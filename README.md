@@ -1,6 +1,6 @@
 # Cognitive Graph
 
-Cognitive Graph is a graph representation learning toolkit that allows researchers and developers to train baseline or custom models for node classification, link prediction and other tasks on graphs.
+Cognitive Graph is a graph representation learning toolkit based on [PyTorch Geometric](https://github.com/rusty1s/pytorch_geometric/) that allows researchers and developers to train baseline or custom models for node classification, link prediction and other tasks on graphs.
 It provides implementations of several models, including:
 
 # Overview

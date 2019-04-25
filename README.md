@@ -36,11 +36,27 @@ Cognitive Graph features:
 - PyTorch version >= 1.0.0
 - Python version >= 3.6
 
-Please follow the instructions here to install PyTorch: https://github.com/pytorch/pytorch#installation.
+Please follow the instructions here to install PyTorch and other dependencies: https://github.com/pytorch/pytorch#installation, https://github.com/rusty1s/pytorch_geometric/#installation
 
 # Getting Started
 
-[full documentation]
+```bash
+$ python display_data.py --dataset cora
++-----------+----------+----------+-------------+------------+-----------------+
+| Dataset   |   #nodes |   #edges |   #features |   #classes |   #labeled data |
+|-----------+----------+----------+-------------+------------+-----------------|
+| cora      |     2708 |    10556 |        1433 |          7 |             140 |
++-----------+----------+----------+-------------+------------+-----------------+
+Sampled ego network saved to ./display.png .
+
+$ python train.py --dataset cora --model gat --num-heads 8 --hidden-size 8 --dropout 0.6 --max-epoch 100 --lr 0.005 --weight-decay 5e-4
+Epoch: 099, Train: 0.9786, Val: 0.8060: 100%|███████████████████████████| 100/100 [00:01<00:00, 66.77it/s]
+Test accuracy = 0.826
+
+$ python train.py --dataset cora --model gcn --num-layers 2 --hidden-size 32 --dropout 0.5 --max-epoch 100 --lr 0.01 --weight-decay 5e-4
+Epoch: 099, Train: 0.9857, Val: 0.7900: 100%|██████████████████████████| 100/100 [00:00<00:00, 142.42it/s]
+Test accuracy = 0.813
+```
 
 # Examples and pre-trained models
 

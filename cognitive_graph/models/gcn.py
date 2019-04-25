@@ -16,7 +16,7 @@ class GCN(BaseCGModel):
         parser.add_argument("--num-classes", type=int)
         parser.add_argument("--hidden-size", type=int, default=16)
         parser.add_argument("--num-layers", type=int, default=2)
-        parser.add_argument("--dropout", type=int, default=0.5)
+        parser.add_argument("--dropout", type=float, default=0.5)
         # fmt: on
 
     @classmethod

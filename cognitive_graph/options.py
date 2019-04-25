@@ -20,6 +20,7 @@ def get_parser():
     parser.add_argument('--cpu', action='store_true', help='use CPU instead of CUDA')
     parser.add_argument('--device-id', default=0, type=int,
                        help='which GPU to use')
+    parser.add_argument('--save-dir', default='.', type=str)
     # fmt: on
     return parser
 
@@ -50,6 +51,12 @@ def get_training_parser():
     add_model_args(parser)
     return parser
 
+def get_display_data_parser():
+    parser = get_parser()
+    add_dataset_args(parser)
+    parser.add_argument('--depth', default=3, type=int)
+
+    return parser
 
 def parse_args_and_arch(parser):
     """The parser doesn't know about model-specific args, so we parse twice."""

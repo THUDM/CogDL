@@ -17,9 +17,9 @@ It provides implementations of several models, including:
   - **_New_** [Qiu et al. (2019): NetSMF: Large-Scale Network Embedding as Sparse Matrix Factorization](http://keg.cs.tsinghua.edu.cn/jietang/publications/www19-Qiu-et-al-NetSMF-Large-Scale-Network-Embedding.pdf)
   - **_New_** [Zhang et al. (2019): ProNE: Fast and Scalable Network Representation Learning](https://www.overleaf.com/read/dhgpkmyfdhnj)
 - **QA**
-  - **_New_** [Ding et al. (2019): Cognitive Graph for Multi-Hop Reading Comprehension at Scale](https://www.overleaf.com/8685337329vkbmkgckzfhk)
+  - **_New_ ACL 2019** [Ding et al. (2019): Cognitive Graph for Multi-Hop Reading Comprehension at Scale](https://arxiv.org/abs/1905.05460)
 - **Heterogeneous**
-  - **_New_** [Cen et al. (2019): Representation Learning for Attributed Multiplex Heterogeneous Network](https://www.overleaf.com/read/cfcyvptkzvjh)
+  - **_New_ KDD 2019** [Cen et al. (2019): Representation Learning for Attributed Multiplex Heterogeneous Network](https://arxiv.org/abs/1905.01669)
 - **Dynamic**
   - **_New_** [Zhao et al. (2019): Large Scale Evolving Graphs with Burst Detection](https://www.overleaf.com/4361782256sqswxgnmwbrs)
 

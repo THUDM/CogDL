@@ -1,3 +1,4 @@
+import copy
 import random
 
 import numpy as np
@@ -33,6 +34,7 @@ class NodeClassification(BaseTask):
         args.num_classes = dataset.num_classes
         model = build_model(args)
         self.model = model.cuda()
+        self.patience = args.patience
 
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
@@ -40,11 +42,25 @@ class NodeClassification(BaseTask):
 
     def train(self, num_epoch):
         epoch_iter = tqdm(range(num_epoch))
+        patience = 0
+        best_score = 0
         for epoch in epoch_iter:
             self._train_step()
+            train_acc = self._test_step(split="train")
+            val_acc = self._test_step(split="val")
             epoch_iter.set_description(
-                f"Epoch: {epoch:03d}, Train: {self._test_step(split='train'):.4f}, Val: {self._test_step(split='val'):.4f}"
+                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
             )
+            if val_acc > best_score:
+                best_score = val_acc
+                best_model = copy.deepcopy(self.model)
+                patience = 0
+            else:
+                patience += 1
+                if patience > self.patience:
+                    self.model = best_model
+                    epoch_iter.close()
+                    break
         test_acc = self._test_step(split="test")
         print(f"Test accuracy = {test_acc}")
         return test_acc

@@ -229,7 +229,6 @@ class LinkPrediction(BaseTask):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--negative-ratio", type=int, default=5)
-        parser.add_argument("--patience", type=int, default=5)
         # fmt: on
 
     def __init__(self, args):
@@ -276,6 +275,7 @@ class LinkPrediction(BaseTask):
                 patience += 1
                 if patience > self.patience:
                     self.model = best_model
+                    epoch_iter.close()
                     break
         roc_auc, f1_score, pr_auc = self._test_step(self.test_data)
         print(

@@ -44,9 +44,9 @@ if __name__ == "__main__":
         result = main(args)
         results_dict[variant[:-1]].append(np.array(result))
 
-    # Seeds
+    # Average for different seeds
     for variant in results_dict:
         results = results_dict[variant]
         print(
-            f"Variant: {variant}; Mean = {np.mean(results).tolist()}; Std = {np.std(results).tolist()}"
+            f"Variant: {variant}; Mean = {np.around(np.mean(results), 4).tolist()}; Std = {np.around(np.std(results), 4).tolist()}"
         )

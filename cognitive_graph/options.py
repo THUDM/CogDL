@@ -2,16 +2,17 @@ import argparse
 
 from cognitive_graph.datasets import DATASET_REGISTRY
 from cognitive_graph.models import MODEL_REGISTRY
+from cognitive_graph.tasks import TASK_REGISTRY
 
 
 def get_parser():
     parser = argparse.ArgumentParser()
     # fmt: off
-    parser.add_argument('--log-interval', type=int, default=1000, metavar='N',
-                        help='log progress every N batches (when progress bar is disabled)')
-    parser.add_argument('--tensorboard-logdir', metavar='DIR', default='',
-                        help='path to save logs for tensorboard, should match --logdir '
-                             'of running tensorboard (default: no tensorboard logging)')
+    # parser.add_argument('--log-interval', type=int, default=1000, metavar='N',
+    #                     help='log progress every N batches (when progress bar is disabled)')
+    # parser.add_argument('--tensorboard-logdir', metavar='DIR', default='',
+    #                     help='path to save logs for tensorboard, should match --logdir '
+    #                          'of running tensorboard (default: no tensorboard logging)')
     parser.add_argument('--seed', default=1, type=int, metavar='N',
                         help='pseudo random number generator seed')
     parser.add_argument('--max-epoch', default=200, type=int)
@@ -23,6 +24,16 @@ def get_parser():
     parser.add_argument('--save-dir', default='.', type=str)
     # fmt: on
     return parser
+
+
+def add_task_args(parser):
+    group = parser.add_argument_group("Task configuration")
+    # fmt: off
+    group.add_argument('--task', '-t', default='node_classification', metavar='TASK', required=True,
+                       choices=TASK_REGISTRY.keys(),
+                       help='Task')
+    # fmt: on
+    return group
 
 
 def add_dataset_args(parser):
@@ -47,16 +58,19 @@ def add_model_args(parser):
 
 def get_training_parser():
     parser = get_parser()
+    add_task_args(parser)
     add_dataset_args(parser)
     add_model_args(parser)
     return parser
 
+
 def get_display_data_parser():
     parser = get_parser()
     add_dataset_args(parser)
-    parser.add_argument('--depth', default=3, type=int)
+    parser.add_argument("--depth", default=3, type=int)
 
     return parser
+
 
 def parse_args_and_arch(parser):
     """The parser doesn't know about model-specific args, so we parse twice."""
@@ -72,8 +86,7 @@ def parse_args_and_arch(parser):
     MODEL_REGISTRY[args.model].add_args(model_specific_group)
 
     # Add *-specific args to parser.
-    # if hasattr(args, "task"):
-    #     TASK_REGISTRY[args.task].add_args(parser)
+    TASK_REGISTRY[args.task].add_args(parser)
 
     # Parse a second time.
     args = parser.parse_args()

@@ -1,4 +1,7 @@
+import copy
+import itertools
 import random
+from collections import defaultdict, namedtuple
 
 import numpy as np
 import torch
@@ -18,11 +21,32 @@ def main(args):
     torch.manual_seed(args.seed)
 
     task = build_task(args)
-    task.train(num_epoch=args.max_epoch)
+    return task.train(num_epoch=args.max_epoch)
+
+
+def gen_variants(**items):
+    Variant = namedtuple("Variant", items.keys())
+    return itertools.starmap(Variant, itertools.product(*items.values()))
 
 
 if __name__ == "__main__":
     parser = options.get_training_parser()
-    args = options.parse_args_and_arch(parser)
+    args, _ = parser.parse_known_args()
 
-    main(args)
+    variants = gen_variants(dataset=args.dataset, model=args.model, seed=args.seed)
+    results_dict = defaultdict(list)
+    for variant in variants:
+        args.dataset, args.model, args.seed = variant
+        # Parse *-specific arguments. *: model, task
+        args = options.parse_args_and_arch(parser, args)
+        # Reset arguments to variant
+        args.dataset, args.model, args.seed = variant
+        result = main(args)
+        results_dict[variant[:-1]].append(np.array(result))
+
+    # Seeds
+    for variant in results_dict:
+        results = results_dict[variant]
+        print(
+            f"Variant: {variant}; Mean = {np.mean(results).tolist()}; Std = {np.std(results).tolist()}"
+        )

@@ -6,14 +6,14 @@ from cognitive_graph.tasks import TASK_REGISTRY
 
 
 def get_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(conflict_handler='resolve')
     # fmt: off
     # parser.add_argument('--log-interval', type=int, default=1000, metavar='N',
     #                     help='log progress every N batches (when progress bar is disabled)')
     # parser.add_argument('--tensorboard-logdir', metavar='DIR', default='',
     #                     help='path to save logs for tensorboard, should match --logdir '
     #                          'of running tensorboard (default: no tensorboard logging)')
-    parser.add_argument('--seed', default=1, type=int, metavar='N',
+    parser.add_argument('--seed', default=1, type=int, nargs='+', metavar='N',
                         help='pseudo random number generator seed')
     parser.add_argument('--max-epoch', default=200, type=int)
     parser.add_argument('--lr', default=0.005, type=float)
@@ -39,7 +39,7 @@ def add_task_args(parser):
 def add_dataset_args(parser):
     group = parser.add_argument_group("Dataset and data loading")
     # fmt: off
-    group.add_argument('--dataset', '-dt', metavar='DATASET', required=True,
+    group.add_argument('--dataset', '-dt', metavar='DATASET', nargs='+', required=True,
                        choices=DATASET_REGISTRY.keys(),
                        help='Dataset')
     # fmt: on
@@ -49,7 +49,7 @@ def add_dataset_args(parser):
 def add_model_args(parser):
     group = parser.add_argument_group("Model configuration")
     # fmt: off
-    group.add_argument('--model', '-m', default='gcn', metavar='MODEL', required=True,
+    group.add_argument('--model', '-m', default='gcn', metavar='MODEL', nargs='+', required=True,
                        choices=MODEL_REGISTRY.keys(),
                        help='Model Architecture')
     # fmt: on
@@ -72,9 +72,9 @@ def get_display_data_parser():
     return parser
 
 
-def parse_args_and_arch(parser):
+def parse_args_and_arch(parser, args):
     """The parser doesn't know about model-specific args, so we parse twice."""
-    args, _ = parser.parse_known_args()
+    # args, _ = parser.parse_known_args()
 
     # Add model-specific args to parser.
     model_specific_group = parser.add_argument_group(

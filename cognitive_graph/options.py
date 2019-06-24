@@ -77,16 +77,15 @@ def parse_args_and_arch(parser, args):
     """The parser doesn't know about model-specific args, so we parse twice."""
     # args, _ = parser.parse_known_args()
 
-    # Add model-specific args to parser.
-    model_specific_group = parser.add_argument_group(
-        "Model-specific configuration",
-        # Only include attributes which are explicitly given as command-line
-        # arguments or which have default values.
-        argument_default=argparse.SUPPRESS,
-    )
-    MODEL_REGISTRY[args.model].add_args(model_specific_group)
+    # model_specific_group = parser.add_argument_group(
+    #     "Model-specific configuration",
+    #     # Only include attributes which are explicitly given as command-line
+    #     # arguments or which have default values.
+    #     argument_default=argparse.SUPPRESS,
+    # )
 
     # Add *-specific args to parser.
+    MODEL_REGISTRY[args.model].add_args(parser)
     TASK_REGISTRY[args.task].add_args(parser)
 
     # Parse a second time.

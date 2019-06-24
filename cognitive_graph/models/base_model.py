@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class BaseCGModel(nn.Module):
+class BaseModel(nn.Module):
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""

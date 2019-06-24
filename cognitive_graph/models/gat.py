@@ -3,11 +3,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from cognitive_graph.modules.conv import GATConv
 
-from . import register_model, BaseCGModel
+from . import register_model, BaseModel
 
 
 @register_model("gat")
-class GAT(BaseCGModel):
+class GAT(BaseModel):
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""

@@ -4,7 +4,7 @@ import os
 
 import torch.nn as nn
 
-from .cg_model import BaseCGModel
+from .base_model import BaseModel
 
 MODEL_REGISTRY = {}
 
@@ -21,7 +21,7 @@ def register_model(name):
     For example::
 
         @register_model('gat')
-        class GAT(BaseCGModel):
+        class GAT(BaseModel):
             (...)
 
     Args:
@@ -31,9 +31,9 @@ def register_model(name):
     def register_model_cls(cls):
         if name in MODEL_REGISTRY:
             raise ValueError("Cannot register duplicate model ({})".format(name))
-        if not issubclass(cls, BaseCGModel):
+        if not issubclass(cls, BaseModel):
             raise ValueError(
-                "Model ({}: {}) must extend BaseCGModel".format(name, cls.__name__)
+                "Model ({}: {}) must extend BaseModel".format(name, cls.__name__)
             )
         MODEL_REGISTRY[name] = cls
         return cls

@@ -35,13 +35,14 @@ class NodeClassification(BaseTask):
         model = build_model(args)
         self.model = model.cuda()
         self.patience = args.patience
+        self.max_epoch = args.max_epoch
 
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
         )
 
-    def train(self, num_epoch):
-        epoch_iter = tqdm(range(num_epoch))
+    def train(self):
+        epoch_iter = tqdm(range(self.max_epoch))
         patience = 0
         best_score = 0
         for epoch in epoch_iter:

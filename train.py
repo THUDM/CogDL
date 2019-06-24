@@ -21,7 +21,7 @@ def main(args):
     torch.manual_seed(args.seed)
 
     task = build_task(args)
-    return task.train(num_epoch=args.max_epoch)
+    return task.train()
 
 
 def gen_variants(**items):
@@ -48,5 +48,5 @@ if __name__ == "__main__":
     for variant in results_dict:
         results = results_dict[variant]
         print(
-            f"Variant: {variant}; Mean = {np.around(np.mean(results), 4).tolist()}; Std = {np.around(np.std(results), 4).tolist()}"
+            f"Variant: {variant}; Mean = {np.around(np.mean(results, axis=0), 4).tolist()}; Std = {np.around(np.std(results, axis=0), 4).tolist()}"
         )

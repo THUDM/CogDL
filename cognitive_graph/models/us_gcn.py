@@ -3,11 +3,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from cognitive_graph.modules.conv import GCNConv
 
-from . import register_model, BaseCGModel
+from . import register_model, BaseModel
 
 
 @register_model("us_gcn")
-class UnsupervisedGCN(BaseCGModel):
+class UnsupervisedGCN(BaseModel):
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""

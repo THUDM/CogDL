@@ -2,8 +2,6 @@ import networkx as nx
 import numpy as np
 import scipy.sparse as sp
 
-from cognitive_graph.modules.conv import GATConv
-
 from . import BaseModel, register_model
 
 
@@ -51,7 +49,8 @@ class NetMF(BaseModel):
             )
         # factorize deepwalk matrix with SVD
         u, s, v = sp.linalg.svds(deepwalk_matrix, self.dimension)
-        return sp.diags(np.sqrt(s)).dot(u.T).T
+        self.embeddings = sp.diags(np.sqrt(s)).dot(u.T).T
+        return self.embeddings
 
     def _compute_deepwalk_matrix(self, A, window, b):
         # directly compute deepwalk matrix

@@ -13,8 +13,8 @@ from cognitive_graph.tasks import build_task
 
 
 def main(args):
-    assert torch.cuda.is_available() and not args.cpu
-    torch.cuda.set_device(args.device_id)
+    if torch.cuda.is_available() and not args.cpu:
+        torch.cuda.set_device(args.device_id)
 
     random.seed(args.seed)
     np.random.seed(args.seed)

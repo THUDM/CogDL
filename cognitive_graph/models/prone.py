@@ -8,8 +8,6 @@ from scipy.special import iv
 from sklearn import preprocessing
 from sklearn.utils.extmath import randomized_svd
 
-from cognitive_graph.modules.conv import GATConv
-
 from . import BaseModel, register_model
 
 
@@ -51,9 +49,9 @@ class ProNE(BaseModel):
 
         print("sparse NE time", t_2 - t_1)
         print("spectral Pro time", t_3 - t_2)
-        self.embedding = embeddings_matrix
+        self.embeddings = embeddings_matrix
 
-        return self.embedding
+        return self.embeddings
 
     def _get_embedding_rand(self, matrix):
         # Sparse randomized tSVD for fast embedding

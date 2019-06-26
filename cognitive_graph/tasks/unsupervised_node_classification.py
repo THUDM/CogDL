@@ -82,7 +82,8 @@ class UnsupervisedNodeClassification(BaseTask):
 
         # score each train/test group
         all_results = defaultdict(list)
-        training_percents = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+        # training_percents = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+        training_percents = [0.1, 0.3, 0.5, 0.7, 0.9]
 
         for train_percent in training_percents:
             for shuf in shuffles:

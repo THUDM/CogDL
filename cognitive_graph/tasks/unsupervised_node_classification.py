@@ -16,6 +16,7 @@ from sklearn.utils import shuffle as skshuffle
 from tqdm import tqdm
 
 from cognitive_graph import options
+from cognitive_graph.data import Dataset, InMemoryDataset
 from cognitive_graph.datasets import build_dataset
 from cognitive_graph.models import build_model
 
@@ -38,15 +39,22 @@ class UnsupervisedNodeClassification(BaseTask):
 
     def __init__(self, args):
         super(UnsupervisedNodeClassification, self).__init__(args)
-
         dataset = build_dataset(args)
-        data = dataset[0]
-        self.data = data
+        if issubclass(dataset.__class__.__bases__[0], InMemoryDataset):
+            self.data = dataset[0]
+            self.num_nodes = self.data.y.shape[0]
+            self.num_classes = dataset.num_classes
+            self.label_matrix = np.zeros((self.num_nodes, self.num_classes), dtype=int)
+            self.label_matrix[range(self.num_nodes), self.data.y] = 1
+        else:
+            self.data = dataset.data
+            self.label_matrix = self.data.y
+            self.num_nodes, self.num_classes = self.data.y.shape
+
         self.model = build_model(args)
         self.hidden_size = args.hidden_size
-        self.num_nodes = self.data.y.shape[0]
-        self.num_classes = dataset.num_classes
         self.num_shuffle = args.num_shuffle
+
 
     def train(self):
         G = nx.Graph()
@@ -58,10 +66,8 @@ class UnsupervisedNodeClassification(BaseTask):
         for vid, node in enumerate(G.nodes()):
             features_matrix[node] = embeddings[vid]
 
-        # label to {0, 1}
-        label_matrix = np.zeros((self.num_nodes, self.num_classes), dtype=int)
-        label_matrix[range(self.num_nodes), self.data.y] = 1
-        label_matrix = sp.csr_matrix(label_matrix)
+        # label nor multi-label
+        label_matrix = sp.csr_matrix(self.label_matrix)
 
         return self._evaluate(features_matrix, label_matrix, self.num_shuffle)
 

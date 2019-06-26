@@ -13,7 +13,7 @@ def get_parser():
     # parser.add_argument('--tensorboard-logdir', metavar='DIR', default='',
     #                     help='path to save logs for tensorboard, should match --logdir '
     #                          'of running tensorboard (default: no tensorboard logging)')
-    parser.add_argument('--seed', default=1, type=int, nargs='+', metavar='N',
+    parser.add_argument('--seed', default=[1], type=int, nargs='+', metavar='N',
                         help='pseudo random number generator seed')
     parser.add_argument('--max-epoch', default=1000, type=int)
     parser.add_argument("--patience", type=int, default=100)
@@ -50,7 +50,7 @@ def add_dataset_args(parser):
 def add_model_args(parser):
     group = parser.add_argument_group("Model configuration")
     # fmt: off
-    group.add_argument('--model', '-m', default='gcn', metavar='MODEL', nargs='+', required=True,
+    group.add_argument('--model', '-m', metavar='MODEL', nargs='+', required=True,
                        choices=MODEL_REGISTRY.keys(),
                        help='Model Architecture')
     # fmt: on

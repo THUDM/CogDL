@@ -100,11 +100,12 @@ class UnsupervisedNodeClassification(BaseTask):
                 all_results[train_percent].append(result)
             # print("micro", result)
 
-        return np.array(
-            [
-                sum(all_results[train_percent]) / len(all_results[train_percent])
-                for train_percent in sorted(all_results.keys())
-            ]
+        return dict(
+            (
+                f"Micro-F1 {train_percent}",
+                sum(all_results[train_percent]) / len(all_results[train_percent]),
+            )
+            for train_percent in sorted(all_results.keys())
         )
 
 

@@ -103,5 +103,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-cognitive_graph/data/
-!cognitive_graph/data/*.py
+cognitive_graph/data/**/*
+!cognitive_graph/data/*

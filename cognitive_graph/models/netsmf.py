@@ -47,7 +47,7 @@ class NetSMF(BaseModel):
 
 		id2node = dict(zip(node2id.values(), node2id.keys()))
 
-		self.num_neigh = np.asarray([len(self.G.neighbors(id2node[i])) for i in range(self.num_node)])
+		self.num_neigh = np.asarray([len(list(self.G.neighbors(id2node[i]))) for i in range(self.num_node)])
 		self.neighbors = [[node2id[v] for v in self.G.neighbors(id2node[i])]
 		                  for i in range(self.num_node)]
 

@@ -6,6 +6,7 @@ from collections import defaultdict, namedtuple
 import numpy as np
 import torch
 import torch.nn.functional as F
+from tabulate import tabulate
 from tqdm import tqdm
 
 from cognitive_graph import options
@@ -42,11 +43,23 @@ if __name__ == "__main__":
         # Reset arguments to variant
         args.dataset, args.model, args.seed = variant
         result = main(args)
-        results_dict[variant[:-1]].append(np.array(result))
+        results_dict[variant[:-1]].append(np.array(list(result.values())))
 
+    col_names = ["Variant"] + list(result.keys())
     # Average for different seeds
+    tab_data = []
     for variant in results_dict:
         results = results_dict[variant]
-        print(
-            f"Variant: {variant}; Mean = {np.around(np.mean(results, axis=0), 4).tolist()}; Std = {np.around(np.std(results, axis=0), 4).tolist()}"
+        tab_data.append(
+            [variant]
+            + list(
+                itertools.starmap(
+                    lambda x, y: f"{x:.4f}±{y:.4f}",
+                    zip(
+                        np.mean(results, axis=0).tolist(),
+                        np.std(results, axis=0).tolist(),
+                    ),
+                )
+            )
         )
+    print(tabulate(tab_data, headers=col_names, tablefmt="github"))

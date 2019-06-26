@@ -282,7 +282,11 @@ class LinkPrediction(BaseTask):
         print(
             f"Test ROC-AUC = {roc_auc:.4f}, F1 = {f1_score:.4f}, PR-AUC = {pr_auc:.4f}"
         )
-        return roc_auc, f1_score, pr_auc
+        return dict(
+            ROC_AUC=roc_auc,
+            PR_AUC=pr_auc,
+            F1=f1_score,
+        )
 
     def _train_step(self):
         self.model.train()

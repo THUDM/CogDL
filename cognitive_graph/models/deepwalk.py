@@ -42,7 +42,6 @@ class DeepWalk(BaseModel):
         embeddings = np.asarray([model[str(id2node[i])] for i in range(len(id2node))])
         return embeddings
 
-
     def _walk(self, start_node, walk_length):
         # Simulate a random walk starting from start node.
         walk = [start_node]
@@ -54,6 +53,7 @@ class DeepWalk(BaseModel):
             k = int(np.floor(np.random.rand()*len(cur_nbrs)))
             walk.append(cur_nbrs[k])
         return walk
+
 
     def _simulate_walks(self, walk_length, num_walks):
         # Repeatedly simulate random walks from each node.

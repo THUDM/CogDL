@@ -148,5 +148,3 @@ class Node2vec(BaseModel):
         self.alias_edges = alias_edges
 
         return
-
-

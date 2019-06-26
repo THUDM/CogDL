@@ -125,6 +125,3 @@ class NetSMF(BaseModel):
                     u_, v_ = self._path_sampling(u, v, r)
                     matrix[u_, v_] += 1.0
         return matrix
-
-
-

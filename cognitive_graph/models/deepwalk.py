@@ -47,7 +47,7 @@ class DeepWalk(BaseModel):
         walk = [start_node]
         while len(walk) < walk_length:
             cur = walk[-1]
-            cur_nbrs = self.G.neighbors(cur)
+            cur_nbrs = list(self.G.neighbors(cur))
             if len(cur_nbrs) == 0:
                 break
             k = int(np.floor(np.random.rand()*len(cur_nbrs)))

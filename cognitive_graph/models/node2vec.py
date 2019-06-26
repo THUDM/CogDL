@@ -66,7 +66,7 @@ class Node2vec(BaseModel):
 
         while len(walk) < walk_length:
             cur = walk[-1]
-            cur_nbrs = G.neighbors(cur)
+            cur_nbrs = list(G.neighbors(cur))
             if len(cur_nbrs) > 0:
                 if len(walk) == 1:
                     walk.append(cur_nbrs[alias_draw(alias_nodes[cur][0], alias_nodes[cur][1])])

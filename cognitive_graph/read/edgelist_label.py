@@ -11,8 +11,8 @@ from cognitive_graph.data import Data
 
 
 def read_edgelist_label_data(folder, prefix):
-    graph_path = osp.join(folder, '{}.ungraph'.format(prefix.lower()))
-    cmty_path = osp.join(folder, '{}.cmty'.format(prefix.lower()))
+    graph_path = osp.join(folder, '{}.ungraph'.format(prefix))
+    cmty_path = osp.join(folder, '{}.cmty'.format(prefix))
 
     G = nx.read_edgelist(graph_path, nodetype=int, create_using=nx.Graph())
     num_node = G.number_of_nodes()

@@ -16,7 +16,7 @@ class NetSMF(BaseModel):
         """Add model-specific arguments to the parser."""
         # fmt: off
         parser.add_argument('--window-size', type=int, default=5,
-                            help='Window size of skip-gram model. Default is 5.')
+                            help='Window size of approximate matrix. Default is 5.')
         parser.add_argument('--negative', type=int, default=5,
                             help='Number of negative node in sampling. Default is 5.')
         parser.add_argument('--num-round', type=int, default=100,

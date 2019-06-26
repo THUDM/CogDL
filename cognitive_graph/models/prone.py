@@ -17,7 +17,8 @@ class ProNE(BaseModel):
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument("--step", type=int, default=5)
+        parser.add_argument("--step", type=int, default=5,
+                            help=" Number of items in the chebyshev expansion")
         parser.add_argument("--mu", type=float, default=0.2)
         parser.add_argument("--theta", type=float, default=0.5)
         # fmt: on

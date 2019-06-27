@@ -55,9 +55,10 @@ class DrGCN(BaseModel):
 
 
     def forward(self, x, edge_index):
-        for se, conv in zip(self.ses[:-1], self.convs[:-1]):
-            x = se(x)
+        x = self.ses[0](x)
+        for se, conv in zip(self.ses[1:], self.convs[:-1]):
             x = F.relu(conv(x, edge_index))
+            x = se(x)
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.convs[-1](x, edge_index)
         return F.log_softmax(x, dim=1)

@@ -42,6 +42,7 @@ if __name__ == "__main__":
         args = options.parse_args_and_arch(parser, args)
         # Reset arguments to variant
         args.dataset, args.model, args.seed = variant
+        print(variant)
         result = main(args)
         results_dict[variant[:-1]].append(np.array(list(result.values())))
 

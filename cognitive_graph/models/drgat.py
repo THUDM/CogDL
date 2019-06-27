@@ -48,10 +48,10 @@ class DrGAT(BaseModel):
         )
 
     def forward(self, x, edge_index):
+        x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.se1(x)
-        x = F.dropout(x, p=self.dropout, training=self.training)
         x = F.elu(self.conv1(x, edge_index))
-        x = self.se2(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.se2(x)
         x = F.elu(self.conv2(x, edge_index))
         return F.log_softmax(x, dim=1)

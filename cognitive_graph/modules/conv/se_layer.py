@@ -15,7 +15,7 @@ class SELayer(nn.Module):
 
         self.encoder_decoder = nn.Sequential(
             nn.Linear(in_channels, se_channels),
-            nn.ReLU(),
+            nn.ELU(),
             nn.Linear(se_channels, in_channels),
             nn.Sigmoid(),
         )

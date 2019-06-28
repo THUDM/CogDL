@@ -52,6 +52,10 @@ class MatlabMatrix(Dataset):
         for name in self.raw_file_names:
             download_url('{}/{}'.format(self.url, name), self.raw_dir)
 
+    def get(self, idx):
+        assert idx == 0
+        return self.data
+
     def process(self):
         path = osp.join(self.raw_dir, '{}.mat'.format(self.name.lower()))
         smat = scipy.io.loadmat(path)

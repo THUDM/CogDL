@@ -20,7 +20,7 @@ def get_parser():
     parser.add_argument('--lr', default=0.005, type=float)
     parser.add_argument('--weight-decay', default=5e-4, type=float)
     parser.add_argument('--cpu', action='store_true', help='use CPU instead of CUDA')
-    parser.add_argument('--device-id', default=0, type=int,
+    parser.add_argument('--device-id', default=[0], type=int, nargs='+',
                        help='which GPU to use')
     parser.add_argument('--save-dir', default='.', type=str)
     # fmt: on

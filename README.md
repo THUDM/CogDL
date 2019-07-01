@@ -87,6 +87,7 @@ for DeepWalk and node2vec:
 - --walk-length, Length of walk start at each node. Default is 50;
 - --worker, Number of parallel workers. Default is 10;
 - --window-size, Window size of skip-gram model. Default is 10;
+- --iteration, Number of iterations. Default is 10;
 - --q, Parameter in node2vec. Default is 1.0;
 - --p, Parameter in node2vec. Default is 1.0;
 

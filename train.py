@@ -1,6 +1,7 @@
 import copy
 import itertools
 import random
+from multiprocessing import Pool
 from collections import defaultdict, namedtuple
 
 import numpy as np
@@ -19,11 +20,10 @@ def main(args):
 
     random.seed(args.seed)
     np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-
+    torch.manual_seed(args.seed) 
+    
     task = build_task(args)
     return task.train()
-
 
 def gen_variants(**items):
     Variant = namedtuple("Variant", items.keys())
@@ -33,24 +33,28 @@ def gen_variants(**items):
 if __name__ == "__main__":
     parser = options.get_training_parser()
     args, _ = parser.parse_known_args()
-
+    args = options.parse_model_and_add_parameter(parser, args)
+    print(args)
     variants = gen_variants(dataset=args.dataset, model=args.model, seed=args.seed)
     results_dict = defaultdict(list)
+
+    num_workers = len(args.dataset) * len(args.model * len(args.seed))
+    print("num_workers", num_workers)
+    
+    pool = Pool(processes=num_workers)        
     for variant in variants:
         args.dataset, args.model, args.seed = variant
-        # Parse *-specific arguments. *: model, task
-        args = options.parse_args_and_arch(parser, args)
-        # Reset arguments to variant
-        args.dataset, args.model, args.seed = variant
-        print(variant)
-        result = main(args)
-        results_dict[variant[:-1]].append(np.array(list(result.values())))
+        results_dict[variant[:-1]].append(pool.apply_async(func=main, args=(copy.copy(args),)))
+        
+    pool.close()
+    pool.join()
 
-    col_names = ["Variant"] + list(result.keys())
     # Average for different seeds
+    col_names = ["Variant"] + list(results_dict[variant[:-1]][-1].get().keys())
+
     tab_data = []
     for variant in results_dict:
-        results = results_dict[variant]
+        results = np.array([list(res.get().values()) for res in results_dict[variant]])
         tab_data.append(
             [variant]
             + list(

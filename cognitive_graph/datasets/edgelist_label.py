@@ -48,6 +48,10 @@ class EdgelistLabel(Dataset):
     def processed_file_names(self):
         return ['data.pt']
 
+    def get(self, idx):
+        assert idx == 0
+        return self.data
+
     def download(self):
         for name in self.raw_file_names:
             download_url('{}/{}'.format(self.url, name), self.raw_dir)

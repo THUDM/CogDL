@@ -153,18 +153,14 @@ def randomly_choose_false_edges(nodes, true_edges, num):
     return tmp_list
 
 
-def gen_node_pairs(edge_list):
-    edge_list = edge_list.cpu().numpy()
-    edge_list = list(zip(edge_list[0], edge_list[1]))
-    train_data, valid_data, test_data = divide_data(edge_list, [0.85, 0.05, 0.10])
-
+def gen_node_pairs(train_data, valid_data, test_data):
     G = nx.Graph()
     G.add_edges_from(train_data)
-    RWG = RWGraph(G)
+    # RWG = RWGraph(G)
 
-    base_walks = RWG.simulate_walks(20, 10)
-    vocab, index2word = generate_vocab(base_walks)
-    train_pairs = generate_pairs(base_walks, vocab)
+    # base_walks = RWG.simulate_walks(20, 10)
+    # vocab, index2word = generate_vocab(base_walks)
+    # train_pairs = generate_pairs(base_walks, vocab)
 
     training_nodes = set(list(G.nodes()))
     valid_true_data = []
@@ -182,15 +178,17 @@ def gen_node_pairs(edge_list):
         list(training_nodes), train_data, len(test_data)
     )
     return (
-        np.array(train_pairs).T,
+        # np.array(train_pairs).T,
         (valid_true_data, valid_false_data),
         (test_true_data, test_false_data),
     )
 
 
 def get_score(embs, node1, node2):
-    vector1 = embs[int(node1)].cpu().detach().numpy()
-    vector2 = embs[int(node2)].cpu().detach().numpy()
+    # vector1 = embs[int(node1)].cpu().detach().numpy()
+    # vector2 = embs[int(node2)].cpu().detach().numpy()
+    vector1 = embs[int(node1)]
+    vector2 = embs[int(node2)]
     return np.dot(vector1, vector2) / (
         np.linalg.norm(vector1) * np.linalg.norm(vector2)
     )
@@ -228,6 +226,7 @@ class LinkPrediction(BaseTask):
     def add_args(parser):
         """Add task-specific arguments to the parser."""
         # fmt: off
+        parser.add_argument("--hidden-size", type=int, default=128)
         parser.add_argument("--negative-ratio", type=int, default=5)
         # fmt: on
 
@@ -236,49 +235,66 @@ class LinkPrediction(BaseTask):
 
         dataset = build_dataset(args)
         data = dataset[0]
+        self.num_nodes = data.y.shape[0]
         self.data = data.cuda()
-        args.num_features = dataset.num_features
+        if hasattr(dataset, 'num_features'):
+            args.num_features = dataset.num_features
         model = build_model(args)
-        self.model = model.cuda()
+        self.model = model
         self.patience = args.patience
         self.max_epoch = args.max_epoch
-
-        self.train_data, self.valid_data, self.test_data = gen_node_pairs(self.data.edge_index)
+        self.hidden_size = args.hidden_size
 
         edge_list = self.data.edge_index.cpu().numpy()
-        G = nx.Graph()
-        G.add_edges_from(edge_list.T.tolist())
-        self.criterion = NEG_loss(
-            len(self.data.x),
-            args.negative_ratio,
-            degree=np.array(list(dict(G.degree()).values())),
-        )
+        edge_list = list(zip(edge_list[0], edge_list[1]))
+        self.train_data, self.valid_data, self.test_data = divide_data(edge_list, [0.85, 0.05, 0.10])
 
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
-        )
+
+        self.valid_data, self.test_data = gen_node_pairs(self.train_data, self.valid_data, self.test_data)
+
+        # edge_list = self.data.edge_index.cpu().numpy()
+        # G = nx.Graph()
+        # G.add_edges_from(edge_list.T.tolist())
+        # self.criterion = NEG_loss(
+        #     len(self.data.x),
+        #     args.negative_ratio,
+        #     degree=np.array(list(dict(G.degree()).values())),
+        # )
+
+        # self.optimizer = torch.optim.Adam(
+        #     self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
+        # )
 
     def train(self):
-        epoch_iter = tqdm(range(self.max_epoch))
-        patience = 0
-        best_score = 0
-        for epoch in epoch_iter:
-            self._train_step()
-            roc_auc, f1_score, pr_auc = self._test_step(self.valid_data)
-            epoch_iter.set_description(
-                f"Epoch: {epoch:03d}, ROC-AUC: {roc_auc:.4f}, F1: {f1_score:.4f}, PR-AUC: {pr_auc:.4f}"
-            )
-            if roc_auc > best_score:
-                best_score = roc_auc
-                best_model = copy.deepcopy(self.model)
-                patience = 0
-            else:
-                patience += 1
-                if patience > self.patience:
-                    self.model = best_model
-                    epoch_iter.close()
-                    break
-        roc_auc, f1_score, pr_auc = self._test_step(self.test_data)
+        G = nx.Graph()
+        G.add_edges_from(self.train_data)
+        embeddings = self.model.train(G)
+
+        embs = np.zeros((self.num_nodes, self.hidden_size))
+        for vid, node in enumerate(G.nodes()):
+            embs[node] = embeddings[vid]
+
+        # epoch_iter = tqdm(range(self.max_epoch))
+        # patience = 0
+        # best_score = 0
+        # for epoch in epoch_iter:
+        #     self._train_step()
+        #     roc_auc, f1_score, pr_auc = self._test_step(self.valid_data)
+        #     epoch_iter.set_description(
+        #         f"Epoch: {epoch:03d}, ROC-AUC: {roc_auc:.4f}, F1: {f1_score:.4f}, PR-AUC: {pr_auc:.4f}"
+        #     )
+        #     if roc_auc > best_score:
+        #         best_score = roc_auc
+        #         best_model = copy.deepcopy(self.model)
+        #         patience = 0
+        #     else:
+        #         patience += 1
+        #         if patience > self.patience:
+        #             self.model = best_model
+        #             epoch_iter.close()
+        #             break
+        # roc_auc, f1_score, pr_auc = self._test_step(self.test_data)
+        roc_auc, f1_score, pr_auc = evaluate(embs, self.test_data[0], self.test_data[1])
         print(
             f"Test ROC-AUC = {roc_auc:.4f}, F1 = {f1_score:.4f}, PR-AUC = {pr_auc:.4f}"
         )

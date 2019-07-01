@@ -92,3 +92,16 @@ def parse_args_and_arch(parser, args):
     args = parser.parse_args()
 
     return args
+
+def parse_model_and_add_parameter(parser, args):
+    """The parser doesn't know about model-specific args, so we parse twice."""
+    # args, _ = parser.parse_known_args()
+
+    # Add *-specific args to parser.
+    for model in args.model:
+        MODEL_REGISTRY[model].add_args(parser)
+    TASK_REGISTRY[args.task].add_args(parser)
+    # Parse a second time.
+    args = parser.parse_args()
+
+    return args

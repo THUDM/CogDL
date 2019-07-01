@@ -40,14 +40,13 @@ class UnsupervisedNodeClassification(BaseTask):
     def __init__(self, args):
         super(UnsupervisedNodeClassification, self).__init__(args)
         dataset = build_dataset(args)
+        self.data = dataset[0]
         if issubclass(dataset.__class__.__bases__[0], InMemoryDataset):
-            self.data = dataset[0]
             self.num_nodes = self.data.y.shape[0]
             self.num_classes = dataset.num_classes
             self.label_matrix = np.zeros((self.num_nodes, self.num_classes), dtype=int)
             self.label_matrix[range(self.num_nodes), self.data.y] = 1
         else:
-            self.data = dataset.data
             self.label_matrix = self.data.y
             self.num_nodes, self.num_classes = self.data.y.shape
 

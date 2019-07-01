@@ -19,25 +19,28 @@ class DeepWalk(BaseModel):
                             help='Window size of skip-gram model. Default is 5.')
         parser.add_argument('--worker', type=int, default=10,
                             help='Number of parallel workers. Default is 10.')
+        parser.add_argument('--iteration', type=int, default=10,
+                            help='Number of iterations. Default is 10.')
         # fmt: on
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.hidden_size, args.walk_length, args.walk_num, args.window_size, args.worker)
+        return cls(args.hidden_size, args.walk_length, args.walk_num, args.window_size, args.worker, args.iteration)
 
-    def __init__(self, dimension, walk_length, walk_num, window_size, worker):
+    def __init__(self, dimension, walk_length, walk_num, window_size, worker, iteration):
         super(DeepWalk, self).__init__()
         self.dimension = dimension
         self.walk_length = walk_length
         self.walk_num = walk_num
         self.window_size = window_size
         self.worker = worker
+        self.iteration = iteration
 
     def train(self, G):
         self.G = G
         walks = self._simulate_walks(self.walk_length, self.walk_num)
         walks = [[str(node) for node in walk] for walk in walks]
-        model = Word2Vec(walks, size=self.dimension, window=self.window_size, min_count=0, sg=1, workers=self.worker)
+        model = Word2Vec(walks, size=self.dimension, window=self.window_size, min_count=0, sg=1, workers=self.worker, iter=self.iteration)
         id2node = dict([(vid, node) for vid, node in enumerate(G.nodes())])
         embeddings = np.asarray([model[str(id2node[i])] for i in range(len(id2node))])
         return embeddings

@@ -53,11 +53,17 @@ class UnsupervisedNodeClassification(BaseTask):
         self.model = build_model(args)
         self.hidden_size = args.hidden_size
         self.num_shuffle = args.num_shuffle
+        self.is_weighted = self.data.edge_attr is not None
+
 
 
     def train(self):
         G = nx.Graph()
-        G.add_edges_from(self.data.edge_index.t().tolist())
+        if self.is_weighted:
+            edges, weight = self.data.edge_index.t().tolist(), self.data.edge_attr.tolist()
+            G.add_weighted_edges_from([(edges[i][0], edges[i][1], weight[0][i]) for i in range(len(edges))])
+        else:
+            G.add_edges_from(self.data.edge_index.t().tolist())
         embeddings = self.model.train(G)
 
         # Map node2id

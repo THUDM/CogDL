@@ -60,22 +60,7 @@ class EdgelistLabel(Dataset):
         data = read_edgelist_label_data(self.raw_dir, self.name)
         data = data if self.pre_transform is None else self.pre_transform(data)
         torch.save(data, self.processed_paths[0])
-
-@register_dataset('ppi')
-class PPI(EdgelistLabel):
-    def __init__(self):
-        dataset = 'PPI'
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
-        super(PPI, self).__init__(path, dataset)
-
-
-@register_dataset('wikipedia')
-class Wikipedia(EdgelistLabel):
-    def __init__(self):
-        dataset = 'wikipedia'
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
-        super(Wikipedia, self).__init__(path, dataset)
-
+        
 
 @register_dataset('dblp')
 class DBLP(EdgelistLabel):

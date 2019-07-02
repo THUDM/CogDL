@@ -11,10 +11,10 @@ class DeepWalk(BaseModel):
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument('--walk-length', type=int, default=50,
-                            help='Length of walk per source. Default is 50.')
-        parser.add_argument('--walk-num', type=int, default=10,
-                            help='Number of walks per source. Default is 10.')
+        parser.add_argument('--walk-length', type=int, default=80,
+                            help='Length of walk per source. Default is 80.')
+        parser.add_argument('--walk-num', type=int, default=40,
+                            help='Number of walks per source. Default is 40.')
         parser.add_argument('--window-size', type=int, default=5,
                             help='Window size of skip-gram model. Default is 5.')
         parser.add_argument('--worker', type=int, default=10,

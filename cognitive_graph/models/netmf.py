@@ -13,7 +13,7 @@ class NetMF(BaseModel):
         # fmt: off
         parser.add_argument("--window-size", type=int, default=5)
         parser.add_argument("--rank", type=int, default=256)
-        parser.add_argument("--negative", type=int, default=5)
+        parser.add_argument("--negative", type=int, default=1)
         parser.add_argument('--is-large', action='store_true')
         # fmt: on
 

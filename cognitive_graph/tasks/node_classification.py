@@ -88,7 +88,7 @@ class NodeClassification(BaseTask):
         self.model.eval()
         logits = self.model(self.data.x, self.data.edge_index)
         loss = F.nll_loss(
-            self.model(self.data.x, self.data.edge_index)[self.data.train_mask],
+            logits[self.data.train_mask],
             self.data.y[self.data.train_mask],
         )
         _, mask = list(self.data(f"{split}_mask"))[0]

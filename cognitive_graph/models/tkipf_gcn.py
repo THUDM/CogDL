@@ -57,7 +57,7 @@ class TKipfGCN(BaseModel):
         # fmt: off
         parser.add_argument("--num-features", type=int)
         parser.add_argument("--num-classes", type=int)
-        parser.add_argument("--hidden-size", type=int, default=16)
+        parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--dropout", type=float, default=0.5)
         # fmt: on
 

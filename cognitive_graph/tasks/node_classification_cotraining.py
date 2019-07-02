@@ -39,9 +39,6 @@ class NodeClassificationCotraining(BaseTask):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--order", type=int, default=5)
-        parser.add_argument("--lr", type=float, default=0.01)
-        parser.add_argument("--hidden-size", type=int, default=64)
-        parser.add_argument("--dropout", type=float, default=0.6)
         # fmt: on
 
     def __init__(self, args):
@@ -156,7 +153,7 @@ class NodeClassificationCotraining(BaseTask):
             """Row-normalize sparse matrix"""
             rowsum = np.array(mx.sum(1))
             r_inv = np.power(rowsum, -1).flatten()
-            r_inv[np.isinf(r_inv)] = 0.
+            r_inv[np.isinf(r_inv)] = 0.0
             r_mat_inv = sp.diags(r_inv)
             mx = r_mat_inv.dot(mx)
             return mx

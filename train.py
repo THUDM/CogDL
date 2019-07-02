@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     parser = options.get_training_parser()
     args, _ = parser.parse_known_args()
-    args = options.parse_model_and_add_parameter(parser, args)
+    args = options.parse_args_and_arch(parser, args)
     print(args)
     variants = list(
         gen_variants(dataset=args.dataset, model=args.model, seed=args.seed)

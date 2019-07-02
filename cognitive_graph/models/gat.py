@@ -17,6 +17,7 @@ class GAT(BaseModel):
         parser.add_argument("--hidden-size", type=int, default=8)
         parser.add_argument("--num-heads", type=int, default=8)
         parser.add_argument("--dropout", type=float, default=0.6)
+        parser.add_argument("--lr", type=float, default=0.005)
         # fmt: on
 
     @classmethod

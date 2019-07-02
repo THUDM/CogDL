@@ -6,7 +6,7 @@ from cognitive_graph.tasks import TASK_REGISTRY
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(conflict_handler='resolve')
+    parser = argparse.ArgumentParser(conflict_handler="resolve")
     # fmt: off
     # parser.add_argument('--log-interval', type=int, default=1000, metavar='N',
     #                     help='log progress every N batches (when progress bar is disabled)')
@@ -17,7 +17,7 @@ def get_parser():
                         help='pseudo random number generator seed')
     parser.add_argument('--max-epoch', default=10000, type=int)
     parser.add_argument("--patience", type=int, default=100)
-    parser.add_argument('--lr', default=0.005, type=float)
+    parser.add_argument('--lr', default=0.01, type=float)
     parser.add_argument('--weight-decay', default=5e-4, type=float)
     parser.add_argument('--cpu', action='store_true', help='use CPU instead of CUDA')
     parser.add_argument('--device-id', default=[0], type=int, nargs='+',
@@ -77,30 +77,10 @@ def parse_args_and_arch(parser, args):
     """The parser doesn't know about model-specific args, so we parse twice."""
     # args, _ = parser.parse_known_args()
 
-    # model_specific_group = parser.add_argument_group(
-    #     "Model-specific configuration",
-    #     # Only include attributes which are explicitly given as command-line
-    #     # arguments or which have default values.
-    #     argument_default=argparse.SUPPRESS,
-    # )
-
     # Add *-specific args to parser.
-    MODEL_REGISTRY[args.model].add_args(parser)
     TASK_REGISTRY[args.task].add_args(parser)
-
-    # Parse a second time.
-    args = parser.parse_args()
-
-    return args
-
-def parse_model_and_add_parameter(parser, args):
-    """The parser doesn't know about model-specific args, so we parse twice."""
-    # args, _ = parser.parse_known_args()
-
-    # Add *-specific args to parser.
     for model in args.model:
         MODEL_REGISTRY[model].add_args(parser)
-    TASK_REGISTRY[args.task].add_args(parser)
     # Parse a second time.
     args = parser.parse_args()
 

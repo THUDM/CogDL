@@ -45,24 +45,31 @@ class NodeClassification(BaseTask):
         epoch_iter = tqdm(range(self.max_epoch))
         patience = 0
         best_score = 0
+        best_loss = np.inf
+        max_score = 0
+        min_loss = np.inf
         for epoch in epoch_iter:
             self._train_step()
-            train_acc = self._test_step(split="train")
-            val_acc = self._test_step(split="val")
+            train_acc, _ = self._test_step(split="train")
+            val_acc, val_loss = self._test_step(split="val")
             epoch_iter.set_description(
                 f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
             )
-            if val_acc > best_score:
-                best_score = val_acc
-                best_model = copy.deepcopy(self.model)
+            if val_loss <= min_loss or val_acc >= max_score:
+                if val_loss <= best_loss:  # and val_acc >= best_score:
+                    best_loss = val_loss
+                    best_score = val_acc
+                    best_model = copy.deepcopy(self.model)
+                min_loss = np.min((min_loss, val_loss))
+                max_score = np.max((max_score, val_acc))
                 patience = 0
             else:
                 patience += 1
-                if patience > self.patience:
+                if patience == self.patience:
                     self.model = best_model
                     epoch_iter.close()
                     break
-        test_acc = self._test_step(split="test")
+        test_acc, _ = self._test_step(split="test")
         print(f"Test accuracy = {test_acc}")
         return dict(
             Acc=test_acc
@@ -80,7 +87,11 @@ class NodeClassification(BaseTask):
     def _test_step(self, split="val"):
         self.model.eval()
         logits = self.model(self.data.x, self.data.edge_index)
+        loss = F.nll_loss(
+            logits[self.data.train_mask],
+            self.data.y[self.data.train_mask],
+        )
         _, mask = list(self.data(f"{split}_mask"))[0]
         pred = logits[mask].max(1)[1]
         acc = pred.eq(self.data.y[mask]).sum().item() / mask.sum().item()
-        return acc
+        return acc, loss

@@ -143,4 +143,9 @@ We have more detailed READMEs to reproduce results from specific papers:
 
 We also provide pre-trained models.
 
-# License
+# Join us!
+
+If you are interested in this toolkit or leaderboard, feel free to contract with us.  You can collaborate with us in the following ways:
+1. Add your dataset into the leaderboard
+2. Add your algorithm into the leaderboard
+3. Add your algorithm into the toolkit

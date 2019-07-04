@@ -6,7 +6,8 @@ from sklearn.utils.extmath import randomized_svd
 from multiprocessing import Pool
 import time
 
-from . import BaseModel, register_model
+from . import BaseModel, register_model, alias_draw, alias_setup
+
 
 
 @register_model("netsmf")
@@ -15,10 +16,10 @@ class NetSMF(BaseModel):
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument('--window-size', type=int, default=5,
-                            help='Window size of approximate matrix. Default is 5.')
-        parser.add_argument('--negative', type=int, default=5,
-                            help='Number of negative node in sampling. Default is 5.')
+        parser.add_argument('--window-size', type=int, default=10,
+                            help='Window size of approximate matrix. Default is 10.')
+        parser.add_argument('--negative', type=int, default=1,
+                            help='Number of negative node in sampling. Default is 1.')
         parser.add_argument('--num-round', type=int, default=100,
                             help='Number of round in NetSMF. Default is 100.')
         parser.add_argument('--worker', type=int, default=10,
@@ -50,6 +51,18 @@ class NetSMF(BaseModel):
         self.num_neigh = np.asarray([len(list(self.G.neighbors(id2node[i]))) for i in range(self.num_node)])
         self.neighbors = [[node2id[v] for v in self.G.neighbors(id2node[i])]
                           for i in range(self.num_node)]
+        s = time.time()
+        self.alias_nodes = {}
+        self.node_weight = {}
+        for i in range(self.num_node):
+            unnormalized_probs = [G[id2node[i]][nbr].get("weight", 1.0) for nbr in G.neighbors(id2node[i])]
+            norm_const = sum(unnormalized_probs)
+            normalized_probs =  [float(u_prob)/norm_const for u_prob in unnormalized_probs]
+            self.alias_nodes[i] = alias_setup(normalized_probs)
+            self.node_weight[i] = dict(zip([node2id[nbr] for nbr in G.neighbors(id2node[i])],unnormalized_probs))
+
+        t = time.time()
+        print('alias_nodes', t-s)
 
         # run netsmf algorithm with multiprocessing and apply randomized svd
         print("number of sample edges ", self.num_round * self.num_edge * self.window_size)
@@ -102,12 +115,16 @@ class NetSMF(BaseModel):
     def _path_sampling(self, u, v, r):
         # sample a r-length path from edge(u, v) and return path end node
         k = np.random.randint(r) + 1
-        rand_u, rand_v = k - 1, r - k
+        zp, rand_u, rand_v = 1e-20, k - 1, r - k
         for i in range(rand_u):
-            u = self.neighbors[u][np.random.randint(self.num_neigh[u])]
+            new_u = self.neighbors[u][alias_draw(self.alias_nodes[u][0], self.alias_nodes[u][1])]
+            zp += 2.0 / self.node_weight[u][new_u]
+            u = new_u
         for j in range(rand_v):
-            v = self.neighbors[v][np.random.randint(self.num_neigh[v])]
-        return u, v
+            new_v = self.neighbors[v][alias_draw(self.alias_nodes[v][0], self.alias_nodes[v][1])]
+            zp += 2.0 / self.node_weight[v][new_v]
+            v =  new_v
+        return u, v, zp
 
     def _random_walk_matrix(self, pid):
         # construct matrix based on random walk
@@ -122,6 +139,6 @@ class NetSMF(BaseModel):
                 if not self.is_directed and np.random.rand() > 0.5:
                     v, u = self.edges[i]
                 for r in range(1, self.window_size + 1):
-                    u_, v_ = self._path_sampling(u, v, r)
-                    matrix[u_, v_] += 1.0
+                    u_, v_, zp = self._path_sampling(u, v, r)
+                    matrix[u_, v_] += 2 * r / self.window_size / self.num_round /zp
         return matrix

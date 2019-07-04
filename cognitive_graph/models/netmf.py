@@ -48,7 +48,7 @@ class NetMF(BaseModel):
                 evals, D_rt_invU, window=self.window_size, vol=vol, b=self.negative
             )
         # factorize deepwalk matrix with SVD
-        u, s, v = sp.linalg.svds(deepwalk_matrix, self.dimension)
+        u, s, _ = sp.linalg.svds(deepwalk_matrix, self.dimension)
         self.embeddings = sp.diags(np.sqrt(s)).dot(u.T).T
         return self.embeddings
 

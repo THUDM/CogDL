@@ -2,6 +2,7 @@ import numpy as np
 import networkx as nx
 from sklearn import preprocessing
 import time
+from tqdm import tqdm
 from . import BaseModel, register_model, alias_draw, alias_setup
 
 
@@ -11,10 +12,10 @@ class LINE(BaseModel):
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument('--walk-length', type=int, default=50,
+        parser.add_argument('--walk-length', type=int, default=80,
                             help='Length of walk per source. Default is 50.')
-        parser.add_argument('--walk-num', type=int, default=10,
-                            help='Number of walks per source. Default is 10.')
+        parser.add_argument('--walk-num', type=int, default=40,
+                            help='Number of walks per source. Default is 20.')
         parser.add_argument('--negative', type=int, default=5,
                             help='Number of negative node in sampling. Default is 5.')
         parser.add_argument('--batch-size', type=int, default=1000,
@@ -48,13 +49,17 @@ class LINE(BaseModel):
         self.num_sampling_edge = self.walk_length * self.walk_num * self.num_node
 
         node2id = dict([(node, vid) for vid, node in enumerate(G.nodes())])
-        id2node = dict(zip(node2id.values(), node2id.keys()))
-
         self.edges = [[node2id[e[0]], node2id[e[1]]] for e in self.G.edges()]
-        self.edges_prob = np.asarray([1.0] * self.num_edge) / self.num_edge
+        self.edges_prob = np.asarray([G[u][v].get("weight", 1.0) for u, v in G.edges()])
+        self.edges_prob /= np.sum(self.edges_prob)
         self.edges_table, self.edges_prob = alias_setup(self.edges_prob)
 
-        self.node_prob = np.power(np.asarray([self.G.degree(id2node[i]) for i in range(self.num_node)]), 0.75)
+        degree_weight = np.asarray([0] * self.num_node)
+        for u, v in G.edges():
+            degree_weight[node2id[u]] += G[u][v].get("weight", 1.0)
+            if not self.is_directed:
+                degree_weight[node2id[v]] += G[u][v].get("weight", 1.0)
+        self.node_prob = np.power(degree_weight, 0.75)
         self.node_prob /= np.sum(self.node_prob)
         self.node_table, self.node_prob = alias_setup(self.node_prob)
 
@@ -97,9 +102,10 @@ class LINE(BaseModel):
         batch_size = self.batch_size
         t0 = time.time()
         num_batch = int(self.num_sampling_edge / batch_size)
-        for b in range(num_batch):
+        epoch_iter = tqdm(range(num_batch))
+        for b in epoch_iter:
             if b % 100 == 0:
-                print("progress: %lf%%, alpha: %lf, time: %lf" % (b *1.0/num_batch * 100, self.alpha, time.time() - t0))
+                epoch_iter.set_description(f"Progress: {b *1.0/num_batch * 100:.4f}%, alpha: {self.alpha:.6f}, time: {time.time() - t0:.4f}")
                 self.alpha = self.init_alpha  * max((1 - b *1.0/num_batch), 0.0001)
             u, v = [0] * batch_size, [0] * batch_size
             for i in range(batch_size):

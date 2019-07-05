@@ -235,7 +235,6 @@ class LinkPrediction(BaseTask):
 
         dataset = build_dataset(args)
         data = dataset[0]
-        self.num_nodes = data.y.shape[0]
         self.data = data.cuda()
         if hasattr(dataset, 'num_features'):
             args.num_features = dataset.num_features
@@ -243,7 +242,6 @@ class LinkPrediction(BaseTask):
         self.model = model
         self.patience = args.patience
         self.max_epoch = args.max_epoch
-        self.hidden_size = args.hidden_size
 
         edge_list = self.data.edge_index.cpu().numpy()
         edge_list = list(zip(edge_list[0], edge_list[1]))
@@ -270,7 +268,7 @@ class LinkPrediction(BaseTask):
         G.add_edges_from(self.train_data)
         embeddings = self.model.train(G)
 
-        embs = np.zeros((self.num_nodes, self.hidden_size))
+        embs = dict()
         for vid, node in enumerate(G.nodes()):
             embs[node] = embeddings[vid]
 

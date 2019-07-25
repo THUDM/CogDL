@@ -90,13 +90,11 @@ class Meanaggregator(MessagePassing):
         """"""
         x = torch.matmul(x, self.weight)
 
-        if not self.cached or self.cached_result is None:
-            edge_index, norm = Meanaggregator.norm(edge_index,
+       
+        edge_index, norm = Meanaggregator.norm(edge_index,
                                             x.size(0), edge_weight,
                                             self.improved, x.dtype)
-            self.cached_result = edge_index, norm
-
-        edge_index, norm = self.cached_result
+        
         return self.propagate(edge_index, x=x, norm=norm)
 
     def message(self, x_j, norm):

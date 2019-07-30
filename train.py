@@ -12,8 +12,8 @@ import torch.nn.functional as F
 from tabulate import tabulate
 from tqdm import tqdm
 
-from cognitive_graph import options
-from cognitive_graph.tasks import build_task
+from cogdl import options
+from cogdl.tasks import build_task
 
 
 def main(args):

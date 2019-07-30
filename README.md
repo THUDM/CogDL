@@ -1,6 +1,9 @@
-# Cognitive Graph
+# CogDL
 
-Cognitive Graph is a graph representation learning toolkit based on [PyTorch Geometric](https://github.com/rusty1s/pytorch_geometric/) that allows researchers and developers to train baseline or custom models for node classification, link prediction and other tasks on graphs.
+Under Construction.
+
+<!-- 
+CogDL is a graph representation learning toolkit that allows researchers and developers to train baseline or custom models for node classification, link prediction and other tasks on graphs.
 It provides implementations of several models, including:
 
 # Overview
@@ -33,7 +36,7 @@ It provides implementations of several models, including:
 - **Dynamic**
   - **_New!_ IJCAI 2019** [Zhao et al. (2019): Large Scale Evolving Graphs with Burst Detection](https://www.overleaf.com/4361782256sqswxgnmwbrs)
 
-Cognitive Graph features:
+CogDL features:
 
 - sparsification: fast network embedding on large-scale networks with tens of millions of nodes
 - cognitive: multi-hop question answering based on GNN and BERT
@@ -139,7 +142,7 @@ If you have ANY difficulties to get things working in the above steps, feel free
 
 We have more detailed READMEs to reproduce results from specific papers:
 
-- [Ding et al. (2019): Cognitive Graph for Multi-Hop Reading Comprehension at Scale](https://github.com/THUcqb/cognitive_graph/blob/master/examples/cogqa/README.md)
+- [Ding et al. (2019): Cognitive Graph for Multi-Hop Reading Comprehension at Scale](https://github.com/THUcqb/cogdl/blob/master/examples/cogqa/README.md)
 
 We also provide pre-trained models.
 
@@ -148,4 +151,4 @@ We also provide pre-trained models.
 If you are interested in this toolkit or leaderboard, feel free to contract with us.  You can collaborate with us in the following ways:
 1. Add your dataset into the leaderboard
 2. Add your algorithm into the leaderboard
-3. Add your algorithm into the toolkit
+3. Add your algorithm into the toolkit -->

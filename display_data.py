@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import networkx as nx
 
-from cognitive_graph import options
-from cognitive_graph.datasets import build_dataset
+from cogdl import options
+from cogdl.datasets import build_dataset
 
 from grave import plot_network, use_attributes
 

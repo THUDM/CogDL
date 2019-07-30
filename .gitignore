@@ -103,6 +103,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-cognitive_graph/data/**/*
-!cognitive_graph/data/*
+cogdl/data/**/*
+!cogdl/data/*
 train_single.py

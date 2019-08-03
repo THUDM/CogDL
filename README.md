@@ -107,13 +107,13 @@ If you have ANY difficulties to get things working in the above steps, feel free
 # Customization
 
 ## Submit Your State-of-the-art
-If you have a well-perform algorithm and are willing to public it, you can submit your implementation via (opening an issue)[https://github.com/THUDM/cogdl/issues] or (join our slack group)[https://join.slack.com/t/cogdl/shared_invite/enQtNjk1ODE4MjEyNDg2LTE3M2Y2N2QzNWJkYzcxNDMzYjZjYmY0YzlmMjYzZDliZTFiMGU3N2YzYWViNmVmNjk4OTY3YjYzODMzMDQ2ZGQ]. After evaluating its originality, creativity and efficiency, we will add your method's performance into our leaderboard.
+If you have a well-perform algorithm and are willing to public it, you can submit your implementation via [opening an issue](https://github.com/THUDM/cogdl/issues) or [join our slack group](https://join.slack.com/t/cogdl/shared_invite/enQtNjk1ODE4MjEyNDg2LTE3M2Y2N2QzNWJkYzcxNDMzYjZjYmY0YzlmMjYzZDliZTFiMGU3N2YzYWViNmVmNjk4OTY3YjYzODMzMDQ2ZGQ). After evaluating its originality, creativity and efficiency, we will add your method's performance into our leaderboard.
 
 ## Add Your Own Dataset
 If you have a unique and interesting and are willing to public it, you can submit your dataset via opening an issue in our repository or commenting on slack group, we will run all suitable methods on your dataset and update our leaderboard. 
 
 ## Implement Your Own Model
-If you have a well-perform algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request,  detail information can be found (here)[https://help.github.com/en/articles/creating-a-pull-request]. 
+If you have a well-perform algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request,  detail information can be found [here](https://help.github.com/en/articles/creating-a-pull-request). 
 
 
 

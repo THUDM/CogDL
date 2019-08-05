@@ -1,3 +1,5 @@
+> **KDD'19 Note: For data and codes in Jie's talk, please go https://github.com/THUDM and https://github.com/xptree/.**
+
 # CogDL
 
 
@@ -7,7 +9,7 @@ CogDL features:
 
 - Sparsification: fast network embedding on large-scale networks with tens of millions of nodes
 - Arbitrary: dealing with different graph strucutures: attributed, multiplex and heterogeneous networks
-- Parallel: multi-GPU training on one machine or across multiple machines
+- Parallel: parallel training of different seeds and different models on multiple GPUs and automatically reporting the result table
 - Extensible: easily register new datasets, models, criterions and tasks
 
 
@@ -120,6 +122,12 @@ If you have a well-perform algorithm and are willing to implement it in our tool
 # Citing
 If you find *CogDL* is useful for your research, please consider citing the following papers:
 ```
+@inproceedings{Fey/Lenssen/2019,
+  title={Fast Graph Representation Learning with {PyTorch Geometric}},
+  author={Fey, Matthias and Lenssen, Jan E.},
+  booktitle={ICLR Workshop on Representation Learning on Graphs and Manifolds},
+  year={2019},
+}
 
 @inproceedings{perozzi2014deepwalk,
   title={Deepwalk: Online learning of social representations},

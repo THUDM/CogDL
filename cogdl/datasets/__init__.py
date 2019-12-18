@@ -9,6 +9,8 @@ DATASET_REGISTRY = {}
 def build_dataset(args):
     return DATASET_REGISTRY[args.dataset]()
 
+def build_dataset_from_name(dataset):
+    return DATASET_REGISTRY[dataset]()
 
 def register_dataset(name):
     """

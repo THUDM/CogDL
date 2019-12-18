@@ -33,17 +33,14 @@ You can use `python train.py --task example_task --dataset example_dataset --mod
 - --model, Model name to run, can be a list of models like `deepwalk line prone`. Supported datasets including
 'gcn', 'gat', 'graphsage', 'deepwalk', 'node2vec', 'hope', 'grarep', 'netmf', 'netsmf', 'prone'
 
-For example, if you want to run GCN on Cora with node classification task , you should use following operation:
+For example, if you want to run Deepwalk, Line, Netmf on Wikipedia with node classification task:
 
 ```bash
-$ python train.py --task node_classification --dataset cora --model gcn
-Epoch: 099, Train: 0.9857, Val: 0.7900: 100%|██████████████████████████| 100/100 [00:00<00:00, 142.42it/s]
-Test accuracy = 0.813
+$ python train.py --task unsupervised_node_classification --dataset wikipedia --model deepwalk line netmf
 ```
 
 If you want to run parallel experiments on your server with multiple GPUs like multiple models gcn, gat on multiple datasets Cora, Citeseer with node classification task, you should use following operation:
 $ python train.py --task node_classification --dataset cora citeseer --model gcn gat --device-id 0 1 2 3
-
 
 ### Specific parameters
 

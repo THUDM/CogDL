@@ -56,17 +56,15 @@ If you want to run parallel experiments on your server with multiple GPUs like m
 To enable efficient graph convolution on GPU, we require `pytorch_geometric`. Please install dependencies here https://github.com/rusty1s/pytorch_geometric/#installation.
 
 ```bash
-$ python train.py --task node_classification --dataset cora citeseer --model gcn gat --device-id 0 1 2 3 --seed 0
+$ python train.py --task node_classification --dataset cora --model pyg_gcn pyg_gat --device-id 0 1 --seed 0 1 2 3 4
 ```
 
 Expected output:
 
 | Variant             | Acc           |
 |---------------------|---------------|
-| ('cora', 'gcn')     | 0.8060±0.0000 |
-| ('cora', 'gat')     | 0.8290±0.0000 |
-| ('citeseer', 'gcn') | 0.7070±0.0000 |
-| ('citeseer', 'gat') | 0.7110±0.0000 |
+| ('cora', 'pyg_gcn') | 0.7922±0.0082 |
+| ('cora', 'pyg_gat') | 0.8092±0.0055 |
 
 ### Specific parameters
 

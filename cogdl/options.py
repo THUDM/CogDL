@@ -16,7 +16,7 @@ def get_parser():
     parser.add_argument('--seed', default=[1], type=int, nargs='+', metavar='N',
                         help='pseudo random number generator seed')
     parser.add_argument('--max-epoch', default=10000, type=int)
-    parser.add_argument("--patience", type=int, default=100)
+    parser.add_argument("--patience", type=int, default=500)
     parser.add_argument('--lr', default=0.01, type=float)
     parser.add_argument('--weight-decay', default=5e-4, type=float)
     parser.add_argument('--cpu', action='store_true', help='use CPU instead of CUDA')

@@ -28,8 +28,8 @@ class NodeClassification(BaseTask):
         super(NodeClassification, self).__init__(args)
 
         dataset = build_dataset(args)
-        data = dataset[0]
-        self.data = data.cuda()
+        self.data = dataset.data
+        self.data.apply(lambda x: x.cuda())
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
         model = build_model(args)

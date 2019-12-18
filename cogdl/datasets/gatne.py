@@ -1,11 +1,43 @@
 import os.path as osp
+import sys
 
 import torch
 
-from cogdl.data import Dataset, download_url
-from cogdl.read import read_gatne_data
+from cogdl.data import Data, Dataset, download_url
 
 from . import register_dataset
+
+
+def read_gatne_data(folder):
+    train_data = {} 
+    with open(osp.join(folder, '{}'.format('train.txt')), 'r') as f:
+        for line in f:
+            items = line.strip().split()
+            if items[0] not in train_data:
+                train_data[items[0]] = []
+            train_data[items[0]].append([int(items[1]), int(items[2])])
+
+    valid_data = {} 
+    with open(osp.join(folder, '{}'.format('valid.txt')), 'r') as f: 
+        for line in f:
+            items = line.strip().split()
+            if items[0] not in valid_data:
+                valid_data[items[0]] = [[], []]
+            valid_data[items[0]][1-int(items[3])].append([int(items[1]), int(items[2])])
+    
+    test_data = {}
+    with open(osp.join(folder, '{}'.format('test.txt')), 'r') as f: 
+        for line in f:
+            items = line.strip().split()
+            if items[0] not in test_data:
+                test_data[items[0]] = [[], []]
+            test_data[items[0]][1-int(items[3])].append([int(items[1]), int(items[2])])
+
+    data = Data()
+    data.train_data = train_data
+    data.valid_data = valid_data
+    data.test_data = test_data
+    return data
 
 
 class GatneDataset(Dataset):
@@ -17,21 +49,13 @@ class GatneDataset(Dataset):
         root (string): Root directory where the dataset should be saved.
         name (string): The name of the dataset (:obj:`"Amazon"`,
             :obj:`"Twitter"`, :obj:`"YouTube"`).
-        transform (callable, optional): A function/transform that takes in an
-            :obj:`cogdl.data.Data` object and returns a transformed
-            version. The data object will be transformed before every access.
-            (default: :obj:`None`)
-        pre_transform (callable, optional): A function/transform that takes in
-            an :obj:`cogdl.data.Data` object and returns a
-            transformed version. The data object will be transformed before
-            being saved to disk. (default: :obj:`None`)
     """
 
     url = 'https://github.com/THUDM/GATNE/raw/master/data'
 
-    def __init__(self, root, name, transform=None, pre_transform=None):
+    def __init__(self, root, name):
         self.name = name
-        super(GatneDataset, self).__init__(root, transform, pre_transform)
+        super(GatneDataset, self).__init__(root)
         self.data = torch.load(self.processed_paths[0])
 
     @property
@@ -53,7 +77,6 @@ class GatneDataset(Dataset):
 
     def process(self):
         data = read_gatne_data(self.raw_dir)
-        data = data if self.pre_transform is None else self.pre_transform(data)
         torch.save(data, self.processed_paths[0])
 
     def __repr__(self):

@@ -1,19 +1,16 @@
-from itertools import product
+import json
 import os
 import os.path as osp
-import json
+from itertools import product
 
-import torch
 import numpy as np
 import scipy
-import networkx as nx
-from networkx.readwrite import json_graph
-from cogdl.data import (InMemoryDataset, Dataset, Data, download_url, extract_zip)
-from cogdl.utils import remove_self_loops
-import cogdl.transforms as T
+import torch
 
+from cogdl.data import Data, Dataset, download_url
 
 from . import register_dataset
+
 
 class MatlabMatrix(Dataset):
     r"""networks from the http://leitang.net/code/social-dimension/data/ or http://snap.stanford.edu/node2vec/
@@ -21,20 +18,12 @@ class MatlabMatrix(Dataset):
     Args:
         root (string): Root directory where the dataset should be saved.
         name (string): The name of the dataset (:obj:`"Blogcatalog"`).
-        transform (callable, optional): A function/transform that takes in an
-            :obj:`cogdl.data.Data` object and returns a transformed
-            version. The data object will be transformed before every access.
-            (default: :obj:`None`)
-        pre_transform (callable, optional): A function/transform that takes in
-            an :obj:`cogdl.data.Data` object and returns a
-            transformed version. The data object will be transformed before
-            being saved to disk. (default: :obj:`None`)
     """
 
-    def __init__(self, root, name, url, transform=None, pre_transform=None):
+    def __init__(self, root, name, url):
         self.name = name
         self.url = url
-        super(MatlabMatrix, self).__init__(root, transform, pre_transform)
+        super(MatlabMatrix, self).__init__(root)
         self.data = torch.load(self.processed_paths[0])
 
     @property
@@ -67,9 +56,6 @@ class MatlabMatrix(Dataset):
         edge_attr = torch.tensor(adj_matrix[row_ind, col_ind])
 
         data = Data(edge_index=edge_index,edge_attr=edge_attr, x=None, y=y)
-
-        if self.pre_transform is not None:
-            data = self.pre_transform(data)
 
         torch.save(data, self.processed_paths[0])
 
@@ -108,5 +94,3 @@ class PPIDataset(MatlabMatrix):
         url = 'http://snap.stanford.edu/node2vec/'
         path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
         super(PPIDataset, self).__init__(path, filename, url)
-
-

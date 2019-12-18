@@ -1,10 +1,6 @@
 import re
 
 import torch
-from cogdl.utils import (contains_isolated_nodes,
-                                   contains_self_loops, is_undirected)
-
-from ..utils.num_nodes import maybe_num_nodes
 
 
 class Data(object):
@@ -99,15 +95,6 @@ class Data(object):
         return -1 if bool(re.search('(index|face)', key)) else 0
 
     @property
-    def num_nodes(self):
-        r"""Returns the number of nodes in the graph."""
-        for key, item in self('x', 'pos'):
-            return item.size(self.cat_dim(key, item))
-        if self.edge_index is not None:
-            return maybe_num_nodes(self.edge_index)
-        return None
-
-    @property
     def num_edges(self):
         r"""Returns the number of edges in the graph."""
         for key, item in self('edge_index', 'edge_attr'):
@@ -125,23 +112,6 @@ class Data(object):
         row, col = self.edge_index
         index = self.num_nodes * row + col
         return row.size(0) == torch.unique(index).size(0)
-
-    def contains_isolated_nodes(self):
-        r"""Returns :obj:`True`, if the graph does not contain isolated
-        nodes."""
-        return contains_isolated_nodes(self.edge_index, self.num_nodes)
-
-    def contains_self_loops(self):
-        """Returns :obj:`True`, if the graph does not contain self-loops."""
-        return contains_self_loops(self.edge_index)
-
-    def is_undirected(self):
-        r"""Returns :obj:`True`, if graph edges are undirected."""
-        return is_undirected(self.edge_index, self.num_nodes)
-
-    def is_directed(self):
-        r"""Returns :obj:`True`, if graph edges are directed."""
-        return not self.is_undirected()
 
     def apply(self, func, *keys):
         r"""Applies the function :obj:`func` to all attributes :obj:`*keys`.

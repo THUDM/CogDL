@@ -1,11 +1,18 @@
 import argparse
 import importlib
-import numpy as np
 import os
 
+import numpy as np
 import torch.nn as nn
 
 from .base_model import BaseModel
+
+try:
+    import torch_geometric
+except ImportError:
+    pyg = False
+else:
+    pyg = True
 
 MODEL_REGISTRY = {}
 
@@ -89,7 +96,12 @@ def alias_draw(J, q):
 
 
 # automatically import any Python files in the models/ directory
-for file in os.listdir(os.path.dirname(__file__)):
-    if file.endswith(".py") and not file.startswith("_"):
-        model_name = file[: file.find(".py")]
-        module = importlib.import_module("cogdl.models." + model_name)
+for root, dirs, files in os.walk(os.path.dirname(__file__)):
+    for file in files:
+        if file.endswith(".py") and not file.startswith("_"):
+            model_name = file[: file.find(".py")]
+            if not pyg and model_name.startswith("pyg"):
+                continue
+            model_name = os.path.join(root, model_name)
+            model_name = model_name[model_name.find("models"):].replace('/', '.')
+            module = importlib.import_module("cogdl." + model_name)

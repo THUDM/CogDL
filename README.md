@@ -19,7 +19,7 @@ CogDL features:
 - PyTorch version >= 1.0.0
 - Python version >= 3.6
 
-Please follow the instructions here to install PyTorch and other dependencies: https://github.com/pytorch/pytorch#installation, https://github.com/rusty1s/pytorch_geometric/#installation
+Please follow the instructions here to install PyTorch and other dependencies: https://github.com/pytorch/pytorch#installation
 
 ## Usage
 
@@ -33,14 +33,35 @@ You can use `python train.py --task example_task --dataset example_dataset --mod
 - --model, Model name to run, can be a list of models like `deepwalk line prone`. Supported datasets including
 'gcn', 'gat', 'graphsage', 'deepwalk', 'node2vec', 'hope', 'grarep', 'netmf', 'netsmf', 'prone'
 
-For example, if you want to run Deepwalk, Line, Netmf on Wikipedia with node classification task:
+For example, if you want to run Deepwalk, Line, Netmf on Wikipedia with node classification task, with 5 different seeds:
 
 ```bash
-$ python train.py --task unsupervised_node_classification --dataset wikipedia --model deepwalk line netmf
+$ python train.py --task unsupervised_node_classification --dataset wikipedia --model line netmf --seed 0 1 2 3 4
 ```
 
-If you want to run parallel experiments on your server with multiple GPUs like multiple models gcn, gat on multiple datasets Cora, Citeseer with node classification task, you should use following operation:
-$ python train.py --task node_classification --dataset cora citeseer --model gcn gat --device-id 0 1 2 3
+Expected output:
+
+| Variant                | Micro-F1 0.1   | Micro-F1 0.3   | Micro-F1 0.5   | Micro-F1 0.7   | Micro-F1 0.9   |
+|------------------------|----------------|----------------|----------------|----------------|----------------|
+| ('wikipedia', 'line')  | 0.4069±0.0011  | 0.4071±0.0010  | 0.4055±0.0013  | 0.4054±0.0020  | 0.4080±0.0042  |
+| ('wikipedia', 'netmf') | 0.4551±0.0024  | 0.4932±0.0022  | 0.5046±0.0017  | 0.5084±0.0057  | 0.5125±0.0035  |
+
+If you want to run parallel experiments on your server with multiple GPUs like multiple models gcn, gat on multiple datasets Cora, Citeseer with node classification task:
+
+To enable efficient graph convolution on GPU, we require `pytorch_geometric`. Please install dependencies here https://github.com/rusty1s/pytorch_geometric/#installation.
+
+```bash
+$ python train.py --task node_classification --dataset cora citeseer --model gcn gat --device-id 0 1 2 3 --seed 0
+```
+
+Expected output:
+
+| Variant             | Acc           |
+|---------------------|---------------|
+| ('cora', 'gcn')     | 0.8060±0.0000 |
+| ('cora', 'gat')     | 0.8290±0.0000 |
+| ('citeseer', 'gcn') | 0.7070±0.0000 |
+| ('citeseer', 'gat') | 0.7110±0.0000 |
 
 ### Specific parameters
 

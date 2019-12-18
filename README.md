@@ -5,6 +5,9 @@
 
 CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or custom models for node classification, link prediction and other tasks on graphs. It provides implementations of many popular models, including: non-GNN Baselines like Deepwalk, LINE, NetMF,  GNN Baselines like GCN, GAT, GraphSAGE.
 
+Note that CogDL is **still actively under development**, so feedback and contributions are welcome.
+Feel free to submit your contributions as a pull request.
+
 CogDL features:
 
 - Sparsification: fast network embedding on large-scale networks with tens of millions of nodes

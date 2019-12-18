@@ -1,0 +1,6 @@
+[submodule "examples/CogQA"]
+	path = examples/CogQA
+	url = https://github.com/THUDM/CogQA/
+[submodule "examples/CogKR"]
+	path = examples/CogKR
+	url = https://github.com/THUDM/CogKR

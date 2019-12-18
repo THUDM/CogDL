@@ -19,7 +19,12 @@ CogDL features:
 - PyTorch version >= 1.0.0
 - Python version >= 3.6
 
-Please follow the instructions here to install PyTorch and other dependencies: https://github.com/pytorch/pytorch#installation
+Please follow the instructions here to install PyTorch: https://github.com/pytorch/pytorch#installation.
+Install other dependencies:
+
+```bash
+pip install -r requirements.txt
+```
 
 ## Usage
 

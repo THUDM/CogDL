@@ -13,7 +13,7 @@ class GraRep(BaseModel):
         # fmt: off
         parser.add_argument('--step', type=int, default=5,
                             help='Number of matrix step in GraRep. Default is 5.')
-    # fmt: on
+        # fmt: on
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -43,12 +43,16 @@ class GraRep(BaseModel):
         final_emb = np.zeros((self.num_node, 1))
         for k in range(self.step):
             for j in range(A.shape[1]):
-                A_list[k][:, j] = np.log(A_list[k][:, j] / T_list[k][j] + 1e-20) - log_beta
+                A_list[k][:, j] = (
+                    np.log(A_list[k][:, j] / T_list[k][j] + 1e-20) - log_beta
+                )
                 for i in range(A.shape[0]):
                     A_list[k][i, j] = max(A_list[k][i, j], 0)
             # concatenate all k-step representations
             if k == 0:
-                dimension = self.dimension - int(self.dimension / self.step) * (self.step -1)
+                dimension = self.dimension - int(self.dimension / self.step) * (
+                    self.step - 1
+                )
                 final_emb = self._get_embedding(A_list[k], dimension)
             else:
                 W = self._get_embedding(A_list[k], self.dimension / self.step)
@@ -57,10 +61,9 @@ class GraRep(BaseModel):
         self.embeddings = final_emb
         return self.embeddings
 
-    def _get_embedding(self,matrix, dimension):
+    def _get_embedding(self, matrix, dimension):
         # get embedding from svd and process normalization for ut
         ut, s, _ = sp.linalg.svds(matrix, int(dimension))
         emb_matrix = ut * np.sqrt(s)
         emb_matrix = preprocessing.normalize(emb_matrix, "l2")
         return emb_matrix
-

@@ -49,13 +49,12 @@ def register_model(name):
     return register_model_cls
 
 
-
 def alias_setup(probs):
-    '''
+    """
     Compute utility lists for non-uniform sampling from discrete distributions.
     Refer to https://hips.seas.harvard.edu/blog/2013/03/03/the-alias-method-efficient-sampling-with-many-discrete-outcomes/
     for details
-    '''
+    """
     K = len(probs)
     q = np.zeros(K)
     J = np.zeros(K, dtype=np.int)
@@ -63,7 +62,7 @@ def alias_setup(probs):
     smaller = []
     larger = []
     for kk, prob in enumerate(probs):
-        q[kk] = K*prob
+        q[kk] = K * prob
         if q[kk] < 1.0:
             smaller.append(kk)
         else:
@@ -82,13 +81,14 @@ def alias_setup(probs):
 
     return J, q
 
+
 def alias_draw(J, q):
-    '''
+    """
     Draw sample from a non-uniform discrete distribution using alias sampling.
-    '''
+    """
     K = len(J)
 
-    kk = int(np.floor(np.random.rand()*K))
+    kk = int(np.floor(np.random.rand() * K))
     if np.random.rand() < q[kk]:
         return kk
     else:
@@ -103,5 +103,5 @@ for root, dirs, files in os.walk(os.path.dirname(__file__)):
             if not pyg and model_name.startswith("pyg"):
                 continue
             model_name = os.path.join(root, model_name)
-            model_name = model_name[model_name.find("models"):].replace('/', '.')
+            model_name = model_name[model_name.find("models") :].replace("/", ".")
             module = importlib.import_module("cogdl." + model_name)

@@ -47,13 +47,10 @@ class InMemoryDataset(Dataset):
         r"""Processes the dataset to the :obj:`self.processed_dir` folder."""
         raise NotImplementedError
 
-    def __init__(self,
-                 root,
-                 transform=None,
-                 pre_transform=None,
-                 pre_filter=None):
-        super(InMemoryDataset, self).__init__(root, transform, pre_transform,
-                                              pre_filter)
+    def __init__(self, root, transform=None, pre_transform=None, pre_filter=None):
+        super(InMemoryDataset, self).__init__(
+            root, transform, pre_transform, pre_filter
+        )
         self.data, self.slices = None, None
 
     @property
@@ -83,8 +80,9 @@ class InMemoryDataset(Dataset):
             return self._indexing(idx.nonzero())
 
         raise IndexError(
-            'Only integers, slices (`:`) and long or byte tensors are valid '
-            'indices (got {}).'.format(type(idx).__name__))
+            "Only integers, slices (`:`) and long or byte tensors are valid "
+            "indices (got {}).".format(type(idx).__name__)
+        )
 
     def shuffle(self):
         r"""Randomly shuffles the examples in the dataset."""
@@ -95,8 +93,7 @@ class InMemoryDataset(Dataset):
         for key in self.data.keys:
             item, slices = self.data[key], self.slices[key]
             s = list(repeat(slice(None), item.dim()))
-            s[self.data.cat_dim(key, item)] = slice(slices[idx],
-                                                    slices[idx + 1])
+            s[self.data.cat_dim(key, item)] = slice(slices[idx], slices[idx + 1])
             data[key] = item[s]
         return data
 
@@ -123,7 +120,8 @@ class InMemoryDataset(Dataset):
 
         for key in keys:
             data[key] = torch.cat(
-                data[key], dim=data_list[0].cat_dim(key, data_list[0][key]))
+                data[key], dim=data_list[0].cat_dim(key, data_list[0][key])
+            )
             slices[key] = torch.LongTensor(slices[key])
 
         return data, slices

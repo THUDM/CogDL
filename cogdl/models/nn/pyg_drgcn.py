@@ -54,7 +54,6 @@ class DrGCN(BaseModel):
             ]
         )
 
-
     def forward(self, x, edge_index):
         x = self.ses[0](x)
         for se, conv in zip(self.ses[1:], self.convs[:-1]):

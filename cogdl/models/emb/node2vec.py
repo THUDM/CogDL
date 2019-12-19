@@ -30,9 +30,20 @@ class Node2vec(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.hidden_size, args.walk_length, args.walk_num, args.window_size, args.worker, args.iteration, args.p, args.q)
+        return cls(
+            args.hidden_size,
+            args.walk_length,
+            args.walk_num,
+            args.window_size,
+            args.worker,
+            args.iteration,
+            args.p,
+            args.q,
+        )
 
-    def __init__(self, dimension, walk_length, walk_num, window_size, worker, iteration, p, q):
+    def __init__(
+        self, dimension, walk_length, walk_num, window_size, worker, iteration, p, q
+    ):
         super(Node2vec, self).__init__()
         self.dimension = dimension
         self.walk_length = walk_length
@@ -43,20 +54,29 @@ class Node2vec(BaseModel):
         self.p = p
         self.q = q
 
-
     def train(self, G):
         self.G = G
         is_directed = nx.is_directed(self.G)
         for i, j in G.edges():
-            G[i][j]['weight'] = G[i][j].get("weight", 1.0)
+            G[i][j]["weight"] = G[i][j].get("weight", 1.0)
             if not is_directed:
-                G[j][i]['weight'] = G[j][i].get("weight", 1.0)
+                G[j][i]["weight"] = G[j][i].get("weight", 1.0)
         self._preprocess_transition_probs()
         walks = self._simulate_walks(self.walk_num, self.walk_length)
-        walks = [[str(node) for node in walk]for walk in walks]
-        model = Word2Vec(walks, size=self.dimension, window=self.window_size, min_count=0, sg=1, workers=self.worker, iter=self.iteration)
+        walks = [[str(node) for node in walk] for walk in walks]
+        model = Word2Vec(
+            walks,
+            size=self.dimension,
+            window=self.window_size,
+            min_count=0,
+            sg=1,
+            workers=self.worker,
+            iter=self.iteration,
+        )
         id2node = dict([(vid, node) for vid, node in enumerate(G.nodes())])
-        self.embeddings = np.asarray([model[str(id2node[i])] for i in range(len(id2node))])
+        self.embeddings = np.asarray(
+            [model[str(id2node[i])] for i in range(len(id2node))]
+        )
         return self.embeddings
 
     def _node2vec_walk(self, walk_length, start_node):
@@ -72,11 +92,16 @@ class Node2vec(BaseModel):
             cur_nbrs = list(G.neighbors(cur))
             if len(cur_nbrs) > 0:
                 if len(walk) == 1:
-                    walk.append(cur_nbrs[alias_draw(alias_nodes[cur][0], alias_nodes[cur][1])])
+                    walk.append(
+                        cur_nbrs[alias_draw(alias_nodes[cur][0], alias_nodes[cur][1])]
+                    )
                 else:
                     prev = walk[-2]
-                    next = cur_nbrs[alias_draw(alias_edges[(prev, cur)][0],
-                        alias_edges[(prev, cur)][1])]
+                    next = cur_nbrs[
+                        alias_draw(
+                            alias_edges[(prev, cur)][0], alias_edges[(prev, cur)][1]
+                        )
+                    ]
                     walk.append(next)
             else:
                 break
@@ -88,13 +113,15 @@ class Node2vec(BaseModel):
         G = self.G
         walks = []
         nodes = list(G.nodes())
-        print('Walk iteration:')
+        print("Walk iteration:")
         for walk_iter in range(num_walks):
-            if walk_iter%10 ==0:
-                print(str(walk_iter+1), '/', str(num_walks))
+            if walk_iter % 10 == 0:
+                print(str(walk_iter + 1), "/", str(num_walks))
             random.shuffle(nodes)
             for node in nodes:
-                walks.append(self._node2vec_walk(walk_length=walk_length, start_node=node))
+                walks.append(
+                    self._node2vec_walk(walk_length=walk_length, start_node=node)
+                )
 
         return walks
 
@@ -104,13 +131,13 @@ class Node2vec(BaseModel):
         unnormalized_probs = []
         for dst_nbr in G.neighbors(dst):
             if dst_nbr == src:
-                unnormalized_probs.append(G[dst][dst_nbr]['weight']/self.p)
+                unnormalized_probs.append(G[dst][dst_nbr]["weight"] / self.p)
             elif G.has_edge(dst_nbr, src):
-                unnormalized_probs.append(G[dst][dst_nbr]['weight'])
+                unnormalized_probs.append(G[dst][dst_nbr]["weight"])
             else:
-                unnormalized_probs.append(G[dst][dst_nbr]['weight']/self.q)
+                unnormalized_probs.append(G[dst][dst_nbr]["weight"] / self.q)
         norm_const = sum(unnormalized_probs)
-        normalized_probs =  [float(u_prob)/norm_const for u_prob in unnormalized_probs]
+        normalized_probs = [float(u_prob) / norm_const for u_prob in unnormalized_probs]
 
         return alias_setup(normalized_probs)
 
@@ -125,13 +152,15 @@ class Node2vec(BaseModel):
         s = time.time()
         alias_nodes = {}
         for node in G.nodes():
-            unnormalized_probs = [G[node][nbr]['weight'] for nbr in G.neighbors(node)]
+            unnormalized_probs = [G[node][nbr]["weight"] for nbr in G.neighbors(node)]
             norm_const = sum(unnormalized_probs)
-            normalized_probs =  [float(u_prob)/norm_const for u_prob in unnormalized_probs]
+            normalized_probs = [
+                float(u_prob) / norm_const for u_prob in unnormalized_probs
+            ]
             alias_nodes[node] = alias_setup(normalized_probs)
 
         t = time.time()
-        print('alias_nodes',t-s)
+        print("alias_nodes", t - s)
 
         alias_edges = {}
         s = time.time()
@@ -145,7 +174,7 @@ class Node2vec(BaseModel):
                 alias_edges[(edge[1], edge[0])] = self._get_alias_edge(edge[1], edge[0])
 
         t = time.time()
-        print('alias_edges',t-s)
+        print("alias_edges", t - s)
 
         self.alias_nodes = alias_nodes
         self.alias_edges = alias_edges

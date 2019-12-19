@@ -38,10 +38,7 @@ class MLP(BaseModel):
         self.dropout = dropout
         shapes = [num_features] + [hidden_size] * (num_layers - 1) + [num_classes]
         self.mlp = nn.ModuleList(
-            [
-                nn.Linear(shapes[layer], shapes[layer + 1])
-                for layer in range(num_layers)
-            ]
+            [nn.Linear(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)]
         )
 
     def forward(self, x, edge_index):

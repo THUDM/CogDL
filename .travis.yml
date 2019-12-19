@@ -5,12 +5,15 @@ python:
   - "3.6"
 
 install:
-- pip install torch torchvision
-- pip install -r requirements.txt
-- pip install coveralls
+  - pip install -r requirements.txt
+  - pip install black pytest coveralls
+
+script:
+  - black .
+  - coverage run -m pytest tests
+  - cd docs && make clean && make html && cd ..
 
 after_success:
-- coverage combine
 - coveralls
 
 notifications:

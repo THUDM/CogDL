@@ -9,10 +9,10 @@ import gzip
 
 def maybe_log(path, log=True):
     if log:
-        print('Extracting', path)
+        print("Extracting", path)
 
 
-def extract_tar(path, folder, mode='r:gz', log=True):
+def extract_tar(path, folder, mode="r:gz", log=True):
     r"""Extracts a tar archive to a specific folder.
 
     Args:
@@ -37,19 +37,19 @@ def extract_zip(path, folder, log=True):
             console. (default: :obj:`True`)
     """
     maybe_log(path, log)
-    with zipfile.ZipFile(path, 'r') as f:
+    with zipfile.ZipFile(path, "r") as f:
         f.extractall(folder)
 
 
 def extract_bz2(path, folder, log=True):
     maybe_log(path, log)
-    with bz2.open(path, 'r') as r:
-        with open(osp.join(folder, '.'.join(path.split('.')[:-1])), 'wb') as w:
+    with bz2.open(path, "r") as r:
+        with open(osp.join(folder, ".".join(path.split(".")[:-1])), "wb") as w:
             w.write(r.read())
 
 
 def extract_gz(path, folder, log=True):
     maybe_log(path, log)
-    with gzip.open(path, 'r') as r:
-        with open(osp.join(folder, '.'.join(path.split('.')[:-1])), 'wb') as w:
+    with gzip.open(path, "r") as r:
+        with open(osp.join(folder, ".".join(path.split(".")[:-1])), "wb") as w:
             w.write(r.read())

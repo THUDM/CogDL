@@ -33,7 +33,7 @@ class ProNE(BaseModel):
         self.step = step
         self.mu = mu
         self.theta = theta
-    
+
     def train(self, G):
         self.num_node = G.number_of_nodes()
 

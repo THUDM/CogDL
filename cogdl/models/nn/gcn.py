@@ -31,7 +31,11 @@ class GraphConvolution(nn.Module):
             self.bias.data.normal_(-stdv, stdv)
 
     def forward(self, input, edge_index):
-        adj = torch.sparse_coo_tensor(edge_index, torch.ones(edge_index.shape[1]).float(), (input.shape[0], input.shape[0])).cuda()
+        adj = torch.sparse_coo_tensor(
+            edge_index,
+            torch.ones(edge_index.shape[1]).float(),
+            (input.shape[0], input.shape[0]),
+        ).cuda()
         support = torch.mm(input, self.weight)
         output = torch.spmm(adj, support)
         if self.bias is not None:

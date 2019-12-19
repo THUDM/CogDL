@@ -65,16 +65,12 @@ class Dataset(torch.utils.data.Dataset):
         r"""Gets the data object at index :obj:`idx`."""
         raise NotImplementedError
 
-    def __init__(self,
-                 root,
-                 transform=None,
-                 pre_transform=None,
-                 pre_filter=None):
+    def __init__(self, root, transform=None, pre_transform=None, pre_filter=None):
         super(Dataset, self).__init__()
 
         self.root = osp.expanduser(osp.normpath(root))
-        self.raw_dir = osp.join(self.root, 'raw')
-        self.processed_dir = osp.join(self.root, 'processed')
+        self.raw_dir = osp.join(self.root, "raw")
+        self.processed_dir = osp.join(self.root, "processed")
         self.transform = transform
         self.pre_transform = pre_transform
         self.pre_filter = pre_filter
@@ -111,12 +107,12 @@ class Dataset(torch.utils.data.Dataset):
         if files_exist(self.processed_paths):  # pragma: no cover
             return
 
-        print('Processing...')
+        print("Processing...")
 
         makedirs(self.processed_dir)
         self.process()
 
-        print('Done!')
+        print("Done!")
 
     def __getitem__(self, idx):  # pragma: no cover
         r"""Gets the data object at index :obj:`idx` and transforms it (in case
@@ -126,4 +122,4 @@ class Dataset(torch.utils.data.Dataset):
         return data
 
     def __repr__(self):  # pragma: no cover
-        return '{}({})'.format(self.__class__.__name__, len(self))
+        return "{}({})".format(self.__class__.__name__, len(self))

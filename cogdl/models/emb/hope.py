@@ -15,7 +15,6 @@ class HOPE(BaseModel):
                             help='Parameter of katz for HOPE. Default is 0.01')
         # fmt: on
 
-
     @classmethod
     def build_model_from_args(cls, args):
         return cls(args.hidden_size, args.beta)

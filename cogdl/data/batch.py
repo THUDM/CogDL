@@ -23,7 +23,7 @@ class Batch(Data):
         The assignment vector :obj:`batch` is created on the fly."""
         keys = [set(data.keys) for data in data_list]
         keys = list(set.union(*keys))
-        assert 'batch' not in keys
+        assert "batch" not in keys
 
         batch = Batch()
 
@@ -34,7 +34,7 @@ class Batch(Data):
         cumsum = 0
         for i, data in enumerate(data_list):
             num_nodes = data.num_nodes
-            batch.batch.append(torch.full((num_nodes, ), i, dtype=torch.long))
+            batch.batch.append(torch.full((num_nodes,), i, dtype=torch.long))
             for key in data.keys:
                 item = data[key]
                 item = item + cumsum if batch.cumsum(key, item) else item
@@ -43,7 +43,8 @@ class Batch(Data):
 
         for key in keys:
             batch[key] = torch.cat(
-                batch[key], dim=data_list[0].cat_dim(key, batch[key][0]))
+                batch[key], dim=data_list[0].cat_dim(key, batch[key][0])
+            )
         batch.batch = torch.cat(batch.batch, dim=-1)
         return batch.contiguous()
 
@@ -57,7 +58,7 @@ class Batch(Data):
             if the batch concatenation process is corrupted for a specific data
             attribute.
         """
-        return bool(re.search('(index|face)', key))
+        return bool(re.search("(index|face)", key))
 
     @property
     def num_graphs(self):

@@ -28,10 +28,19 @@ class LINE(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.hidden_size, args.walk_length, args.walk_num, args.negative,
-                   args.batch_size, args.alpha, args.order)
+        return cls(
+            args.hidden_size,
+            args.walk_length,
+            args.walk_num,
+            args.negative,
+            args.batch_size,
+            args.alpha,
+            args.order,
+        )
 
-    def __init__(self, dimension, walk_length, walk_num, negative, batch_size, alpha, order):
+    def __init__(
+        self, dimension, walk_length, walk_num, negative, batch_size, alpha, order
+    ):
         self.dimension = dimension
         self.walk_length = walk_length
         self.walk_num = walk_num
@@ -43,7 +52,7 @@ class LINE(BaseModel):
     def train(self, G):
         # run LINE algorithm, 1-order, 2-order or 3(1-order + 2-order)
         self.G = G
-        self.is_directed =  nx.is_directed(self.G)
+        self.is_directed = nx.is_directed(self.G)
         self.num_node = G.number_of_nodes()
         self.num_edge = G.number_of_edges()
         self.num_sampling_edge = self.walk_length * self.walk_num * self.num_node
@@ -65,16 +74,20 @@ class LINE(BaseModel):
 
         if self.order == 3:
             self.dimension = int(self.dimension / 2)
-        if self.order == 1 or self.order==3:
+        if self.order == 1 or self.order == 3:
             print("train line with 1-order")
             print(type(self.dimension))
-            self.emb_vertex = (np.random.random((self.num_node, self.dimension)) - 0.5) / self.dimension
+            self.emb_vertex = (
+                np.random.random((self.num_node, self.dimension)) - 0.5
+            ) / self.dimension
             self._train_line(order=1)
             embedding1 = preprocessing.normalize(self.emb_vertex, "l2")
 
         if self.order == 2 or self.order == 3:
             print("train line with 2-order")
-            self.emb_vertex = (np.random.random((self.num_node, self.dimension)) - 0.5) / self.dimension
+            self.emb_vertex = (
+                np.random.random((self.num_node, self.dimension)) - 0.5
+            ) / self.dimension
             self.emb_context = self.emb_vertex
             self._train_line(order=2)
             embedding2 = preprocessing.normalize(self.emb_vertex, "l2")
@@ -95,7 +108,6 @@ class LINE(BaseModel):
         vec_error += g * vec_v
         vec_v += g * vec_u
 
-
     def _train_line(self, order):
         # train Line model with order
         self.alpha = self.init_alpha
@@ -105,8 +117,10 @@ class LINE(BaseModel):
         epoch_iter = tqdm(range(num_batch))
         for b in epoch_iter:
             if b % 100 == 0:
-                epoch_iter.set_description(f"Progress: {b *1.0/num_batch * 100:.4f}%, alpha: {self.alpha:.6f}, time: {time.time() - t0:.4f}")
-                self.alpha = self.init_alpha  * max((1 - b *1.0/num_batch), 0.0001)
+                epoch_iter.set_description(
+                    f"Progress: {b *1.0/num_batch * 100:.4f}%, alpha: {self.alpha:.6f}, time: {time.time() - t0:.4f}"
+                )
+                self.alpha = self.init_alpha * max((1 - b * 1.0 / num_batch), 0.0001)
             u, v = [0] * batch_size, [0] * batch_size
             for i in range(batch_size):
                 edge_id = alias_draw(self.edges_table, self.edges_prob)
@@ -122,7 +136,11 @@ class LINE(BaseModel):
                     for i in range(batch_size):
                         target[i] = alias_draw(self.node_table, self.node_prob)
                 if order == 1:
-                    self._update(self.emb_vertex[u], self.emb_vertex[target], vec_error, label)
+                    self._update(
+                        self.emb_vertex[u], self.emb_vertex[target], vec_error, label
+                    )
                 else:
-                    self._update(self.emb_vertex[u], self.emb_context[target], vec_error, label)
+                    self._update(
+                        self.emb_vertex[u], self.emb_context[target], vec_error, label
+                    )
             self.emb_vertex[u] += vec_error

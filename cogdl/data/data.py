@@ -23,12 +23,7 @@ class Data(object):
     by any other additional data.
     """
 
-    def __init__(self,
-                 x=None,
-                 edge_index=None,
-                 edge_attr=None,
-                 y=None,
-                 pos=None):
+    def __init__(self, x=None, edge_index=None, edge_attr=None, y=None, pos=None):
         self.x = x
         self.edge_index = edge_index
         self.edge_attr = edge_attr
@@ -92,12 +87,12 @@ class Data(object):
         """
         # `*index*` and `*face*` should be concatenated in the last dimension,
         # everything else in the first dimension.
-        return -1 if bool(re.search('(index|face)', key)) else 0
+        return -1 if bool(re.search("(index|face)", key)) else 0
 
     @property
     def num_edges(self):
         r"""Returns the number of edges in the graph."""
-        for key, item in self('edge_index', 'edge_attr'):
+        for key, item in self("edge_index", "edge_attr"):
             return item.size(self.cat_dim(key, item))
         return None
 
@@ -142,5 +137,5 @@ class Data(object):
         return Data.from_dict({k: v.clone() for k, v in self})
 
     def __repr__(self):
-        info = ['{}={}'.format(key, list(item.size())) for key, item in self]
-        return '{}({})'.format(self.__class__.__name__, ', '.join(info))
+        info = ["{}={}".format(key, list(item.size())) for key, item in self]
+        return "{}({})".format(self.__class__.__name__, ", ".join(info))

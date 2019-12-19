@@ -71,9 +71,7 @@ class NodeClassification(BaseTask):
                     break
         test_acc, _ = self._test_step(split="test")
         print(f"Test accuracy = {test_acc}")
-        return dict(
-            Acc=test_acc
-        )
+        return dict(Acc=test_acc)
 
     def _train_step(self):
         self.model.train()
@@ -88,11 +86,8 @@ class NodeClassification(BaseTask):
         self.model.eval()
         logits = self.model(self.data.x, self.data.edge_index)
         _, mask = list(self.data(f"{split}_mask"))[0]
-        loss = F.nll_loss(
-            logits[mask],
-            self.data.y[mask],
-        )
-        
+        loss = F.nll_loss(logits[mask], self.data.y[mask])
+
         pred = logits[mask].max(1)[1]
         acc = pred.eq(self.data.y[mask]).sum().item() / mask.sum().item()
         return acc, loss

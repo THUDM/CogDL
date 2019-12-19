@@ -16,8 +16,10 @@ DATASET_REGISTRY = {}
 def build_dataset(args):
     return DATASET_REGISTRY[args.dataset]()
 
+
 def build_dataset_from_name(dataset):
     return DATASET_REGISTRY[dataset]()
+
 
 def register_dataset(name):
     """
@@ -37,7 +39,9 @@ def register_dataset(name):
     def register_dataset_cls(cls):
         if name in DATASET_REGISTRY:
             raise ValueError("Cannot register duplicate dataset ({})".format(name))
-        if not issubclass(cls, Dataset) and (pyg and not issubclass(cls, torch_geometric.data.Dataset)):
+        if not issubclass(cls, Dataset) and (
+            pyg and not issubclass(cls, torch_geometric.data.Dataset)
+        ):
             raise ValueError(
                 "Dataset ({}: {}) must extend cogdl.data.Dataset".format(
                     name, cls.__name__

@@ -22,7 +22,8 @@ class DataLoader(torch.utils.data.DataLoader):
             batch_size,
             shuffle,
             collate_fn=lambda data_list: Batch.from_data_list(data_list),
-            **kwargs)
+            **kwargs
+        )
 
 
 class DataListLoader(torch.utils.data.DataLoader):
@@ -48,7 +49,8 @@ class DataListLoader(torch.utils.data.DataLoader):
             batch_size,
             shuffle,
             collate_fn=lambda data_list: data_list,
-            **kwargs)
+            **kwargs
+        )
 
 
 class DenseDataLoader(torch.utils.data.DataLoader):
@@ -78,4 +80,5 @@ class DenseDataLoader(torch.utils.data.DataLoader):
             return batch
 
         super(DenseDataLoader, self).__init__(
-            dataset, batch_size, shuffle, collate_fn=dense_collate, **kwargs)
+            dataset, batch_size, shuffle, collate_fn=dense_collate, **kwargs
+        )

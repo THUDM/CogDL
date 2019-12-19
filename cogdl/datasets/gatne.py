@@ -9,29 +9,33 @@ from . import register_dataset
 
 
 def read_gatne_data(folder):
-    train_data = {} 
-    with open(osp.join(folder, '{}'.format('train.txt')), 'r') as f:
+    train_data = {}
+    with open(osp.join(folder, "{}".format("train.txt")), "r") as f:
         for line in f:
             items = line.strip().split()
             if items[0] not in train_data:
                 train_data[items[0]] = []
             train_data[items[0]].append([int(items[1]), int(items[2])])
 
-    valid_data = {} 
-    with open(osp.join(folder, '{}'.format('valid.txt')), 'r') as f: 
+    valid_data = {}
+    with open(osp.join(folder, "{}".format("valid.txt")), "r") as f:
         for line in f:
             items = line.strip().split()
             if items[0] not in valid_data:
                 valid_data[items[0]] = [[], []]
-            valid_data[items[0]][1-int(items[3])].append([int(items[1]), int(items[2])])
-    
+            valid_data[items[0]][1 - int(items[3])].append(
+                [int(items[1]), int(items[2])]
+            )
+
     test_data = {}
-    with open(osp.join(folder, '{}'.format('test.txt')), 'r') as f: 
+    with open(osp.join(folder, "{}".format("test.txt")), "r") as f:
         for line in f:
             items = line.strip().split()
             if items[0] not in test_data:
                 test_data[items[0]] = [[], []]
-            test_data[items[0]][1-int(items[3])].append([int(items[1]), int(items[2])])
+            test_data[items[0]][1 - int(items[3])].append(
+                [int(items[1]), int(items[2])]
+            )
 
     data = Data()
     data.train_data = train_data
@@ -51,7 +55,7 @@ class GatneDataset(Dataset):
             :obj:`"Twitter"`, :obj:`"YouTube"`).
     """
 
-    url = 'https://github.com/THUDM/GATNE/raw/master/data'
+    url = "https://github.com/THUDM/GATNE/raw/master/data"
 
     def __init__(self, root, name):
         self.name = name
@@ -60,12 +64,12 @@ class GatneDataset(Dataset):
 
     @property
     def raw_file_names(self):
-        names = ['train.txt', 'valid.txt', 'test.txt']
-        return ['{}/{}'.format(self.name.lower(), name) for name in names]
+        names = ["train.txt", "valid.txt", "test.txt"]
+        return ["{}/{}".format(self.name.lower(), name) for name in names]
 
     @property
     def processed_file_names(self):
-        return 'data.pt'
+        return "data.pt"
 
     def get(self, idx):
         assert idx == 0
@@ -73,35 +77,35 @@ class GatneDataset(Dataset):
 
     def download(self):
         for name in self.raw_file_names:
-            download_url('{}/{}'.format(self.url, name), self.raw_dir)
+            download_url("{}/{}".format(self.url, name), self.raw_dir)
 
     def process(self):
         data = read_gatne_data(self.raw_dir)
         torch.save(data, self.processed_paths[0])
 
     def __repr__(self):
-        return '{}()'.format(self.name)
+        return "{}()".format(self.name)
 
 
-@register_dataset('amazon')
+@register_dataset("amazon")
 class AmazonDataset(GatneDataset):
     def __init__(self):
-        dataset = 'amazon'
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '../..', 'data', dataset)
+        dataset = "amazon"
+        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(AmazonDataset, self).__init__(path, dataset)
 
 
-@register_dataset('twitter')
+@register_dataset("twitter")
 class TwitterDataset(GatneDataset):
     def __init__(self):
-        dataset = 'twitter'
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '../..', 'data', dataset)
+        dataset = "twitter"
+        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(TwitterDataset, self).__init__(path, dataset)
 
 
-@register_dataset('youtube')
+@register_dataset("youtube")
 class YouTubeDataset(GatneDataset):
     def __init__(self):
-        dataset = 'youtube'
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '../..', 'data', dataset)
+        dataset = "youtube"
+        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(YouTubeDataset, self).__init__(path, dataset)

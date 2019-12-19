@@ -16,15 +16,15 @@ def download_url(url, folder, log=True):
             console. (default: :obj:`True`)
     """
     if log:
-        print('Downloading', url)
+        print("Downloading", url)
 
     makedirs(folder)
 
     data = urllib.request.urlopen(url)
-    filename = url.rpartition('/')[2]
+    filename = url.rpartition("/")[2]
     path = osp.join(folder, filename)
 
-    with open(path, 'wb') as f:
+    with open(path, "wb") as f:
         f.write(data.read())
 
     return path

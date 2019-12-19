@@ -236,7 +236,7 @@ class LinkPrediction(BaseTask):
         dataset = build_dataset(args)
         data = dataset[0]
         self.data = data.cuda()
-        if hasattr(dataset, 'num_features'):
+        if hasattr(dataset, "num_features"):
             args.num_features = dataset.num_features
         model = build_model(args)
         self.model = model
@@ -245,10 +245,13 @@ class LinkPrediction(BaseTask):
 
         edge_list = self.data.edge_index.cpu().numpy()
         edge_list = list(zip(edge_list[0], edge_list[1]))
-        self.train_data, self.valid_data, self.test_data = divide_data(edge_list, [0.85, 0.05, 0.10])
+        self.train_data, self.valid_data, self.test_data = divide_data(
+            edge_list, [0.85, 0.05, 0.10]
+        )
 
-
-        self.valid_data, self.test_data = gen_node_pairs(self.train_data, self.valid_data, self.test_data)
+        self.valid_data, self.test_data = gen_node_pairs(
+            self.train_data, self.valid_data, self.test_data
+        )
 
         # edge_list = self.data.edge_index.cpu().numpy()
         # G = nx.Graph()
@@ -296,11 +299,7 @@ class LinkPrediction(BaseTask):
         print(
             f"Test ROC-AUC = {roc_auc:.4f}, F1 = {f1_score:.4f}, PR-AUC = {pr_auc:.4f}"
         )
-        return dict(
-            ROC_AUC=roc_auc,
-            PR_AUC=pr_auc,
-            F1=f1_score,
-        )
+        return dict(ROC_AUC=roc_auc, PR_AUC=pr_auc, F1=f1_score)
 
     def _train_step(self):
         self.model.train()

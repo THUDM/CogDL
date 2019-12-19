@@ -31,6 +31,7 @@ class PubMedDataset(Planetoid):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(PubMedDataset, self).__init__(path, dataset, T.TargetIndegree())
 
+
 @register_dataset("reddit")
 class RedditDataset(Reddit):
     def __init__(self):

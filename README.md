@@ -8,9 +8,9 @@ Feel free to submit your contributions as a pull request.
 CogDL features:
 
 - Sparsification: fast network embedding on large-scale networks with tens of millions of nodes
-- Arbitrary: dealing with different graph strucutures: attributed, multiplex and heterogeneous networks
+- Arbitrary: dealing with different graph structures: attributed, multiplex and heterogeneous networks
 - Parallel: parallel training of different seeds and different models on multiple GPUs and automatically reporting the result table
-- Extensible: easily register new datasets, models, criterions and tasks
+- Extensible: easily register new datasets, models, criteria and tasks
 
 ## Getting Started
 
@@ -32,7 +32,7 @@ You can use `python train.py --task example_task --dataset example_dataset --mod
 
 ### General parameters
 
-- --task, Downsteam tasks to evaluate representation like node_classification, unsupervised_node_classification, link_prediction
+- --task, Downstream tasks to evaluate representation like node_classification, unsupervised_node_classification, link_prediction
 - --dataset, Dataset name to run, can be a list of datasets with space like `cora citeseer ppi`. Supported datasets including
 'cora', 'citeseer', 'pumbed', 'PPI', 'wikipedia', 'blogcatalog', 'dblp', 'flickr'
 - --model, Model name to run, can be a list of models like `deepwalk line prone`. Supported datasets including
@@ -83,7 +83,7 @@ for LINE:
 - --order, Order of proximity in LINE. Default is 3 for 1+2;
 - --alpha, Initial earning rate of SGD. Default is 0.025;
 - --batch-size, Batch size in SGD training process. Default is 100;
-- --negative, Number of negative node in sampling. Default is 5;
+- --negative, Number of negative nodes in sampling. Default is 5;
 
 for HOPE:
 
@@ -97,13 +97,13 @@ for NetMF:
 
 - --window-size, Window size of deepwalk matrix. Default is 10;
 - --is-large, Large or small for NetMF;
-- --negative, Number of negative node in sampling. Default is 5;
+- --negative, Number of negative nodes in sampling. Default is 5;
 - --rank, Number of Eigenpairs in NetMF, default is 256;
 
 for NetSMF:
 
 - --window-size, Window size of approximate matrix. Default is 10;
-- --negative, Number of negative node in sampling. Default is 5;
+- --negative, Number of negative nodes in sampling. Default is 5;
 - --round, Number of round in NetSMF. Default is 100;
 - --worker, Number of parallel workers. Default is 10;
 
@@ -138,15 +138,15 @@ If you have ANY difficulties to get things working in the above steps, feel free
 
 ### Submit Your State-of-the-art
 
-If you have a well-perform algorithm and are willing to public it, you can submit your implementation via [opening an issue](https://github.com/THUDM/cogdl/issues) or [join our slack group](https://join.slack.com/t/cogdl/shared_invite/enQtNjk1ODE4MjEyNDg2LTE3M2Y2N2QzNWJkYzcxNDMzYjZjYmY0YzlmMjYzZDliZTFiMGU3N2YzYWViNmVmNjk4OTY3YjYzODMzMDQ2ZGQ). After evaluating its originality, creativity and efficiency, we will add your method's performance into our leaderboard.
+If you have a well-perform algorithm and are willing to publish it, you can submit your implementation via [opening an issue](https://github.com/THUDM/cogdl/issues) or [join our slack group](https://join.slack.com/t/cogdl/shared_invite/enQtNjk1ODE4MjEyNDg2LTE3M2Y2N2QzNWJkYzcxNDMzYjZjYmY0YzlmMjYzZDliZTFiMGU3N2YzYWViNmVmNjk4OTY3YjYzODMzMDQ2ZGQ). After evaluating its originality, creativity and efficiency, we will add your method's performance into our leaderboard.
 
 ### Add Your Own Dataset
 
-If you have a unique and interesting and are willing to public it, you can submit your dataset via opening an issue in our repository or commenting on slack group, we will run all suitable methods on your dataset and update our leaderboard. 
+If you have a unique and interesting and are willing to publish it, you can submit your dataset via opening an issue in our repository or commenting on slack group, we will run all suitable methods on your dataset and update our leaderboard. 
 
 ### Implement Your Own Model
 
-If you have a well-perform algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request,  detail information can be found [here](https://help.github.com/en/articles/creating-a-pull-request). 
+If you have a well-perform algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request,  detailed information can be found [here](https://help.github.com/en/articles/creating-a-pull-request). 
 
 ## Citing
 

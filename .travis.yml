@@ -1,0 +1,17 @@
+language: python
+
+python:
+  - "3.7"
+  - "3.6"
+
+install:
+- pip install torch torchvision
+- pip install -r requirements.txt
+- pip install coveralls
+
+after_success:
+- coverage combine
+- coveralls
+
+notifications:
+  email: false

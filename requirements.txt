@@ -9,3 +9,9 @@ gensim
 grave
 scikit_learn
 tabulate
+black
+pytest
+sphinx
+sphinx_rtd_theme
+recommonmark
+coveralls

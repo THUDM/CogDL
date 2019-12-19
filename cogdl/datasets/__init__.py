@@ -13,14 +13,6 @@ else:
 DATASET_REGISTRY = {}
 
 
-def build_dataset(args):
-    return DATASET_REGISTRY[args.dataset]()
-
-
-def build_dataset_from_name(dataset):
-    return DATASET_REGISTRY[dataset]()
-
-
 def register_dataset(name):
     """
     New dataset types can be added to cogdl with the :func:`register_dataset`
@@ -60,3 +52,11 @@ for file in os.listdir(os.path.dirname(__file__)):
         if not pyg and dataset_name.startswith("pyg"):
             continue
         module = importlib.import_module("cogdl.datasets." + dataset_name)
+
+
+def build_dataset(args):
+    return DATASET_REGISTRY[args.dataset]()
+
+
+def build_dataset_from_name(dataset):
+    return DATASET_REGISTRY[dataset]()

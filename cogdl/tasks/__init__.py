@@ -9,10 +9,6 @@ from .base_task import BaseTask
 TASK_REGISTRY = {}
 
 
-def build_task(args):
-    return TASK_REGISTRY[args.task](args)
-
-
 def register_task(name):
     """
     New task types can be added to cogdl with the :func:`register_task`
@@ -46,3 +42,7 @@ for file in os.listdir(os.path.dirname(__file__)):
     if file.endswith(".py") and not file.startswith("_"):
         task_name = file[: file.find(".py")]
         module = importlib.import_module("cogdl.tasks." + task_name)
+
+
+def build_task(args):
+    return TASK_REGISTRY[args.task](args)

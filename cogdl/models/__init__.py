@@ -17,10 +17,6 @@ else:
 MODEL_REGISTRY = {}
 
 
-def build_model(args):
-    return MODEL_REGISTRY[args.model].build_model_from_args(args)
-
-
 def register_model(name):
     """
     New model types can be added to cogdl with the :func:`register_model`
@@ -105,3 +101,7 @@ for root, dirs, files in os.walk(os.path.dirname(__file__)):
             model_name = os.path.join(root, model_name)
             model_name = model_name[model_name.find("models") :].replace("/", ".")
             module = importlib.import_module("cogdl." + model_name)
+
+
+def build_model(args):
+    return MODEL_REGISTRY[args.model].build_model_from_args(args)

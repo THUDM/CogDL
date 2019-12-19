@@ -6,7 +6,7 @@ python:
 
 install:
   - pip install -r requirements.txt
-  - pip install black pytest coveralls
+  - pip install black pytest sphinx coveralls
 
 script:
   - black .

@@ -1,4 +1,5 @@
-# CogDL
+![CogDL](docs/source/_static/cogdl-logo.png)
+===
 
 [![Build Status](https://travis-ci.org/THUDM/cogdl.svg?branch=master)](https://travis-ci.org/THUDM/cogdl)
 [![Maintainability](https://api.codeclimate.com/v1/badges/d587092245542684c80b/maintainability)](https://codeclimate.com/github/THUDM/cogdl/maintainability)

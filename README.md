@@ -19,6 +19,14 @@ CogDL features:
 - Arbitrary: dealing with different graph structures: attributed, multiplex and heterogeneous networks
 - Parallel: parallel training of different seeds and different models on multiple GPUs and automatically reporting the result table
 - Extensible: easily register new datasets, models, criteria and tasks
+- Supported tasks:
+  - Node classification
+  - Link prediction
+  - Social influence prediction (coming)
+  - Knowledge graph reasoning (coming)
+  - Community detection (todo)
+  - Graph classification (todo)
+  - Combinatorial optimization on graphs (todo)
 
 ## Getting Started
 

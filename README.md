@@ -44,7 +44,7 @@ pip install -r requirements.txt
 
 ## Usage
 
-You can use `python train.py --task example_task --dataset example_dataset --model example_method` to run example_method on example_data and evaluate it via example_task.
+You can use `python scripts/train.py --task example_task --dataset example_dataset --model example_method` to run example_method on example_data and evaluate it via example_task.
 
 ### General parameters
 
@@ -57,7 +57,7 @@ You can use `python train.py --task example_task --dataset example_dataset --mod
 For example, if you want to run Deepwalk, Line, Netmf on Wikipedia with node classification task, with 5 different seeds:
 
 ```bash
-$ python train.py --task unsupervised_node_classification --dataset wikipedia --model line netmf --seed 0 1 2 3 4
+$ python scripts/train.py --task unsupervised_node_classification --dataset wikipedia --model line netmf --seed 0 1 2 3 4
 ```
 
 Expected output:
@@ -72,7 +72,7 @@ If you want to run parallel experiments on your server with multiple GPUs like m
 To enable efficient graph convolution on GPU, we require `pytorch_geometric`. Please install dependencies here https://github.com/rusty1s/pytorch_geometric/#installation.
 
 ```bash
-$ python parallel_train.py --task node_classification --dataset cora --model pyg_gcn pyg_gat --device-id 0 1 --seed 0 1 2 3 4
+$ python scripts/parallel_train.py --task node_classification --dataset cora --model pyg_gcn pyg_gat --device-id 0 1 --seed 0 1 2 3 4
 ```
 
 Expected output:

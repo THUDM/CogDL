@@ -65,7 +65,7 @@ class BlogcatalogDataset(MatlabMatrix):
     def __init__(self):
         dataset, filename = 'blogcatalog', 'blogcatalog'
         url = 'http://leitang.net/code/social-dimension/data/'
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
+        path = osp.join(osp.dirname(osp.realpath(__file__)), '../..', 'data', dataset)
         super(BlogcatalogDataset, self).__init__(path, filename, url)
 
 
@@ -74,7 +74,7 @@ class FlickrDataset(MatlabMatrix):
     def __init__(self):
         dataset, filename = 'flickr', 'flickr'
         url = 'http://leitang.net/code/social-dimension/data/'
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
+        path = osp.join(osp.dirname(osp.realpath(__file__)), '../..', 'data', dataset)
         super(FlickrDataset, self).__init__(path, filename, url)
 
 
@@ -83,7 +83,7 @@ class WikipediaDataset(MatlabMatrix):
     def __init__(self):
         dataset, filename = 'wikipedia', 'POS'
         url = 'http://snap.stanford.edu/node2vec/'
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
+        path = osp.join(osp.dirname(osp.realpath(__file__)), '../..', 'data', dataset)
         super(WikipediaDataset, self).__init__(path, filename, url)
 
 
@@ -92,5 +92,5 @@ class PPIDataset(MatlabMatrix):
     def __init__(self):
         dataset, filename = 'ppi', 'Homo_sapiens'
         url = 'http://snap.stanford.edu/node2vec/'
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
+        path = osp.join(osp.dirname(osp.realpath(__file__)), '../..', 'data', dataset)
         super(PPIDataset, self).__init__(path, filename, url)

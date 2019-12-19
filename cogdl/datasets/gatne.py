@@ -87,7 +87,7 @@ class GatneDataset(Dataset):
 class AmazonDataset(GatneDataset):
     def __init__(self):
         dataset = 'amazon'
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
+        path = osp.join(osp.dirname(osp.realpath(__file__)), '../..', 'data', dataset)
         super(AmazonDataset, self).__init__(path, dataset)
 
 
@@ -95,7 +95,7 @@ class AmazonDataset(GatneDataset):
 class TwitterDataset(GatneDataset):
     def __init__(self):
         dataset = 'twitter'
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
+        path = osp.join(osp.dirname(osp.realpath(__file__)), '../..', 'data', dataset)
         super(TwitterDataset, self).__init__(path, dataset)
 
 
@@ -103,5 +103,5 @@ class TwitterDataset(GatneDataset):
 class YouTubeDataset(GatneDataset):
     def __init__(self):
         dataset = 'youtube'
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
+        path = osp.join(osp.dirname(osp.realpath(__file__)), '../..', 'data', dataset)
         super(YouTubeDataset, self).__init__(path, dataset)

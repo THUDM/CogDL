@@ -13,9 +13,9 @@ from tabulate import tabulate
 from tqdm import tqdm
 
 from cogdl import options
+from cogdl.datasets import build_dataset
 from cogdl.tasks import build_task
-
-from train import tabulate_results, gen_variants
+from train import gen_variants, tabulate_results
 
 
 def main(args):
@@ -50,6 +50,14 @@ if __name__ == "__main__":
     parser = options.get_training_parser()
     args, _ = parser.parse_known_args()
     args = options.parse_args_and_arch(parser, args)
+
+    # Make sure datasets are downloaded first
+    datasets = args.dataset
+    for dataset in datasets:
+        args.dataset = dataset
+        _ = build_dataset(args)
+    args.dataset = datasets
+
     print(args)
     variants = list(
         gen_variants(dataset=args.dataset, model=args.model, seed=args.seed)

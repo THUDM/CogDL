@@ -86,5 +86,5 @@ class EdgelistLabel(Dataset):
 class DBLP(EdgelistLabel):
     def __init__(self):
         dataset = 'dblp'
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
+        path = osp.join(osp.dirname(osp.realpath(__file__)), '../..', 'data', dataset)
         super(DBLP, self).__init__(path, dataset)

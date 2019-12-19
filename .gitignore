@@ -103,6 +103,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-cogdl/data/**/*
-!cogdl/data/*
-train_single.py
+data/
+

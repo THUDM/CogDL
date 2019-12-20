@@ -39,7 +39,7 @@ Please follow the instructions here to install PyTorch: https://github.com/pytor
 Install other dependencies:
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ## Usage

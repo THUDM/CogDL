@@ -11,6 +11,7 @@ try:
     import torch_geometric
 except ImportError:
     pyg = False
+    print("Failed to import PyTorch Geometric")
 else:
     pyg = True
 

@@ -65,11 +65,11 @@ class GatneDataset(Dataset):
     @property
     def raw_file_names(self):
         names = ["train.txt", "valid.txt", "test.txt"]
-        return ["{}/{}".format(self.name.lower(), name) for name in names]
+        return names
 
     @property
     def processed_file_names(self):
-        return "data.pt"
+        return ["data.pt"]
 
     def get(self, idx):
         assert idx == 0

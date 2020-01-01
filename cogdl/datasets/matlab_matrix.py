@@ -4,7 +4,7 @@ import os.path as osp
 from itertools import product
 
 import numpy as np
-import scipy
+import scipy.io
 import torch
 
 from cogdl.data import Data, Dataset, download_url

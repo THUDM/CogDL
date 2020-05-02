@@ -73,6 +73,13 @@ def get_display_data_parser():
     return parser
 
 
+def get_download_data_parser():
+    parser = get_parser()
+    add_dataset_args(parser)
+
+    return parser
+
+
 def parse_args_and_arch(parser, args):
     """The parser doesn't know about model-specific args, so we parse twice."""
     # args, _ = parser.parse_known_args()

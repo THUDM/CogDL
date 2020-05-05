@@ -65,11 +65,11 @@ class GatneDataset(Dataset):
     @property
     def raw_file_names(self):
         names = ["train.txt", "valid.txt", "test.txt"]
-        return ["{}/{}".format(self.name.lower(), name) for name in names]
+        return names
 
     @property
     def processed_file_names(self):
-        return "data.pt"
+        return ["data.pt"]
 
     def get(self, idx):
         assert idx == 0
@@ -77,7 +77,7 @@ class GatneDataset(Dataset):
 
     def download(self):
         for name in self.raw_file_names:
-            download_url("{}/{}".format(self.url, name), self.raw_dir)
+            download_url("{}/{}/{}".format(self.url, self.name.lower(), name), self.raw_dir)
 
     def process(self):
         data = read_gatne_data(self.raw_dir)

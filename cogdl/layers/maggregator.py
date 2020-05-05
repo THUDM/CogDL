@@ -17,7 +17,7 @@ class MeanAggregator(torch.nn.Module):
         self.linear = nn.Linear(in_channels, out_channels, bias)
 
     @staticmethod
-    def norm(x, edge_index, num_nodes):
+    def norm(x, edge_index):
         # here edge_index is already a sparse tensor
         deg = torch.sparse.sum(edge_index, 1)
         deg_inv = deg.pow(-1).to_dense()
@@ -29,10 +29,10 @@ class MeanAggregator(torch.nn.Module):
 
         return x.t()
 
-    def forward(self, x, edge_index, num_nodes, edge_weight=None, bias=True):
+    def forward(self, x, edge_index, edge_weight=None, bias=True):
         """"""
         x = self.linear(x)
-        x = self.norm(x, edge_index, num_nodes)
+        x = self.norm(x, edge_index)
         return x
 
     def update(self, aggr_out):

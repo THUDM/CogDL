@@ -83,7 +83,12 @@ class Graphsage(BaseModel):
     def forward(self, x, edge_index):
         for i in range(self.num_layers):
             edge_index_sp = self.sampler(edge_index, self.sample_size[i])
-            x = self.convs[i](x, edge_index_sp)
+            adj_sp = torch.sparse_coo_tensor(
+                edge_index_sp,
+                torch.ones(edge_index_sp.shape[1]).float(),
+                (x.shape[0], x.shape[0]),
+            ).cuda()
+            x = self.convs[i](x, adj_sp)
             if i != self.num_layers - 1:
                 x = F.relu(x)
                 x = F.dropout(x, p=self.dropout, training=self.training)

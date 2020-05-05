@@ -130,7 +130,7 @@ class LINE(BaseModel):
 
             vec_error = np.zeros((batch_size, self.dimension))
             label, target = np.asarray([1 for i in range(batch_size)]), np.asarray(v)
-            for j in range(self.negative):
+            for j in range(1 + self.negative):
                 if j != 0:
                     label = np.asarray([0 for i in range(batch_size)])
                     for i in range(batch_size):

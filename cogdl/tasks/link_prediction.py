@@ -137,6 +137,11 @@ class LinkPrediction(BaseTask):
 
         edge_list = self.data.edge_index.numpy()
         edge_list = list(zip(edge_list[0], edge_list[1]))
+        edge_set = set()
+        for edge in edge_list:
+            if (edge[0], edge[1]) not in edge_set and (edge[1], edge[0]) not in edge_set:
+                edge_set.add(edge)
+        edge_list = list(edge_set)
         self.train_data, self.valid_data, self.test_data = divide_data(
             edge_list, [0.85, 0.05, 0.10]
         )

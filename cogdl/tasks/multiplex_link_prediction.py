@@ -70,8 +70,6 @@ class MultiplexLinkPrediction(BaseTask):
         dataset = build_dataset(args)
         data = dataset[0]
         self.data = data
-        print(self.data.keys)
-        # self.data = data.cuda()
         if hasattr(dataset, "num_features"):
             args.num_features = dataset.num_features
         model = build_model(args)
@@ -80,36 +78,22 @@ class MultiplexLinkPrediction(BaseTask):
         self.max_epoch = args.max_epoch
         self.eval_type = args.eval_type
 
-        # edge_list = self.data.edge_index.cpu().numpy()
-        # edge_list = list(zip(edge_list[0], edge_list[1]))
-        # self.train_data, self.valid_data, self.test_data = divide_data(edge_list, [0.85, 0.05, 0.10])
-
-        # self.valid_data, self.test_data = gen_node_pairs(self.train_data, self.valid_data, self.test_data)
-
-        # edge_list = self.data.edge_index.cpu().numpy()
-        # G = nx.Graph()
-        # G.add_edges_from(edge_list.T.tolist())
-        # self.criterion = NEG_loss(
-        #     len(self.data.x),
-        #     args.negative_ratio,
-        #     degree=np.array(list(dict(G.degree()).values())),
-        # )
-
-        # self.optimizer = torch.optim.Adam(
-        #     self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
-        # )
-
     def train(self):
         total_roc_auc, total_f1_score, total_pr_auc = [], [], []
+        if hasattr(self.model, "multiplicity"):
+            all_embs = self.model.train(self.data.train_data)
         for key in self.data.train_data.keys():
             if self.eval_type == "all" or key in self.eval_type:
-                G = nx.Graph()
-                G.add_edges_from(self.data.train_data[key])
-                embeddings = self.model.train(G)
-
                 embs = dict()
-                for vid, node in enumerate(G.nodes()):
-                    embs[node] = embeddings[vid]
+                if not hasattr(self.model, "multiplicity"):
+                    G = nx.Graph()
+                    G.add_edges_from(self.data.train_data[key])
+                    embeddings = self.model.train(G)
+
+                    for vid, node in enumerate(G.nodes()):
+                        embs[node] = embeddings[vid]
+                else:
+                    embs = all_embs[key]
                 roc_auc, f1_score, pr_auc = evaluate(
                     embs, self.data.test_data[key][0], self.data.test_data[key][1]
                 )

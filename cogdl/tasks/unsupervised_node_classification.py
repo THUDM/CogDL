@@ -1,4 +1,5 @@
 import copy
+import os
 import random
 import warnings
 from collections import defaultdict
@@ -51,9 +52,15 @@ class UnsupervisedNodeClassification(BaseTask):
             self.num_nodes, self.num_classes = self.data.y.shape
 
         self.model = build_model(args)
+        self.model_name = args.model
         self.hidden_size = args.hidden_size
         self.num_shuffle = args.num_shuffle
+        self.save_dir = args.save_dir
         self.is_weighted = self.data.edge_attr is not None
+
+    def save_emb(self, embs):
+        name = os.path.join(self.save_dir, self.model_name + '_emb.npy')
+        np.save(name, embs)
 
     def train(self):
         G = nx.Graph()
@@ -73,6 +80,8 @@ class UnsupervisedNodeClassification(BaseTask):
         features_matrix = np.zeros((self.num_nodes, self.hidden_size))
         for vid, node in enumerate(G.nodes()):
             features_matrix[node] = embeddings[vid]
+
+        self.save_emb(features_matrix)
 
         # label nor multi-label
         label_matrix = sp.csr_matrix(self.label_matrix)

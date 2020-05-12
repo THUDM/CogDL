@@ -43,6 +43,7 @@ class Graph2Vec(BaseModel):
         parser.add_argument("--sampling", type=float, default=0.0001)
         parser.add_argument("--iteration", type=int, default=2)
         parser.add_argument("--epochs", type=int, default=20)
+        parser.add_argument("--nn", type=bool, default=False)
 
 
     @classmethod
@@ -101,7 +102,7 @@ class Graph2Vec(BaseModel):
         self.epochs = epochs
         self.lr = lr
 
-    def forward(self, graphs):
+    def forward(self, graphs, **kwargs):
         if self.doc_collections is None:
             self.doc_collections = Parallel(n_jobs=self.n_workers)(
                 delayed(Graph2Vec.feature_extractor)(graph, self.rounds, str(i)) for i, graph in enumerate(graphs)
@@ -120,3 +121,6 @@ class Graph2Vec(BaseModel):
         vectors = np.array([self.model["g_"+str(i)] for i in range(len(graphs))])
         return vectors, None
 
+    def save_embedding(self, output_path):
+        self.model.wv.save("model.wv")
+        self.model.wv.save_word2vec_format("model.emb")

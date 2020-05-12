@@ -76,15 +76,12 @@ class NodeClassification(BaseTask):
     def _train_step(self):
         self.model.train()
         self.optimizer.zero_grad()
-        F.nll_loss(
-            self.model(self.data.x, self.data.edge_index)[self.data.train_mask],
-            self.data.y[self.data.train_mask],
-        ).backward()
+        self.model.loss(self.data).backward()
         self.optimizer.step()
 
     def _test_step(self, split="val"):
         self.model.eval()
-        logits = self.model(self.data.x, self.data.edge_index)
+        logits = self.model.predict(self.data)
         _, mask = list(self.data(f"{split}_mask"))[0]
         loss = F.nll_loss(logits[mask], self.data.y[mask])
 

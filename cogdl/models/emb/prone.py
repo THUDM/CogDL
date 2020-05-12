@@ -107,19 +107,20 @@ class ProNE(BaseModel):
         features_matrix = self._get_embedding_rand(F)
         return features_matrix
 
-    def _chebyshev_gaussian(self, A, a, order=10, mu=0.5, s=0.5):
+    def _chebyshev_gaussian(self, A, a, order=5, mu=0.5, s=0.2):
         # NE Enhancement via Spectral Propagation
         print("Chebyshev Series -----------------")
         t1 = time.time()
+        num_node = a.shape[0]
 
         if order == 1:
             return a
 
-        A = sp.eye(self.num_node) + A
+        A = sp.eye(num_node) + A
         DA = preprocessing.normalize(A, norm="l1")
-        L = sp.eye(self.num_node) - DA
+        L = sp.eye(num_node) - DA
 
-        M = L - mu * sp.eye(self.num_node)
+        M = L - mu * sp.eye(num_node)
 
         Lx0 = a
         Lx1 = M.dot(a)

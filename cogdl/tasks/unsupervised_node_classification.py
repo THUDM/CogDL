@@ -19,7 +19,7 @@ from tqdm import tqdm
 from cogdl import options
 from cogdl.data import Dataset, InMemoryDataset
 from cogdl.datasets import build_dataset
-from cogdl.models import build_model
+from cogdl.models import build_model, register_model
 
 from . import BaseTask, register_task
 
@@ -56,8 +56,20 @@ class UnsupervisedNodeClassification(BaseTask):
         self.hidden_size = args.hidden_size
         self.num_shuffle = args.num_shuffle
         self.save_dir = args.save_dir
+        self.enhance = args.enhance
+        self.args = args
         self.is_weighted = self.data.edge_attr is not None
 
+
+    def enhance_emb(self, G, embs):
+        A = sp.csr_matrix(nx.adjacency_matrix(G))
+        self.args.model = 'prone'
+        self.args.step, self.args.theta, self.args.mu = 5, 0.5, 0.2
+        model = build_model(self.args)
+        embs = model._chebyshev_gaussian(A, embs)
+        return embs
+    
+    
     def save_emb(self, embs):
         name = os.path.join(self.save_dir, self.model_name + '_emb.npy')
         np.save(name, embs)
@@ -75,6 +87,8 @@ class UnsupervisedNodeClassification(BaseTask):
         else:
             G.add_edges_from(self.data.edge_index.t().tolist())
         embeddings = self.model.train(G)
+        if self.enhance is True:
+            embeddings = self.enhance_emb(G, embeddings)
 
         # Map node2id
         features_matrix = np.zeros((self.num_nodes, self.hidden_size))

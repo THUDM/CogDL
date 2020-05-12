@@ -5,6 +5,7 @@ from sklearn.utils import shuffle as skshuffle
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.metrics import f1_score, accuracy_score
+from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -13,6 +14,7 @@ from cogdl.data import Data, DataLoader, InMemoryDataset
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from . import BaseTask, register_task
+from .graph_classification import node_degree_as_feature
 
 @register_task("unsupervised_graph_classification")
 class UnsupervisedGraphClassification(BaseTask):
@@ -20,52 +22,88 @@ class UnsupervisedGraphClassification(BaseTask):
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=128)
         parser.add_argument("--num-shuffle", type=int, default=10)
-
+        parser.add_argument("--degree-feature", dest="degree_feature", action="store_true")
 
     def __init__(self, args):
         super(UnsupervisedGraphClassification, self).__init__(args)
         dataset = build_dataset(args)
         self.label = np.array([data.y for data in dataset])
-        print(self.label)
         self.data = [
             Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr, pos=data.pos).apply(lambda x:x.cuda())
             for data in dataset
         ]
+        args.num_features = dataset.num_features
+        args.num_classes = args.hidden_size
+        args.use_unsup = True
+
+        if args.degree_feature:
+            self.data = node_degree_as_feature(self.data)
+            args.num_features = self.data[0].num_features
+
         self.num_graphs = len(self.data)
         self.num_classes = dataset.num_classes
-        self.label_matrix = np.zeros((self.num_graphs, self.num_classes))
-        self.label_matrix[range(self.num_graphs), np.array([data.y for data in self.data], dtype=int)] = 1
-
+        # self.label_matrix = np.zeros((self.num_graphs, self.num_classes))
+        # self.label_matrix[range(self.num_graphs), np.array([data.y for data in self.data], dtype=int)] = 1
 
         self.model = build_model(args)
+        self.model = self.model.cuda()
         self.model_name = args.model
         self.hidden_size = args.hidden_size
         self.num_shuffle = args.num_shuffle
         self.save_dir = args.save_dir
-        self.epochs = args.max_epoch
+        self.epochs = args.epochs
+        self.use_nn = args.nn
 
-        # self.optimizer = torch.optim.Adam(
-        #     self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
-        # )
+        if args.nn:
+            self.optimizer = torch.optim.Adam(
+                self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
+            )
+            self.data_loader = DataLoader(self.data, batch_size=args.batch_size, shuffle=True)
 
     def train(self):
-        prediction = None
-        for epoch in range(self.epochs):
+        if self.use_nn:
+            epoch_iter = tqdm(range(self.epochs))
+            for epoch in epoch_iter:
+                loss_n = 0
+                for batch in self.data_loader:
+                    batch = batch.cuda()
+                    predict, loss = self.model(batch.x, batch.edge_index, batch.batch)
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    self.optimizer.step()
+                    loss_n += loss.item()
+                epoch_iter.set_description(
+                    f"Epoch: {epoch:03d}, TrainLoss: {loss_n} "
+                )
+            with torch.no_grad():
+                self.model.eval()
+                prediction = []
+                label = []
+                for batch in self.data_loader:
+                    batch = batch.cuda()
+                    predict, _ = self.model(batch.x, batch.edge_index, batch.batch)
+                    prediction.extend(predict.cpu().numpy())
+                    label.extend(batch.y.cpu().numpy())
+                prediction = np.array(prediction).reshape(len(label), -1)
+                label = np.array(label).reshape(-1)
+
+        else:
             prediction, loss = self.model(self.data)
-            if loss is None:
-                break
+            label = self.label
+
+
         if prediction is not None:
-            self.save_emb(prediction)
-            return self._evaluate(prediction)
+            # self.save_emb(prediction)
+            return self._evaluate(prediction, label)
 
     def save_emb(self, embs):
         name = os.path.join(self.save_dir, self.model_name + '_emb.npy')
         np.save(name, embs)
 
-    def _evaluate(self, embeddings):
+    def _evaluate(self, embeddings, labels):
         shuffles = []
         for _ in range(self.num_shuffle):
-            shuffles.append(skshuffle(embeddings, self.label))
+            shuffles.append(skshuffle(embeddings, labels))
         all_results = defaultdict(list)
         training_percents = [0.1, 0.3, 0.5, 0.7, 0.9]
         for training_percent in training_percents:

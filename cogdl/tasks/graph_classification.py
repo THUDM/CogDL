@@ -61,27 +61,21 @@ class GraphClassification(BaseTask):
 
     def __init__(self, args):
         super(GraphClassification, self).__init__(args)
-
         dataset = build_dataset(args)
-        self.data = [
-            Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr, pos=data.pos).apply(lambda x:x.cuda())
-            for data in dataset
-        ]
 
+        args.max_graph_size = max([ds.num_nodes for ds in dataset])
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
         args.use_unsup = False
-        if args.degree_feature:
-            self.data = node_degree_as_feature(self.data)
-            args.num_features = self.data[0].num_features
 
+        self.data = self.generate_data(dataset, args)
 
         model = build_model(args)
         self.model = model.cuda()
         self.patience = args.patience
         self.max_epoch = args.max_epoch
 
-        self.train_loader, self.val_loader, self.test_loader = self.model.split_dataset(dataset, args)
+        self.train_loader, self.val_loader, self.test_loader = self.model.split_dataset(self.data, args)
 
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
@@ -134,7 +128,7 @@ class GraphClassification(BaseTask):
             batch = batch.cuda()
             self.optimizer.zero_grad()
             # print(batch.x.shape, batch.y.shape, batch.batch.shape)
-            output, loss = self.model(batch.x, batch.edge_index, batch.batch, label=batch.y)
+            output, loss = self.model(x=batch.x, edge_index=batch.edge_index, batch=batch.batch, label=batch.y)
             loss_n += loss.item()
             loss.backward()
             self.optimizer.step()
@@ -163,3 +157,17 @@ class GraphClassification(BaseTask):
         pred = pred.max(1)[1]
         acc = pred.eq(y).sum().item() / len(y)
         return acc, loss_n
+
+    def generate_data(self, dataset, args):
+        if str(type(dataset).__name__) == "ModelNetData10" or str(type(dataset).__name__) == "ModelNetData40":
+            train_set, test_set = dataset.get_all()
+            return {"train": train_set, "test": test_set}
+        else:
+            data = [
+                Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr, pos=data.pos).apply(lambda x:x.cuda())
+                for data in dataset
+            ]
+            if args.degree_feature:
+                data = node_degree_as_feature(data)
+                args.num_features = data[0].num_features
+            return data

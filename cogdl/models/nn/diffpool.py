@@ -83,10 +83,6 @@ class BatchedGraphSAGE(nn.Module):
         self.self_loop = self_loop
         self.use_bn = use_bn
         self.weight = nn.Linear(in_feats, out_feats, bias=True)
-        if use_bn:
-            self.bn = nn.BatchNorm1d(out_feats)
-        else:
-            self.register_parameter('bn', None)
 
         nn.init.xavier_uniform_(self.weight.weight.data, gain=nn.init.calculate_gain('relu'))
 
@@ -99,18 +95,20 @@ class BatchedGraphSAGE(nn.Module):
         h = self.weight(h)
         h = F.normalize(h, dim=2, p=2)
         h = F.relu(h)
-        #TODO: batch norm
-        # if self.use_bn:
+        # TODO: shape = [a, 0, b] ?
+        # if self.use_bn and h.shape[1] > 0:
+        #     self.bn = nn.BatchNorm1d(h.shape[1]).to(device)
         #     h = self.bn(h)
         return h
 
 
 class BatchedDiffPoolLayer(nn.Module):
-    def __init__(self, in_feats, out_feats, assign_dim, dropout=0.5, link_pred_loss=True):
+    def __init__(self, in_feats, out_feats, assign_dim, batch_size, dropout=0.5, link_pred_loss=True):
         super(BatchedDiffPoolLayer, self).__init__()
         self.assign_dim = assign_dim
         self.dropout = dropout
         self.use_link_pred = link_pred_loss
+        self.batch_size = batch_size
         self.embd_gnn = SAGEConv(in_feats, out_feats, normalize=True, concat=True)
         self.pool_gnn = SAGEConv(in_feats, assign_dim, normalize=True, concat=True)
         self.loss_dict = dict()
@@ -123,15 +121,17 @@ class BatchedDiffPoolLayer(nn.Module):
         masked_tensor = []
         value_set, value_counts = torch.unique(batch, return_counts=True)
         batch_size = len(value_set)
+        # batch_size = self.batch_size
         for i in value_counts:
             masked = torch.ones((i, int(pooled.size()[1]/batch_size)))
             masked_tensor.append(masked)
         masked = torch.FloatTensor(block_diag(*masked_tensor)).to(device)
 
         # result = torch.nn.functional.softmax(masked * pooled, dim=-1)
+        # result = result * masked
+        # result = result / (result.sum(dim=-1, keepdim=True) + 1e-13)
         result = masked_softmax(pooled, masked, memory_efficient=False)
-        result = result * masked
-        result = result / (result.sum(dim=-1, keepdim=True) + 1e-13)
+
 
         h = torch.matmul(result.t(), embed)
         if not edge_weight:
@@ -204,8 +204,8 @@ def toBatchedGraph(batch_adj, batch_feat, node_per_pool_graph):
 class DiffPool(BaseModel):
     @staticmethod
     def add_args(parser):
-        parser.add_argument("--num-layers", type=int, default=4)
-        parser.add_argument("--num-pooling-layers", type=int, default=4)
+        parser.add_argument("--num-layers", type=int, default=2)
+        parser.add_argument("--num-pooling-layers", type=int, default=2)
         parser.add_argument("--no-link-pred", dest="no_link_pred", action="store_false")
         parser.add_argument("--pooling-ratio", type=float, default=0.15)
         parser.add_argument("--embedding-dim", type=int, default=64)
@@ -239,8 +239,8 @@ class DiffPool(BaseModel):
         train_data = dataset[:train_index]
         valid_data = dataset[train_index:-test_index]
         test_data = dataset[-test_index:]
-        return DataLoader(train_data, args.batch_size), DataLoader(valid_data, args.batch_size),\
-                DataLoader(test_data, args.batch_size)
+        return DataLoader(train_data, args.batch_size, drop_last=True), DataLoader(valid_data, args.batch_size, drop_last=True),\
+                DataLoader(test_data, 1)
 
     def __init__(self, in_feats, hidden_dim, embed_dim, num_classes, num_layers, num_pool_layers, dropout, no_link_pred,
                  assign_dim, pooling_ratio, batch_size, concat=False, use_bn=False):
@@ -250,11 +250,11 @@ class DiffPool(BaseModel):
         self.use_bn = use_bn
         self.dropout = dropout
         self.use_link_loss = not no_link_pred
-        assert num_layers > 3, "layers > 3"
+        # assert num_layers > 3, "layers > 3"
         self.diffpool_layers = nn.ModuleList()
         self.before_pooling = GraphSAGE(in_feats, hidden_dim, embed_dim,
                                         num_layers=num_layers, dropout=dropout, use_bn=self.use_bn)
-        self.init_diffpool = BatchedDiffPoolLayer(embed_dim, hidden_dim, assign_dim, dropout, self.use_link_loss)
+        self.init_diffpool = BatchedDiffPoolLayer(embed_dim, hidden_dim, assign_dim, batch_size, dropout, self.use_link_loss)
 
         pooled_emb_dim = embed_dim
         self.after_pool = nn.ModuleList()

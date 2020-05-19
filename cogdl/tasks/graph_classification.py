@@ -99,7 +99,7 @@ class GraphClassification(BaseTask):
             self.scheduler.step()
             self._train_step()
             train_acc, _ = self._test_step(split="train")
-            val_acc, val_loss = self._test_step(split="val")
+            val_acc, val_loss = self._test_step(split="valid")
             epoch_iter.set_description(
                 f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
             )

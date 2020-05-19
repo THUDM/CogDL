@@ -47,3 +47,12 @@ class MLP(BaseModel):
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.mlp[-1](x)
         return F.log_softmax(x, dim=1)
+
+    def loss(self, data):
+        return F.nll_loss(
+            self.forward(data.x, data.edge_index)[data.train_mask],
+            data.y[data.train_mask],
+        )
+    
+    def predict(self, data):
+        return self.forward(data.x, data.edge_index)

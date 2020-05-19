@@ -89,3 +89,12 @@ class TKipfGCN(BaseModel):
         # return x
         # h2 = x
         return F.log_softmax(x, dim=-1)
+    
+    def loss(self, data):
+        return F.nll_loss(
+            self.forward(data.x, data.edge_index)[data.train_mask],
+            data.y[data.train_mask],
+        )
+    
+    def predict(self, data):
+        return self.forward(data.x, data.edge_index)

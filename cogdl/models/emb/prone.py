@@ -107,7 +107,7 @@ class ProNE(BaseModel):
         features_matrix = self._get_embedding_rand(F)
         return features_matrix
 
-    def _chebyshev_gaussian(self, A, a, order=5, mu=0.5, s=0.2):
+    def _chebyshev_gaussian(self, A, a, order=5, mu=0.5, s=0.2, plus=False, nn=False):
         # NE Enhancement via Spectral Propagation
         print("Chebyshev Series -----------------")
         t1 = time.time()
@@ -140,6 +140,9 @@ class ProNE(BaseModel):
             Lx1 = Lx2
             del Lx2
             print("Bessell time", i, time.time() - t1)
-        mm = A.dot(a - conv)
-        emb = self._get_embedding_dense(mm, self.dimension)
+        emb = mm = conv
+        if not plus:
+            mm = A.dot(a - conv)
+        if not nn:
+            emb = self._get_embedding_dense(mm, self.dimension)
         return emb

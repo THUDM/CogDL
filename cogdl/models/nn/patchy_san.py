@@ -90,10 +90,12 @@ class PatchySAN(BaseModel):
     def forward(self, x, edge_index=None, batch=None, label=None):
         # print(x.shape, edge_index.shape, label)
         data = get_feature(batch, self.num_features, self.num_classes, self.num_sample, self.num_neighbor, self.stride)
-        data = torch.from_numpy(data).cuda()    
-        logits= self.nn(data)
-        criterion = self.criterion(logits, label)
-        return logits, criterion
+        data = torch.from_numpy(data).cuda()
+
+        logits= self.nn(data)        
+        if label is not None:
+            return logits, self.criterion(logits, label)
+        return logits, None
     
 
 def assemble_neighbor(G, node, num_neighbor, sorted_nodes):

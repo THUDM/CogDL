@@ -61,19 +61,14 @@ class GraphClassification(BaseTask):
 
     def __init__(self, args):
         super(GraphClassification, self).__init__(args)
-
         dataset = build_dataset(args)
-        self.data = [
-            Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr, pos=data.pos).apply(lambda x:x.cuda())
-            for data in dataset
-        ]
+
+        args.max_graph_size = max([ds.num_nodes for ds in dataset])
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
         args.use_unsup = False
-        if args.degree_feature:
-            self.data = node_degree_as_feature(self.data)
-            args.num_features = self.data[0].num_features
 
+        self.data = self.generate_data(dataset, args)
 
         model = build_model(args)
         self.model = model.cuda()
@@ -106,7 +101,7 @@ class GraphClassification(BaseTask):
             train_acc, train_loss = self._test_step(split="train")
             val_acc, val_loss = self._test_step(split="val")
             epoch_iter.set_description(
-                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, Train_loss: {train_loss:.4f}, Val_loss: {val_loss:.4f}"
+                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
             )
             if val_loss < min_loss or val_acc > max_score:
                 if val_loss <= best_loss:  # and val_acc >= best_score:
@@ -133,7 +128,7 @@ class GraphClassification(BaseTask):
             batch = batch.cuda()
             self.optimizer.zero_grad()
             batch_data = batch if self.model.__class__.__name__ == "PatchySAN" else batch.batch
-            predict, loss = self.model(batch.x, batch.edge_index, batch_data, label=batch.y)
+            output, loss = self.model(x=batch.x, edge_index=batch.edge_index, batch=batch_data, label=batch.y)
             loss_n += loss.item()
             loss.backward()
             self.optimizer.step()
@@ -154,8 +149,7 @@ class GraphClassification(BaseTask):
             for batch in loader:
                 batch = batch.cuda()
                 batch_data = batch if self.model.__class__.__name__ == "PatchySAN" else batch.batch
-                predict, loss = self.model(batch.x, batch.edge_index, batch_data, label=batch.y)
-                loss_n += loss.item()
+                predict, loss = self.model(batch.x, batch.edge_index, batch_data)
                 y.append(batch.y)
                 pred.extend(predict)
 
@@ -164,3 +158,17 @@ class GraphClassification(BaseTask):
         pred = pred.max(1)[1]
         acc = pred.eq(y).sum().item() / len(y)
         return acc, loss_n
+
+    def generate_data(self, dataset, args):
+        if str(type(dataset).__name__) == "ModelNetData10" or str(type(dataset).__name__) == "ModelNetData40":
+            train_set, test_set = dataset.get_all()
+            return {"train": train_set, "test": test_set}
+        else:
+            data = [
+                Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr, pos=data.pos).apply(lambda x:x.cuda())
+                for data in dataset
+            ]
+            if args.degree_feature:
+                data = node_degree_as_feature(data)
+                args.num_features = data[0].num_features
+            return data

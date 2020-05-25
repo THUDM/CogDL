@@ -49,8 +49,10 @@ class Data(object):
     @property
     def keys(self):
         r"""Returns all names of graph attributes."""
-        return [key for key in self.__dict__.keys() if self[key] is not None]
-
+        keys = [key for key in self.__dict__.keys() if self[key] is not None]
+        keys = [key for key in keys if key[:2] != '__' and key[-2:] != '__']
+        return keys
+    
     def __len__(self):
         r"""Returns the number of all present attributes."""
         return len(self.keys)
@@ -88,6 +90,20 @@ class Data(object):
         # `*index*` and `*face*` should be concatenated in the last dimension,
         # everything else in the first dimension.
         return -1 if bool(re.search("(index|face)", key)) else 0
+    
+    def __inc__(self, key, value):
+        r""""Returns the incremental count to cumulatively increase the value
+        of the next attribute of :obj:`key` when creating batches.
+
+        .. note::
+
+            This method is for internal use only, and should only be overridden
+            if the batch concatenation process is corrupted for a specific data
+            attribute.
+        """
+        # Only `*index*` and `*face*` should be cumulatively summed up when
+        # creating batches.
+        return self.num_nodes if bool(re.search('(index|face)', key)) else 0
 
     @property
     def num_edges(self):

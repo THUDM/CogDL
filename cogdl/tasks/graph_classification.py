@@ -67,7 +67,6 @@ class GraphClassification(BaseTask):
             Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr, pos=data.pos).apply(lambda x:x.cuda())
             for data in dataset
         ]
-
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
         args.use_unsup = False
@@ -81,7 +80,7 @@ class GraphClassification(BaseTask):
         self.patience = args.patience
         self.max_epoch = args.max_epoch
 
-        self.train_loader, self.val_loader, self.test_loader = self.model.split_dataset(dataset, args)
+        self.train_loader, self.val_loader, self.test_loader = self.model.split_dataset(self.data, args)
 
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
@@ -104,10 +103,10 @@ class GraphClassification(BaseTask):
         for epoch in epoch_iter:
             self.scheduler.step()
             self._train_step()
-            train_acc, _ = self._test_step(split="train")
+            train_acc, train_loss = self._test_step(split="train")
             val_acc, val_loss = self._test_step(split="val")
             epoch_iter.set_description(
-                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
+                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, Train_loss: {train_loss:.4f}, Val_loss: {val_loss:.4f}"
             )
             if val_loss < min_loss or val_acc > max_score:
                 if val_loss <= best_loss:  # and val_acc >= best_score:
@@ -133,8 +132,8 @@ class GraphClassification(BaseTask):
         for batch in self.train_loader:
             batch = batch.cuda()
             self.optimizer.zero_grad()
-            # print(batch.x.shape, batch.y.shape, batch.batch.shape)
-            output, loss = self.model(batch.x, batch.edge_index, batch.batch, label=batch.y)
+            batch_data = batch if self.model.__class__.__name__ == "PatchySAN" else batch.batch
+            predict, loss = self.model(batch.x, batch.edge_index, batch_data, label=batch.y)
             loss_n += loss.item()
             loss.backward()
             self.optimizer.step()
@@ -154,7 +153,9 @@ class GraphClassification(BaseTask):
         with torch.no_grad():
             for batch in loader:
                 batch = batch.cuda()
-                predict, _ = self.model(batch.x, batch.edge_index, batch.batch)
+                batch_data = batch if self.model.__class__.__name__ == "PatchySAN" else batch.batch
+                predict, loss = self.model(batch.x, batch.edge_index, batch_data, label=batch.y)
+                loss_n += loss.item()
                 y.append(batch.y)
                 pred.extend(predict)
 

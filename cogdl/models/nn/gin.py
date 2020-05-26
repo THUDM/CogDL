@@ -5,38 +5,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.utils import remove_self_loops
 from torch_scatter import scatter_add
-from torch_geometric.nn import GINConv
 
 from .. import BaseModel, register_model
 from cogdl.data import DataLoader
-
-# def broadcast(src, other, dim):
-#     if dim < 0:
-#         dim = other.dim() + dim
-#     if src.dim() == 1:
-#         for _ in range(0, dim):
-#             src = src.unsqueeze(0)
-#     for _ in range(src.dim(), other.dim()):
-#         src = src.unsqueeze(-1)
-#     src = src.expand_as(other)
-#     return src
-#
-#
-# def scatter_sum(src, index, dim=-1, out=None, dim_size=None):
-#     index = broadcast(index, src, dim)
-#     if out is None:
-#         size = list(src.shape)
-#         if dim_size is not None:
-#             size[dim] = dim_size
-#         elif index.numel() == 0:
-#             size[dim] = 0
-#         else:
-#             size[dim] = int(index.max()) + 1
-#         out = torch.zeros(size, dtype=src.dtype, device=src.device)
-#         return out.scatter_add_(dim, index, src)
-#     else:
-#         return out.scatter_add_(dim, index, src)
-
 
 
 class GINLayer(nn.Module):
@@ -90,6 +61,7 @@ class GINMLP(nn.Module):
             h = F.relu(h)
         return self.nn[self.num_layers - 1](h)
 
+
 @register_model("gin")
 class GIN(BaseModel):
     @staticmethod
@@ -104,6 +76,9 @@ class GIN(BaseModel):
         parser.add_argument("--train-epsilon", type=bool, default=True)
         parser.add_argument("--pooling", type=str, default='sum')
         parser.add_argument("--batch-size", type=int, default=128)
+        parser.add_argument("--lr", type=float, default=0.001)
+        parser.add_argument("--train-ratio", type=float, default=0.7)
+        parser.add_argument("--test-ratio", type=float, default=0.1)
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -121,14 +96,17 @@ class GIN(BaseModel):
 
     @classmethod
     def split_dataset(cls, dataset, args):
-        test_index = random.sample(range(len(dataset)), len(dataset)//10)
-        train_index = [x for x in range(len(dataset)) if x not in test_index]
-
-        train_dataset = [dataset[i] for i in train_index]
-        test_dataset = [dataset[i] for i in test_index]
-        train_loader = DataLoader(train_dataset, batch_size=args.batch_size)
-        test_loader = DataLoader(test_dataset, batch_size=args.batch_size)
-        return train_loader, test_loader, test_loader
+        random.shuffle(dataset)
+        train_size = int(len(dataset) * args.train_ratio)
+        test_size = int(len(dataset) * args.test_ratio)
+        bs = args.batch_size
+        train_loader = DataLoader(dataset[:train_size], batch_size=bs)
+        test_loader = DataLoader(dataset[-test_size:], batch_size=bs)
+        if args.train_ratio + args.test_ratio < 1:
+            valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
+        else:
+            valid_loader = test_loader
+        return train_loader, valid_loader, test_loader
 
     def __init__(self,
                  num_layers,
@@ -153,16 +131,6 @@ class GIN(BaseModel):
             self.gin_layers.append(GINLayer(mlp, eps, train_eps))
             self.batch_norm.append(nn.BatchNorm1d(hidden_dim))
 
-        # if pooling == 'sum':
-        #     pooling_layer = scatter_add
-        # elif pooling == 'mean':
-        #     raise NotImplementedError
-        # elif pooling == 'max':
-        #     raise NotImplementedError
-        # else:
-        #     raise ValueError("pooling type should be 'sum', 'mean' or 'max'")
-        # self.pooling = pooling_layer
-
         self.linear_prediction = nn.ModuleList()
         for i in range(self.num_layers):
             if i == 0:
@@ -172,7 +140,7 @@ class GIN(BaseModel):
         self.dropout = nn.Dropout(dropout)
         self.criterion = torch.nn.CrossEntropyLoss()
 
-    def forward(self, x, edge_index, batch, edge_weight=None, label=None):
+    def forward(self, x, edge_index, batch, label=None, *args, **kwargs):
         h = x
         layer_rep = [h]
         for i in range(self.num_layers-1):
@@ -194,3 +162,4 @@ class GIN(BaseModel):
 
     def loss(self, output, label=None):
         return self.criterion(output, label)
+

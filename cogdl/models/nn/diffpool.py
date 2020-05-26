@@ -1,41 +1,26 @@
 import numpy as np
+import random
+
 from scipy.linalg import block_diag
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from torch_geometric.nn import SAGEConv
+from torch_geometric.utils import add_remaining_self_loops
 
 from .. import BaseModel, register_model
 from cogdl.data import DataLoader
 
-def masked_softmax(matrix, mask, dim=-1, memory_efficient=True,
-                   mask_fill_value=-1e32):
-    '''
-    masked_softmax for dgl batch graph
-    code snippet contributed by AllenNLP (https://github.com/allenai/allennlp)
-    '''
-    if mask is None:
-        result = torch.nn.functional.softmax(matrix, dim=dim)
-    else:
-        mask = mask.float()
-        while mask.dim() < matrix.dim():
-            mask = mask.unsqueeze(1)
-        if not memory_efficient:
-            result = torch.nn.functional.softmax(matrix * mask, dim=dim)
-            result = result * mask
-            result = result / (result.sum(dim=dim, keepdim=True) + 1e-13)
-        else:
-            masked_matrix = matrix.masked_fill((1 - mask).byte(),
-                                               mask_fill_value)
-            result = torch.nn.functional.softmax(masked_matrix, dim=dim)
-    return result
 
 class EntropyLoss(nn.Module):
     # Return Scalar
     def forward(self, adj, anext, s_l):
+        # entropy.mean(-1).mean(-1): 1/n in node and batch
+        # entropy = (torch.distributions.Categorical(
+            # probs=s_l).entropy()).sum(-1).mean(-1)
         entropy = (torch.distributions.Categorical(
-            probs=s_l).entropy()).sum(-1).mean(-1)
+            probs=s_l).entropy()).mean()
         assert not torch.isnan(entropy)
         return entropy
 
@@ -46,6 +31,7 @@ class LinkPredLoss(nn.Module):
             adj - s_l.matmul(s_l.transpose(-1, -2))).norm(dim=(1, 2))
         link_pred_loss = link_pred_loss / (adj.size(1) * adj.size(2))
         return link_pred_loss.mean()
+
 
 class GraphSAGE(nn.Module):
     def __init__(self, in_feats, hidden_dim, out_feats, num_layers, dropout=0.5, normalize=False, concat=False, use_bn=False):
@@ -95,7 +81,7 @@ class BatchedGraphSAGE(nn.Module):
         h = self.weight(h)
         h = F.normalize(h, dim=2, p=2)
         h = F.relu(h)
-        # TODO: shape = [a, 0, b] ?
+        # TODO: shape = [a, 0, b]
         # if self.use_bn and h.shape[1] > 0:
         #     self.bn = nn.BatchNorm1d(h.shape[1]).to(device)
         #     h = self.bn(h)
@@ -103,35 +89,34 @@ class BatchedGraphSAGE(nn.Module):
 
 
 class BatchedDiffPoolLayer(nn.Module):
-    def __init__(self, in_feats, out_feats, assign_dim, batch_size, dropout=0.5, link_pred_loss=True):
+    def __init__(self, in_feats, out_feats, assign_dim, batch_size, dropout=0.5, link_pred_loss=True, entropy_loss=True):
         super(BatchedDiffPoolLayer, self).__init__()
         self.assign_dim = assign_dim
         self.dropout = dropout
         self.use_link_pred = link_pred_loss
         self.batch_size = batch_size
-        self.embd_gnn = SAGEConv(in_feats, out_feats, normalize=True, concat=True)
-        self.pool_gnn = SAGEConv(in_feats, assign_dim, normalize=True, concat=True)
+        self.embd_gnn = SAGEConv(in_feats, out_feats, normalize=False, concat=False)
+        self.pool_gnn = SAGEConv(in_feats, assign_dim, normalize=False, concat=False)
+
         self.loss_dict = dict()
-        self.loss_type = EntropyLoss()
+
 
     def forward(self, x, edge_index, batch, edge_weight=None):
         embed = self.embd_gnn(x, edge_index)
-        pooled = self.pool_gnn(x, edge_index)
+        pooled = F.softmax(self.pool_gnn(x, edge_index), dim=-1)
         device = x.device
         masked_tensor = []
         value_set, value_counts = torch.unique(batch, return_counts=True)
         batch_size = len(value_set)
-        # batch_size = self.batch_size
         for i in value_counts:
             masked = torch.ones((i, int(pooled.size()[1]/batch_size)))
             masked_tensor.append(masked)
         masked = torch.FloatTensor(block_diag(*masked_tensor)).to(device)
 
-        # result = torch.nn.functional.softmax(masked * pooled, dim=-1)
-        # result = result * masked
-        # result = result / (result.sum(dim=-1, keepdim=True) + 1e-13)
-        result = masked_softmax(pooled, masked, memory_efficient=False)
-
+        result = torch.nn.functional.softmax(masked * pooled, dim=-1)
+        result = result * masked
+        result = result / (result.sum(dim=-1, keepdim=True) + 1e-13)
+        # result = masked_softmax(pooled, masked, memory_efficient=False)
 
         h = torch.matmul(result.t(), embed)
         if not edge_weight:
@@ -143,8 +128,16 @@ class BatchedDiffPoolLayer(nn.Module):
         if self.use_link_pred:
             adj_loss = torch.norm((adj.to_dense() - torch.mm(result, result.t()))) / np.power((len(batch)), 2)
             self.loss_dict["adj_loss"] = adj_loss
-        self.loss_dict["entropy_loss"] = self.loss_type(adj, adj_new, masked)
+        entropy_loss = (torch.distributions.Categorical(probs=pooled).entropy()).mean()
+        assert not torch.isnan(entropy_loss)
+        self.loss_dict["entropy_loss"] = entropy_loss
         return adj_new, h
+
+    def get_loss(self):
+        loss_n = 0
+        for _, value in self.loss_dict.items():
+            loss_n += value
+        return loss_n
 
 
 class BatchedDiffPool(nn.Module):
@@ -167,7 +160,7 @@ class BatchedDiffPool(nn.Module):
 
     def forward(self, x, adj):
         h = self.feat_trans(x, adj)
-        next_l = self.assign_trans(x, adj)
+        next_l = F.softmax(self.assign_trans(x, adj), dim=-1)
 
         h = torch.matmul(next_l.transpose(-1, -2), h)
         next = torch.matmul(next_l.transpose(-1, -2), torch.matmul(adj, next_l))
@@ -188,11 +181,6 @@ def toBatchedGraph(batch_adj, batch_feat, node_per_pool_graph):
     adj_list = [batch_adj[i:i+node_per_pool_graph, i:i+node_per_pool_graph]
                 for i in range(0, batch_adj.size()[0], node_per_pool_graph)]
     feat_list = [batch_feat[i:i+node_per_pool_graph, :] for i in range(0, batch_adj.size()[0], node_per_pool_graph)]
-    # for i in range(num_graphs):
-    #     start = i * node_per_pool_graph
-    #     end = (i + 1) * node_per_pool_graph
-    #     adj_list.append(batch_adj[start:end, start:end])
-    #     feat_list.append(batch_feat[start:end, :])
     adj_list = list(map(lambda x: torch.unsqueeze(x, 0), adj_list))
     feat_list = list(map(lambda x: torch.unsqueeze(x, 0), feat_list))
     adj = torch.cat(adj_list, dim=0)
@@ -205,8 +193,8 @@ class DiffPool(BaseModel):
     @staticmethod
     def add_args(parser):
         parser.add_argument("--num-layers", type=int, default=2)
-        parser.add_argument("--num-pooling-layers", type=int, default=2)
-        parser.add_argument("--no-link-pred", dest="no_link_pred", action="store_false")
+        parser.add_argument("--num-pooling-layers", type=int, default=1)
+        parser.add_argument("--no-link-pred", dest="no_link_pred", action="store_true")
         parser.add_argument("--pooling-ratio", type=float, default=0.15)
         parser.add_argument("--embedding-dim", type=int, default=64)
         parser.add_argument("--hidden-dim", type=int, default=64)
@@ -214,7 +202,7 @@ class DiffPool(BaseModel):
         parser.add_argument("--batch-size", type=int, default=20)
         parser.add_argument("--train-ratio", type=float, default=0.7)
         parser.add_argument("--test-ratio", type=float, default=0.1)
-
+        parser.add_argument("--lr", type=float, default=0.001)
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -234,13 +222,17 @@ class DiffPool(BaseModel):
 
     @classmethod
     def split_dataset(cls, dataset, args):
-        train_index = int(len(dataset) * args.train_ratio)
-        test_index = int(len(dataset) * args.test_ratio)
-        train_data = dataset[:train_index]
-        valid_data = dataset[train_index:-test_index]
-        test_data = dataset[-test_index:]
-        return DataLoader(train_data, args.batch_size, drop_last=True), DataLoader(valid_data, args.batch_size, drop_last=True),\
-                DataLoader(test_data, 1)
+        random.shuffle(dataset)
+        train_size = int(len(dataset) * args.train_ratio)
+        test_size = int(len(dataset) * args.test_ratio)
+        bs = args.batch_size
+        train_loader = DataLoader(dataset[:train_size], batch_size=bs)
+        test_loader = DataLoader(dataset[-test_size:], batch_size=bs)
+        if args.train_ratio + args.test_ratio < 1:
+            valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
+        else:
+            valid_loader = test_loader
+        return train_loader, valid_loader, test_loader
 
     def __init__(self, in_feats, hidden_dim, embed_dim, num_classes, num_layers, num_pool_layers, dropout, no_link_pred,
                  assign_dim, pooling_ratio, batch_size, concat=False, use_bn=False):
@@ -299,7 +291,7 @@ class DiffPool(BaseModel):
         readout = torch.cat(readouts, dim=1)
         return h
 
-    def forward(self, x, edge_index, batch=None, label=None):
+    def forward(self, x, edge_index, batch, label=None, *args, **kwargs):
         readouts_all = []
 
         init_emb = self.before_pooling(x, edge_index)
@@ -323,8 +315,8 @@ class DiffPool(BaseModel):
 
     def loss(self, prediction, label):
         criterion = nn.CrossEntropyLoss()
-        # TODO: loss
-        loss_n = criterion(F.softmax(prediction), label)
+        loss_n = criterion(prediction, label)
+        loss_n += self.init_diffpool.get_loss()
         for layer in self.diffpool_layers:
             loss_n += layer.get_loss()
         return loss_n

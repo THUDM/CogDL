@@ -15,6 +15,8 @@ from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from . import BaseTask, register_task
 from .graph_classification import node_degree_as_feature
+from .unsupervised_node_classification import TopKRanker
+
 
 @register_task("unsupervised_graph_classification")
 class UnsupervisedGraphClassification(BaseTask):
@@ -91,7 +93,6 @@ class UnsupervisedGraphClassification(BaseTask):
             prediction, loss = self.model(self.data)
             label = self.label
 
-
         if prediction is not None:
             # self.save_emb(prediction)
             return self._evaluate(prediction, label)
@@ -106,6 +107,7 @@ class UnsupervisedGraphClassification(BaseTask):
             shuffles.append(skshuffle(embeddings, labels))
         all_results = defaultdict(list)
         training_percents = [0.1, 0.3, 0.5, 0.7, 0.9]
+
         for training_percent in training_percents:
             for shuf in shuffles:
                 training_size = int(training_percent * self.num_graphs)
@@ -120,7 +122,7 @@ class UnsupervisedGraphClassification(BaseTask):
                 clf.fit(X_train, y_train)
 
                 preds = clf.predict(X_test)
-                accuracy = accuracy_score(y_test, preds)
+                accuracy = f1_score(y_test, preds, average="micro")
                 all_results[training_percent].append(accuracy)
 
         return dict(

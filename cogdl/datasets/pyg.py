@@ -3,7 +3,7 @@ import os.path as osp
 import torch
 
 import torch_geometric.transforms as T
-from torch_geometric.datasets import Planetoid, Reddit, TUDataset, QM9
+from torch_geometric.datasets import Planetoid, Reddit, TUDataset, QM9, ModelNet
 from torch_geometric.utils import remove_self_loops
 from . import register_dataset
 
@@ -14,7 +14,6 @@ class CoraDataset(Planetoid):
         dataset = "Cora"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
-            Planetoid(path, dataset, T.NormalizeFeatures())
             Planetoid(path, dataset, T.TargetIndegree())
         super(CoraDataset, self).__init__(path, dataset, T.TargetIndegree())
 
@@ -109,6 +108,27 @@ class RedditBinary(TUDataset):
         super(RedditBinary, self).__init__(path, name=dataset)
 
 
+@register_dataset("reddit-multi-5k")
+class RedditMulti5K(TUDataset):
+    def __init__(self):
+        dataset = "REDDIT-MULTI-5K"
+        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        if not osp.exists(path):
+            TUDataset(path, name=dataset)
+        super(RedditMulti5K, self).__init__(path, name=dataset)
+
+
+
+@register_dataset("reddit-multi-12k")
+class RedditMulti12K(TUDataset):
+    def __init__(self):
+        dataset = "REDDIT-MULTI-12K"
+        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        if not osp.exists(path):
+            TUDataset(path, name=dataset)
+        super(RedditMulti12K, self).__init__(path, name=dataset)
+
+
 @register_dataset("ptc-mr")
 class PTCMRDataset(TUDataset):
     def __init__(self):
@@ -138,6 +158,28 @@ class NCT109Dataset(TUDataset):
             TUDataset(path, name=dataset)
         super(NCT109Dataset, self).__init__(path, name=dataset)
 
+
+@register_dataset("enzymes")
+class ENZYMES(TUDataset):
+    def __init__(self):
+        dataset = "ENZYMES"
+        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        if not osp.exists(path):
+            TUDataset(path, name=dataset)
+        super(ENZYMES, self).__init__(path, name=dataset)
+
+    def __getitem__(self, idx):
+        if isinstance(idx, int):
+            data = self.get(self.indices()[idx])
+            data = data if self.transform is None else self.transform(data)
+            edge_nodes = data.edge_index.max() + 1
+            if edge_nodes < data.x.size(0):
+                data.x = data.x[:edge_nodes]
+            return data
+        else:
+            return self.index_select(idx)
+
+
 @register_dataset("qm9")
 class QM9Dataset(QM9):
     def __init__(self):
@@ -145,7 +187,6 @@ class QM9Dataset(QM9):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
 
         target=0
-
         class MyTransform(object):
             def __call__(self, data):
                 # Specify target.
@@ -174,5 +215,5 @@ class QM9Dataset(QM9):
 
         transform = T.Compose([MyTransform(), Complete(), T.Distance(norm=False)])
         if not osp.exists(path):
-            QM9(path, transform=transform)
+            QM9(path)
         super(QM9Dataset, self).__init__(path)

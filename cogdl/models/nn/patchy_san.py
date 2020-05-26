@@ -23,29 +23,26 @@ class PatchySAN(BaseModel):
         parser.add_argument('--stride', default=1, type=int, help='Stride of chosen vertexes')
         parser.add_argument('--neighbor', default=10, type=int, help='Number of neighbor in constructing features')
         parser.add_argument('--iteration', default=10, type=int, help='Number of iteration')
-    
+        parser.add_argument("--train-ratio", type=float, default=0.7)
+        parser.add_argument("--test-ratio", type=float, default=0.1)
+
     @classmethod
     def build_model_from_args(cls, args):
         return cls(args.batch_size, args.num_features, args.num_classes, args.sample, args.stride, args.neighbor, args.iteration)
             
     @classmethod
     def split_dataset(cls, dataset, args):
-        
-        if args.dataset == "QM9":
-            test_dataset = dataset[:10000]
-            val_dataset = dataset[10000:20000]
-            train_dataset = dataset[20000:20000 + args.train_num]
-            return DataLoader(train_dataset, batch_size=args.batch_size), DataLoader(val_dataset, batch_size=args.batch_size),\
-                   DataLoader(test_dataset, batch_size=args.batch_size)
+        random.shuffle(dataset)
+        train_size = int(len(dataset) * args.train_ratio)
+        test_size = int(len(dataset) * args.test_ratio)
+        bs = args.batch_size
+        train_loader = DataLoader(dataset[:train_size], batch_size=bs)
+        test_loader = DataLoader(dataset[-test_size:], batch_size=bs)
+        if args.train_ratio + args.test_ratio < 1:
+            valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
         else:
-            test_index = random.sample(range(len(dataset)), len(dataset) // 10)
-            train_index = [x for x in range(len(dataset)) if x not in test_index]
-
-            train_dataset = [dataset[i] for i in train_index]
-            test_dataset = [dataset[i] for i in test_index]
-            train_loader = DataLoader(train_dataset, batch_size=args.batch_size)
-            test_loader = DataLoader(test_dataset, batch_size=args.batch_size)
-            return train_loader, test_loader, test_loader
+            valid_loader = test_loader
+        return train_loader, valid_loader, test_loader
 
     def __init__(self, batch_size, num_features, num_classes, num_sample, stride, num_neighbor, iteration):
         super(PatchySAN, self).__init__()
@@ -87,14 +84,14 @@ class PatchySAN(BaseModel):
         self.criterion = nn.CrossEntropyLoss()
         # self.criterion = nn.NLLLoss()
 
-    def forward(self, x, edge_index=None, batch=None, label=None):
+    def forward(self, batch):
         # print(x.shape, edge_index.shape, label)
         data = get_feature(batch, self.num_features, self.num_classes, self.num_sample, self.num_neighbor, self.stride)
         data = torch.from_numpy(data).cuda()
 
         logits= self.nn(data)        
-        if label is not None:
-            return logits, self.criterion(logits, label)
+        if batch.y is not None:
+            return logits, self.criterion(logits, batch.y)
         return logits, None
     
 

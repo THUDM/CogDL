@@ -5,32 +5,6 @@ import numpy as np
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from .. import BaseModel, register_model
 
-class WLMachine:
-    def __init__(self, graph, features, rounds):
-        self.rounds = rounds
-        self.graph = graph
-        self.features = features
-        self.nodes = self.graph.nodes
-        self.wl_features = [str(val) for _, val in features]
-        self.wl_iterations()
-
-    def wl_iterations(self):
-        for i in self.rounds:
-            new_feats = {}
-            for node in self.nodes:
-                neighbors = self.graph.neighbors(node)
-                neigh_feats = [self.features[x] for x in neighbors]
-                neigh_feats = [self.features[node]] + sorted(neigh_feats)
-                hash_feat = hashlib.md5("_".join(neigh_feats).encode())
-                hash_feat = hash_feat.hexdigest()
-                new_feats[node] = hash_feat
-            self.wl_features = self.wl_features + list(new_feats.values())
-            self.features = new_feats
-
-    def get_wl_features(self):
-        return self.wl_features
-
-
 
 @register_model("graph2vec")
 class Graph2Vec(BaseModel):

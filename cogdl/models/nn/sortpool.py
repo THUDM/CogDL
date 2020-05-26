@@ -39,7 +39,7 @@ def spare2dense_batch(x, batch=None, fill_value=0):
 class SortPool(BaseModel):
     @staticmethod
     def add_args(parser):
-        parser.add_argument("--hidden-dim", type=int, default=64)
+        parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--dropout", type=float, default=0.1)
         parser.add_argument("--batch-size", type=int, default=20)
         parser.add_argument("--train-ratio", type=float, default=0.7)
@@ -53,7 +53,7 @@ class SortPool(BaseModel):
     def build_model_from_args(cls, args):
         return cls(
             args.num_features,
-            args.hidden_dim,
+            args.hidden_size,
             args.num_classes,
             args.num_layers,
             args.out_channels,
@@ -89,16 +89,16 @@ class SortPool(BaseModel):
         self.fc1 = nn.Linear(out_channel * (self.k - kernel_size + 1), hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, num_classes)
 
-    def forward(self, x, edge_index, batch, label=None, *args, **kwargs):
-        h = x
+    def forward(self, batch):
+        h = batch.x
         for i in range(self.num_layers):
-            h = self.gnn_convs[i](h, edge_index)
+            h = self.gnn_convs[i](h, batch.edge_index)
             h = F.relu(h)
         # h = global_sort_pool(h, batch, self.k)
 
         h, _ = h.sort(dim=-1)
         fill_value = h.min().item() - 1
-        batch_h = spare2dense_batch(h, batch, fill_value)
+        batch_h = spare2dense_batch(h, batch.batch, fill_value)
         batch_size, num_nodes, xdim = batch_h.size()
 
         _, order = batch_h[:, :, -1].sort(dim=-1, descending=True)
@@ -121,9 +121,9 @@ class SortPool(BaseModel):
         h = F.relu(self.fc1(h))
         h = F.dropout(h, p=self.dropout, training=self.training)
         h = self.fc2(h)
-        if label is not None:
+        if batch.y is not None:
             pred = F.log_softmax(h, dim=-1)
-            loss = F.nll_loss(pred, label)
+            loss = F.nll_loss(pred, batch.y)
             return h, loss
         return h, None
 

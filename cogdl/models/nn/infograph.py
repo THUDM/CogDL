@@ -89,7 +89,7 @@ class FF(nn.Module):
 class InfoGraph(BaseModel):
     @staticmethod
     def add_args(parser):
-        parser.add_argument("--hidden-dim", type=int, default=64)
+        parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--batch-size", type=int, default=20)
         parser.add_argument("--target", dest='target', type=int, default=0,
                             help='')
@@ -106,7 +106,7 @@ class InfoGraph(BaseModel):
     def build_model_from_args(cls, args):
         return cls(
             args.num_features,
-            args.hidden_dim,
+            args.hidden_size,
             args.num_classes,
             args.num_layers,
             args.unsup
@@ -161,11 +161,11 @@ class InfoGraph(BaseModel):
             if isinstance(m, nn.Linear):
                 nn.init.xavier_uniform_(m.weight.data)
 
-    def forward(self, x, edge_index=None, batch=None, label=None, edge_attr=None):
+    def forward(self, batch):
         if self.unsup:
-            return self.unsup_forward(x, edge_index, batch)
+            return self.unsup_forward(batch.x, batch.edge_index, batch.batch)
         else:
-            return self.sup_forward(x, edge_index, batch, label, edge_attr)
+            return self.sup_forward(batch.x, batch.edge_index, batch.batch, batch.y, batch.edge_attr)
 
     def sup_forward(self, x, edge_index=None, batch=None, label=None, edge_attr=None):
         node_feat, graph_feat = self.sem_encoder(x, edge_index, batch, edge_attr)

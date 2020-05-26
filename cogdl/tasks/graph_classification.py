@@ -130,11 +130,7 @@ class GraphClassification(BaseTask):
         for batch in self.train_loader:
             batch = batch.cuda()
             self.optimizer.zero_grad()
-            output, loss = self.model(x=batch.x,
-                                      edge_index=batch.edge_index,
-                                      batch=batch.batch,
-                                      label=batch.y,
-                                      edge_attr=batch.edge_attr)
+            output, loss = self.model(batch)
             loss_n += loss.item()
             loss.backward()
             self.optimizer.step()
@@ -155,7 +151,7 @@ class GraphClassification(BaseTask):
         with torch.no_grad():
             for batch in loader:
                 batch = batch.cuda()
-                predict, loss = self.model(x=batch.x, edge_index=batch.edge_index, batch=batch.batch, label=batch.y)
+                predict, loss = self.model(batch)
                 loss_n.append(loss.item())
                 y.append(batch.y)
                 pred.extend(predict)

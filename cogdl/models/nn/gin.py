@@ -140,11 +140,11 @@ class GIN(BaseModel):
         self.dropout = nn.Dropout(dropout)
         self.criterion = torch.nn.CrossEntropyLoss()
 
-    def forward(self, x, edge_index, batch, label=None, *args, **kwargs):
-        h = x
+    def forward(self, batch):
+        h = batch.x
         layer_rep = [h]
         for i in range(self.num_layers-1):
-            h = self.gin_layers[i](h, edge_index)
+            h = self.gin_layers[i](h, batch.edge_index)
             h = self.batch_norm[i](h)
             h = F.relu(h)
             layer_rep.append(h)
@@ -152,11 +152,11 @@ class GIN(BaseModel):
         final_score = 0
         for i in range(self.num_layers):
             # pooled = self.pooling(layer_rep[i], batch, dim=0)
-            pooled = scatter_add(layer_rep[i], batch, dim=0)
+            pooled = scatter_add(layer_rep[i], batch.batch, dim=0)
             final_score += self.dropout(self.linear_prediction[i](pooled))
         final_score = F.softmax(final_score, dim=-1)
-        if label is not None:
-            loss = self.loss(final_score, label)
+        if batch.y is not None:
+            loss = self.loss(final_score, batch.y)
             return final_score, loss
         return final_score, None
 

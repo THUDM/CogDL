@@ -197,7 +197,7 @@ class DiffPool(BaseModel):
         parser.add_argument("--no-link-pred", dest="no_link_pred", action="store_true")
         parser.add_argument("--pooling-ratio", type=float, default=0.15)
         parser.add_argument("--embedding-dim", type=int, default=64)
-        parser.add_argument("--hidden-dim", type=int, default=64)
+        parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--dropout", type=float, default=0.1)
         parser.add_argument("--batch-size", type=int, default=20)
         parser.add_argument("--train-ratio", type=float, default=0.7)
@@ -208,7 +208,7 @@ class DiffPool(BaseModel):
     def build_model_from_args(cls, args):
         return cls(
             args.num_features,
-            args.hidden_dim,
+            args.hidden_size,
             args.embedding_dim,
             args.num_classes,
             args.num_layers,
@@ -291,11 +291,11 @@ class DiffPool(BaseModel):
         readout = torch.cat(readouts, dim=1)
         return h
 
-    def forward(self, x, edge_index, batch, label=None, *args, **kwargs):
+    def forward(self, batch):
         readouts_all = []
 
-        init_emb = self.before_pooling(x, edge_index)
-        adj, h = self.init_diffpool(init_emb, edge_index, batch)
+        init_emb = self.before_pooling(batch.x, batch.edge_index)
+        adj, h = self.init_diffpool(init_emb, batch.edge_index, batch.batch)
         value_set, value_counts = torch.unique(batch, return_counts=True)
         batch_size = len(value_set)
         adj, h = toBatchedGraph(adj, h, adj.size(0)//batch_size)
@@ -309,8 +309,8 @@ class DiffPool(BaseModel):
             readout = torch.sum(h, dim=1)
             readouts_all.append(readout)
         pred = self.fc(readout)
-        if label is not None:
-            return pred, self.loss(pred, label)
+        if batch.y is not None:
+            return pred, self.loss(pred, batch.y)
         return pred, None
 
     def loss(self, prediction, label):

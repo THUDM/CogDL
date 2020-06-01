@@ -127,7 +127,7 @@ class SpGraphAttentionLayer(nn.Module):
         # edge_e: E
 
         e_rowsum = self.special_spmm(
-            edge, edge_e, torch.Size([N, N]), torch.ones(size=(N, 1)).cuda()
+            edge, edge_e, torch.Size([N, N]), torch.ones(size=(N, 1)).to(input.device)
         )
         # e_rowsum: N x 1
 

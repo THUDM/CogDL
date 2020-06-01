@@ -35,7 +35,7 @@ class GraphConvolution(nn.Module):
             edge_index,
             torch.ones(edge_index.shape[1]).float(),
             (input.shape[0], input.shape[0]),
-        ).cuda()
+        ).to(input.device)
         support = torch.mm(input, self.weight)
         output = torch.spmm(adj, support)
         if self.bias is not None:

@@ -13,12 +13,21 @@ from .. import BaseModel, register_model
 
 @register_model("prone")
 class ProNE(BaseModel):
+    r"""The ProNE model from the `"ProNE: Fast and Scalable Network Representation Learning"
+    <https://www.ijcai.org/Proceedings/2019/0594.pdf>`_ paper.
+    
+    Args:
+        hidden_size (int) : The dimension of node representation.
+        step (int) : The number of items in the chebyshev expansion.
+        mu (float) : Parameter in ProNE.
+        theta (float) : Parameter in ProNE.
+    """    
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--step", type=int, default=5,
-                            help=" Number of items in the chebyshev expansion")
+                            help="Number of items in the chebyshev expansion")
         parser.add_argument("--mu", type=float, default=0.2)
         parser.add_argument("--theta", type=float, default=0.5)
         # fmt: on

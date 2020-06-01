@@ -8,6 +8,20 @@ from .. import BaseModel, register_model, alias_draw, alias_setup
 
 @register_model("node2vec")
 class Node2vec(BaseModel):
+    r"""The node2vec model from the `"node2vec: Scalable feature learning for networks"
+    <http://dl.acm.org/citation.cfm?doid=2939672.2939754>`_ paper
+    
+    Args:
+        hidden_size (int) : The dimension of node representation.
+        walk_length (int) : The walk length.
+        walk_num (int) : The number of walks to sample for each node.
+        window_size (int) : The actual context size which is considered in language model.
+        worker (int) : The number of workers for word2vec.
+        iteration (int) : The number of training iteration in word2vec.
+        p (float) : Parameter in node2vec.
+        q (float) : Parameter in node2vec.
+    """
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""

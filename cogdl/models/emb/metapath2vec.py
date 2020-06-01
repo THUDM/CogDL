@@ -5,10 +5,12 @@ import random
 from .. import BaseModel, register_model
 
 
-@register_model("deepwalk")
-class DeepWalk(BaseModel):
-    r"""The DeepWalk model from the `"DeepWalk: Online Learning of Social Representations"
-    <https://arxiv.org/abs/1403.6652>`_ paper
+@register_model("metapath2vec")
+class Metapath2vec(BaseModel):
+    r"""The Metapath2vec model from the `"metapath2vec: Scalable Representation
+    Learning for Heterogeneous Networks"
+    <https://ericdongyx.github.io/papers/
+    KDD17-dong-chawla-swami-metapath2vec.pdf>`_ paper
     
     Args:
         hidden_size (int) : The dimension of node representation.
@@ -17,22 +19,26 @@ class DeepWalk(BaseModel):
         window_size (int) : The actual context size which is considered in language model.
         worker (int) : The number of workers for word2vec.
         iteration (int) : The number of training iteration in word2vec.
+        schema (str) : The metapath schema used in model. Metapaths are splited with ",", 
+        while each node type are connected with "-" in each metapath. For example:"0-1-0,0-1-2-1-0".
     """
-    
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
         parser.add_argument('--walk-length', type=int, default=80,
                             help='Length of walk per source. Default is 80.')
-        parser.add_argument('--walk-num', type=int, default=40,
-                            help='Number of walks per source. Default is 40.')
+        parser.add_argument('--walk-num', type=int, default=20,
+                            help='Number of walks per source. Default is 20.')
         parser.add_argument('--window-size', type=int, default=5,
                             help='Window size of skip-gram model. Default is 5.')
         parser.add_argument('--worker', type=int, default=10,
                             help='Number of parallel workers. Default is 10.')
         parser.add_argument('--iteration', type=int, default=10,
                             help='Number of iterations. Default is 10.')
+        parser.add_argument('--schema', type=str, default="No",
+                            help="Input schema for multi-type node representation.")
         # fmt: on
 
     @classmethod
@@ -44,22 +50,26 @@ class DeepWalk(BaseModel):
             args.window_size,
             args.worker,
             args.iteration,
+            args.schema
         )
 
     def __init__(
-        self, dimension, walk_length, walk_num, window_size, worker, iteration
+        self, dimension, walk_length, walk_num, window_size, worker, iteration, schema
     ):
-        super(DeepWalk, self).__init__()
+        super(Metapath2vec, self).__init__()
         self.dimension = dimension
         self.walk_length = walk_length
         self.walk_num = walk_num
         self.window_size = window_size
         self.worker = worker
         self.iteration = iteration
+        self.schema = schema
+        self.node_type = None
 
-    def train(self, G):
+    def train(self, G, node_type):
         self.G = G
-        walks = self._simulate_walks(self.walk_length, self.walk_num)
+        self.node_type = [str(a) for a in node_type]
+        walks = self._simulate_walks(self.walk_length, self.walk_num, self.schema)
         walks = [[str(node) for node in walk] for walk in walks]
         model = Word2Vec(
             walks,
@@ -74,27 +84,47 @@ class DeepWalk(BaseModel):
         embeddings = np.asarray([model[str(id2node[i])] for i in range(len(id2node))])
         return embeddings
 
-    def _walk(self, start_node, walk_length):
-        # Simulate a random walk starting from start node.
+    def _walk(self, start_node, walk_length, schema=None):
+        # Simulate a random walk starting from start node. 
+        # Note that metapaths in schema should be like '0-1-0' or '0-1-2-1-0'.
+        if schema:
+            schema_items = schema.split("-")
+            assert schema_items[0] == schema_items[-1]
+        
         walk = [start_node]
         while len(walk) < walk_length:
             cur = walk[-1]
-            cur_nbrs = list(self.G.neighbors(cur))
-            if len(cur_nbrs) == 0:
+            candidates = []
+            for node in list(self.G.neighbors(cur)):
+                if (
+                    schema == None
+                    or self.node_type[node]
+                    == schema_items[len(walk) % (len(schema_items) - 1)]
+                ):
+                    candidates.append(node)
+            if candidates:
+                walk.append(random.choice(candidates))
+            else:
                 break
-            k = int(np.floor(np.random.rand() * len(cur_nbrs)))
-            walk.append(cur_nbrs[k])
+        # print(walk)
         return walk
 
-    def _simulate_walks(self, walk_length, num_walks):
-        # Repeatedly simulate random walks from each node.
+    def _simulate_walks(self, walk_length, num_walks, schema="No"):
+        # Repeatedly simulate random walks from each node with metapath schema.
         G = self.G
         walks = []
         nodes = list(G.nodes())
+        if schema != "No":
+            schema_list = schema.split(",")
         print("node number:", len(nodes))
         for walk_iter in range(num_walks):
-            print(str(walk_iter + 1), "/", str(num_walks))
             random.shuffle(nodes)
+            print(str(walk_iter + 1), "/", str(num_walks))
             for node in nodes:
-                walks.append(self._walk(node, walk_length))
+                if schema == "No":
+                    walks.append(self._walk(node, walk_length))
+                else:
+                    for schema_iter in schema_list:
+                        if schema_iter.split("-")[0] == self.node_type[node]:
+                            walks.append(self._walk(node, walk_length, schema_iter))
         return walks

@@ -11,6 +11,17 @@ from .. import BaseModel, register_model, alias_draw, alias_setup
 
 @register_model("netsmf")
 class NetSMF(BaseModel):
+    r"""The NetSMF model from the `"NetSMF: Large-Scale Network Embedding as Sparse Matrix Factorization"
+    <http://arxiv.org/abs/1710.02971>`_ paper.
+    
+    Args:
+        hidden_size (int) : The dimension of node representation.
+        window_size (int) : The actual context size which is considered in language model.
+        negative (int) : The number of nagative samples in negative sampling.
+        num_round (int) : The number of round in NetSMF.
+        worker (int) : The number of workers for NetSMF.
+    """
+    
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""

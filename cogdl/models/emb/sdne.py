@@ -13,6 +13,21 @@ from .. import BaseModel, register_model
 
 @register_model("sdne")
 class SDNE(BaseModel):
+    r"""The SDNE model from the `"Structural Deep Network Embedding"
+    <https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf>`_ paper
+    
+    Args:
+        hidden_size1 (int) : The size of the first hidden layer.
+        hidden_size2 (int) : The size of the second hidden layer.
+        droput (float) : Droput rate.
+        alpha (float) : Trade-off parameter between 1-st and 2-nd order objective function in SDNE.
+        beta (float) : Parameter of 2-nd order objective function in SDNE.
+        nu1 (float) : Parameter of l1 normlization in SDNE.
+        nu2 (float) : Parameter of l2 normlization in SDNE.
+        max_epoch (int) : The max epoches in training step.
+        lr (float) : Learning rate in SDNE.
+    """
+    
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""

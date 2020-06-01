@@ -7,6 +7,17 @@ from .. import BaseModel, register_model
 
 @register_model("netmf")
 class NetMF(BaseModel):
+    r"""The NetMF model from the `"Network Embedding as Matrix Factorization: Unifying DeepWalk, LINE, PTE, and node2vec"
+    <http://arxiv.org/abs/1710.02971>`_ paper.
+    
+    Args:
+        hidden_size (int) : The dimension of node representation.
+        window_size (int) : The actual context size which is considered in language model.
+        rank (int) : The rank in approximate normalized laplacian.
+        negative (int) : The number of nagative samples in negative sampling.
+        is-large (bool) : When window size is large, use approximated deepwalk matrix to decompose.
+    """
+    
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""

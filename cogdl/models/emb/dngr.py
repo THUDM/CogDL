@@ -14,6 +14,19 @@ from .. import BaseModel, register_model
 
 @register_model("dngr")
 class DNGR(BaseModel):
+    r"""The DNGR model from the `"Deep Neural Networks for Learning Graph Representations"
+    <https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/download/12423/11715>`_ paper
+    
+    Args:
+        hidden_size1 (int) : The size of the first hidden layer.
+        hidden_size2 (int) : The size of the second hidden layer.
+        noise (float) : Denoise rate of DAE.
+        alpha (float) : Parameter in DNGR.
+        step (int) : The max step in random surfing.
+        max_epoch (int) : The max epoches in training step.
+        lr (float) : Learning rate in DNGR.
+    """
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""

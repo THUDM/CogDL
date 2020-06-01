@@ -34,15 +34,29 @@ class WLMachine:
 
 @register_model("graph2vec")
 class Graph2Vec(BaseModel):
+    r"""The Graph2Vec model from the `"graph2vec: Learning Distributed Representations of Graphs"
+    <https://arxiv.org/abs/1707.05005>`_ paper
+    
+    Args:
+        hidden_size (int) : The dimension of node representation.
+        min_count (int) : Parameter in doc2vec.
+        window_size (int) : The actual context size which is considered in language model.
+        sampling_rate (float) : Parameter in doc2vec.
+        dm (int) :  Parameter in doc2vec.
+        iteration (int) : The number of iteration in WL method.
+        epoch (int) : The max epoches in training step.
+        lr (float) : Learning rate in doc2vec.
+    """
+   
     @staticmethod
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=128)
-        parser.add_argument("--window", type=int, default=0)
+        parser.add_argument("--window-size", type=int, default=0)
         parser.add_argument("--min-count", type=int, default=5)
         parser.add_argument("--dm", type=int, default=0)
         parser.add_argument("--sampling", type=float, default=0.0001)
         parser.add_argument("--iteration", type=int, default=2)
-        parser.add_argument("--epochs", type=int, default=20)
+        parser.add_argument("--epoch", type=int, default=20)
         parser.add_argument("--nn", type=bool, default=False)
 
 
@@ -51,11 +65,11 @@ class Graph2Vec(BaseModel):
         return cls(
             args.hidden_size,
             args.min_count,
-            args.window,
+            args.window_size,
             args.sampling,
             args.dm,
             args.iteration,
-            args.epochs,
+            args.epoch,
             args.lr
         )
 
@@ -88,34 +102,34 @@ class Graph2Vec(BaseModel):
             features = new_feats
         return wl_features
 
-    def __init__(self, hidden_dim, min_count, window, dm, sampling_rate, rounds, epochs, lr, n_workers=4):
+    def __init__(self, dimension, min_count, window_size, dm, sampling_rate, rounds, epoch, lr, worker=4):
         super(Graph2Vec, self).__init__()
-        self.hidden_dim = hidden_dim
+        self.dimension = dimension
         self.min_count = min_count
-        self.window = window
+        self.window_size = window_size
         self.sampling_rate = sampling_rate
         self.dm = dm
-        self.n_workers = n_workers
+        self.worker = worker
         self.rounds = rounds
         self.model = None
         self.doc_collections = None
-        self.epochs = epochs
+        self.epoch = epoch
         self.lr = lr
 
     def forward(self, graphs, **kwargs):
         if self.doc_collections is None:
-            self.doc_collections = Parallel(n_jobs=self.n_workers)(
+            self.doc_collections = Parallel(n_jobs=self.worker)(
                 delayed(Graph2Vec.feature_extractor)(graph, self.rounds, str(i)) for i, graph in enumerate(graphs)
             )
         self.model = Doc2Vec(
             self.doc_collections,
-            vector_size=self.hidden_dim,
-            window=self.window,
+            vector_size=self.dimension,
+            window=self.window_size,
             min_count=self.min_count,
             dm=self.dm,
             sample=self.sampling_rate,
-            workers=self.n_workers,
-            epochs=self.epochs,
+            workers=self.worker,
+            epochs=self.epoch,
             alpha=self.lr
         )
         vectors = np.array([self.model["g_"+str(i)] for i in range(len(graphs))])

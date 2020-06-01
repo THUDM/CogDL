@@ -7,6 +7,14 @@ from .. import BaseModel, register_model
 
 @register_model("hope")
 class HOPE(BaseModel):
+    r"""The HOPE model from the `"Grarep: Asymmetric transitivity preserving graph embedding"
+    <http://dl.acm.org/citation.cfm?doid=2939672.2939751>`_ paper.
+    
+    Args:
+        hidden_size (int) : The dimension of node representation.
+        beta (float) : Parameter in katz decomposition.
+    """
+    
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -25,12 +33,13 @@ class HOPE(BaseModel):
         self.beta = beta
 
     def train(self, G):
+        r"""The author claim that Katz has superior performance in related tasks
+        S_katz = (M_g)^-1 * M_l = (I - beta*A)^-1 * beta*A = (I - beta*A)^-1 * (I - (I -beta*A))
+        = (I - beta*A)^-1 - I
+        """
         self.G = G
         adj = nx.adjacency_matrix(self.G).todense()
         n = adj.shape[0]
-        # The author claim that Katz has superior performance in related tasks
-        # S_katz = (M_g)^-1 * M_l = (I - beta*A)^-1 * beta*A = (I - beta*A)^-1 * (I - (I -beta*A))
-        #        = (I - beta*A)^-1 - I
         katz_matrix = np.asarray((np.eye(n) - self.beta * np.mat(adj)).I - np.eye(n))
         self.embeddings = self._get_embedding(katz_matrix, self.dimension)
         return self.embeddings

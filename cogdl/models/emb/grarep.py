@@ -7,6 +7,14 @@ from .. import BaseModel, register_model
 
 @register_model("grarep")
 class GraRep(BaseModel):
+    r"""The GraRep model from the `"Grarep: Learning graph representations with global structural information"
+    <http://dl.acm.org/citation.cfm?doid=2806416.2806512>`_ paper.
+    
+    Args:
+        hidden_size (int) : The dimension of node representation.
+        step (int) : The maximum order of transitition probability.
+    """
+    
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""

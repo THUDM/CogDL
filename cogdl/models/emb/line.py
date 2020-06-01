@@ -8,13 +8,27 @@ from .. import BaseModel, register_model, alias_draw, alias_setup
 
 @register_model("line")
 class LINE(BaseModel):
+    r"""The LINE model from the `"Line: Large-scale information network embedding"
+    <http://arxiv.org/abs/1503.03578>`_ paper.
+    
+    Args:
+        dimension (int) : The dimension of node representation.
+        walk_length (int) : The walk length.
+        walk_num (int) : The number of walks to sample for each node.
+        negative (int) : The number of nagative samples for each edge.
+        batch_size (int) : The batch size of training in LINE.
+        alpha (float) : The initial learning rate of SGD.
+        order (int) : 1 represents perserving 1-st order proximity, 2 represents 2-nd, 
+        while 3 means both of them (each of them having dimension/2 node representation).
+    """
+    
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
         parser.add_argument('--walk-length', type=int, default=80,
-                            help='Length of walk per source. Default is 50.')
-        parser.add_argument('--walk-num', type=int, default=40,
+                            help='Length of walk per source. Default is 80.')
+        parser.add_argument('--walk-num', type=int, default=20,
                             help='Number of walks per source. Default is 20.')
         parser.add_argument('--negative', type=int, default=5,
                             help='Number of negative node in sampling. Default is 5.')

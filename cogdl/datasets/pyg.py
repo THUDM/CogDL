@@ -14,9 +14,8 @@ class CoraDataset(Planetoid):
         dataset = "Cora"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
-            Planetoid(path, dataset, T.NormalizeFeatures())
-            Planetoid(path, dataset, T.TargetIndegree())
-        super(CoraDataset, self).__init__(path, dataset, T.TargetIndegree())
+            Planetoid(path, dataset, transform=T.TargetIndegree())
+        super(CoraDataset, self).__init__(path, dataset, transform=T.TargetIndegree())
 
 
 @register_dataset("citeseer")
@@ -25,8 +24,8 @@ class CiteSeerDataset(Planetoid):
         dataset = "CiteSeer"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
-            Planetoid(path, dataset, T.TargetIndegree())
-        super(CiteSeerDataset, self).__init__(path, dataset, T.TargetIndegree())
+            Planetoid(path, dataset, transform=T.TargetIndegree())
+        super(CiteSeerDataset, self).__init__(path, dataset, transform=T.TargetIndegree())
 
 
 @register_dataset("pubmed")
@@ -35,8 +34,8 @@ class PubMedDataset(Planetoid):
         dataset = "PubMed"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
-            Planetoid(path, dataset, T.TargetIndegree())
-        super(PubMedDataset, self).__init__(path, dataset, T.TargetIndegree())
+            Planetoid(path, dataset, transform=T.TargetIndegree())
+        super(PubMedDataset, self).__init__(path, dataset, transform=T.TargetIndegree())
 
 
 @register_dataset("reddit")
@@ -46,7 +45,7 @@ class RedditDataset(Reddit):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
             Reddit(path)
-        super(RedditDataset, self).__init__(path, T.TargetIndegree())
+        super(RedditDataset, self).__init__(path, transform=T.TargetIndegree())
 
 
 @register_dataset("mutag")

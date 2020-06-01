@@ -6,7 +6,6 @@ setup(
     install_requires=[
         "torch",
         "networkx",
-        "torch",
         "matplotlib",
         "tqdm",
         "numpy",

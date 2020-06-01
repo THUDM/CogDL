@@ -36,19 +36,20 @@ class NodeClassificationSampling(BaseTask):
     def __init__(self, args):
         super(NodeClassificationSampling, self).__init__(args)
 
+        self.device = torch.device('cpu' if args.cpu else 'cuda')
         dataset = build_dataset(args)
         self.data = dataset.data
-        self.data.apply(lambda x: x.cuda())
+        self.data.apply(lambda x: x.to(self.device))
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
         model = build_model(args)
         self.num_nodes = self.data.x.shape[0]
-        self.model = model.cuda()
+        self.model = model.to(self.device)
         self.patience = args.patience
         self.max_epoch = args.max_epoch
 
         self.adj_list = self.data.edge_index.detach().cpu().numpy()
-        self.model.set_adj(self.adj_list)
+        self.model.set_adj(self.adj_list, self.num_nodes)
 
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
@@ -91,8 +92,8 @@ class NodeClassificationSampling(BaseTask):
         train_nodes = np.where(self.data.train_mask.detach().cpu().numpy())[0]
         train_labels = self.data.y.detach().cpu().numpy()
         for batch_nodes, batch_labels in get_batches(train_nodes, train_labels, batch_size=140):
-            batch_nodes = torch.LongTensor(batch_nodes).cuda()
-            batch_labels = torch.LongTensor(batch_labels).cuda()
+            batch_nodes = torch.LongTensor(batch_nodes).to(self.device)
+            batch_labels = torch.LongTensor(batch_labels).to(self.device)
             sampled_x, sampled_adj, var_loss = self.model.sampling(self.data.x, batch_nodes)
             self.optimizer.zero_grad()
             output = self.model(sampled_x, sampled_adj)
@@ -108,8 +109,8 @@ class NodeClassificationSampling(BaseTask):
         all_loss = []
         all_acc = []
         for batch_nodes, batch_labels in get_batches(test_nodes, test_labels, batch_size=128):
-            batch_nodes = torch.LongTensor(batch_nodes).cuda()
-            batch_labels = torch.LongTensor(batch_labels).cuda()
+            batch_nodes = torch.LongTensor(batch_nodes).to(self.device)
+            batch_labels = torch.LongTensor(batch_labels).to(self.device)
             sampled_x, sampled_adj, var_loss = self.model.sampling(self.data.x, batch_nodes)
             with torch.no_grad():
                 logits = self.model(sampled_x, sampled_adj)

@@ -27,13 +27,14 @@ class NodeClassification(BaseTask):
     def __init__(self, args):
         super(NodeClassification, self).__init__(args)
 
+        self.device = torch.device('cpu' if args.cpu else 'cuda')
         dataset = build_dataset(args)
         self.data = dataset.data
-        self.data.apply(lambda x: x.cuda())
+        self.data.apply(lambda x: x.to(self.device))
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
         model = build_model(args)
-        self.model = model.cuda()
+        self.model = model.to(self.device)
         self.patience = args.patience
         self.max_epoch = args.max_epoch
 

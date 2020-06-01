@@ -92,7 +92,7 @@ class FastGCN(BaseModel):
             ]
         )
 
-    def set_adj(self, edge_index):
+    def set_adj(self, edge_index, num_nodes):
         self.adj = collections.defaultdict(list)
         for i in range(edge_index.shape[1]):
             self.adj[edge_index[0, i]].append(edge_index[1, i])
@@ -122,7 +122,7 @@ class FastGCN(BaseModel):
         valuetensor = torch.ones(edgetensor.shape[0]).float()
         t = torch.sparse_coo_tensor(
             edgetensor.t(), valuetensor, (len(sample1), len(sample2))
-        ).cuda()
+        )
         return t
 
     def sampling(self, x, v):
@@ -130,10 +130,10 @@ class FastGCN(BaseModel):
         sampled = v.detach().cpu().numpy()
         for i in range(self.num_layers - 1, -1, -1):
             cur_sampled = self._sample_one_layer(sampled, self.sample_size[i])
-            all_support[i] = self._generate_adj(sampled, cur_sampled)
+            all_support[i] = self._generate_adj(sampled, cur_sampled).to(x.device)
             sampled = cur_sampled
 
-        return x[torch.LongTensor(sampled).cuda()], all_support, 0
+        return x[torch.LongTensor(sampled).to(x.device)], all_support, 0
 
     def forward(self, x, adj):
         for index, conv in enumerate(self.convs[:-1]):

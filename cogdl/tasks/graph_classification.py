@@ -8,15 +8,19 @@ from torch_geometric.utils import add_remaining_self_loops
 from torch_scatter import scatter_add
 from tqdm import tqdm
 
-
-from cogdl import options
 from cogdl.datasets import build_dataset
 from cogdl.data import DataLoader, Data
 from cogdl.models import build_model
 
 from . import BaseTask, register_task
 
+
 def node_degree_as_feature(data):
+    r"""
+    Set each node feature as one-hot encoding of degree
+    :param data: a list of class Data
+    :return: a list of class Data
+    """
     max_degree = 0
     degrees = []
     for graph in data:
@@ -34,54 +38,51 @@ def node_degree_as_feature(data):
     max_degree = int(max_degree)
     for i in range(len(data)):
         one_hot = torch.zeros(data[i].num_nodes, max_degree).scatter_(1, degrees[i].unsqueeze(1), 1)
-        data[i].x = one_hot.cuda()
+        data[i].x = one_hot.to(data[i].y.device)
     return data
 
 
 def uniform_node_feature(data):
+    r"""Set each node feature to the same"""
     feat_dim = 2
     init_feat = torch.rand(1, feat_dim)
     for i in range(len(data)):
-        data[i].x =init_feat.repeat(1, data[i].num_nodes)
+        data[i].x = init_feat.repeat(1, data[i].num_nodes)
     return data
 
 
 @register_task("graph_classification")
 class GraphClassification(BaseTask):
-    """Node classification task."""
+    r"""Superiviced graph classification task."""
 
     @staticmethod
     def add_args(parser):
         """Add task-specific arguments to the parser."""
         # fmt: off
-        # parser.add_argument("--num-features", type=int)
-        # fmt: on
-        # batch_size \in {32, 128}
         parser.add_argument("--degree-feature", dest="degree_feature", action="store_true")
+        parser.add_argument("--gamma", type=float, default=0.5)
+        parser.add_argument("--uniform-feature", action="store_true")
+        parser.add_argument("--lr", type=float, default=0.001)
+        # fmt: on
 
     def __init__(self, args):
         super(GraphClassification, self).__init__(args)
-
         dataset = build_dataset(args)
-        self.data = [
-            Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr, pos=data.pos).apply(lambda x:x.cuda())
-            for data in dataset
-        ]
 
+        args.max_graph_size = max([ds.num_nodes for ds in dataset])
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
         args.use_unsup = False
-        if args.degree_feature:
-            self.data = node_degree_as_feature(self.data)
-            args.num_features = self.data[0].num_features
 
+        self.device = args.device
+        self.data = self.generate_data(dataset, args)
 
         model = build_model(args)
-        self.model = model.cuda()
+        self.model = model.to(self.device)
         self.patience = args.patience
         self.max_epoch = args.max_epoch
 
-        self.train_loader, self.val_loader, self.test_loader = self.model.split_dataset(dataset, args)
+        self.train_loader, self.val_loader, self.test_loader = self.model.split_dataset(self.data, args)
 
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
@@ -104,10 +105,11 @@ class GraphClassification(BaseTask):
         for epoch in epoch_iter:
             self.scheduler.step()
             self._train_step()
-            train_acc, _ = self._test_step(split="train")
-            val_acc, val_loss = self._test_step(split="val")
+            train_acc, train_loss = self._test_step(split="train")
+            val_acc, val_loss = self._test_step(split="valid")
+            test_acc, _ = self._test_step(split="test")
             epoch_iter.set_description(
-                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
+                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, Test: {test_acc: .4f}, TrainLoss:{train_loss: .4f}, ValLoss: {val_loss: .4f}"
             )
             if val_loss < min_loss or val_acc > max_score:
                 if val_loss <= best_loss:  # and val_acc >= best_score:
@@ -131,14 +133,12 @@ class GraphClassification(BaseTask):
         self.model.train()
         loss_n = 0
         for batch in self.train_loader:
-            batch = batch.cuda()
+            batch = batch.to(self.device)
             self.optimizer.zero_grad()
-            # print(batch.x.shape, batch.y.shape, batch.batch.shape)
-            output, loss = self.model(batch.x, batch.edge_index, batch.batch, label=batch.y)
+            output, loss = self.model(batch)
             loss_n += loss.item()
             loss.backward()
             self.optimizer.step()
-
 
     def _test_step(self, split="val"):
         self.model.eval()
@@ -146,20 +146,44 @@ class GraphClassification(BaseTask):
             loader = self.train_loader
         elif split == "valid":
             loader = self.val_loader
-        else:
+        elif split == "test":
             loader = self.test_loader
-        loss_n = 0
+        else:
+            raise ValueError
+        loss_n = []
         pred = []
         y = []
         with torch.no_grad():
             for batch in loader:
-                batch = batch.cuda()
-                predict, _ = self.model(batch.x, batch.edge_index, batch.batch)
+                batch = batch.to(self.device)
+                predict, loss = self.model(batch)
+                loss_n.append(loss.item())
                 y.append(batch.y)
                 pred.extend(predict)
+        y = torch.cat(y).to(self.device)
 
-        y = torch.cat(y).cuda()
         pred = torch.stack(pred, dim=0)
         pred = pred.max(1)[1]
         acc = pred.eq(y).sum().item() / len(y)
-        return acc, loss_n
+        return acc, sum(loss_n)/len(loss_n)
+
+    def generate_data(self, dataset, args):
+        if "ModelNet" in str(type(dataset).__name__):
+            train_set, test_set = dataset.get_all()
+            args.num_features = 3
+            return {"train": train_set, "test": test_set}
+        else:
+            datalist = []
+            if isinstance(dataset[0], Data):
+                return dataset
+            for idata in dataset:
+                data = Data()
+                for key in idata.keys:
+                    data[key] = idata[key]
+                datalist.append(data)
+
+            if args.degree_feature:
+                datalist = node_degree_as_feature(datalist)
+                args.num_features = datalist[0].num_features
+            return datalist
+

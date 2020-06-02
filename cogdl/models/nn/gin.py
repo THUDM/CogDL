@@ -5,41 +5,29 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.utils import remove_self_loops
 from torch_scatter import scatter_add
-from torch_geometric.nn import GINConv
 
 from .. import BaseModel, register_model
 from cogdl.data import DataLoader
 
-# def broadcast(src, other, dim):
-#     if dim < 0:
-#         dim = other.dim() + dim
-#     if src.dim() == 1:
-#         for _ in range(0, dim):
-#             src = src.unsqueeze(0)
-#     for _ in range(src.dim(), other.dim()):
-#         src = src.unsqueeze(-1)
-#     src = src.expand_as(other)
-#     return src
-#
-#
-# def scatter_sum(src, index, dim=-1, out=None, dim_size=None):
-#     index = broadcast(index, src, dim)
-#     if out is None:
-#         size = list(src.shape)
-#         if dim_size is not None:
-#             size[dim] = dim_size
-#         elif index.numel() == 0:
-#             size[dim] = 0
-#         else:
-#             size[dim] = int(index.max()) + 1
-#         out = torch.zeros(size, dtype=src.dtype, device=src.device)
-#         return out.scatter_add_(dim, index, src)
-#     else:
-#         return out.scatter_add_(dim, index, src)
-
-
 
 class GINLayer(nn.Module):
+    r"""Graph Isomorphism Network layer from paper `"How Powerful are Graph
+    Neural Networks?" <https://arxiv.org/pdf/1810.00826.pdf>`__.
+
+    .. math::
+        h_i^{(l+1)} = f_\Theta \left((1 + \epsilon) h_i^{l} +
+        \mathrm{sum}\left(\left\{h_j^{l}, j\in\mathcal{N}(i)
+        \right\}\right)\right)
+
+    Parameters
+    ----------
+    apply_func : callable layer function)
+        layer or function applied to update node feature
+    eps : float32, optional
+        Initial `\epsilon` value.
+    train_eps : bool, optional
+        If True, `\epsilon` will be a learnable parameter.
+    """
     def __init__(self, apply_func=None, eps=0, train_eps=True):
         super(GINLayer, self).__init__()
         if train_eps:
@@ -52,7 +40,7 @@ class GINLayer(nn.Module):
         edge_index, _ = remove_self_loops(edge_index)
         edge_weight = torch.ones(edge_index.shape[1]) if edge_weight is None else edge_weight
         adj = torch.sparse_coo_tensor(edge_index, edge_weight, (x.shape[0], x.shape[0]))
-        adj = adj.cuda()
+        adj = adj.to(x.device)
         out = (1 + self.eps) * x + torch.spmm(adj, x)
         if self.apply_func is not None:
             out = self.apply_func(out)
@@ -60,6 +48,22 @@ class GINLayer(nn.Module):
 
 
 class GINMLP(nn.Module):
+    r"""Multilayer perception with batch normalization
+
+    .. math::
+        x^{(i+1)} = \sigma(W^{i}x^{(i)})
+
+    Parameters
+    ----------
+    in_feats : int
+        Size of each input sample.
+    out_feats : int
+        Size of each output sample.
+    hidden_dim : int
+        Size of hidden layer dimension.
+    use_bn : bool, optional
+        Apply batch normalization if True, default: `True).
+    """
     def __init__(self, in_feats, out_feats, hidden_dim, num_layers, use_bn=True, activation=None):
         super(GINMLP, self).__init__()
         self.use_bn = use_bn
@@ -90,12 +94,33 @@ class GINMLP(nn.Module):
             h = F.relu(h)
         return self.nn[self.num_layers - 1](h)
 
+
 @register_model("gin")
 class GIN(BaseModel):
+    r"""Graph Isomorphism Network from paper `"How Powerful are Graph
+    Neural Networks?" <https://arxiv.org/pdf/1810.00826.pdf>`__.
+
+    Args:
+        num_layers : int
+            Number of GIN layers
+        in_feats : int
+            Size of each input sample
+        out_feats : int
+            Size of each output sample
+        hidden_dim : int
+            Size of each hidden layer dimension
+        num_mlp_layers : int
+            Number of MLP layers
+        eps : float32, optional
+            Initial `\epsilon` value, default: ``0``
+        pooling : str, optional
+            Aggregator type to use, default:　``sum``
+        train_eps : bool, optional
+            If True, `\epsilon` will be a learnable parameter, default: ``True``
+    """
+
     @staticmethod
     def add_args(parser):
-        parser.add_argument("--num-features", type=int)
-        parser.add_argument("--num-classes", type=int)
         parser.add_argument("--epsilon", type=float, default=0.)
         parser.add_argument("--hidden-size", type=int, default=32)
         parser.add_argument("--num-layers", type=int, default=5)
@@ -104,6 +129,9 @@ class GIN(BaseModel):
         parser.add_argument("--train-epsilon", type=bool, default=True)
         parser.add_argument("--pooling", type=str, default='sum')
         parser.add_argument("--batch-size", type=int, default=128)
+        parser.add_argument("--lr", type=float, default=0.001)
+        parser.add_argument("--train-ratio", type=float, default=0.7)
+        parser.add_argument("--test-ratio", type=float, default=0.1)
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -121,14 +149,17 @@ class GIN(BaseModel):
 
     @classmethod
     def split_dataset(cls, dataset, args):
-        test_index = random.sample(range(len(dataset)), len(dataset)//10)
-        train_index = [x for x in range(len(dataset)) if x not in test_index]
-
-        train_dataset = [dataset[i] for i in train_index]
-        test_dataset = [dataset[i] for i in test_index]
-        train_loader = DataLoader(train_dataset, batch_size=args.batch_size)
-        test_loader = DataLoader(test_dataset, batch_size=args.batch_size)
-        return train_loader, test_loader, test_loader
+        random.shuffle(dataset)
+        train_size = int(len(dataset) * args.train_ratio)
+        test_size = int(len(dataset) * args.test_ratio)
+        bs = args.batch_size
+        train_loader = DataLoader(dataset[:train_size], batch_size=bs)
+        test_loader = DataLoader(dataset[-test_size:], batch_size=bs)
+        if args.train_ratio + args.test_ratio < 1:
+            valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
+        else:
+            valid_loader = test_loader
+        return train_loader, valid_loader, test_loader
 
     def __init__(self,
                  num_layers,
@@ -153,16 +184,6 @@ class GIN(BaseModel):
             self.gin_layers.append(GINLayer(mlp, eps, train_eps))
             self.batch_norm.append(nn.BatchNorm1d(hidden_dim))
 
-        # if pooling == 'sum':
-        #     pooling_layer = scatter_add
-        # elif pooling == 'mean':
-        #     raise NotImplementedError
-        # elif pooling == 'max':
-        #     raise NotImplementedError
-        # else:
-        #     raise ValueError("pooling type should be 'sum', 'mean' or 'max'")
-        # self.pooling = pooling_layer
-
         self.linear_prediction = nn.ModuleList()
         for i in range(self.num_layers):
             if i == 0:
@@ -172,11 +193,11 @@ class GIN(BaseModel):
         self.dropout = nn.Dropout(dropout)
         self.criterion = torch.nn.CrossEntropyLoss()
 
-    def forward(self, x, edge_index, batch, edge_weight=None, label=None):
-        h = x
+    def forward(self, batch):
+        h = batch.x
         layer_rep = [h]
         for i in range(self.num_layers-1):
-            h = self.gin_layers[i](h, edge_index)
+            h = self.gin_layers[i](h, batch.edge_index)
             h = self.batch_norm[i](h)
             h = F.relu(h)
             layer_rep.append(h)
@@ -184,13 +205,14 @@ class GIN(BaseModel):
         final_score = 0
         for i in range(self.num_layers):
             # pooled = self.pooling(layer_rep[i], batch, dim=0)
-            pooled = scatter_add(layer_rep[i], batch, dim=0)
+            pooled = scatter_add(layer_rep[i], batch.batch, dim=0)
             final_score += self.dropout(self.linear_prediction[i](pooled))
         final_score = F.softmax(final_score, dim=-1)
-        if label is not None:
-            loss = self.loss(final_score, label)
+        if batch.y is not None:
+            loss = self.loss(final_score, batch.y)
             return final_score, loss
         return final_score, None
 
     def loss(self, output, label=None):
         return self.criterion(output, label)
+

@@ -3,33 +3,9 @@ from joblib import Parallel, delayed
 import networkx as nx
 import numpy as np
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
+import os
+
 from .. import BaseModel, register_model
-
-class WLMachine:
-    def __init__(self, graph, features, rounds):
-        self.rounds = rounds
-        self.graph = graph
-        self.features = features
-        self.nodes = self.graph.nodes
-        self.wl_features = [str(val) for _, val in features]
-        self.wl_iterations()
-
-    def wl_iterations(self):
-        for i in self.rounds:
-            new_feats = {}
-            for node in self.nodes:
-                neighbors = self.graph.neighbors(node)
-                neigh_feats = [self.features[x] for x in neighbors]
-                neigh_feats = [self.features[node]] + sorted(neigh_feats)
-                hash_feat = hashlib.md5("_".join(neigh_feats).encode())
-                hash_feat = hash_feat.hexdigest()
-                new_feats[node] = hash_feat
-            self.wl_features = self.wl_features + list(new_feats.values())
-            self.features = new_feats
-
-    def get_wl_features(self):
-        return self.wl_features
-
 
 
 @register_model("graph2vec")
@@ -47,7 +23,6 @@ class Graph2Vec(BaseModel):
         epoch (int) : The max epoches in training step.
         lr (float) : Learning rate in doc2vec.
     """
-   
     @staticmethod
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=128)
@@ -56,8 +31,9 @@ class Graph2Vec(BaseModel):
         parser.add_argument("--dm", type=int, default=0)
         parser.add_argument("--sampling", type=float, default=0.0001)
         parser.add_argument("--iteration", type=int, default=2)
-        parser.add_argument("--epoch", type=int, default=20)
+        parser.add_argument("--epoch", type=int, default=40)
         parser.add_argument("--nn", type=bool, default=False)
+        parser.add_argument("--lr", type=float, default=0.001)
 
 
     @classmethod
@@ -136,5 +112,5 @@ class Graph2Vec(BaseModel):
         return vectors, None
 
     def save_embedding(self, output_path):
-        self.model.wv.save("model.wv")
-        self.model.wv.save_word2vec_format("model.emb")
+        self.model.wv.save(os.path.join(output_path, "model.wv"))
+        self.model.wv.save_word2vec_format(os.path.join("model.emb"))

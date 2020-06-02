@@ -320,10 +320,10 @@ class DiffPool(BaseModel):
         train_size = int(len(dataset) * args.train_ratio)
         test_size = int(len(dataset) * args.test_ratio)
         bs = args.batch_size
-        train_loader = DataLoader(dataset[:train_size], batch_size=bs)
-        test_loader = DataLoader(dataset[-test_size:], batch_size=bs)
+        train_loader = DataLoader(dataset[:train_size], batch_size=bs, drop_last=True)
+        test_loader = DataLoader(dataset[-test_size:], batch_size=bs, drop_last=True)
         if args.train_ratio + args.test_ratio < 1:
-            valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
+            valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs, drop_last=True)
         else:
             valid_loader = test_loader
         return train_loader, valid_loader, test_loader
@@ -390,7 +390,7 @@ class DiffPool(BaseModel):
 
         init_emb = self.before_pooling(batch.x, batch.edge_index)
         adj, h = self.init_diffpool(init_emb, batch.edge_index, batch.batch)
-        value_set, value_counts = torch.unique(batch, return_counts=True)
+        value_set, value_counts = torch.unique(batch.batch, return_counts=True)
         batch_size = len(value_set)
         adj, h = toBatchedGraph(adj, h, adj.size(0)//batch_size)
         h = self.after_pooling_forward(self.after_pool[0], adj, h)

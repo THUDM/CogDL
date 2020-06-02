@@ -1,4 +1,3 @@
-from cogdl import options
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model

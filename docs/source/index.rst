@@ -1,7 +1,4 @@
-.. CogDL documentation master file, created by
-   sphinx-quickstart on Thu Dec 19 20:17:06 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. CogDL documentation master file
 
 Welcome to CogDL's documentation!
 =================================
@@ -19,17 +16,18 @@ CogDL provides these features:
 - Supported tasks:
   - Node classification
   - Link prediction
+  - Graph classification
   - Social influence
   - Community detection
-  - Graph classification (coming)
 
 
 .. toctree::
    :maxdepth: 2
+   :caption: Contents:
 
    install
    tutorial
-   reference/index
+   unsupervised_node_classification
    license
    citing
 

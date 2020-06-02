@@ -14,7 +14,10 @@
 #
 import os
 import sys
+
+# print('current path', os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../../cogdl'))
+# print(sys.path)
 
 # -- Project information -----------------------------------------------------
 
@@ -49,7 +52,10 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "recommonmark",
+    'autoapi.extension'
 ]
+
+autoapi_dirs = ['../../cogdl']
 
 
 # generate autosummary pages

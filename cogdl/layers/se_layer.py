@@ -18,7 +18,7 @@ class SELayer(nn.Module):
             nn.Sigmoid(),
         )
 
-        self.reset_parameters()
+        # self.reset_parameters()
 
     def forward(self, x):
         """"""

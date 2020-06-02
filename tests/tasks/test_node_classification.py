@@ -156,6 +156,34 @@ def test_pyg_unet_cora():
     ret = task.train()
     assert ret['Acc'] >= 0 and ret['Acc'] <= 1
 
+def test_pyg_drgcn_cora():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.dataset = 'cora'
+    args.model = 'drgcn'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_layers = 2
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+
+def test_pyg_drgat_cora():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.dataset = 'cora'
+    args.model = 'drgat'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_heads = 8
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+
 if __name__ == "__main__":
     test_gcn_cora()
     test_gat_cora()
@@ -167,3 +195,5 @@ if __name__ == "__main__":
     test_pyg_gat_cora()
     test_pyg_infomax_cora()
     test_pyg_unet_cora()
+    test_pyg_drgcn_cora()
+    test_pyg_drgat_cora()

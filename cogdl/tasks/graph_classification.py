@@ -74,7 +74,7 @@ class GraphClassification(BaseTask):
         args.num_classes = dataset.num_classes
         args.use_unsup = False
 
-        self.device = args.device
+        self.device = args.device_id[0] if not args.cpu else 'cpu'
         self.data = self.generate_data(dataset, args)
 
         model = build_model(args)

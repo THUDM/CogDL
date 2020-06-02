@@ -15,7 +15,7 @@ install:
 
 script:
   - black .
-  - coverage run -m pytest tests
+  - coverage run --source=cogdl -m pytest tests
   - cd docs && make clean && make html && cd ..
 
 after_success:

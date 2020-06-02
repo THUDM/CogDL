@@ -71,7 +71,7 @@ class DeepWalk(BaseModel):
             iter=self.iteration,
         )
         id2node = dict([(vid, node) for vid, node in enumerate(G.nodes())])
-        embeddings = np.asarray([model[str(id2node[i])] for i in range(len(id2node))])
+        embeddings = np.asarray([model.wv[str(id2node[i])] for i in range(len(id2node))])
         return embeddings
 
     def _walk(self, start_node, walk_length):

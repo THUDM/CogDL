@@ -89,7 +89,7 @@ class Node2vec(BaseModel):
         )
         id2node = dict([(vid, node) for vid, node in enumerate(G.nodes())])
         self.embeddings = np.asarray(
-            [model[str(id2node[i])] for i in range(len(id2node))]
+            [model.wv[str(id2node[i])] for i in range(len(id2node))]
         )
         return self.embeddings
 

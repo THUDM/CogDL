@@ -30,7 +30,7 @@ class NodeClassificationSampling(BaseTask):
     def add_args(parser):
         """Add task-specific arguments to the parser."""
         # fmt: off
-        # parser.add_argument("--num-features", type=int)
+        parser.add_argument("--batch-size", type=int, default=20)
         # fmt: on
 
     def __init__(self, args):
@@ -47,6 +47,7 @@ class NodeClassificationSampling(BaseTask):
         self.model = model.to(self.device)
         self.patience = args.patience
         self.max_epoch = args.max_epoch
+        self.batch_size = args.batch_size
 
         self.adj_list = self.data.edge_index.detach().cpu().numpy()
         self.model.set_adj(self.adj_list, self.num_nodes)
@@ -91,8 +92,8 @@ class NodeClassificationSampling(BaseTask):
         self.model.train()
         train_nodes = np.where(self.data.train_mask.detach().cpu().numpy())[0]
         train_labels = self.data.y.detach().cpu().numpy()
-        for batch_nodes, batch_labels in get_batches(train_nodes, train_labels, batch_size=140):
-            batch_nodes = torch.LongTensor(batch_nodes).to(self.device)
+        for batch_nodes, batch_labels in get_batches(train_nodes, train_labels, batch_size=self.batch_size):
+            batch_nodes = torch.LongTensor(batch_nodes)
             batch_labels = torch.LongTensor(batch_labels).to(self.device)
             sampled_x, sampled_adj, var_loss = self.model.sampling(self.data.x, batch_nodes)
             self.optimizer.zero_grad()
@@ -108,8 +109,8 @@ class NodeClassificationSampling(BaseTask):
         test_labels = self.data.y.detach().cpu().numpy()
         all_loss = []
         all_acc = []
-        for batch_nodes, batch_labels in get_batches(test_nodes, test_labels, batch_size=128):
-            batch_nodes = torch.LongTensor(batch_nodes).to(self.device)
+        for batch_nodes, batch_labels in get_batches(test_nodes, test_labels, batch_size=self.batch_size):
+            batch_nodes = torch.LongTensor(batch_nodes)
             batch_labels = torch.LongTensor(batch_labels).to(self.device)
             sampled_x, sampled_adj, var_loss = self.model.sampling(self.data.x, batch_nodes)
             with torch.no_grad():

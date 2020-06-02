@@ -27,7 +27,7 @@ CogDL provides these features:
 
    install
    tutorial
-   unsupervised_node_classification
+   task/index
    license
    citing
 

@@ -34,6 +34,20 @@ class LinkPredLoss(nn.Module):
 
 
 class GraphSAGE(nn.Module):
+    r"""GraphSAGE from `"Inductive Representation Learning on Large Graphs" <https://arxiv.org/pdf/1706.02216.pdf>`__.
+
+    ..math::
+        h^{i+1}_{\mathcal{N}(v)}=AGGREGATE_{k}(h_{u}^{k})
+        h^{k+1}_{v} = \sigma(\mathbf{W}^{k}·CONCAT(h_{v}^{k}, h_{\mathcal{N}(v)}))
+
+    Args:
+        in_feats (int) : Size of each input sample.
+        hidden_dim (int) : Size of hidden layer dimension.
+        out_feats (int) : Size of each output sample.
+        num_layers (int) : Number of GraphSAGE Layers.
+        dropout (float, optional) : Size of dropout, default: ``0.5``.
+        normalize (bool, optional) : Normalze features after each layer if True, default: ``True``.
+    """
     def __init__(self, in_feats, hidden_dim, out_feats, num_layers, dropout=0.5, normalize=False, concat=False, use_bn=False):
         super(GraphSAGE, self).__init__()
         self.convlist = nn.ModuleList()
@@ -64,6 +78,14 @@ class GraphSAGE(nn.Module):
 
 
 class BatchedGraphSAGE(nn.Module):
+    r"""GraphSAGE with mini-batch
+
+    Args:
+        in_feats (int) : Size of each input sample.
+        out_feats (int) : Size of each output sample.
+        use_bn (bool) : Apply batch normalization if True, default: ``True``.
+        self_loop (bool) : Add self loop if True, default: ``True``.
+    """
     def __init__(self, in_feats, out_feats, use_bn=True, self_loop=True):
         super(BatchedGraphSAGE, self).__init__()
         self.self_loop = self_loop
@@ -89,6 +111,30 @@ class BatchedGraphSAGE(nn.Module):
 
 
 class BatchedDiffPoolLayer(nn.Module):
+    r"""DIFFPOOL from paper `"Hierarchical Graph Representation Learning
+    with Differentiable Pooling" <https://arxiv.org/pdf/1806.08804.pdf>`__.
+
+    .. math::
+        X^{(l+1)} = S^{l)}^T Z^{(l)}
+        A^{(l+1)} = S^{(l)}^T A^{(l)} S^{(l)}
+        Z^{(l)} = GNN_{l, embed}(A^{(l)}, X^{(l)})
+        S^{(l)} = softmax(GNN_{l,pool}(A^{(l)}, X^{(l)}))
+
+    Parameters
+    ----------
+    in_feats : int
+        Size of each input sample.
+    out_feats : int
+        Size of each output sample.
+    assign_dim : int
+        Size of next adjacency matrix.
+    batch_size : int
+        Size of each mini-batch.
+    dropout : float, optional
+        Size of dropout, default: ``0.5``.
+    link_pred_loss : bool, optional
+        Use link prediction loss if True, default: ``True``.
+    """
     def __init__(self, in_feats, out_feats, assign_dim, batch_size, dropout=0.5, link_pred_loss=True, entropy_loss=True):
         super(BatchedDiffPoolLayer, self).__init__()
         self.assign_dim = assign_dim
@@ -120,7 +166,7 @@ class BatchedDiffPoolLayer(nn.Module):
 
         h = torch.matmul(result.t(), embed)
         if not edge_weight:
-            edge_weight = torch.ones(edge_index.shape[1]).cuda()
+            edge_weight = torch.ones(edge_index.shape[1]).to(x.device)
         adj = torch.sparse_coo_tensor(edge_index, edge_weight)
         adj_new = torch.sparse.mm(adj, result)
         adj_new = torch.mm(result.t(), adj_new)
@@ -141,6 +187,25 @@ class BatchedDiffPoolLayer(nn.Module):
 
 
 class BatchedDiffPool(nn.Module):
+    r"""DIFFPOOL layer with batch forward
+
+    Parameters
+    ----------
+    in_feats : int
+        Size of each input sample.
+    next_size : int
+        Size of next adjacency matrix.
+    emb_size : int
+        Dimension of next node feature matrix.
+    use_bn : bool, optional
+        Apply batch normalization if True, default: ``True``.
+    self_loop : bool, optional
+        Add self loop if True, default: ``True``.
+    use_link_loss : bool, optional
+        Use link prediction loss if True, default: ``True``.
+    use_entropy : bool, optioinal
+        Use entropy prediction loss if True, default: ``True``.
+    """
     def __init__(self, in_feats, next_size, emb_size, use_bn=True, self_loop=True, use_link_loss=False, use_entropy=True):
         super(BatchedDiffPool, self).__init__()
         self.use_link_loss = use_link_loss
@@ -190,6 +255,35 @@ def toBatchedGraph(batch_adj, batch_feat, node_per_pool_graph):
 
 @register_model("diffpool")
 class DiffPool(BaseModel):
+    r"""DIFFPOOL from paper `Hierarchical Graph Representation Learning
+    with Differentiable Pooling <https://arxiv.org/pdf/1806.08804.pdf>`__.
+
+    Parameters
+    ----------
+    in_feats : int
+        Size of each input sample.
+    hidden_dim : int
+        Size of hidden layer dimension of GNN.
+    embed_dim : int
+        Size of embeded node feature, output size of GNN.
+    num_classes : int
+        Number of target classes.
+    num_layers : int
+        Number of GNN layers.
+    num_pool_layers : int
+        Number of pooling.
+    assign_dim : int
+        Embedding size after the first pooling.
+    pooling_ratio : float
+        Size of each poolling ratio.
+    batch_size : int
+        Size of each mini-batch.
+    dropout : float, optional
+        Size of dropout, default: `0.5`.
+    no_link_pred : bool, optional
+        If True, use link prediction loss, default: `True`.
+    """
+
     @staticmethod
     def add_args(parser):
         parser.add_argument("--num-layers", type=int, default=2)
@@ -213,11 +307,11 @@ class DiffPool(BaseModel):
             args.num_classes,
             args.num_layers,
             args.num_pooling_layers,
-            args.dropout,
-            args.no_link_pred,
             int(args.max_graph_size * args.pooling_ratio) * args.batch_size,
             args.pooling_ratio,
-            args.batch_size
+            args.batch_size,
+            args.dropout,
+            args.no_link_pred
         )
 
     @classmethod
@@ -234,8 +328,8 @@ class DiffPool(BaseModel):
             valid_loader = test_loader
         return train_loader, valid_loader, test_loader
 
-    def __init__(self, in_feats, hidden_dim, embed_dim, num_classes, num_layers, num_pool_layers, dropout, no_link_pred,
-                 assign_dim, pooling_ratio, batch_size, concat=False, use_bn=False):
+    def __init__(self, in_feats, hidden_dim, embed_dim, num_classes, num_layers, num_pool_layers,  assign_dim,
+                 pooling_ratio, batch_size, dropout=0.5, no_link_pred=True, concat=False, use_bn=False):
         super(DiffPool, self).__init__()
         self.assign_dim = assign_dim
         self.assign_dim_list = [assign_dim]

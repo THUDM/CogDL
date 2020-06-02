@@ -3,7 +3,7 @@ import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import SAGEConv, global_sort_pool
+from torch_geometric.nn import SAGEConv
 
 from .. import BaseModel, register_model
 from cogdl.data import DataLoader
@@ -37,6 +37,30 @@ def spare2dense_batch(x, batch=None, fill_value=0):
 
 @register_model("sortpool")
 class SortPool(BaseModel):
+    r"""Implimentation of sortpooling in paper `"An End-to-End Deep Learning
+    Architecture for Graph Classification" <https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf>__.`
+
+    Parameters
+    ----------
+    in_feats : int
+        Size of each input sample.
+    out_feats : int
+        Size of each output sample.
+    hidden_dim : int
+        Dimension of hidden layer embedding.
+    num_classes : int
+        Number of target classes.
+    num_layers : int
+        Number of graph neural network layers before pooling.
+    k : int, optional
+        Number of selected features to sort, default: ``30``.
+    out_channel : int
+        Number of the first convolution's output channels.
+    kernel_size : int
+        Size of the first convolution's kernel.
+    dropout : float, optional
+        Size of dropout, default: ``0.5``.
+    """
     @staticmethod
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=64)
@@ -94,7 +118,6 @@ class SortPool(BaseModel):
         for i in range(self.num_layers):
             h = self.gnn_convs[i](h, batch.edge_index)
             h = F.relu(h)
-        # h = global_sort_pool(h, batch, self.k)
 
         h, _ = h.sort(dim=-1)
         fill_value = h.min().item() - 1

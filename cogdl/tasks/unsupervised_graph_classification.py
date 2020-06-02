@@ -20,18 +20,25 @@ from .unsupervised_node_classification import TopKRanker
 
 @register_task("unsupervised_graph_classification")
 class UnsupervisedGraphClassification(BaseTask):
+    r"""Unsupervised graph classification"""
     @staticmethod
     def add_args(parser):
-        parser.add_argument("--hidden-size", type=int, default=128)
+        """Add task-specific arguments to the parser."""
+        # fmt: off
+        parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--num-shuffle", type=int, default=10)
         parser.add_argument("--degree-feature", dest="degree_feature", action="store_true")
+        # fmt: on
 
     def __init__(self, args):
         super(UnsupervisedGraphClassification, self).__init__(args)
+        self.device = args.device
+
         dataset = build_dataset(args)
         self.label = np.array([data.y for data in dataset])
         self.data = [
-            Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr, pos=data.pos).apply(lambda x:x.cuda())
+            Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr,
+                 pos=data.pos).apply(lambda x:x.to(self.device))
             for data in dataset
         ]
         args.num_features = dataset.num_features
@@ -48,7 +55,7 @@ class UnsupervisedGraphClassification(BaseTask):
         # self.label_matrix[range(self.num_graphs), np.array([data.y for data in self.data], dtype=int)] = 1
 
         self.model = build_model(args)
-        self.model = self.model.cuda()
+        self.model = self.model.to(self.device)
         self.model_name = args.model
         self.hidden_size = args.hidden_size
         self.num_shuffle = args.num_shuffle
@@ -68,7 +75,7 @@ class UnsupervisedGraphClassification(BaseTask):
             for epoch in epoch_iter:
                 loss_n = 0
                 for batch in self.data_loader:
-                    batch = batch.cuda()
+                    batch = batch.to(self.device)
                     predict, loss = self.model(batch.x, batch.edge_index, batch.batch)
                     self.optimizer.zero_grad()
                     loss.backward()
@@ -82,13 +89,12 @@ class UnsupervisedGraphClassification(BaseTask):
                 prediction = []
                 label = []
                 for batch in self.data_loader:
-                    batch = batch.cuda()
+                    batch = batch.to(self.device)
                     predict, _ = self.model(batch.x, batch.edge_index, batch.batch)
                     prediction.extend(predict.cpu().numpy())
                     label.extend(batch.y.cpu().numpy())
                 prediction = np.array(prediction).reshape(len(label), -1)
                 label = np.array(label).reshape(-1)
-
         else:
             prediction, loss = self.model(self.data)
             label = self.label

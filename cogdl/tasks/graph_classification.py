@@ -16,6 +16,11 @@ from . import BaseTask, register_task
 
 
 def node_degree_as_feature(data):
+    r"""
+    Set each node feature as one-hot encoding of degree
+    :param data: a list of class Data
+    :return: a list of class Data
+    """
     max_degree = 0
     degrees = []
     for graph in data:
@@ -33,33 +38,32 @@ def node_degree_as_feature(data):
     max_degree = int(max_degree)
     for i in range(len(data)):
         one_hot = torch.zeros(data[i].num_nodes, max_degree).scatter_(1, degrees[i].unsqueeze(1), 1)
-        data[i].x = one_hot.cuda()
+        data[i].x = one_hot.to(data[i].y.device)
     return data
 
 
 def uniform_node_feature(data):
+    r"""Set each node feature to the same"""
     feat_dim = 2
     init_feat = torch.rand(1, feat_dim)
     for i in range(len(data)):
-        data[i].x =init_feat.repeat(1, data[i].num_nodes)
+        data[i].x = init_feat.repeat(1, data[i].num_nodes)
     return data
 
 
 @register_task("graph_classification")
 class GraphClassification(BaseTask):
-    """Graph classification task."""
+    r"""Superiviced graph classification task."""
 
     @staticmethod
     def add_args(parser):
         """Add task-specific arguments to the parser."""
         # fmt: off
-        # parser.add_argument("--num-features", type=int)
-        # fmt: on
-        # batch_size \in {32, 128}
         parser.add_argument("--degree-feature", dest="degree_feature", action="store_true")
         parser.add_argument("--gamma", type=float, default=0.5)
         parser.add_argument("--uniform-feature", action="store_true")
         parser.add_argument("--lr", type=float, default=0.001)
+        # fmt: on
 
     def __init__(self, args):
         super(GraphClassification, self).__init__(args)
@@ -70,10 +74,11 @@ class GraphClassification(BaseTask):
         args.num_classes = dataset.num_classes
         args.use_unsup = False
 
+        self.device = args.device
         self.data = self.generate_data(dataset, args)
 
         model = build_model(args)
-        self.model = model.cuda()
+        self.model = model.to(self.device)
         self.patience = args.patience
         self.max_epoch = args.max_epoch
 
@@ -128,7 +133,7 @@ class GraphClassification(BaseTask):
         self.model.train()
         loss_n = 0
         for batch in self.train_loader:
-            batch = batch.cuda()
+            batch = batch.to(self.device)
             self.optimizer.zero_grad()
             output, loss = self.model(batch)
             loss_n += loss.item()
@@ -150,12 +155,12 @@ class GraphClassification(BaseTask):
         y = []
         with torch.no_grad():
             for batch in loader:
-                batch = batch.cuda()
+                batch = batch.to(self.device)
                 predict, loss = self.model(batch)
                 loss_n.append(loss.item())
                 y.append(batch.y)
                 pred.extend(predict)
-        y = torch.cat(y).cuda()
+        y = torch.cat(y).to(self.device)
 
         pred = torch.stack(pred, dim=0)
         pred = pred.max(1)[1]
@@ -182,7 +187,3 @@ class GraphClassification(BaseTask):
                 args.num_features = datalist[0].num_features
             return datalist
 
-        # data = [
-        #     Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr, pos=data.pos).apply(lambda x:x.cuda())
-        #     for data in dataset
-        #     ]

@@ -3,11 +3,39 @@ from joblib import Parallel, delayed
 import networkx as nx
 import numpy as np
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
+import os
+
 from .. import BaseModel, register_model
 
 
 @register_model("graph2vec")
 class Graph2Vec(BaseModel):
+    r"""Implimentation of graph2vec in paper `"graph2vec: Learning Distributed Representations of
+         Graphs" <https://arxiv.org/pdf/1707.05005.pdf>`
+
+        Parameters
+        ----------
+        hidden_dim : int
+            Dimensionality of the feature vectors.
+        min_count : int
+            Ignores all nodes with total frequency lower than this.
+        window : int
+            The maximum distance between the current and predicted word within a sentence.
+        dm : int {1,0}
+            Defines the training algorithm. If `dm=1`, 'distributed memory' (PV-DM) is used.
+            Otherwise, `distributed bag of words` (PV-DBOW) is employed.
+        sample_rate : float
+            The threshold for configuring which higher-frequency words are randomly downsampled,
+            useful range is (0, 1e-5).
+        rounds : int
+            Number of iteration of wl-iteration.
+        epochs : int
+            Number of iterations (epochs) over the corpus.
+        lr : float
+            learning rate.
+        n_workers : int
+            Use these many worker threads to train the model (=faster training with multicore machines).
+        """
     @staticmethod
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=128)
@@ -16,8 +44,9 @@ class Graph2Vec(BaseModel):
         parser.add_argument("--dm", type=int, default=0)
         parser.add_argument("--sampling", type=float, default=0.0001)
         parser.add_argument("--iteration", type=int, default=2)
-        parser.add_argument("--epochs", type=int, default=20)
+        parser.add_argument("--epochs", type=int, default=40)
         parser.add_argument("--nn", type=bool, default=False)
+        parser.add_argument("--lr", type=float, default=0.001)
 
 
     @classmethod
@@ -96,5 +125,5 @@ class Graph2Vec(BaseModel):
         return vectors, None
 
     def save_embedding(self, output_path):
-        self.model.wv.save("model.wv")
-        self.model.wv.save_word2vec_format("model.emb")
+        self.model.wv.save(os.path.join(output_path, "model.wv"))
+        self.model.wv.save_word2vec_format(os.path.join("model.emb"))

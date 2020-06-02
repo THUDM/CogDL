@@ -13,6 +13,11 @@ from .. import BaseModel, register_model
 
 
 class SUPEncoder(torch.nn.Module):
+    r"""Encoder used in supervised model with Set2set in paper `"Order Matters: Sequence to sequence for sets"
+    <https://arxiv.org/abs/1511.06391>` and NNConv in paper `"Dynamic Edge-Conditioned Filters in Convolutional Neural Networks on
+    Graphs" <https://arxiv.org/abs/1704.02901>`
+
+    """
     def __init__(self, num_features, dim, num_layers=1):
         super(SUPEncoder, self).__init__()
         self.lin0 = torch.nn.Linear(num_features, dim)
@@ -41,6 +46,22 @@ class SUPEncoder(torch.nn.Module):
 
 
 class Encoder(nn.Module):
+    r"""Encoder stacked with GIN layers
+
+    Parameters
+    ----------
+    in_feats : int
+        Size of each input sample.
+    hidden_feats : int
+        Size of output embedding.
+    num_layers : int, optional
+        Number of GIN layers, default: ``3``.
+    num_mlp_layers : int, optional
+        Number of MLP layers for each GIN layer, default: ``2``.
+    pooling : str, optional
+        Aggragation type, default : ``sum``.
+
+    """
     def __init__(self, in_feats, hidden_dim, num_layers=3, num_mlp_layers=2, pooling='sum'):
         super(Encoder, self).__init__()
         self.num_layers = num_layers
@@ -63,7 +84,7 @@ class Encoder(nn.Module):
 
     def forward(self, x, edge_index, batch, *args):
         if x is None:
-            x = torch.ones((batch.shape[0], 1)).cuda()
+            x = torch.ones((batch.shape[0], 1)).to(batch.device)
         layer_rep = []
         for i in range(self.num_layers):
             x = F.relu(self.bn_layers[i](self.gnn_layers[i](x, edge_index)))
@@ -76,9 +97,21 @@ class Encoder(nn.Module):
 
 
 class FF(nn.Module):
+    r"""Residual MLP layers.
+
+    ..math::
+        out = \mathbf{MLP}(x) + \mathbf{Linear}(x)
+
+    Paramaters
+    ----------
+    in_feats : int
+        Size of each input sample
+    out_feats : int
+        Size of each output sample
+    """
     def __init__(self, in_feats, out_feats):
         super(FF, self).__init__()
-        self.block = GINMLP(in_feats, out_feats, out_feats, num_layers=3 ,use_bn=False)
+        self.block = GINMLP(in_feats, out_feats, out_feats, num_layers=3, use_bn=False)
         self.shortcut = nn.Linear(in_feats, out_feats)
 
     def forward(self, x):
@@ -87,6 +120,21 @@ class FF(nn.Module):
 
 @register_model("infograph")
 class InfoGraph(BaseModel):
+    r"""Implimentation of Infograph in paper `"InfoGraph: Unsupervised and Semi-supervised Graph-Level Representation
+     Learning via Mutual Information Maximization" <https://openreview.net/forum?id=r1lfF2NYvH>__. `
+
+     Parameters
+     ----------
+     in_feats : int
+        Size of each input sample.
+    out_feats : int
+        Size of each output sample.
+    num_layers : int, optional
+        Number of MLP layers in encoder, default: ``3``.
+    unsup : bool, optional
+        Use unsupervised model if True, default: ``True``.
+    """
+
     @staticmethod
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=64)
@@ -195,8 +243,8 @@ class InfoGraph(BaseModel):
         num_graphs = graph_feat.shape[0]
         num_nodes = node_feat.shape[0]
 
-        pos_mask = torch.zeros((num_nodes, num_graphs)).cuda()
-        neg_mask = torch.ones((num_nodes, num_graphs)).cuda()
+        pos_mask = torch.zeros((num_nodes, num_graphs)).to(x.device)
+        neg_mask = torch.ones((num_nodes, num_graphs)).to(x.device)
         for nid, gid in enumerate(batch):
             pos_mask[nid][gid] = 1
             neg_mask[nid][gid] = 0
@@ -212,7 +260,7 @@ class InfoGraph(BaseModel):
         un_encode = self._fc2(un_g_feat)
 
         num_graphs = sem_encode.shape[0]
-        pos_mask = torch.eye(num_graphs).cuda()
+        pos_mask = torch.eye(num_graphs).to(x.device)
         neg_mask = 1 - pos_mask
 
         mi = torch.mm(sem_encode, un_encode.t())

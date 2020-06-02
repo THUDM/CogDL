@@ -11,6 +11,23 @@ from cogdl.data import DataLoader
 
 
 class GINLayer(nn.Module):
+    r"""Graph Isomorphism Network layer from paper `"How Powerful are Graph
+    Neural Networks?" <https://arxiv.org/pdf/1810.00826.pdf>`__.
+
+    .. math::
+        h_i^{(l+1)} = f_\Theta \left((1 + \epsilon) h_i^{l} +
+        \mathrm{sum}\left(\left\{h_j^{l}, j\in\mathcal{N}(i)
+        \right\}\right)\right)
+
+    Parameters
+    ----------
+    apply_func : callable layer function)
+        layer or function applied to update node feature
+    eps : float32, optional
+        Initial `\epsilon` value.
+    train_eps : bool, optional
+        If True, `\epsilon` will be a learnable parameter.
+    """
     def __init__(self, apply_func=None, eps=0, train_eps=True):
         super(GINLayer, self).__init__()
         if train_eps:
@@ -23,7 +40,7 @@ class GINLayer(nn.Module):
         edge_index, _ = remove_self_loops(edge_index)
         edge_weight = torch.ones(edge_index.shape[1]) if edge_weight is None else edge_weight
         adj = torch.sparse_coo_tensor(edge_index, edge_weight, (x.shape[0], x.shape[0]))
-        adj = adj.cuda()
+        adj = adj.to(x.device)
         out = (1 + self.eps) * x + torch.spmm(adj, x)
         if self.apply_func is not None:
             out = self.apply_func(out)
@@ -31,6 +48,22 @@ class GINLayer(nn.Module):
 
 
 class GINMLP(nn.Module):
+    r"""Multilayer perception with batch normalization
+
+    .. math::
+        x^{(i+1)} = \sigma(W^{i}x^{(i)})
+
+    Parameters
+    ----------
+    in_feats : int
+        Size of each input sample.
+    out_feats : int
+        Size of each output sample.
+    hidden_dim : int
+        Size of hidden layer dimension.
+    use_bn : bool, optional
+        Apply batch normalization if True, default: `True).
+    """
     def __init__(self, in_feats, out_feats, hidden_dim, num_layers, use_bn=True, activation=None):
         super(GINMLP, self).__init__()
         self.use_bn = use_bn
@@ -64,10 +97,30 @@ class GINMLP(nn.Module):
 
 @register_model("gin")
 class GIN(BaseModel):
+    r"""Graph Isomorphism Network from paper `"How Powerful are Graph
+    Neural Networks?" <https://arxiv.org/pdf/1810.00826.pdf>`__.
+
+    Args:
+        num_layers : int
+            Number of GIN layers
+        in_feats : int
+            Size of each input sample
+        out_feats : int
+            Size of each output sample
+        hidden_dim : int
+            Size of each hidden layer dimension
+        num_mlp_layers : int
+            Number of MLP layers
+        eps : float32, optional
+            Initial `\epsilon` value, default: ``0``
+        pooling : str, optional
+            Aggregator type to use, default:　``sum``
+        train_eps : bool, optional
+            If True, `\epsilon` will be a learnable parameter, default: ``True``
+    """
+
     @staticmethod
     def add_args(parser):
-        parser.add_argument("--num-features", type=int)
-        parser.add_argument("--num-classes", type=int)
         parser.add_argument("--epsilon", type=float, default=0.)
         parser.add_argument("--hidden-size", type=int, default=32)
         parser.add_argument("--num-layers", type=int, default=5)

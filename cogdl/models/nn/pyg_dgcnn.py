@@ -12,9 +12,23 @@ from cogdl.data import DataLoader, Data
 
 @register_model("pyg_dgcnn")
 class DGCNN(BaseModel):
+    r"""EdgeConv and DynamicGraph in paper `"Dynamic Graph CNN for Learning on
+    Point Clouds" <https://arxiv.org/pdf/1801.07829.pdf>__ .`
+
+    Parameters
+    ----------
+    in_feats : int
+        Size of each input sample.
+    out_feats : int
+        Size of each output sample.
+    hidden_dim : int
+        Dimension of hidden layer embedding.
+    k : int
+        Number of neareast neighbors.
+    """
     @staticmethod
     def add_args(parser):
-        parser.add_argument("--hidden-dim", type=int, default=64)
+        parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--batch-size", type=int, default=20)
         parser.add_argument("--train-ratio", type=float, default=0.7)
         parser.add_argument("--test-ratio", type=float, default=0.1)
@@ -24,7 +38,7 @@ class DGCNN(BaseModel):
     def build_model_from_args(cls, args):
         return cls(
             args.num_features,
-            args.hidden_dim,
+            args.hidden_size,
             args.num_classes,
         )
 

@@ -54,7 +54,7 @@ class Graphsage(BaseModel):
                 list = random.sample(list, num_sample)
             sample_list.extend(list)
 
-        edge_idx = torch.LongTensor(sample_list).t().cuda()
+        edge_idx = torch.LongTensor(sample_list).t()
         # for i in edge_index
         # print("sampled",edge_index)
         return edge_idx
@@ -71,7 +71,7 @@ class Graphsage(BaseModel):
         self.sample_size = sample_size
         self.dropout = dropout
         shapes = [num_features] + hidden_size + [num_classes]
-        print(shapes)
+        # print(shapes)
         self.convs = nn.ModuleList(
             [
                 MeanAggregator(shapes[layer], shapes[layer + 1], cached=True)
@@ -82,12 +82,12 @@ class Graphsage(BaseModel):
     # @profile
     def forward(self, x, edge_index):
         for i in range(self.num_layers):
-            edge_index_sp = self.sampler(edge_index, self.sample_size[i])
+            edge_index_sp = self.sampler(edge_index, self.sample_size[i]).to(x.device)
             adj_sp = torch.sparse_coo_tensor(
                 edge_index_sp,
                 torch.ones(edge_index_sp.shape[1]).float(),
                 (x.shape[0], x.shape[0]),
-            ).cuda()
+            ).to(x.device)
             x = self.convs[i](x, adj_sp)
             if i != self.num_layers - 1:
                 x = F.relu(x)

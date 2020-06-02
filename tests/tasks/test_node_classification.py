@@ -25,7 +25,7 @@ def test_gcn_cora():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] > 0
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
 
 def test_gat_cora():
     args = get_default_args()
@@ -40,12 +40,12 @@ def test_gat_cora():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] > 0
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
 
-def test_mlp_cora():
+def test_mlp_pubmed():
     args = get_default_args()
     args.task = 'node_classification'
-    args.dataset = 'cora'
+    args.dataset = 'pubmed'
     args.model = 'mlp'
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
@@ -54,9 +54,116 @@ def test_mlp_cora():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] > 0
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+
+def test_mixhop_citeseer():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.dataset = 'citeseer'
+    args.model = 'mixhop'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_layers = 2
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+
+def test_graphsage_cora():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.dataset = 'cora'
+    args.model = 'graphsage'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_layers = 2
+    args.hidden_size = [128]
+    args.sample_size = [10, 10]
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+
+def test_pyg_cheb_cora():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.dataset = 'cora'
+    args.model = 'pyg_cheb'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_layers = 2
+    args.filter_size = 5
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+
+def test_pyg_gcn_cora():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.dataset = 'cora'
+    args.model = 'pyg_gcn'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_layers = 2
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+
+def test_pyg_gat_cora():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.dataset = 'cora'
+    args.model = 'pyg_gat'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_heads = 8
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+
+def test_pyg_infomax_cora():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.dataset = 'cora'
+    args.model = 'pyg_infomax'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+
+def test_pyg_unet_cora():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.dataset = 'cora'
+    args.model = 'pyg_unet'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_layers = 2
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
 
 if __name__ == "__main__":
     test_gcn_cora()
     test_gat_cora()
-    test_mlp_cora()
+    test_mlp_pubmed()
+    test_mixhop_citeseer()
+    test_graphsage_cora()
+    test_pyg_cheb_cora()
+    test_pyg_gcn_cora()
+    test_pyg_gat_cora()
+    test_pyg_infomax_cora()
+    test_pyg_unet_cora()

@@ -102,9 +102,10 @@ class Test(EdgelistLabelType):
         super(Test, self).__init__(path, dataset)
 
 
+
 @register_dataset("aminer")
-class Test(EdgelistLabelType):
+class Aminer(EdgelistLabelType):
     def __init__(self):
         dataset = "aminer"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
-        super(Test, self).__init__(path, dataset)
+        super(Aminer, self).__init__(path, dataset)

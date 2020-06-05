@@ -12,7 +12,7 @@ class LINE(BaseModel):
     <http://arxiv.org/abs/1503.03578>`_ paper.
     
     Args:
-        dimension (int) : The dimension of node representation.
+        hidden_size (int) : The dimension of node representation.
         walk_length (int) : The walk length.
         walk_num (int) : The number of walks to sample for each node.
         negative (int) : The number of nagative samples for each edge.

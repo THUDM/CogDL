@@ -6,7 +6,7 @@ from six.moves import urllib
 from .makedirs import makedirs
 
 
-def download_url(url, folder, log=True):
+def download_url(url, folder, name=None, log=True):
     r"""Downloads the content of an URL to a specific folder.
 
     Args:
@@ -21,7 +21,10 @@ def download_url(url, folder, log=True):
     makedirs(folder)
 
     data = urllib.request.urlopen(url)
-    filename = url.rpartition("/")[2]
+    if name is None:
+        filename = url.rpartition("/")[2]
+    else:
+        filename = name
     path = osp.join(folder, filename)
 
     with open(path, "wb") as f:

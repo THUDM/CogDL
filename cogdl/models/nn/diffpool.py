@@ -141,8 +141,8 @@ class BatchedDiffPoolLayer(nn.Module):
         self.dropout = dropout
         self.use_link_pred = link_pred_loss
         self.batch_size = batch_size
-        self.embd_gnn = SAGEConv(in_feats, out_feats, normalize=False, concat=False)
-        self.pool_gnn = SAGEConv(in_feats, assign_dim, normalize=False, concat=False)
+        self.embd_gnn = SAGEConv(in_feats, out_feats, normalize=False)
+        self.pool_gnn = SAGEConv(in_feats, assign_dim, normalize=False)
 
         self.loss_dict = dict()
 

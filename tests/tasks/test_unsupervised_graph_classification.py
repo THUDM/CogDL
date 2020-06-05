@@ -67,13 +67,13 @@ def test_infograph_proteins():
     accuracy_check(ret)
 
 
-def test_infograph_collab():
-    args = get_default_args()
-    args = add_infograp_args(args)
-    args.dataset = 'collab'
-    task = build_task(args)
-    ret = task.train()
-    accuracy_check(ret)
+# def test_infograph_collab():
+#     args = get_default_args()
+#     args = add_infograp_args(args)
+#     args.dataset = 'collab'
+#     task = build_task(args)
+#     ret = task.train()
+#     accuracy_check(ret)
 
 
 def test_infograph_imdb_binary():

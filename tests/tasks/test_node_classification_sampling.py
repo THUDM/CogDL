@@ -9,6 +9,7 @@ def get_default_args():
                     'dropout': 0.5,
                     'patience': 1,
                     'max_epoch': 2,
+                    'batch_size': 20,
                     'cpu': True,
                     'lr': 0.01,
                     'weight_decay': 5e-4}
@@ -29,5 +30,21 @@ def test_fastgcn_cora():
     ret = task.train()
     assert ret['Acc'] >= 0 and ret['Acc'] <= 1
 
+def test_asgcn_cora():
+    args = get_default_args()
+    args.task = 'node_classification_sampling'
+    args.dataset = 'cora'
+    args.model = 'asgcn'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_layers = 3
+    args.sample_size = [64,64,32]
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+
 if __name__ == "__main__":
     test_fastgcn_cora()
+    test_asgcn_cora()

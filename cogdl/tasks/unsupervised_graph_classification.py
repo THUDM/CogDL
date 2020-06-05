@@ -32,7 +32,7 @@ class UnsupervisedGraphClassification(BaseTask):
 
     def __init__(self, args):
         super(UnsupervisedGraphClassification, self).__init__(args)
-        self.device = args.device
+        self.device = args.device_id[0] if not args.cpu else 'cpu'
 
         dataset = build_dataset(args)
         self.label = np.array([data.y for data in dataset])
@@ -76,7 +76,7 @@ class UnsupervisedGraphClassification(BaseTask):
                 loss_n = 0
                 for batch in self.data_loader:
                     batch = batch.to(self.device)
-                    predict, loss = self.model(batch.x, batch.edge_index, batch.batch)
+                    predict, loss = self.model(batch)
                     self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
@@ -90,7 +90,7 @@ class UnsupervisedGraphClassification(BaseTask):
                 label = []
                 for batch in self.data_loader:
                     batch = batch.to(self.device)
-                    predict, _ = self.model(batch.x, batch.edge_index, batch.batch)
+                    predict, _ = self.model(batch)
                     prediction.extend(predict.cpu().numpy())
                     label.extend(batch.y.cpu().numpy())
                 prediction = np.array(prediction).reshape(len(label), -1)

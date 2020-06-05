@@ -80,16 +80,16 @@ class DGCNN(BaseModel):
             nn.Linear(256, out_feats)
         )
 
-    def forward(self, x, batch=None, label=None, *args, **kwargs):
-        h = x
-        h1 = self.conv1(h, batch)
-        h2 = self.conv2(h1, batch)
+    def forward(self, batch):
+        h = batch.x
+        h1 = self.conv1(h, batch.batch)
+        h2 = self.conv2(h1, batch.batch)
         h = self.linear(torch.cat([h1, h2], dim=1))
-        h = global_max_pool(h, batch)
+        h = global_max_pool(h, batch.batch)
         out = self.final_mlp(h)
         out = F.log_softmax(out, dim=-1)
-        if label is not None:
-            loss = F.nll_loss(out, label)
+        if batch.y is not None:
+            loss = F.nll_loss(out, batch.y)
             return out, loss
         return out, None
 

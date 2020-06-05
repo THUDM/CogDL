@@ -6,7 +6,9 @@ from cogdl.utils import build_args_from_dict
 
 
 def get_default_args():
-    default_dict = {'hidden_size': 64,
+    default_dict = {
+                    'task': 'graph_classification',
+                    'hidden_size': 64,
                     'dropout': 0.5,
                     'patience': 1,
                     'max_epoch': 2,
@@ -16,6 +18,7 @@ def get_default_args():
                     'gamma': 0.5,
                     'train_ratio': 0.7,
                     'test_ratio': 0.1,
+                    'device_id': ['cpu'],
                     'degree_feature': False}
     return build_args_from_dict(default_dict)
 
@@ -70,10 +73,10 @@ def test_gin_mutag():
     assert ret["Acc"] > 0
 
 
-def test_gin_lmdb_binary():
+def test_gin_imdb_binary():
     args = get_default_args()
     args = add_gin_args(args)
-    args.dataset = 'lmdb-b'
+    args.dataset = 'imdb-b'
     args.model = 'gin'
     args.degree_feature = True
     task = build_task(args)
@@ -96,7 +99,7 @@ def test_diffpool_mutag():
     args = add_diffpool_args(args)
     args.dataset = 'mutag'
     args.model = 'diffpool'
-    args.batch_size = 20
+    args.batch_size = 5
     task = build_task(args)
     ret = task.train()
     assert ret["Acc"] > 0
@@ -133,6 +136,16 @@ def test_dgcnn_proteins():
     assert ret["Acc"] > 0
 
 
+def test_dgcnn_imdb_binary():
+    args = get_default_args()
+    args = add_dgcnn_args(args)
+    args.dataset = 'imdb-b'
+    args.model = 'pyg_dgcnn'
+    args.degree_feature = True
+    task = build_task(args)
+    ret = task.train()
+    assert ret["Acc"] > 0
+
 def test_sortpool_mutag():
     args = get_default_args()
     args = add_sortpool_args(args)
@@ -156,7 +169,7 @@ def test_sortpool_proteins():
 
 
 if __name__ == "__main__":
-    test_gin_lmdb_binary()
+    test_gin_imdb_binary()
     test_gin_mutag()
     test_gin_proteins()
 
@@ -167,4 +180,5 @@ if __name__ == "__main__":
     test_diffpool_proteins()
 
     test_dgcnn_proteins()
-    test_dgcnn_modelnet10()
+    test_dgcnn_imdb_binary()
+    # test_dgcnn_modelnet10()

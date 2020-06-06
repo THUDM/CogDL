@@ -34,7 +34,7 @@ def test_line_ppi():
     args.dataset = 'ppi'
     args.model = 'line'
     dataset = build_dataset(args)
-    args.walk_length = 10
+    args.walk_length = 1
     args.walk_num = 2
     args.negative = 3
     args.batch_size = 20
@@ -45,14 +45,14 @@ def test_line_ppi():
     ret = task.train()
     assert ret['Micro-F1 0.9'] > 0
 
-def test_node2vec_ppi():
+def test_node2vec_wikipedia():
     args = get_default_args()
     args.task = 'unsupervised_node_classification'
-    args.dataset = 'ppi'
+    args.dataset = 'wikipedia'
     args.model = 'node2vec'
     dataset = build_dataset(args)
-    args.walk_length = 10
-    args.walk_num = 2
+    args.walk_length = 5
+    args.walk_num = 1
     args.window_size = 3
     args.worker = 5
     args.iteration = 2
@@ -119,10 +119,10 @@ def test_netsmf_ppi():
     assert ret['Micro-F1 0.9'] > 0  
 
 
-def test_prone_ppi():
+def test_prone_blogcatalog():
     args = get_default_args()
     args.task = 'unsupervised_node_classification'
-    args.dataset = 'ppi'
+    args.dataset = 'blogcatalog'
     args.model = 'prone'
     dataset = build_dataset(args)
     args.step = 5
@@ -175,11 +175,11 @@ def test_dngr_ppi():
 if __name__ == "__main__":
     test_deepwalk_ppi()
     test_line_ppi()
-    test_node2vec_ppi()
+    test_node2vec_wikipedia()
     test_hope_ppi()
     test_grarep_ppi()
     test_netmf_ppi()
     test_netsmf_ppi()
-    test_prone_ppi()
+    test_prone_blogcatalog()
     test_sdne_ppi()
     test_dngr_ppi()

@@ -9,14 +9,27 @@ from .. import BaseModel, register_model
 
 @register_model("dgk")
 class DeepGraphKernel(BaseModel):
+    r"""The Hin2vec model from the `"Deep Graph Kernels"
+    <https://dl.acm.org/citation.cfm?id=2783417&CFID=763322570&CFTOKEN=93890155>`_ paper.
+    
+    Args:
+        hidden_size (int) : The dimension of node representation.
+        min_count (int) : Parameter in word2vec.
+        window (int) : The actual context size which is considered in language model.
+        sampling_rate (float) : Parameter in word2vec.
+        iteration (int) : The number of iteration in WL method.
+        epoch (int) : The number of training iteration.
+        alpha (float) : The learning rate of word2vec.
+    """
     @staticmethod
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=128)
-        parser.add_argument("--window", type=int, default=5)
+        parser.add_argument("--window_size", type=int, default=5)
         parser.add_argument("--min-count", type=int, default=1)
         parser.add_argument("--sampling", type=float, default=0.0001)
         parser.add_argument("--iteration", type=int, default=2)
-        parser.add_argument("--epochs", type=int, default=20)
+        parser.add_argument("--epoch", type=int, default=20)
+        parser.add_argument("--alpha", type=float, default=0.01)
         parser.add_argument("--nn", type=bool, default=False)
 
 
@@ -25,11 +38,11 @@ class DeepGraphKernel(BaseModel):
         return cls(
             args.hidden_size,
             args.min_count,
-            args.window,
+            args.window_size,
             args.sampling,
             args.iteration,
-            args.epochs,
-            args.lr
+            args.epoch,
+            args.alpha
         )
 
     @staticmethod
@@ -60,18 +73,18 @@ class DeepGraphKernel(BaseModel):
             features = new_feats
         return wl_features
 
-    def __init__(self, hidden_dim, min_count, window, sampling_rate, rounds, epochs, lr, n_workers=4):
+    def __init__(self, hidden_dim, min_count, window_size, sampling_rate, rounds, epoch, alpha, n_workers=4):
         super(DeepGraphKernel, self).__init__()
         self.hidden_dim = hidden_dim
         self.min_count = min_count
-        self.window = window
+        self.window = window_size
         self.sampling_rate = sampling_rate
         self.n_workers = n_workers
         self.rounds = rounds
         self.model = None
         self.gl_collections = None
-        self.epochs = epochs
-        self.lr = lr
+        self.epoch = epoch
+        self.alpha = alpha
 
     def forward(self, graphs, **kwargs):
         if self.gl_collections is None:
@@ -86,12 +99,11 @@ class DeepGraphKernel(BaseModel):
             min_count=self.min_count,
             sample=self.sampling_rate,
             workers=self.n_workers,
-            iter=self.epochs,
-            alpha=self.lr
+            iter=self.epoch,
+            alpha=self.alpha
         )
         vectors = np.asarray([model[str(node)] for node in model.wv.index2word])
         S = vectors.dot(vectors.T)        
-
         node2id = dict(zip(model.wv.index2word, range(len(model.wv.index2word))))
         
         num_graph, size_vocab = len(graphs), len(node2id)

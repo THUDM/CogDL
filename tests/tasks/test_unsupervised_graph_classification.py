@@ -58,6 +58,20 @@ def add_graph2vec_args(args):
     return args
 
 
+def add_dgk_args(args):
+    args.hidden_size = 128
+    args.window_size = 2
+    args.min_count = 5
+    args.sampling = 0.0001
+    args.iteration = 2
+    args.epoch = 4
+    args.nn = False
+    args.alpha = 0.01
+    args.model = 'dgk'
+    args.degree_feature = False
+    return args    
+    
+
 def test_infograph_proteins():
     args = get_default_args()
     args = add_infograp_args(args)
@@ -115,10 +129,35 @@ def test_graph2vec_proteins():
     accuracy_check(ret)
 
 
-if __name__ == "__main__":
+def test_dgk_mutag():
+    args = get_default_args()
+    args = add_dgk_args(args)
+    args.dataset = 'mutag'
+    print(args)
+    task = build_task(args)
+    ret = task.train()
+    accuracy_check(ret)
+
+
+def test_dgk_proteins():
+    args = get_default_args()
+    args = add_dgk_args(args)
+    args.dataset = 'proteins'
+    print(args)
+    task = build_task(args)
+    ret = task.train()
+    accuracy_check(ret)
+    
+
+if __name__ == "__main__":    
     test_graph2vec_mutag()
     test_graph2vec_proteins()
 
     test_infograph_mutag()
     test_infograph_imdb_binary()
     test_infograph_proteins()
+    
+    test_dgk_mutag()
+    test_dgk_proteins()
+    
+

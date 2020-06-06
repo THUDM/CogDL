@@ -62,6 +62,17 @@ def add_sortpool_args(args):
     return args
 
 
+def add_patchy_san_args(args):
+    args.hidden_size = 64
+    args.batch_size = 20
+    args.sample = 10
+    args.stride = 1
+    args.neighbor = 10
+    args.iteration = 2
+    args.train_ratio = 0.7
+    args.test_ratio = 0.1
+    return args    
+
 def test_gin_mutag():
     args = get_default_args()
     args = add_gin_args(args)
@@ -168,7 +179,30 @@ def test_sortpool_proteins():
     assert ret["Acc"] > 0
 
 
+def test_patchy_san_mutag():
+    args = get_default_args()
+    args = add_patchy_san_args(args)
+    args.dataset = 'mutag'
+    args.model = 'patchy_san'
+    args.batch_size =  20
+    task = build_task(args)
+    ret = task.train()
+    assert ret["Acc"] > 0
+    
+
+def test_patchy_san_proteins():
+    args = get_default_args()
+    args = add_patchy_san_args(args)
+    args.dataset = 'proteins'
+    args.model = 'patchy_san'
+    args.batch_size =  20
+    task = build_task(args)
+    ret = task.train()
+    assert ret["Acc"] > 0  
+
+
 if __name__ == "__main__":
+        
     test_gin_imdb_binary()
     test_gin_mutag()
     test_gin_proteins()
@@ -182,3 +216,6 @@ if __name__ == "__main__":
     test_dgcnn_proteins()
     test_dgcnn_imdb_binary()
     # test_dgcnn_modelnet10()
+    
+    test_patchy_san_mutag()
+    test_patchy_san_proteins()

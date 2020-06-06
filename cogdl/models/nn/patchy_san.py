@@ -16,23 +16,38 @@ import functools
 
 @register_model("patchy_san")
 class PatchySAN(BaseModel):
+    r"""The Patchy-SAN model from the `"Learning Convolutional Neural Networks for Graphs"
+    <https://arxiv.org/abs/1605.05273>`_ paper.
+    
+    Args:
+        batch_size (int) : The batch size of training.
+        sample (int) : Number of chosen vertexes.
+        stride (int) : Node selection stride.
+        neighbor (int) : The number of neighbor for each node.
+        iteration (int) : The number of training iteration.
+    """
     @staticmethod
     def add_args(parser):
         parser.add_argument("--batch-size", type=int, default=20)
         parser.add_argument('--sample', default=30, type=int, help='Number of chosen vertexes')
         parser.add_argument('--stride', default=1, type=int, help='Stride of chosen vertexes')
         parser.add_argument('--neighbor', default=10, type=int, help='Number of neighbor in constructing features')
-        parser.add_argument('--iteration', default=10, type=int, help='Number of iteration')
+        parser.add_argument('--iteration', default=5, type=int, help='Number of iteration')
         parser.add_argument("--train-ratio", type=float, default=0.7)
         parser.add_argument("--test-ratio", type=float, default=0.1)
 
     @classmethod
     def build_model_from_args(cls, args):
         return cls(args.batch_size, args.num_features, args.num_classes, args.sample, args.stride, args.neighbor, args.iteration)
-            
-    @classmethod
-    def split_dataset(cls, dataset, args):
+    
+    @classmethod        
+    def split_dataset(self, dataset, args):
         random.shuffle(dataset)
+        # process each graph and add it into Data() as attribute tx
+        for i, data in enumerate(dataset):
+            new_feature = get_single_feature(dataset[i], args.num_features, args.num_classes, args.sample, args.neighbor, args.stride)
+            dataset[i].tx = torch.from_numpy(new_feature)
+
         train_size = int(len(dataset) * args.train_ratio)
         test_size = int(len(dataset) * args.test_ratio)
         bs = args.batch_size
@@ -85,11 +100,7 @@ class PatchySAN(BaseModel):
         # self.criterion = nn.NLLLoss()
 
     def forward(self, batch):
-        # print(x.shape, edge_index.shape, label)
-        data = get_feature(batch, self.num_features, self.num_classes, self.num_sample, self.num_neighbor, self.stride)
-        data = torch.from_numpy(data).cuda()
-
-        logits= self.nn(data)        
+        logits= self.nn(batch.tx)
         if batch.y is not None:
             return logits, self.criterion(logits, batch.y)
         return logits, None
@@ -212,9 +223,9 @@ def node_selection_with_1d_wl(G, features, num_channel, num_sample, num_neighbor
             X[:, j, :] = np.zeros((num_channel, num_neighbor), dtype=np.float32)
         i += stride
         j += 1
-
     init_labels = dict([(v, features[id].argmax(axis=0)) for v, id in node2id.items()])
     graph_labels_list = one_dim_wl(graph_list, init_labels)
+
     # finally relabel based on 1d-wl and distance to root node
     for i in range(len(root_list)):
         # set root node the first position
@@ -226,14 +237,16 @@ def node_selection_with_1d_wl(G, features, num_channel, num_sample, num_neighbor
     return X.reshape(num_channel, num_sample * num_neighbor)
 
 
-def get_feature(batch, num_features, num_classes, num_sample, num_neighbor, stride=1):
+def get_single_feature(data, num_features, num_classes, num_sample, num_neighbor, stride=1):
     """construct features"""
-    data_list = batch.to_data_list()
+    data_list = [data]
     X = np.zeros((len(data_list), num_features, num_sample * num_neighbor), dtype=np.float32)
     for i in range(len(data_list)):
         edge_index, features = data_list[i].edge_index, data_list[i].x
         G = nx.Graph()
         G.add_edges_from(edge_index.t().tolist())
-        X[i] = node_selection_with_1d_wl(G, features.cpu().numpy(), num_features, num_sample, num_neighbor, stride)
+        # print("graph", i, "number of node", G.number_of_nodes(), "edge", G.number_of_edges())
+        if G.number_of_nodes() > num_neighbor:
+            X[i] = node_selection_with_1d_wl(G, features.cpu().numpy(), num_features, num_sample, num_neighbor, stride)
     X = X.astype(np.float32)
-    return X
+    return X    

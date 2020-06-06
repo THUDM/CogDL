@@ -35,7 +35,6 @@ class MultiplexNodeClassification(BaseTask):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--hidden-size", type=int, default=128)
-        parser.add_argument("--num-shuffle", type=int, default=5)
         # fmt: on
 
     def __init__(self, args):
@@ -43,89 +42,30 @@ class MultiplexNodeClassification(BaseTask):
         dataset = build_dataset(args)
         self.data = dataset[0]
         self.label_matrix = self.data.y
-        self.num_nodes, self.num_classes = self.data.y.shape
-
-        self.model = build_model(args)
-        self.model_name = args.model
+        self.num_nodes, self.num_classes = dataset.num_nodes, dataset.num_classes
         self.hidden_size = args.hidden_size
-        self.num_shuffle = args.num_shuffle
-        self.save_dir = args.save_dir
-        self.enhance = args.enhance
-        self.args = args
-        self.is_weighted = self.data.edge_attr is not None
-    
+        self.model = build_model(args)
+        
+        self.device = torch.device('cpu' if args.cpu else 'cuda')
+        self.model = self.model.to(self.device)
+
 
     def train(self):
         G = nx.DiGraph()
-        if self.is_weighted:
-            edges, weight = (
-                self.data.edge_index.t().tolist(),
-                self.data.edge_attr.tolist(),
-            )
-            G.add_weighted_edges_from(
-                [(edges[i][0], edges[i][1], weight[i]) for i in range(len(edges))]
-            )
-        else:
-            G.add_edges_from(self.data.edge_index.t().tolist())
+        G.add_edges_from(self.data.edge_index.t().tolist())
         embeddings = self.model.train(G, self.data.pos.tolist())
+        embeddings = np.hstack((embeddings, self.data.x.numpy()))
+                    
+        # Select nodes which have label as training data        
+        train_index = torch.cat((self.data.train_node, self.data.valid_node)).numpy()
+        test_index = self.data.test_node.numpy()
+        y = self.data.y.numpy()
+        
+        X_train, y_train = embeddings[train_index], y[train_index]
+        X_test, y_test = embeddings[test_index], y[test_index]
+        clf = LogisticRegression()
+        clf.fit(X_train, y_train)
+        preds = clf.predict(X_test)
+        test_f1 = f1_score(y_test, preds, average="micro")
 
-        # Map node2id
-        features_matrix = np.zeros((self.num_nodes, self.hidden_size))
-        for vid, node in enumerate(G.nodes()):
-            features_matrix[node] = embeddings[vid]
-            
-        # Select nodes which have label as training data
-        select_index = [i for i in range(self.num_nodes) if sum(self.label_matrix[i]) !=0]
-        features_matrix, label_matrix = features_matrix[select_index], self.label_matrix[select_index]
-        label_matrix = sp.csr_matrix(label_matrix)
-        return self._evaluate(features_matrix, label_matrix, self.num_shuffle)
-
-    def _evaluate(self, features_matrix, label_matrix, num_shuffle):
-        shuffles = []
-        for _ in range(num_shuffle):
-            shuffles.append(skshuffle(features_matrix, label_matrix))
-        all_results = defaultdict(list)
-        training_percents = [0.3, 0.5, 0.7, 0.9]
-
-        for train_percent in training_percents:
-            for shuf in shuffles:
-                X, y = shuf
-
-                training_size = int(train_percent * len(X))
-
-                X_train = X[:training_size, :]
-                y_train = y[:training_size, :]
-
-                X_test = X[training_size:, :]
-                y_test = y[training_size:, :]
-
-                clf = TopKRanker(LogisticRegression())
-                clf.fit(X_train, y_train)
-
-                # find out how many labels should be predicted
-                top_k_list = list(map(int, y_test.sum(axis=1).T.tolist()[0]))
-                preds = clf.predict(X_test, top_k_list)
-                result = f1_score(y_test, preds, average="micro")
-                all_results[train_percent].append(result)
-
-        return dict(
-            (
-                f"Micro-F1 {train_percent}",
-                sum(all_results[train_percent]) / len(all_results[train_percent]),
-            )
-            for train_percent in sorted(all_results.keys())
-        )
-
-
-class TopKRanker(OneVsRestClassifier):
-    def predict(self, X, top_k_list):
-        assert X.shape[0] == len(top_k_list)
-        probs = np.asarray(super(TopKRanker, self).predict_proba(X))
-        all_labels = sp.lil_matrix(probs.shape)
-
-        for i, k in enumerate(top_k_list):
-            probs_ = probs[i, :]
-            labels = self.classes_[probs_.argsort()[-k:]].tolist()
-            for label in labels:
-                all_labels[i, label] = 1
-        return all_labels
+        return dict(f1=test_f1)

@@ -34,8 +34,6 @@ class PTE(BaseModel):
                             help='Batch size in SGD training process. Default is 1000.')
         parser.add_argument('--alpha', type=float, default=0.025,
                             help='Initial learning rate of SGD. Default is 0.025.')
-        parser.add_argument('--order', type=int, default=3,
-                            help='Order of proximity in LINE. Default is 3 for 1+2.')
         # fmt: on
 
     @classmethod
@@ -73,35 +71,38 @@ class PTE(BaseModel):
         self.edges, self.edges_prob = [[] for _ in range(self.num_node_type)], []
         self.node_prob, self.id2node = [], [dict() for _ in range(self.num_node_type)]
         
+        subgraphs = []
         for i in range(self.num_node_type):
-            node_set = context_node = [nid for nid, ntype in enumerate(self.node_type) if ntype==0 or ntype ==i]
-            sub_graph = nx.Graph()
-            if i==0:
-                sub_graph = self.G.subgraph(context_node).to_undirected()
-            else:
-                sub_edges = [(u, v) for u, v in self.G.edges() if self.node_type[u]==0 and self.node_type[v]==i]
-                sub_graph.add_edges_from(sub_edges)
-            
-            self.edges[i] = [[e[0], e[1]] for e in sub_graph.edges()]
-            edges_prob = np.asarray([sub_graph[u][v].get("weight", 1.0) for u, v in self.edges[i]])
+            for j in range(i+1, self.num_node_type):
+                context_node = [nid for nid, ntype in enumerate(self.node_type) if ntype==i or ntype ==j]
+                sub_graph = nx.Graph()
+                sub_graph = self.G.subgraph(context_node)
+                if sub_graph.number_of_edges() != 0:
+                    subgraphs.append(sub_graph)
+        self.num_graph = len(subgraphs)
+        print("number of subgraph", self.num_graph)
+        
+        for i in range(self.num_graph):
+            self.edges[i] = [[e[0], e[1]] for e in subgraphs[i].edges()]
+            edges_prob = np.asarray([subgraphs[i][u][v].get("weight", 1.0) for u, v in self.edges[i]])
             edges_prob /= np.sum(edges_prob)
             edges_table_prob = alias_setup(edges_prob)
             self.edges_prob.append(edges_table_prob)
-                        
+            
+            context_node = subgraphs[i].nodes()    
             self.id2node[i] = dict(zip(range(len(context_node)), context_node))
             node2id = dict(zip(context_node, range(len(context_node))))
 
             degree_weight = np.asarray([0] * len(context_node))
             for u in context_node:
-                for v in list(sub_graph.neighbors(u)):
-                    degree_weight[node2id[u]] += sub_graph[u][v].get("weight", 1.0)
+                for v in list(subgraphs[i].neighbors(u)):
+                    degree_weight[node2id[u]] += subgraphs[i][u][v].get("weight", 1.0)
 
             node_prob = np.power(degree_weight, 0.75)
             node_prob /= np.sum(node_prob)
             nodes_table_prob = alias_setup(node_prob) 
             self.node_prob.append(nodes_table_prob)
-            # print(self.edges[i], edges_table_prob)
-            # print(node2id, degree_weight, nodes_table_prob)
+
 
         print("train pte with 2-order")
         self.emb_vertex = (
@@ -133,7 +134,7 @@ class PTE(BaseModel):
                 )
                 self.alpha = self.init_alpha * max((1 - b * 1.0 / num_batch), 0.0001)
             
-            for k in range(self.num_node_type):
+            for k in range(self.num_graph):
                 u, v = [0] * batch_size, [0] * batch_size
                 for i in range(batch_size):
                     edge_id = alias_draw(self.edges_prob[k][0], self.edges_prob[k][1])

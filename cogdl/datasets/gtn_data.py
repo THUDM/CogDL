@@ -152,8 +152,29 @@ class GTNDataset(Dataset):
 
         num_nodes = edges[0].shape[0]
 
-        A = []
+        node_type = np.zeros((num_nodes), dtype=int)
+        assert len(edges)==4
+        assert len(edges[0].nonzero())==2
         
+        node_type[edges[0].nonzero()[0]] = 0
+        node_type[edges[0].nonzero()[1]] = 1
+        node_type[edges[1].nonzero()[0]] = 1
+        node_type[edges[1].nonzero()[1]] = 0       
+        node_type[edges[2].nonzero()[0]] = 0
+        node_type[edges[2].nonzero()[1]] = 2
+        node_type[edges[3].nonzero()[0]] = 2
+        node_type[edges[3].nonzero()[1]] = 0
+          
+        print(node_type)
+        data.pos = torch.from_numpy(node_type)
+        
+        edge_list = []
+        for i, edge in enumerate(edges):
+            edge_tmp = torch.from_numpy(np.vstack((edge.nonzero()[0], edge.nonzero()[1]))).type(torch.LongTensor)
+            edge_list.append(edge_tmp)
+        data.edge_index = torch.cat(edge_list, 1)
+        
+        A = []                     
         for i,edge in enumerate(edges):
             edge_tmp = torch.from_numpy(np.vstack((edge.nonzero()[0], edge.nonzero()[1]))).type(torch.LongTensor)
             value_tmp = torch.ones(edge_tmp.shape[1]).type(torch.FloatTensor)
@@ -169,7 +190,13 @@ class GTNDataset(Dataset):
         data.valid_target = torch.from_numpy(np.array(labels[1])[:,1]).type(torch.LongTensor)
         data.test_node = torch.from_numpy(np.array(labels[2])[:,0]).type(torch.LongTensor)
         data.test_target = torch.from_numpy(np.array(labels[2])[:,1]).type(torch.LongTensor)
-
+        
+        num_classes = torch.max(data.train_target).item() + 1
+        y = np.zeros((num_nodes), dtype=int)
+        x_index = torch.cat((data.train_node, data.valid_node, data.test_node))
+        y_index = torch.cat((data.train_target, data.valid_target, data.test_target))
+        y[x_index.numpy()] = y_index.numpy()
+        data.y = torch.from_numpy(y)
         self.data = data
 
     def get(self, idx):

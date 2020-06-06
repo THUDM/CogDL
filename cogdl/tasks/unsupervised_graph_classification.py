@@ -27,6 +27,7 @@ class UnsupervisedGraphClassification(BaseTask):
         # fmt: off
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--num-shuffle", type=int, default=10)
+        parser.add_argument('--epochs', default=20, type=int)
         parser.add_argument("--degree-feature", dest="degree_feature", action="store_true")
         # fmt: on
 
@@ -128,7 +129,8 @@ class UnsupervisedGraphClassification(BaseTask):
                 clf.fit(X_train, y_train)
 
                 preds = clf.predict(X_test)
-                accuracy = f1_score(y_test, preds, average="micro")
+                # accuracy = f1_score(y_test, preds, average="micro")
+                accuracy = accuracy_score(y_test, preds)
                 all_results[training_percent].append(accuracy)
 
         return dict(

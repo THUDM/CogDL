@@ -14,6 +14,7 @@ from cogdl.data import Data, Dataset, download_url
 
 from . import register_dataset
 
+
 def untar(path, fname, deleteTar=True):
     """
     Unpacks the given archive file to the same directory, then (by default)
@@ -29,7 +30,7 @@ class GTNDataset(Dataset):
     r"""The network datasets "ACM", "DBLP" and "IMDB" from the
     `"Graph Transformer Networks"
     <https://arxiv.org/abs/1911.06455>`_ paper.
-
+    
     Args:
         root (string): Root directory where the dataset should be saved.
         name (string): The name of the dataset (:obj:`"Amazon"`,
@@ -44,6 +45,7 @@ class GTNDataset(Dataset):
         self.num_classes = torch.max(self.data.train_target).item() + 1
         self.num_edge = len(self.data.adj)
         self.num_nodes = self.data.x.shape[0]
+
 
     @property
     def raw_file_names(self):
@@ -103,7 +105,6 @@ class GTNDataset(Dataset):
         data.test_node = torch.from_numpy(np.array(labels[2])[:,0]).type(torch.LongTensor)
         data.test_target = torch.from_numpy(np.array(labels[2])[:,1]).type(torch.LongTensor)
         
-        num_classes = torch.max(data.train_target).item() + 1
         y = np.zeros((num_nodes), dtype=int)
         x_index = torch.cat((data.train_node, data.valid_node, data.test_node))
         y_index = torch.cat((data.train_target, data.valid_target, data.test_target))

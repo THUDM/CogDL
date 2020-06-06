@@ -127,14 +127,14 @@ def test_diffpool_proteins():
     assert ret["Acc"] > 0
 
 
-def test_dgcnn_modelnet10():
-    args = get_default_args()
-    args = add_dgcnn_args(args)
-    args.dataset = 'ModelNet10'
-    args.model = 'pyg_dgcnn'
-    task = build_task(args)
-    ret = task.train()
-    assert ret["Acc"] > 0
+# def test_dgcnn_modelnet10():
+#     args = get_default_args()
+#     args = add_dgcnn_args(args)
+#     args.dataset = 'ModelNet10'
+#     args.model = 'pyg_dgcnn'
+#     task = build_task(args)
+#     ret = task.train()
+#     assert ret["Acc"] > 0
 
 
 def test_dgcnn_proteins():

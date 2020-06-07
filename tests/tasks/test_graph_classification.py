@@ -14,6 +14,8 @@ def get_default_args():
                     'max_epoch': 2,
                     'cpu': True,
                     'lr': 0.001,
+                    'kfold': False,
+                    'seed': [0],
                     'weight_decay': 5e-4,
                     'gamma': 0.5,
                     'train_ratio': 0.7,

@@ -20,7 +20,7 @@ def get_default_args():
                     'save_dir': '.',
                     'dropout': 0.5,
                     'patience': 1,
-                    'epochs': 2,
+                    'epoch': 2,
                     'cpu': True,
                     'lr': 0.001,
                     'weight_decay': 5e-4}
@@ -33,7 +33,7 @@ def add_infograp_args(args):
     args.train_num = 5000
     args.num_layers = 3
     args.unsup = True
-    args.epochs = 3
+    args.epoch = 3
     args.nn = True
     args.lr = 0.0001
     args.train_ratio = 0.7

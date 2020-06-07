@@ -140,7 +140,7 @@ def test_sdne_ppi():
     args.model = 'sdne'
     dataset = build_dataset(args)
     args.hidden_size1 = 500
-    args.hidden_size2 = 128
+    args.hidden_size2 = 64
     args.droput = 0.2
     args.alpha = 0.01
     args.beta = 5
@@ -160,7 +160,7 @@ def test_dngr_ppi():
     args.model = 'dngr'
     dataset = build_dataset(args)
     args.hidden_size1 = 500
-    args.hidden_size2 = 128
+    args.hidden_size2 = 64
     args.noise = 0.2
     args.alpha = 0.01
     args.step = 3

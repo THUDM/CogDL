@@ -123,10 +123,10 @@ class GIN(BaseModel):
     def add_args(parser):
         parser.add_argument("--epsilon", type=float, default=0.)
         parser.add_argument("--hidden-size", type=int, default=32)
-        parser.add_argument("--num-layers", type=int, default=5)
+        parser.add_argument("--num-layers", type=int, default=3)
         parser.add_argument("--num-mlp-layers", type=int, default=2)
         parser.add_argument("--dropout", type=float, default=0.5)
-        parser.add_argument("--train-epsilon", type=bool, default=True)
+        parser.add_argument("--train-epsilon", dest="train_epsilon", action="store_false")
         parser.add_argument("--pooling", type=str, default='sum')
         parser.add_argument("--batch-size", type=int, default=128)
         parser.add_argument("--lr", type=float, default=0.001)
@@ -215,4 +215,3 @@ class GIN(BaseModel):
 
     def loss(self, output, label=None):
         return self.criterion(output, label)
-

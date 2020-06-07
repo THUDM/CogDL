@@ -2,6 +2,7 @@ import copy
 import random
 
 import numpy as np
+from sklearn.model_selection import StratifiedKFold
 import torch
 import torch.nn.functional as F
 from torch_geometric.utils import add_remaining_self_loops
@@ -63,6 +64,7 @@ class GraphClassification(BaseTask):
         parser.add_argument("--gamma", type=float, default=0.5)
         parser.add_argument("--uniform-feature", action="store_true")
         parser.add_argument("--lr", type=float, default=0.001)
+        parser.add_argument("--kfold", dest="kfold", action="store_true")
         # fmt: on
 
     def __init__(self, args):
@@ -74,6 +76,9 @@ class GraphClassification(BaseTask):
         args.num_classes = dataset.num_classes
         args.use_unsup = False
 
+        self.args = args
+        self.kfold = args.kfold
+        self.folds = 10
         self.device = args.device_id[0] if not args.cpu else 'cpu'
         self.data = self.generate_data(dataset, args)
 
@@ -94,6 +99,12 @@ class GraphClassification(BaseTask):
         )
 
     def train(self):
+        if self.kfold:
+            return self._kfold_train()
+        else:
+            return self._train()
+
+    def _train(self):
         epoch_iter = tqdm(range(self.max_epoch))
         patience = 0
         best_score = 0
@@ -107,9 +118,8 @@ class GraphClassification(BaseTask):
             self._train_step()
             train_acc, train_loss = self._test_step(split="train")
             val_acc, val_loss = self._test_step(split="valid")
-            test_acc, _ = self._test_step(split="test")
             epoch_iter.set_description(
-                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, Test: {test_acc: .4f}, TrainLoss:{train_loss: .4f}, ValLoss: {val_loss: .4f}"
+                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, TrainLoss:{train_loss: .4f}, ValLoss: {val_loss: .4f}"
             )
             if val_loss < min_loss or val_acc > max_score:
                 if val_loss <= best_loss:  # and val_acc >= best_score:
@@ -144,10 +154,10 @@ class GraphClassification(BaseTask):
         self.model.eval()
         if split == "train":
             loader = self.train_loader
-        elif split == "valid":
-            loader = self.val_loader
         elif split == "test":
             loader = self.test_loader
+        elif split == "valid":
+            loader = self.val_loader
         else:
             raise ValueError
         loss_n = []
@@ -166,6 +176,30 @@ class GraphClassification(BaseTask):
         pred = pred.max(1)[1]
         acc = pred.eq(y).sum().item() / len(y)
         return acc, sum(loss_n)/len(loss_n)
+
+    def _kfold_train(self):
+        y = [x.y for x in self.data]
+        kf = StratifiedKFold(n_splits=self.folds, shuffle=True, random_state=self.args.seed)
+        acc = []
+        for train_index, test_index in kf.split(self.data, y=y):
+            model = build_model(self.args)
+            self.model = model.to(self.device)
+
+            self.train_loader = DataLoader([self.data[i] for i in train_index], batch_size=self.args.batch_size)
+            self.test_loader = DataLoader([self.data[i] for i in test_index], batch_size=self.args.batch_size)
+            self.val_loader = DataLoader([self.data[i] for i in test_index], batch_size=self.args.batch_size)
+            self.optimizer = torch.optim.Adam(
+                self.model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay
+            )
+            self.scheduler = torch.optim.lr_scheduler.StepLR(
+                optimizer=self.optimizer,
+                step_size=50,
+                gamma=0.5
+            )
+
+            res = self._train()
+            acc.append(res["Acc"])
+        return dict(Acc=sum(acc)/len(acc))
 
     def generate_data(self, dataset, args):
         if "ModelNet" in str(type(dataset).__name__):
@@ -186,4 +220,3 @@ class GraphClassification(BaseTask):
                 datalist = node_degree_as_feature(datalist)
                 args.num_features = datalist[0].num_features
             return datalist
-

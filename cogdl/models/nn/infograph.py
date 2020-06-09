@@ -137,7 +137,7 @@ class InfoGraph(BaseModel):
 
     @staticmethod
     def add_args(parser):
-        parser.add_argument("--hidden-size", type=int, default=64)
+        parser.add_argument("--hidden-size", type=int, default=512)
         parser.add_argument("--batch-size", type=int, default=20)
         parser.add_argument("--target", dest='target', type=int, default=0,
                             help='')

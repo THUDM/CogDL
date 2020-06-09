@@ -185,9 +185,16 @@ class GraphClassification(BaseTask):
             model = build_model(self.args)
             self.model = model.to(self.device)
 
-            self.train_loader = DataLoader([self.data[i] for i in train_index], batch_size=self.args.batch_size)
-            self.test_loader = DataLoader([self.data[i] for i in test_index], batch_size=self.args.batch_size)
-            self.val_loader = DataLoader([self.data[i] for i in test_index], batch_size=self.args.batch_size)
+            droplast = self.args.model == 'diffpool'
+            self.train_loader = DataLoader([self.data[i] for i in train_index],
+                                           batch_size=self.args.batch_size,
+                                           drop_last=droplast)
+            self.test_loader = DataLoader([self.data[i] for i in test_index],
+                                          batch_size=self.args.batch_size,
+                                          drop_last=droplast)
+            self.val_loader = DataLoader([self.data[i] for i in test_index],
+                                         batch_size=self.args.batch_size,
+                                         drop_last=droplast)
             self.optimizer = torch.optim.Adam(
                 self.model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay
             )

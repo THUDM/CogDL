@@ -123,8 +123,12 @@ class UnsupervisedGraphClassification(BaseTask):
 
                 X_test = X[training_size:, :]
                 y_test = y[training_size:]
+                # clf = SVC()
+                # clf.fit(X_train, y_train)
 
-                clf = SVC()
+                params = {"C": [1e-3, 1e-2, 1e-1, 0, 1, 10]}
+                svc = SVC()
+                clf = GridSearchCV(svc, params)
                 clf.fit(X_train, y_train)
 
                 preds = clf.predict(X_test)

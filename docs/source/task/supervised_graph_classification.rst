@@ -1,9 +1,9 @@
 Supervised Graph Classification
+================================
 
 In this section, we will introduce the implementation "Graph classification task".
 
-Task Design
->>>>>>>>>>>>>>>
+**Task Design**
 
 1. Set up "SupervisedGraphClassification" class, which has two specific parameters.
 
@@ -17,7 +17,7 @@ Task Design
 
    dataset = build_dataset(args)
    self.data = self.generate_data(dataset, args)
-   
+
    def generate_data(self, dataset, args):
         if "ModelNet" in str(type(dataset).__name__):
             train_set, test_set = dataset.get_all()
@@ -32,14 +32,14 @@ Task Design
                for key in idata.keys:
                    data[key] = idata[key]
                    datalist.append(data)
-   
+
            if args.degree_feature:
                datalist = node_degree_as_feature(datalist)
                args.num_features = datalist[0].num_features
-           return datalist        
+           return datalist
    ```
 
-3. Then we build model and can run `train` to train the model. 
+3. Then we build model and can run `train` to train the model.
 
 .. code-block:: python
 
@@ -49,7 +49,7 @@ Task Design
             val_acc, val_loss = self._test_step(split="valid")
             # ...
    	    return dict(Acc=test_acc)
-   
+
    def _train_step(self):
        self.model.train()
        loss_n = 0
@@ -60,7 +60,7 @@ Task Design
            loss_n += loss.item()
            loss.backward()
            self.optimizer.step()
-           
+
    def _test_step(self, split):
        """split in ['train', 'test', 'valid']"""
        # ...
@@ -68,9 +68,9 @@ Task Design
 
 The overall implementation of GraphClassification is at (https://github.com/THUDM/cogdl/blob/master/cogdl/tasks/graph_classification.py).
 
-Create a model
->>>>>>>>>>>>>>>>>>
-​	To create a model for task graph classification, the following functions have to be implemented.
+**Create a model**
+
+To create a model for task graph classification, the following functions have to be implemented.
 
 1. `add_args(parser)`: add necessary hyper-parameters used in model.
 
@@ -102,7 +102,7 @@ Create a model
             valid_loader = test_loader
        return train_loader, valid_loader, test_loader
 
-4. `forward`: forward propagation, and the return should be (predication, loss) or (prediction, None), respectively for training and test. Input parameters of `forward` is class `Batch`, which 
+4. `forward`: forward propagation, and the return should be (predication, loss) or (prediction, None), respectively for training and test. Input parameters of `forward` is class `Batch`, which
 
 .. code-block:: python
 
@@ -114,7 +114,7 @@ Create a model
         h = self.batch_norm[i](h)
         h = F.relu(h)
         layer_rep.append(h)
-   
+
     final_score = 0
     for i in range(self.num_layers):
     pooled = scatter_add(layer_rep[i], batch.batch, dim=0)
@@ -126,13 +126,13 @@ Create a model
     return final_score, None
 
 
-Run
->>>>>>
+**Run**
+
 To run GraphClassification, we can use the following command:
 
-```
-python scripts/train.py --task graph_classification --dataset proteins --model gin diffpool sortpool pyg_dgcnn --seed 0 1
-```
+.. code-block:: python
+
+    python scripts/train.py --task graph_classification --dataset proteins --model gin diffpool sortpool pyg_dgcnn --seed 0 1
 
 Then We get experimental results like this:
 
@@ -145,4 +145,3 @@ Variants                      Acc
 ('proteins', 'pyg_dgcnn')    0.6677±0.0355
 ('proteins', 'patchy_san')   0.7550±0.0812
 ============================ ===============
-

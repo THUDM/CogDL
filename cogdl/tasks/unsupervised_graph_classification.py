@@ -62,9 +62,9 @@ class UnsupervisedGraphClassification(BaseTask):
         self.num_shuffle = args.num_shuffle
         self.save_dir = args.save_dir
         self.epoch = args.epoch
-        self.use_nn = args.nn
+        self.use_nn = args.model in ('infograph', )
 
-        if args.nn:
+        if self.use_nn:
             self.optimizer = torch.optim.Adam(
                 self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
             )

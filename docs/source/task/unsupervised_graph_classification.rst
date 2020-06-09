@@ -1,8 +1,9 @@
 Unsupervised Graph Classification
-In this section, we will introduce the implementation "Unsupervised graph classification task". 
+==================================
+In this section, we will introduce the implementation "Unsupervised graph classification task".
 
-Task Design
->>>>>>>>>>>>
+**Task Design**
+
 1. Set up "UnsupervisedGraphClassification" class, which has two specific parameters.
 
    * `num-shuffle` : Shuffle times in classifier
@@ -43,7 +44,7 @@ Task Design
 
    self.model = build_model(args)
    self.model = self.model.to(self.device)
-   
+
    def train(self):
         if self.use_nn:
            # deep neural network models
@@ -81,9 +82,9 @@ Task Design
 
 The overall implementation of UnsupervisedGraphClassification is at (https://github.com/THUDM/cogdl/blob/master/cogdl/tasks/unsupervised_graph_classification.py).
 
-Create a model
->>>>>>>>>>>>>>>>
-​	To create a model for task unsupervised graph classification, the following functions have to be implemented.
+**Create a model**
+
+​To create a model for task unsupervised graph classification, the following functions have to be implemented.
 
 1. `add_args(parser)`: add necessary hyper-parameters used in model.
 
@@ -98,7 +99,7 @@ Create a model
 
 2. `build_model_from_args(cls, args)`: this function is called in 'task' to build model.
 
-3. `forward`: For shallow models, this function runs as training process of model and will be called only once; For deep neural network models,  this function is actually the forward propagation process and will be called many times. 
+3. `forward`: For shallow models, this function runs as training process of model and will be called only once; For deep neural network models,  this function is actually the forward propagation process and will be called many times.
 
 .. code-block:: python
 
@@ -112,11 +113,13 @@ Create a model
        vectors = np.array([self.model["g_"+str(i)] for i in range(len(graphs))])
        return vectors, None
 
-Run
->>>>>
+**Run**
+
 To run UnsupervisedGraphClassification, we can use the following command:
 
-`python scripts/train.py --task unsupervised_graph_classification --dataset proteins --model dgk graph2vec`
+.. code-block:: python
+    
+    python scripts/train.py --task unsupervised_graph_classification --dataset proteins --model dgk graph2vec
 
 Then we get experimental results like this:
 

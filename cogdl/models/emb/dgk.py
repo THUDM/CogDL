@@ -30,7 +30,6 @@ class DeepGraphKernel(BaseModel):
         parser.add_argument("--iteration", type=int, default=2)
         parser.add_argument("--epoch", type=int, default=20)
         parser.add_argument("--alpha", type=float, default=0.01)
-        parser.add_argument("--nn", type=bool, default=False)
 
 
     @classmethod

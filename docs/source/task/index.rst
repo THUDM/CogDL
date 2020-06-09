@@ -7,4 +7,6 @@ Tasks
 
    node_classification
    unsupervised_node_classification
+   supervised_graph_classification
+   unsupervised_graph_classification
 

@@ -1,10 +1,11 @@
-<h3>Unsupervised graph classification</h3>
+Supervised Graph Classification
+===============================
 
 In this section, we will introduce the implementation "Graph classification task". 
 
 <h5>Task Design</h5>
 
-1. Set up "UnsupervisedGraphClassification" class, which has two specific parameters.
+1. Set up "SupervisedGraphClassification" class, which has two specific parameters.
 
    * `degree-feature`: Use one-hot node degree as node feature, for datasets such as lmdb-binary and lmdb-multi, which don't have node features.
    * `gamma`: Multiplicative factor of learning rate decay.
@@ -129,7 +130,7 @@ The overall implementation of GraphClassification is at (https://github.com/THUD
 To run GraphClassification, we can use the following command:
 
 ```
-python scripts/train.py --task graph_classification --dataset proteins --model gin --seed 0
+python scripts/train.py --task graph_classification --dataset proteins --model gin diffpool sortpool pyg_dgcnn --seed 0 1
 ```
 
 Then We get experimental results like this:

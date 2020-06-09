@@ -1,4 +1,4 @@
-Unsupervised node classification
+Unsupervised Node Classification
 ================================
 
 In this tutorial, we will introduce a important task, unsupervised node classification. In this task, we usually apply L2 normalized logisitic regression to train a classifier and use F1-score to measure the performance. 

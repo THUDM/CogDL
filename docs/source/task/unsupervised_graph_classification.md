@@ -1,4 +1,5 @@
-<h3>Unsupervised graph classification</h3>
+Unsupervised Graph Classification
+=================================
 
 In this section, we will introduce the implementation "Unsupervised graph classification task". 
 
@@ -116,13 +117,13 @@ The overall implementation of UnsupervisedGraphClassification is at (https://git
 To run UnsupervisedGraphClassification, we can use the following command:
 
 ```
-python scripts/train.py --task unsupervised?_graph_classification --dataset proteins --model graph2vec infograph --seed 0
+python scripts/train.py --task unsupervised_graph_classification --dataset proteins --model dgk graph2vec --seed 0 1
 ```
 
 Then We get experimental results like this:
 
 | Variant                   | Acc           |
 | ------------------------- | ------------- |
+| ('proteins', 'dgk')       | 0.7354±0.0118 |
 | ('proteins', 'graph2vec') | 0.7183±0.0043 |
 | ('proteins', 'infograph') | 0.7396±0.0070 |
-| ('proteins', 'dgk')       | 0.7354±0.0118 |

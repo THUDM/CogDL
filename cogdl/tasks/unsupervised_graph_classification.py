@@ -5,6 +5,7 @@ from sklearn.utils import shuffle as skshuffle
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.metrics import f1_score, accuracy_score
+from sklearn.model_selection import GridSearchCV
 from tqdm import tqdm
 import torch
 import torch.nn as nn

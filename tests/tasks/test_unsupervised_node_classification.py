@@ -11,10 +11,10 @@ def get_default_args():
                     'save_dir': ".",}
     return build_args_from_dict(default_dict)
 
-def test_deepwalk_ppi():
+def test_deepwalk_wikipedia():
     args = get_default_args()
     args.task = 'unsupervised_node_classification'
-    args.dataset = 'ppi'
+    args.dataset = 'wikipedia'
     args.model = 'deepwalk'
     dataset = build_dataset(args)
     args.walk_length = 5
@@ -45,10 +45,10 @@ def test_line_ppi():
     ret = task.train()
     assert ret['Micro-F1 0.9'] > 0
 
-def test_node2vec_wikipedia():
+def test_node2vec_ppi():
     args = get_default_args()
     args.task = 'unsupervised_node_classification'
-    args.dataset = 'wikipedia'
+    args.dataset = 'ppi'
     args.model = 'node2vec'
     dataset = build_dataset(args)
     args.walk_length = 5
@@ -173,9 +173,9 @@ def test_dngr_ppi():
     
 
 if __name__ == "__main__":
-    test_deepwalk_ppi()
+    test_deepwalk_wikipedia()
     test_line_ppi()
-    test_node2vec_wikipedia()
+    test_node2vec_ppi()
     test_hope_ppi()
     test_grarep_ppi()
     test_netmf_ppi()

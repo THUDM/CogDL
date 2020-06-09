@@ -61,17 +61,17 @@ class HeterogeneousNodeClassification(BaseTask):
                 f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
             )
             if val_loss <= min_loss or val_acc >= max_score:
-                if val_loss <= best_loss:  # and val_acc >= best_score:
+                if val_acc >= best_score:
                     best_loss = val_loss
                     best_score = val_acc
-                    # best_model = copy.deepcopy(self.model)
+                    best_model = copy.deepcopy(self.model.state_dict())
                 min_loss = np.min((min_loss, val_loss))
                 max_score = np.max((max_score, val_acc))
                 patience = 0
             else:
                 patience += 1
                 if patience == self.patience:
-                    # self.model = best_model
+                    self.model.load_state_dict(best_model)
                     epoch_iter.close()
                     break
         test_f1, _ = self._test_step(split="test")

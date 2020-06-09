@@ -33,8 +33,8 @@ class GTNDataset(Dataset):
     
     Args:
         root (string): Root directory where the dataset should be saved.
-        name (string): The name of the dataset (:obj:`"Amazon"`,
-            :obj:`"Twitter"`, :obj:`"YouTube"`).
+        name (string): The name of the dataset (:obj:`"gtn-acm"`,
+            :obj:`"gtn-dblp"`, :obj:`"gtn-imdb"`).
     """
 
     def __init__(self, root, name):

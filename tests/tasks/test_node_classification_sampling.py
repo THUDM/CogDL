@@ -1,3 +1,4 @@
+import torch
 from cogdl import options
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
@@ -5,12 +6,13 @@ from cogdl.models import build_model
 from cogdl.utils import build_args_from_dict
 
 def get_default_args():
-    default_dict = {'hidden_size': 64,
+    cuda_available = torch.cuda.is_available()
+    default_dict = {'hidden_size': 16,
                     'dropout': 0.5,
                     'patience': 1,
-                    'max_epoch': 2,
+                    'max_epoch': 1,
                     'batch_size': 20,
-                    'cpu': True,
+                    'cpu': not cuda_available,
                     'lr': 0.01,
                     'weight_decay': 5e-4}
     return build_args_from_dict(default_dict)

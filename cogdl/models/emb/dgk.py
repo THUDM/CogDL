@@ -102,7 +102,7 @@ class DeepGraphKernel(BaseModel):
             iter=self.epoch,
             alpha=self.alpha
         )
-        vectors = np.asarray([model[str(node)] for node in model.wv.index2word])
+        vectors = np.asarray([model.wv[str(node)] for node in model.wv.index2word])
         S = vectors.dot(vectors.T)        
         node2id = dict(zip(model.wv.index2word, range(len(model.wv.index2word))))
         

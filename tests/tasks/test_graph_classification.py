@@ -1,3 +1,4 @@
+import torch
 from cogdl import options
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
@@ -6,13 +7,14 @@ from cogdl.utils import build_args_from_dict
 
 
 def get_default_args():
+    cuda_available = torch.cuda.is_available()
     default_dict = {
                     'task': 'graph_classification',
                     'hidden_size': 64,
                     'dropout': 0.5,
                     'patience': 1,
                     'max_epoch': 2,
-                    'cpu': True,
+                    'cpu': not cuda_available,
                     'lr': 0.001,
                     'kfold': False,
                     'seed': [0],
@@ -20,7 +22,7 @@ def get_default_args():
                     'gamma': 0.5,
                     'train_ratio': 0.7,
                     'test_ratio': 0.1,
-                    'device_id': ['cpu'],
+                    'device_id': [0 if cuda_available else 'cpu'],
                     'degree_feature': False}
     return build_args_from_dict(default_dict)
 

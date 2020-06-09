@@ -1,3 +1,4 @@
+import torch
 from cogdl import options
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
@@ -5,12 +6,13 @@ from cogdl.models import build_model
 from cogdl.utils import build_args_from_dict
 
 def get_default_args():
-    default_dict = {'hidden_size': 64,
+    cuda_available = torch.cuda.is_available()
+    default_dict = {'hidden_size': 16,
                     'negative_ratio': 5,
                     'patience': 1,
-                    'max_epoch': 2,
+                    'max_epoch': 1,
                     'eval_type': 'all',
-                    'cpu': True}
+                    'cpu': not cuda_available}
     return build_args_from_dict(default_dict)
 
 def test_gatne_amazon():
@@ -23,7 +25,7 @@ def test_gatne_amazon():
     args.walk_num = 1
     args.window_size = 3
     args.worker = 5
-    args.iteration = 1
+    args.schema = None
     args.epoch = 1
     args.batch_size = 128
     args.edge_dim = 5
@@ -46,7 +48,7 @@ def test_gatne_twitter():
     args.walk_num = 1
     args.window_size = 3
     args.worker = 5
-    args.iteration = 1
+    args.schema = None
     args.epoch = 1
     args.batch_size = 128
     args.edge_dim = 5

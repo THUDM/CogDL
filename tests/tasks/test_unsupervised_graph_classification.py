@@ -1,3 +1,4 @@
+import torch
 import argparse
 
 from cogdl import options
@@ -13,15 +14,16 @@ def accuracy_check(x):
 
 
 def get_default_args():
+    cuda_available = torch.cuda.is_available()
     default_dict = {'task': 'unsupervised_graph_classification',
                     'gamma': 0.5,
-                    'device_id': ['cpu'],
+                    'device_id': [0 if cuda_available else 'cpu'],
                     'num_shuffle': 1,
                     'save_dir': '.',
                     'dropout': 0.5,
                     'patience': 1,
                     'epoch': 2,
-                    'cpu': True,
+                    'cpu': not cuda_available,
                     'lr': 0.001,
                     'weight_decay': 5e-4}
     return build_args_from_dict(default_dict)

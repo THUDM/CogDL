@@ -4,7 +4,7 @@ from cogdl.models import build_model
 from cogdl.utils import build_args_from_dict
 
 def get_default_args():
-    default_dict = {'hidden_size': 64,
+    default_dict = {'hidden_size': 16,
                     'cpu': True,
                     'enhance': False,
                     'save_dir': ".",}
@@ -16,11 +16,11 @@ def test_metapath2vec_gtn_acm():
     args.dataset = 'gtn-acm'
     args.model = 'metapath2vec'
     dataset = build_dataset(args)
-    args.walk_length = 10
-    args.walk_num = 2
+    args.walk_length = 5
+    args.walk_num = 1
     args.window_size = 3
     args.worker = 5
-    args.iteration = 2
+    args.iteration = 1
     args.schema = "No"
     model = build_model(args)
     task = build_task(args)
@@ -34,11 +34,11 @@ def test_metapath2vec_gtn_imdb():
     args.dataset = 'gtn-imdb'
     args.model = 'metapath2vec'
     dataset = build_dataset(args)
-    args.walk_length = 10
-    args.walk_num = 2
+    args.walk_length = 5
+    args.walk_num = 1
     args.window_size = 3
     args.worker = 5
-    args.iteration = 2
+    args.iteration = 1
     args.schema = "No"
     model = build_model(args)
     task = build_task(args)
@@ -52,8 +52,8 @@ def test_pte_gtn_imdb():
     args.dataset = 'gtn-imdb'
     args.model = 'pte'
     dataset = build_dataset(args)
-    args.walk_length = 10
-    args.walk_num = 2
+    args.walk_length = 5
+    args.walk_num = 1
     args.negative = 3
     args.batch_size = 10
     args.alpha = 0.025
@@ -70,8 +70,8 @@ def test_pte_gtn_dblp():
     args.dataset = 'gtn-dblp'
     args.model = 'pte'
     dataset = build_dataset(args)
-    args.walk_length = 10
-    args.walk_num = 2
+    args.walk_length = 5
+    args.walk_num = 1
     args.negative = 3
     args.batch_size = 10
     args.alpha = 0.025
@@ -87,8 +87,8 @@ def test_hin2vec_dblp():
     args.dataset = 'gtn-dblp'
     args.model = 'hin2vec'
     dataset = build_dataset(args)
-    args.walk_length = 10
-    args.walk_num = 2
+    args.walk_length = 5
+    args.walk_num = 1
     args.negative = 3
     args.batch_size = 1000
     args.hop = 2

@@ -16,6 +16,24 @@ from .. import BaseModel, register_model
 
 @register_model("gatne")
 class GATNE(BaseModel):
+    r"""The GATNE model from the `"Representation Learning for Attributed Multiplex Heterogeneous Network"
+    <https://dl.acm.org/doi/10.1145/3292500.3330964>`_ paper
+
+    Args:
+        walk_length (int) : The walk length.
+        walk_num (int) : The number of walks to sample for each node.
+        window_size (int) : The actual context size which is considered in language model.
+        worker (int) : The number of workers for word2vec.
+        epoch (int) : The number of training epochs.
+        batch_size (int) : The size of each training batch.
+        edge_dim (int) : Number of edge embedding dimensions.
+        att_dim (int) : Number of attention dimensions.
+        negative_samples (int) : Negative samples for optimization.
+        neighbor_samples (int) : Neighbor samples for aggregation
+        schema (str) : The metapath schema used in model. Metapaths are splited with ",", 
+        while each node type are connected with "-" in each metapath. For example:"0-1-0,0-1-2-1-0"
+    """
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -28,8 +46,6 @@ class GATNE(BaseModel):
                             help='Window size of skip-gram model. Default is 5.')
         parser.add_argument('--worker', type=int, default=10,
                             help='Number of parallel workers. Default is 10.')
-        parser.add_argument('--iteration', type=int, default=10,
-                            help='Number of iterations. Default is 10.')
         parser.add_argument('--epoch', type=int, default=20,
                             help='Number of epoch. Default is 20.')
         parser.add_argument('--batch-size', type=int, default=64,
@@ -42,6 +58,8 @@ class GATNE(BaseModel):
                             help='Negative samples for optimization. Default is 5.')
         parser.add_argument('--neighbor-samples', type=int, default=10,
                             help='Neighbor samples for aggregation. Default is 10.')
+        parser.add_argument('--schema', type=str, default=None,
+                            help="Input schema for metapath random walk.")
         # fmt: on
 
     @classmethod
@@ -52,13 +70,13 @@ class GATNE(BaseModel):
             args.walk_num,
             args.window_size,
             args.worker,
-            args.iteration,
             args.epoch,
             args.batch_size,
             args.edge_dim,
             args.att_dim,
             args.negative_samples,
             args.neighbor_samples,
+            args.schema,
         )
 
     def __init__(
@@ -68,13 +86,13 @@ class GATNE(BaseModel):
         walk_num,
         window_size,
         worker,
-        iteration,
         epoch,
         batch_size,
         edge_dim,
         att_dim,
         negative_samples,
         neighbor_samples,
+        schema,
     ):
         super(GATNE, self).__init__()
         self.embedding_size = dimension
@@ -82,20 +100,20 @@ class GATNE(BaseModel):
         self.walk_num = walk_num
         self.window_size = window_size
         self.worker = worker
-        self.iteration = iteration
         self.epochs = epoch
         self.batch_size = batch_size
         self.embedding_u_size = edge_dim
         self.dim_att = att_dim
         self.num_sampled = negative_samples
         self.neighbor_samples = neighbor_samples
+        self.schema = schema
 
         self.multiplicity = True
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     def train(self, network_data):
-        all_walks = generate_walks(network_data, self.walk_num, self.walk_length)
+        all_walks = generate_walks(network_data, self.walk_num, self.walk_length, schema=self.schema)
         vocab, index2word = generate_vocab(all_walks)
         train_pairs = generate_pairs(all_walks, vocab)
 

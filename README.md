@@ -2,13 +2,12 @@
 ===
 
 [![Build Status](https://travis-ci.org/THUDM/cogdl.svg?branch=master)](https://travis-ci.org/THUDM/cogdl)
-[![Maintainability](https://api.codeclimate.com/v1/badges/d587092245542684c80b/maintainability)](https://codeclimate.com/github/THUDM/cogdl/maintainability)
 [![Coverage Status](https://coveralls.io/repos/github/THUDM/cogdl/badge.svg?branch=master)](https://coveralls.io/github/THUDM/cogdl?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/cogdl/badge/?version=latest)](https://cogdl.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or custom models for node classification, link prediction and other tasks on graphs. It provides implementations of many popular models, including: non-GNN Baselines like Deepwalk, LINE, NetMF,  GNN Baselines like GCN, GAT, GraphSAGE.
+CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or custom models for node classification, link prediction and other tasks on graphs. It provides implementations of many popular models, including: non-GNN Baselines like Deepwalk, LINE, NetMF, GNN Baselines like GCN, GAT, GraphSAGE.
 
 Note that CogDL is **still actively under development**, so feedback and contributions are welcome.
 Feel free to submit your contributions as a pull request.
@@ -22,10 +21,11 @@ CogDL features:
 - Supported tasks:
   - Node classification
   - Link prediction
-  - Social influence prediction (coming)
-  - Knowledge graph reasoning (coming)
-  - Community detection (todo)
-  - Graph classification (todo)
+  - Graph classification
+  - Community detection
+  - Social influence prediction
+  - Graph reasoning (todo)
+  - Graph pre-training (todo)
   - Combinatorial optimization on graphs (todo)
 
 ## Getting Started
@@ -34,8 +34,10 @@ CogDL features:
 
 - PyTorch version >= 1.0.0
 - Python version >= 3.6
+- PyTorch Geometric (optional)
 
 Please follow the instructions here to install PyTorch: https://github.com/pytorch/pytorch#installation.
+
 Install other dependencies:
 
 ```bash
@@ -48,11 +50,11 @@ You can use `python scripts/train.py --task example_task --dataset example_datas
 
 ### General parameters
 
-- --task, Downstream tasks to evaluate representation like node_classification, unsupervised_node_classification, link_prediction
-- --dataset, Dataset name to run, can be a list of datasets with space like `cora citeseer ppi`. Supported datasets including
-'cora', 'citeseer', 'pumbed', 'PPI', 'wikipedia', 'blogcatalog', 'dblp', 'flickr'
-- --model, Model name to run, can be a list of models like `deepwalk line prone`. Supported datasets including
-'gcn', 'gat', 'graphsage', 'deepwalk', 'node2vec', 'hope', 'grarep', 'netmf', 'netsmf', 'prone'
+- --task, downstream tasks to evaluate representation like node_classification, unsupervised_node_classification, link_prediction. More tasks can be found in the [cogdl/tasks](https://github.com/THUDM/cogdl/tree/master/cogdl/tasks).
+- --dataset, dataset name to run, can be a list of datasets with space like `cora citeseer ppi`. Supported datasets include
+'cora', 'citeseer', 'pumbed', 'PPI', 'wikipedia', 'blogcatalog', 'dblp', 'flickr'. More datasets can be found in the [cogdl/datasets](https://github.com/THUDM/cogdl/tree/master/cogdl/datasets).
+- --model, model name to run, can be a list of models like `deepwalk line prone`. Supported datasets include
+'gcn', 'gat', 'graphsage', 'deepwalk', 'node2vec', 'hope', 'grarep', 'netmf', 'netsmf', 'prone'. More models can be found in the [cogdl/models](https://github.com/THUDM/cogdl/tree/master/cogdl/models).
 
 For example, if you want to run Deepwalk, Line, Netmf on Wikipedia with node classification task, with 5 different seeds:
 
@@ -67,7 +69,7 @@ Expected output:
 | ('wikipedia', 'line')  | 0.4069±0.0011  | 0.4071±0.0010  | 0.4055±0.0013  | 0.4054±0.0020  | 0.4080±0.0042  |
 | ('wikipedia', 'netmf') | 0.4551±0.0024  | 0.4932±0.0022  | 0.5046±0.0017  | 0.5084±0.0057  | 0.5125±0.0035  |
 
-If you want to run parallel experiments on your server with multiple GPUs like multiple models gcn, gat on multiple datasets Cora, Citeseer with node classification task:
+If you want to run parallel experiments on your server with multiple GPUs on multiple models gcn, gat on multiple datasets Cora, Citeseer with node classification task:
 
 To enable efficient graph convolution on GPU, we require `pytorch_geometric`. Please install dependencies here https://github.com/rusty1s/pytorch_geometric/#installation.
 
@@ -154,12 +156,12 @@ If you have ANY difficulties to get things working in the above steps, feel free
 
 ### Submit Your State-of-the-art
 
-If you have a well-perform algorithm and are willing to publish it, you can submit your implementation via [opening an issue](https://github.com/THUDM/cogdl/issues) or [join our slack group](https://join.slack.com/t/cogdl/shared_invite/enQtODgyMjY5MTY0NTY3LWQ5YTMwMWQzN2U2YTY0YWM2ZjhkNWUyZmE5ZmQyMTEyMGVkMzI0MjdlMGZlYmYzOWIwMTkyZGZmYTRjNGYxOGM). After evaluating its originality, creativity and efficiency, we will add your method's performance into our leaderboard.
+If you have a well-performed algorithm and are willing to publish it, you can submit your implementation via [opening an issue](https://github.com/THUDM/cogdl/issues) or [join our slack group](https://join.slack.com/t/cogdl/shared_invite/enQtODgyMjY5MTY0NTY3LWQ5YTMwMWQzN2U2YTY0YWM2ZjhkNWUyZmE5ZmQyMTEyMGVkMzI0MjdlMGZlYmYzOWIwMTkyZGZmYTRjNGYxOGM). After evaluating its originality, creativity and efficiency, we will add your method's performance into our leaderboard.
 
 ### Add Your Own Dataset
 
-If you have a unique and interesting and are willing to publish it, you can submit your dataset via opening an issue in our repository or commenting on slack group, we will run all suitable methods on your dataset and update our leaderboard. 
+If you have a unique and interesting dataset and are willing to publish it, you can submit your dataset via opening an issue in our repository or commenting on slack group, we will run all suitable methods on your dataset and update our leaderboard. 
 
 ### Implement Your Own Model
 
-If you have a well-perform algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request,  detailed information can be found [here](https://help.github.com/en/articles/creating-a-pull-request). 
+If you have a well-performed algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request,  detailed information can be found [here](https://help.github.com/en/articles/creating-a-pull-request). 

@@ -31,9 +31,9 @@ class Graph2Vec(BaseModel):
         parser.add_argument("--dm", type=int, default=0)
         parser.add_argument("--sampling", type=float, default=0.0001)
         parser.add_argument("--iteration", type=int, default=2)
-        parser.add_argument("--epoch", type=int, default=40)
+        parser.add_argument("--epoch", type=int, default=10)
         parser.add_argument("--nn", type=bool, default=False)
-        parser.add_argument("--lr", type=float, default=0.001)
+        parser.add_argument("--lr", type=float, default=0.025)
 
 
     @classmethod

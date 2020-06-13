@@ -7,6 +7,8 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
+**[HomePage](http://keg.cs.tsinghua.edu.cn/cogdl)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Poster](https://qibinc.github.io/cogdl-leaderboard/poster.pdf)**
+
 CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or custom models for node classification, link prediction and other tasks on graphs. It provides implementations of many popular models, including: non-GNN Baselines like Deepwalk, LINE, NetMF, GNN Baselines like GCN, GAT, GraphSAGE.
 
 Note that CogDL is **still actively under development**, so feedback and contributions are welcome.
@@ -84,71 +86,101 @@ Expected output:
 | ('cora', 'pyg_gcn') | 0.7922±0.0082 |
 | ('cora', 'pyg_gat') | 0.8092±0.0055 |
 
-### Specific parameters
+## Leaderboard
 
-for DeepWalk and node2vec:
+CogDL provides several downstream tasks including node classification (with or without node attributes), link prediction (with or without attributes, heterogeneous or not). These leaderboards maintain state-of-the-art results and benchmarks on these tasks.
 
-- --walk-num, the number of random walks to start at each node; the default is 10;
-- --walk-length, Length of walk start at each node. Default is 50;
-- --worker, Number of parallel workers. Default is 10;
-- --window-size, Window size of skip-gram model. Default is 10;
-- --iteration, Number of iterations. Default is 10;
-- --q, Parameter in node2vec. Default is 1.0;
-- --p, Parameter in node2vec. Default is 1.0;
+### Node Classification
 
-for LINE:
+#### Unsupervised Multi-label Node Classification
 
-- --order, Order of proximity in LINE. Default is 3 for 1+2;
-- --alpha, Initial earning rate of SGD. Default is 0.025;
-- --batch-size, Batch size in SGD training process. Default is 100;
-- --negative, Number of negative nodes in sampling. Default is 5;
+This leaderboard reports unsupervised multi-label node classification setting. we run all algorithms on several real-world datasets and report the sorted experimental results (Micro-F1 score with 90% labels as training data in L2 normalization logistic regression).
 
-for HOPE:
+| Rank | Method                                                       |    PPI    | Blogcatalog | Wikipedia |
+| ---- | ------------------------------------------------------------ | :-------: | :---------: | :-------: |
+| 1    | ProNE [(Zhang et al, IJCAI'19)](http://arxiv.org/abs/1806.02623) | **26.32** |  **43.63**  |   57.64   |
+| 2    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) |   24.86   |    43.49    | **58.46** |
+| 3    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) |   23.86   |    42.51    |   53.68   |
+| 4    | NetSMF [(Qiu et at, WWW'19)](http://arxiv.org/abs/1710.02971) |   24.39   |    43.21    |   51.42   |
+| 5    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) |   22.72   |    42.26    |   50.42   |
+| 6    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) |   23.15   |    39.29    |   49.83   |
+| 7    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) |   23.24   |    35.52    |   52.96   |
+| 8    | SDNE [(Wang et al, KDD'16):](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf) |   20.14   |    40.32    |   48.24   |
+| 9    | GraRep [(Cao et al, CIKM'15):](http://dl.acm.org/citation.cfm?doid=2806416.2806512) |   20.96   |    34.35    |   51.84   |
+| 10   | DNGR [(Cao et al, AAAI'16):](https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/download/12423/11715) |   16.45   |    28.54    |   48.57   |
 
-- --beta, Parameter of katz for HOPE. Default is 0.01;
+#### Semi-Supervised Node Classification with Attributes
 
-for Grarep:
+This leaderboard reports the semi-supervised node classification under a transductive setting including several popular graph neural network methods.
 
-- --step, Number of matrix step in GraRep and ProNE. Default is 5;
+| Rank | Method                                                       |      Cora      |    Citeseer    |     Pubmed     |
+| ---- | ------------------------------------------------------------ | :------------: | :------------: | :------------: |
+| 1    | NSGCN [(Zhang et al., 2019)](https://arxiv.org/)             | **84.0 ± 0.5** |   72.7 ± 0.4   | **79.2 ± 0.3** |
+| 2    | DR-GAT [(Zou et al., 2019)](https://arxiv.org/)              |   83.6 ± 0.5   | **72.8 ± 0.8** |   79.1 ± 0.3   |
+| 3    | DR-GCN [(Zou et al., 2019)](https://arxiv.org/)              |   81.6 ± 0.1   |   71.0 ± 0.6   |   79.2 ± 0.4   |
+| 4    | GAT [(Veličković et al., ICLR'18)](https://arxiv.org/abs/1710.10903) |   83.0 ± 0.7   |   72.5 ± 0.7   |   79.0 ± 0.3   |
+| 5    | GCN [(Kipf et al., ICLR'17)](https://arxiv.org/abs/1609.02907) |   81.4 ± 0.5   |   70.9 ± 0.5   |   79.0 ± 0.3   |
+| 6    | FastGCN [(Chen, Ma et al., ICLR'18)](https://arxiv.org/abs/1801.10247) |   81.4 ± 0.5   |   68.8 ± 0.9   |   77.6 ± 0.5   |
+| 7    | GraphSAGE [(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |   78.9 ± 0.8   |   67.4 ± 0.7   |   77.8 ± 0.6   |
 
-for NetMF:
+#### Multiplex Node Classification
 
-- --window-size, Window size of deepwalk matrix. Default is 10;
-- --is-large, Large or small for NetMF;
-- --negative, Number of negative nodes in sampling. Default is 5;
-- --rank, Number of Eigenpairs in NetMF, default is 256;
+For multiplex node classification, we use macro F1 to evaluate models. We evaluate all models under the setting and datasets of GTN. The results with * represent the original results from papers.
 
-for NetSMF:
+| Rank | Method                                                       |    DBLP     |    ACM    |   IMDB    |
+| ---- | ------------------------------------------------------------ | :---------: | :-------: | :-------: |
+| 1    | GTN [(Yun et al, NeurIPS'19)](https://arxiv.org/abs/1911.06455) | **94.18\*** | **90.85** | **59.24** |
+| 2    | HAN [(Xiao et al, WWW'19)](https://arxiv.org/abs/1903.07293) |    91.21    |   87.25   |   53.94   |
+| 3    | PTE [(Tang et al, KDD'15)](https://arxiv.org/abs/1508.00200) |    78.65    |   87.44   |   48.91   |
+| 4    | Metapath2vec [(Dong et al, KDD'17)](https://ericdongyx.github.io/papers/KDD17-dong-chawla-swami-metapath2vec.pdf) |    75.18    |   88.79   |   43.10   |
+| 5    | Hin2vec [(Fu et al, CIKM'17)](https://dl.acm.org/doi/10.1145/3132847.3132953) |    74.31    |   84.66   |   44.04   |
 
-- --window-size, Window size of approximate matrix. Default is 10;
-- --negative, Number of negative nodes in sampling. Default is 5;
-- --round, Number of round in NetSMF. Default is 100;
-- --worker, Number of parallel workers. Default is 10;
+### Link Prediction
 
-for ProNE:
+#### Link Prediction
 
-- --step, Number of items in the chebyshev expansion. Default is 5;
-- --theta, Parameter of ProNE. Default is 0.5;
-- --mu, Parameter of ProNE. Default is 0.2;
+For link prediction, we adopt  Area Under the Receiver Operating Characteristic Curve (ROC AUC), standard evaluation metric AUC and F1-score, which represents the probability that vertices in a random unobserved link are more similar than those in a random nonexistent link. We evaluate these measures while removing 15 percents of edges on these dataset. We repeat our experiments for 10 times and report the three matrices in order.
 
-for GCN and DR-GCN:
+| Rank | Method                                                       |    PPI    | Wikipedia | Blogcatalog |
+| ---- | ------------------------------------------------------------ | :-------: | :-------: | :---------: |
+| 1    | ProNE [(Zhang et al, IJCAI'19)](http://arxiv.org/abs/1806.02623) | **95.14** |   83.15   |  **89.63**  |
+| 2    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) |   92.99   | **85.86** |    85.05    |
+| 3    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) |   92.13   |   84.18   |    84.41    |
+| 4    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) |   92.05   |   83.94   |    84.45    |
+| 5    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) |   91.80   |   77.95   |    77.25    |
+| 6    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) |   92.77   |   69.16   |    80.99    |
+| 7    | NetSMF [(Qiu et at, WWW'19)](http://arxiv.org/abs/1710.02971) |   75.16   |   47.66   |    68.14    |
+| 8    | GraRep [(Cao et al, CIKM'15)](http://dl.acm.org/citation.cfm?doid=2806416.2806512) |   79.21   |   29.55   |    49.24    |
 
-- --hidden-size, The size of hidden layer. Default=16;
-- --num-layers, The number of GCN layer. Default=2;
-- --dropout, The dropout probability. Default=0.5;
+#### Multiplex Link Prediction
 
-for GAT and DR-GAT:
+For multiplex link prediction, we adopt Area Under the Receiver Operating Characteristic Curve (ROC AUC). We evaluate these measures while removing 15 percents of edges on these dataset. We repeat our experiments for 10 times and report the three matrices in order.
 
-- --hidden-size, The size of hidden layer. Default=8;
-- --num-heads, The number of heads in attention mechanism. Default=8;
-- --dropout, The dropout probability. Default=0.6;
+| Rank | Method                                                       |  Amazon   |  YouTube  |  Twitter  |
+| ---- | ------------------------------------------------------------ | :-------: | :-------: | :-------: |
+| 1    | GATNE [(Cen et al, KDD'19)](https://arxiv.org/abs/1905.01669) |   97.44   | **84.61** | **92.30** |
+| 2    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) | **97.72** |   82.53   |   73.75   |
+| 3    | ProNE [(Zhang et al, IJCAI'19)](http://arxiv.org/abs/1806.02623) |   96.51   |   78.96   |   81.32   |
+| 4    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) |   86.86   |   74.01   |   78.30   |
+| 5    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) |   92.54   |   74.31   |   60.29   |
+| 6    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) |   92.56   |   73.40   |   60.36   |
+| 7    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) |   94.39   |   74.66   |   70.61   |
+| 8    | GraRep [(Cao et al, CIKM'15)](http://dl.acm.org/citation.cfm?doid=2806416.2806512) |   83.88   |   71.37   |   49.64   |
 
-for Graphsage:
+### Graph Classification
 
-- --hidden-size, The size of hidden layer. Default=8;
-- --num-layers, The number of Graphsage. Default=2;
-- --sample-size, The List of number of neighbor samples for each node in Graphsage. Default=10, 10;
-- --dropout, The dropout probability. Default=0.5;
+This leaderboard reports the performance of graph classification methods. we run all algorithms on several datasets and report the sorted experimental results.
+
+| Rank | Method                                                       | MUTAG | IMDB-B | IMDB-M | PROTEINS | COLLAB |
+| :--- | :----------------------------------------------------------- | :---: | :----: | :----: | :------: | :----: |
+| 1    | Infograph [(Sun et al, ICLR'20)](https://openreview.net/forum?id=r1lfF2NYvH) | 88.95 | 74.50  | 51.33  |  73.93   | 78.14  |
+| 2    | GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km) | 88.33 | 76.70  | 50.80  |  72.86   | 79.52  |
+| 3    | DiffPool [(Ying et al, NeuIPS'18)](https://arxiv.org/abs/1806.08804) | 85.18 | 74.30  | 50.73  |  75.30   | 77.20  |
+| 4    | SortPool [(Zhang et al, AAAI'18)](https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf) | 85.61 | 75.20  | 51.07  |  74.11   | 79.98  |
+| 5    | Graph2Vec [(Narayanan et al, CoRR'17)](https://arxiv.org/abs/1707.05005) | 83.68 | 73.90  | 52.27  |  73.30   | 85.58  |
+| 6    | PATCH_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf) | 85.12 | 76.00  | 46.20  |  75.50   | 75.42  |
+| 7    | DGCNN [(Wang et al, ACM Transactions on Graphics'17)](https://arxiv.org/abs/1801.07829) | 83.33 | 69.50  | 46.33  |  66.67   | 77.45  |
+| 8    | DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417) | 83.68 | 55.00  | 40.40  |  72.59   |   /    |
 
 If you have ANY difficulties to get things working in the above steps, feel free to open an issue. You can expect a reply within 24 hours.
 

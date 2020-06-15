@@ -53,29 +53,19 @@ def randomly_choose_false_edges(nodes, true_edges, num):
     return tmp_list
 
 
-def gen_node_pairs(train_data, valid_data, test_data):
+def gen_node_pairs(train_data, test_data, negative_ratio=5):
     G = nx.Graph()
     G.add_edges_from(train_data)
 
     training_nodes = set(list(G.nodes()))
-    valid_true_data = []
     test_true_data = []
-    for u, v in valid_data:
-        if u in training_nodes and v in training_nodes:
-            valid_true_data.append((u, v))
     for u, v in test_data:
         if u in training_nodes and v in training_nodes:
             test_true_data.append((u, v))
-    valid_false_data = randomly_choose_false_edges(
-        list(training_nodes), train_data, len(valid_data)
-    )
     test_false_data = randomly_choose_false_edges(
-        list(training_nodes), train_data, len(test_data)
+        list(training_nodes), train_data, len(test_data) * negative_ratio
     )
-    return (
-        (valid_true_data, valid_false_data),
-        (test_true_data, test_false_data),
-    )
+    return (test_true_data, test_false_data)
 
 
 def get_score(embs, node1, node2):
@@ -142,12 +132,12 @@ class LinkPrediction(BaseTask):
             if (edge[0], edge[1]) not in edge_set and (edge[1], edge[0]) not in edge_set:
                 edge_set.add(edge)
         edge_list = list(edge_set)
-        self.train_data, self.valid_data, self.test_data = divide_data(
-            edge_list, [0.85, 0.05, 0.10]
+        self.train_data, self.test_data = divide_data(
+            edge_list, [0.90, 0.10]
         )
 
-        self.valid_data, self.test_data = gen_node_pairs(
-            self.train_data, self.valid_data, self.test_data
+        self.test_data = gen_node_pairs(
+            self.train_data, self.test_data, args.negative_ratio
         )
 
     def train(self):

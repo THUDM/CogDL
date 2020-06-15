@@ -98,16 +98,16 @@ This leaderboard reports unsupervised multi-label node classification setting. w
 
 | Rank | Method                                                       |    PPI    | Blogcatalog | Wikipedia |
 | ---- | ------------------------------------------------------------ | :-------: | :---------: | :-------: |
-| 1    | ProNE [(Zhang et al, IJCAI'19)](http://arxiv.org/abs/1806.02623) | **26.32** |  **43.63**  |   57.64   |
+| 1    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf) | **26.32** |  **43.63**  |   57.64   |
 | 2    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) |   24.86   |    43.49    | **58.46** |
 | 3    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) |   23.86   |    42.51    |   53.68   |
-| 4    | NetSMF [(Qiu et at, WWW'19)](http://arxiv.org/abs/1710.02971) |   24.39   |    43.21    |   51.42   |
+| 4    | NetSMF [(Qiu et at, WWW'19)](https://arxiv.org/abs/1906.11156) |   24.39   |    43.21    |   51.42   |
 | 5    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) |   22.72   |    42.26    |   50.42   |
 | 6    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) |   23.15   |    39.29    |   49.83   |
 | 7    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) |   23.24   |    35.52    |   52.96   |
-| 8    | SDNE [(Wang et al, KDD'16):](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf) |   20.14   |    40.32    |   48.24   |
-| 9    | GraRep [(Cao et al, CIKM'15):](http://dl.acm.org/citation.cfm?doid=2806416.2806512) |   20.96   |    34.35    |   51.84   |
-| 10   | DNGR [(Cao et al, AAAI'16):](https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/download/12423/11715) |   16.45   |    28.54    |   48.57   |
+| 8    | SDNE [(Wang et al, KDD'16)](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf) |   20.14   |    40.32    |   48.24   |
+| 9    | GraRep [(Cao et al, CIKM'15)](http://dl.acm.org/citation.cfm?doid=2806416.2806512) |   20.96   |    34.35    |   51.84   |
+| 10   | DNGR [(Cao et al, AAAI'16)](https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/download/12423/11715) |   16.45   |    28.54    |   48.57   |
 
 #### Semi-Supervised Node Classification with Attributes
 
@@ -115,13 +115,14 @@ This leaderboard reports the semi-supervised node classification under a transdu
 
 | Rank | Method                                                       |      Cora      |    Citeseer    |     Pubmed     |
 | ---- | ------------------------------------------------------------ | :------------: | :------------: | :------------: |
-| 1    | NSGCN [(Zhang et al., 2019)](https://arxiv.org/)             | **84.0 ± 0.5** |   72.7 ± 0.4   | **79.2 ± 0.3** |
-| 2    | DR-GAT [(Zou et al., 2019)](https://arxiv.org/)              |   83.6 ± 0.5   | **72.8 ± 0.8** |   79.1 ± 0.3   |
-| 3    | DR-GCN [(Zou et al., 2019)](https://arxiv.org/)              |   81.6 ± 0.1   |   71.0 ± 0.6   |   79.2 ± 0.4   |
+| 1    | Graph U-Net [(Gao et al., 2019)](https://arxiv.org/abs/1905.05178) | **84.4 ± 0.6** | **73.2 ± 0.5** |   79.6 ± 0.2   |
+| 2    | MixHop [(Abu-El-Haija et al., ICML'19)](https://arxiv.org/abs/1905.00067) |   81.9 ± 0.4   |   71.4 ± 0.8   | **80.8 ± 0.6** |
+| 3    | DR-GAT [(Zou et al., 2019)](https://arxiv.org/abs/1907.02237) |   83.6 ± 0.5   |   72.8 ± 0.8   |   79.1 ± 0.3   |
 | 4    | GAT [(Veličković et al., ICLR'18)](https://arxiv.org/abs/1710.10903) |   83.0 ± 0.7   |   72.5 ± 0.7   |   79.0 ± 0.3   |
-| 5    | GCN [(Kipf et al., ICLR'17)](https://arxiv.org/abs/1609.02907) |   81.4 ± 0.5   |   70.9 ± 0.5   |   79.0 ± 0.3   |
-| 6    | FastGCN [(Chen, Ma et al., ICLR'18)](https://arxiv.org/abs/1801.10247) |   81.4 ± 0.5   |   68.8 ± 0.9   |   77.6 ± 0.5   |
-| 7    | GraphSAGE [(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |   78.9 ± 0.8   |   67.4 ± 0.7   |   77.8 ± 0.6   |
+| 5    | DGI [(Veličković et al., ICLR'19)](https://arxiv.org/abs/1809.10341) |   82.3 ± 0.6   |   71.8 ± 0.7   |   76.8 ± 0.6   |
+| 6    | GCN [(Kipf et al., ICLR'17)](https://arxiv.org/abs/1609.02907) |   81.4 ± 0.5   |   70.9 ± 0.5   |   79.0 ± 0.3   |
+| 7    | GraphSAGE [(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |   80.1 ± 0.2   |   66.2 ± 0.4   |   76.9 ± 0.7   |
+| 8    | Chebyshev [(Defferrard et al., NeurIPS'16)](https://arxiv.org/abs/1606.09375) |   79.2 ± 1.4   |   69.3 ± 1.3   |   68.5 ± 1.2   |
 
 #### Multiplex Node Classification
 
@@ -139,18 +140,18 @@ For multiplex node classification, we use macro F1 to evaluate models. We evalua
 
 #### Link Prediction
 
-For link prediction, we adopt  Area Under the Receiver Operating Characteristic Curve (ROC AUC), standard evaluation metric AUC and F1-score, which represents the probability that vertices in a random unobserved link are more similar than those in a random nonexistent link. We evaluate these measures while removing 15 percents of edges on these dataset. We repeat our experiments for 10 times and report the three matrices in order.
+For link prediction, we adopt Area Under the Receiver Operating Characteristic Curve (ROC AUC), which represents the probability that vertices in a random unobserved link are more similar than those in a random nonexistent link. We evaluate these measures while removing 10 percents of edges on these dataset. We repeat our experiments for 10 times and report the results in order.
 
-| Rank | Method                                                       |    PPI    | Wikipedia | Blogcatalog |
-| ---- | ------------------------------------------------------------ | :-------: | :-------: | :---------: |
-| 1    | ProNE [(Zhang et al, IJCAI'19)](http://arxiv.org/abs/1806.02623) | **95.14** |   83.15   |  **89.63**  |
-| 2    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) |   92.99   | **85.86** |    85.05    |
-| 3    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) |   92.13   |   84.18   |    84.41    |
-| 4    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) |   92.05   |   83.94   |    84.45    |
-| 5    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) |   91.80   |   77.95   |    77.25    |
-| 6    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) |   92.77   |   69.16   |    80.99    |
-| 7    | NetSMF [(Qiu et at, WWW'19)](http://arxiv.org/abs/1710.02971) |   75.16   |   47.66   |    68.14    |
-| 8    | GraRep [(Cao et al, CIKM'15)](http://dl.acm.org/citation.cfm?doid=2806416.2806512) |   79.21   |   29.55   |    49.24    |
+| Rank | Method                                                       |  PPI  | Wikipedia |
+| ---- | ------------------------------------------------------------ | :---: | :-------: |
+| 1    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf) | 79.93 |   82.74   |
+| 2    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) | 79.04 |   73.24   |
+| 3    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) | 80.21 |   68.89   |
+| 4    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) | 73.75 |   66.51   |
+| 5    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) | 70.19 |   66.60   |
+| 6    | NetSMF [(Qiu et at, WWW'19)](https://arxiv.org/abs/1906.11156) | 68.64 |   67.52   |
+| 7    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) | 69.65 |   65.93   |
+| 8    | SDNE [(Wang et al, KDD'16)](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf) | 54.87 |   60.72   |
 
 #### Multiplex Link Prediction
 
@@ -160,7 +161,7 @@ For multiplex link prediction, we adopt Area Under the Receiver Operating Charac
 | ---- | ------------------------------------------------------------ | :-------: | :-------: | :-------: |
 | 1    | GATNE [(Cen et al, KDD'19)](https://arxiv.org/abs/1905.01669) |   97.44   | **84.61** | **92.30** |
 | 2    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) | **97.72** |   82.53   |   73.75   |
-| 3    | ProNE [(Zhang et al, IJCAI'19)](http://arxiv.org/abs/1806.02623) |   96.51   |   78.96   |   81.32   |
+| 3    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf) |   96.51   |   78.96   |   81.32   |
 | 4    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) |   86.86   |   74.01   |   78.30   |
 | 5    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) |   92.54   |   74.31   |   60.29   |
 | 6    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) |   92.56   |   73.40   |   60.36   |

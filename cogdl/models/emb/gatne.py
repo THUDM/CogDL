@@ -40,16 +40,16 @@ class GATNE(BaseModel):
         # fmt: off
         parser.add_argument('--walk-length', type=int, default=10,
                             help='Length of walk per source. Default is 10.')
-        parser.add_argument('--walk-num', type=int, default=20,
-                            help='Number of walks per source. Default is 20.')
+        parser.add_argument('--walk-num', type=int, default=10,
+                            help='Number of walks per source. Default is 10.')
         parser.add_argument('--window-size', type=int, default=5,
                             help='Window size of skip-gram model. Default is 5.')
         parser.add_argument('--worker', type=int, default=10,
                             help='Number of parallel workers. Default is 10.')
         parser.add_argument('--epoch', type=int, default=20,
                             help='Number of epoch. Default is 20.')
-        parser.add_argument('--batch-size', type=int, default=64,
-                            help='Number of batch_size. Default is 64.')
+        parser.add_argument('--batch-size', type=int, default=256,
+                            help='Number of batch_size. Default is 256.')
         parser.add_argument('--edge-dim', type=int, default=10,
                             help='Number of edge embedding dimensions. Default is 10.')
         parser.add_argument('--att-dim', type=int, default=20,
@@ -110,7 +110,7 @@ class GATNE(BaseModel):
 
         self.multiplicity = True
 
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def train(self, network_data):
         all_walks = generate_walks(network_data, self.walk_num, self.walk_length, schema=self.schema)

@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-**[HomePage](http://keg.cs.tsinghua.edu.cn/cogdl)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Poster](https://qibinc.github.io/cogdl-leaderboard/poster.pdf)** | **[中文](https://github.com/THUDM/cogdl/README_CN.md)**
+**[HomePage](http://keg.cs.tsinghua.edu.cn/cogdl)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Poster](https://qibinc.github.io/cogdl-leaderboard/poster.pdf)** | **[中文](./README_CN.md)**
 
 CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or custom models for node classification, link prediction and other tasks on graphs. It provides implementations of many popular models, including: non-GNN Baselines like Deepwalk, LINE, NetMF, GNN Baselines like GCN, GAT, GraphSAGE.
 

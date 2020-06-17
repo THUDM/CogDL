@@ -45,7 +45,7 @@ def getpid(_):
 
 if __name__ == "__main__":
     # Magic for making multiprocessing work for PyTorch
-    mp.set_start_method("spawn")
+    mp.set_start_method("spawn", force=True)
 
     parser = options.get_training_parser()
     args, _ = parser.parse_known_args()

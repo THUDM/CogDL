@@ -16,16 +16,16 @@ Feel free to submit your contributions as a pull request.
 
 CogDL features:
 
-- Sparsification: fast network embedding on large-scale networks with tens of millions of nodes
-- Arbitrary: dealing with different graph structures: attributed, multiplex and heterogeneous networks
-- Parallel: parallel training of different seeds and different models on multiple GPUs and automatically reporting the result table
-- Extensible: easily register new datasets, models, criteria and tasks
+- Task-Oriented: CogDL focuses on tasks on graphs and provides corresponding models, datasets, and leaderboards.
+- Easy-Running: CogDL supports running multiple experiments simultaneously on multiple models and datasets under a specific task using multiple GPUs.
+- Multiple Tasks: CogDL supports node classification and link prediction tasks on homogeneous/heterogeneous networks, as well as graph classification.
+- Extensibility: You can easily add new datasets, models and tasks and conduct experiments for them!
 - Supported tasks:
   - Node classification
   - Link prediction
   - Graph classification
-  - Community detection
-  - Social influence prediction
+  - Community detection (testing)
+  - Social influence prediction (testing)
   - Graph reasoning (todo)
   - Graph pre-training (todo)
   - Combinatorial optimization on graphs (todo)

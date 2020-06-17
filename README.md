@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-**[HomePage](http://keg.cs.tsinghua.edu.cn/cogdl)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Poster](https://qibinc.github.io/cogdl-leaderboard/poster.pdf)**
+**[HomePage](http://keg.cs.tsinghua.edu.cn/cogdl)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Poster](https://qibinc.github.io/cogdl-leaderboard/poster.pdf)** | **[中文](https://github.com/THUDM/cogdl/README_CN.md)**
 
 CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or custom models for node classification, link prediction and other tasks on graphs. It provides implementations of many popular models, including: non-GNN Baselines like Deepwalk, LINE, NetMF, GNN Baselines like GCN, GAT, GraphSAGE.
 
@@ -85,6 +85,65 @@ Expected output:
 |---------------------|---------------|
 | ('cora', 'pyg_gcn') | 0.7922±0.0082 |
 | ('cora', 'pyg_gat') | 0.8092±0.0055 |
+
+
+## Model Characteristics
+
+We summarize the characteristics of all methods for different tasks in the following, where reproducibility means whether the model is reproduced in our experimental setting currently. 
+
+### Unsupervised Graph Embedding Methods
+
+| Algorithm | Directed           | Weight             | Shallow network    | Matrix factorization | Sampling           | Reproducibility    |
+| --------- | :----------------- | ------------------ | ------------------ | -------------------- | ------------------ | ------------------ |
+| DeepWalk  |                    |                    | :heavy_check_mark: |                      |                    | :heavy_check_mark: |
+| LINE      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      | :heavy_check_mark: | :heavy_check_mark: |
+| Node2vec  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      | :heavy_check_mark: | :heavy_check_mark: |
+| SDNE      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      |                    | :heavy_check_mark: |
+| DNGR      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      |                    |                    |
+| HOPE      | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark:   |                    | :heavy_check_mark: |
+| GraRep    | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark:   |                    |                    |
+| NetMF     | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark:   |                    | :heavy_check_mark: |
+| NetSMF    |                    | :heavy_check_mark: |                    | :heavy_check_mark:   | :heavy_check_mark: | :heavy_check_mark: |
+| ProNE     | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark:   |                    | :heavy_check_mark: |
+
+
+### Graph Neural Networks
+
+| Algorithm   | Weight             | Sampling           | Attention          | Inductive          | Reproducibility    |
+| ----------- | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ |
+| Graph U-Net | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+| MixHop      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+| Dr-GAT      |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| GAT         |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| DGI         | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: |
+| GCN         | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+| GraphSAGE   | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: |
+| Chebyshev   | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+
+### Heterogeneous Graph Embedding Methods
+
+| Algorithm\Feature | Multi-Node         | Multi-Edge         | Attribute          | Supervised         | MetaPath           | Reproducibility    |
+| ----------------- | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ |
+| GATNE             | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+| Metapath2vec      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+| PTE               | :heavy_check_mark: |                    |                    |                    |                    | :heavy_check_mark: |
+| Hin2vec           | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+| GTN               | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| HAN               | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+
+### Methods for Graph Classification
+
+| Algorithm  | Node feature       | Unsupervised       | Graph kernel       | Shallow network    | Reproducibility    |
+| ---------- | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ |
+| Infograph  | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
+| Diffpool   | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+| Graph2Vec  |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Sortpool   | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+| GIN        | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+| PATCHY_SAN | :heavy_check_mark: |                    | :heavy_check_mark: |                    | :heavy_check_mark: |
+| DGCNN      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
+| DGK        |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    |
+
 
 ## Leaderboard
 

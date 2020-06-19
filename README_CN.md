@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-**[主页](http://keg.cs.tsinghua.edu.cn/cogdl/cn)** | **[智源链接](http://open.baai.ac.cn/cogdl-toolkit)** | **[文档](https://cogdl.readthedocs.io)** | **[English](./README.md)**
+**[主页](http://keg.cs.tsinghua.edu.cn/cogdl/cn)** | **[智源链接](http://open.baai.ac.cn/cogdl-toolkit)** | **[文档](https://cogdl.readthedocs.io)** | **[海报](https://qibinc.github.io/cogdl-leaderboard/poster_cn.pdf)** | **[English](./README.md)**
 
 CogDL是由清华大学计算机系知识工程实验室（KEG）的[唐杰教授](http://keg.cs.tsinghua.edu.cn/jietang/)所主持的基于图的深度学习的研究工具，基于Python语言和[Pytorch](https://github.com/pytorch/pytorch)库进行开发。
 

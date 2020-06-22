@@ -9,7 +9,7 @@
 
 **[主页](http://keg.cs.tsinghua.edu.cn/cogdl/cn)** | **[智源链接](http://open.baai.ac.cn/cogdl-toolkit)** | **[文档](https://cogdl.readthedocs.io)** | **[海报](https://qibinc.github.io/cogdl-leaderboard/poster_cn.pdf)** | **[English](./README.md)**
 
-CogDL是由清华大学计算机系知识工程实验室（KEG）开发的基于图的深度学习的研究工具，基于Python语言和[Pytorch](https://github.com/pytorch/pytorch)库。CogDL允许研究人员和开发人员可以轻松地训练和比较基线算法或自定义模型，以进行结点分类，链接预测，图分类，社区发现等基于图结构的任务。 它提供了许多流行模型的实现，包括：非图神经网络算法例如Deepwalk、LINE、Node2vec、NetMF、ProNE、methpath2vec、PTE、graph2vec、Infograph等；图神经网络算法例如GCN、GAT、GraphSAGE、FastGCN、GTN、HAN、GIN、DiffPool等。它也提供了一些下游任务，包括结点分类（具有或不具有结点属性），链接预测（具有或不具有属性，边异构或不异构），图分类（有监督或无监督）以及为这些任务构建各种算法效果的排行榜。
+CogDL是由清华大学计算机系知识工程实验室（KEG）开发的基于图的深度学习的研究工具，基于Python语言和[Pytorch](https://github.com/pytorch/pytorch)库。CogDL允许研究人员和开发人员可以轻松地训练和比较基线算法或自定义模型，以进行结点分类，链接预测，图分类，社区发现等基于图结构的任务。 它提供了许多流行模型的实现，包括：非图神经网络算法例如Deepwalk、LINE、Node2vec、NetMF、ProNE、methpath2vec、PTE、graph2vec、DGK等；图神经网络算法例如GCN、GAT、GraphSAGE、FastGCN、GTN、HAN、GIN、DiffPool等。它也提供了一些下游任务，包括结点分类（具有或不具有结点属性），链接预测（具有或不具有属性，边异构或不异构），图分类（有监督或无监督）以及为这些任务构建各种算法效果的排行榜。
 
 CogDL的特性包括：
 

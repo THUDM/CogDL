@@ -3,7 +3,7 @@ Unsupervised Node Classification
 
 In this tutorial, we will introduce a important task, unsupervised node classification. In this task, we usually apply L2 normalized logisitic regression to train a classifier and use F1-score to measure the performance. 
 
-First we define the 'UnsupervisedNodeClassification' class, which has two parameters 'hidden-size' and 'num-shuffle'. 'hidden-size' represents the dimension of node representation, while 'num-shuffle' means the shuffle times in classifier.
+First we define the `UnsupervisedNodeClassification`  class, which has two parameters `hidden-size`  and `num-shuffle` . `hidden-size`  represents the dimension of node representation, while `num-shuffle`  means the shuffle times in classifier.
 
 .. code-block:: python
 
@@ -23,7 +23,7 @@ First we define the 'UnsupervisedNodeClassification' class, which has two parame
             super(UnsupervisedNodeClassification, self).__init__(args)
 
 
-Then we can build dataset according to input graph's type, and get 'self.label_matrix'.
+Then we can build dataset according to input graph's type, and get `self.label_matrix`.
 
 .. code-block:: python
 
@@ -38,7 +38,7 @@ Then we can build dataset according to input graph's type, and get 'self.label_m
             self.label_matrix = self.data.y
             self.num_nodes, self.num_classes = self.data.y.shape
 
-After that, we can build model and run 'model.train(G)' to obtain node representation.
+After that, we can build model and run `model.train(G)` to obtain node representation.
 
 .. code-block:: python
 
@@ -67,7 +67,7 @@ After that, we can build model and run 'model.train(G)' to obtain node represent
             embeddings = self.model.train(G)
 
 
-The spectral propagation in ProNE can improve the quality of representation learned from other methods, so we can use 'enhance_emb' to enhance performance.
+The spectral propagation in ProNE can improve the quality of representation learned from other methods, so we can use `enhance_emb` to enhance performance.
 
 .. code-block:: python
 
@@ -82,7 +82,7 @@ The spectral propagation in ProNE can improve the quality of representation lear
             embs = model._chebyshev_gaussian(A, embs)
             return embs
 
-When the embeddings are obtained, we can save them at 'self.save_dir'.
+When the embeddings are obtained, we can save them at `self.save_dir`.
 
 .. code-block:: python
 
@@ -98,7 +98,7 @@ When the embeddings are obtained, we can save them at 'self.save_dir'.
             np.save(name, embs)
 
 
-At last, we evaluate embedding via run 'num_shuffle' times classification under different training ratio with 'features_matrix' and 'label_matrix'.
+At last, we evaluate embedding via run `num_shuffle` times classification under different training ratio with `features_matrix` and `label_matrix`.
 
 .. code-block:: python
 
@@ -116,7 +116,7 @@ At last, we evaluate embedding via run 'num_shuffle' times classification under 
             for train_percent in training_percents:
                 for shuf in shuffles:
 
-In each shuffle, split data into two parts(training and testing) and use 'LogisticRegression' to evaluate.
+In each shuffle, split data into two parts(training and testing) and use `LogisticRegression` to evaluate.
 
 .. code-block:: python
 
@@ -174,7 +174,7 @@ Finally, we get the results of Micro-F1 score under different training ratio for
             for train_percent in sorted(all_results.keys())
         )
 
-The overall implementation of 'UnsupervisedNodeClassification' is at (https://github.com/THUDM/cogdl/blob/master/cogdl/tasks/unsupervised_node_classification.py).
+The overall implementation of `UnsupervisedNodeClassification` is at (https://github.com/THUDM/cogdl/blob/master/cogdl/tasks/unsupervised_node_classification.py).
 
 To run UnsupervisedNodeClassification, we can use following instruction:
 

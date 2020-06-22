@@ -6,7 +6,7 @@ import numpy as np
 
 import torch_geometric.transforms as T
 from torch_geometric.datasets import ModelNet
-from cogdl.data import Data, Dataset, download_url, InMemoryDataset
+from cogdl.data import Data, Dataset, download_url
 from . import register_dataset
 
 

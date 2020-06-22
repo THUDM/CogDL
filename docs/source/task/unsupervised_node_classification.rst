@@ -34,6 +34,7 @@ Then we can build dataset according to input graph's type, and get `self.label_m
             self.num_classes = dataset.num_classes
             self.label_matrix = np.zeros((self.num_nodes, self.num_classes), dtype=int)
             self.label_matrix[range(self.num_nodes), self.data.y] = 1
+            self.data.edge_attr = self.data.edge_attr.t()
         else:
             self.label_matrix = self.data.y
             self.num_nodes, self.num_classes = self.data.y.shape

@@ -17,7 +17,7 @@ from sklearn.utils import shuffle as skshuffle
 from tqdm import tqdm
 
 from cogdl import options
-from cogdl.data import Dataset, InMemoryDataset
+from cogdl.data import Dataset
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model, register_model
 

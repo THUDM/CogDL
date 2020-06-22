@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from cogdl.data import Data, DataLoader, InMemoryDataset
+from cogdl.data import Data, DataLoader
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from . import BaseTask, register_task

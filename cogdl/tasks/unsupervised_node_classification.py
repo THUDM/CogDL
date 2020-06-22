@@ -17,9 +17,10 @@ from sklearn.utils import shuffle as skshuffle
 from tqdm import tqdm
 
 from cogdl import options
-from cogdl.data import Dataset, InMemoryDataset
+from cogdl.data import Dataset
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model, register_model
+from torch_geometric.data import InMemoryDataset
 
 from . import BaseTask, register_task
 
@@ -47,6 +48,7 @@ class UnsupervisedNodeClassification(BaseTask):
             self.num_classes = dataset.num_classes
             self.label_matrix = np.zeros((self.num_nodes, self.num_classes), dtype=int)
             self.label_matrix[range(self.num_nodes), self.data.y] = 1
+            self.data.edge_attr = self.data.edge_attr.t()
         else:
             self.label_matrix = self.data.y
             self.num_nodes, self.num_classes = self.data.y.shape

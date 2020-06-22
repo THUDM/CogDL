@@ -132,20 +132,6 @@ def test_prone_flickr():
     ret = task.train()
     assert ret['ROC_AUC'] >= 0 and ret['ROC_AUC'] <= 1
 
-def test_prone_dblp():
-    args = get_default_args()
-    args.task = 'link_prediction'
-    args.dataset = 'dblp'
-    args.model = 'prone'
-    dataset = build_dataset(args)
-    args.step = 3
-    args.theta = 0.5
-    args.mu = 0.2
-    model = build_model(args)
-    task = build_task(args)
-    ret = task.train()
-    assert ret['ROC_AUC'] >= 0 and ret['ROC_AUC'] <= 1
-
 def test_sdne_ppi():
     args = get_default_args()
     args.task = 'link_prediction'
@@ -193,6 +179,5 @@ if __name__ == "__main__":
     test_netmf_ppi()
     test_netsmf_ppi()
     test_prone_flickr()
-    test_prone_dblp()
     test_sdne_ppi()
     test_dngr_ppi()

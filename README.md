@@ -24,8 +24,6 @@ CogDL features:
   - Node classification
   - Link prediction
   - Graph classification
-  - Community detection (testing)
-  - Social influence prediction (testing)
   - Graph reasoning (todo)
   - Graph pre-training (todo)
   - Combinatorial optimization on graphs (todo)
@@ -36,9 +34,9 @@ CogDL features:
 
 - PyTorch version >= 1.0.0
 - Python version >= 3.6
-- PyTorch Geometric (optional)
+- PyTorch Geometric
 
-Please follow the instructions here to install PyTorch: https://github.com/pytorch/pytorch#installation.
+Please follow the instructions here to install PyTorch: https://github.com/pytorch/pytorch#installation and PyTorch Geometric https://github.com/rusty1s/pytorch_geometric/#installation.
 
 Install other dependencies:
 
@@ -54,7 +52,7 @@ You can use `python scripts/train.py --task example_task --dataset example_datas
 
 - --task, downstream tasks to evaluate representation like node_classification, unsupervised_node_classification, link_prediction. More tasks can be found in the [cogdl/tasks](https://github.com/THUDM/cogdl/tree/master/cogdl/tasks).
 - --dataset, dataset name to run, can be a list of datasets with space like `cora citeseer ppi`. Supported datasets include
-'cora', 'citeseer', 'pumbed', 'PPI', 'wikipedia', 'blogcatalog', 'dblp', 'flickr'. More datasets can be found in the [cogdl/datasets](https://github.com/THUDM/cogdl/tree/master/cogdl/datasets).
+'cora', 'citeseer', 'pumbed', 'PPI', 'wikipedia', 'blogcatalog', 'flickr'. More datasets can be found in the [cogdl/datasets](https://github.com/THUDM/cogdl/tree/master/cogdl/datasets).
 - --model, model name to run, can be a list of models like `deepwalk line prone`. Supported datasets include
 'gcn', 'gat', 'graphsage', 'deepwalk', 'node2vec', 'hope', 'grarep', 'netmf', 'netsmf', 'prone'. More models can be found in the [cogdl/models](https://github.com/THUDM/cogdl/tree/master/cogdl/models).
 
@@ -72,8 +70,6 @@ Expected output:
 | ('wikipedia', 'netmf') | 0.4551±0.0024  | 0.4932±0.0022  | 0.5046±0.0017  | 0.5084±0.0057  | 0.5125±0.0035  |
 
 If you want to run parallel experiments on your server with multiple GPUs on multiple models gcn, gat on multiple datasets Cora, Citeseer with node classification task:
-
-To enable efficient graph convolution on GPU, we require `pytorch_geometric`. Please install dependencies here https://github.com/rusty1s/pytorch_geometric/#installation.
 
 ```bash
 $ python scripts/parallel_train.py --task node_classification --dataset cora --model pyg_gcn pyg_gat --device-id 0 1 --seed 0 1 2 3 4
@@ -94,7 +90,7 @@ We summarize the characteristics of all methods for different tasks in the follo
 ### Unsupervised Graph Embedding Methods
 
 | Algorithm | Directed           | Weight             | Shallow network    | Matrix factorization | Sampling           | Reproducibility    |
-| --------- | :----------------- | ------------------ | ------------------ | -------------------- | ------------------ | ------------------ |
+| --------- | :----------------: | :----------------: | :----------------: | :------------------: | :----------------: | :----------------: |
 | DeepWalk  |                    |                    | :heavy_check_mark: |                      |                    | :heavy_check_mark: |
 | LINE      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      | :heavy_check_mark: | :heavy_check_mark: |
 | Node2vec  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      | :heavy_check_mark: | :heavy_check_mark: |
@@ -110,7 +106,7 @@ We summarize the characteristics of all methods for different tasks in the follo
 ### Graph Neural Networks
 
 | Algorithm   | Weight             | Sampling           | Attention          | Inductive          | Reproducibility    |
-| ----------- | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ |
+| ----------- | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: |
 | Graph U-Net | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
 | MixHop      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
 | Dr-GAT      |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
@@ -122,19 +118,19 @@ We summarize the characteristics of all methods for different tasks in the follo
 
 ### Heterogeneous Graph Embedding Methods
 
-| Algorithm\Feature | Multi-Node         | Multi-Edge         | Attribute          | Supervised         | MetaPath           | Reproducibility    |
-| ----------------- | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ |
-| GATNE             | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| Metapath2vec      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| PTE               | :heavy_check_mark: |                    |                    |                    |                    | :heavy_check_mark: |
-| Hin2vec           | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| GTN               | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| HAN               | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Algorithm    | Multi-Node         | Multi-Edge         | Attribute          | Supervised         | MetaPath           | Reproducibility    |
+| ------------ | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: |
+| GATNE        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: |
+| Metapath2vec | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+| PTE          | :heavy_check_mark: |                    |                    |                    |                    | :heavy_check_mark: |
+| Hin2vec      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+| GTN          | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| HAN          | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 
 ### Methods for Graph Classification
 
 | Algorithm  | Node feature       | Unsupervised       | Graph kernel       | Shallow network    | Reproducibility    |
-| ---------- | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ |
+| ---------- | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: |
 | Infograph  | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
 | Diffpool   | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
 | Graph2Vec  |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
@@ -185,11 +181,11 @@ This leaderboard reports the semi-supervised node classification under a transdu
 
 #### Multiplex Node Classification
 
-For multiplex node classification, we use macro F1 to evaluate models. We evaluate all models under the setting and datasets of GTN. The results with * represent the original results from papers.
+For multiplex node classification, we use macro F1 to evaluate models. We evaluate all models under the setting and datasets of GTN.
 
 | Rank | Method                                                       |    DBLP     |    ACM    |   IMDB    |
 | ---- | ------------------------------------------------------------ | :---------: | :-------: | :-------: |
-| 1    | GTN [(Yun et al, NeurIPS'19)](https://arxiv.org/abs/1911.06455) | **94.18\*** | **90.85** | **59.24** |
+| 1    | GTN [(Yun et al, NeurIPS'19)](https://arxiv.org/abs/1911.06455) | **92.03** | **90.85** | **59.24** |
 | 2    | HAN [(Xiao et al, WWW'19)](https://arxiv.org/abs/1903.07293) |    91.21    |   87.25   |   53.94   |
 | 3    | PTE [(Tang et al, KDD'15)](https://arxiv.org/abs/1508.00200) |    78.65    |   87.44   |   48.91   |
 | 4    | Metapath2vec [(Dong et al, KDD'17)](https://ericdongyx.github.io/papers/KDD17-dong-chawla-swami-metapath2vec.pdf) |    75.18    |   88.79   |   43.10   |
@@ -201,16 +197,16 @@ For multiplex node classification, we use macro F1 to evaluate models. We evalua
 
 For link prediction, we adopt Area Under the Receiver Operating Characteristic Curve (ROC AUC), which represents the probability that vertices in a random unobserved link are more similar than those in a random nonexistent link. We evaluate these measures while removing 10 percents of edges on these dataset. We repeat our experiments for 10 times and report the results in order.
 
-| Rank | Method                                                       |  PPI  | Wikipedia |
-| ---- | ------------------------------------------------------------ | :---: | :-------: |
-| 1    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf) | 79.93 |   82.74   |
-| 2    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) | 79.04 |   73.24   |
-| 3    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) | 80.21 |   68.89   |
-| 4    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) | 73.75 |   66.51   |
-| 5    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) | 70.19 |   66.60   |
-| 6    | NetSMF [(Qiu et at, WWW'19)](https://arxiv.org/abs/1906.11156) | 68.64 |   67.52   |
-| 7    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) | 69.65 |   65.93   |
-| 8    | SDNE [(Wang et al, KDD'16)](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf) | 54.87 |   60.72   |
+| Rank | Method                                                       |    PPI    |   Wikipedia   |
+| ---- | ------------------------------------------------------------ | :-------: | :-----------: |
+| 1    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf) |   79.93   |   **82.74**   |
+| 2    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) |   79.04   |     73.24     |
+| 3    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) | **80.21** |     68.89     |
+| 4    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) |   73.75   |     66.51     |
+| 5    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) |   70.19   |     66.60     |
+| 6    | NetSMF [(Qiu et at, WWW'19)](https://arxiv.org/abs/1906.11156) |   68.64   |     67.52     |
+| 7    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) |   69.65   |     65.93     |
+| 8    | SDNE [(Wang et al, KDD'16)](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf) |   54.87   |     60.72     |
 
 #### Multiplex Link Prediction
 
@@ -231,14 +227,14 @@ For multiplex link prediction, we adopt Area Under the Receiver Operating Charac
 
 This leaderboard reports the performance of graph classification methods. we run all algorithms on several datasets and report the sorted experimental results.
 
-| Rank | Method                                                       | MUTAG | IMDB-B | IMDB-M | PROTEINS | COLLAB |
-| :--- | :----------------------------------------------------------- | :---: | :----: | :----: | :------: | :----: |
-| 1    | Infograph [(Sun et al, ICLR'20)](https://openreview.net/forum?id=r1lfF2NYvH) | 88.95 | 74.50  | 51.33  |  73.93   | 78.14  |
-| 2    | GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km) | 88.33 | 76.70  | 50.80  |  72.86   | 79.52  |
+| Rank | Method                                                       |   MUTAG   |   IMDB-B   |   IMDB-M   |   PROTEINS   |   COLLAB   |
+| :--- | :----------------------------------------------------------- | :-------: | :--------: | :--------: | :----------: | :--------: |
+| 1    | Infograph [(Sun et al, ICLR'20)](https://openreview.net/forum?id=r1lfF2NYvH) | **88.95** | 74.50  | 51.33  |  73.93   | 78.14  |
+| 2    | GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km) | 88.33 | **76.70**  | 50.80  |  72.86   | 79.52  |
 | 3    | DiffPool [(Ying et al, NeuIPS'18)](https://arxiv.org/abs/1806.08804) | 85.18 | 74.30  | 50.73  |  75.30   | 77.20  |
 | 4    | SortPool [(Zhang et al, AAAI'18)](https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf) | 85.61 | 75.20  | 51.07  |  74.11   | 79.98  |
-| 5    | Graph2Vec [(Narayanan et al, CoRR'17)](https://arxiv.org/abs/1707.05005) | 83.68 | 73.90  | 52.27  |  73.30   | 85.58  |
-| 6    | PATCH_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf) | 85.12 | 76.00  | 46.20  |  75.50   | 75.42  |
+| 5    | Graph2Vec [(Narayanan et al, CoRR'17)](https://arxiv.org/abs/1707.05005) | 83.68 | 73.90  | **52.27**  |  73.30   | **85.58**  |
+| 6    | PATCH_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf) | 85.12 | 76.00  | 46.20  |  **75.50**   | 75.42  |
 | 7    | DGCNN [(Wang et al, ACM Transactions on Graphics'17)](https://arxiv.org/abs/1801.07829) | 83.33 | 69.50  | 46.33  |  66.67   | 77.45  |
 | 8    | DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417) | 83.68 | 55.00  | 40.40  |  72.59   |   /    |
 

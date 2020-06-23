@@ -9,7 +9,7 @@
 
 **[主页](http://keg.cs.tsinghua.edu.cn/cogdl/cn)** | **[智源链接](http://open.baai.ac.cn/cogdl-toolkit)** | **[文档](https://cogdl.readthedocs.io)** | **[海报](https://qibinc.github.io/cogdl-leaderboard/poster_cn.pdf)** | **[English](./README.md)**
 
-CogDL是由清华大学计算机系知识工程实验室（KEG）开发的基于图的深度学习的研究工具，基于Python语言和[Pytorch](https://github.com/pytorch/pytorch)库。CogDL允许研究人员和开发人员可以轻松地训练和比较基线算法或自定义模型，以进行结点分类，链接预测，图分类，社区发现等基于图结构的任务。 它提供了许多流行模型的实现，包括：非图神经网络算法例如Deepwalk、LINE、Node2vec、NetMF、ProNE、methpath2vec、PTE、graph2vec、DGK等；图神经网络算法例如GCN、GAT、GraphSAGE、FastGCN、GTN、HAN、GIN、DiffPool等。它也提供了一些下游任务，包括结点分类（具有或不具有结点属性），链接预测（具有或不具有属性，边异构或不异构），图分类（有监督或无监督）以及为这些任务构建各种算法效果的排行榜。
+CogDL是由清华大学计算机系知识工程实验室（KEG）开发的基于图的深度学习的研究工具，基于Python语言和[Pytorch](https://github.com/pytorch/pytorch)库。CogDL允许研究人员和开发人员可以轻松地训练和比较基线算法或自定义模型，以进行结点分类，链接预测，图分类，社区发现等基于图结构的任务。 它提供了许多流行模型的实现，包括：非图神经网络算法例如Deepwalk、LINE、Node2vec、NetMF、ProNE、methpath2vec、PTE、graph2vec、DGK等；图神经网络算法例如GCN、GAT、GraphSAGE、FastGCN、GTN、HAN、GIN、DiffPool等。它也提供了一些下游任务，包括结点分类（分为是否具有节点属性），链接预测（分为同构和异构），图分类（分有监督和⽆监督）以及为这些任务构建各种算法效果的排行榜。
 
 CogDL的特性包括：
 
@@ -48,7 +48,7 @@ CogDL实现了一系列不同类型的模型，下面列出了这些算法的特
 ### 无监督结点表示学习的算法
 
 | Algorithm | Directed           | Weight             | Shallow network    | Matrix factorization | Sampling           | Reproducibility    |
-| --------- | :----------------- | ------------------ | ------------------ | -------------------- | ------------------ | ------------------ |
+| --------- | :----------------: | :----------------: | :----------------: | :------------------: | :----------------: | :----------------: |
 | DeepWalk  |                    |                    | :heavy_check_mark: |                      |                    | :heavy_check_mark: |
 | LINE      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      | :heavy_check_mark: | :heavy_check_mark: |
 | Node2vec  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      | :heavy_check_mark: | :heavy_check_mark: |
@@ -66,7 +66,7 @@ CogDL实现了一系列不同类型的模型，下面列出了这些算法的特
 ### 半监督结点表示学习的算法
 
 | Algorithm   | Weight             | Sampling           | Attention          | Inductive          | Reproducibility    |
-| ----------- | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ |
+| ----------- | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: |
 | Graph U-Net | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
 | MixHop      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
 | Dr-GAT      |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
@@ -78,19 +78,19 @@ CogDL实现了一系列不同类型的模型，下面列出了这些算法的特
 
 ### 异构结点表示学习的算法
 
-| Algorithm\Feature | Multi-Node         | Multi-Edge         | Attribute          | Supervised         | MetaPath           | Reproducibility    |
-| ----------------- | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ |
-| GATNE             | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| Metapath2vec      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| PTE               | :heavy_check_mark: |                    |                    |                    |                    | :heavy_check_mark: |
-| Hin2vec           | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| GTN               | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| HAN               | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Algorithm    | Multi-Node         | Multi-Edge         | Attribute          | Supervised         | MetaPath           | Reproducibility    |
+| ------------ | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: |
+| GATNE        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: |
+| Metapath2vec | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+| PTE          | :heavy_check_mark: |                    |                    |                    |                    | :heavy_check_mark: |
+| Hin2vec      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+| GTN          | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| HAN          | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 
 ### 图表示学习的算法
 
 | Algorithm  | Node feature       | Unsupervised       | Graph kernel       | Shallow network    | Reproducibility    |
-| ---------- | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ |
+| ---------- | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: |
 | Infograph  | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
 | Diffpool   | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: |
 | Graph2Vec  |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
@@ -161,16 +161,16 @@ CogDL提供了一些下游任务，包括结点分类（具有或不具有结点
 
 对于链接预测任务，我们通过隐去数据集中10%的边，然后对隐去的边进行预测，使用ROC-AUC指标来评估模型的性能。ROC-AUC指标代表了一条随机未观察到的边对应的两个结点比一条随机不存在的边对应的两个结点更相似的概率。
 
-| Rank | Method                                                       |  PPI  | Wikipedia |
-| ---- | ------------------------------------------------------------ | :---: | :-------: |
-| 1    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf) | 79.93 |   82.74   |
-| 2    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) | 79.04 |   73.24   |
-| 3    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) | 80.21 |   68.89   |
-| 4    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) | 73.75 |   66.51   |
-| 5    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) | 70.19 |   66.60   |
-| 6    | NetSMF [(Qiu et at, WWW'19)](https://arxiv.org/abs/1906.11156) | 68.64 |   67.52   |
-| 7    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) | 69.65 |   65.93   |
-| 8    | SDNE [(Wang et al, KDD'16)](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf) | 54.87 |   60.72   |
+| Rank | Method                                                       |    PPI    |   Wikipedia   |
+| ---- | ------------------------------------------------------------ | :-------: | :-----------: |
+| 1    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf) |   79.93   |   **82.74**   |
+| 2    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) |   79.04   |     73.24     |
+| 3    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) | **80.21** |     68.89     |
+| 4    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) |   73.75   |     66.51     |
+| 5    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) |   70.19   |     66.60     |
+| 6    | NetSMF [(Qiu et at, WWW'19)](https://arxiv.org/abs/1906.11156) |   68.64   |     67.52     |
+| 7    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) |   69.65   |     65.93     |
+| 8    | SDNE [(Wang et al, KDD'16)](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf) |   54.87   |     60.72     |
 
 
 
@@ -195,14 +195,14 @@ CogDL提供了一些下游任务，包括结点分类（具有或不具有结点
 
 CogDL统一对有监督和无监督的图分类算法在相同的若干个真实的数据集上运行和评测。有监督图分类算法使用kfold对算法进行调参、训练和评测；无监督图分类算法学习到图的表示之后，将其作为输入并利用90%的图的标签作为SVM的训练数据，使用剩余10%的标签作为测试数据。两者均计算并按照Accuracy的大小进行排序。
 
-| Rank | Method                                                       | MUTAG | IMDB-B | IMDB-M | PROTEINS | COLLAB |
-| :--- | :----------------------------------------------------------- | :---: | :----: | :----: | :------: | :----: |
-| 1    | Infograph [(Sun et al, ICLR'20)](https://openreview.net/forum?id=r1lfF2NYvH) | 88.95 | 74.50  | 51.33  |  73.93   | 78.14  |
-| 2    | GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km) | 88.33 | 76.70  | 50.80  |  72.86   | 79.52  |
+| Rank | Method                                                       |   MUTAG   |   IMDB-B   |   IMDB-M   |   PROTEINS   |   COLLAB   |
+| :--- | :----------------------------------------------------------- | :-------: | :--------: | :--------: | :----------: | :--------: |
+| 1    | Infograph [(Sun et al, ICLR'20)](https://openreview.net/forum?id=r1lfF2NYvH) | **88.95** | 74.50  | 51.33  |  73.93   | 78.14  |
+| 2    | GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km) | 88.33 | **76.70**  | 50.80  |  72.86   | 79.52  |
 | 3    | DiffPool [(Ying et al, NeuIPS'18)](https://arxiv.org/abs/1806.08804) | 85.18 | 74.30  | 50.73  |  75.30   | 77.20  |
 | 4    | SortPool [(Zhang et al, AAAI'18)](https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf) | 85.61 | 75.20  | 51.07  |  74.11   | 79.98  |
-| 5    | Graph2Vec [(Narayanan et al, CoRR'17)](https://arxiv.org/abs/1707.05005) | 83.68 | 73.90  | 52.27  |  73.30   | 85.58  |
-| 6    | PATCH_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf) | 85.12 | 76.00  | 46.20  |  75.50   | 75.42  |
+| 5    | Graph2Vec [(Narayanan et al, CoRR'17)](https://arxiv.org/abs/1707.05005) | 83.68 | 73.90  | **52.27**  |  73.30   | **85.58**  |
+| 6    | PATCH_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf) | 85.12 | 76.00  | 46.20  |  **75.50**   | 75.42  |
 | 7    | DGCNN [(Wang et al, ACM Transactions on Graphics'17)](https://arxiv.org/abs/1801.07829) | 83.33 | 69.50  | 46.33  |  66.67   | 77.45  |
 | 8    | DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417) | 83.68 | 55.00  | 40.40  |  72.59   |   /    |
 

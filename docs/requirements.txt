@@ -3,17 +3,6 @@ sphinx_rtd_theme
 sphinx-markdown-tables
 recommonmark
 sphinx-autoapi
-torch
-networkx
-matplotlib
-tqdm
-numpy
-scipy
-six
-gensim
-grave
-scikit_learn
-tabulate
 black
 pytest
 coveralls

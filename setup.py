@@ -15,11 +15,5 @@ setup(
         "grave",
         "scikit_learn",
         "tabulate",
-        "black",
-        "pytest",
-        "coveralls",
-        "sphinx",
-        "sphinx_rtd_theme",
-        "recommonmark",
     ],
 )

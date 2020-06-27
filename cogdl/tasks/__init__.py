@@ -44,5 +44,11 @@ for file in os.listdir(os.path.dirname(__file__)):
         module = importlib.import_module("cogdl.tasks." + task_name)
 
 
-def build_task(args):
-    return TASK_REGISTRY[args.task](args)
+def build_task(args, dataset=None, model=None):
+    if dataset is None and model is None:
+        return TASK_REGISTRY[args.task](args)
+    elif dataset is not None and model is None:
+        return TASK_REGISTRY[args.task](args, dataset=dataset)
+    elif dataset is None and model is not None:
+        return TASK_REGISTRY[args.task](args, model=model)
+    return TASK_REGISTRY[args.task](args, dataset=dataset, model=model)

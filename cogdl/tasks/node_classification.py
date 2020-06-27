@@ -24,16 +24,18 @@ class NodeClassification(BaseTask):
         # parser.add_argument("--num-features", type=int)
         # fmt: on
 
-    def __init__(self, args):
+    def __init__(self, args, dataset=None, model=None):
         super(NodeClassification, self).__init__(args)
 
         self.device = torch.device('cpu' if args.cpu else 'cuda')
-        dataset = build_dataset(args)
+        if dataset is None:
+            dataset = build_dataset(args)
         self.data = dataset.data
         self.data.apply(lambda x: x.to(self.device))
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
-        model = build_model(args)
+        if model is None:
+            model = build_model(args)
         self.model = model.to(self.device)
         self.patience = args.patience
         self.max_epoch = args.max_epoch
@@ -83,7 +85,12 @@ class NodeClassification(BaseTask):
     def _test_step(self, split="val"):
         self.model.eval()
         logits = self.model.predict(self.data)
-        _, mask = list(self.data(f"{split}_mask"))[0]
+        if split == "train":
+            mask = self.data.train_mask
+        elif split == "val":
+            mask = self.data.val_mask
+        else:
+            mask = self.data.test_mask
         loss = F.nll_loss(logits[mask], self.data.y[mask])
 
         pred = logits[mask].max(1)[1]

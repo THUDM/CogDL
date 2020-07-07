@@ -4,7 +4,8 @@ from scipy.special import iv
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_sparse import spspmm, spmm
+from torch_sparse.tensor import SparseTensor
+from torch_sparse import spspmm, spmm, matmul
 from torch_geometric.utils import degree
 
 
@@ -18,7 +19,7 @@ class NodeAttention(nn.Module):
         super(NodeAttention, self).__init__()
         self.p = nn.Linear(in_feat, 1)
         self.dropout = nn.Dropout(0.7)
-    
+
     def forward(self, x, edge_index, edge_attr):
         device = x.device
         N, dim = x.shape
@@ -47,7 +48,7 @@ class EdgeAttention(nn.Module):
         self.q = nn.Linear(in_feat, 1)
 
         self.dropout = nn.Dropout(0.5)
-    
+
     def forward(self, x, edge_index, edge_attr):
         device = x.device
         N, dim = x.shape
@@ -74,7 +75,7 @@ class EdgeAttention(nn.Module):
 class Identity(nn.Module):
     def __init__(self, in_feat):
         super(Identity, self).__init__()
-    
+
     def forward(self, x, edge_index, edge_attr):
         return edge_index, edge_attr
 
@@ -96,7 +97,10 @@ class Gaussian(nn.Module):
         laplacian = identity - adj
 
         t0 = identity
-        l_x = -0.5 * ((laplacian - self.mu * identity).pow(2) - identity)
+        t1 = laplacian - self.mu * identity
+        t1 = t1.mm(t1.to_dense()).to_sparse()
+        l_x = -0.5 * (t1 - identity)
+        # l_x = -0.5 * ((laplacian - self.mu * identity).pow(2) - identity)
 
         ivs = [iv(i, self.theta) for i in range(self.steps)]
         ivs[1:] = [(-1) ** i * 2 * x for i, x in enumerate(ivs[1:])]
@@ -104,6 +108,12 @@ class Gaussian(nn.Module):
         result = [t0, l_x]
         for i in range(2, self.steps):
             result.append(2*l_x.mm(result[i-1].to_dense()).to_sparse().sub(result[i-2]))
+
+            # adj_ind, adj_val = spspmm(l_x._indices(), l_x._values(), result[i-1]._indices(), result[i-1]._values(), N, N, N, True)
+            # obj = torch.sparse_coo_tensor(adj_ind, adj_val * 2, size=(N, N))
+            # obj = obj.sub(result[i-2])
+            # result.append(obj)
+
         result = [result[i] * ivs[i] for i in range(self.steps)]
 
         def fn(x, y):
@@ -134,15 +144,19 @@ class PPR(nn.Module):
         theta = self.alpha * (1 - self.alpha)
         result = [theta * adj]
 
-        for _ in range(2, self.steps):
+        for i in range(1, self.steps-1):
             theta = theta * (1 - self.alpha)
-            result.append(adj.mm((result[-1] * theta).to_dense()).to_sparse())
+            adj_ind, adj_val = spspmm(edge_index, edge_attr_t, result[i-1]._indices(), result[i-1]._values(), N, N, N, True)
+            result.append(torch.sparse_coo_tensor(adj_ind, adj_val, size=(N, N)))
+            # result.append(adj.mm((result[-1] * theta).to_dense()).to_sparse())
+            # spspmm
 
         identity = torch.sparse_coo_tensor([range(N)] * 2, torch.ones(N), size=(N, N)).to(x.device)
         result.append(self.alpha * identity)
 
         def fn(x, y):
             return x.add(y)
+
         res = reduce(fn, result)
 
         return res._indices(), res._values()
@@ -186,7 +200,7 @@ def act_attention(attn_type):
 class NormIdentity(nn.Module):
     def __init__(self):
         super(NormIdentity, self).__init__()
-    
+
     def forward(self, edge_index, edge_attr, N):
         return edge_attr
 
@@ -194,11 +208,11 @@ class NormIdentity(nn.Module):
 class RowUniform(nn.Module):
     def __init__(self):
         super(RowUniform, self).__init__()
-    
+
     def forward(self, edge_index, edge_attr, N):
         device = edge_attr.device
         ones = torch.ones(N, 1, device=device)
-        rownorm = 1./spmm(edge_index, edge_attr, N, N, ones).view(-1)
+        rownorm = 1. / spmm(edge_index, edge_attr, N, N, ones).view(-1)
         row = rownorm[edge_index[0]]
         # col = rownorm[edge_index[1]]
         edge_attr_t = row * edge_attr
@@ -214,7 +228,7 @@ class RowSoftmax(nn.Module):
         device = edge_attr.device
         edge_attr_t = torch.exp(edge_attr)
         ones = torch.ones(N, 1, device=device)
-        rownorm = 1./spmm(edge_index, edge_attr_t, N, N, ones).view(-1)
+        rownorm = 1. / spmm(edge_index, edge_attr_t, N, N, ones).view(-1)
         row = rownorm[edge_index[0]]
         # col = rownorm[edge_index[1]]
         edge_attr_t = row * edge_attr_t

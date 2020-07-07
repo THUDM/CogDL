@@ -186,6 +186,49 @@ def test_pyg_drgat_cora():
     ret = task.train()
     assert ret['Acc'] >= 0 and ret['Acc'] <= 1
 
+def test_srgcn_cora():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.dataset = 'cora'
+    args.model = 'srgcn'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_heads = 4
+    args.subheads = 1
+    args.nhop = 1
+    args.node_dropout = 0.5
+    args.alpha = 0.2
+
+    args.normalization = 'identity'
+    args.attention_type = 'identity'
+    args.activation = 'linear'
+
+    norm_list = ['identity', 'row_uniform', 'row_softmax', 'col_uniform', 'symmetry']
+    activation_list = ['relu', 'relu6', 'sigmoid', 'tanh', 'leaky_relu', 'softplus', 'elu', 'linear']
+    attn_list = ['node', 'edge', 'identity', 'heat', 'ppr']  # gaussian
+
+    for norm in norm_list:
+        args.normalization = norm
+        task = build_task(args)
+        ret = task.train()
+        assert  ret['Acc'] > 0 and ret['Acc'] < 1
+
+    args.norm = 'identity'
+    for ac in activation_list:
+        args.activation = ac
+        task = build_task(args)
+        ret = task.train()
+        assert  ret['Acc'] > 0 and ret['Acc'] < 1
+
+    args.activation = 'relu'
+    for attn in attn_list:
+        args.attention_type = attn
+        task = build_task(args)
+        ret = task.train()
+        assert  ret['Acc'] > 0 and ret['Acc'] < 1
+
+
 if __name__ == "__main__":
     test_gcn_cora()
     test_gat_cora()
@@ -199,3 +242,4 @@ if __name__ == "__main__":
     test_pyg_unet_cora()
     test_pyg_drgcn_cora()
     test_pyg_drgat_cora()
+    test_srgcn_cora()

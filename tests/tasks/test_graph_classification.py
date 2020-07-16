@@ -145,7 +145,7 @@ def test_dgcnn_proteins():
     args = get_default_args()
     args = add_dgcnn_args(args)
     args.dataset = 'proteins'
-    args.model = 'pyg_dgcnn'
+    args.model = 'dgcnn'
     task = build_task(args)
     ret = task.train()
     assert ret["Acc"] > 0
@@ -155,7 +155,7 @@ def test_dgcnn_imdb_binary():
     args = get_default_args()
     args = add_dgcnn_args(args)
     args.dataset = 'imdb-b'
-    args.model = 'pyg_dgcnn'
+    args.model = 'dgcnn'
     args.degree_feature = True
     task = build_task(args)
     ret = task.train()

@@ -20,9 +20,15 @@ from cogdl import options
 from cogdl.data import Dataset
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model, register_model
-from torch_geometric.data import InMemoryDataset
 
 from . import BaseTask, register_task
+
+try:
+    from torch_geometric.data import InMemoryDataset
+except ImportError:
+    pyg = False
+else:
+    pyg = True
 
 warnings.filterwarnings("ignore")
 
@@ -43,7 +49,7 @@ class UnsupervisedNodeClassification(BaseTask):
         super(UnsupervisedNodeClassification, self).__init__(args)
         dataset = build_dataset(args)
         self.data = dataset[0]
-        if issubclass(dataset.__class__.__bases__[0], InMemoryDataset):
+        if pyg and issubclass(dataset.__class__.__bases__[0], InMemoryDataset):
             self.num_nodes = self.data.y.shape[0]
             self.num_classes = dataset.num_classes
             self.label_matrix = np.zeros((self.num_nodes, self.num_classes), dtype=int)
@@ -77,25 +83,27 @@ class UnsupervisedNodeClassification(BaseTask):
         np.save(name, embs)
 
     def train(self):
-        G = nx.Graph()
-        if self.is_weighted:
-            edges, weight = (
-                self.data.edge_index.t().tolist(),
-                self.data.edge_attr.tolist(),
-            )
-            G.add_weighted_edges_from(
-                [(edges[i][0], edges[i][1], weight[0][i]) for i in range(len(edges))]
-            )
+        if 'gcc' in self.model_name:
+            features_matrix = self.model.train(self.data)
         else:
-            G.add_edges_from(self.data.edge_index.t().tolist())
-        embeddings = self.model.train(G)
-        if self.enhance is True:
-            embeddings = self.enhance_emb(G, embeddings)
-
-        # Map node2id
-        features_matrix = np.zeros((self.num_nodes, self.hidden_size))
-        for vid, node in enumerate(G.nodes()):
-            features_matrix[node] = embeddings[vid]
+            G = nx.Graph()
+            if self.is_weighted:
+                edges, weight = (
+                    self.data.edge_index.t().tolist(),
+                    self.data.edge_attr.tolist(),
+                )
+                G.add_weighted_edges_from(
+                    [(edges[i][0], edges[i][1], weight[0][i]) for i in range(len(edges))]
+                )
+            else:
+                G.add_edges_from(self.data.edge_index.t().tolist())
+            embeddings = self.model.train(G)
+            if self.enhance is True:
+                embeddings = self.enhance_emb(G, embeddings)
+            # Map node2id
+            features_matrix = np.zeros((self.num_nodes, self.hidden_size))
+            for vid, node in enumerate(G.nodes()):
+                features_matrix[node] = embeddings[vid]
 
         self.save_emb(features_matrix)
 

@@ -6,7 +6,7 @@ from torch_geometric.nn.conv import ChebConv
 from .. import BaseModel, register_model
 
 
-@register_model("pyg_cheb")
+@register_model("chebyshev")
 class Chebyshev(BaseModel):
     @staticmethod
     def add_args(parser):

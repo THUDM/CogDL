@@ -20,7 +20,7 @@ class Encoder(nn.Module):
 def corruption(x, edge_index):
     return x[torch.randperm(x.size(0))], edge_index
 
-@register_model("pyg_infomax")
+@register_model("infomax")
 class Infomax(BaseModel):
     @staticmethod
     def add_args(parser):

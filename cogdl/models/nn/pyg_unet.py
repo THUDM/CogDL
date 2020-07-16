@@ -7,7 +7,7 @@ from torch_geometric.utils import dropout_adj
 from .. import BaseModel, register_model
 
 
-@register_model("pyg_unet")
+@register_model("unet")
 class UNet(BaseModel):
     @staticmethod
     def add_args(parser):

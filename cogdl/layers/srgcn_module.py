@@ -4,8 +4,7 @@ from scipy.special import iv
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_sparse.tensor import SparseTensor
-from torch_sparse import spspmm, spmm, matmul
+from torch_sparse import spspmm, spmm
 from torch_geometric.utils import degree
 
 

@@ -6,11 +6,11 @@ import torch.nn.functional as F
 from torch_geometric.nn import DynamicEdgeConv, global_max_pool
 
 from .. import BaseModel, register_model
-from .gin import GINMLP
+from .pyg_gin import GINMLP
 from cogdl.data import DataLoader, Data
 
 
-@register_model("pyg_dgcnn")
+@register_model("dgcnn")
 class DGCNN(BaseModel):
     r"""EdgeConv and DynamicGraph in paper `"Dynamic Graph CNN for Learning on
     Point Clouds" <https://arxiv.org/pdf/1801.07829.pdf>__ .`

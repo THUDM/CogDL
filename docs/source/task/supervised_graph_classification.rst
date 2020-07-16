@@ -132,7 +132,7 @@ To run GraphClassification, we can use the following command:
 
 .. code-block:: python
 
-    python scripts/train.py --task graph_classification --dataset proteins --model gin diffpool sortpool pyg_dgcnn --seed 0 1
+    python scripts/train.py --task graph_classification --dataset proteins --model gin diffpool sortpool dgcnn --seed 0 1
 
 Then We get experimental results like this:
 
@@ -142,6 +142,6 @@ Variants                      Acc
 ('proteins', 'gin')          0.7286±0.0598
 ('proteins', 'diffpool')     0.7530±0.0589
 ('proteins', 'sortpool')     0.7411±0.0269
-('proteins', 'pyg_dgcnn')    0.6677±0.0355
+('proteins', 'dgcnn')        0.6677±0.0355
 ('proteins', 'patchy_san')   0.7550±0.0812
 ============================ ===============

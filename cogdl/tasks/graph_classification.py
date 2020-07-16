@@ -2,16 +2,15 @@ import copy
 import random
 
 import numpy as np
-from sklearn.model_selection import StratifiedKFold
 import torch
 import torch.nn.functional as F
-from torch_geometric.utils import add_remaining_self_loops
-from torch_scatter import scatter_add
+from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
+from cogdl.data import Data, DataLoader
 from cogdl.datasets import build_dataset
-from cogdl.data import DataLoader, Data
 from cogdl.models import build_model
+from cogdl.utils import add_remaining_self_loops
 
 from . import BaseTask, register_task
 
@@ -33,7 +32,7 @@ def node_degree_as_feature(data):
             edge_index, edge_weight, fill_value, num_nodes
         )
         row, col = edge_index
-        deg = scatter_add(edge_weight, row, dim=0, dim_size=num_nodes).long()
+        deg = torch.zeros(num_nodes).scatter_add_(0, row, edge_weight).long()
         degrees.append(deg.cpu()-1)
         max_degree = max(torch.max(deg), max_degree)
     max_degree = int(max_degree)

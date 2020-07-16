@@ -92,7 +92,7 @@ def test_pyg_cheb_cora():
     args = get_default_args()
     args.task = 'node_classification'
     args.dataset = 'cora'
-    args.model = 'pyg_cheb'
+    args.model = 'chebyshev'
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -135,7 +135,7 @@ def test_pyg_infomax_cora():
     args = get_default_args()
     args.task = 'node_classification'
     args.dataset = 'cora'
-    args.model = 'pyg_infomax'
+    args.model = 'infomax'
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -148,7 +148,7 @@ def test_pyg_unet_cora():
     args = get_default_args()
     args.task = 'node_classification'
     args.dataset = 'cora'
-    args.model = 'pyg_unet'
+    args.model = 'unet'
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes

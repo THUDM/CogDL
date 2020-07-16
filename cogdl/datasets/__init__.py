@@ -59,7 +59,7 @@ for file in os.listdir(os.path.dirname(__file__)):
         dataset_name = file[: file.find(".py")]
         if not pyg and dataset_name.startswith("pyg"):
             continue
-        if not dgl_import and model_name.startswith("dgl"):
+        if not dgl_import and dataset_name.startswith("dgl"):
             continue
         module = importlib.import_module("cogdl.datasets." + dataset_name)
 

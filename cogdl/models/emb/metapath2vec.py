@@ -20,7 +20,7 @@ class Metapath2vec(BaseModel):
         worker (int) : The number of workers for word2vec.
         iteration (int) : The number of training iteration in word2vec.
         schema (str) : The metapath schema used in model. Metapaths are splited with ",", 
-        while each node type are connected with "-" in each metapath. For example:"0-1-0,0-1-2-1-0".
+        while each node type are connected with "-" in each metapath. For example:"0-1-0,0-2-0,1-0-2-0-1".
     """
 
     @staticmethod
@@ -86,7 +86,7 @@ class Metapath2vec(BaseModel):
 
     def _walk(self, start_node, walk_length, schema=None):
         # Simulate a random walk starting from start node. 
-        # Note that metapaths in schema should be like '0-1-0' or '0-1-2-1-0'.
+        # Note that metapaths in schema should be like '0-1-0', '0-2-0' or '1-0-2-0-1'.
         if schema:
             schema_items = schema.split("-")
             assert schema_items[0] == schema_items[-1]

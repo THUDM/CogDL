@@ -17,27 +17,24 @@ from torch_geometric.utils import degree
 class NodeAttention(nn.Module):
     def __init__(self, in_feat):
         super(NodeAttention, self).__init__()
-        self.p = nn.Linear(in_feat, 1)
-        self.dropout = nn.Dropout(0.7)
+        self.p = nn.Parameter(torch.zeros(in_feat, 1))
+        self.b = nn.Parameter(torch.zeros(1, ))
+        nn.init.xavier_normal_(self.p.data, gain=1.414)
+        self.dropout = nn.Dropout(0.8)
 
     def forward(self, x, edge_index, edge_attr):
         device = x.device
         N, dim = x.shape
-        diag_val = self.p(x)
+        diag_val = torch.mm(x, self.p) + self.b
 
         # add sigmoid
         diag_val = F.sigmoid(diag_val)
         # add dropout
         self.dropout(diag_val)
-        # ----------
-
-        row, col = edge_index
-        deg = degree(col, x.size(0), dtype=x.dtype)
-        deg_inv = deg.pow(-1)
-        edge_attr_t = deg_inv[row] * edge_attr
 
         diag_ind = torch.LongTensor([range(N)] * 2).to(device)
-        _, adj_mat_val = spspmm(edge_index, edge_attr_t, diag_ind, diag_val.view(-1), N, N, N, True)
+        _, adj_mat_val = spspmm(edge_index, edge_attr, diag_ind, diag_val.view(-1), N, N, N, True)
+
         return edge_index, adj_mat_val
 
 
@@ -92,7 +89,7 @@ class Gaussian(nn.Module):
         row, col = edge_index
         deg = degree(row, x.size(0), dtype=x.dtype)
         deg_inv = deg.pow(-1)
-        adj = torch.sparse_coo_tensor(edge_index, deg_inv[row] * edge_attr , size=(N, N))
+        adj = torch.sparse_coo_tensor(edge_index, deg_inv[row] * edge_attr, size=(N, N))
         identity = torch.sparse_coo_tensor([range(N)] * 2, torch.ones(N), size=(N, N)).to(x.device)
         laplacian = identity - adj
 
@@ -107,7 +104,7 @@ class Gaussian(nn.Module):
         ivs = torch.tensor(ivs).to(x.device)
         result = [t0, l_x]
         for i in range(2, self.steps):
-            result.append(2*l_x.mm(result[i-1].to_dense()).to_sparse().sub(result[i-2]))
+            result.append(2 * l_x.mm(result[i - 1].to_dense()).to_sparse().sub(result[i - 2]))
 
             # adj_ind, adj_val = spspmm(l_x._indices(), l_x._values(), result[i-1]._indices(), result[i-1]._values(), N, N, N, True)
             # obj = torch.sparse_coo_tensor(adj_ind, adj_val * 2, size=(N, N))
@@ -118,8 +115,8 @@ class Gaussian(nn.Module):
 
         def fn(x, y):
             return x.add(y)
-        res = reduce(fn, result)
 
+        res = reduce(fn, result)
         return res._indices(), res._values()
 
 
@@ -128,44 +125,54 @@ class PPR(nn.Module):
         super(PPR, self).__init__()
         self.alpha = 0.4
         self.steps = 4
+        self.epsilon = 0.005
 
     def forward(self, x, edge_index, edge_attr):
-        # if self.inv_indices is not None:
-        #     return self.inv_indices, self.inv_values
-
-        row, col = edge_index
-        deg = degree(col, x.size(0), dtype=x.dtype)
-        deg_inv_sqrt = deg.pow(-0.5)
-        edge_attr_t = deg_inv_sqrt[row] * edge_attr * deg_inv_sqrt[col]
-
+        device = x.device
+        edge_attr_t = edge_attr
         N = x.size(0)
-        adj = torch.sparse_coo_tensor(edge_index, edge_attr_t, size=(N, N))
 
-        theta = self.alpha * (1 - self.alpha)
-        result = [theta * adj]
+        thetas = [self.alpha * (1 - self.alpha) ** i for i in range(0, self.steps)]
+        res_edges = [edge_index, edge_index]
+        res_val = [torch.ones(edge_attr_t.shape[0]).to(device), edge_attr_t]
 
-        for i in range(1, self.steps-1):
-            theta = theta * (1 - self.alpha)
-            adj_ind, adj_val = spspmm(edge_index, edge_attr_t, result[i-1]._indices(), result[i-1]._values(), N, N, N, True)
-            result.append(torch.sparse_coo_tensor(adj_ind, adj_val, size=(N, N)))
-            # result.append(adj.mm((result[-1] * theta).to_dense()).to_sparse())
-            # spspmm
+        for i in range(1, self.steps - 1):
+            adj_ind, adj_val = spspmm(edge_index, edge_attr_t, res_edges[-1], res_val[-1], N, N, N, True)
 
-        identity = torch.sparse_coo_tensor([range(N)] * 2, torch.ones(N), size=(N, N)).to(x.device)
-        result.append(self.alpha * identity)
+            selected = adj_val >= self.epsilon
+            adj_val = adj_val[selected]
+            adj_ind = torch.stack([adj_ind[0][selected], adj_ind[1][selected]], dim=0)
 
-        def fn(x, y):
-            return x.add(y)
+            res_edges.append(adj_ind)
+            res_val.append(adj_val)
+        result = [torch.sparse_coo_tensor(indices=res_edges[i], values=res_val[i], size=(N, N)) * thetas[i] for i in range(self.steps)]
+
+        # --------------- use matmul ---------
+        # identity = self.alpha * torch.sparse_coo_tensor([range(N)] * 2, torch.ones(N), size=(N, N)).to(x.device)
+        # adj = SparseTensor(row=edge_index[0], col=edge_index[1], sparse_sizes=(N, N), value=edge_attr_t)
+        #
+        # result = [identity, adj]
+        # thetas = [self.alpha * (1 - self.alpha)**i for i in range(0, self.steps)]
+        # for _ in range(2, self.steps):
+        #     adj_t = matmul(adj, result[-1])
+        #     result.append(adj_t)
+        # assert len(result) == self.steps
+        # assert len(thetas) == self.steps
+
+        # result[1:] = [result[i].to_torch_sparse_coo_tensor() * thetas[i] for i in range(1, self.steps)]
+        # ---------------------------
+
+        def fn(a, b):
+            return a.add(b)
 
         res = reduce(fn, result)
-
         return res._indices(), res._values()
 
 
 class HeatKernel(nn.Module):
     def __init__(self, in_feat):
         super(HeatKernel, self).__init__()
-        self.t = nn.Parameter(torch.zeros(1,))
+        self.t = nn.Parameter(torch.zeros(1, ))
 
     def forward(self, x, edge_index, edge_attr):
         row, col = edge_index
@@ -173,6 +180,29 @@ class HeatKernel(nn.Module):
         deg_inv = deg.pow(-1)
         edge_attr_t = self.t * edge_attr * deg_inv[col] - self.t
         return edge_index, edge_attr_t.exp()
+
+
+class LayerSample(nn.Module):
+    def __init__(self, in_feat):
+        super(LayerSample, self).__init__()
+        self.sample_rate = torch.nn.Parameter(torch.zeros(1, ))
+
+    def forward(self, x, edge_index, edge_attr):
+        device = x.device
+        sample_rate = F.sigmoid(self.sample_rate)
+        _sample_rate = sample_rate.detach().numpy()
+        N = x.shape[0]
+        sampled = torch.rand(N) > _sample_rate[0]
+
+        edge_attr = torch.tensor([edge_attr[i]
+                                  for i in range(edge_index.shape[0])
+                                  if sampled[edge_index[0][i]] and sampled[edge_index[1][i]]]).to(device)
+        edge_attr = edge_attr / sample_rate
+
+        edge_index = torch.tensor([[edge_index[0][i], edge_index[1][i]]
+                                   for i in range(edge_index.shape[0])
+                                   if sampled[edge_index[0][i]] and sampled[edge_index[1][i]]]).to(device)
+        return edge_index, edge_attr
 
 
 def act_attention(attn_type):
@@ -188,6 +218,8 @@ def act_attention(attn_type):
         return PPR
     elif attn_type == "heat":
         return HeatKernel
+    elif attn_type == "layer_sample":
+        return LayerSample
     else:
         raise ValueError("no such attention type")
 
@@ -226,6 +258,7 @@ class RowSoftmax(nn.Module):
 
     def forward(self, edge_index, edge_attr, N):
         device = edge_attr.device
+        edge_attr = F.leaky_relu(edge_attr)
         edge_attr_t = torch.exp(edge_attr)
         ones = torch.ones(N, 1, device=device)
         rownorm = 1. / spmm(edge_index, edge_attr_t, N, N, ones).view(-1)
@@ -266,6 +299,23 @@ class SymmetryNorm(nn.Module):
         return edge_attr_t
 
 
+class ClusterGCNNorm(nn.Module):
+    def __init__(self):
+        super(ClusterGCNNorm, self).__init__()
+        self.lmbda = 0.2
+
+    def forward(self, edge_index, edge_attr, N):
+        row, col = edge_index
+        deg = degree(col, N, dtype=torch.float)
+        deg_inv = deg.pow(-1)
+        adj_attr = deg_inv[row] * edge_attr
+        diag = row == col
+        diag_attr = adj_attr[diag]
+        diag_attr = diag_attr + self.lmbda * diag_attr
+        adj_attr[diag] = diag_attr
+        return adj_attr
+
+
 def act_normalization(norm_type):
     if norm_type == "identity":
         return NormIdentity
@@ -277,12 +327,14 @@ def act_normalization(norm_type):
         return ColumnUniform
     elif norm_type == "symmetry":
         return SymmetryNorm
+    elif norm_type == "clusternorm":
+        return ClusterGCNNorm
     else:
         raise ValueError("no such normalization type")
 
 
 # ============
-# activation 
+# activation
 # ============
 
 def act_map(act):

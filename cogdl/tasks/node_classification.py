@@ -91,7 +91,7 @@ class NodeClassification(BaseTask):
             mask = self.data.val_mask
         else:
             mask = self.data.test_mask
-        loss = F.nll_loss(logits[mask], self.data.y[mask])
+        loss = F.nll_loss(logits[mask], self.data.y[mask]).item()
 
         pred = logits[mask].max(1)[1]
         acc = pred.eq(self.data.y[mask]).sum().item() / mask.sum().item()

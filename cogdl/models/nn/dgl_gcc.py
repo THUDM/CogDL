@@ -58,7 +58,7 @@ def eigen_decomposision(n, k, laplacian, hidden_size, retry):
         try:
             s, u = linalg.eigsh(laplacian, k=k, which="LA", ncv=ncv, v0=v0)
         except sparse.linalg.eigen.arpack.ArpackError:
-            print("arpack error, retry=", i)
+            # print("arpack error, retry=", i)
             ncv = min(ncv * 2, n)
             if i + 1 == retry:
                 sparse.save_npz("arpack_error_sparse_matrix.npz", laplacian)
@@ -206,6 +206,35 @@ class NodeClassificationDataset(object):
         return graph_q, graph_k
 
 
+class GraphClassificationDataset(NodeClassificationDataset):
+    def __init__(
+        self,
+        data,
+        rw_hops=64,
+        subgraph_size=64,
+        restart_prob=0.8,
+        positional_embedding_size=32,
+        step_dist=[1.0, 0.0, 0.0],
+    ):
+        self.rw_hops = rw_hops
+        self.subgraph_size = subgraph_size
+        self.restart_prob = restart_prob
+        self.positional_embedding_size = positional_embedding_size
+        self.step_dist = step_dist
+        self.entire_graph = True
+        assert positional_embedding_size > 1
+
+        self.graphs = data
+
+        self.length = len(self.graphs)
+        self.total = self.length
+
+    def _convert_idx(self, idx):
+        graph_idx = idx
+        node_idx = self.graphs[idx].out_degrees().argmax().item()
+        return graph_idx, node_idx
+
+
 @register_model("gcc")
 class GCC(BaseModel):
     @staticmethod
@@ -213,6 +242,8 @@ class GCC(BaseModel):
         """Add model-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--load_path", type=str)
+        parser.add_argument("--hidden-size", type=int, default=64)
+        parser.add_argument("--epoch", type=int, default=0)
         # fmt: on
 
     @classmethod
@@ -238,13 +269,22 @@ class GCC(BaseModel):
 
         args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        train_dataset = NodeClassificationDataset(
-            data=data,
-            rw_hops=args.rw_hops,
-            subgraph_size=args.subgraph_size,
-            restart_prob=args.restart_prob,
-            positional_embedding_size=args.positional_embedding_size,
-        )
+        if isinstance(data, list):
+            train_dataset = GraphClassificationDataset(
+                data=data,
+                rw_hops=args.rw_hops,
+                subgraph_size=args.subgraph_size,
+                restart_prob=args.restart_prob,
+                positional_embedding_size=args.positional_embedding_size,
+            )
+        else:
+            train_dataset = NodeClassificationDataset(
+                data=data,
+                rw_hops=args.rw_hops,
+                subgraph_size=args.subgraph_size,
+                restart_prob=args.restart_prob,
+                positional_embedding_size=args.positional_embedding_size,
+            )
         args.batch_size = len(train_dataset)
         train_loader = torch.utils.data.DataLoader(
             dataset=train_dataset,

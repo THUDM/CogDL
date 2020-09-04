@@ -186,6 +186,7 @@ def test_pyg_drgat_cora():
     ret = task.train()
     assert ret['Acc'] >= 0 and ret['Acc'] <= 1
 
+
 if __name__ == "__main__":
     test_gcn_cora()
     test_gat_cora()

@@ -12,6 +12,7 @@ else:
 
 try:
     import dgl
+    from dgl.data.tu import TUDataset
 except ImportError:
     dgl_import = False
     print("Failed to import Deep Graph Library (DGL)")
@@ -41,6 +42,8 @@ def register_dataset(name):
             raise ValueError("Cannot register duplicate dataset ({})".format(name))
         if not issubclass(cls, Dataset) and (
             pyg and not issubclass(cls, torch_geometric.data.Dataset)
+        ) and (
+            dgl_import and not issubclass(cls, TUDataset)
         ):
             raise ValueError(
                 "Dataset ({}: {}) must extend cogdl.data.Dataset".format(

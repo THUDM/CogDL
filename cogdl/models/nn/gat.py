@@ -138,7 +138,7 @@ class SpGraphAttentionLayer(nn.Module):
         assert not torch.isnan(h_prime).any()
         # h_prime: N x out
 
-        h_prime = h_prime.div(e_rowsum)
+        h_prime = h_prime.div(e_rowsum + 1e-8)
         # h_prime: N x out
         assert not torch.isnan(h_prime).any()
 
@@ -210,6 +210,18 @@ class PetarVGAT(BaseModel):
 
 @register_model("gat")
 class PetarVSpGAT(PetarVGAT):
+    r"""The GAT model from the `"Graph Attention Networks"
+    <https://arxiv.org/abs/1710.10903>`_ paper
+
+    Args:
+        num_features (int) : Number of input features.
+        num_classes (int) : Number of classes.
+        hidden_size (int) : The dimension of node representation.
+        dropout (float) : Dropout rate for model training.
+        alpha (float) : Coefficient of leaky_relu.
+        nheads (int) : Number of attention heads.
+    """
+
     def __init__(self, nfeat, nhid, nclass, dropout, alpha, nheads):
         """Sparse version of GAT."""
         BaseModel.__init__(self)

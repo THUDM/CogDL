@@ -56,6 +56,16 @@ class GraphConvolution(nn.Module):
 
 @register_model("gcn")
 class TKipfGCN(BaseModel):
+    r"""The GCN model from the `"Semi-Supervised Classification with Graph Convolutional Networks"
+    <https://arxiv.org/abs/1609.02907>`_ paper
+
+    Args:
+        num_features (int) : Number of input features.
+        num_classes (int) : Number of classes.
+        hidden_size (int) : The dimension of node representation.
+        dropout (float) : Dropout rate for model training.
+    """
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""

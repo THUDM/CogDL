@@ -22,7 +22,8 @@ def main(args):
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
-
+    torch.cuda.manual_seed(args.seed)
+    
     task = build_task(args)
     result = task.train()
     return result

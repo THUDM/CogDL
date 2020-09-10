@@ -59,6 +59,8 @@ class UnsupervisedNodeClassification(BaseTask):
             self.label_matrix = self.data.y
             self.num_nodes, self.num_classes = self.data.y.shape
 
+        args.num_classes = dataset.num_classes if hasattr(dataset, 'num_classes') else 0
+        args.num_features = dataset.num_features if hasattr(dataset, 'num_features') else 0
         self.model = build_model(args)
         self.model_name = args.model
         self.hidden_size = args.hidden_size
@@ -85,6 +87,9 @@ class UnsupervisedNodeClassification(BaseTask):
     def train(self):
         if 'gcc' in self.model_name:
             features_matrix = self.model.train(self.data)
+        elif 'dgi' in self.model_name:
+            acc = self.model.train(self.data)
+            return dict(Acc=acc)
         else:
             G = nx.Graph()
             if self.is_weighted:

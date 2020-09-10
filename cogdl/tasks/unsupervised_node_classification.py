@@ -63,6 +63,7 @@ class UnsupervisedNodeClassification(BaseTask):
         args.num_features = dataset.num_features if hasattr(dataset, 'num_features') else 0
         self.model = build_model(args)
         self.model_name = args.model
+        self.dataset_name = args.dataset
         self.hidden_size = args.hidden_size
         self.num_shuffle = args.num_shuffle
         self.save_dir = args.save_dir
@@ -89,6 +90,9 @@ class UnsupervisedNodeClassification(BaseTask):
             features_matrix = self.model.train(self.data)
         elif 'dgi' in self.model_name:
             acc = self.model.train(self.data)
+            return dict(Acc=acc)
+        elif 'mvgrl' in self.model_name:
+            acc = self.model.train(self.data, self.dataset_name)
             return dict(Acc=acc)
         else:
             G = nx.Graph()

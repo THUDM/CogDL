@@ -78,7 +78,7 @@ class UnsupervisedNodeClassification(BaseTask):
             self.args.step, self.args.theta, self.args.mu = 5, 0.5, 0.2
             model = build_model(self.args)
             embs = model._chebyshev_gaussian(A, embs)
-        else:
+        elif self.args.enhance == "prone++":
             self.args.model = "prone++"
             self.args.filter_types = ["heat", "ppr", "gaussian", "sc"]
             self.args.max_evals = 100
@@ -88,6 +88,8 @@ class UnsupervisedNodeClassification(BaseTask):
             self.args.no_search = False
             model = build_model(self.args)
             embs = model(embs, A)
+        else:
+            raise ValueError("only supports 'prone' and 'prone++'")
         return embs
 
     def save_emb(self, embs):

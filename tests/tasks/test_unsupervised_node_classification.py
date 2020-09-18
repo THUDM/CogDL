@@ -7,7 +7,7 @@ def get_default_args():
     default_dict = {'hidden_size': 16,
                     'num_shuffle': 1,
                     'cpu': True,
-                    'enhance': False,
+                    'enhance': None,
                     'save_dir': ".",}
     return build_args_from_dict(default_dict)
 

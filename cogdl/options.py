@@ -23,7 +23,8 @@ def get_parser():
     parser.add_argument('--device-id', default=[0], type=int, nargs='+',
                        help='which GPU to use')
     parser.add_argument('--save-dir', default='.', type=str)
-    parser.add_argument('--enhance', action='store_true', help='use prone to enhance embedding')
+    # parser.add_argument('--enhance', action='store_true', help='use prone to enhance embedding')
+    parser.add_argument('--enhance', type=str, default=None, help='use prone or prone++ to enhance embedding')
 
     # fmt: on
     return parser

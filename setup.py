@@ -65,6 +65,7 @@ setup(
         "grave",
         "scikit_learn",
         "tabulate",
+        "optuna",
     ],
 
     # List additional groups of dependencies here (e.g. development

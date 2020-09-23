@@ -187,9 +187,10 @@ For multiplex node classification, we use macro F1 to evaluate models. We evalua
 | ---- | ------------------------------------------------------------ | :---------: | :-------: | :-------: |
 | 1    | GTN [(Yun et al, NeurIPS'19)](https://arxiv.org/abs/1911.06455) | **92.03** | **90.85** | **59.24** |
 | 2    | HAN [(Xiao et al, WWW'19)](https://arxiv.org/abs/1903.07293) |    91.21    |   87.25   |   53.94   |
-| 3    | PTE [(Tang et al, KDD'15)](https://arxiv.org/abs/1508.00200) |    78.65    |   87.44   |   48.91   |
-| 4    | Metapath2vec [(Dong et al, KDD'17)](https://ericdongyx.github.io/papers/KDD17-dong-chawla-swami-metapath2vec.pdf) |    75.18    |   88.79   |   43.10   |
-| 5    | Hin2vec [(Fu et al, CIKM'17)](https://dl.acm.org/doi/10.1145/3132847.3132953) |    74.31    |   84.66   |   44.04   |
+| 3    | GCC [(Qiu et al, KDD'20)](http://keg.cs.tsinghua.edu.cn/jietang/publications/KDD20-Qiu-et-al-GCC-GNN-pretrain.pdf) |    79.42    |   86.82   |    55.86  |
+| 4    | PTE [(Tang et al, KDD'15)](https://arxiv.org/abs/1508.00200) |    78.65    |   87.44   |   48.91   |
+| 5    | Metapath2vec [(Dong et al, KDD'17)](https://ericdongyx.github.io/papers/KDD17-dong-chawla-swami-metapath2vec.pdf) |    75.18    |   88.79   |   43.10   |
+| 6    | Hin2vec [(Fu et al, CIKM'17)](https://dl.acm.org/doi/10.1145/3132847.3132953) |    74.31    |   84.66   |   44.04   |
 
 ### Link Prediction
 

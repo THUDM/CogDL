@@ -39,12 +39,17 @@ class NodeClassification(BaseTask):
         self.model = model.to(self.device)
         self.patience = args.patience
         self.max_epoch = args.max_epoch
-
+        self.args = args
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
         )
 
     def train(self):
+        if self.args.model == "dgi":
+            test_acc = self.model.train(self.data)
+            print(f"Test accuracy = {test_acc}")
+            return dict(Acc=test_acc)
+    
         epoch_iter = tqdm(range(self.max_epoch))
         patience = 0
         best_score = 0

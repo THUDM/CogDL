@@ -35,8 +35,9 @@ CogDL features:
 - PyTorch version >= 1.0.0
 - Python version >= 3.6
 - PyTorch Geometric
+- Deep Graph Library
 
-Please follow the instructions here to install PyTorch: https://github.com/pytorch/pytorch#installation and PyTorch Geometric https://github.com/rusty1s/pytorch_geometric/#installation.
+Please follow the instructions here to install PyTorch: https://github.com/pytorch/pytorch#installation, PyTorch Geometric https://github.com/rusty1s/pytorch_geometric/#installation and Deep Graph Library https://docs.dgl.ai/install/index.html.
 
 Install other dependencies:
 

@@ -99,7 +99,7 @@ class UnsupervisedNodeClassification(BaseTask):
     def train(self):
         if 'gcc' in self.model_name:
             features_matrix = self.model.train(self.data)
-        elif 'dgi' in self.model_name:
+        elif 'dgi' in self.model_name or "graphsage" in self.model_name:
             acc = self.model.train(self.data)
             return dict(Acc=acc)
         elif 'mvgrl' in self.model_name:

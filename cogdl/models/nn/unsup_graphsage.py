@@ -1,3 +1,4 @@
+import numpy as np
 import tqdm
 
 import torch
@@ -38,7 +39,6 @@ class SAGE(nn.Module):
                 for layer in range(num_layers)
             ]
         )
-        self.base = None
 
     def forward(self, x, edge_index):
         for i in range(self.num_layers):
@@ -59,11 +59,11 @@ class SAGE(nn.Module):
 
         if not self.num_nodes:
             self.num_nodes = int(torch.max(data.edge_index)) + 1
-        if self.base is None:
-            self.base = torch.ones(self.num_nodes, self.num_nodes).to(device)
 
         # if self.negative_samples is None:
-        self.negative_samples = torch.multinomial(self.base, self.num_negative_samples)
+        self.negative_samples = torch.from_numpy(
+            np.random.choice(self.num_nodes, (self.num_nodes, self.num_negative_samples))
+        ).to(device)
 
         pos_loss = -torch.log(
             torch.sigmoid(
@@ -94,6 +94,7 @@ class Graphsage(BaseModel):
         parser.add_argument("--walk-length", type=int, default=10)
         parser.add_argument("--negative-samples", type=int, default=30)
         parser.add_argument("--lr", type=float, default=0.00001)
+        parser.add_argument("--max-epochs", type=int, default=3000)
         # fmt: on
 
     @classmethod
@@ -108,15 +109,16 @@ class Graphsage(BaseModel):
             args.walk_length,
             args.negative_samples,
             args.lr,
+            args.max_epochs,
         )
 
     def __init__(
             self, num_features, hidden_size, num_classes, num_layers,
-            sample_size, dropout, walk_length, negative_samples, lr
+            sample_size, dropout, walk_length, negative_samples, lr, epochs
     ):
         super(Graphsage, self).__init__()
         self.model = SAGE(num_features, hidden_size, num_layers, sample_size, dropout, walk_length, negative_samples)
-        self.epochs = 3000
+        self.epochs = epochs
         self.patience = 20
         self.lr = lr
         self.nhid = hidden_size

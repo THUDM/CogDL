@@ -219,20 +219,21 @@ class DGI(BaseModel):
         # fmt: off
         parser.add_argument("--num-features", type=int)
         parser.add_argument("--hidden-size", type=int, default=512)
+        parser.add_argument("--max-epochs", type=int, default=1000)
         # fmt: on
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.num_features, args.hidden_size, args.num_classes)
+        return cls(args.num_features, args.hidden_size, args.num_classes, args.max_epochs)
 
-    def __init__(self, nfeat, nhid, nclass):
+    def __init__(self, nfeat, nhid, nclass, max_epochs):
         super(DGI, self).__init__()
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = DGIModel(nfeat, nhid, 'prelu').to(self.device)
         self.nhid = nhid
         self.nclass = nclass
-        self.epochs = 1000
+        self.epochs = max_epochs
         self.patience = 20
 
     def train(self, data):

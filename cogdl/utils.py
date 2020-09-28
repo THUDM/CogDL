@@ -31,6 +31,65 @@ def add_remaining_self_loops(edge_index, edge_weight, fill_value, num_nodes):
 
     return edge_index, edge_weight
 
+
+def spmm(indices, values, b):
+    r"""
+    Args:
+        indices : Tensor, shape=(2, E)
+        values : Tensor, shape=(E,)
+        shape : tuple(int ,int)
+        b : Tensor, shape=(N, )
+    """
+    output = b.index_select(0, indices[1]) * values.unsqueeze(-1)
+    output = torch.zeros_like(b).scatter_add_(0, indices[0].unsqueeze(-1).repeat(1, b.shape[1]), output)
+    return output
+
+
+def spmm_adj(indices, values, shape, b):
+    adj = torch.sparse_coo_tensor(indices=indices, values=values, size=shape)
+    return torch.spmm(adj, b)
+
+
+def edge_softmax(indices, values, shape):
+    """
+    Args:
+        indices: Tensor, shape=(2, E)
+        values: Tensor, shape=(N,)
+        shape: tuple(int, int)
+
+    Returns:
+        Softmax values of edge values for nodes
+    """
+    values = torch.exp(values)
+    node_sum = spmm(indices, values, torch.ones(shape[0], 1).to(values.device)).squeeze()
+    softmax_values = values / node_sum[indices[0]]
+    return softmax_values
+
+
+def mul_edge_softmax(indices, values, shape):
+    """
+    Args:
+        indices: Tensor, shape=(2, E)
+        values: Tensor, shape=(E, d)
+        shape: tuple(int, int)
+
+    Returns:
+        Softmax values of multi-dimension edge values for nodes
+    """
+    device = values.device
+    values = torch.exp(values)
+    output = torch.zeros(shape[0], values.shape[1]).to(device)
+    output = output.scatter_add_(0, indices[0].unsqueeze(-1).repeat(1, values.shape[1]), values)
+    softmax_values = values / output[indices[0]]
+    return softmax_values
+
+
+def remove_self_loops(indices):
+    mask = indices[0] != indices[1]
+    indices = indices[:, mask]
+    return indices, mask
+
+
 if __name__ == "__main__":
     args = build_args_from_dict({'a': 1, 'b': 2})
     print(args.a, args.b)

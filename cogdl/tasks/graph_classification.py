@@ -135,8 +135,9 @@ class GraphClassification(BaseTask):
                     epoch_iter.close()
                     break
         test_acc, _ = self._test_step(split="test")
+        val_acc, _ = self._test_step(split="val")
         print(f"Test accuracy = {test_acc}")
-        return dict(Acc=test_acc)
+        return dict(Acc=test_acc, ValAcc=val_acc)
 
     def _train_step(self):
         self.model.train()

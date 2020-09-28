@@ -26,6 +26,8 @@ def main(args):
     
     task = build_task(args)
     result = task.train()
+    if "ValAcc" in result:
+        result.pop("ValAcc")
     return result
 
 

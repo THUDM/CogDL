@@ -186,6 +186,23 @@ def test_pyg_drgat_cora():
     ret = task.train()
     assert ret['Acc'] >= 0 and ret['Acc'] <= 1
 
+def test_pyg_disengcn_cora():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.dataset = 'cora'
+    args.model = 'disengcn'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.K = [4, 2]
+    args.activation = "leaky_relu"
+    args.tau = 1.0
+    args.iterations = 3
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+
 
 if __name__ == "__main__":
     test_gcn_cora()
@@ -200,3 +217,4 @@ if __name__ == "__main__":
     test_pyg_unet_cora()
     test_pyg_drgcn_cora()
     test_pyg_drgat_cora()
+    test_pyg_disengcn_cora()

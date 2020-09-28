@@ -166,7 +166,7 @@ def test_sortpool_mutag():
     args = add_sortpool_args(args)
     args.dataset = 'mutag'
     args.model = 'sortpool'
-    args.batch_size =  20
+    args.batch_size = 20
     task = build_task(args)
     ret = task.train()
     assert ret["Acc"] > 0
@@ -177,7 +177,7 @@ def test_sortpool_proteins():
     args = add_sortpool_args(args)
     args.dataset = 'proteins'
     args.model = 'sortpool'
-    args.batch_size =  20
+    args.batch_size = 20
     task = build_task(args)
     ret = task.train()
     assert ret["Acc"] > 0
@@ -188,7 +188,7 @@ def test_patchy_san_mutag():
     args = add_patchy_san_args(args)
     args.dataset = 'mutag'
     args.model = 'patchy_san'
-    args.batch_size =  20
+    args.batch_size = 20
     task = build_task(args)
     ret = task.train()
     assert ret["Acc"] > 0
@@ -199,7 +199,7 @@ def test_patchy_san_proteins():
     args = add_patchy_san_args(args)
     args.dataset = 'proteins'
     args.model = 'patchy_san'
-    args.batch_size =  20
+    args.batch_size = 20
     task = build_task(args)
     ret = task.train()
     assert ret["Acc"] > 0  

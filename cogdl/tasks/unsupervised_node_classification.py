@@ -71,16 +71,27 @@ class UnsupervisedNodeClassification(BaseTask):
         self.args = args
         self.is_weighted = self.data.edge_attr is not None
 
-
     def enhance_emb(self, G, embs):
         A = sp.csr_matrix(nx.adjacency_matrix(G))
-        self.args.model = 'prone'
-        self.args.step, self.args.theta, self.args.mu = 5, 0.5, 0.2
-        model = build_model(self.args)
-        embs = model._chebyshev_gaussian(A, embs)
+        if self.args.enhance == "prone":
+            self.args.model = 'prone'
+            self.args.step, self.args.theta, self.args.mu = 5, 0.5, 0.2
+            model = build_model(self.args)
+            embs = model._chebyshev_gaussian(A, embs)
+        elif self.args.enhance == "prone++":
+            self.args.model = "prone++"
+            self.args.filter_types = ["heat", "ppr", "gaussian", "sc"]
+            self.args.max_evals = 100
+            self.args.num_workers = 10
+            self.args.no_svd = False
+            self.args.loss = "infomax"
+            self.args.no_search = False
+            model = build_model(self.args)
+            embs = model(embs, A)
+        else:
+            raise ValueError("only supports 'prone' and 'prone++'")
         return embs
-    
-    
+
     def save_emb(self, embs):
         name = os.path.join(self.save_dir, self.model_name + '_emb.npy')
         np.save(name, embs)
@@ -88,7 +99,7 @@ class UnsupervisedNodeClassification(BaseTask):
     def train(self):
         if 'gcc' in self.model_name:
             features_matrix = self.model.train(self.data)
-        elif 'dgi' in self.model_name:
+        elif 'dgi' in self.model_name or "graphsage" in self.model_name:
             acc = self.model.train(self.data)
             return dict(Acc=acc)
         elif 'mvgrl' in self.model_name:
@@ -107,7 +118,7 @@ class UnsupervisedNodeClassification(BaseTask):
             else:
                 G.add_edges_from(self.data.edge_index.t().tolist())
             embeddings = self.model.train(G)
-            if self.enhance is True:
+            if self.enhance is not None:
                 embeddings = self.enhance_emb(G, embeddings)
             # Map node2id
             features_matrix = np.zeros((self.num_nodes, self.hidden_size))

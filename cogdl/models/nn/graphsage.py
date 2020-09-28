@@ -9,6 +9,46 @@ from cogdl.layers import MeanAggregator
 from .. import BaseModel, register_model
 
 
+# edge index based sampler
+# @profile
+def sage_sampler(adjlist, edge_index, num_sample):
+    # print(edge_index)
+    if adjlist == {}:
+        edge_index = edge_index.t().cpu().tolist()
+        for i in edge_index:
+            if not (i[0] in adjlist):
+                adjlist[i[0]] = [i[1]]
+            else:
+                adjlist[i[0]].append(i[1])
+
+    sample_list = []
+    for i in adjlist:
+        list = [[i, j] for j in adjlist[i]]
+        if len(list) > num_sample:
+            list = random.sample(list, num_sample)
+        sample_list.extend(list)
+
+    edge_idx = torch.LongTensor(sample_list).t()
+    # for i in edge_index
+    # print("sampled",edge_index)
+    return edge_idx
+
+class GraphSAGELayer(nn.Module):
+    def __init__(self, in_feats, out_feats):
+        super(GraphSAGELayer, self).__init__()
+        self.in_feats = in_feats
+        self.out_feats = out_feats
+        self.aggr = MeanAggregator(in_feats, out_feats, cached=True)
+
+    def forward(self, x, edge_index):
+        adj_sp = torch.sparse_coo_tensor(
+            edge_index,
+            torch.ones(edge_index.shape[1]).float(),
+            (x.shape[0], x.shape[0]),
+        ).to(x.device)
+        x = self.aggr(x, adj_sp)
+        return x
+
 @register_model("graphsage")
 class Graphsage(BaseModel):
     @staticmethod
@@ -34,30 +74,8 @@ class Graphsage(BaseModel):
             args.dropout,
         )
 
-    # edge index based sampler
-    # @profile
-    def sampler(self, edge_index, num_sample):
-        # print(edge_index)
-        if self.adjlist == {}:
-
-            edge_index = edge_index.t().cpu().tolist()
-            for i in edge_index:
-                if not (i[0] in self.adjlist):
-                    self.adjlist[i[0]] = [i[1]]
-                else:
-                    self.adjlist[i[0]].append(i[1])
-
-        sample_list = []
-        for i in self.adjlist:
-            list = [[i, j] for j in self.adjlist[i]]
-            if len(list) > num_sample:
-                list = random.sample(list, num_sample)
-            sample_list.extend(list)
-
-        edge_idx = torch.LongTensor(sample_list).t()
-        # for i in edge_index
-        # print("sampled",edge_index)
-        return edge_idx
+    def sampling(self, edge_index, num_sample):
+        return sage_sampler(self.adjlist, edge_index, num_sample)
 
     def __init__(
         self, num_features, num_classes, hidden_size, num_layers, sample_size, dropout
@@ -74,7 +92,7 @@ class Graphsage(BaseModel):
         # print(shapes)
         self.convs = nn.ModuleList(
             [
-                MeanAggregator(shapes[layer], shapes[layer + 1], cached=True)
+                GraphSAGELayer(shapes[layer], shapes[layer+1])
                 for layer in range(num_layers)
             ]
         )
@@ -82,13 +100,8 @@ class Graphsage(BaseModel):
     # @profile
     def forward(self, x, edge_index):
         for i in range(self.num_layers):
-            edge_index_sp = self.sampler(edge_index, self.sample_size[i]).to(x.device)
-            adj_sp = torch.sparse_coo_tensor(
-                edge_index_sp,
-                torch.ones(edge_index_sp.shape[1]).float(),
-                (x.shape[0], x.shape[0]),
-            ).to(x.device)
-            x = self.convs[i](x, adj_sp)
+            edge_index_sp = self.sampling(edge_index, self.sample_size[i]).to(x.device)
+            x = self.convs[i](x, edge_index_sp)
             if i != self.num_layers - 1:
                 x = F.relu(x)
                 x = F.dropout(x, p=self.dropout, training=self.training)

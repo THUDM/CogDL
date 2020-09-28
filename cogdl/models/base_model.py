@@ -14,3 +14,7 @@ class BaseModel(nn.Module):
         raise NotImplementedError(
             "Models must implement the build_model_from_args method"
         )
+
+    @staticmethod
+    def get_trainer():
+        return None

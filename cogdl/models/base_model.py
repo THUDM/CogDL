@@ -18,6 +18,9 @@ class BaseModel(nn.Module):
             "Models must implement the build_model_from_args method"
         )
 
+    def _forward_unimplemented(self, *input: Any) -> None:  # abc warning
+        pass
+
     @staticmethod
     def get_trainer(taskType: Any) -> Optional[Type[BaseTrainer]]:
         return None

@@ -20,32 +20,24 @@ class SupervisedTrainer(BaseTrainer, ABC):
 
 
 class SupervisedHeterogeneousNodeClassificationTrainer(BaseTrainer, ABC):
-    def __init__(
+    @abstractmethod
+    def fit(
         self, model: SupervisedHeterogeneousNodeClassificationModel, dataset: Dataset
-    ):
-        self.model = model
-        self.dataset = dataset
-
-    @abstractmethod
-    def fit(self) -> None:
+    ) -> None:
         raise NotImplemented
 
-    @abstractmethod
-    def evaluate(self, data: Any, nodes: Any, targets: Any) -> Any:
-        raise NotImplemented
+    # @abstractmethod
+    # def evaluate(self, data: Any, nodes: Any, targets: Any) -> Any:
+    #     raise NotImplemented
 
 
 class SupervisedHomogeneousNodeClassificationTrainer(BaseTrainer, ABC):
-    def __init__(
+    @abstractmethod
+    def fit(
         self, model: SupervisedHomogeneousNodeClassificationModel, dataset: Dataset
-    ):
-        self.model = model
-        self.dataset = dataset
-
-    @abstractmethod
-    def fit(self) -> None:
+    ) -> None:
         raise NotImplemented
 
-    @abstractmethod
-    def predictAll(self) -> Any:
-        raise NotImplemented
+    # @abstractmethod
+    # def predictAll(self) -> Any:
+    #     raise NotImplemented

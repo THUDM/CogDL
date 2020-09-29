@@ -52,11 +52,8 @@ class NodeClassification(BaseTask):
         if self.model.get_trainer(NodeClassification):
             trainer: SupervisedHomogeneousNodeClassificationTrainer = self.model.get_trainer(
                 NodeClassification
-            )(
-                self.model, self.dataset
-            )
-            trainer.fit()
-            test_acc, _ = self._test_step(split="test", logits=trainer.predictAll())
+            )()
+            trainer.fit(self.model, self.dataset)
         else:
             epoch_iter = tqdm(range(self.max_epoch))
             patience = 0
@@ -85,7 +82,7 @@ class NodeClassification(BaseTask):
                         self.model = best_model
                         epoch_iter.close()
                         break
-            test_acc, _ = self._test_step(split="test")
+        test_acc, _ = self._test_step(split="test")
         print(f"Test accuracy = {test_acc}")
         return dict(Acc=test_acc)
 

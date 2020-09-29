@@ -1,15 +1,15 @@
 import copy
-import random
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 from tqdm import tqdm
 
-from cogdl import options
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
-
+from cogdl.models.supervised_model import SupervisedHeterogeneousNodeClassificationModel
+from cogdl.trainers.supervised_trainer import (
+    SupervisedHeterogeneousNodeClassificationTrainer,
+)
 from . import BaseTask, register_task
 
 
@@ -27,10 +27,11 @@ class HeterogeneousNodeClassification(BaseTask):
     def __init__(self, args):
         super(HeterogeneousNodeClassification, self).__init__(args)
 
-        self.device = torch.device('cpu' if args.cpu else 'cuda')
+        self.device = args.device_id[0] if not args.cpu else "cpu"
         dataset = build_dataset(args)
         if not args.cpu:
             dataset.apply_to_device(self.device)
+        self.dataset = dataset
         self.data = dataset.data
 
         args.num_features = dataset.num_features
@@ -38,7 +39,9 @@ class HeterogeneousNodeClassification(BaseTask):
         args.num_edge = dataset.num_edge
         args.num_nodes = dataset.num_nodes
         model = build_model(args)
-        self.model = model.to(self.device)
+        self.model: SupervisedHeterogeneousNodeClassificationModel = model.to(
+            self.device
+        )
         self.patience = args.patience
         self.max_epoch = args.max_epoch
 
@@ -47,34 +50,45 @@ class HeterogeneousNodeClassification(BaseTask):
         )
 
     def train(self):
-        epoch_iter = tqdm(range(self.max_epoch))
-        patience = 0
-        best_score = 0
-        best_loss = np.inf
-        max_score = 0
-        min_loss = np.inf
-        for epoch in epoch_iter:
-            self._train_step()
-            train_acc, _ = self._test_step(split="train")
-            val_acc, val_loss = self._test_step(split="val")
-            epoch_iter.set_description(
-                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
+        if self.model.get_trainer(HeterogeneousNodeClassification):
+            trainer: SupervisedHeterogeneousNodeClassificationTrainer = self.model.get_trainer(
+                HeterogeneousNodeClassification
+            )(
+                self.model, self.dataset
             )
-            if val_loss <= min_loss or val_acc >= max_score:
-                if val_acc >= best_score:
-                    best_loss = val_loss
-                    best_score = val_acc
-                    best_model = copy.deepcopy(self.model.state_dict())
-                min_loss = np.min((min_loss, val_loss))
-                max_score = np.max((max_score, val_acc))
-                patience = 0
-            else:
-                patience += 1
-                if patience == self.patience:
-                    self.model.load_state_dict(best_model)
-                    epoch_iter.close()
-                    break
-        test_f1, _ = self._test_step(split="test")
+            trainer.fit()
+            _, test_f1 = self.model.evaluate(
+                self.data, self.data.test_node, self.data.test_target
+            )
+        else:
+            epoch_iter = tqdm(range(self.max_epoch))
+            patience = 0
+            best_score = 0
+            best_loss = np.inf
+            max_score = 0
+            min_loss = np.inf
+            for epoch in epoch_iter:
+                self._train_step()
+                train_acc, _ = self._test_step(split="train")
+                val_acc, val_loss = self._test_step(split="val")
+                epoch_iter.set_description(
+                    f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
+                )
+                if val_loss <= min_loss or val_acc >= max_score:
+                    if val_acc >= best_score:
+                        best_loss = val_loss
+                        best_score = val_acc
+                        best_model = copy.deepcopy(self.model.state_dict())
+                    min_loss = np.min((min_loss, val_loss))
+                    max_score = np.max((max_score, val_acc))
+                    patience = 0
+                else:
+                    patience += 1
+                    if patience == self.patience:
+                        self.model.load_state_dict(best_model)
+                        epoch_iter.close()
+                        break
+            test_f1, _ = self._test_step(split="test")
         print(f"Test f1 = {test_f1}")
         return dict(f1=test_f1)
 
@@ -86,10 +100,16 @@ class HeterogeneousNodeClassification(BaseTask):
 
     def _test_step(self, split="val"):
         self.model.eval()
-        if split == 'train':
-            loss, f1 = self.model.evaluate(self.data, self.data.train_node, self.data.train_target)
-        elif split == 'val':
-            loss, f1 = self.model.evaluate(self.data, self.data.valid_node, self.data.valid_target)
+        if split == "train":
+            loss, f1 = self.model.evaluate(
+                self.data, self.data.train_node, self.data.train_target
+            )
+        elif split == "val":
+            loss, f1 = self.model.evaluate(
+                self.data, self.data.valid_node, self.data.valid_target
+            )
         else:
-            loss, f1 = self.model.evaluate(self.data, self.data.test_node, self.data.test_target)
+            loss, f1 = self.model.evaluate(
+                self.data, self.data.test_node, self.data.test_target
+            )
         return f1, loss

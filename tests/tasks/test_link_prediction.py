@@ -1,5 +1,8 @@
+import torch
+
+from torch import argsort
 from cogdl import options
-from cogdl.tasks import build_task
+from cogdl.tasks import build_task, register_task
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.utils import build_args_from_dict
@@ -170,6 +173,96 @@ def test_dngr_ppi():
     ret = task.train()
     assert ret['ROC_AUC'] >= 0 and ret['ROC_AUC'] <= 1
 
+
+def get_kg_default_arfgs():
+    default_dict = {
+        "max_epoch": 2,
+        "num_bases": 5,
+        "num_layers": 2,
+        "hidden_size": 200,
+        "penalty": 0.1,
+        "sampling_rate": 0.001,
+        "dropout": 0.3,
+        "evaluate_interval": 2,
+        "patience": 20,
+        "lr": 0.001,
+        "weight_decay": 0,
+        "negative_ratio": 3,
+        "cpu": True,
+    }
+    return build_args_from_dict(default_dict)
+
+
+def get_nums(dataset, args):
+    data = dataset[0]
+    args.num_entities = len(torch.unique(data.edge_index))
+    args.num_rels = len(torch.unique(data.edge_attr))
+    return args
+
+def test_rgcn_wn18():
+    args = get_kg_default_arfgs()
+    args.self_dropout = 0.2
+    args.self_loop = True
+    args.dataset = "wn18"
+    args.model = "rgcn"
+    args.task = "link_prediction"
+    args.regularizer = "basis"
+    dataset = build_dataset(args)
+    args = get_nums(dataset, args)
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret["MRR"] >= 0 and ret["MRR"] < 1
+
+
+def test_rgcn_fb15k237():
+    args = get_kg_default_arfgs()
+    args.self_dropout = 0.2
+    args.sampling_rate = 0.001
+    args.self_loop = True
+    args.dataset = "fb15k237"
+    args.model = "rgcn"
+    args.task = "link_prediction"
+    args.regularizer = "basis"
+    dataset = build_dataset(args)
+    args = get_nums(dataset, args)
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret["MRR"] >= 0 and ret["MRR"] < 1
+
+
+def test_compgcn_fb13():
+    args = get_kg_default_arfgs()
+    args.self_dropout = 0.2
+    args.self_loop = True
+    args.dataset = "fb13"
+    args.model = "rgcn"
+    args.task = "link_prediction"
+    args.regularizer = "basis"
+    dataset = build_dataset(args)
+    args = get_nums(dataset, args)
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret["MRR"] >= 0 and ret["MRR"] < 1
+
+def test_compgcn_wn18rr():
+    args = get_kg_default_arfgs()
+    args.lbl_smooth = 0.1
+    args.score_func = "distmult"
+    args.dataset = "wn18rr"
+    args.model = "compgcn"
+    args.task = "link_prediction"
+    args.regularizer = "basis"
+    dataset = build_dataset(args)
+    args = get_nums(dataset, args)
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret["MRR"] >= 0 and ret["MRR"] < 1
+
+
 if __name__ == "__main__":
     test_deepwalk_ppi()
     test_line_wikipedia()
@@ -181,3 +274,8 @@ if __name__ == "__main__":
     test_prone_flickr()
     test_sdne_ppi()
     test_dngr_ppi()
+
+    test_rgcn_wn18()
+    test_rgcn_fb15k237()
+    test_compgcn_fb13()
+    test_compgcn_wn18rr()

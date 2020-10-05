@@ -32,6 +32,25 @@ def add_remaining_self_loops(edge_index, edge_weight, fill_value, num_nodes):
     return edge_index, edge_weight
 
 
+def row_normalization(num_nodes, edge_index, edge_weight=None):
+    device = edge_index.device
+    if edge_weight is None:
+        edge_weight = torch.ones(edge_index.shape[1]).to(device)
+    row_sum = spmm(edge_index, edge_weight, torch.ones(num_nodes, 1).to(device))
+    row_sum_inv = row_sum.pow(-1).view(-1)
+    return edge_weight * row_sum_inv[edge_index[0]]
+
+
+def symmetric_normalization(num_nodes, edge_index, edge_weight=None):
+    device = edge_index.device
+    if edge_weight is None:
+        edge_weight = torch.ones(edge_index.shape[1]).to(device)
+    row_sum = spmm(edge_index, edge_weight, torch.ones(num_nodes, 1).to(device)).view(-1)
+    row_sum_inv_sqrt = row_sum.pow(-0.5)
+    row_sum_inv_sqrt[row_sum_inv_sqrt == float('inf')] = 0
+    return row_sum_inv_sqrt[edge_index[1]] * edge_weight * row_sum_inv_sqrt[edge_index[0]]
+
+
 def spmm(indices, values, b):
     r"""
     Args:

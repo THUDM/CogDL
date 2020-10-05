@@ -215,23 +215,6 @@ def test_rgcn_wn18():
     assert ret["MRR"] >= 0 and ret["MRR"] < 1
 
 
-def test_rgcn_fb15k237():
-    args = get_kg_default_arfgs()
-    args.self_dropout = 0.2
-    args.sampling_rate = 0.001
-    args.self_loop = True
-    args.dataset = "fb15k237"
-    args.model = "rgcn"
-    args.task = "link_prediction"
-    args.regularizer = "basis"
-    dataset = build_dataset(args)
-    args = get_nums(dataset, args)
-    model = build_model(args)
-    task = build_task(args)
-    ret = task.train()
-    assert ret["MRR"] >= 0 and ret["MRR"] < 1
-
-
 def test_compgcn_fb13():
     args = get_kg_default_arfgs()
     args.self_dropout = 0.2
@@ -276,6 +259,5 @@ if __name__ == "__main__":
     test_dngr_ppi()
 
     test_rgcn_wn18()
-    test_rgcn_fb15k237()
     test_compgcn_fb13()
     test_compgcn_wn18rr()

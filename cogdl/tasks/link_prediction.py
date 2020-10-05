@@ -235,18 +235,15 @@ class LinkPrediction(BaseTask):
     @staticmethod
     def add_args(parser):
         # fmt: off
-        # KG
         parser.add_argument("--evaluate-interval", type=int, default=30)
         parser.add_argument("--max-epoch", type=int, default=3000)
         parser.add_argument("--patience", type=int, default=10)
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--weight-decay", type=float, default=0)
         
-        # Homogeneous
-        parser.add_argument("--hidden-size", type=int, default=128) # KG
-        # parser.add_argument("--hidden-size", type=int, default=128) 
+        parser.add_argument("--hidden-size", type=int, default=200) # KG
         parser.add_argument("--negative-ratio", type=int, default=5)
-        # fmt: off
+        # fmt: on
 
     def __init__(self, args, dataset=None, model=None):
         super(LinkPrediction, self).__init__(args)

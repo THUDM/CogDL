@@ -3,6 +3,8 @@ import itertools
 import os
 import random
 import time
+from numpy.core.fromnumeric import product
+import yaml
 from collections import defaultdict, namedtuple
 
 import numpy as np
@@ -63,6 +65,27 @@ def tabulate_results(results_dict):
     return tab_data
 
 
+def check_task_dataset_model_match(task, variants):
+    with open("./match.yml", "r", encoding="utf8") as f:
+        match = yaml.load(f)
+    objective = match.get(task, None)
+    if objective is None:
+        raise NotImplementedError
+    pairs = []
+    for item in objective:
+        pairs.extend([(x, y) for x in item["model"] for y in item["dataset"]])
+
+    clean_variants = []
+    for item in variants:
+        if (item.model, item.dataset) not in pairs:
+            print(f"({item.model}, {item.dataset}) is not implemented in task '{task}''.")
+            continue
+        clean_variants.append(item)
+    if not clean_variants:
+        exit(0)
+    return clean_variants
+
+
 if __name__ == "__main__":
     parser = options.get_training_parser()
     args, _ = parser.parse_known_args()
@@ -72,7 +95,7 @@ if __name__ == "__main__":
     variants = list(
         gen_variants(dataset=args.dataset, model=args.model, seed=args.seed)
     )
-
+    variants = check_task_dataset_model_match(args.task, variants)
     # Collect results
     results_dict = defaultdict(list)
     results = [main(args) for args in variant_args_generator(args, variants)]

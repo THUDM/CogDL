@@ -1,0 +1,113 @@
+node_classification:
+  - model:
+    - gcn
+    - gat
+    - drgat
+    - grand
+    - gcnmix
+    - disengcn
+    - srgcn
+    - graphsage
+    - pyg_cheb
+    - pyg_gcn
+    - pyg_gat
+    - pyg_unet
+    - pyg_mixhop
+    dataset:
+    - cora
+    - citeseer
+    - pubmed
+unsupervised_node_classification:
+  - model:
+    - prone
+    - netmf
+    - deepwalk
+    - line
+    - node2vec
+    - hope
+    - sdne
+    - grarep
+    - dngr
+    dataset:
+    - ppi
+    - blogcatalog
+    - wikipedia
+  - model:
+    - unsup_graphsage
+    - dgi
+    - mvgrl
+    dataset:
+    - cora
+    - citeseer
+    - pubmed
+graph_classification:
+  - model:
+    - gin
+    - diffpool
+    - sortpool
+    - dgcnn
+    - patch_san
+    dataset:
+    - mutag
+    - lmdb-b
+    - lmdb-m
+    - proteins
+    - collab
+unsupervised_graph_classification:
+  - model:
+    - infograph
+    - graph2vec
+    - dgk
+    dataset:
+    - mutag
+    - lmdb-b
+    - lmdb-m
+    - proteins
+    - collab
+link_prediction:
+  - model:
+    - prone
+    - netmf
+    - hope
+    - line
+    - node2vec
+    - deepwalk
+    - sdne
+    dataset:
+    - ppi
+    - wikipedia
+  - model:
+    - rgcn
+    - compgcn
+    dataset:
+    - fb13
+    - fb15k237
+    - wn18
+    - wn18rr
+    - wn11
+multiplex_link_prediction:
+  - model:
+    - gatne
+    - netmf
+    - deepwalk
+    - line
+    - hope
+    - node2vec
+    - netmf
+    - grarep
+    dataset:
+    - amazon
+    - youtube
+    - twitter
+multiplex_node_classification:
+  - model:
+    - gtn
+    - han
+    - gcc
+    - pte
+    - metapath2vec
+    - hin2vec
+    dataset:
+    - dblp
+    - acm
+    - lmdb

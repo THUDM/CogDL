@@ -30,8 +30,7 @@ class NodeClassification(BaseTask):
         self.device = torch.device('cpu' if args.cpu else 'cuda')
         if dataset is None:
             dataset = build_dataset(args)
-        self.data = dataset.data
-        self.data.y = self.data.y.squeeze()
+        self.data = dataset[0]
 
         self.data.apply(lambda x: x.to(self.device))
         args.num_features = self.data.num_features

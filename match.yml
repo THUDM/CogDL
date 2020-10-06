@@ -84,7 +84,6 @@ link_prediction:
     - fb15k237
     - wn18
     - wn18rr
-    - wn11
 multiplex_link_prediction:
   - model:
     - gatne

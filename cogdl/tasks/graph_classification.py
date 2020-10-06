@@ -32,7 +32,7 @@ def node_degree_as_feature(data):
             edge_index, edge_weight, fill_value, num_nodes
         )
         row, col = edge_index
-        deg = torch.zeros(num_nodes).scatter_add_(0, row, edge_weight).long()
+        deg = torch.zeros(num_nodes).to(edge_index.device).scatter_add_(0, row, edge_weight).long()
         degrees.append(deg.cpu()-1)
         max_degree = max(torch.max(deg), max_degree)
     max_degree = int(max_degree)

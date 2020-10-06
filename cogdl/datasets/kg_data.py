@@ -95,14 +95,6 @@ class FB15k237Datset(KnowledgeGraphDataset):
         super(FB15k237Datset, self).__init__(path, dataset)
 
 
-@register_dataset("wn11")
-class WN11Datset(KnowledgeGraphDataset):
-    def __init__(self):
-        dataset = "WN11"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
-        super(WN11Datset, self).__init__(path, dataset)
-
-
 @register_dataset("wn18")
 class WN18Datset(KnowledgeGraphDataset):
     def __init__(self):

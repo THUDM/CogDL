@@ -9,8 +9,8 @@ def get_default_args():
     cuda_available = torch.cuda.is_available()
     default_dict = {'hidden_size': 16,
                     'dropout': 0.5,
-                    'patience': 1,
-                    'max_epoch': 1,
+                    'patience': 2,
+                    'max_epoch': 3,
                     'cpu': not cuda_available,
                     'lr': 0.01,
                     'weight_decay': 5e-4}

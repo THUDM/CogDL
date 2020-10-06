@@ -135,6 +135,22 @@ def test_prone_blogcatalog():
     ret = task.train()
     assert ret['Micro-F1 0.9'] > 0
 
+def test_prone_pp():
+    args = get_default_args()
+    args.task = 'unsupervised_node_classification'
+    args.dataset = 'ppi'
+    args.model = 'prone'
+    args.enhance = "prone++"
+    args.max_evals = 3
+    dataset = build_dataset(args)
+    args.step = 5
+    args.theta = 0.5
+    args.mu = 0.2
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Micro-F1 0.9'] > 0
+
 def test_sdne_ppi():
     args = get_default_args()
     args.task = 'unsupervised_node_classification'
@@ -248,3 +264,5 @@ if __name__ == "__main__":
     test_prone_blogcatalog()
     test_sdne_ppi()
     test_dngr_ppi()
+
+    test_prone_pp()

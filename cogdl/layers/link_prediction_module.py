@@ -78,7 +78,6 @@ class ConvELayer(nn.Module):
         h = h.view(-1, self.flat_size)
         h = self.hidden_drop(self.fc(h))
         h = F.relu(self.bn2(self.hidden_drop2(h)))
-        # x = torch.matmul(h, obj_emb.t())
         x = torch.sum(h * obj_emb + self.bias, dim=-1)
         return x
 
@@ -175,7 +174,6 @@ def sampling_edge_uniform(edge_index, edge_types, edge_set, sampling_rate, num_r
     corrupt_rels = to_set(heads, tails, corrupt_rels)
 
     corrupt_triplets = corrupt_heads.union(corrupt_tails).union(corrupt_rels)
-    # corrupt_triplets = corrupt_tails.union(corrupt_heads)
     corrupt_triplets = corrupt_triplets.difference(edge_set)
     corrupt_triplets = torch.tensor(list(corrupt_triplets)).to(edge_index.device).T
 

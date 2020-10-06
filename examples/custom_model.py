@@ -41,7 +41,7 @@ def get_default_args():
     return build_args_from_dict(default_dict)
 
 
-def main():
+def main_model():
     args = get_default_args()
     # Set the task
     args.task = "node_classification"
@@ -60,4 +60,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main_model()

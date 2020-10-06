@@ -114,7 +114,7 @@ def fixed_hyper_parameters():
     }
 
 
-def main(n_trials=30):
+def main_hypersearch(n_trials=30):
     cls = HyperSearch(fixed_hyper_parameters, hyper_parameters_to_search, n_trials=n_trials)
     result = cls.run()
     for key, val in result.items():
@@ -122,4 +122,4 @@ def main(n_trials=30):
 
 
 if __name__ == "__main__":
-    main(40)
+    main_hypersearch(40)

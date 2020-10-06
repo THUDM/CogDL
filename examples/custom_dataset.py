@@ -64,7 +64,7 @@ def get_default_args():
     return build_args_from_dict(default_dict)
 
 
-def main():
+def main_dataset():
     args = get_default_args()
     args.task = "node_classification"
     args.model = "gcn"
@@ -81,4 +81,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main_dataset()

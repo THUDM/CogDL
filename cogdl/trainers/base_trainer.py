@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 
 
-class BaseTrainer(object, ABC):
+class BaseTrainer(ABC):
     @classmethod
     @abstractmethod
     def build_trainer_from_args(cls, args):

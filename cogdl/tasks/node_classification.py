@@ -31,9 +31,11 @@ class NodeClassification(BaseTask):
     def __init__(self, args, dataset=None, model=None):
         super(NodeClassification, self).__init__(args)
 
+        self.args = args
         self.device = args.device_id[0] if not args.cpu else "cpu"
         if dataset is None:
             dataset = build_dataset(args)
+        self.dataset = dataset
         self.data = dataset.data
         self.data.apply(lambda x: x.to(self.device))
         args.num_features = dataset.num_features
@@ -49,11 +51,11 @@ class NodeClassification(BaseTask):
         )
 
     def train(self):
-        if self.model.get_trainer(NodeClassification):
+        if self.model.get_trainer(NodeClassification, self.args):
             trainer: SupervisedHomogeneousNodeClassificationTrainer = self.model.get_trainer(
-                NodeClassification
-            )()
-            trainer.fit(self.model, self.dataset)
+                NodeClassification, self.args
+            )(self.args)
+            self.model = trainer.fit(self.model, self.dataset)
         else:
             epoch_iter = tqdm(range(self.max_epoch))
             patience = 0

@@ -238,11 +238,11 @@ class DGI(BaseModel):
 
     def train(self, data):
         num_nodes = data.x.shape[0]
-        features = preprocess_features(data.x.numpy())
+        features = preprocess_features(data.x.cpu().numpy())
         features = torch.FloatTensor(features).unsqueeze(0).to(self.device)
 
         adj = sp.coo_matrix(
-            (np.ones(data.edge_index.shape[1]), data.edge_index),
+            (np.ones(data.edge_index.shape[1]), data.edge_index.cpu()),
             (num_nodes, num_nodes),
         )
         adj = normalize_adj(adj + sp.eye(adj.shape[0]))

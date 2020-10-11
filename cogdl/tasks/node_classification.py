@@ -40,7 +40,7 @@ class NodeClassification(BaseTask):
         self.model = model.to(self.device)
         self.patience = args.patience
         self.max_epoch = args.max_epoch
-
+        self.args = args
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
         )

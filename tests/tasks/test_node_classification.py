@@ -16,32 +16,6 @@ def get_default_args():
                     'weight_decay': 5e-4}
     return build_args_from_dict(default_dict)
 
-def test_dgi_cora():
-    args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'dgi'
-    dataset = build_dataset(args)
-    args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
-    model = build_model(args)
-    task = build_task(args)
-    ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
-
-def test_dgi_pubmed():
-    args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'pubmed'
-    args.model = 'dgi'
-    dataset = build_dataset(args)
-    args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
-    model = build_model(args)
-    task = build_task(args)
-    ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
-
 def test_gcn_cora():
     args = get_default_args()
     args.task = 'node_classification'
@@ -214,8 +188,6 @@ def test_pyg_drgat_cora():
 
 
 if __name__ == "__main__":
-    test_dgi_pubmed()
-    test_dgi_cora()
     test_gcn_cora()
     test_gat_cora()
     test_mlp_pubmed()

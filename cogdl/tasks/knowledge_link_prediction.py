@@ -17,7 +17,7 @@ from tqdm import tqdm
 from cogdl import options
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
-from cogdl.datasets.kg_data import KnowledgeGraph, BidirectionalOneShotIterator, TrainDataset
+from cogdl.datasets.triple_kg_data import KnowledgeGraph, BidirectionalOneShotIterator, TrainDataset
 
 
 

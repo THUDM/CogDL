@@ -30,9 +30,10 @@ class NodeClassification(BaseTask):
         self.device = torch.device('cpu' if args.cpu else 'cuda')
         if dataset is None:
             dataset = build_dataset(args)
-        self.data = dataset.data
+        self.data = dataset[0]
+
         self.data.apply(lambda x: x.to(self.device))
-        args.num_features = dataset.num_features
+        args.num_features = self.data.num_features
         args.num_classes = dataset.num_classes
         if model is None:
             model = build_model(args)
@@ -73,8 +74,9 @@ class NodeClassification(BaseTask):
                     epoch_iter.close()
                     break
         test_acc, _ = self._test_step(split="test")
+        val_acc, _ = self._test_step(split="val")
         print(f"Test accuracy = {test_acc}")
-        return dict(Acc=test_acc)
+        return dict(Acc=test_acc, ValAcc=val_acc)
 
     def _train_step(self):
         self.model.train()

@@ -1,3 +1,5 @@
+import torch
+
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
@@ -133,6 +135,22 @@ def test_prone_blogcatalog():
     ret = task.train()
     assert ret['Micro-F1 0.9'] > 0
 
+def test_prone_pp():
+    args = get_default_args()
+    args.task = 'unsupervised_node_classification'
+    args.dataset = 'ppi'
+    args.model = 'prone'
+    args.enhance = "prone++"
+    args.max_evals = 3
+    dataset = build_dataset(args)
+    args.step = 5
+    args.theta = 0.5
+    args.mu = 0.2
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Micro-F1 0.9'] > 0
+
 def test_sdne_ppi():
     args = get_default_args()
     args.task = 'unsupervised_node_classification'
@@ -170,9 +188,72 @@ def test_dngr_ppi():
     task = build_task(args)
     ret = task.train()
     assert ret['Micro-F1 0.9'] > 0
-    
+
+def get_unsupervised_nn_args():
+    default_dict = {
+        'hidden_size': 16,
+        'num_layers': 2,
+        'lr': 0.01,
+        'dropout': 0.,
+        'patience': 1,
+        'max_epoch': 1,
+        'cpu': not torch.cuda.is_available(),
+        'weight_decay': 5e-4,
+        'num_shuffle': 2,
+        'save_dir': ',',
+        'enhance': None,
+    }
+    return build_args_from_dict(default_dict)
+
+def test_unsupervised_graphsage():
+    args = get_unsupervised_nn_args()
+    args.negative_samples = 10
+    args.walk_length = 5
+    args.sample_size = [5, 5]
+    args.task = "unsupervised_node_classification"
+    args.dataset = "cora"
+    args.max_epochs = 2
+    args.model = "unsup_graphsage"
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] > 0
+
+def test_dgi():
+    args = get_unsupervised_nn_args()
+    args.task = "unsupervised_node_classification"
+    args.dataset = "cora"
+    args.max_epochs = 2
+    args.model = "dgi"
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] > 0
+
+def test_mvgrl():
+    args = get_unsupervised_nn_args()
+    args.task = "unsupervised_node_classification"
+    args.dataset = "cora"
+    args.max_epochs = 2
+    args.model = "mvgrl"
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] > 0
 
 if __name__ == "__main__":
+    test_unsupervised_graphsage()
+    test_dgi()
+    test_mvgrl()
     test_deepwalk_wikipedia()
     test_line_ppi()
     test_node2vec_ppi()
@@ -183,3 +264,5 @@ if __name__ == "__main__":
     test_prone_blogcatalog()
     test_sdne_ppi()
     test_dngr_ppi()
+
+    test_prone_pp()

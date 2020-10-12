@@ -81,9 +81,12 @@ class UnsupervisedNodeClassification(BaseTask):
         elif self.args.enhance == "prone++":
             self.args.model = "prone++"
             self.args.filter_types = ["heat", "ppr", "gaussian", "sc"]
-            self.args.max_evals = 100
-            self.args.num_workers = 10
-            self.args.no_svd = False
+            if not hasattr(self.args, "max_evals"):
+                self.args.max_evals = 100
+            if not hasattr(self.args, "num_workers"):
+                self.args.num_workers = 10
+            if not hasattr(self.args, "no_svd"):
+                self.args.no_svd = False
             self.args.loss = "infomax"
             self.args.no_search = False
             model = build_model(self.args)
@@ -99,7 +102,7 @@ class UnsupervisedNodeClassification(BaseTask):
     def train(self):
         if 'gcc' in self.model_name:
             features_matrix = self.model.train(self.data)
-        elif 'dgi' in self.model_name:
+        elif 'dgi' in self.model_name or "graphsage" in self.model_name:
             acc = self.model.train(self.data)
             return dict(Acc=acc)
         elif 'mvgrl' in self.model_name:

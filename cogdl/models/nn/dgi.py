@@ -108,6 +108,51 @@ class LogReg(nn.Module):
         ret = self.fc(seq)
         return ret
 
+
+class LogRegTrainer(object):
+    def train(self, data, labels, opt):
+        device = data.device
+        idx_train = opt["idx_train"].to(device)
+        idx_val = opt["idx_val"].to(device)
+        idx_test = opt["idx_test"].to(device)
+        nclass = opt["num_classes"]
+        nhid = data.shape[-1]
+        labels = labels.to(device)
+
+        train_embs = data[idx_train]
+        val_embs = data[idx_val]
+        test_embs = data[idx_test]
+
+        train_lbls = labels[idx_train]
+        val_lbls = labels[idx_val]
+        test_lbls = labels[idx_test]
+
+        tot = 0
+
+        xent = nn.CrossEntropyLoss()
+
+        for _ in range(50):
+            log = LogReg(nhid, nclass).to(device)
+            optimizer = torch.optim.Adam(log.parameters(), lr=0.01, weight_decay=0.0)
+            log.to(device)
+
+            for _ in range(100):
+                log.train()
+                optimizer.zero_grad()
+
+                logits = log(train_embs)
+                loss = xent(logits, train_lbls)
+
+                loss.backward()
+                optimizer.step()
+
+            logits = log(test_embs)
+            preds = torch.argmax(logits, dim=1)
+            acc = torch.sum(preds == test_lbls).float() / test_lbls.shape[0]
+            tot += acc.item()
+        return tot / 50
+
+
 # Borrowed from https://github.com/PetarV-/DGI
 class DGIModel(nn.Module):
     def __init__(self, n_in, n_h, activation):
@@ -174,20 +219,21 @@ class DGI(BaseModel):
         # fmt: off
         parser.add_argument("--num-features", type=int)
         parser.add_argument("--hidden-size", type=int, default=512)
+        parser.add_argument("--max-epochs", type=int, default=1000)
         # fmt: on
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.num_features, args.hidden_size, args.num_classes)
+        return cls(args.num_features, args.hidden_size, args.num_classes, args.max_epochs)
 
-    def __init__(self, nfeat, nhid, nclass):
+    def __init__(self, nfeat, nhid, nclass, max_epochs):
         super(DGI, self).__init__()
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = DGIModel(nfeat, nhid, 'prelu').to(self.device)
         self.nhid = nhid
         self.nclass = nclass
-        self.epochs = 1000
+        self.epochs = max_epochs
         self.patience = 20
 
     def train(self, data):
@@ -246,41 +292,11 @@ class DGI(BaseModel):
             optimizer.step()
         embeds, _ = self.model.embed(features, sp_adj, True, None)
 
-        idx_train = data.train_mask.to(self.device)
-        idx_val = data.val_mask.to(self.device)
-        idx_test = data.test_mask.to(self.device)
-        labels = data.y.to(self.device)
-
-        train_embs = embeds[0, idx_train]
-        val_embs = embeds[0, idx_val]
-        test_embs = embeds[0, idx_test]
-
-        train_lbls = labels[idx_train]
-        val_lbls = labels[idx_val]
-        test_lbls = labels[idx_test]
-
-        tot = 0
-
-        xent = nn.CrossEntropyLoss()
-
-        for _ in range(50):
-            log = LogReg(self.nhid, self.nclass)
-            opt = torch.optim.Adam(log.parameters(), lr=0.01, weight_decay=0.0)
-            log.to(self.device)
-
-            for _ in range(100):
-                log.train()
-                opt.zero_grad()
-
-                logits = log(train_embs)
-                loss = xent(logits, train_lbls)
-                
-                loss.backward()
-                opt.step()
-
-            logits = log(test_embs)
-            preds = torch.argmax(logits, dim=1)
-            acc = torch.sum(preds == test_lbls).float() / test_lbls.shape[0]
-            tot += acc.item()
-
-        return tot / 50
+        opt = {
+            "idx_train": data.train_mask,
+            "idx_val": data.val_mask,
+            "idx_test": data.test_mask,
+            "num_classes": self.nclass
+        }
+        result = LogRegTrainer().train(embeds[0], data.y, opt)
+        return result

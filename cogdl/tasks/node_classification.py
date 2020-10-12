@@ -43,8 +43,9 @@ class NodeClassification(BaseTask):
         self.device = args.device_id[0] if not args.cpu else "cpu"
         if dataset is None:
             dataset = build_dataset(args)
+
         self.dataset = dataset
-        self.data = dataset.data
+        self.data = dataset[0]
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
         if model is None:
@@ -57,6 +58,7 @@ class NodeClassification(BaseTask):
         ) if self.model.get_trainer(
             NodeClassification, self.args
         ) else None
+
 
         if not self.trainer:
             self.optimizer = torch.optim.Adam(
@@ -104,8 +106,9 @@ class NodeClassification(BaseTask):
                         epoch_iter.close()
                         break
         test_acc, _ = self._test_step(split="test")
+        val_acc, _ = self._test_step(split="val")
         print(f"Test accuracy = {test_acc}")
-        return dict(Acc=test_acc)
+        return dict(Acc=test_acc, ValAcc=val_acc)
 
     def _train_step(self):
         self.model.train()

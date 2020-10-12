@@ -17,7 +17,7 @@ else:
 
 try:
     import dgl
-    import dgl.model_zoo.chem.gnn
+#    import dgl.model_zoo.chem.gnn
 except ImportError:
     dgl_import = False
     print("Failed to import Deep Graph Library (DGL)")

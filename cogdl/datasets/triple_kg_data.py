@@ -392,7 +392,7 @@ class KnowledgeGraph(Dataset):
         torch.save(datas, self.processed_paths[0])
 
 
-@register_dataset("fb15k")
+@register_dataset("triple-fb15k")
 class FB15KDataset(KnowledgeGraph):
     
     def __init__(self):
@@ -412,7 +412,7 @@ class FB15KDataset(KnowledgeGraph):
         subprocess.run(rename_train_cmds)
         subprocess.run(rename_valid_cmds)
 
-@register_dataset("fb15k-237")
+@register_dataset("triple-fb15k-237")
 class FB15K237Dataset(KnowledgeGraph):
     
     def __init__(self):
@@ -432,7 +432,7 @@ class FB15K237Dataset(KnowledgeGraph):
         subprocess.run(rename_train_cmds)
         subprocess.run(rename_valid_cmds)
 
-@register_dataset("wn18")
+@register_dataset("triple-wn18")
 class WN18Dataset(KnowledgeGraph):
     
     def __init__(self):
@@ -452,7 +452,7 @@ class WN18Dataset(KnowledgeGraph):
         subprocess.run(rename_train_cmds)
         subprocess.run(rename_valid_cmds)
 
-@register_dataset("wnrr")
+@register_dataset("triple-wn18rr")
 class WNRRDataset(KnowledgeGraph):
     
     def __init__(self):
@@ -472,7 +472,7 @@ class WNRRDataset(KnowledgeGraph):
         subprocess.run(rename_train_cmds)
         subprocess.run(rename_valid_cmds)
 
-@register_dataset("yago3-10")
+@register_dataset("triple-yago3-10")
 class YAGO310Dataset(KnowledgeGraph):
     
     def __init__(self):

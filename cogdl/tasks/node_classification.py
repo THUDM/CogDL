@@ -45,11 +45,6 @@ class NodeClassification(BaseTask):
         )
 
     def train(self):
-        if self.args.model == "dgi":
-            test_acc = self.model.train(self.data)
-            print(f"Test accuracy = {test_acc}")
-            return dict(Acc=test_acc)
-    
         epoch_iter = tqdm(range(self.max_epoch))
         patience = 0
         best_score = 0

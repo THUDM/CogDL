@@ -9,8 +9,8 @@ def get_default_args():
     cuda_available = torch.cuda.is_available()
     default_dict = {'hidden_size': 16,
                     'dropout': 0.5,
-                    'patience': 1,
-                    'max_epoch': 1,
+                    'patience': 2,
+                    'max_epoch': 3,
                     'cpu': not cuda_available,
                     'lr': 0.01,
                     'weight_decay': 5e-4}
@@ -186,7 +186,7 @@ def test_pyg_drgat_cora():
     ret = task.train()
     assert ret['Acc'] >= 0 and ret['Acc'] <= 1
 
-def test_pyg_disengcn_cora():
+def test_disengcn_cora():
     args = get_default_args()
     args.task = 'node_classification'
     args.dataset = 'cora'
@@ -203,6 +203,25 @@ def test_pyg_disengcn_cora():
     ret = task.train()
     assert ret['Acc'] >= 0 and ret['Acc'] <= 1
 
+def test_graph_mix():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.dataset = 'cora'
+    args.model = 'gcnmix'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.rampup_starts = 1
+    args.rampup_ends = 100
+    args.mixup_consistency = 5.0
+    args.ema_decay = 0.999
+    args.alpha = 1.0
+    args.temperature = 1.0
+    args.k = 10
+    model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
 
 if __name__ == "__main__":
     test_gcn_cora()
@@ -217,4 +236,5 @@ if __name__ == "__main__":
     test_pyg_unet_cora()
     test_pyg_drgcn_cora()
     test_pyg_drgat_cora()
-    test_pyg_disengcn_cora()
+    test_disengcn_cora()
+    test_graph_mix()

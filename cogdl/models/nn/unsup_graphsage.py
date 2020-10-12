@@ -139,7 +139,7 @@ class Graphsage(BaseModel):
             optimizer.zero_grad()
 
             loss = self.model.loss(data)
-            epoch_iter.set_description(f'Epoch: {epoch:03d}, Loss: {loss.item()}')
+            epoch_iter.set_description(f'Epoch: {epoch:03d}, Loss: {loss.item():.4f}')
 
             if loss < best:
                 best = loss

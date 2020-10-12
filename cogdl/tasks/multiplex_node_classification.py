@@ -45,7 +45,7 @@ class MultiplexNodeClassification(BaseTask):
         self.num_nodes, self.num_classes = dataset.num_nodes, dataset.num_classes
         self.hidden_size = args.hidden_size
         self.model = build_model(args)
-        
+        self.args = args
         self.device = torch.device('cpu' if args.cpu else 'cuda')
         self.model = self.model.to(self.device)
 
@@ -53,7 +53,10 @@ class MultiplexNodeClassification(BaseTask):
     def train(self):
         G = nx.DiGraph()
         G.add_edges_from(self.data.edge_index.t().tolist())
-        embeddings = self.model.train(G, self.data.pos.tolist())
+        if self.args.model != "gcc":
+            embeddings = self.model.train(G, self.data.pos.tolist())
+        else:
+            embeddings = self.model.train(self.data)
         embeddings = np.hstack((embeddings, self.data.x.numpy()))
                     
         # Select nodes which have label as training data        

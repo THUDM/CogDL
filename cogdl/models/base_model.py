@@ -22,5 +22,5 @@ class BaseModel(nn.Module):
         pass
 
     @staticmethod
-    def get_trainer(taskType: Any) -> Optional[Type[BaseTrainer]]:
+    def get_trainer(taskType: Any, args: Any) -> Optional[Type[BaseTrainer]]:
         return None

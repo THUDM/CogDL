@@ -1,10 +1,10 @@
 import random
-from collections import defaultdict
 
 import copy
 import networkx as nx
 import numpy as np
 import torch
+from torch import mode
 import torch.nn as nn
 import torch.nn.functional as F
 from gensim.models.keyedvectors import Vocab
@@ -102,19 +102,18 @@ def evaluate(embs, true_edges, false_edges):
     return roc_auc_score(y_true, y_scores), f1_score(y_true, y_pred), auc(rs, ps)
 
 
-@register_task("link_prediction")
-class LinkPrediction(BaseTask):
-    @staticmethod
-    def add_args(parser):
-        """Add task-specific arguments to the parser."""
-        # fmt: off
-        parser.add_argument("--hidden-size", type=int, default=128)
-        parser.add_argument("--negative-ratio", type=int, default=5)
-        # fmt: on
+def select_task(model_name=None, model=None):
+    assert model_name is not None or model is not None
+    if model_name is not None:
+        return model_name in ["rgcn", "compgcn"]
+    else:
+        from cogdl.models.nn import rgcn, compgcn
+        return type(model) in [rgcn.LinkPredictRGCN, compgcn.LinkPredictCompGCN]
 
+
+class HomoLinkPrediction(nn.Module):
     def __init__(self, args):
-        super(LinkPrediction, self).__init__(args)
-
+        super(HomoLinkPrediction, self).__init__()
         dataset = build_dataset(args)
         data = dataset[0]
         self.data = data
@@ -154,3 +153,104 @@ class LinkPrediction(BaseTask):
             f"Test ROC-AUC = {roc_auc:.4f}, F1 = {f1_score:.4f}, PR-AUC = {pr_auc:.4f}"
         )
         return dict(ROC_AUC=roc_auc, PR_AUC=pr_auc, F1=f1_score)
+
+
+class KGLinkPrediction(nn.Module):
+    def __init__(self, args, dataset=None, model=None):
+        super(KGLinkPrediction, self).__init__()
+        self.device = torch.device('cpu' if args.cpu else 'cuda')
+        self.evaluate_interval = args.evaluate_interval
+        dataset = build_dataset(args) if dataset is None else dataset
+        self.data = dataset[0]
+        self.data.apply(lambda x: x.to(self.device))
+        args.num_entities = len(torch.unique(self.data.edge_index))
+        args.num_rels = len(torch.unique(self.data.edge_attr))
+        if model is None:
+            model = build_model(args) if model is None else model
+        self.model = model.to(self.device)
+        self.max_epoch = args.max_epoch
+        self.patience = min(args.patience, 20)
+        self.grad_norm = 1.0
+        self.optimizer = torch.optim.AdamW(
+            self.model.parameters(), lr=args.lr,
+            weight_decay=args.weight_decay
+        )
+
+    def train(self):
+        epoch_iter = tqdm(range(self.max_epoch))
+        patience = 0
+        best_mrr = 0
+        best_model = None
+        val_mrr = 0
+
+        for epoch in epoch_iter:
+            loss_n = self._train_step()
+            if (epoch + 1) % self.evaluate_interval == 0:
+                torch.cuda.empty_cache()
+                val_mrr, _ = self._test_step("val")
+                if val_mrr > best_mrr:
+                    best_mrr = val_mrr
+                    best_model = copy.deepcopy(self.model)
+                    patience = 0
+                else:
+                    patience += 1
+                    if patience == self.patience:
+                        self.model = best_model
+                        epoch_iter.close()
+                        break
+            epoch_iter.set_description(
+                f"Epoch: {epoch:03d}, TrainLoss: {loss_n: .4f}, Val MRR: {val_mrr: .4f}, Best MRR: {best_mrr: .4f}"
+            )
+        self.model = best_model
+        test_mrr, test_hits = self._test_step("test")
+        print(
+            f"Test MRR:{test_mrr}, Hits@1/3/10: {test_hits}"
+        )
+        return dict(MRR=test_mrr, HITS1=test_hits[0], HITS3=test_hits[1], HITS10=test_hits[2])
+
+    def _train_step(self, split="train"):
+        self.model.train()
+        self.optimizer.zero_grad()
+        loss_n = self.model.loss(self.data)
+        loss_n.backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_norm)
+        self.optimizer.step()
+        return loss_n.item()
+    
+    def _test_step(self, split="val"):
+        self.model.eval()
+        if split == "train":
+            mask = self.data.train_mask
+        elif split == "val":
+            mask = self.data.val_mask
+        else:
+            mask = self.data.test_mask
+        edge_index = self.data.edge_index[:, mask]
+        edge_attr = self.data.edge_attr[mask]
+        mrr, hits = self.model.predict(edge_index, edge_attr)
+        return mrr, hits
+
+@register_task("link_prediction")
+class LinkPrediction(BaseTask):
+    @staticmethod
+    def add_args(parser):
+        # fmt: off
+        parser.add_argument("--evaluate-interval", type=int, default=30)
+        parser.add_argument("--max-epoch", type=int, default=3000)
+        parser.add_argument("--patience", type=int, default=10)
+        parser.add_argument("--lr", type=float, default=0.001)
+        parser.add_argument("--weight-decay", type=float, default=0)
+        
+        parser.add_argument("--hidden-size", type=int, default=200) # KG
+        parser.add_argument("--negative-ratio", type=int, default=5)
+        # fmt: on
+
+    def __init__(self, args, dataset=None, model=None):
+        super(LinkPrediction, self).__init__(args)
+        if select_task(args.model, model):
+            self.task = KGLinkPrediction(args, dataset, model)
+        else:
+            self.task = HomoLinkPrediction(args)
+    
+    def train(self):
+        return self.task.train()

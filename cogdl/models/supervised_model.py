@@ -30,7 +30,7 @@ class SupervisedHeterogeneousNodeClassificationModel(BaseModel, ABC):
 
     @staticmethod
     def get_trainer(
-        taskType: Any,
+        taskType: Any, args: Any
     ) -> Optional[Type[SupervisedHeterogeneousNodeClassificationTrainer]]:
         return None
 
@@ -46,6 +46,6 @@ class SupervisedHomogeneousNodeClassificationModel(BaseModel, ABC):
 
     @staticmethod
     def get_trainer(
-        taskType: Any,
+        taskType: Any, args: Any,
     ) -> Optional[Type[SupervisedHomogeneousNodeClassificationTrainer]]:
         return None

@@ -1,5 +1,6 @@
 import copy
 import random
+from typing import Optional
 
 import numpy as np
 import torch
@@ -15,6 +16,7 @@ from cogdl.trainers.supervised_trainer import (
 )
 
 from . import BaseTask, register_task
+from ..trainers.sampled_trainer import SampledTrainer
 
 
 @register_task("node_classification")
@@ -28,34 +30,53 @@ class NodeClassification(BaseTask):
         # parser.add_argument("--num-features", type=int)
         # fmt: on
 
-    def __init__(self, args, dataset=None, model=None):
+    def __init__(
+        self,
+        args,
+        dataset=None,
+        model: Optional[SupervisedHomogeneousNodeClassificationModel] = None,
+    ):
         super(NodeClassification, self).__init__(args)
 
         self.args = args
+        self.model_name = args.model
         self.device = args.device_id[0] if not args.cpu else "cpu"
         if dataset is None:
             dataset = build_dataset(args)
+
         self.dataset = dataset
-        self.data = dataset.data
-        self.data.apply(lambda x: x.to(self.device))
+        self.data = dataset[0]
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
         if model is None:
-            model = build_model(args)
-        self.model: SupervisedHomogeneousNodeClassificationModel = model.to(self.device)
-        self.patience = args.patience
-        self.max_epoch = args.max_epoch
+            self.model: SupervisedHomogeneousNodeClassificationModel = build_model(args)
 
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
-        )
+        self.trainer: Optional[
+            SupervisedHomogeneousNodeClassificationTrainer
+        ] = self.model.get_trainer(NodeClassification, self.args)(
+            self.args
+        ) if self.model.get_trainer(
+            NodeClassification, self.args
+        ) else None
+
+
+        if not self.trainer:
+            self.optimizer = torch.optim.Adam(
+                self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
+            )
+            self.data.apply(lambda x: x.to(self.device))
+            self.model: SupervisedHomogeneousNodeClassificationModel = self.model.to(
+                self.device
+            )
+            self.patience = args.patience
+            self.max_epoch = args.max_epoch
 
     def train(self):
-        if self.model.get_trainer(NodeClassification, self.args):
-            trainer: SupervisedHomogeneousNodeClassificationTrainer = self.model.get_trainer(
-                NodeClassification, self.args
-            )(self.args)
-            self.model = trainer.fit(self.model, self.dataset)
+        if self.trainer:
+            if issubclass(type(self.trainer), SampledTrainer):
+                self.model = self.trainer.fit(self.model, self.dataset)
+            else:
+                return dict(Acc=self.trainer.fit(self.model, self.dataset))
         else:
             epoch_iter = tqdm(range(self.max_epoch))
             patience = 0
@@ -85,8 +106,9 @@ class NodeClassification(BaseTask):
                         epoch_iter.close()
                         break
         test_acc, _ = self._test_step(split="test")
+        val_acc, _ = self._test_step(split="val")
         print(f"Test accuracy = {test_acc}")
-        return dict(Acc=test_acc)
+        return dict(Acc=test_acc, ValAcc=val_acc)
 
     def _train_step(self):
         self.model.train()

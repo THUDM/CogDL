@@ -79,14 +79,18 @@ class GraphClassification(BaseTask):
         self.kfold = args.kfold
         self.folds = 10
         self.device = args.device_id[0] if not args.cpu else 'cpu'
-        self.data = self.generate_data(dataset, args)
 
         model = build_model(args)
         self.model = model.to(self.device)
         self.patience = args.patience
         self.max_epoch = args.max_epoch
 
-        self.train_loader, self.val_loader, self.test_loader = self.model.split_dataset(self.data, args)
+        if args.dataset.startswith("ogbg"):
+            self.data = dataset.data
+            self.train_loader, self.val_loader, self.test_loader = dataset.get_loader(args)
+        else:
+            self.data = self.generate_data(dataset, args)
+            self.train_loader, self.val_loader, self.test_loader = self.model.split_dataset(self.data, args)
 
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
@@ -143,6 +147,8 @@ class GraphClassification(BaseTask):
         loss_n = 0
         for batch in self.train_loader:
             batch = batch.to(self.device)
+            batch.x = batch.x.to(dtype=torch.float32)
+            batch.y = torch.flatten(batch.y)
             self.optimizer.zero_grad()
             output, loss = self.model(batch)
             loss_n += loss.item()
@@ -165,6 +171,8 @@ class GraphClassification(BaseTask):
         with torch.no_grad():
             for batch in loader:
                 batch = batch.to(self.device)
+                batch.x = batch.x.to(dtype=torch.float32)
+                batch.y = torch.flatten(batch.y)
                 predict, loss = self.model(batch)
                 loss_n.append(loss.item())
                 y.append(batch.y)

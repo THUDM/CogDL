@@ -1,4 +1,5 @@
 import copy
+from typing import Optional
 
 import numpy as np
 import torch
@@ -9,6 +10,7 @@ from cogdl.models import build_model
 from cogdl.models.supervised_model import SupervisedHeterogeneousNodeClassificationModel
 from cogdl.trainers.supervised_trainer import (
     SupervisedHeterogeneousNodeClassificationTrainer,
+    SupervisedHomogeneousNodeClassificationTrainer,
 )
 from . import BaseTask, register_task
 
@@ -42,6 +44,15 @@ class HeterogeneousNodeClassification(BaseTask):
         self.model: SupervisedHeterogeneousNodeClassificationModel = model.to(
             self.device
         )
+
+        self.trainer: Optional[
+            SupervisedHeterogeneousNodeClassificationTrainer
+        ] = self.model.get_trainer(HeterogeneousNodeClassification, args)(
+            self.args
+        ) if self.model.get_trainer(
+            HeterogeneousNodeClassification, args
+        ) else None
+
         self.patience = args.patience
         self.max_epoch = args.max_epoch
 
@@ -50,16 +61,8 @@ class HeterogeneousNodeClassification(BaseTask):
         )
 
     def train(self):
-        if self.model.get_trainer(HeterogeneousNodeClassification):
-            trainer: SupervisedHeterogeneousNodeClassificationTrainer = self.model.get_trainer(
-                HeterogeneousNodeClassification
-            )(
-                self.model, self.dataset
-            )
-            trainer.fit()
-            _, test_f1 = self.model.evaluate(
-                self.data, self.data.test_node, self.data.test_target
-            )
+        if self.trainer:
+            self.trainer.fit(self.model, self.dataset)
         else:
             epoch_iter = tqdm(range(self.max_epoch))
             patience = 0
@@ -88,7 +91,7 @@ class HeterogeneousNodeClassification(BaseTask):
                         self.model.load_state_dict(best_model)
                         epoch_iter.close()
                         break
-            test_f1, _ = self._test_step(split="test")
+        test_f1, _ = self._test_step(split="test")
         print(f"Test f1 = {test_f1}")
         return dict(f1=test_f1)
 

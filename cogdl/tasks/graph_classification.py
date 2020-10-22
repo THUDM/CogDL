@@ -24,7 +24,7 @@ def node_degree_as_feature(data):
     max_degree = 0
     degrees = []
     for graph in data:
-        edge_index =graph.edge_index
+        edge_index = graph.edge_index
         edge_weight = torch.ones((edge_index.size(1),), device=edge_index.device)
         fill_value = 1
         num_nodes = graph.num_nodes
@@ -32,12 +32,19 @@ def node_degree_as_feature(data):
             edge_index, edge_weight, fill_value, num_nodes
         )
         row, col = edge_index
-        deg = torch.zeros(num_nodes).to(edge_index.device).scatter_add_(0, row, edge_weight).long()
-        degrees.append(deg.cpu()-1)
+        deg = (
+            torch.zeros(num_nodes)
+            .to(edge_index.device)
+            .scatter_add_(0, row, edge_weight)
+            .long()
+        )
+        degrees.append(deg.cpu() - 1)
         max_degree = max(torch.max(deg), max_degree)
     max_degree = int(max_degree)
     for i in range(len(data)):
-        one_hot = torch.zeros(data[i].num_nodes, max_degree).scatter_(1, degrees[i].unsqueeze(1), 1)
+        one_hot = torch.zeros(data[i].num_nodes, max_degree).scatter_(
+            1, degrees[i].unsqueeze(1), 1
+        )
         data[i].x = one_hot.to(data[i].y.device)
     return data
 
@@ -78,23 +85,31 @@ class GraphClassification(BaseTask):
         self.args = args
         self.kfold = args.kfold
         self.folds = 10
-        self.device = args.device_id[0] if not args.cpu else 'cpu'
-        self.data = self.generate_data(dataset, args)
+        self.device = args.device_id[0] if not args.cpu else "cpu"
+        if args.dataset.startswith("ogbg"):
+            self.data = dataset.data
+            self.train_loader, self.val_loader, self.test_loader = dataset.get_loader(
+                args
+            )
+            model = build_model(args)
+        else:
+            self.data = self.generate_data(dataset, args)
+            model = build_model(args)
+            (
+                self.train_loader,
+                self.val_loader,
+                self.test_loader,
+            ) = model.split_dataset(self.data, args)
 
-        model = build_model(args)
         self.model = model.to(self.device)
         self.patience = args.patience
         self.max_epoch = args.max_epoch
-
-        self.train_loader, self.val_loader, self.test_loader = self.model.split_dataset(self.data, args)
 
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
         )
         self.scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer=self.optimizer,
-            step_size=50,
-            gamma=0.5
+            optimizer=self.optimizer, step_size=50, gamma=0.5
         )
 
     def train(self):
@@ -144,6 +159,8 @@ class GraphClassification(BaseTask):
         loss_n = 0
         for batch in self.train_loader:
             batch = batch.to(self.device)
+            # batch.x = batch.x.to(dtype=torch.float32)
+            # batch.y = torch.flatten(batch.y)
             self.optimizer.zero_grad()
             output, loss = self.model(batch)
             loss_n += loss.item()
@@ -166,6 +183,8 @@ class GraphClassification(BaseTask):
         with torch.no_grad():
             for batch in loader:
                 batch = batch.to(self.device)
+                # batch.x = batch.x.to(dtype=torch.float32)
+                # batch.y = torch.flatten(batch.y)
                 predict, loss = self.model(batch)
                 loss_n.append(loss.item())
                 y.append(batch.y)
@@ -175,38 +194,46 @@ class GraphClassification(BaseTask):
         pred = torch.stack(pred, dim=0)
         pred = pred.max(1)[1]
         acc = pred.eq(y).sum().item() / len(y)
-        return acc, sum(loss_n)/len(loss_n)
+        return acc, sum(loss_n) / len(loss_n)
 
     def _kfold_train(self):
         y = [x.y for x in self.data]
-        kf = StratifiedKFold(n_splits=self.folds, shuffle=True, random_state=self.args.seed)
+        kf = StratifiedKFold(
+            n_splits=self.folds, shuffle=True, random_state=self.args.seed
+        )
         acc = []
         for train_index, test_index in kf.split(self.data, y=y):
             model = build_model(self.args)
             self.model = model.to(self.device)
 
-            droplast = self.args.model == 'diffpool'
-            self.train_loader = DataLoader([self.data[i] for i in train_index],
-                                           batch_size=self.args.batch_size,
-                                           drop_last=droplast)
-            self.test_loader = DataLoader([self.data[i] for i in test_index],
-                                          batch_size=self.args.batch_size,
-                                          drop_last=droplast)
-            self.val_loader = DataLoader([self.data[i] for i in test_index],
-                                         batch_size=self.args.batch_size,
-                                         drop_last=droplast)
+            droplast = self.args.model == "diffpool"
+            self.train_loader = DataLoader(
+                [self.data[i] for i in train_index],
+                batch_size=self.args.batch_size,
+                drop_last=droplast,
+            )
+            self.test_loader = DataLoader(
+                [self.data[i] for i in test_index],
+                batch_size=self.args.batch_size,
+                drop_last=droplast,
+            )
+            self.val_loader = DataLoader(
+                [self.data[i] for i in test_index],
+                batch_size=self.args.batch_size,
+                drop_last=droplast,
+            )
             self.optimizer = torch.optim.Adam(
-                self.model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay
+                self.model.parameters(),
+                lr=self.args.lr,
+                weight_decay=self.args.weight_decay,
             )
             self.scheduler = torch.optim.lr_scheduler.StepLR(
-                optimizer=self.optimizer,
-                step_size=50,
-                gamma=0.5
+                optimizer=self.optimizer, step_size=50, gamma=0.5
             )
 
             res = self._train()
             acc.append(res["Acc"])
-        return dict(Acc=sum(acc)/len(acc))
+        return dict(Acc=sum(acc) / len(acc))
 
     def generate_data(self, dataset, args):
         if "ModelNet" in str(type(dataset).__name__):
@@ -224,6 +251,7 @@ class GraphClassification(BaseTask):
                 datalist.append(data)
 
             if args.degree_feature:
+                print("FDSFSDFSDFDFSSF")
                 datalist = node_degree_as_feature(datalist)
                 args.num_features = datalist[0].num_features
             return datalist

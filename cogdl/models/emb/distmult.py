@@ -3,8 +3,6 @@ from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 
-from cogdl.layers.kg_score_module import DistMultScorer
-
 from .. import BaseModel, register_model
 from .knowledge_base import KGEModel
 

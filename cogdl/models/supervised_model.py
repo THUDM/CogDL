@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from typing import Any, Optional, Type
 from typing import TYPE_CHECKING
@@ -31,7 +29,7 @@ class SupervisedHeterogeneousNodeClassificationModel(BaseModel, ABC):
     @staticmethod
     def get_trainer(
         taskType: Any, args: Any
-    ) -> Optional[Type[SupervisedHeterogeneousNodeClassificationTrainer]]:
+    ) -> "Optional[Type[SupervisedHeterogeneousNodeClassificationTrainer]]":
         return None
 
 
@@ -47,5 +45,5 @@ class SupervisedHomogeneousNodeClassificationModel(BaseModel, ABC):
     @staticmethod
     def get_trainer(
         taskType: Any, args: Any,
-    ) -> Optional[Type[SupervisedHomogeneousNodeClassificationTrainer]]:
+    ) -> "Optional[Type[SupervisedHomogeneousNodeClassificationTrainer]]":
         return None

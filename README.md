@@ -33,7 +33,7 @@ CogDL features:
 ## Requirements and Installation
 
 - PyTorch version >= 1.0.0
-- Python version >= 3.7
+- Python version >= 3.6
 - PyTorch Geometric
 - Deep Graph Library
 

@@ -1,4 +1,4 @@
-![CogDL](docs/source/_static/cogdl-logo.png)
+![CogDL](http://keg.cs.tsinghua.edu.cn/cogdl/cogdl-logo.png)
 ===
 
 [![Build Status](https://travis-ci.org/THUDM/cogdl.svg?branch=master)](https://travis-ci.org/THUDM/cogdl)

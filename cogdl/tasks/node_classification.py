@@ -14,9 +14,9 @@ from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificatio
 from cogdl.trainers.supervised_trainer import (
     SupervisedHomogeneousNodeClassificationTrainer,
 )
+from cogdl.trainers.sampled_trainer import SampledTrainer
 
 from . import BaseTask, register_task
-from ..trainers.sampled_trainer import SampledTrainer
 
 
 @register_task("node_classification")

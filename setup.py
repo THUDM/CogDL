@@ -8,9 +8,10 @@ with open(path.join(here, "README.md"), encoding='utf8') as f:
 
 setup(
     name='cogdl',
-    version='0.0.1',
-    description='A Library for Graph representataion Learning',
+    version='0.1.1',
+    description='An Extensive Research Toolkit for Deep Learning on Graphs',
     long_description=readme,
+    long_description_content_type='text/markdown',
     url='https://github.com/THUDM/cogdl',
 
     license='MIT',
@@ -19,7 +20,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Beta',
+        'Development Status :: 3 - Alpha',
 
         # Indicate who your project is intended for
         'Intended Audience :: Science/Research',
@@ -27,7 +28,7 @@ setup(
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
 
         # Pick your license as you wish (should match "license" above)
-        'Licence :: OSI Approved :: MIT Licence',
+        'License :: OSI Approved :: MIT License',
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
@@ -38,7 +39,7 @@ setup(
         'Programming Language :: Python :: 3.8',
     ],
     # What does your project relate to?
-    keywords='network embedding and deep grapg representation learning',
+    keywords='network embedding, graph representation learning, graph neural networks',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().

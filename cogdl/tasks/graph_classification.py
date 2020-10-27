@@ -66,9 +66,9 @@ class GraphClassification(BaseTask):
         parser.add_argument("--kfold", dest="kfold", action="store_true")
         # fmt: on
 
-    def __init__(self, args):
+    def __init__(self, args, dataset=None, model=None):
         super(GraphClassification, self).__init__(args)
-        dataset = build_dataset(args)
+        dataset = build_dataset(args) if dataset is None else dataset
 
         args.max_graph_size = max([ds.num_nodes for ds in dataset])
         args.num_features = dataset.num_features
@@ -81,7 +81,7 @@ class GraphClassification(BaseTask):
         self.device = args.device_id[0] if not args.cpu else 'cpu'
         self.data = self.generate_data(dataset, args)
 
-        model = build_model(args)
+        model = build_model(args) if model is None else model
         self.model = model.to(self.device)
         self.patience = args.patience
         self.max_epoch = args.max_epoch

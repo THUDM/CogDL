@@ -11,13 +11,12 @@ try:
     import torch_geometric
 except ImportError:
     pyg = False
-    print("Failed to import PyTorch Geometric")
+    print("Failed to import PyTorch Geometric (PyG)")
 else:
     pyg = True
 
 try:
     import dgl
-#    import dgl.model_zoo.chem.gnn
 except ImportError:
     dgl_import = False
     print("Failed to import Deep Graph Library (DGL)")

@@ -112,14 +112,14 @@ def select_task(model_name=None, model=None):
 
 
 class HomoLinkPrediction(nn.Module):
-    def __init__(self, args):
+    def __init__(self, args, dataset=None, model=None):
         super(HomoLinkPrediction, self).__init__()
-        dataset = build_dataset(args)
+        dataset = build_dataset(args) if dataset is None else dataset
         data = dataset[0]
         self.data = data
         if hasattr(dataset, "num_features"):
             args.num_features = dataset.num_features
-        model = build_model(args)
+        model = build_model(args) if model is None else model
         self.model = model
         self.patience = args.patience
         self.max_epoch = args.max_epoch
@@ -165,8 +165,7 @@ class KGLinkPrediction(nn.Module):
         self.data.apply(lambda x: x.to(self.device))
         args.num_entities = len(torch.unique(self.data.edge_index))
         args.num_rels = len(torch.unique(self.data.edge_attr))
-        if model is None:
-            model = build_model(args) if model is None else model
+        model = build_model(args) if model is None else model
         self.model = model.to(self.device)
         self.max_epoch = args.max_epoch
         self.patience = min(args.patience, 20)
@@ -250,7 +249,7 @@ class LinkPrediction(BaseTask):
         if select_task(args.model, model):
             self.task = KGLinkPrediction(args, dataset, model)
         else:
-            self.task = HomoLinkPrediction(args)
+            self.task = HomoLinkPrediction(args, dataset, model)
     
     def train(self):
         return self.task.train()

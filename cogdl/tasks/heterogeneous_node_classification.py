@@ -26,11 +26,12 @@ class HeterogeneousNodeClassification(BaseTask):
         # parser.add_argument("--num-features", type=int)
         # fmt: on
 
-    def __init__(self, args):
+    def __init__(self, args, dataset=None, model=None):
         super(HeterogeneousNodeClassification, self).__init__(args)
 
         self.device = args.device_id[0] if not args.cpu else "cpu"
-        dataset = build_dataset(args)
+        dataset = build_dataset(args) if dataset is None else dataset
+
         if not args.cpu:
             dataset.apply_to_device(self.device)
         self.dataset = dataset
@@ -40,7 +41,8 @@ class HeterogeneousNodeClassification(BaseTask):
         args.num_classes = dataset.num_classes
         args.num_edge = dataset.num_edge
         args.num_nodes = dataset.num_nodes
-        model = build_model(args)
+
+        model = build_model(args) if model is None else model
         self.model: SupervisedHeterogeneousNodeClassificationModel = model.to(
             self.device
         )

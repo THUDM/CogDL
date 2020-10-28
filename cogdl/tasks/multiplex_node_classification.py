@@ -37,14 +37,14 @@ class MultiplexNodeClassification(BaseTask):
         parser.add_argument("--hidden-size", type=int, default=128)
         # fmt: on
 
-    def __init__(self, args):
+    def __init__(self, args, dataset=None, model=None):
         super(MultiplexNodeClassification, self).__init__(args)
-        dataset = build_dataset(args)
+        dataset = build_dataset(args) if dataset is None else dataset
         self.data = dataset[0]
         self.label_matrix = self.data.y
         self.num_nodes, self.num_classes = dataset.num_nodes, dataset.num_classes
         self.hidden_size = args.hidden_size
-        self.model = build_model(args)
+        self.model = build_model(args) if model is None else model
         self.args = args
         self.device = torch.device('cpu' if args.cpu else 'cuda')
         self.model = self.model.to(self.device)

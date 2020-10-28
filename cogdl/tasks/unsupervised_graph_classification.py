@@ -31,11 +31,11 @@ class UnsupervisedGraphClassification(BaseTask):
         parser.add_argument("--degree-feature", dest="degree_feature", action="store_true")
         # fmt: on
 
-    def __init__(self, args):
+    def __init__(self, args, dataset=None, model=None):
         super(UnsupervisedGraphClassification, self).__init__(args)
         self.device = args.device_id[0] if not args.cpu else 'cpu'
 
-        dataset = build_dataset(args)
+        dataset = build_dataset(args) if dataset is None else dataset
         if 'gcc' in args.model:
             self.label = dataset.graph_labels[:, 0]
             self.data = dataset.graph_lists
@@ -59,7 +59,7 @@ class UnsupervisedGraphClassification(BaseTask):
         # self.label_matrix = np.zeros((self.num_graphs, self.num_classes))
         # self.label_matrix[range(self.num_graphs), np.array([data.y for data in self.data], dtype=int)] = 1
 
-        self.model = build_model(args)
+        self.model = build_model(args) if model is None else model
         self.model = self.model.to(self.device)
         self.model_name = args.model
         self.hidden_size = args.hidden_size

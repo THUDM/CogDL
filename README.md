@@ -1,9 +1,10 @@
 ![CogDL](http://keg.cs.tsinghua.edu.cn/cogdl/cogdl-logo.png)
 ===
 
+[![PyPI Latest Release](https://badge.fury.io/py/cogdl.svg)](https://pypi.org/project/cogdl/)
 [![Build Status](https://travis-ci.org/THUDM/cogdl.svg?branch=master)](https://travis-ci.org/THUDM/cogdl)
-[![Coverage Status](https://coveralls.io/repos/github/THUDM/cogdl/badge.svg?branch=master)](https://coveralls.io/github/THUDM/cogdl?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/cogdl/badge/?version=latest)](https://cogdl.readthedocs.io/en/latest/?badge=latest)
+[![Coverage Status](https://coveralls.io/repos/github/THUDM/cogdl/badge.svg?branch=master)](https://coveralls.io/github/THUDM/cogdl?branch=master)
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
@@ -24,32 +25,69 @@ CogDL features:
   - Node classification
   - Link prediction
   - Graph classification
-  - Graph reasoning (todo)
   - Graph pre-training (todo)
+  - Graph similarity search (todo)
+  - Graph clustering (todo)
   - Combinatorial optimization on graphs (todo)
+
+## ❗ News
+
+- We set up WeChat groups for CogDL discussion. For Chinese users, [click here to join our community](http://keg.cs.tsinghua.edu.cn/cogdl/cogdl-user-group.png)! For English users, [click here to join our community](http://keg.cs.tsinghua.edu.cn/cogdl/cogdl-community.png)!
+
+- The new **v0.1.1 release** includes the knowledge link prediction task, many state-of-the-art models, and `optuna` support. We also have a [Chinese WeChat post](https://mp.weixin.qq.com/s/IUh-ctQwtSXGvdTij5eDDg) about the CogDL release.
 
 ## Getting Started
 
 ## Requirements and Installation
 
-- PyTorch version >= 1.0.0
 - Python version >= 3.6
-- PyTorch Geometric
-- Deep Graph Library
+- PyTorch version >= 1.0.0
+- PyTorch Geometric (recommended)
+- Deep Graph Library (optional)
 
 Please follow the instructions here to install PyTorch: https://github.com/pytorch/pytorch#installation, PyTorch Geometric https://github.com/rusty1s/pytorch_geometric/#installation and Deep Graph Library https://docs.dgl.ai/install/index.html.
 
-Install other dependencies:
+Install cogdl with other dependencies: 
 
 ```bash
+pip install cogdl
+```
+
+If you want to experiment with the latest CogDL features which did not get released yet, you can install CogDL via:
+
+```bash
+git clone git@github.com:THUDM/cogdl.git
+cd cogdl
 pip install -e .
 ```
 
 ## Usage
 
-You can use `python scripts/train.py --task example_task --dataset example_dataset --model example_method` to run example_method on example_data and evaluate it via example_task.
+### API Usage
 
-### General parameters
+You can run all kinds of experiments through CogDL APIs, including: `build_dataset`, `build_model`, and `build_task`. You can also use your own datasets and models for experiments. Some examples are provided in the [examples/](https://github.com/THUDM/cogdl/tree/master/examples/), including [gcn.py](https://github.com/THUDM/cogdl/tree/master/examples/gcn.py). 
+
+```python
+# Set hyper-parameters for experiments
+args = get_default_args()
+args.task = 'node_classification'
+args.dataset = 'cora'
+args.model = 'gcn'
+# Set datasets
+dataset = build_dataset(args)
+args.num_features = dataset.num_features
+args.num_classes = dataset.num_classes
+args.num_layers = 2
+# Build models
+model = build_model(args)
+# Train and evaluate models
+task = build_task(args, dataset=dataset, model=model)
+ret = task.train()
+```
+
+### Command-Line Usage
+
+You can use `python scripts/train.py --task example_task --dataset example_dataset --model example_method` to run example_method on example_data and evaluate it via example_task.
 
 - --task, downstream tasks to evaluate representation like node_classification, unsupervised_node_classification, link_prediction. More tasks can be found in the [cogdl/tasks](https://github.com/THUDM/cogdl/tree/master/cogdl/tasks).
 - --dataset, dataset name to run, can be a list of datasets with space like `cora citeseer ppi`. Supported datasets include

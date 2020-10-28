@@ -5,11 +5,13 @@ class ArgClass(object):
     def __init__(self):
         pass
 
+
 def build_args_from_dict(dic):
     args = ArgClass()
     for key, value in dic.items():
         args.__setattr__(key, value)
     return args
+
 
 def add_remaining_self_loops(edge_index, edge_weight, fill_value, num_nodes):
     N = num_nodes
@@ -22,8 +24,9 @@ def add_remaining_self_loops(edge_index, edge_weight, fill_value, num_nodes):
 
     inv_mask = ~mask
 
-    loop_weight = torch.full((N, ), fill_value, dtype=edge_weight.dtype,
-                                device=edge_weight.device)
+    loop_weight = torch.full(
+        (N,), fill_value, dtype=edge_weight.dtype, device=edge_weight.device
+    )
     remaining_edge_weight = edge_weight[inv_mask]
     if remaining_edge_weight.numel() > 0:
         loop_weight[row[inv_mask]] = remaining_edge_weight
@@ -108,7 +111,6 @@ def remove_self_loops(indices):
     indices = indices[:, mask]
     return indices, mask
 
-
 if __name__ == "__main__":
-    args = build_args_from_dict({'a': 1, 'b': 2})
+    args = build_args_from_dict({"a": 1, "b": 2})
     print(args.a, args.b)

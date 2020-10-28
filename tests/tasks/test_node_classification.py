@@ -5,35 +5,42 @@ from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.utils import build_args_from_dict
 
+
 def get_default_args():
     cuda_available = torch.cuda.is_available()
-    default_dict = {'hidden_size': 16,
-                    'dropout': 0.5,
-                    'patience': 2,
-                    'max_epoch': 3,
-                    'cpu': not cuda_available,
-                    'lr': 0.01,
-                    'weight_decay': 5e-4}
+    default_dict = {
+        "hidden_size": 16,
+        "dropout": 0.5,
+        "patience": 2,
+        "device_id": [0],
+        "max_epoch": 3,
+        "sampler": "none",
+        "cpu": not cuda_available,
+        "lr": 0.01,
+        "weight_decay": 5e-4,
+    }
     return build_args_from_dict(default_dict)
+
 
 def test_gcn_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'gcn'
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "gcn"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 def test_gat_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'gat'
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "gat"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -42,13 +49,14 @@ def test_gat_cora():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 def test_mlp_pubmed():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'pubmed'
-    args.model = 'mlp'
+    args.task = "node_classification"
+    args.dataset = "pubmed"
+    args.model = "mlp"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -56,13 +64,14 @@ def test_mlp_pubmed():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 def test_mixhop_citeseer():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'citeseer'
-    args.model = 'mixhop'
+    args.task = "node_classification"
+    args.dataset = "citeseer"
+    args.model = "mixhop"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -70,13 +79,14 @@ def test_mixhop_citeseer():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 def test_graphsage_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'graphsage'
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "graphsage"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -86,13 +96,14 @@ def test_graphsage_cora():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 def test_pyg_cheb_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'chebyshev'
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "chebyshev"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -101,13 +112,14 @@ def test_pyg_cheb_cora():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 def test_pyg_gcn_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'pyg_gcn'
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "pyg_gcn"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -115,13 +127,14 @@ def test_pyg_gcn_cora():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 def test_pyg_gat_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'pyg_gat'
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "pyg_gat"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -129,26 +142,28 @@ def test_pyg_gat_cora():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 def test_pyg_infomax_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'infomax'
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "infomax"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 def test_pyg_unet_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'unet'
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "unet"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -156,13 +171,14 @@ def test_pyg_unet_cora():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 def test_pyg_drgcn_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'drgcn'
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "drgcn"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -170,13 +186,14 @@ def test_pyg_drgcn_cora():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 def test_pyg_drgat_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'drgat'
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "drgat"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -184,13 +201,14 @@ def test_pyg_drgat_cora():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 def test_disengcn_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'disengcn'
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "disengcn"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -201,13 +219,14 @@ def test_disengcn_cora():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 def test_graph_mix():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'gcnmix'
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "gcnmix"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
@@ -221,7 +240,8 @@ def test_graph_mix():
     model = build_model(args)
     task = build_task(args)
     ret = task.train()
-    assert ret['Acc'] >= 0 and ret['Acc'] <= 1
+    assert ret["Acc"] >= 0 and ret["Acc"] <= 1
+
 
 if __name__ == "__main__":
     test_gcn_cora()

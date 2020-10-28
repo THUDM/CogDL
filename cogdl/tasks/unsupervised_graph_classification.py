@@ -36,12 +36,16 @@ class UnsupervisedGraphClassification(BaseTask):
         self.device = args.device_id[0] if not args.cpu else 'cpu'
 
         dataset = build_dataset(args)
-        self.label = np.array([data.y for data in dataset])
-        self.data = [
-            Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr,
-                 pos=data.pos).apply(lambda x:x.to(self.device))
-            for data in dataset
-        ]
+        if 'gcc' in args.model:
+            self.label = dataset.graph_labels[:, 0]
+            self.data = dataset.graph_lists
+        else:
+            self.label = np.array([data.y for data in dataset])
+            self.data = [
+                Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr,
+                    pos=data.pos).apply(lambda x:x.to(self.device))
+                for data in dataset
+            ]
         args.num_features = dataset.num_features
         args.num_classes = args.hidden_size
         args.use_unsup = True
@@ -96,6 +100,9 @@ class UnsupervisedGraphClassification(BaseTask):
                     label.extend(batch.y.cpu().numpy())
                 prediction = np.array(prediction).reshape(len(label), -1)
                 label = np.array(label).reshape(-1)
+        elif 'gcc' in self.model_name:
+            prediction = self.model.train(self.data)
+            label = self.label
         else:
             prediction, loss = self.model(self.data)
             label = self.label
@@ -127,7 +134,7 @@ class UnsupervisedGraphClassification(BaseTask):
                 # clf = SVC()
                 # clf.fit(X_train, y_train)
 
-                params = {"C": [1e-3, 1e-2, 1e-1, 0, 1, 10]}
+                params = {"C": [1e-3, 1e-2, 1e-1, 1, 10]}
                 svc = SVC()
                 clf = GridSearchCV(svc, params)
                 clf.fit(X_train, y_train)

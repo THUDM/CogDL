@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch_scatter import scatter_add
 from torch_geometric.nn import NNConv, Set2Set
 
-from .gin import GINLayer, GINMLP
+from .pyg_gin import GINLayer, GINMLP
 from cogdl.data import DataLoader
 from .. import BaseModel, register_model
 

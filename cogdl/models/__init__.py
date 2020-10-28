@@ -15,6 +15,15 @@ except ImportError:
 else:
     pyg = True
 
+try:
+    import dgl
+#    import dgl.model_zoo.chem.gnn
+except ImportError:
+    dgl_import = False
+    print("Failed to import Deep Graph Library (DGL)")
+else:
+    dgl_import = True
+
 MODEL_REGISTRY = {}
 
 
@@ -98,6 +107,8 @@ for root, dirs, files in os.walk(os.path.dirname(__file__)):
         if file.endswith(".py") and not file.startswith("_"):
             model_name = file[: file.find(".py")]
             if not pyg and model_name.startswith("pyg"):
+                continue
+            if not dgl_import and model_name.startswith("dgl"):
                 continue
             model_name = os.path.join(root, model_name)
             model_name = model_name[model_name.find("models") :].replace(os.sep, ".")

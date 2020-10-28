@@ -4,8 +4,7 @@ from scipy.special import iv
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_sparse.tensor import SparseTensor
-from torch_sparse import spspmm, spmm, matmul
+from torch_sparse import spspmm, spmm
 from torch_geometric.utils import degree
 
 
@@ -24,12 +23,8 @@ class NodeAttention(nn.Module):
         device = x.device
         N, dim = x.shape
         diag_val = self.p(x)
-
-        # add sigmoid
         diag_val = F.sigmoid(diag_val)
-        # add dropout
         self.dropout(diag_val)
-        # ----------
 
         row, col = edge_index
         deg = degree(col, x.size(0), dtype=x.dtype)
@@ -61,10 +56,8 @@ class EdgeAttention(nn.Module):
         p_val = F.relu(self.p(x))
         q_val = F.relu(self.q(x))
 
-        # add dropout
         p_val = self.dropout(p_val)
         q_val = self.dropout(q_val)
-        # --------------------
 
         diag_ind = torch.LongTensor([range(N)] * 2).to(device)
         _, p_adj_mat_val = spspmm(edge_index, edge_attr_t, diag_ind, p_val.view(-1), N, N, N, True)
@@ -130,9 +123,6 @@ class PPR(nn.Module):
         self.steps = 4
 
     def forward(self, x, edge_index, edge_attr):
-        # if self.inv_indices is not None:
-        #     return self.inv_indices, self.inv_values
-
         row, col = edge_index
         deg = degree(col, x.size(0), dtype=x.dtype)
         deg_inv_sqrt = deg.pow(-0.5)
@@ -148,8 +138,6 @@ class PPR(nn.Module):
             theta = theta * (1 - self.alpha)
             adj_ind, adj_val = spspmm(edge_index, edge_attr_t, result[i-1]._indices(), result[i-1]._values(), N, N, N, True)
             result.append(torch.sparse_coo_tensor(adj_ind, adj_val, size=(N, N)))
-            # result.append(adj.mm((result[-1] * theta).to_dense()).to_sparse())
-            # spspmm
 
         identity = torch.sparse_coo_tensor([range(N)] * 2, torch.ones(N), size=(N, N)).to(x.device)
         result.append(self.alpha * identity)
@@ -158,7 +146,6 @@ class PPR(nn.Module):
             return x.add(y)
 
         res = reduce(fn, result)
-
         return res._indices(), res._values()
 
 
@@ -214,7 +201,6 @@ class RowUniform(nn.Module):
         ones = torch.ones(N, 1, device=device)
         rownorm = 1. / spmm(edge_index, edge_attr, N, N, ones).view(-1)
         row = rownorm[edge_index[0]]
-        # col = rownorm[edge_index[1]]
         edge_attr_t = row * edge_attr
 
         return edge_attr_t
@@ -230,7 +216,6 @@ class RowSoftmax(nn.Module):
         ones = torch.ones(N, 1, device=device)
         rownorm = 1. / spmm(edge_index, edge_attr_t, N, N, ones).view(-1)
         row = rownorm[edge_index[0]]
-        # col = rownorm[edge_index[1]]
         edge_attr_t = row * edge_attr_t
 
         return edge_attr_t
@@ -244,7 +229,6 @@ class ColumnUniform(nn.Module):
         device = edge_attr.device
         ones = torch.ones(N, 1, device=device)
         rownorm = 1. / spmm(edge_index, edge_attr, N, N, ones).view(-1)
-        # row = rownorm[edge_index[0]]
         col = rownorm[edge_index[1]]
         edge_attr_t = col * edge_attr
 

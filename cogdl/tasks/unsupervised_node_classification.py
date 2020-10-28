@@ -20,9 +20,15 @@ from cogdl import options
 from cogdl.data import Dataset
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model, register_model
-from torch_geometric.data import InMemoryDataset
 
 from . import BaseTask, register_task
+
+try:
+    from torch_geometric.data import InMemoryDataset
+except ImportError:
+    pyg = False
+else:
+    pyg = True
 
 warnings.filterwarnings("ignore")
 
@@ -43,7 +49,7 @@ class UnsupervisedNodeClassification(BaseTask):
         super(UnsupervisedNodeClassification, self).__init__(args)
         dataset = build_dataset(args)
         self.data = dataset[0]
-        if issubclass(dataset.__class__.__bases__[0], InMemoryDataset):
+        if pyg and issubclass(dataset.__class__.__bases__[0], InMemoryDataset):
             self.num_nodes = self.data.y.shape[0]
             self.num_classes = dataset.num_classes
             self.label_matrix = np.zeros((self.num_nodes, self.num_classes), dtype=int)
@@ -53,8 +59,11 @@ class UnsupervisedNodeClassification(BaseTask):
             self.label_matrix = self.data.y
             self.num_nodes, self.num_classes = self.data.y.shape
 
+        args.num_classes = dataset.num_classes if hasattr(dataset, 'num_classes') else 0
+        args.num_features = dataset.num_features if hasattr(dataset, 'num_features') else 0
         self.model = build_model(args)
         self.model_name = args.model
+        self.dataset_name = args.dataset
         self.hidden_size = args.hidden_size
         self.num_shuffle = args.num_shuffle
         self.save_dir = args.save_dir
@@ -62,40 +71,62 @@ class UnsupervisedNodeClassification(BaseTask):
         self.args = args
         self.is_weighted = self.data.edge_attr is not None
 
-
     def enhance_emb(self, G, embs):
         A = sp.csr_matrix(nx.adjacency_matrix(G))
-        self.args.model = 'prone'
-        self.args.step, self.args.theta, self.args.mu = 5, 0.5, 0.2
-        model = build_model(self.args)
-        embs = model._chebyshev_gaussian(A, embs)
+        if self.args.enhance == "prone":
+            self.args.model = 'prone'
+            self.args.step, self.args.theta, self.args.mu = 5, 0.5, 0.2
+            model = build_model(self.args)
+            embs = model._chebyshev_gaussian(A, embs)
+        elif self.args.enhance == "prone++":
+            self.args.model = "prone++"
+            self.args.filter_types = ["heat", "ppr", "gaussian", "sc"]
+            if not hasattr(self.args, "max_evals"):
+                self.args.max_evals = 100
+            if not hasattr(self.args, "num_workers"):
+                self.args.num_workers = 10
+            if not hasattr(self.args, "no_svd"):
+                self.args.no_svd = False
+            self.args.loss = "infomax"
+            self.args.no_search = False
+            model = build_model(self.args)
+            embs = model(embs, A)
+        else:
+            raise ValueError("only supports 'prone' and 'prone++'")
         return embs
-    
-    
+
     def save_emb(self, embs):
         name = os.path.join(self.save_dir, self.model_name + '_emb.npy')
         np.save(name, embs)
 
     def train(self):
-        G = nx.Graph()
-        if self.is_weighted:
-            edges, weight = (
-                self.data.edge_index.t().tolist(),
-                self.data.edge_attr.tolist(),
-            )
-            G.add_weighted_edges_from(
-                [(edges[i][0], edges[i][1], weight[0][i]) for i in range(len(edges))]
-            )
+        if 'gcc' in self.model_name:
+            features_matrix = self.model.train(self.data)
+        elif 'dgi' in self.model_name or "graphsage" in self.model_name:
+            acc = self.model.train(self.data)
+            return dict(Acc=acc)
+        elif 'mvgrl' in self.model_name:
+            acc = self.model.train(self.data, self.dataset_name)
+            return dict(Acc=acc)
         else:
-            G.add_edges_from(self.data.edge_index.t().tolist())
-        embeddings = self.model.train(G)
-        if self.enhance is True:
-            embeddings = self.enhance_emb(G, embeddings)
-
-        # Map node2id
-        features_matrix = np.zeros((self.num_nodes, self.hidden_size))
-        for vid, node in enumerate(G.nodes()):
-            features_matrix[node] = embeddings[vid]
+            G = nx.Graph()
+            if self.is_weighted:
+                edges, weight = (
+                    self.data.edge_index.t().tolist(),
+                    self.data.edge_attr.tolist(),
+                )
+                G.add_weighted_edges_from(
+                    [(edges[i][0], edges[i][1], weight[0][i]) for i in range(len(edges))]
+                )
+            else:
+                G.add_edges_from(self.data.edge_index.t().tolist())
+            embeddings = self.model.train(G)
+            if self.enhance is not None:
+                embeddings = self.enhance_emb(G, embeddings)
+            # Map node2id
+            features_matrix = np.zeros((self.num_nodes, self.hidden_size))
+            for vid, node in enumerate(G.nodes()):
+                features_matrix[node] = embeddings[vid]
 
         self.save_emb(features_matrix)
 

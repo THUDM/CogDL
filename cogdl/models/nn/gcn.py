@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
 from .. import BaseModel, register_model
+from cogdl.utils import add_remaining_self_loops, spmm, spmm_adj
 
 
 class GraphConvolution(nn.Module):
@@ -30,10 +31,12 @@ class GraphConvolution(nn.Module):
         if self.bias is not None:
             self.bias.data.normal_(-stdv, stdv)
 
-    def forward(self, input, edge_index):
+    def forward(self, input, edge_index, edge_attr=None):
+        if edge_attr is None:
+            edge_attr = torch.ones(edge_index.shape[1]).float().to(input.device)
         adj = torch.sparse_coo_tensor(
             edge_index,
-            torch.ones(edge_index.shape[1]).float(),
+            edge_attr,
             (input.shape[0], input.shape[0]),
         ).to(input.device)
         support = torch.mm(input, self.weight)
@@ -56,6 +59,16 @@ class GraphConvolution(nn.Module):
 
 @register_model("gcn")
 class TKipfGCN(BaseModel):
+    r"""The GCN model from the `"Semi-Supervised Classification with Graph Convolutional Networks"
+    <https://arxiv.org/abs/1609.02907>`_ paper
+
+    Args:
+        num_features (int) : Number of input features.
+        num_classes (int) : Number of classes.
+        hidden_size (int) : The dimension of node representation.
+        dropout (float) : Dropout rate for model training.
+    """
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -79,10 +92,17 @@ class TKipfGCN(BaseModel):
         # self.nonlinear = nn.SELU()
 
     def forward(self, x, adj):
-        x = F.relu(self.gc1(x, adj))
+        device = x.device
+        adj_values = torch.ones(adj.shape[1]).to(device)
+        adj, adj_values = add_remaining_self_loops(adj, adj_values, 1, x.shape[0])
+        deg = spmm(adj, adj_values, torch.ones(x.shape[0], 1).to(device)).squeeze()
+        deg_sqrt = deg.pow(-1/2)
+        adj_values = deg_sqrt[adj[1]] * adj_values * deg_sqrt[adj[0]]
+
+        x = F.relu(self.gc1(x, adj, adj_values))
         # h1 = x
         x = F.dropout(x, self.dropout, training=self.training)
-        x = self.gc2(x, adj)
+        x = self.gc2(x, adj, adj_values)
 
         # x = F.relu(x)
         # x = torch.sigmoid(x)

@@ -92,7 +92,7 @@ You can use `python scripts/train.py --task example_task --dataset example_datas
 - --task, downstream tasks to evaluate representation like node_classification, unsupervised_node_classification, link_prediction. More tasks can be found in the [cogdl/tasks](https://github.com/THUDM/cogdl/tree/master/cogdl/tasks).
 - --dataset, dataset name to run, can be a list of datasets with space like `cora citeseer ppi`. Supported datasets include
 'cora', 'citeseer', 'pumbed', 'PPI', 'wikipedia', 'blogcatalog', 'flickr'. More datasets can be found in the [cogdl/datasets](https://github.com/THUDM/cogdl/tree/master/cogdl/datasets).
-- --model, model name to run, can be a list of models like `deepwalk line prone`. Supported datasets include
+- --model, model name to run, can be a list of models like `deepwalk line prone`. Supported models include
 'gcn', 'gat', 'graphsage', 'deepwalk', 'node2vec', 'hope', 'grarep', 'netmf', 'netsmf', 'prone'. More models can be found in the [cogdl/models](https://github.com/THUDM/cogdl/tree/master/cogdl/models).
 
 For example, if you want to run Deepwalk, Line, Netmf on Wikipedia with node classification task, with 5 different seeds:

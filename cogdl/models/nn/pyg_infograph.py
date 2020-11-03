@@ -4,11 +4,14 @@ import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_scatter import scatter_add
 from torch_geometric.nn import NNConv, Set2Set
 
 from .pyg_gin import GINLayer, GINMLP
 from cogdl.data import DataLoader
+from cogdl.utils import (
+    batch_mean_pooling,
+    batch_sum_pooling
+)
 from .. import BaseModel, register_model
 
 
@@ -78,7 +81,9 @@ class Encoder(nn.Module):
             self.bn_layers.append(nn.BatchNorm1d(hidden_dim))
 
         if pooling == 'sum':
-            self.pooling = scatter_add
+            self.pooling = batch_sum_pooling
+        elif pooling == "mean":
+            self.pooling = batch_mean_pooling
         else:
             raise NotImplementedError
 
@@ -90,7 +95,7 @@ class Encoder(nn.Module):
             x = F.relu(self.bn_layers[i](self.gnn_layers[i](x, edge_index)))
             layer_rep.append(x)
 
-        pooled_rep = [self.pooling(h, batch, 0) for h in layer_rep]
+        pooled_rep = [self.pooling(h, batch) for h in layer_rep]
         node_rep = torch.cat(layer_rep, dim=1)
         graph_rep = torch.cat(pooled_rep, dim=1)
         return graph_rep, node_rep
@@ -143,7 +148,7 @@ class InfoGraph(BaseModel):
                             help='')
         parser.add_argument("--train-num", dest='train_num', type=int, default=5000)
         parser.add_argument("--num-layers", type=int, default=1)
-        parser.add_argument("--unsup", dest="unsup", action="store_false")
+        parser.add_argument("--sup", dest="sup", action="store_true")
         parser.add_argument("--epoch", type=int, default=15)
         parser.add_argument("--lr", type=float, default=0.0001)
         parser.add_argument("--train-ratio", type=float, default=0.7)
@@ -156,7 +161,7 @@ class InfoGraph(BaseModel):
             args.hidden_size,
             args.num_classes,
             args.num_layers,
-            args.unsup
+            args.sup
         )
 
     @classmethod
@@ -180,17 +185,17 @@ class InfoGraph(BaseModel):
                 valid_loader = test_loader
             return train_loader, valid_loader, test_loader
 
-    def __init__(self, in_feats, hidden_dim, out_feats, num_layers=3, unsup=True):
+    def __init__(self, in_feats, hidden_dim, out_feats, num_layers=3, sup=False):
         super(InfoGraph, self).__init__()
 
-        self.unsup = unsup
+        self.sup = sup
         self.emb_dim = hidden_dim
         self.out_feats = out_feats
 
         self.sem_fc1 = nn.Linear(num_layers*hidden_dim, hidden_dim)
         self.sem_fc2 = nn.Linear(hidden_dim, out_feats)
 
-        if unsup:
+        if not sup:
             self.unsup_encoder = Encoder(in_feats, hidden_dim, num_layers)
             self.register_parameter("sem_encoder", None)
         else:
@@ -209,10 +214,10 @@ class InfoGraph(BaseModel):
                 nn.init.xavier_uniform_(m.weight.data)
 
     def forward(self, batch):
-        if self.unsup:
-            return self.unsup_forward(batch.x, batch.edge_index, batch.batch)
-        else:
+        if self.sup:
             return self.sup_forward(batch.x, batch.edge_index, batch.batch, batch.y, batch.edge_attr)
+        else:
+            return self.unsup_forward(batch.x, batch.edge_index, batch.batch)
 
     def sup_forward(self, x, edge_index=None, batch=None, label=None, edge_attr=None):
         node_feat, graph_feat = self.sem_encoder(x, edge_index, batch, edge_attr)
@@ -270,8 +275,11 @@ class InfoGraph(BaseModel):
     def mi_loss(pos_mask, neg_mask, mi, pos_div, neg_div):
         pos_mi = pos_mask * mi
         neg_mi = neg_mask * mi
-        # pos_loss = -(math.log(2.) - F.softplus(-pos_mi)).sum()
-        # neg_loss = (-math.log(2.) + F.softplus(-neg_mi) + neg_mi).sum()
-        pos_loss = F.softplus(-pos_mi).sum()
-        neg_loss = (F.softplus(neg_mi)).sum()
-        return pos_loss/pos_div + neg_loss/neg_div
+
+        pos_loss = (-math.log(2.) + F.softplus(-pos_mi)).sum()
+        neg_loss = (-math.log(2.) + F.softplus(-neg_mi) + neg_mi).sum()
+        # pos_loss = F.softplus(-pos_mi).sum()
+        # neg_loss = (F.softplus(neg_mi)).sum()
+        # pos_loss = pos_mi.sum()
+        # neg_loss = neg_mi.sum()
+        return pos_loss / pos_div + neg_loss / neg_div

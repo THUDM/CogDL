@@ -48,6 +48,7 @@ class NodeClassification(BaseTask):
         self.data = dataset[0]
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
+        args.num_nodes = dataset.data.x.shape[0]
         if model is None:
             self.model: SupervisedHomogeneousNodeClassificationModel = build_model(args)
 
@@ -58,7 +59,6 @@ class NodeClassification(BaseTask):
         ) if self.model.get_trainer(
             NodeClassification, self.args
         ) else None
-
 
         if not self.trainer:
             self.optimizer = torch.optim.Adam(
@@ -73,10 +73,15 @@ class NodeClassification(BaseTask):
 
     def train(self):
         if self.trainer:
-            if issubclass(type(self.trainer), SampledTrainer):
-                self.model = self.trainer.fit(self.model, self.dataset)
+            # if issubclass(type(self.trainer), SampledTrainer):
+            #     self.model = self.trainer.fit(self.model, self.dataset)
+            # else:
+            #     return dict(Acc=self.trainer.fit(self.model, self.dataset.data))
+            result = self.trainer.fit(self.model, self.dataset)
+            if isinstance(result, torch.nn.Module):
+                self.model = result
             else:
-                return dict(Acc=self.trainer.fit(self.model, self.dataset))
+                return result
         else:
             epoch_iter = tqdm(range(self.max_epoch))
             patience = 0

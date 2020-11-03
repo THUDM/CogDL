@@ -149,6 +149,7 @@ class GraphClassification(BaseTask):
                     self.model = best_model
                     epoch_iter.close()
                     break
+        self.model = best_model
         test_acc, _ = self._test_step(split="test")
         val_acc, _ = self._test_step(split="valid")
         print(f"Test accuracy = {test_acc}")
@@ -251,7 +252,6 @@ class GraphClassification(BaseTask):
                 datalist.append(data)
 
             if args.degree_feature:
-                print("FDSFSDFSDFDFSSF")
                 datalist = node_degree_as_feature(datalist)
                 args.num_features = datalist[0].num_features
             return datalist

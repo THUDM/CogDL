@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from .. import BaseModel, register_model
 from cogdl.utils import spmm, symmetric_normalization, row_normalization
 
+
 def mix_hidden_state(feat, target, train_index, alpha):
     if alpha > 0:
         lamb = np.random.beta(alpha, alpha)
@@ -27,6 +28,7 @@ def sharpen(prob, temperature):
 def get_one_hot_label(labels, index):
     num_classes = int(torch.max(labels) + 1)
     target = torch.zeros(labels.shape[0], num_classes).to(labels.device)
+
     target[index, labels[index]] = 1
     return target
 
@@ -133,6 +135,7 @@ class BaseGNNMix(BaseModel):
                             opt["rampup_ends"],
                             opt["epoch"]
                         )
+
         loss_sum = sup_loss + mixup_weight * unsup_loss
         return loss_sum
 

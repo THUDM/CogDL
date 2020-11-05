@@ -94,6 +94,7 @@ class Graphsage(BaseModel):
         parser.add_argument("--walk-length", type=int, default=10)
         parser.add_argument("--negative-samples", type=int, default=30)
         parser.add_argument("--lr", type=float, default=0.001)
+
         parser.add_argument("--max-epochs", type=int, default=3000)
         # fmt: on
 

@@ -2,7 +2,6 @@ import random
 
 import numpy as np
 import torch
-from torch import symeig
 import torch.nn as nn
 import torch.nn.functional as F
 

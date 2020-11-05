@@ -214,22 +214,6 @@ def test_rgcn_wn18():
     ret = task.train()
     assert ret["MRR"] >= 0 and ret["MRR"] < 1
 
-
-def test_compgcn_fb13():
-    args = get_kg_default_arfgs()
-    args.self_dropout = 0.2
-    args.self_loop = True
-    args.dataset = "fb13"
-    args.model = "rgcn"
-    args.task = "link_prediction"
-    args.regularizer = "basis"
-    dataset = build_dataset(args)
-    args = get_nums(dataset, args)
-    model = build_model(args)
-    task = build_task(args)
-    ret = task.train()
-    assert ret["MRR"] >= 0 and ret["MRR"] < 1
-
 def test_compgcn_wn18rr():
     args = get_kg_default_arfgs()
     args.lbl_smooth = 0.1

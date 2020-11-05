@@ -41,16 +41,15 @@ class NodeClassification(BaseTask):
         self.args = args
         self.model_name = args.model
         self.device = args.device_id[0] if not args.cpu else "cpu"
-        if dataset is None:
-            dataset = build_dataset(args)
+        dataset = build_dataset(args) if dataset is None else dataset
 
         self.dataset = dataset
         self.data = dataset[0]
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
         args.num_nodes = dataset.data.x.shape[0]
-        if model is None:
-            self.model: SupervisedHomogeneousNodeClassificationModel = build_model(args)
+
+        self.model: SupervisedHomogeneousNodeClassificationModel = build_model(args) if model is None else model
 
         self.trainer: Optional[
             SupervisedHomogeneousNodeClassificationTrainer

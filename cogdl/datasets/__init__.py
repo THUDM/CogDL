@@ -15,7 +15,6 @@ try:
     from dgl.data.tu import TUDataset
 except ImportError:
     dgl_import = False
-    print("Failed to import Deep Graph Library (DGL)")
 else:
     dgl_import = True
 

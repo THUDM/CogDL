@@ -45,10 +45,10 @@ class UnsupervisedNodeClassification(BaseTask):
         parser.add_argument("--num-shuffle", type=int, default=5)
         # fmt: on
 
-    def __init__(self, args, model=None, dataset=None):
+    def __init__(self, args, dataset=None, model=None):
         super(UnsupervisedNodeClassification, self).__init__(args)
-        if dataset is None:
-            dataset = build_dataset(args)
+        dataset = build_dataset(args) if dataset is None else dataset
+
         self.data = dataset[0]
         if pyg and issubclass(dataset.__class__.__bases__[0], InMemoryDataset):
             self.num_nodes = self.data.y.shape[0]
@@ -62,8 +62,8 @@ class UnsupervisedNodeClassification(BaseTask):
 
         args.num_classes = dataset.num_classes if hasattr(dataset, 'num_classes') else 0
         args.num_features = dataset.num_features if hasattr(dataset, 'num_features') else 0
-        if model is None:
-            self.model = build_model(args)
+        self.model = build_model(args) if model is None else model
+
         self.model_name = args.model
         self.dataset_name = args.dataset
         self.hidden_size = args.hidden_size

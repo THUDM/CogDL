@@ -710,7 +710,7 @@ class SupervisedTrainer(Pretrainer):
             loss_items.append(loss.item())
 
             with torch.no_grad():
-                pred = pred.cpu().numpy()
+                pred = pred.cpu().detach().numpy()
                 y_labels = batch.go_target_pretrain.view(pred.shape).cpu().numpy()
 
                 auc_scores = []

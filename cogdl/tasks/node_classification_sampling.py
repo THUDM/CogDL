@@ -33,16 +33,16 @@ class NodeClassificationSampling(BaseTask):
         parser.add_argument("--batch-size", type=int, default=20)
         # fmt: on
 
-    def __init__(self, args):
+    def __init__(self, args, dataset=None, model=None):
         super(NodeClassificationSampling, self).__init__(args)
 
         self.device = torch.device('cpu' if args.cpu else 'cuda')
-        dataset = build_dataset(args)
+        dataset = build_dataset(args) if dataset is None else dataset
         self.data = dataset.data
         self.data.apply(lambda x: x.to(self.device))
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
-        model = build_model(args)
+        model = build_model(args) if model is None else model
         self.num_nodes = self.data.x.shape[0]
         self.model = model.to(self.device)
         self.patience = args.patience

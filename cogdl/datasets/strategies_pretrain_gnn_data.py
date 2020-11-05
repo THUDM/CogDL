@@ -554,6 +554,7 @@ class DataLoaderSubstructContext(torch.utils.data.DataLoader):
 @register_dataset("test_bio")
 class TestBioDataset(InMemoryDataset):
     def __init__(self,
+                 data_type="unsupervised",
                  root=None,
                  transform=None,
                  pre_transform=None,
@@ -587,6 +588,18 @@ class TestBioDataset(InMemoryDataset):
             "edge_attr": torch.arange(0, (num_graphs + 1) * num_edges, num_edges),
             "center_node_idx": torch.arange(num_graphs+1),
         }
+
+        if data_type == "supervised":
+            pretrain_tasks = 10
+            downstream_tasks = 5
+            go_target_pretrain = torch.zeros(pretrain_tasks * num_graphs)
+            go_target_downstream = torch.zeros(downstream_tasks * num_graphs)
+            go_target_pretrain[torch.arange(0, pretrain_tasks*num_graphs, pretrain_tasks)] = 1
+            go_target_downstream[torch.arange(0, downstream_tasks*num_graphs, downstream_tasks)] = 1
+            self.data.go_target_downstream = go_target_downstream
+            self.data.go_target_pretrain = go_target_pretrain
+            self.slices["go_target_pretrain"] = torch.arange(0, (num_graphs + 1) * pretrain_tasks)
+            self.slices["go_target_downstream"] = torch.arange(0, (num_graphs + 1) * downstream_tasks)
 
 
 @register_dataset("bio")

@@ -63,7 +63,7 @@ class NodeClassification(BaseTask):
         if not self.trainer:
             self.optimizer = torch.optim.Adam(
                 self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
-            )
+            ) if not hasattr(self.model, "get_optimizer") else self.model.get_optimizer(args)
             self.data.apply(lambda x: x.to(self.device))
             self.model: SupervisedHomogeneousNodeClassificationModel = self.model.to(
                 self.device
@@ -107,9 +107,10 @@ class NodeClassification(BaseTask):
                 else:
                     patience += 1
                     if patience == self.patience:
-                        self.model = best_model
                         epoch_iter.close()
                         break
+            print(f"Valid accurracy = {best_score}")
+            self.model = best_model
         test_acc, _ = self._test_step(split="test")
         val_acc, _ = self._test_step(split="val")
         print(f"Test accuracy = {test_acc}")

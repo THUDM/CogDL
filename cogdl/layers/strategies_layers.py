@@ -274,7 +274,7 @@ class Pretrainer(nn.Module):
             }
             raise NotImplementedError  # ChemDataset
         elif dataset_name == "test_bio":
-            dataset = TestBioDataset(transform=transform)
+            dataset = TestBioDataset(data_type=self.data_type, transform=transform)
             opt = {
                 "input_layer": 2,
                 "edge_encode": 9,
@@ -289,6 +289,7 @@ class Pretrainer(nn.Module):
 
     def fit(self):
         print("Start training...")
+        train_acc = 0.
         for i in range(self.max_epoch):
             train_loss, train_acc = self._train_step()
             if self.device != "cpu":
@@ -297,11 +298,17 @@ class Pretrainer(nn.Module):
         if not self.output_model_file == "":
             if not os.path.exists("./saved"):
                 os.mkdir("./saved")
-            if self.finetune:
-                torch.save(self.model.state_dict(), self.output_model_file + "_ft.pth")
+
+            if isinstance(self.model, GNNPred):
+                model = self.model.gnn
             else:
-                torch.save(self.model.state_dict(), self.output_model_file + ".pth")
-        return dict()
+                model = self.model
+            if self.finetune:
+                torch.save(model.state_dict(), self.output_model_file + "_ft.pth")
+            else:
+                torch.save(model.state_dict(), self.output_model_file + ".pth")
+
+        return dict(Acc=train_acc)
 
 
 class Discriminator(nn.Module):
@@ -645,7 +652,7 @@ class SupervisedTrainer(Pretrainer):
     @staticmethod
     def add_args(parser):
         parser.add_argument("--pooling", type=str, default="mean")
-        parser.add_argument("--checkpoint", type=str, default="./saved")
+        parser.add_argument("--checkpoint", type=str, default=None)
 
     def __init__(self, args):
         args.data_type = "supervised"
@@ -697,14 +704,14 @@ class SupervisedTrainer(Pretrainer):
                 self.self_loop_type
             )
             self.optimizer.zero_grad()
-            loss = self.loss_fn(pred, batch.go_target_downstream.view(pred.shape).to(torch.float64))
+            loss = self.loss_fn(pred, batch.go_target_pretrain.view(pred.shape).to(torch.float64))
             loss.backward()
             self.optimizer.step()
             loss_items.append(loss.item())
 
             with torch.no_grad():
                 pred = pred.cpu().numpy()
-                y_labels = batch.go_target_downstream.view(pred.shape).cpu().numpy()
+                y_labels = batch.go_target_pretrain.view(pred.shape).cpu().numpy()
 
                 auc_scores = []
                 for i in range(len(pred[0])):
@@ -851,4 +858,4 @@ class Finetuner(Pretrainer):
         self.model = best_model
         test_auc, test_loss = self._test_step(split="test")
         print(f"Test auc:{test_auc}, test loss: {test_loss}")
-        return test_auc
+        return dict(Acc=test_auc)

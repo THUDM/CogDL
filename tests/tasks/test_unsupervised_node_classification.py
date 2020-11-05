@@ -89,7 +89,7 @@ def test_grarep_ppi():
     task = build_task(args)
     ret = task.train()
     assert ret['Micro-F1 0.9'] > 0   
-    
+
 def test_netmf_ppi():
     args = get_default_args()
     args.task = 'unsupervised_node_classification'
@@ -210,6 +210,7 @@ def test_unsupervised_graphsage():
     args.negative_samples = 10
     args.walk_length = 5
     args.sample_size = [5, 5]
+    args.patience = 20
     args.task = "unsupervised_node_classification"
     args.dataset = "cora"
     args.max_epochs = 2
@@ -217,10 +218,10 @@ def test_unsupervised_graphsage():
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
-    model = build_model(args)
     task = build_task(args)
     ret = task.train()
     assert ret['Acc'] > 0
+
 
 def test_dgi():
     args = get_unsupervised_nn_args()
@@ -231,10 +232,10 @@ def test_dgi():
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
-    model = build_model(args)
     task = build_task(args)
     ret = task.train()
     assert ret['Acc'] > 0
+
 
 def test_mvgrl():
     args = get_unsupervised_nn_args()
@@ -245,10 +246,10 @@ def test_mvgrl():
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
-    model = build_model(args)
     task = build_task(args)
     ret = task.train()
     assert ret['Acc'] > 0
+
 
 if __name__ == "__main__":
     test_unsupervised_graphsage()

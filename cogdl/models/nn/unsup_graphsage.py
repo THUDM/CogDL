@@ -93,7 +93,7 @@ class Graphsage(BaseModel):
         parser.add_argument("--dropout", type=float, default=0.5)
         parser.add_argument("--walk-length", type=int, default=10)
         parser.add_argument("--negative-samples", type=int, default=30)
-        parser.add_argument("--lr", type=float, default=0.00001)
+        parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--max-epochs", type=int, default=3000)
         # fmt: on
 
@@ -110,16 +110,17 @@ class Graphsage(BaseModel):
             args.negative_samples,
             args.lr,
             args.max_epochs,
+            args.patience,
         )
 
     def __init__(
             self, num_features, hidden_size, num_classes, num_layers,
-            sample_size, dropout, walk_length, negative_samples, lr, epochs
+            sample_size, dropout, walk_length, negative_samples, lr, epochs, patience
     ):
         super(Graphsage, self).__init__()
         self.model = SAGE(num_features, hidden_size, num_layers, sample_size, dropout, walk_length, negative_samples)
         self.epochs = epochs
-        self.patience = 20
+        self.patience = patience
         self.lr = lr
         self.nhid = hidden_size
         self.nclass = num_classes

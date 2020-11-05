@@ -169,16 +169,21 @@ This leaderboard reports unsupervised multi-label node classification setting. w
 
 This leaderboard reports the semi-supervised node classification under a transductive setting including several popular graph neural network methods.
 
-| Rank | Method                                                       |      Cora      |    Citeseer    |     Pubmed     |
-| ---- | ------------------------------------------------------------ | :------------: | :------------: | :------------: |
-| 1    | Graph U-Net [(Gao et al., 2019)](https://arxiv.org/abs/1905.05178) | **84.4 ± 0.6** | **73.2 ± 0.5** |   79.6 ± 0.2   |
-| 2    | MixHop [(Abu-El-Haija et al., ICML'19)](https://arxiv.org/abs/1905.00067) |   81.9 ± 0.4   |   71.4 ± 0.8   | **80.8 ± 0.6** |
-| 3    | DR-GAT [(Zou et al., 2019)](https://arxiv.org/abs/1907.02237) |   83.6 ± 0.5   |   72.8 ± 0.8   |   79.1 ± 0.3   |
-| 4    | GAT [(Veličković et al., ICLR'18)](https://arxiv.org/abs/1710.10903) |   83.0 ± 0.7   |   72.5 ± 0.7   |   79.0 ± 0.3   |
-| 5    | DGI [(Veličković et al., ICLR'19)](https://arxiv.org/abs/1809.10341) |   82.3 ± 0.6   |   71.8 ± 0.7   |   76.8 ± 0.6   |
-| 6    | GCN [(Kipf et al., ICLR'17)](https://arxiv.org/abs/1609.02907) |   81.4 ± 0.5   |   70.9 ± 0.5   |   79.0 ± 0.3   |
-| 7    | GraphSAGE [(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |   80.1 ± 0.2   |   66.2 ± 0.4   |   76.9 ± 0.7   |
-| 8    | Chebyshev [(Defferrard et al., NeurIPS'16)](https://arxiv.org/abs/1606.09375) |   79.2 ± 1.4   |   69.3 ± 1.3   |   68.5 ± 1.2   |
+| Rank | Method                                                       |     Cora      |    Citeseer    |     Pubmed     |
+| ---- | ------------------------------------------------------------ | :-----------: | :------------: | :------------: |
+| 1    | Grand([Feng et al., NIPS'20](https://arxiv.org/pdf/2005.11079.pdf)) |  84.8 ± 0.3   | **75.1 ± 0.3** | **82.4 ± 0.4** |
+| 2    | GCNII([Chen et al., ICML'20](https://arxiv.org/pdf/2007.02133.pdf)) | **85.1± 0.3** |      71.3      |      80.2      |
+| 3    | DR-GAT [(Zou et al., 2019)](https://arxiv.org/abs/1907.02237) |  83.6 ± 0.5   |   72.8 ± 0.8   |   79.1 ± 0.3   |
+| 4    | MVGRL [(Hassani et al., KDD'20)](https://arxiv.org/pdf/2006.05582v1.pdf) |  83.6 ± 0.2   |   73.0 ± 0.3   |   80.1 ± 0.7   |
+| 5    | GAT [(Veličković et al., ICLR'18)](https://arxiv.org/abs/1710.10903) |     82.9      |      71.0      |   78.9 ± 0.3   |
+| 6    | GCN [(Kipf et al., ICLR'17)](https://arxiv.org/abs/1609.02907) |  82.3 ± 0.3   |   71.4 ± 0.4   |   79.5 ± 0.2   |
+| 7    | SRGCN                                                        |  82.2 ± 0.2   |   72.8 ± 0.2   |   79.0 ± 0.4   |
+| 8    | DGI [(Veličković et al., ICLR'19)](https://arxiv.org/abs/1809.10341) |  82.0 ± 0.2   |   71.2 ± 0.4   |   76.5 ± 0.6   |
+| 9    | GraphSAGE [(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |  80.1 ± 0.2   |   66.2 ± 0.4   |   77.2 ± 0.7   |
+| 10   | GraphSAGE(unsup)[(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |  78.2 ± 0.9   |   65.8 ± 1.0   |   78.2 ± 0.7   |
+| 11   | Chebyshev [(Defferrard et al., NeurIPS'16)](https://arxiv.org/abs/1606.09375) |  79.0 ± 1.0   |   69.8 ± 0.5   |   68.6 ± 1.0   |
+| 12   | Graph U-Net [(Gao et al., 2019)](https://arxiv.org/abs/1905.05178) |     81.8      |      67.1      |      77.3      |
+| 13   | MixHop [(Abu-El-Haija et al., ICML'19)](https://arxiv.org/abs/1905.00067) |  81.9 ± 0.4   |   71.4 ± 0.8   |   80.8 ± 0.6   |
 
 #### Multiplex Node Classification
 
@@ -231,12 +236,12 @@ This leaderboard reports the performance of graph classification methods. we run
 
 | Rank | Method                                                       |   MUTAG   |   IMDB-B   |   IMDB-M   |   PROTEINS   |   COLLAB   |
 | :--- | :----------------------------------------------------------- | :-------: | :--------: | :--------: | :----------: | :--------: |
-| 1    | Infograph [(Sun et al, ICLR'20)](https://openreview.net/forum?id=r1lfF2NYvH) | **88.95** | 74.50  | 51.33  |  73.93   | 78.14  |
-| 2    | GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km) | 88.33 | **76.70**  | 50.80  |  72.86   | 79.52  |
-| 3    | DiffPool [(Ying et al, NeuIPS'18)](https://arxiv.org/abs/1806.08804) | 85.18 | 74.30  | 50.73  |  75.30   | 77.20  |
-| 4    | SortPool [(Zhang et al, AAAI'18)](https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf) | 85.61 | 75.20  | 51.07  |  74.11   | 79.98  |
+| 1 | GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km) | **92.06** | **76.10** | 51.80 | 75.19 | 79.52 |
+| 2   | Infograph [(Sun et al, ICLR'20)](https://openreview.net/forum?id=r1lfF2NYvH) | 88.95 | 74.50  | 51.33  |  73.93   | 79.4 |
+| 3    | DiffPool [(Ying et al, NeuIPS'18)](https://arxiv.org/abs/1806.08804) | 85.18 | 72.40 | 50.50 |  75.30   | 79.27 |
+| 4    | SortPool [(Zhang et al, AAAI'18)](https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf) | 87.25 | 75.40 | 50.47 |  73.23  | 80.07 |
 | 5    | Graph2Vec [(Narayanan et al, CoRR'17)](https://arxiv.org/abs/1707.05005) | 83.68 | 73.90  | **52.27**  |  73.30   | **85.58**  |
-| 6    | PATCH_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf) | 85.12 | 76.00  | 46.20  |  **75.50**   | 75.42  |
+| 6    | PATCH_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf) | 86.12 | 76.00  | 46.40 |  **75.38**  | 74.34 |
 | 7    | DGCNN [(Wang et al, ACM Transactions on Graphics'17)](https://arxiv.org/abs/1801.07829) | 83.33 | 69.50  | 46.33  |  66.67   | 77.45  |
 | 8    | DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417) | 83.68 | 55.00  | 40.40  |  72.59   |   /    |
 

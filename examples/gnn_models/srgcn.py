@@ -14,50 +14,27 @@ DATASET_REGISTRY = {}
 def build_default_args_for_node_classification(dataset):
     cpu = not torch.cuda.is_available()
     args = {
-        "lr": 0.01,
+        "lr": 0.005,
         "weight_decay": 5e-4,
-        "max_epoch": 500,
+        "max_epoch": 1300,
         "patience": 100,
         "cpu": cpu,
         "device_id": [0],
-        "seed": [0,],
+        "seed": [0, ],
 
         "dropout": 0.5,
-        "hidden_size": [128, ],
-        "num_layers": 2,
-        "sample_size": [10, 10],
+        "hidden_size": 8,
+        "attention_type": "node",
+        "normalization": "row_uniform",
+        "num_heads": 8,
+        "nhtop": 1,
+        "node_dropout": 0.5,
+        "subheads": 1,
+        "activation": "leaky_relu",
+        "alpha": 0.2,
 
         "task": "node_classification",
-        "model": "graphsage",
-        "dataset": dataset
-    }
-    return build_args_from_dict(args)
-
-
-def build_default_args_for_unsupervised_node_classification(dataset):
-    cpu = not torch.cuda.is_available()
-    args = {
-        "lr": 0.001,
-        "weight_decay": 0,
-        "max_epoch": 500,
-        "max_epochs": 3000,
-        "patience": 100,
-        "cpu": cpu,
-        "device_id": 0,
-        "seed": [0,],
-        "num_shuffle": 5,
-        "save_dir": ".",
-        "enhance": None,
-
-        "negative_samples": 30,
-        "dropout": 0.5,
-        "hidden_size": 128,
-        "num_layers": 2,
-        "sample_size": [10, 10],
-        "walk_length": 10,
-
-        "task": "unsupervised_node_classification",
-        "model": "unsup_graphsage",
+        "model": "gcn",
         "dataset": dataset
     }
     return build_args_from_dict(args)
@@ -72,11 +49,13 @@ def register_func(name):
 
 @register_func("cora")
 def cora_config(args):
+    args.dropout = 0.6
     return args
 
 
 @register_func("citeseer")
 def citeseer_config(args):
+    args.dropout = 0.6
     return args
 
 
@@ -86,11 +65,7 @@ def pubmed_config(args):
 
 
 def run(dataset_name):
-    unsup = False # unsupervised or supervised node classification
-    if unsup:
-        args = build_default_args_for_unsupervised_node_classification(dataset_name)
-    else:
-        args = build_default_args_for_node_classification(dataset_name)
+    args = build_default_args_for_node_classification(dataset_name)
     args = DATASET_REGISTRY[dataset_name](args)
     dataset, args = get_dataset(args)
     results = []
@@ -107,4 +82,4 @@ if __name__ == "__main__":
     results = []
     for x in datasets:
         results += run(x)
-    print_result(results, datasets, "graphsage")
+    print_result(results, datasets, "srgcn")

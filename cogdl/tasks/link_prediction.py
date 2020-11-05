@@ -234,6 +234,9 @@ class HomoLinkPrediction(nn.Module):
         return dict(ROC_AUC=roc_auc, PR_AUC=pr_auc, F1=f1_score)
 
 class TripleLinkPrediction(nn.Module):
+    """
+    Training process borrowed from `KnowledgeGraphEmbedding<https://github.com/DeepGraphLearning/KnowledgeGraphEmbedding>`
+    """
     def __init__(self, args, dataset=None, model=None):
         super(TripleLinkPrediction, self).__init__()
         self.dataset = build_dataset(args) if dataset is None else dataset

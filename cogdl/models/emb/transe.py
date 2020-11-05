@@ -10,6 +10,7 @@ from .knowledge_base import KGEModel
 class TransE(KGEModel):
     r"""The TransE model from paper `"Translating Embeddings for Modeling Multi-relational Data"
     <http://papers.nips.cc/paper/5071-translating-embeddings-for-modeling-multi-relational-data.pdf>`
+    borrowed from `KnowledgeGraphEmbedding<https://github.com/DeepGraphLearning/KnowledgeGraphEmbedding>`
     """
     def __init__(self, nentity, nrelation, hidden_dim, gamma, 
                  double_entity_embedding=False, double_relation_embedding=False):

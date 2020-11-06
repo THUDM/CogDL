@@ -10,6 +10,7 @@ from .knowledge_base import KGEModel
 class DistMult(KGEModel):
     r"""The DistMult model from the ICLR 2015 paper `"EMBEDDING ENTITIES AND RELATIONS FOR LEARNING AND INFERENCE IN KNOWLEDGE BASES"
     <https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/ICLR2015_updated.pdf>`
+    borrowed from `KnowledgeGraphEmbedding<https://github.com/DeepGraphLearning/KnowledgeGraphEmbedding>`
     """
 
     def __init__(self, nentity, nrelation, hidden_dim, gamma, 

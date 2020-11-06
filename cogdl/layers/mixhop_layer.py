@@ -17,7 +17,7 @@ class MixHopLayer(nn.Module):
         for dim in dim_per_pow:
             self.linears.append(nn.Linear(num_features, dim))
             self.total_dim += dim
-        self.reset_parameters()
+        # self.reset_parameters()
 
     def reset_parameters(self):
         for linear in self.linears:

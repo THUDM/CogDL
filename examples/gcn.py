@@ -4,6 +4,7 @@ from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.utils import build_args_from_dict
 
+
 def get_default_args():
     cuda_available = torch.cuda.is_available()
     default_dict = {'hidden_size': 16,

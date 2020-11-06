@@ -1,5 +1,4 @@
-from torch_geometric.utils import add_self_loops, degree
-
+from cogdl.utils import add_remaining_self_loops
 from cogdl.layers.srgcn_module import *
 from .. import BaseModel, register_model
 
@@ -60,7 +59,7 @@ class SrgcnHead(nn.Module):
         # x = self.dropout(x)
 
         # nl_adj_mat_ind, nl_adj_mat_val = add_self_loops(edge_index, num_nodes=N)[0], edge_attr.squeeze()
-        nl_adj_mat_ind = add_self_loops(edge_index, num_nodes=N)[0]
+        nl_adj_mat_ind = add_remaining_self_loops(edge_index, num_nodes=N)[0]
         nl_adj_mat_val = torch.ones(nl_adj_mat_ind.shape[1]).to(x.device)
 
         for _ in range(self.nhop-1):
@@ -81,10 +80,6 @@ class SrgcnHead(nn.Module):
             val_h = h
 
             for _ in range(i + 1):
-                # scatter_add
-                # h_selected = torch.index_select(val_h, 0, edge_index[1])
-                # val_h = torch.zeros_like(h).scatter_add_(dim=0, index=edge_index[0].unsqueeze(1).repeat(1, dim), src=h_selected)
-
                 val_h = spmm(adj_mat_ind, adj_mat_val, N, N, val_h)
                 # val_h = spmm(adj_mat_ind, F.dropout(adj_mat_val, p=self.node_dropout, training=self.training), N, N, val_h)
 
@@ -123,7 +118,7 @@ class SrgcnSoftmaxHead(nn.Module):
         # x = self.dropout(x)
 
         # adj_mat_ind, adj_mat_val = add_self_loops(edge_index, num_nodes=N)[0], edge_attr.squeeze()
-        adj_mat_ind = add_self_loops(edge_index, num_nodes=N)[0]
+        adj_mat_ind = add_remaining_self_loops(edge_index, num_nodes=N)[0]
         adj_mat_val = torch.ones(adj_mat_ind.shape[1]).to(x.device)
 
         h = torch.mm(x, self.weight)

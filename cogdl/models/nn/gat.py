@@ -4,10 +4,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.parameter import Parameter
 
 from .. import BaseModel, register_model
-
+from cogdl.utils import add_remaining_self_loops
 
 class GraphAttentionLayer(nn.Module):
     """
@@ -240,11 +239,12 @@ class PetarVSpGAT(PetarVGAT):
             nhid * nheads, nclass, dropout=dropout, alpha=alpha, concat=False
         )
 
-    def forward(self, x, adj):
+    def forward(self, x, edge_index):
+        edge_index, _ = add_remaining_self_loops(edge_index)
         x = F.dropout(x, self.dropout, training=self.training)
-        x = torch.cat([att(x, adj) for att in self.attentions], dim=1)
+        x = torch.cat([att(x, edge_index) for att in self.attentions], dim=1)
         x = F.dropout(x, self.dropout, training=self.training)
-        x = F.elu(self.out_att(x, adj))
+        x = F.elu(self.out_att(x, edge_index))
         return F.log_softmax(x, dim=1)
     
     def loss(self, data):

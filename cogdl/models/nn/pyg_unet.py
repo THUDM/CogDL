@@ -5,6 +5,7 @@ from torch_geometric.nn import GraphUNet
 from torch_geometric.utils import dropout_adj
 
 from .. import BaseModel, register_model
+from cogdl.utils import add_remaining_self_loops
 
 
 @register_model("unet")
@@ -15,9 +16,9 @@ class UNet(BaseModel):
         # fmt: off
         parser.add_argument("--num-features", type=int)
         parser.add_argument("--num-classes", type=int)
-        parser.add_argument("--hidden-size", type=int, default=64)
+        parser.add_argument("--hidden-size", type=int, default=32)
         parser.add_argument("--num-layers", type=int, default=2)
-        parser.add_argument("--dropout", type=float, default=0.5)
+        parser.add_argument("--dropout", type=float, default=0.92)
         # fmt: on
 
     @classmethod
@@ -28,9 +29,10 @@ class UNet(BaseModel):
             args.hidden_size,
             args.num_layers,
             args.dropout,
+            args.num_nodes
         )
 
-    def __init__(self, num_features, num_classes, hidden_size, num_layers, dropout):
+    def __init__(self, num_features, num_classes, hidden_size, num_layers, dropout, num_nodes):
         super(UNet, self).__init__()
 
         self.num_features = num_features
@@ -38,8 +40,16 @@ class UNet(BaseModel):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.dropout = dropout
+        self.num_nodes = 0
 
-        self.unet = GraphUNet(num_features, hidden_size, num_classes, depth=3, pool_ratios=[0.5, 0.5])
+        self.unet = GraphUNet(
+            self.num_features,
+            self.hidden_size,
+            self.num_classes,
+            depth=3,
+            pool_ratios=[2000 / num_nodes, 0.5],
+            act=F.elu
+        )
 
     def forward(self, x, edge_index):
         edge_index, _ = dropout_adj(edge_index, p=0.2,

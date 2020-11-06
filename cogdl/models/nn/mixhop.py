@@ -1,3 +1,4 @@
+from cogdl.utils import add_remaining_self_loops
 import math
 
 import torch
@@ -18,9 +19,9 @@ class MixHop(BaseModel):
         # fmt: off
         parser.add_argument("--num-features", type=int)
         parser.add_argument("--num-classes", type=int)
-        parser.add_argument("--hidden-size", type=int, default=64)
-        parser.add_argument("--num-layers", type=int, default=2)
-        parser.add_argument("--dropout", type=float, default=0.5)
+        parser.add_argument("--dropout", type=float, default=0.7)
+        parser.add_argument("--layer1-pows", type=int, nargs="+", default=[200, 200, 200])
+        parser.add_argument("--layer2-pows", type=int, nargs="+", default=[20, 20, 20])
         # fmt: on
 
     @classmethod
@@ -28,32 +29,33 @@ class MixHop(BaseModel):
         return cls(
             args.num_features,
             args.num_classes,
-            args.hidden_size,
-            args.num_layers,
             args.dropout,
+            args.layer1_pows,
+            args.layer2_pows,
         )
 
-    def __init__(self, num_features, num_classes, hidden_size, num_layers, dropout):
+    def __init__(self, num_features, num_classes, dropout, layer1_pows, layer2_pows):
         super(MixHop, self).__init__()
 
         self.dropout = dropout
 
         self.num_features = num_features
         self.num_classes = num_classes
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
         self.dropout = dropout
+        layer_pows = [layer1_pows, layer2_pows]
 
-        shapes = [num_features] + [hidden_size * 2] * (num_layers)
+        shapes = [num_features] + [sum(layer1_pows), sum(layer2_pows)]
+
         self.mixhops = nn.ModuleList(
             [
-                MixHopLayer(shapes[layer], [1, 2], [hidden_size] * 2)
-                for layer in range(num_layers)
+                MixHopLayer(shapes[layer], [0, 1, 2], layer_pows[layer])
+                for layer in range(len(layer_pows))
             ]
         )
-        self.fc = nn.Linear(hidden_size * 2, num_classes)
+        self.fc = nn.Linear(shapes[-1], num_classes)
 
     def forward(self, x, edge_index):
+        edge_index, _ = add_remaining_self_loops(edge_index)
         for mixhop in self.mixhops:
             x = F.relu(mixhop(x, edge_index))
             x = F.dropout(x, p=self.dropout, training=self.training)

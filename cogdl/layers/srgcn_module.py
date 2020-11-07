@@ -59,9 +59,8 @@ class EdgeAttention(nn.Module):
         p_val = self.dropout(p_val)
         q_val = self.dropout(q_val)
 
-        diag_ind = torch.LongTensor([range(N)] * 2).to(device)
-        _, p_adj_mat_val = spspmm(edge_index, edge_attr_t, diag_ind, p_val.view(-1), N, N, N, True)
-        _, q_adj_mat_val = spspmm(diag_ind, q_val.view(-1), edge_index, edge_attr, N, N, N, True)
+        p_adj_mat_val = edge_attr_t * p_val.view(-1)[edge_index[1]]
+        q_adj_mat_val = edge_attr_t * q_val.view(-1)[edge_index[0]]
         return edge_index, p_adj_mat_val + q_adj_mat_val
 
 
@@ -73,47 +72,42 @@ class Identity(nn.Module):
         return edge_index, edge_attr
 
 
-class Gaussian(nn.Module):
-    def __init__(self, in_feat):
-        super(Gaussian, self).__init__()
-        self.mu = 0.2
-        self.theta = 1.
-        self.steps = 4
+# class Gaussian(nn.Module):
+#     def __init__(self, in_feat):
+#         super(Gaussian, self).__init__()
+#         self.mu = 0.2
+#         self.theta = 1.
+#         self.steps = 4
 
-    def forward(self, x, edge_index, edge_attr):
-        N = x.shape[0]
-        row, col = edge_index
-        deg = degree(row, x.size(0), dtype=x.dtype)
-        deg_inv = deg.pow(-1)
-        adj = torch.sparse_coo_tensor(edge_index, deg_inv[row] * edge_attr , size=(N, N))
-        identity = torch.sparse_coo_tensor([range(N)] * 2, torch.ones(N), size=(N, N)).to(x.device)
-        laplacian = identity - adj
+#     def forward(self, x, edge_index, edge_attr):
+#         N = x.shape[0]
+#         row, col = edge_index
+#         deg = degree(row, x.size(0), dtype=x.dtype)
+#         deg_inv = deg.pow(-1)
+#         adj = torch.sparse_coo_tensor(edge_index, deg_inv[row] * edge_attr , size=(N, N))
+#         identity = torch.sparse_coo_tensor([range(N)] * 2, torch.ones(N), size=(N, N)).to(x.device)
+#         laplacian = identity - adj
 
-        t0 = identity
-        t1 = laplacian - self.mu * identity
-        t1 = t1.mm(t1.to_dense()).to_sparse()
-        l_x = -0.5 * (t1 - identity)
-        # l_x = -0.5 * ((laplacian - self.mu * identity).pow(2) - identity)
+#         t0 = identity
+#         t1 = laplacian - self.mu * identity
+#         t1 = t1.mm(t1.to_dense()).to_sparse()
+#         l_x = -0.5 * (t1 - identity)
+#         # l_x = -0.5 * ((laplacian - self.mu * identity).pow(2) - identity)
 
-        ivs = [iv(i, self.theta) for i in range(self.steps)]
-        ivs[1:] = [(-1) ** i * 2 * x for i, x in enumerate(ivs[1:])]
-        ivs = torch.tensor(ivs).to(x.device)
-        result = [t0, l_x]
-        for i in range(2, self.steps):
-            result.append(2*l_x.mm(result[i-1].to_dense()).to_sparse().sub(result[i-2]))
+#         ivs = [iv(i, self.theta) for i in range(self.steps)]
+#         ivs[1:] = [(-1) ** i * 2 * x for i, x in enumerate(ivs[1:])]
+#         ivs = torch.tensor(ivs).to(x.device)
+#         result = [t0, l_x]
+#         for i in range(2, self.steps):
+#             result.append(2*l_x.mm(result[i-1].to_dense()).to_sparse().sub(result[i-2]))
 
-            # adj_ind, adj_val = spspmm(l_x._indices(), l_x._values(), result[i-1]._indices(), result[i-1]._values(), N, N, N, True)
-            # obj = torch.sparse_coo_tensor(adj_ind, adj_val * 2, size=(N, N))
-            # obj = obj.sub(result[i-2])
-            # result.append(obj)
+#         result = [result[i] * ivs[i] for i in range(self.steps)]
 
-        result = [result[i] * ivs[i] for i in range(self.steps)]
+#         def fn(x, y):
+#             return x.add(y)
+#         res = reduce(fn, result)
 
-        def fn(x, y):
-            return x.add(y)
-        res = reduce(fn, result)
-
-        return res._indices(), res._values()
+#         return res._indices(), res._values()
 
 
 class PPR(nn.Module):
@@ -169,8 +163,6 @@ def act_attention(attn_type):
         return NodeAttention
     elif attn_type == "edge":
         return EdgeAttention
-    elif attn_type == "gaussian":
-        return Gaussian
     elif attn_type == "ppr":
         return PPR
     elif attn_type == "heat":

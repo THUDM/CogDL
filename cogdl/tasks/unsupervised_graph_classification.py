@@ -1,8 +1,8 @@
+import copy
 import os
 from collections import defaultdict
 import numpy as np
 from sklearn.utils import shuffle as skshuffle
-from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.metrics import f1_score, accuracy_score
 from sklearn.model_selection import GridSearchCV
@@ -16,7 +16,6 @@ from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from . import BaseTask, register_task
 from .graph_classification import node_degree_as_feature
-from .unsupervised_node_classification import TopKRanker
 
 
 @register_task("unsupervised_graph_classification")
@@ -76,19 +75,26 @@ class UnsupervisedGraphClassification(BaseTask):
 
     def train(self):
         if self.use_nn:
+            best_model = None
+            best_loss = 10000
             epoch_iter = tqdm(range(self.epoch))
             for epoch in epoch_iter:
-                loss_n = 0
+                loss_n = []
                 for batch in self.data_loader:
                     batch = batch.to(self.device)
                     predict, loss = self.model(batch)
                     self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
-                    loss_n += loss.item()
+                    loss_n.append(loss.item())
+                loss_n = np.mean(loss_n)
                 epoch_iter.set_description(
-                    f"Epoch: {epoch:03d}, TrainLoss: {loss_n} "
+                    f"Epoch: {epoch:03d}, TrainLoss: {np.mean(loss_n)} "
                 )
+                if loss_n < best_loss:
+                    best_loss = loss_n
+                    best_model = copy.deepcopy(self.model)
+            self.model = best_model
             with torch.no_grad():
                 self.model.eval()
                 prediction = []
@@ -143,10 +149,12 @@ class UnsupervisedGraphClassification(BaseTask):
                 accuracy = f1_score(y_test, preds, average="micro")
                 all_results[training_percent].append(accuracy)
 
-        return dict(
+        result = dict(
             (
                 f"Accuracy {train_percent}",
                 sum(all_results[train_percent]) / len(all_results[train_percent]),
             )
             for train_percent in sorted(all_results.keys())
         )
+        print("Test Acc: ", list(result.values())[-1])
+        return result

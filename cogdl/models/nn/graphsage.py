@@ -33,6 +33,7 @@ def sage_sampler(adjlist, edge_index, num_sample):
     # print("sampled",edge_index)
     return edge_idx
 
+
 class GraphSAGELayer(nn.Module):
     def __init__(self, in_feats, out_feats):
         super(GraphSAGELayer, self).__init__()
@@ -49,17 +50,16 @@ class GraphSAGELayer(nn.Module):
         x = self.aggr(x, adj_sp)
         return x
 
+
 @register_model("graphsage")
 class Graphsage(BaseModel):
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument("--num-features", type=int)
-        parser.add_argument("--num-classes", type=int)
-        parser.add_argument("--hidden-size", type=int, nargs='+',default=[128])
+        parser.add_argument("--hidden-size", type=int, nargs='+', default=[128])
         parser.add_argument("--num-layers", type=int, default=2)
-        parser.add_argument("--sample-size",type=int,nargs='+',default=[10,10])
+        parser.add_argument("--sample-size",type=int,nargs='+', default=[10, 10])
         parser.add_argument("--dropout", type=float, default=0.5)
         # fmt: on
 

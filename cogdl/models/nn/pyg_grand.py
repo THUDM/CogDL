@@ -88,7 +88,8 @@ class Grand(BaseModel):
         drop_rates = torch.ones(n) * self.dropnode_rate
         if self.training:
             masks = torch.bernoulli(1. - drop_rates).unsqueeze(1)
-            x = masks.cuda() * x
+            x = masks.to(x.device) * x
+
         else:
             x =  x * (1. - self.dropnode_rate)
         return x

@@ -34,7 +34,7 @@ def add_infograp_args(args):
     args.target = 0
     args.train_num = 5000
     args.num_layers = 3
-    args.unsup = True
+    args.sup = False
     args.epoch = 3
     args.nn = True
     args.lr = 0.0001
@@ -81,15 +81,6 @@ def test_infograph_proteins():
     task = build_task(args)
     ret = task.train()
     accuracy_check(ret)
-
-
-# def test_infograph_collab():
-#     args = get_default_args()
-#     args = add_infograp_args(args)
-#     args.dataset = 'collab'
-#     task = build_task(args)
-#     ret = task.train()
-#     accuracy_check(ret)
 
 
 def test_infograph_imdb_binary():

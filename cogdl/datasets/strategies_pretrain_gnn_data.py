@@ -3,11 +3,14 @@
 """
 from cogdl.datasets import register_dataset
 import random
+import zipfile
 import networkx as nx
 import numpy as np
 
 import torch
 from torch_geometric.data import InMemoryDataset, Data, Batch
+from cogdl.data import download_url
+import os.path as osp
 
 
 # ================
@@ -611,35 +614,28 @@ class BioDataset(InMemoryDataset):
                  pre_transform=None,
                  pre_filter=None):
         self.data_type = data_type
-        self.root = "./data/bio/" + self.data_type
-
+        self.url = "https://cloud.tsinghua.edu.cn/f/c865b1d61348489e86ac/?dl=1"
+        self.root = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", "BIO")
         super(BioDataset, self).__init__(self.root, transform, pre_transform, pre_filter)
         if not empty:
-            self.data, self.slices = torch.load(self.processed_paths[0])
+            if data_type == "unsupervised":
+                self.data, self.slices = torch.load(self.processed_paths[1])
+            else:
+                self.data, self.slices = torch.load(self.processed_paths[0])
 
     @property
     def raw_file_names(self):
-        #raise NotImplementedError('Data is assumed to be processed')
-        if self.data_type == 'supervised': # 8 labelled species
-            file_name_list = ['3702', '6239', '511145', '7227', '9606', '10090', '4932', '7955']
-        else: # unsupervised: 8 labelled species, and 42 top unlabelled species by n_nodes.
-            file_name_list = ['3702', '6239', '511145', '7227', '9606', '10090',
-            '4932', '7955', '3694', '39947', '10116', '443255', '9913', '13616',
-            '3847', '4577', '8364', '9823', '9615', '9544', '9796', '3055', '7159',
-            '9031', '7739', '395019', '88036', '9685', '9258', '9598', '485913',
-            '44689', '9593', '7897', '31033', '749414', '59729', '536227', '4081',
-            '8090', '9601', '749927', '13735', '448385', '457427', '3711', '479433',
-            '479432', '28377', '9646']
-        return file_name_list
-
+        return ['processed.zip']
 
     @property
     def processed_file_names(self):
-        return 'geometric_data_processed.pt'
+        return ['supervised_data_processed.pt', 'unsupervised_data_processed.pt']
 
     def download(self):
-        raise NotImplementedError('Must indicate valid location of raw data. '
-                                  'No download allowed')
+        download_url(self.url, self.raw_dir, name="processed.zip")
 
     def process(self):
-        raise NotImplementedError('Data is assumed to be processed')
+        zfile = zipfile.ZipFile(osp.join(self.raw_dir, self.raw_file_names[0]),'r')
+        for filename in zfile.namelist():
+            print("unzip file: " + filename)
+            zfile.extract(filename, osp.join(self.processed_dir))

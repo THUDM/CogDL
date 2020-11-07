@@ -22,7 +22,7 @@ class stpgnn(BaseModel):
         parser.add_argument("--JK", type=str, default="last")
         parser.add_argument("--output-model-file", type=str, default="./saved")
         parser.add_argument("--num-workers", type=int, default=4)
-        parser.add_argument("--pretrain-task", type=str, default="infomax")
+        parser.add_argument("--pretrain_task", type=str, default="infomax")
         parser.add_argument("--finetune", action="store_true")
         parser.add_argument("--dropout", type=float, default=0.5)
         # fmt: on

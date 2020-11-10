@@ -24,6 +24,7 @@ unsupervised_node_classification:
   - model:
     - prone
     - netmf
+    - netsmf
     - deepwalk
     - line
     - node2vec
@@ -31,6 +32,7 @@ unsupervised_node_classification:
     - sdne
     - grarep
     - dngr
+    - spectral
     dataset:
     - ppi
     - blogcatalog

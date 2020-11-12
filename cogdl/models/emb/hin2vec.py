@@ -124,7 +124,7 @@ class Hin2vec(BaseModel):
         batch_size (int) : The batch size of training in Hin2vec.
         hop (int) : The number of hop to construct training samples in Hin2vec.
         negative (int) : The number of nagative samples for each meta2path pair.
-        epoches (int) : The number of training iteration.
+        epochs (int) : The number of training iteration.
         lr (float) : The initial learning rate of SGD.
         cpu (bool) : Use CPU or GPU to train hin2vec.
     """
@@ -139,7 +139,7 @@ class Hin2vec(BaseModel):
                             help='Batch size in SGD training process. Default is 1000.')
         parser.add_argument("--hop", type=int, default=2)
         parser.add_argument("--negative", type=int, default=5)
-        parser.add_argument("--epoches", type=int, default=1)
+        parser.add_argument("--epochs", type=int, default=1)
 
 
     @classmethod
@@ -151,12 +151,12 @@ class Hin2vec(BaseModel):
             args.batch_size,
             args.hop,
             args.negative,
-            args.epoches,
+            args.epochs,
             args.lr,
             args.cpu
         )
 
-    def __init__(self, hidden_dim, walk_length, walk_num, batch_size, hop, negative, epoches, lr, cpu=True):
+    def __init__(self, hidden_dim, walk_length, walk_num, batch_size, hop, negative, epochs, lr, cpu=True):
         super(Hin2vec, self).__init__()
         self.hidden_dim = hidden_dim
         self.walk_length = walk_length
@@ -164,7 +164,7 @@ class Hin2vec(BaseModel):
         self.batch_size = batch_size
         self.hop = hop
         self.negative = negative
-        self.epoches = epoches
+        self.epochs = epochs
         self.lr = lr
         self.cpu = cpu
         self.device = torch.device('cpu' if self.cpu else 'cuda')
@@ -185,7 +185,7 @@ class Hin2vec(BaseModel):
         print("number of batch", num_batch)
         
         opt = torch.optim.Adam(self.model.parameters(), lr=self.lr)
-        epoch_iter = tqdm(range(self.epoches))
+        epoch_iter = tqdm(range(self.epochs))
         for epoch in epoch_iter:
             loss_n, pred, label = [], [], []
             for i in range(num_batch):

@@ -1,8 +1,11 @@
-import torch
-from torch import dtype
-import torch.nn.functional as F
+import itertools
+import random
+from collections import defaultdict
 
-from torch_scatter import scatter
+import numpy as np
+import torch
+import torch.nn.functional as F
+from tabulate import tabulate
 
 
 class ArgClass(object):
@@ -182,6 +185,44 @@ def batch_mean_pooling(x, batch):
     res = torch.zeros(len(values), x.size(1)).to(x.device)
     res = res.scatter_add_(dim=0, index=batch.unsqueeze(-1).expand_as(x), src=x)
     return res / counts.unsqueeze(-1)
+
+def tabulate_results(results_dict):
+    # Average for different seeds
+    tab_data = []
+    for variant in results_dict:
+        results = np.array([list(res.values()) for res in results_dict[variant]])
+        tab_data.append(
+            [variant]
+            + list(
+                itertools.starmap(
+                    lambda x, y: f"{x:.4f}±{y:.4f}",
+                    zip(
+                        np.mean(results, axis=0).tolist(),
+                        np.std(results, axis=0).tolist(),
+                    ),
+                )
+            )
+        )
+    return tab_data
+
+
+def print_result(results, datasets, model_name):
+    table_header = ["Variants"] + list(results[0].keys())
+
+    results_dict = defaultdict(list)
+    num_datasets = len(datasets)
+    num_seed = len(results) // num_datasets
+    for i, res in enumerate(results):
+        results_dict[(model_name, datasets[i//num_seed])].append(res)
+    tab_data = tabulate_results(results_dict)
+    print(tabulate(tab_data, headers=table_header, tablefmt="github"))
+
+
+def set_random_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
 
 
 if __name__ == "__main__":

@@ -62,8 +62,7 @@ def run(dataset_name):
 
 
 if __name__ == "__main__":
-    # datasets = ["gtn-dblp", "gtn-acm", "gtn-imdb"]
-    datasets = ["gtn-imdb"]
+    datasets = ["gtn-dblp", "gtn-acm", "gtn-imdb"]
     results = []
     for x in datasets:
         results += run(x)

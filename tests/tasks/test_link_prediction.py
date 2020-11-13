@@ -193,11 +193,11 @@ def test_rgcn_wn18():
     ret = task.train()
     assert 0 <= ret["MRR"] <= 1
 
-def test_compgcn_wn18rr():
+def test_compgcn_fb15k237():
     args = get_kg_default_args()
     args.lbl_smooth = 0.1
     args.score_func = "distmult"
-    args.dataset = "wn18rr"
+    args.dataset = "fb15k237"
     args.model = "compgcn"
     args.task = "link_prediction"
     args.regularizer = "basis"
@@ -235,9 +235,9 @@ def get_kge_default_args():
         "double_entity_embedding": False,
         "double_relation_embedding": False,
         "negative_adversarial_sampling": False,
-        "negative_sample_size": 2,
+        "negative_sample_size": 1,
         "batch_size": 64,
-        "test_batch_size": 64,
+        "test_batch_size": 100,
         "uni_weight": False,
         "learning_rate": 0.0001,
         "warm_up_steps": None,
@@ -252,9 +252,9 @@ def get_kge_default_args():
     return build_args_from_dict(default_dict)
 
 
-def test_distmult_fb15k237():
+def test_distmult_wn18rr():
     args = get_kge_default_args()
-    args.dataset = "fb15k237"
+    args.dataset = "wn18rr"
     args.model = "distmult"
     args.task = "link_prediction"
     task = build_task(args)
@@ -262,9 +262,9 @@ def test_distmult_fb15k237():
     assert 0 <= ret["MRR"] <= 1
 
 
-def test_rotate_wn18():
+def test_rotate_wn18rr():
     args = get_kge_default_args()
-    args.dataset = "wn18"
+    args.dataset = "wn18rr"
     args.model = "rotate"
     args.task = "link_prediction"
     task = build_task(args)
@@ -272,9 +272,9 @@ def test_rotate_wn18():
     assert 0 <= ret["MRR"] <= 1
 
 
-def test_transe_wn18():
+def test_transe_wn18rr():
     args = get_kge_default_args()
-    args.dataset = "wn18"
+    args.dataset = "wn18rr"
     args.model = "transe"
     args.task = "link_prediction"
     task = build_task(args)
@@ -282,9 +282,9 @@ def test_transe_wn18():
     assert 0 <= ret["MRR"] <= 1
 
 
-def test_complex_wn18():
+def test_complex_wn18rr():
     args = get_kge_default_args()
-    args.dataset = "wn18"
+    args.dataset = "wn18rr"
     args.model = "complex"
     args.task = "link_prediction"
     task = build_task(args)
@@ -305,9 +305,9 @@ if __name__ == "__main__":
 
     test_rgcn_wn18()
     test_compgcn_fb13()
-    test_compgcn_wn18rr()
+    test_compgcn_fb15k237()
 
-    test_distmult_fb15k237()
-    test_rotate_wn18()
-    test_transe_wn18()
-    test_complex_wn18()
+    test_distmult_wn18rr()
+    test_rotate_wn18rr()
+    test_transe_wn18rr()
+    test_complex_wn18rr()

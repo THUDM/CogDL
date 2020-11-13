@@ -16,6 +16,7 @@ node_classification:
     - pyg_gat
     - deepergcn
     - gcnii
+    - gpt_gnn
     dataset:
     - cora
     - citeseer

@@ -127,3 +127,6 @@ pretrain:
     dataset:
     - bio
     - test_bio
+    - chem
+    - bbbp
+    - bace

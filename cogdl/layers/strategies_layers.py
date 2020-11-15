@@ -44,7 +44,7 @@ class GINConv(nn.Module):
         self.pooling = pooling
 
         if edge_emb is not None:
-            self.edge_emb = [
+            self.edge_embeddings = [
                 nn.Embedding(num, hidden_size)
                 for num in edge_emb
             ]
@@ -60,13 +60,18 @@ class GINConv(nn.Module):
             self_loop_attr = torch.zeros(x.size(0), edge_attr.size(1))
             self_loop_attr[:, self_loop_index] = self_loop_type
             self_loop_attr = self_loop_attr.to(edge_attr.device).to(edge_attr.dtype)
+            self_loop_attr.to(x.device)
             edge_attr = torch.cat((edge_attr, self_loop_attr), dim=0)
-
+        print(edge_attr.shape)
+        print(x.shape)
         if self.edge_embeddings is not None:
-            edge_embeddings = torch.sum([
+            for i in range(edge_index.shape[0]):
+                self.edge_embeddings[i].to(x.device)
+            edge_embeddings = sum([
                 self.edge_embeddings[i](edge_attr[:, i])
                 for i in range(edge_index.shape[0])
-            ], dim=0)
+            ])
+            print(edge_embeddings.shape)
         elif self.edge_encoder is not None:
             edge_embeddings = self.edge_encoder(edge_attr)
         else:
@@ -74,7 +79,9 @@ class GINConv(nn.Module):
 
         if self.input_node_embeddings is not None:
             x = self.input_node_embeddings(x.long().view(-1))
-
+        print(x.shape)
+        print(edge_index.device)
+        print(edge_index[0])
         if self.feature_concat:
             h = torch.cat((x[edge_index[1]], edge_embeddings), dim=1)
         else:
@@ -126,7 +133,7 @@ class GNN(nn.Module):
                 self.gnn.append(
                     GINConv(
                         hidden_size=hidden_size,
-                        edge_emb=edge_emb,
+                        edge_emb=None,
                         edge_encode=edge_encode,
                         feature_concat=True
                     )
@@ -248,12 +255,12 @@ class Pretrainer(nn.Module):
             transform=transform
         )
 
-        if isinstance(self.dataset, BioDataset) or isinstance(self.dataset, TestBioDataset):
+        if isinstance(self.dataset, BioDataset) or isinstance(self.dataset, TestBioDataset) or isinstance(self.dataset, MoleculeDataset):
             self.self_loop_index = self.opt["self_loop_index"]
             self.self_loop_type = self.opt["self_loop_type"]
 
     def get_dataset(self, dataset_name, transform=None):
-        assert dataset_name in ("bio", "chem", "test_bio")
+        assert dataset_name in ("bio", "chem", "test_bio", "bbbp", "bace")
         if dataset_name == "bio":
             dataset = BioDataset(self.data_type, transform=transform)  # BioDataset
             opt = {
@@ -264,15 +271,16 @@ class Pretrainer(nn.Module):
                 "concat": True,
             }
         elif dataset_name == "chem":
+            dataset = MoleculeDataset(self.data_type, transform=transform)  # MoleculeDataset
             opt = {
                 "edge_emb": [6, 3],
                 "num_atom_type": 120,
                 "num_chirality_tag": 3,
                 "self_loop_index": 0,
                 "self_loop_type": 4,
+                "input_layer": 2,
                 "concat": False,
             }
-            raise NotImplementedError  # ChemDataset
         elif dataset_name == "test_bio":
             dataset = TestBioDataset(data_type=self.data_type, transform=transform)
             opt = {
@@ -407,7 +415,10 @@ class ContextPredictTrainer(Pretrainer):
         parser.add_argument("--l1", type=int, default=1)
 
     def __init__(self, args):
-        transform = ExtractSubstructureContextPair(args.l1, args.center)
+        if args.dataset == "bio":
+            transform = ExtractSubstructureContextPair(args.l1, args.center)
+        elif args.dataset == "chem":
+            transform = ChemExtractSubstructureContextPair(args.num_layers, args.num_layers - 1, args.num_layers - 1 + args.l1)
         args.data_type = "unsupervised"
         super(ContextPredictTrainer, self).__init__(args, transform)
         self.mode = args.mode
@@ -442,6 +453,8 @@ class ContextPredictTrainer(Pretrainer):
             edge_encode=self.opt.get("edge_encode", None),
             concat=self.opt["concat"],
         )
+        self.model.to(self.device)
+        self.model_context.to(self.device)
 
         self.optimizer_neighbor = torch.optim.Adam(
             self.model.parameters(),
@@ -461,7 +474,6 @@ class ContextPredictTrainer(Pretrainer):
         acc_items = []
         self.model.train()
         self.model_context.train()
-
         for batch in self.dataloader:
             batch = batch.to(self.device)
             neighbor_rep = self.model(

@@ -193,25 +193,12 @@ def test_rgcn_wn18():
     ret = task.train()
     assert 0 <= ret["MRR"] <= 1
 
-def test_compgcn_fb15k237():
-    args = get_kg_default_args()
-    args.lbl_smooth = 0.1
-    args.score_func = "distmult"
-    args.dataset = "fb15k237"
-    args.model = "compgcn"
-    args.task = "link_prediction"
-    args.regularizer = "basis"
-    dataset = build_dataset(args)
-    args = get_nums(dataset, args)
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["MRR"] <= 1
 
-def test_compgcn_fb13():
+def test_compgcn_wn18rr():
     args = get_kg_default_args()
     args.lbl_smooth = 0.1
     args.score_func = "distmult"
-    args.dataset = "fb13"
+    args.dataset = "wn18rr"
     args.model = "compgcn"
     args.task = "link_prediction"
     args.regularizer = "basis"
@@ -252,9 +239,9 @@ def get_kge_default_args():
     return build_args_from_dict(default_dict)
 
 
-def test_distmult_wn18rr():
+def test_distmult_fb13s():
     args = get_kge_default_args()
-    args.dataset = "wn18rr"
+    args.dataset = "fb13s"
     args.model = "distmult"
     args.task = "link_prediction"
     task = build_task(args)
@@ -262,9 +249,9 @@ def test_distmult_wn18rr():
     assert 0 <= ret["MRR"] <= 1
 
 
-def test_rotate_wn18rr():
+def test_rotate_fb13s():
     args = get_kge_default_args()
-    args.dataset = "wn18rr"
+    args.dataset = "fb13s"
     args.model = "rotate"
     args.task = "link_prediction"
     task = build_task(args)
@@ -272,9 +259,9 @@ def test_rotate_wn18rr():
     assert 0 <= ret["MRR"] <= 1
 
 
-def test_transe_wn18rr():
+def test_transe_fb13s():
     args = get_kge_default_args()
-    args.dataset = "wn18rr"
+    args.dataset = "fb13s"
     args.model = "transe"
     args.task = "link_prediction"
     task = build_task(args)
@@ -282,9 +269,9 @@ def test_transe_wn18rr():
     assert 0 <= ret["MRR"] <= 1
 
 
-def test_complex_wn18rr():
+def test_complex_fb13s():
     args = get_kge_default_args()
-    args.dataset = "wn18rr"
+    args.dataset = "fb13s"
     args.model = "complex"
     args.task = "link_prediction"
     task = build_task(args)
@@ -304,10 +291,9 @@ if __name__ == "__main__":
     test_dngr_ppi()
 
     test_rgcn_wn18()
-    test_compgcn_fb13()
-    test_compgcn_fb15k237()
+    test_compgcn_wn18rr()
 
-    test_distmult_wn18rr()
-    test_rotate_wn18rr()
-    test_transe_wn18rr()
-    test_complex_wn18rr()
+    test_distmult_fb13s()
+    test_rotate_fb13s()
+    test_transe_fb13s()
+    test_complex_fb13s()

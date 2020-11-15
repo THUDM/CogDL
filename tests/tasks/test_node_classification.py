@@ -111,7 +111,7 @@ def test_pyg_gcn_cora_sampler():
     args.cpu = True
     args.num_layers = 2
     args.sample_coverage = 20
-    args.size_subgraph = 100
+    args.size_subgraph = 200
     args.num_walks = 20
     args.walk_length = 10
     args.size_frontier = 20

@@ -62,8 +62,6 @@ class GINConv(nn.Module):
             self_loop_attr = self_loop_attr.to(edge_attr.device).to(edge_attr.dtype)
             self_loop_attr.to(x.device)
             edge_attr = torch.cat((edge_attr, self_loop_attr), dim=0)
-        print(edge_attr.shape)
-        print(x.shape)
         if self.edge_embeddings is not None:
             for i in range(edge_index.shape[0]):
                 self.edge_embeddings[i].to(x.device)
@@ -71,17 +69,12 @@ class GINConv(nn.Module):
                 self.edge_embeddings[i](edge_attr[:, i])
                 for i in range(edge_index.shape[0])
             ])
-            print(edge_embeddings.shape)
         elif self.edge_encoder is not None:
             edge_embeddings = self.edge_encoder(edge_attr)
         else:
             raise NotImplementedError
-
         if self.input_node_embeddings is not None:
             x = self.input_node_embeddings(x.long().view(-1))
-        print(x.shape)
-        print(edge_index.device)
-        print(edge_index[0])
         if self.feature_concat:
             h = torch.cat((x[edge_index[1]], edge_embeddings), dim=1)
         else:
@@ -110,14 +103,24 @@ class GNN(nn.Module):
             input_layer=None,
             edge_encode=None,
             edge_emb=None,
+            num_atom_type=None,
+            num_chirality_tag=None,
             concat=False,
     ):
         super(GNN, self).__init__()
         self.num_layers = num_layers
         self.dropout = dropout
         self.JK = JK
+        self.atom_type_embedder = num_atom_type
+        self.chirality_tag_embedder = num_chirality_tag
 
         self.gnn = nn.ModuleList()
+        if num_atom_type is not None:
+            self.atom_type_embedder = torch.nn.Embedding(num_atom_type, hidden_size)
+            torch.nn.init.xavier_uniform_(self.atom_type_embedder.weight.data)
+        if num_chirality_tag is not None:
+            self.chirality_tag_embedder = torch.nn.Embedding(num_chirality_tag, hidden_size)
+            torch.nn.init.xavier_uniform_(self.chirality_tag_embedder.weight.data)
         for i in range(num_layers):
             if i == 0:
                 self.gnn.append(
@@ -133,13 +136,15 @@ class GNN(nn.Module):
                 self.gnn.append(
                     GINConv(
                         hidden_size=hidden_size,
-                        edge_emb=None,
+                        edge_emb=edge_emb,
                         edge_encode=edge_encode,
                         feature_concat=True
                     )
                 )
 
     def forward(self, x, edge_index, edge_attr, self_loop_index=None, self_loop_type=None):
+        if self.atom_type_embedder is not None and self.chirality_tag_embedder is not None:
+            x = self.atom_type_embedder(x[:,0]) + self.chirality_tag_embedder(x[:,1])
         h_list = [x]
         for i in range(self.num_layers):
             h = self.gnn[i](h_list[i], edge_index, edge_attr, self_loop_index, self_loop_type)
@@ -170,6 +175,8 @@ class GNNPred(nn.Module):
             input_layer=None,
             edge_encode=None,
             edge_emb=None,
+            num_atom_type=None,
+            num_chirality_tag=None,
             concat=True,
     ):
         super(GNNPred, self).__init__()
@@ -201,6 +208,8 @@ class GNNPred(nn.Module):
             input_layer=input_layer,
             edge_encode=edge_encode,
             edge_emb=edge_emb,
+            num_atom_type=num_atom_type,
+            num_chirality_tag=num_chirality_tag,
             concat=concat
         )
 
@@ -220,9 +229,12 @@ class GNNPred(nn.Module):
         )
 
         pooled = self.pool(node_representation, batch)
-        center_node_rep = node_representation[data.center_node_idx]
+        if hasattr(data, "center_node_idx"):
+            center_node_rep = node_representation[data.center_node_idx]
 
-        graph_rep = torch.cat([pooled, center_node_rep], dim=1)
+            graph_rep = torch.cat([pooled, center_node_rep], dim=1)
+        else:
+            graph_rep = torch.cat([pooled, pooled], dim=1)
 
         return self.graph_pred_linear(graph_rep)
 
@@ -255,12 +267,12 @@ class Pretrainer(nn.Module):
             transform=transform
         )
 
-        if isinstance(self.dataset, BioDataset) or isinstance(self.dataset, TestBioDataset) or isinstance(self.dataset, MoleculeDataset):
+        if self.dataset_name in ("bio", "chem", "test_bio", "test_chem", "bbbp", "bace"):
             self.self_loop_index = self.opt["self_loop_index"]
             self.self_loop_type = self.opt["self_loop_type"]
 
     def get_dataset(self, dataset_name, transform=None):
-        assert dataset_name in ("bio", "chem", "test_bio", "bbbp", "bace")
+        assert dataset_name in ("bio", "chem", "test_bio", "test_chem", "bbbp", "bace")
         if dataset_name == "bio":
             dataset = BioDataset(self.data_type, transform=transform)  # BioDataset
             opt = {
@@ -278,7 +290,6 @@ class Pretrainer(nn.Module):
                 "num_chirality_tag": 3,
                 "self_loop_index": 0,
                 "self_loop_type": 4,
-                "input_layer": 2,
                 "concat": False,
             }
         elif dataset_name == "test_bio":
@@ -290,9 +301,26 @@ class Pretrainer(nn.Module):
                 "self_loop_type": 1,
                 "concat": True,
             }
+        elif dataset_name == "test_chem":
+            dataset = TestChemDataset(data_type=self.data_type, transform=transform)
+            opt = {
+                "edge_emb": [6, 3],
+                "num_atom_type": 120,
+                "num_chirality_tag": 3,
+                "self_loop_index": 0,
+                "self_loop_type": 4,
+                "concat": False,
+            }
         else:
             dataset = build_dataset_from_name(self.dataset_name)
-            opt = dict()
+            opt = {
+                "edge_emb": [6, 3],
+                "num_atom_type": 120,
+                "num_chirality_tag": 3,
+                "self_loop_index": 0,
+                "self_loop_type": 4,
+                "concat": False,
+            }
         return dataset, opt
 
     def fit(self):
@@ -316,7 +344,7 @@ class Pretrainer(nn.Module):
             else:
                 torch.save(model.state_dict(), self.output_model_file + ".pth")
 
-        return dict(Acc=train_acc)
+        return dict(Acc=train_acc.item())
 
 
 class Discriminator(nn.Module):
@@ -357,6 +385,8 @@ class InfoMaxTrainer(Pretrainer):
             input_layer=self.opt.get("input_layer", None),
             edge_encode=self.opt.get("edge_encode", None),
             edge_emb=self.opt.get("edge_emb", None),
+            num_atom_type=self.opt.get("num_atom_type", None),
+            num_chirality_tag=self.opt.get("num_chirality_tag", None),
             concat=self.opt["concat"],
         )
 
@@ -413,12 +443,13 @@ class ContextPredictTrainer(Pretrainer):
         parser.add_argument("--negative-samples", type=int, default=10)
         parser.add_argument("--center", type=int, default=0)
         parser.add_argument("--l1", type=int, default=1)
+        parser.add_argument("--l2", type=int, default=2)
 
     def __init__(self, args):
-        if args.dataset == "bio":
+        if "bio" in args.dataset:
             transform = ExtractSubstructureContextPair(args.l1, args.center)
-        elif args.dataset == "chem":
-            transform = ChemExtractSubstructureContextPair(args.num_layers, args.num_layers - 1, args.num_layers - 1 + args.l1)
+        elif "chem" in args.dataset:
+            transform = ChemExtractSubstructureContextPair(args.num_layers, args.l1, args.l2)
         args.data_type = "unsupervised"
         super(ContextPredictTrainer, self).__init__(args, transform)
         self.mode = args.mode
@@ -440,6 +471,8 @@ class ContextPredictTrainer(Pretrainer):
             input_layer=self.opt.get("input_layer", None),
             edge_emb=self.opt.get("edge_emb", None),
             edge_encode=self.opt.get("edge_encode", None),
+            num_atom_type=self.opt.get("num_atom_type", None),
+            num_chirality_tag=self.opt.get("num_chirality_tag", None),
             concat=self.opt["concat"],
         )
 
@@ -451,11 +484,12 @@ class ContextPredictTrainer(Pretrainer):
             input_layer=self.opt.get("input_layer", None),
             edge_emb=self.opt.get("edge_emb", None),
             edge_encode=self.opt.get("edge_encode", None),
+            num_atom_type=self.opt.get("num_atom_type", None),
+            num_chirality_tag=self.opt.get("num_chirality_tag", None),
             concat=self.opt["concat"],
         )
         self.model.to(self.device)
         self.model_context.to(self.device)
-
         self.optimizer_neighbor = torch.optim.Adam(
             self.model.parameters(),
             lr=args.lr,
@@ -487,8 +521,8 @@ class ContextPredictTrainer(Pretrainer):
                 batch.x_context,
                 batch.edge_index_context,
                 batch.edge_attr_context,
-                self.self_loop_type,
-                self.self_loop_index
+                self.self_loop_index,
+                self.self_loop_type
             )[batch.overlap_context_substruct_idx]
             if self.mode == "cbow":
                 pos_scores, neg_scores = self.get_cbow_pred(
@@ -590,7 +624,10 @@ class MaskTrainer(Pretrainer):
         parser.add_argument("--mask-rate", type=float, default=0.15)
 
     def __init__(self, args):
-        transform = MaskEdge(mask_rate=args.mask_rate)
+        if "bio" in args.dataset:
+            transform = MaskEdge(mask_rate=args.mask_rate)
+        elif "chem" in args.dataset:
+            transform = MaskAtom(mask_rate=args.mask_rate, num_atom_type=119, num_edge_type=5)
         args.data_type = "unsupervised"
         super(MaskTrainer, self).__init__(args, transform)
         self.dataloader = DataLoaderMasking(
@@ -607,12 +644,18 @@ class MaskTrainer(Pretrainer):
             input_layer=self.opt.get("input_layer", None),
             edge_encode=self.opt.get("edge_encode", None),
             edge_emb=self.opt.get("edge_emb", None),
+            num_atom_type=self.opt.get("num_atom_type", None),
+            num_chirality_tag=self.opt.get("num_chirality_tag", None),
             concat=self.opt["concat"],
         )
 
         edge_attr_dim = self.dataset[0].edge_attr.size(1)
-        self.linear = nn.Linear(args.hidden_size, edge_attr_dim)
-
+        if "bio" in args.dataset:
+            self.linear = nn.Linear(args.hidden_size, edge_attr_dim)
+        elif "chem" in args.dataset:
+            self.linear = nn.Linear(args.hidden_size, 120)
+        else:
+            raise NotImplementedError
         self.optmizer_gnn = torch.optim.Adam(
             self.model.parameters(),
             lr=args.lr,
@@ -623,6 +666,14 @@ class MaskTrainer(Pretrainer):
             lr=args.lr,
             weight_decay=args.weight_decay
         )
+
+        if "chem" in args.dataset:
+            self.linear_bonds = torch.nn.Linear(args.hidden_size, 6)
+            self.optmizer_linear_bonds = torch.optim.Adam(
+                self.linear_bonds.parameters(),
+                lr=args.lr,
+                weight_decay=args.weight_decay
+            )
 
         self.loss_fn = nn.CrossEntropyLoss()
 
@@ -639,24 +690,45 @@ class MaskTrainer(Pretrainer):
                 self_loop_index=self.self_loop_index,
                 self_loop_type=self.self_loop_type
             )
+            if "bio" in self.dataset_name:
+                masked_edges = batch.edge_index[:, batch.masked_edge_idx]
+                masked_edges_rep = hidden[masked_edges[0]] + hidden[masked_edges[1]]
+                pred = self.linear(masked_edges_rep)
+                labels = torch.argmax(batch.mask_edge_label, dim=1)
 
-            masked_edges = batch.edge_index[:, batch.masked_edge_idx]
-            masked_edges_rep = hidden[masked_edges[0]] + hidden[masked_edges[1]]
-            pred = self.linear(masked_edges_rep)
-            labels = torch.argmax(batch.mask_edge_label, dim=1)
+                self.optmizer_gnn.zero_grad()
+                self.optmizer_linear.zero_grad()
 
-            self.optmizer_gnn.zero_grad()
-            self.optmizer_linear.zero_grad()
-
-            loss = self.loss_fn(pred, labels)
-            loss.backward()
-            self.optmizer_gnn.step()
-            self.optmizer_linear.step()
-
-            loss_items.append(loss.item())
-            acc_items.append(
-                (torch.max(pred, dim=1)[1] == labels).float().sum().cpu().numpy() / len(pred)
-            )
+                loss = self.loss_fn(pred, labels)
+                loss.backward()
+                self.optmizer_gnn.step()
+                self.optmizer_linear.step()
+                loss_items.append(loss.item())
+                acc_items.append(
+                    (torch.max(pred, dim=1)[1] == labels).float().sum().cpu().numpy() / len(pred)
+                )
+            elif "chem" in self.dataset_name:
+                def compute_accuracy(pred, target):
+                    return float(torch.sum(torch.max(pred.detach(), dim = 1)[1] == target).cpu().item())/len(pred)
+                pred_node = self.linear(hidden[batch.masked_atom_indices])
+                loss = self.loss_fn(pred_node.double(), batch.mask_node_label[:,0])
+                acc_node = compute_accuracy(pred_node, batch.mask_node_label[:,0])
+                masked_edge_index = batch.edge_index[:, batch.connected_edge_indices]
+                edge_rep = hidden[masked_edge_index[0]] + hidden[masked_edge_index[1]]
+                pred_edge = self.linear_bonds(edge_rep)
+                loss += self.loss_fn(pred_edge.double(), batch.mask_edge_label[:,0])
+                acc_edge = compute_accuracy(pred_edge, batch.mask_edge_label[:,0])
+                self.optmizer_gnn.zero_grad()
+                self.optmizer_linear.zero_grad()
+                self.optmizer_linear_bonds.zero_grad()
+                loss.backward()
+                self.optmizer_gnn.step()
+                self.optmizer_linear.step()
+                self.optmizer_linear_bonds.step()
+                loss_items.append(loss.item())
+                acc_items.extend([acc_node, acc_edge])
+            else:
+                raise NotImplementedError
         return np.mean(loss_items), np.mean(acc_items)
 
 
@@ -670,16 +742,22 @@ class SupervisedTrainer(Pretrainer):
         args.data_type = "supervised"
         super(SupervisedTrainer, self).__init__(args)
         self.dataloader = self.split_data()
+        if "bio" in args.dataset:
+            num_tasks = len(self.dataset[0].go_target_downstream)
+        elif "chem" in args.dataset:
+            num_tasks = len(self.dataset[0].y)
         self.model = GNNPred(
             num_layers=args.num_layers,
             hidden_size=args.hidden_size,
-            num_tasks=len(self.dataset[0].go_target_downstream),
+            num_tasks=num_tasks,
             JK=args.JK,
             dropout=args.dropout,
             graph_pooling=args.pooling,
             input_layer=self.opt.get("input_layer", None),
             edge_emb=self.opt.get("edge_emb", None),
             edge_encode=self.opt.get("edge_encode", None),
+            num_atom_type=self.opt.get("num_atom_type", None),
+            num_chirality_tag=self.opt.get("num_chirality_tag", None),
             concat=self.opt["concat"],
         )
         if args.checkpoint is not None:
@@ -693,7 +771,6 @@ class SupervisedTrainer(Pretrainer):
         np.random.shuffle(indices)
         self.train_ratio = 0.9
         train_index = torch.LongTensor(indices[: int(length * self.train_ratio)])
-
         dataset = self.dataset[train_index]
         dataloader = DataLoader(
             dataset=dataset,
@@ -716,19 +793,40 @@ class SupervisedTrainer(Pretrainer):
                 self.self_loop_type
             )
             self.optimizer.zero_grad()
-            loss = self.loss_fn(pred, batch.go_target_pretrain.view(pred.shape).to(torch.float64))
+            if "bio" in self.dataset_name:
+                target = batch.go_target_pretrain.view(pred.shape).to(torch.float64)
+                is_valid = (target != -1)
+            elif "chem" in self.dataset_name:
+                target = batch.y.view(pred.shape).to(torch.float64)
+                is_valid = target**2 > 0
+                target = (target + 1) / 2
+            else:
+                raise NotImplementedError
+            
+            loss = self.loss_fn(pred, target)
+            loss = torch.where(is_valid, loss, torch.zeros(loss.shape).to(loss.device).to(loss.dtype))
+            loss = torch.sum(loss) / torch.sum(is_valid)
             loss.backward()
             self.optimizer.step()
             loss_items.append(loss.item())
 
             with torch.no_grad():
                 pred = pred.cpu().detach().numpy()
-                y_labels = batch.go_target_pretrain.view(pred.shape).cpu().numpy()
-
+                if "bio" in self.dataset_name:
+                    y_labels = batch.go_target_pretrain.view(pred.shape).cpu().numpy()
+                elif "chem" in self.dataset_name:
+                    y_labels = batch.y.view(pred.shape).cpu().numpy()
                 auc_scores = []
                 for i in range(len(pred[0])):
-                    if (y_labels[:, i] == 1).sum() > 0 and (y_labels[:, ] == 0).sum() > 0:
-                        auc_scores.append(roc_auc_score(y_labels[:, i], pred[:, i]))
+                    if "chem" in self.dataset_name:
+                        is_valid = y_labels[:,i]**2 > 0
+                        y_labels[:,i] = (y_labels[:,i] + 1) / 2
+                    elif "bio" in self.dataset_name:
+                        is_valid = y_labels[:,i] != -1
+                    else:
+                        raise NotImplementedError
+                    if (y_labels[is_valid, i] == 1).sum() > 0 and (y_labels[is_valid, i] == 0).sum() > 0:
+                        auc_scores.append(roc_auc_score(y_labels[is_valid, i], pred[is_valid, i]))
                     else:
                         # All zeros or all ones
                         auc_scores.append(np.nan)
@@ -768,16 +866,23 @@ class Finetuner(Pretrainer):
         self.loss_fn = nn.BCEWithLogitsLoss()
 
     def build_model(self, args):
+        if "bio" in args.dataset:
+            num_tasks = len(self.dataset[0].go_target_downstream)
+        elif "bbbp" == args.dataset or "bace" == args.dataset:
+            num_tasks = 1
+
         model = GNNPred(
             num_layers=args.num_layers,
             hidden_size=args.hidden_size,
-            num_tasks=len(self.dataset[0].go_target_downstream),
+            num_tasks=num_tasks,
             JK=self.JK,
             dropout=args.dropout,
             graph_pooling=args.pooling,
             input_layer=self.opt.get("input_layer", None),
             edge_emb=self.opt.get("edge_emb", None),
             edge_encode=self.opt.get("edge_encode", None),
+            num_atom_type=self.opt.get("num_atom_type", None),
+            num_chirality_tag=self.opt.get("num_chirality_tag", None),
             concat=self.opt["concat"],
         )
         model.load_from_pretrained(args.checkpoint)
@@ -808,10 +913,18 @@ class Finetuner(Pretrainer):
         for batch in self.train_loader:
             batch = batch.to(self.device)
             pred = self.model(batch, self.self_loop_index, self.self_loop_type)
-            labels = batch.go_target_downstream.view(pred.shape).to(torch.float64)
+            if "bio" in self.dataset_name:
+                labels = batch.go_target_downstream.view(pred.shape).to(torch.float64)
+                is_valid = labels != -1
+            else:
+                labels = batch.y.view(pred.shape).to(torch.float64)
+                is_valid = labels ** 2 > 0
+                labels = (labels + 1) / 2
 
             self.optimizer.zero_grad()
             loss = self.loss_fn(pred, labels)
+            loss = torch.where(is_valid, loss, torch.zeros(loss.shape).to(loss.device).to(loss.dtype))
+            loss = torch.sum(loss) / torch.sum(is_valid)
             loss.backward()
             self.optimizer.step()
 
@@ -830,19 +943,26 @@ class Finetuner(Pretrainer):
         for batch in loader:
             batch = batch.to(self.device)
             pred = self.model(batch, self.self_loop_index, self.self_loop_type)
-
             y_pred.append(pred)
-            y_labels.append(batch.go_target_downstream.view(pred.shape))
+            if "bio" in self.dataset_name:
+                target = batch.go_target_downstream.view(pred.shape)
+            else:
+                target =  batch.y.view(pred.shape)
+            y_labels.append(target)
         y_pred = torch.cat(y_pred, dim=0)
         y_labels = torch.cat(y_labels, dim=0)
 
         loss = self.loss_fn(y_pred, y_labels.to(torch.float64))
         y_pred = y_pred.cpu().numpy()
         y_labels = y_labels.cpu().numpy()
-
         auc_scores = []
         for i in range(len(y_pred[1])):
-            if (y_labels[:, i] == 1).sum() > 0 and (y_labels[:, i] == 0).sum() > 0:
+            if "bio" in self.dataset_name:
+                is_valid = y_labels[:,i] != -1
+            else:
+                is_valid = y_labels[:,i]**2 > 0
+                y_labels[:,i] = (y_labels[:,i] + 1) / 2
+            if (y_labels[is_valid, i] == 1).sum() > 0 and (y_labels[is_valid, i] == 0).sum() > 0:
                 auc_scores.append(roc_auc_score(y_labels[:, i], y_pred[:, i]))
             else:
                 # All zeros or all ones

@@ -128,5 +128,6 @@ pretrain:
     - bio
     - test_bio
     - chem
+    - test_chem
     - bbbp
     - bace

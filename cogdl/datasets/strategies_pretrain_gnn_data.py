@@ -269,6 +269,100 @@ class MaskEdge:
 
         return data
 
+class MaskAtom:
+    """Borrowed from https://github.com/snap-stanford/pretrain-gnns/"""
+    def __init__(self, num_atom_type, num_edge_type, mask_rate, mask_edge=True):
+        """
+        Randomly masks an atom, and optionally masks edges connecting to it.
+        The mask atom type index is num_possible_atom_type
+        The mask edge type index in num_possible_edge_type
+        :param num_atom_type:
+        :param num_edge_type:
+        :param mask_rate: % of atoms to be masked
+        :param mask_edge: If True, also mask the edges that connect to the
+        masked atoms
+        """
+        self.num_atom_type = num_atom_type
+        self.num_edge_type = num_edge_type
+        self.mask_rate = mask_rate
+        self.mask_edge = mask_edge
+
+    def __call__(self, data, masked_atom_indices=None):
+        """
+        :param data: pytorch geometric data object. Assume that the edge
+        ordering is the default pytorch geometric ordering, where the two
+        directions of a single edge occur in pairs.
+        Eg. data.edge_index = tensor([[0, 1, 1, 2, 2, 3],
+                                     [1, 0, 2, 1, 3, 2]])
+        :param masked_atom_indices: If None, then randomly samples num_atoms
+        * mask rate number of atom indices
+        Otherwise a list of atom idx that sets the atoms to be masked (for
+        debugging only)
+        :return: None, Creates new attributes in original data object:
+        data.mask_node_idx
+        data.mask_node_label
+        data.mask_edge_idx
+        data.mask_edge_label
+        """
+
+        if masked_atom_indices == None:
+            # sample x distinct atoms to be masked, based on mask rate. But
+            # will sample at least 1 atom
+            num_atoms = data.x.size()[0]
+            sample_size = int(num_atoms * self.mask_rate + 1)
+            masked_atom_indices = random.sample(range(num_atoms), sample_size)
+
+        # create mask node label by copying atom feature of mask atom
+        mask_node_labels_list = []
+        for atom_idx in masked_atom_indices:
+            mask_node_labels_list.append(data.x[atom_idx].view(1, -1))
+        data.mask_node_label = torch.cat(mask_node_labels_list, dim=0)
+        data.masked_atom_indices = torch.tensor(masked_atom_indices)
+
+        # modify the original node feature of the masked node
+        for atom_idx in masked_atom_indices:
+            data.x[atom_idx] = torch.tensor([self.num_atom_type, 0])
+
+        if self.mask_edge:
+            # create mask edge labels by copying edge features of edges that are bonded to
+            # mask atoms
+            connected_edge_indices = []
+            for bond_idx, (u, v) in enumerate(data.edge_index.cpu().numpy().T):
+                for atom_idx in masked_atom_indices:
+                    if atom_idx in set((u, v)) and \
+                        bond_idx not in connected_edge_indices:
+                        connected_edge_indices.append(bond_idx)
+
+            if len(connected_edge_indices) > 0:
+                # create mask edge labels by copying bond features of the bonds connected to
+                # the mask atoms
+                mask_edge_labels_list = []
+                for bond_idx in connected_edge_indices[::2]: # because the
+                    # edge ordering is such that two directions of a single
+                    # edge occur in pairs, so to get the unique undirected
+                    # edge indices, we take every 2nd edge index from list
+                    mask_edge_labels_list.append(
+                        data.edge_attr[bond_idx].view(1, -1))
+
+                data.mask_edge_label = torch.cat(mask_edge_labels_list, dim=0)
+                # modify the original bond features of the bonds connected to the mask atoms
+                for bond_idx in connected_edge_indices:
+                    data.edge_attr[bond_idx] = torch.tensor(
+                        [self.num_edge_type, 0])
+
+                data.connected_edge_indices = torch.tensor(
+                    connected_edge_indices[::2])
+            else:
+                data.mask_edge_label = torch.empty((0, 2)).to(torch.int64)
+                data.connected_edge_indices = torch.tensor(
+                    connected_edge_indices).to(torch.int64)
+
+        return data
+
+    def __repr__(self):
+        return '{}(num_atom_type={}, num_edge_type={}, mask_rate={}, mask_edge={})'.format(
+            self.__class__.__name__, self.num_atom_type, self.num_edge_type,
+            self.mask_rate, self.mask_edge)
 
 def reset_idxes(G):
     """
@@ -359,7 +453,6 @@ class ChemExtractSubstructureContextPair:
         self.k = k
         self.l1 = l1
         self.l2 = l2
-
         # for the special case of 0, addresses the quirk with
         # single_source_shortest_path_length
         if self.k == 0:
@@ -415,6 +508,11 @@ class ChemExtractSubstructureContextPair:
                                                               self.l2).keys()
         context_node_idxes = set(l1_node_idxes).symmetric_difference(
             set(l2_node_idxes))
+        if len(context_node_idxes) == 0:
+            l2_node_idxes = range(num_atoms)
+            context_node_idxes = set(l1_node_idxes).symmetric_difference(
+                set(l2_node_idxes))
+
         if len(context_node_idxes) > 0:
             context_G = G.subgraph(context_node_idxes)
             context_G, context_node_map = reset_idxes(context_G)  # need to
@@ -429,6 +527,8 @@ class ChemExtractSubstructureContextPair:
         # WRT context ordering
         context_substruct_overlap_idxes = list(set(
             context_node_idxes).intersection(set(substruct_node_idxes)))
+        if len(context_substruct_overlap_idxes) <= 0:
+            context_substruct_overlap_idxes = list(context_node_idxes)
         if len(context_substruct_overlap_idxes) > 0:
             context_substruct_overlap_idxes_reorder = [context_node_map[old_idx]
                                                        for
@@ -634,7 +734,6 @@ class BatchSubstructContext(Data):
         The assignment vector :obj:`batch` is created on the fly."""
         batch = BatchSubstructContext()
         keys = ["center_substruct_idx", "edge_attr_substruct", "edge_index_substruct", "x_substruct", "overlap_context_substruct_idx", "edge_attr_context", "edge_index_context", "x_context"]
-
         for key in keys:
             batch[key] = []
 
@@ -799,6 +898,70 @@ class TestBioDataset(InMemoryDataset):
             self.slices["go_target_pretrain"] = torch.arange(0, (num_graphs + 1) * pretrain_tasks)
             self.slices["go_target_downstream"] = torch.arange(0, (num_graphs + 1) * downstream_tasks)
 
+@register_dataset("test_chem")
+class TestChemDataset(InMemoryDataset):
+    def __init__(self,
+                 data_type="unsupervised",
+                 root=None,
+                 transform=None,
+                 pre_transform=None,
+                 pre_filter=None):
+        super(TestChemDataset, self).__init__(root, transform, pre_transform, pre_filter)
+        num_nodes = 10
+        num_edges = 10
+        num_graphs = 100
+
+        def cycle_index(num, shift):
+            arr = torch.arange(num) + shift
+            arr[-shift:] = torch.arange(shift)
+            return arr
+
+        upp = torch.cat([torch.arange(0, num_nodes)] * num_graphs)
+        dwn = torch.cat([cycle_index(num_nodes, 1)] * num_graphs)
+        edge_index = torch.stack([upp, dwn])
+
+        edge_attr = torch.zeros(num_edges * num_graphs, 2)
+        x = torch.zeros(num_graphs * num_nodes, 2)
+        for idx, val in enumerate(torch.randint(0, 6, size=(num_edges * num_graphs,))):
+            edge_attr[idx][0] = val
+        for idx, val in enumerate(torch.randint(0, 3, size=(num_edges * num_graphs,))):
+            edge_attr[idx][1] = val
+        for idx, val in enumerate(torch.randint(0, 120, size=(num_edges * num_graphs,))):
+            x[idx][0] = val
+        for idx, val in enumerate(torch.randint(0, 3, size=(num_edges * num_graphs,))):
+            x[idx][1] = val
+
+        self.data = Data(
+            x=x.to(torch.long),
+            edge_index=edge_index.to(torch.long),
+            edge_attr=edge_attr.to(torch.long),
+        )
+
+        self.slices = {
+            "x": torch.arange(0, (num_graphs + 1) * num_nodes, num_nodes),
+            "edge_index": torch.arange(0, (num_graphs + 1) * num_edges, num_edges),
+            "edge_attr": torch.arange(0, (num_graphs + 1) * num_edges, num_edges),
+        }
+
+        if data_type == "supervised":
+            pretrain_tasks = 10
+            go_target_pretrain = torch.zeros(pretrain_tasks * num_graphs) - 1
+            for i in range(num_graphs):
+                val = np.random.randint(0, pretrain_tasks)
+                go_target_pretrain[i * pretrain_tasks + val] = 1
+            self.data.y = go_target_pretrain
+            self.slices["y"] = torch.arange(0, (num_graphs + 1) * pretrain_tasks, pretrain_tasks)
+        
+    def get(self, idx):
+        data = Data()
+        for key in self.data.keys:
+            item, slices = self.data[key], self.slices[key]
+            s = list(repeat(slice(None), item.dim()))
+            s[data.__cat_dim__(key, item)] = slice(slices[idx],
+                                                    slices[idx + 1])
+            data[key] = item[s]
+        return data
+
 
 @register_dataset("bio")
 class BioDataset(InMemoryDataset):
@@ -856,7 +1019,6 @@ class MoleculeDataset(InMemoryDataset):
                 self.data, self.slices = torch.load(self.processed_paths[1])
             else:
                 self.data, self.slices = torch.load(self.processed_paths[0])
-
 
     def get(self, idx):
         data = Data()

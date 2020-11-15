@@ -200,14 +200,15 @@ This leaderboard reports unsupervised multi-label node classification setting. w
 | ---- | ------------------------------------------------------------ | :-------: | :---------: | :-------: |
 | 1    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf) | **26.32** |  **43.63**  |   57.64   |
 | 2    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) |   24.86   |    43.49    | **58.46** |
-| 3    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) |   23.86   |    42.51    |   53.68   |
+| 3    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) |   22.97   |    42.29    |   56.00   |
 | 4    | NetSMF [(Qiu et at, WWW'19)](https://arxiv.org/abs/1906.11156) |   24.39   |    43.21    |   51.42   |
-| 5    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) |   22.72   |    42.26    |   50.42   |
-| 6    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) |   23.15   |    39.29    |   49.83   |
-| 7    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) |   23.24   |    35.52    |   52.96   |
-| 8    | SDNE [(Wang et al, KDD'16)](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf) |   20.14   |    40.32    |   48.24   |
-| 9    | GraRep [(Cao et al, CIKM'15)](http://dl.acm.org/citation.cfm?doid=2806416.2806512) |   20.96   |    34.35    |   51.84   |
-| 10   | DNGR [(Cao et al, AAAI'16)](https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/download/12423/11715) |   16.45   |    28.54    |   48.57   |
+| 5    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) |   23.20   |   39.21   |   52.99   |
+| 6    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) |   22.59   |    42.69    |   51.38   |
+| 7    | Spectral [(Tang et al, Data Min Knowl Disc (2011))](https://link.springer.com/article/10.1007/s10618-010-0210-x) |   23.33   |    42.40    |   50.33   |
+| 8    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) |   22.94   |    34.82    |   55.43   |
+| 9    | SDNE [(Wang et al, KDD'16)](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf) |   20.14   |    40.32    |   48.24   |
+| 10   | GraRep [(Cao et al, CIKM'15)](http://dl.acm.org/citation.cfm?doid=2806416.2806512) |   22.03   |    33.99    |   55.59   |
+| 11   | DNGR [(Cao et al, AAAI'16)](https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/download/12423/11715) |   16.45   |    28.54    |   48.57   |
 
 #### Semi-Supervised Node Classification with Attributes
 

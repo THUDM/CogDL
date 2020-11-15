@@ -24,6 +24,7 @@ unsupervised_node_classification:
   - model:
     - prone
     - netmf
+    - netsmf
     - deepwalk
     - line
     - node2vec
@@ -31,6 +32,7 @@ unsupervised_node_classification:
     - sdne
     - grarep
     - dngr
+    - spectral
     dataset:
     - ppi
     - blogcatalog
@@ -103,16 +105,22 @@ multiplex_link_prediction:
     - twitter
 multiplex_node_classification:
   - model:
-    - gtn
-    - han
-    - gcc
     - pte
     - metapath2vec
     - hin2vec
+    - gcc
     dataset:
-    - dblp
-    - acm
-    - lmdb
+    - gtn-dblp
+    - gtn-acm
+    - gtn-imdb
+heterogeneous_node_classification:
+  - model:
+    - gtn
+    - han
+    dataset:
+    - gtn-dblp
+    - gtn-acm
+    - gtn-imdb
 pretrain:
   - model:
     - stpgnn

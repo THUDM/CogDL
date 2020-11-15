@@ -1,30 +1,24 @@
 import copy
 import itertools
-import os
 import random
-import time
 from numpy.core.fromnumeric import product
 import yaml
 from collections import defaultdict, namedtuple
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 from tabulate import tabulate
-from tqdm import tqdm
 
 from cogdl import options
 from cogdl.tasks import build_task
+from cogdl.utils import set_random_seed, tabulate_results
 
 
 def main(args):
     if torch.cuda.is_available() and not args.cpu:
         torch.cuda.set_device(args.device_id[0])
 
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    torch.cuda.manual_seed(args.seed)
+    set_random_seed(args.seed)
     
     task = build_task(args)
     result = task.train()
@@ -43,26 +37,6 @@ def variant_args_generator(args, variants):
     for variant in variants:
         args.dataset, args.model, args.seed = variant
         yield copy.deepcopy(args)
-
-
-def tabulate_results(results_dict):
-    # Average for different seeds
-    tab_data = []
-    for variant in results_dict:
-        results = np.array([list(res.values()) for res in results_dict[variant]])
-        tab_data.append(
-            [variant]
-            + list(
-                itertools.starmap(
-                    lambda x, y: f"{x:.4f}±{y:.4f}",
-                    zip(
-                        np.mean(results, axis=0).tolist(),
-                        np.std(results, axis=0).tolist(),
-                    ),
-                )
-            )
-        )
-    return tab_data
 
 
 def check_task_dataset_model_match(task, variants):

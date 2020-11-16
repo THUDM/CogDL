@@ -6,6 +6,11 @@ import torch
 from cogdl.data import Data
 
 class Sampler:
+    r"""
+    Base sampler class.
+    Constructs a sampler with data (`torch_geometric.data.Data`), which indicates Graph to be sampled,
+    and args_params (Dictionary) which represents args parameters needed by the sampler.
+    """
     def __init__(self, data, args_params):
         self.data = data
         self.num_nodes = self.data.x.size()[0]
@@ -15,6 +20,18 @@ class Sampler:
         pass
 
 class SAINTSampler(Sampler):
+    r"""
+    The sampler super-class referenced from GraphSAINT (https://arxiv.org/abs/1907.04931). Any graph sampler is supposed to perform
+    the following meta-steps:
+     1. [optional] Preprocessing: e.g., for edge sampler, we need to calculate the
+            sampling probability for each edge in the training graph. This is to be
+            performed only once per phase (or, once throughout the whole training,
+            since in most cases, training only consists of a single phase).
+            ==> Need to override the `preproc()` in sub-class
+     2. Post-processing: upon getting the sampled subgraphs, we need to prepare the
+            appropriate information (e.g., subgraph adj with renamed indices) to
+            enable the PyTorch trainer. 
+    """
     def __init__(self, data, args_params):
         super().__init__(data, args_params)
         self.adj = sp.coo_matrix((np.ones(self.num_edges), (self.data.edge_index[0], self.data.edge_index[1])), 
@@ -26,15 +43,16 @@ class SAINTSampler(Sampler):
         self.estimate()
 
     def estimate(self):
-        # estimation of loss / aggregation normalization factors
-        # -------------------------------------------------------------
-        # For some special sampler, no need to estimate norm factors, we can calculate
-        # the node / edge probabilities directly.
-        # However, for integrity of the framework, we follow the same procedure
-        # for all samplers:
-        #   1. sample enough number of subgraphs
-        #   2. update the counter for each node / edge in the training graph
-        #   3. estimate norm factor alpha and lambda
+        r"""
+        estimation of loss / aggregation normalization factors.
+        For some special sampler, no need to estimate norm factors, we can calculate
+        the node / edge probabilities directly.
+        However, for integrity of the framework, we follow the same procedure
+        for all samplers:
+            1. sample enough number of subgraphs
+            2. update the counter for each node / edge in the training graph
+            3. estimate norm factor alpha and lambda
+        """
         self.subgraphs_indptr = []
         self.subgraphs_indices = []
         self.subgraphs_data = []
@@ -116,7 +134,7 @@ class SAINTSampler(Sampler):
         return indptr, indices, data, node_idx, edge_idx
 
     def get_subgraph(self, phase, require_norm = True):
-        """
+        r"""
         Generate one minibatch for model. In the 'train' mode, one minibatch corresponds
         to one subgraph of the training graph. In the 'valid' or 'test' mode, one batch
         corresponds to the full graph (i.e., full-batch rather than minibatch evaluation
@@ -172,6 +190,12 @@ class SAINTSampler(Sampler):
         return data
 
 class NodeSampler(SAINTSampler):
+    r"""
+    randomly select nodes, then adding edges connecting these nodes 
+    Args:
+        sample_coverage (integer):  number of sampled nodes during estimation / number of nodes in graph
+        size_subgraph (integer): number of nodes in subgraph
+    """
     def __init__(self, data, args_params):
         self.node_num_subgraph = args_params["size_subgraph"]
         super().__init__(data, args_params)
@@ -200,6 +224,12 @@ class NodeSampler(SAINTSampler):
         return indptr, indices, data, node_idx, subg_edge_index
         
 class EdgeSampler(SAINTSampler):
+    r"""
+    randomly select edges, then adding nodes connected by these edges 
+    Args:
+        sample_coverage (integer):  number of sampled nodes during estimation / number of nodes in graph
+        size_subgraph (integer): number of edges in subgraph
+    """
     def __init__(self, data, args_params):
         self.edge_num_subgraph = args_params["size_subgraph"]
         super().__init__(data, args_params)
@@ -209,6 +239,13 @@ class EdgeSampler(SAINTSampler):
         return self.extract_subgraph(edge_idx)
 
 class RWSampler(SAINTSampler):
+    r"""
+    randomly select a node, perform a random walk starting from the node and add the walk path to the subgraph
+    Args:
+        sample_coverage (integer):  number of sampled nodes during estimation / number of nodes in graph
+        num_walks (integer): number of walks
+        walk_length (integer): length of the random walk
+    """
     def __init__(self, data, args_params):
         self.num_walks = args_params["num_walks"]
         self.walk_length = args_params["walk_length"]
@@ -228,6 +265,13 @@ class RWSampler(SAINTSampler):
         return self.extract_subgraph(np.array(edge_idx))
 
 class MRWSampler(SAINTSampler):
+    r"""
+    multidimentional random walk, similar to https://arxiv.org/abs/1002.1751
+    Args:
+        sample_coverage (integer):  number of sampled nodes during estimation / number of nodes in graph
+        size_frontier (integer): number of frontiers
+        size_subgraph (integer): number of edges in subgraph
+    """
     def __init__(self, data, args_params):
         self.size_frontier = args_params["size_frontier"]
         self.edge_num_subgraph = args_params["size_subgraph"]

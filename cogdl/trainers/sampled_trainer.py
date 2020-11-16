@@ -45,8 +45,6 @@ class SAINTTrainer(SampledTrainer):
 
     def fit(self, model: SupervisedHeterogeneousNodeClassificationModel, dataset: Dataset):
         self.data = dataset.data
-        self.data.apply(lambda x: x.to(self.device))
-        self.model = model
         if self.args_sampler["sampler"] == "node":
             self.sampler = NodeSampler(self.data, self.args_sampler)
         elif self.args_sampler["sampler"] == "edge":
@@ -55,6 +53,8 @@ class SAINTTrainer(SampledTrainer):
             self.sampler = RWSampler(self.data, self.args_sampler)
         elif self.args_sampler["sampler"] == "mrw":
             self.sampler = MRWSampler(self.data, self.args_sampler)
+        self.data.apply(lambda x: x.to(self.device))
+        self.model = model
 
         self.optimizer = torch.optim.Adam(
             model.parameters(), lr=self.lr, weight_decay=self.weight_decay
@@ -90,6 +90,7 @@ class SAINTTrainer(SampledTrainer):
 
     def _train_step(self):
         self.data = self.sampler.get_subgraph("train")
+        self.data.apply(lambda x: x.to(self.device))
         self.model.train()
         self.optimizer.zero_grad()
         self.model.loss(self.data).backward()

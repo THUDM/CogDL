@@ -110,3 +110,15 @@ multiplex_node_classification:
     - dblp
     - acm
     - lmdb
+attributed_graph_clustering:
+  - model:
+    - deepwalk
+    - pyg-gcn
+    - prone
+    - netmf
+    - deepwalk
+    - line
+    dataset:
+    - cora
+    - citeseer
+    - pubmed

@@ -16,14 +16,17 @@ node_classification:
     - pyg_gat
     - deepergcn
     - gcnii
+    - gpt_gnn
     dataset:
     - cora
     - citeseer
     - pubmed
+    - ogbn-arxiv
 unsupervised_node_classification:
   - model:
     - prone
     - netmf
+    - netsmf
     - deepwalk
     - line
     - node2vec
@@ -31,10 +34,13 @@ unsupervised_node_classification:
     - sdne
     - grarep
     - dngr
+    - spectral
+    - gcc
     dataset:
     - ppi
     - blogcatalog
     - wikipedia
+    - usa-airport
   - model:
     - unsup_graphsage
     - dgi
@@ -82,11 +88,16 @@ link_prediction:
   - model:
     - rgcn
     - compgcn
+    - distmult
+    - rotate
+    - transe
+    - complex
     dataset:
     - fb13
     - fb15k237
     - wn18
     - wn18rr
+    - fb13s
 multiplex_link_prediction:
   - model:
     - gatne
@@ -103,19 +114,29 @@ multiplex_link_prediction:
     - twitter
 multiplex_node_classification:
   - model:
-    - gtn
-    - han
-    - gcc
     - pte
     - metapath2vec
     - hin2vec
+    - gcc
     dataset:
-    - dblp
-    - acm
-    - lmdb
+    - gtn-dblp
+    - gtn-acm
+    - gtn-imdb
+heterogeneous_node_classification:
+  - model:
+    - gtn
+    - han
+    dataset:
+    - gtn-dblp
+    - gtn-acm
+    - gtn-imdb
 pretrain:
   - model:
     - stpgnn
     dataset:
     - bio
     - test_bio
+    - chem
+    - test_chem
+    - bbbp
+    - bace

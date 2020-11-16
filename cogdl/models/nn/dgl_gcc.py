@@ -241,7 +241,7 @@ class GCC(BaseModel):
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument("--load_path", type=str)
+        parser.add_argument("--load-path", type=str, default='./saved/gcc_pretrained.pth')
         parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--epoch", type=int, default=0)
         # fmt: on

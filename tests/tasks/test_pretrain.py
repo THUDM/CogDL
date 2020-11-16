@@ -28,7 +28,9 @@ def get_strategies_for_pretrain_args():
         "weight_decay": 5e-4,
         "max_epoch": 3,
         "patience": 2,
-        "output_model_file": "./saved"
+        "output_model_file": "./saved",
+        "l1": 1,
+        "l2": 2,
     }
     return build_args_from_dict(args)
 
@@ -66,10 +68,72 @@ def test_stpgnn_supervised():
     args.checkpoint = None
     task = build_task(args)
     ret = task.train()
-    assert 0 < ret["Acc"] <= 1
+    # assert 0 < ret["Acc"] <= 1
 
 def test_stpgnn_finetune():
     args = get_strategies_for_pretrain_args()
+    args.pretrain_task = "infomax"
+    args.pooling = "mean"
+    args.finetune = True
+    args.checkpoint = "./saved/context.pth"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret["Acc"] <= 1
+
+def test_chem_infomax():
+    args = get_strategies_for_pretrain_args()
+    args.dataset = "test_chem"
+    args.pretrain_task = "infomax"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret["Acc"] <= 1
+
+def test_chem_contextpred():
+    args = get_strategies_for_pretrain_args()
+    args.dataset = "test_chem"
+    args.negative_samples = 1
+    args.center = 0
+    args.l1 = 1.0
+    args.pretrain_task = "context"
+    for mode in ["cbow", "skipgram"]:
+        args.mode = mode
+        task = build_task(args)
+        ret = task.train()
+        assert 0 < ret["Acc"] <= 1
+
+def test_chem_mask():
+    args = get_strategies_for_pretrain_args()
+    args.dataset = "test_chem"
+    args.pretrain_task = "mask"
+    args.mask_rate = 0.15
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret["Acc"] <= 1
+
+def test_chem_supervised():
+    args = get_strategies_for_pretrain_args()
+    args.dataset = "test_chem"
+    args.pretrain_task = "supervised"
+    args.pooling = "mean"
+    args.checkpoint = None
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret["Acc"] <= 1
+
+def test_bbbp():
+    args = get_strategies_for_pretrain_args()
+    args.dataset = "bbbp"
+    args.pretrain_task = "infomax"
+    args.pooling = "mean"
+    args.finetune = True
+    args.checkpoint = "./saved/context.pth"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret["Acc"] <= 1
+
+def test_bace():
+    args = get_strategies_for_pretrain_args()
+    args.dataset = "bace"
     args.pretrain_task = "infomax"
     args.pooling = "mean"
     args.finetune = True
@@ -85,3 +149,9 @@ if __name__ == "__main__":
     test_stpgnn_mask()
     test_stpgnn_supervised()
     test_stpgnn_finetune()
+    test_chem_contextpred()
+    test_chem_infomax()
+    test_chem_mask()
+    test_chem_supervised()
+    test_bace()
+    test_bbbp()

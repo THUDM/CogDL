@@ -150,7 +150,7 @@ def test_hin2vec_dblp():
     args.negative = 3
     args.batch_size = 1000
     args.hop = 2
-    args.epoches = 1
+    args.epochs = 1
     args.lr = 0.025
     args.cpu = True
     model = build_model(args)

@@ -8,7 +8,23 @@ from cogdl.utils import mul_edge_softmax, remove_self_loops
 
 class DisenGCNLayer(nn.Module):
     """
-        Implementation of "Disentangled Graph Convolutional Networks" <http://proceedings.mlr.press/v97/ma19a.html>.
+        Implementation of DisenGCN paper "Disentangled Graph Convolutional Networks"
+        <http://proceedings.mlr.press/v97/ma19a.html>.
+
+        Parameters
+        -----------
+        in_feats : int
+            Size of each input features.
+        out_feats : int
+            Size of each output features.
+        K : int
+            Number of channels in hidden embeddings.
+        iterations : int
+            Iterations of neighborhood routing.
+        tau : float, optional
+            Temperature to sharpen edge features, default: ``1.0``
+        activation : str, optional
+            Activation function to use, default: ``leaky_relu``.
     """
     def __init__(self, in_feats, out_feats, K, iterations, tau=1.0, activation="leaky_relu"):
         super(DisenGCNLayer, self).__init__()

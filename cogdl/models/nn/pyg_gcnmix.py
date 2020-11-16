@@ -46,6 +46,9 @@ def get_current_consistency_weight(final_consistency_weight, rampup_starts, ramp
 
 
 class GCNConv(nn.Module):
+    """Implementation of Graph convolution network in paper `"Semi-Supervised Classification with Graph Convolutional
+     Networks"`
+ """
     def __init__(self, in_feats, out_feats):
         super(GCNConv, self).__init__()
         self.weight = nn.Linear(in_features=in_feats, out_features=out_feats)
@@ -65,9 +68,27 @@ class GCNConv(nn.Module):
 
 
 class BaseGNNMix(BaseModel):
+    """Implementation of GraphMix in paper `"GraphMix: Improved Training of GNNs for Semi-Supervised Learning"`
+    <https://arxiv.org/abs/1909.11715?
+
+     Parameters
+     ----------
+     in_feats : int
+        Size of each input features.
+     hidden_size : int
+     num_classes : int
+        Size of output classes
+     k : int
+        Number of mix iterations to generate labels
+     temperature : float
+        Temperature used to sharpen predictions
+     alpha : float
+        Rate of mixing labels
+     dropout : float
+    """
     def __init__(
         self,
-        in_feat,
+        in_feats,
         hidden_size,
         num_classes,
         k,
@@ -81,7 +102,7 @@ class BaseGNNMix(BaseModel):
         self.k = k
         self.temperature = temperature
 
-        self.input_gnn = GCNConv(in_feat, hidden_size)
+        self.input_gnn = GCNConv(in_feats, hidden_size)
         self.hidden_gnn = GCNConv(hidden_size, num_classes)
         self.loss_f = nn.BCELoss()
 

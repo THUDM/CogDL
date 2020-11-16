@@ -10,6 +10,31 @@ from .. import register_model, BaseModel
 
 
 class RGCNLayer(nn.Module):
+    """
+        Implementation of Relational-GCN in paper `"Modeling Relational Data with Graph Convolutional Networks"`
+         <https://arxiv.org/abs/1703.06103>
+
+         Parameters
+         ----------
+         in_feats : int
+            Size of each input embedding.
+        out_feats : int
+            Size of each output embedding.
+        num_edge_type : int
+            The number of edge type in knowledge graph.
+        regularizer : str, optional
+            Regularizer used to avoid overfitting, ``basis`` or ``bdd``, default : ``basis``.
+        num_bases : int, optional
+            The number of basis, only used when `regularizer` is `basis`, default : ``None``.
+        self_loop : bool, optional
+            Add self loop embedding if True, default : ``True``.
+        dropout : float
+        self_dropout : float, optional
+            Dropout rate of self loop embedding, default : ``0.0``
+        layer_norm : bool, optional
+            Use layer normalization if True, default : ``True``
+        bias : bool
+    """
     def __init__(self, in_feats, out_feats, num_edge_types, regularizer="basis", num_bases=None, self_loop=True,
                  dropout=0.0, self_dropout=0.0, layer_norm=True, bias=True):
         super(RGCNLayer, self).__init__()
@@ -192,10 +217,6 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
             self_loop=self_loop,
             dropout=dropout,
             self_dropout=self_dropout,)
-        # self.rel_weight = nn.Parameter(torch.Tensor(num_rels, hidden_size))
-        # nn.init.xavier_normal_(self.rel_weight, gain=nn.init.calculate_gain("relu"))
-        # self.emb = nn.Parameter(torch.Tensor(num_entities, hidden_size))
-        # nn.init.xavier_normal_(self.emb, gain=nn.init.calculate_gain("relu"))
 
         self.rel_weight = nn.Embedding(num_rels, hidden_size)
         self.emb = nn.Embedding(num_entities, hidden_size)

@@ -18,15 +18,14 @@ def nx_to_graph_data_obj(g, center_id, allowable_features_downstream=None,
                          allowable_features_pretrain=None,
                          node_id_to_go_labels=None):
     n_nodes = g.number_of_nodes()
-    n_edges = g.number_of_edges()
 
     # nodes
     nx_node_ids = [n_i for n_i in g.nodes()]  # contains list of nx node ids
     # in a particular ordering. Will be used as a mapping to convert
     # between nx node ids and data obj node indices
 
-    x = torch.tensor(np.ones(n_nodes).reshape(-1, 1), dtype=torch.float)
     # we don't have any node labels, so set to dummy 1. dim n_nodes x 1
+    x = torch.tensor(np.ones(n_nodes).reshape(-1, 1), dtype=torch.float)
 
     center_node_idx = nx_node_ids.index(center_id)
     center_node_idx = torch.tensor([center_node_idx], dtype=torch.long)
@@ -52,8 +51,7 @@ def nx_to_graph_data_obj(g, center_id, allowable_features_downstream=None,
     edge_index = torch.tensor(np.array(edges_list).T, dtype=torch.long)
 
     # data.edge_attr: Edge feature matrix with shape [num_edges, num_edge_features]
-    edge_attr = torch.tensor(np.array(edge_features_list),
-                             dtype=torch.float)
+    edge_attr = torch.tensor(np.array(edge_features_list), dtype=torch.float)
 
     try:
         species_id = int(nx_node_ids[0].split('.')[0])  # nx node id is of the form:
@@ -80,8 +78,7 @@ def nx_to_graph_data_obj(g, center_id, allowable_features_downstream=None,
             go_labels = node_id_to_go_labels[center_id]
             # get indices of allowable_features_downstream that match with elements
             # in go_labels
-            _, node_feature_indices, _ = np.intersect1d(
-                allowable_features_downstream, go_labels, return_indices=True)
+            _, node_feature_indices, _ = np.intersect1d(allowable_features_downstream, go_labels, return_indices=True)
             for idx in node_feature_indices:
                 downstream_go_node_feature[idx] = 1
             # get indices of allowable_features_pretrain that match with
@@ -109,40 +106,33 @@ def graph_data_obj_to_nx(data):
         end_idx = int(edge_index[1, j])
         w1, w2, w3, w4, w5, w6, w7, _, _ = edge_attr[j].astype(bool)
         if not G.has_edge(begin_idx, end_idx):
-            G.add_edge(begin_idx, end_idx, w1=w1, w2=w2, w3=w3, w4=w4, w5=w5,
-                       w6=w6, w7=w7)
+            G.add_edge(begin_idx, end_idx, w1=w1, w2=w2, w3=w3, w4=w4, w5=w5, w6=w6, w7=w7)
     return G
 
 
 class NegativeEdge:
     """Borrowed from https://github.com/snap-stanford/pretrain-gnns/"""
-    def __init__(self):
-        """
-        Randomly sample negative edges
-        """
-        pass
-
     def __call__(self, data):
         num_nodes = data.num_nodes
         num_edges = data.num_edges
 
-        edge_set = set([str(data.edge_index[0,i].cpu().item()) + "," + str(data.edge_index[1,i].cpu().item()) for i in range(data.edge_index.shape[1])])
+        edge_set = set([str(data.edge_index[0, i].cpu().item()) + "," + str(data.edge_index[1, i].cpu().item())
+                        for i in range(data.edge_index.shape[1])])
 
-        redandunt_sample = torch.randint(0, num_nodes, (2,5*num_edges))
+        redandunt_sample = torch.randint(0, num_nodes, (2, 5*num_edges))
         sampled_ind = []
         sampled_edge_set = set([])
         for i in range(5*num_edges):
-            node1 = redandunt_sample[0,i].cpu().item()
-            node2 = redandunt_sample[1,i].cpu().item()
+            node1 = redandunt_sample[0, i].cpu().item()
+            node2 = redandunt_sample[1, i].cpu().item()
             edge_str = str(node1) + "," + str(node2)
             if not edge_str in edge_set and not edge_str in sampled_edge_set and not node1 == node2:
                 sampled_edge_set.add(edge_str)
                 sampled_ind.append(i)
-            if len(sampled_ind) == num_edges/2:
+            if len(sampled_ind) == num_edges//2:
                 break
 
-        data.negative_edge_index = redandunt_sample[:,sampled_ind]
-        
+        data.negative_edge_index = redandunt_sample[:, sampled_ind]
         return data
 
 
@@ -157,7 +147,7 @@ class MaskEdge:
         self.mask_rate = mask_rate
 
     def __call__(self, data, masked_edge_indices=None):
-        if masked_edge_indices == None:
+        if masked_edge_indices is None:
             # sample x distinct edges to be masked, based on mask rate. But
             # will sample at least 1 edge
             num_edges = int(data.edge_index.size()[1] / 2)  # num unique edges
@@ -183,9 +173,7 @@ class MaskEdge:
         all_masked_edge_indices = masked_edge_indices + [i + 1 for i in
                                                          masked_edge_indices]
         for idx in all_masked_edge_indices:
-            data.edge_attr[idx] = torch.tensor(np.array([0, 0, 0, 0, 0,
-                                                             0, 0, 0, 1]),
-                                                      dtype=torch.float)
+            data.edge_attr[idx] = torch.tensor(np.array([0, 0, 0, 0, 0, 0, 0, 0, 1]), dtype=torch.float)
 
         return data
 
@@ -215,8 +203,8 @@ class ExtractSubstructureContextPair:
         num_atoms = data.x.size()[0]
         G = graph_data_obj_to_nx(data)
 
-        if root_idx == None:
-            if self.center == True:
+        if root_idx is None:
+            if self.center is True:
                 root_idx = data.center_node_idx.item()
             else:
                 root_idx = random.sample(range(num_atoms), 1)[0]
@@ -227,12 +215,9 @@ class ExtractSubstructureContextPair:
         data.edge_index_substruct = data.edge_index
         data.center_substruct_idx = data.center_node_idx
 
-
         # Get context that is between l1 and the max diameter of the PPI graph
         l1_node_idxes = nx.single_source_shortest_path_length(G, root_idx,
                                                               self.l1).keys()
-        # l2_node_idxes = nx.single_source_shortest_path_length(G, root_idx,
-        #                                                       self.l2).keys()
         l2_node_idxes = range(num_atoms)
         context_node_idxes = set(l1_node_idxes).symmetric_difference(
             set(l2_node_idxes))
@@ -246,9 +231,9 @@ class ExtractSubstructureContextPair:
             data.x_context = context_data.x
             data.edge_attr_context = context_data.edge_attr
             data.edge_index_context = context_data.edge_index
-
+        else:
+            raise RuntimeError
         # Get indices of overlapping nodes between substruct and context,
-        # WRT context ordering
         context_substruct_overlap_idxes = list(context_node_idxes)
         if len(context_substruct_overlap_idxes) > 0:
             context_substruct_overlap_idxes_reorder = [context_node_map[old_idx]
@@ -261,8 +246,7 @@ class ExtractSubstructureContextPair:
         return data
 
     def __repr__(self):
-        return '{}(l1={}, center={})'.format(self.__class__.__name__,
-                                              self.l1, self.center)
+        return '{}(l1={}, center={})'.format(self.__class__.__name__, self.l1, self.center)
 
 
 # ==================
@@ -272,7 +256,7 @@ class ExtractSubstructureContextPair:
 
 class BatchFinetune(Data):
     def __init__(self, batch=None, **kwargs):
-        super(BatchMasking, self).__init__(**kwargs)
+        super(BatchFinetune, self).__init__(**kwargs)
         self.batch = batch
 
     @staticmethod
@@ -347,7 +331,7 @@ class BatchMasking(Data):
                 item = data[key]
                 if key in ['edge_index']:
                     item = item + cumsum_node
-                elif key  == 'masked_edge_idx':
+                elif key == 'masked_edge_idx':
                     item = item + cumsum_edge
                 batch[key].append(item)
 
@@ -435,12 +419,21 @@ class BatchSubstructContext(Data):
         :class:`torch_geometric.data.Data` objects.
         The assignment vector :obj:`batch` is created on the fly."""
         batch = BatchSubstructContext()
-        keys = ["center_substruct_idx", "edge_attr_substruct", "edge_index_substruct", "x_substruct", "overlap_context_substruct_idx", "edge_attr_context", "edge_index_context", "x_context"]
+        keys = [
+                    "center_substruct_idx",
+                    "edge_attr_substruct",
+                    "edge_index_substruct",
+                    "x_substruct",
+                    "overlap_context_substruct_idx",
+                    "edge_attr_context",
+                    "edge_index_context",
+                    "x_context"
+                ]
 
         for key in keys:
             batch[key] = []
 
-        #used for pooling the context
+        # used for pooling the context
         batch.batch_overlapped_context = []
         batch.overlapped_context_size = []
 
@@ -451,23 +444,23 @@ class BatchSubstructContext(Data):
         i = 0
 
         for data in data_list:
-            #If there is no context, just skip!!
+            # If there is no context, just skip!!
             if hasattr(data, "x_context"):
                 num_nodes = data.num_nodes
                 num_nodes_substruct = len(data.x_substruct)
                 num_nodes_context = len(data.x_context)
 
-                #batch.batch.append(torch.full((num_nodes, ), i, dtype=torch.long))
+                # batch.batch.append(torch.full((num_nodes, ), i, dtype=torch.long))
                 batch.batch_overlapped_context.append(torch.full((len(data.overlap_context_substruct_idx), ), i, dtype=torch.long))
                 batch.overlapped_context_size.append(len(data.overlap_context_substruct_idx))
 
-                ###batching for the substructure graph
+                # batching for the substructure graph
                 for key in ["center_substruct_idx", "edge_attr_substruct", "edge_index_substruct", "x_substruct"]:
                     item = data[key]
                     item = item + cumsum_substruct if batch.cumsum(key, item) else item
                     batch[key].append(item)
 
-                ###batching for the context graph
+                # batching for the context graph
                 for key in ["overlap_context_substruct_idx", "edge_attr_context", "edge_index_context", "x_context"]:
                     item = data[key]
                     item = item + cumsum_context if batch.cumsum(key, item) else item
@@ -481,7 +474,6 @@ class BatchSubstructContext(Data):
         for key in keys:
             batch[key] = torch.cat(
                 batch[key], dim=batch.cat_dim(key))
-        #batch.batch = torch.cat(batch.batch, dim=-1)
         batch.batch_overlapped_context = torch.cat(batch.batch_overlapped_context, dim=-1)
         batch.overlapped_context_size = torch.LongTensor(batch.overlapped_context_size)
 
@@ -491,13 +483,6 @@ class BatchSubstructContext(Data):
         return -1 if key in ["edge_index", "edge_index_substruct", "edge_index_context"] else 0
 
     def cumsum(self, key, item):
-        r"""If :obj:`True`, the attribute :obj:`key` with content :obj:`item`
-        should be added up cumulatively before concatenated together.
-        .. note::
-            This method is for internal use only, and should only be overridden
-            if the batch concatenation process is corrupted for a specific data
-            attribute.
-        """
         return key in ["edge_index", "edge_index_substruct", "edge_index_context", "overlap_context_substruct_idx", "center_substruct_idx"]
 
     @property
@@ -560,8 +545,8 @@ class TestBioDataset(InMemoryDataset):
                  pre_transform=None,
                  pre_filter=None):
         super(TestBioDataset, self).__init__(root, transform, pre_transform, pre_filter)
-        num_nodes = 10
-        num_edges = 10
+        num_nodes = 100
+        num_edges = 300
         num_graphs = 100
 
         def cycle_index(num, shift):

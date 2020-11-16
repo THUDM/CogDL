@@ -45,6 +45,13 @@ class BasesRelEmbLayer(nn.Module):
 
 
 class CompGCNLayer(nn.Module):
+    """
+        Implementation of CompGCN in paper `"Composition-based Multi-Relational Graph Convolutional Networks"`
+        <https://arxiv.org/abs/1911.03082>
+
+        Parameters
+        ----------
+    """
     def __init__(self, in_feats, out_feats, num_rels, opn="mult", num_bases=None, activation=lambda x:x, dropout=0.0, bias=True):
         super(CompGCNLayer, self).__init__()
         self.in_feats = in_feats

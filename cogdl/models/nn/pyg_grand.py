@@ -21,7 +21,6 @@ class MLPLayer(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        
         stdv = 1. / math.sqrt(self.weight.size(1))
         self.weight.data.normal_(-stdv, stdv)
         if self.bias is not None:
@@ -42,6 +41,36 @@ class MLPLayer(nn.Module):
 
 @register_model("grand")
 class Grand(BaseModel):
+    """
+        Implementation of GRAND in paper `"Graph Random Neural Networks for Semi-Supervised Learning on Graphs"`
+        <https://arxiv.org/abs/2005.11079>
+
+        Parameters
+        ----------
+        nfeat : int
+            Size of each input features.
+        nhid : int
+            Size of hidden features.
+        nclass : int
+            Number of output classes.
+        input_droprate : float
+            Dropout rate of input features.
+        hidden_droprate : float
+            Dropout rate of hidden features.
+        use_bn : bool
+            Using batch normalization.
+        dropnode_rate : float
+            Rate of dropping elements of input features
+        tem : float
+            Temperature to sharpen predictions.
+        lam : float
+             Proportion of consistency loss of unlabelled data
+        order : int
+            Order of adjacency matrix
+        sample : int
+            Number of augmentations for consistency loss
+        alpha : float
+    """
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -49,25 +78,48 @@ class Grand(BaseModel):
         parser.add_argument("--num-features", type=int)
         parser.add_argument("--num-classes", type=int)
         parser.add_argument("--hidden-size", type=int, default=32)
-        parser.add_argument("--hidden_dropout", type=float, default=0.5)
-        parser.add_argument("--input_dropout", type=float, default=0.5)
+        parser.add_argument("--hidden-dropout", type=float, default=0.5)
+        parser.add_argument("--input-dropout", type=float, default=0.5)
         parser.add_argument("--bn", type=bool, default=False)
-        parser.add_argument("--dropnode_rate", type=float, default=0.5)
-        parser.add_argument('--order', type = int, default = 5)
-        parser.add_argument('--tem', type = float, default = 0.5)
-        parser.add_argument('--lam', type = float, default = 0.5)
-        parser.add_argument('--sample', type = int, default = 2)    
-        parser.add_argument('--alpha', type = float, default = 0.2)        
-    
-
-
+        parser.add_argument("--dropnode-rate", type=float, default=0.5)
+        parser.add_argument('--order', type=int, default=5)
+        parser.add_argument('--tem', type=float, default=0.5)
+        parser.add_argument('--lam', type=float, default=0.5)
+        parser.add_argument('--sample', type=int, default=2)
+        parser.add_argument('--alpha', type=float, default=0.2)
         # fmt: on
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.num_features, args.hidden_size, args.num_classes, args.input_dropout, args.hidden_dropout, args.bn, args.dropnode_rate, args.tem, args.lam, args.order, args.sample, args.alpha)
+        return cls(
+            nfeat=args.num_features,
+            nhid=args.hidden_size,
+            nclass=args.num_classes,
+            input_droprate=args.input_dropout,
+            hidden_droprate=args.hidden_dropout,
+            use_bn=args.bn,
+            dropnode_rate=args.dropnode_rate,
+            tem=args.tem,
+            lam=args.lam,
+            order=args.order,
+            sample=args.sample,
+            alpha=args.alpha
+        )
 
-    def __init__(self, nfeat, nhid, nclass, input_droprate, hidden_droprate, use_bn, dropnode_rate, tem, lam, order, sample, alpha):
+    def __init__(
+            self,
+            nfeat,
+            nhid,
+            nclass,
+            input_droprate,
+            hidden_droprate,
+            use_bn,
+            dropnode_rate,
+            tem,
+            lam,
+            order,
+            sample,
+            alpha):
         super(Grand, self).__init__()
         self.layer1 = MLPLayer(nfeat, nhid)
         self.layer2 = MLPLayer(nhid, nclass)
@@ -91,7 +143,7 @@ class Grand(BaseModel):
             x = masks.to(x.device) * x
 
         else:
-            x =  x * (1. - self.dropnode_rate)
+            x = x * (1. - self.dropnode_rate)
         return x
 
     def normalize_adj(self, edge_index, edge_weight, num_nodes):
@@ -101,7 +153,6 @@ class Grand(BaseModel):
         deg_inv_sqrt = deg.pow_(-0.5)
         deg_inv_sqrt.masked_fill_(deg_inv_sqrt == float('inf'), 0)
         edge_weight = deg_inv_sqrt[row] * edge_weight * deg_inv_sqrt[col]
-        #print(edge_weight)
         return edge_weight
 
     def rand_prop(self, x, edge_index, edge_weight):
@@ -112,8 +163,7 @@ class Grand(BaseModel):
         y = x
         for i in range(self.order):
             x_source = x[col]
-            x = scatter(x_source * edge_weight[:, None], row[:,None], dim=0, dim_size=x.shape[0], reduce='sum').detach_()
-            #x = torch.spmm(adj, x).detach_()
+            x = scatter(x_source * edge_weight[:, None], row[:, None], dim=0, dim_size=x.shape[0], reduce='sum').detach_()
             y.add_(x)
         return y.div_(self.order + 1.0).detach_()
     
@@ -140,13 +190,6 @@ class Grand(BaseModel):
         return x
 
     def forward(self, x, edge_index):
-        """
-        adj = torch.sparse_coo_tensor(
-            edge_index,
-            torch.ones(edge_index.shape[1]).float(),
-            (x.shape[0], x.shape[0]),
-        ).to(x.device)
-        """
         x = self.normalize_x(x)
         edge_weight = torch.ones(edge_index.shape[1], dtype=torch.float32).to(x.device)
         x = self.rand_prop(x, edge_index, edge_weight)

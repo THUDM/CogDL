@@ -1,16 +1,17 @@
 import math
 import os
+import os.path as osp
 
+import dgl
 import numpy as np
+import scipy.sparse as sparse
+import sklearn.preprocessing as preprocessing
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import scipy.sparse as sparse
-from scipy.sparse import linalg
-import sklearn.preprocessing as preprocessing
-
-import dgl
+from cogdl.data import download_url
 from cogdl.layers.gcc_module import *
+from scipy.sparse import linalg
 
 from .. import BaseModel, register_model
 
@@ -255,16 +256,20 @@ class GCC(BaseModel):
         self.load_path = load_path
 
     def train(self, data):
-        if os.path.isfile(self.load_path):
-            print("=> loading checkpoint '{}'".format(self.load_path))
-            checkpoint = torch.load(self.load_path, map_location="cpu")
-            print(
-                "=> loaded successfully '{}' (epoch {})".format(
-                    self.load_path, checkpoint["epoch"]
-                )
-            )
-        else:
+        if not os.path.isfile(self.load_path):
             print("=> no checkpoint found at '{}'".format(self.load_path))
+            url = "https://github.com/cenyk1230/gcc-data/raw/master/saved/gcc_pretrained.pth"
+            path = '/'.join(self.load_path.split('/')[:-1])
+            name = self.load_path.split('/')[-1]
+            download_url(url, path, name=name)
+
+        print("=> loading checkpoint '{}'".format(self.load_path))
+        checkpoint = torch.load(self.load_path, map_location="cpu")
+        print(
+            "=> loaded successfully '{}' (epoch {})".format(
+                self.load_path, checkpoint["epoch"]
+            )
+        )
         args = checkpoint["opt"]
 
         args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

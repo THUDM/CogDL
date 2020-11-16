@@ -7,7 +7,6 @@ from torch_geometric.data import DataLoader
 from torch_sparse import coalesce
 import numpy as np
 
-from cogdl.data import Data, Dataset
 from ogb.nodeproppred import PygNodePropPredDataset
 from ogb.linkproppred import PygLinkPropPredDataset
 from ogb.graphproppred import PygGraphPropPredDataset
@@ -54,25 +53,25 @@ class OGBProductsDataset(OGBNDataset):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data")
         if not osp.exists(path):
             PygNodePropPredDataset(dataset, path)
-        super(OGBArxivDataset, self).__init__(path, dataset)
+        super(OGBProductsDataset, self).__init__(path, dataset)
 
 @register_dataset("ogbn-proteins")
-class OGBProductsDataset(OGBNDataset):
+class OGBGProteins(OGBNDataset):
     def __init__(self):
         dataset = "ogbn-proteins"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data")
         if not osp.exists(path):
             PygNodePropPredDataset(dataset, path)
-        super(OGBArxivDataset, self).__init__(path, dataset)
+        super(OGBGProteins, self).__init__(path, dataset)
 
 @register_dataset("ogbn-mag")
-class OGBProductsDataset(OGBNDataset):
+class OGBMAGDataset(OGBNDataset):
     def __init__(self):
         dataset = "ogbn-mag"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data")
         if not osp.exists(path):
             PygNodePropPredDataset(dataset, path)
-        super(OGBArxivDataset, self).__init__(path, dataset)
+        super(OGBMAGDataset, self).__init__(path, dataset)
 
 @register_dataset("ogbn-papers100M")
 class OGBPapers100MDataset(OGBNDataset):
@@ -81,19 +80,20 @@ class OGBPapers100MDataset(OGBNDataset):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data")
         if not osp.exists(path):
             PygNodePropPredDataset(dataset, path)
-        super(OGBArxivDataset, self).__init__(path, dataset)
+        super(OGBPapers100MDataset, self).__init__(path, dataset)
 
 class OGBGDataset(PygGraphPropPredDataset):
     def __init__(self, root, name):
         super(OGBGDataset, self).__init__(name, root)
         self.name = name
+        self.data.y = self.y.view(-1)
+        self.data.x = self.data.x.to(torch.float) / torch.sum(self.data.x, dim=1, keepdim=True)
 
     def get_loader(self, args):
         split_index = self.get_idx_split()
-        dataset = PygGraphPropPredDataset(self.name, osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data"))
-        train_loader = DataLoader(dataset[split_index["train"]], batch_size = args.batch_size, shuffle = True)
-        valid_loader = DataLoader(dataset[split_index["valid"]], batch_size = args.batch_size, shuffle = False)
-        test_loader = DataLoader(dataset[split_index["test"]], batch_size = args.batch_size, shuffle = False)
+        train_loader = DataLoader(self[split_index["train"]], batch_size = args.batch_size, shuffle = True)
+        valid_loader = DataLoader(self[split_index["valid"]], batch_size = args.batch_size, shuffle = False)
+        test_loader = DataLoader(self[split_index["test"]], batch_size = args.batch_size, shuffle = False)
         return train_loader, valid_loader, test_loader
 
     def get(self, idx):
@@ -118,22 +118,22 @@ class OGBMolhivDataset(OGBGDataset):
         super(OGBMolhivDataset, self).__init__(path, dataset)
 
 @register_dataset("ogbg-molpcba")
-class OGBMolhivDataset(OGBGDataset):
+class OGBMolpcbaDataset(OGBGDataset):
     def __init__(self):
         dataset = "ogbg-molpcba"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data")
         if not osp.exists(path):
             PygGraphPropPredDataset(dataset, path)
-        super(OGBMolhivDataset, self).__init__(path, dataset)
+        super(OGBMolpcbaDataset, self).__init__(path, dataset)
 
 @register_dataset("ogbg-ppa")
-class OGBMolhivDataset(OGBGDataset):
+class OGBPPADataset(OGBGDataset):
     def __init__(self):
         dataset = "ogbg-ppa"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data")
         if not osp.exists(path):
             PygGraphPropPredDataset(dataset, path)
-        super(OGBMolhivDataset, self).__init__(path, dataset)
+        super(OGBPPADataset, self).__init__(path, dataset)
 
 @register_dataset("ogbg-code")
 class OGBCodeDataset(OGBGDataset):
@@ -142,4 +142,4 @@ class OGBCodeDataset(OGBGDataset):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data")
         if not osp.exists(path):
             PygGraphPropPredDataset(dataset, path)
-        super(OGBMolhivDataset, self).__init__(path, dataset)
+        super(OGBCodeDataset, self).__init__(path, dataset)

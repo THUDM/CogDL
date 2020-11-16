@@ -174,7 +174,7 @@ def cycle_index(num, shift):
 
 
 def batch_sum_pooling(x, batch):
-    batch_size = torch.max(batch)+1
+    batch_size = torch.max(batch.cpu())+1
     # batch_size = len(torch.unique(batch))
     res = torch.zeros(batch_size, x.size(1)).to(x.device)
     return res.scatter_add_(dim=0, index=batch.unsqueeze(-1).expand_as(x), src=x)

@@ -274,6 +274,6 @@ if __name__ == "__main__":
     test_sdne_ppi()
     test_dngr_ppi()
     test_prone_ppi()
+    test_prone_usa_airport()
     test_spectral_ppi()
     test_gcc_usa_airport()
-    test_prone_usa_airport()

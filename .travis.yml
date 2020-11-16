@@ -17,7 +17,7 @@ install:
 
 script:
   - black .
-  - python -m dgl.backend.set_default_backend pytorch
+  - export DGLBACKEND=pytorch
   - coverage run --source=cogdl -m pytest tests
   - cd docs && make clean && make html && cd ..
 

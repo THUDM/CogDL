@@ -340,3 +340,12 @@ class WN18RRDataset(KnowledgeGraphDataset):
         dataset = "WN18RR"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(WN18RRDataset, self).__init__(path, dataset)
+
+@register_dataset("fb13s")
+class FB13SDatset(KnowledgeGraphDataset):
+    url = "https://raw.githubusercontent.com/cenyk1230/test-data/main"
+
+    def __init__(self):
+        dataset = "FB13-S"
+        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        super(FB13SDatset, self).__init__(path, dataset)

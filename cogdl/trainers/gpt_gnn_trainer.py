@@ -271,7 +271,7 @@ class GPT_GNNHomogeneousTrainer(SupervisedHomogeneousNodeClassificationTrainer):
                     Calculate Valid F1. Update the best model based on highest F1 score.
                 """
                 valid_f1 = f1_score(
-                    res.argmax(dim=1).cpu().tolist(), ylabel.tolist(), average="micro"
+                    ylabel.tolist(), res.argmax(dim=1).cpu().tolist(), average="micro"
                 )
 
                 if valid_f1 > self.best_val:
@@ -339,11 +339,11 @@ class GPT_GNNHomogeneousTrainer(SupervisedHomogeneousNodeClassificationTrainer):
                     edge_type.to(self.device),
                 )[x_ids]
                 res = classifier.forward(paper_rep)
-                test_f1 = accuracy_score(
-                    res.argmax(dim=1).cpu().tolist(), ylabel.tolist()
+                test_acc = accuracy_score(
+                    ylabel.tolist(), res.argmax(dim=1).cpu().tolist()
                 )
-                test_res += [test_f1]
-            return np.average(test_res)
+                test_res += [test_acc]
+            return dict(Acc=np.average(test_res))
         #     # print("Best Test F1: %.4f" % np.average(test_res))
 
     @classmethod

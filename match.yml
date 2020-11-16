@@ -16,10 +16,12 @@ node_classification:
     - pyg_gat
     - deepergcn
     - gcnii
+    - gpt_gnn
     dataset:
     - cora
     - citeseer
     - pubmed
+    - ogbn-arxiv
 unsupervised_node_classification:
   - model:
     - prone
@@ -33,10 +35,12 @@ unsupervised_node_classification:
     - grarep
     - dngr
     - spectral
+    - gcc
     dataset:
     - ppi
     - blogcatalog
     - wikipedia
+    - usa-airport
   - model:
     - unsup_graphsage
     - dgi
@@ -84,11 +88,16 @@ link_prediction:
   - model:
     - rgcn
     - compgcn
+    - distmult
+    - rotate
+    - transe
+    - complex
     dataset:
     - fb13
     - fb15k237
     - wn18
     - wn18rr
+    - fb13s
 multiplex_link_prediction:
   - model:
     - gatne

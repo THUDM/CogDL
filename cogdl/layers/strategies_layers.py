@@ -19,6 +19,22 @@ from torch_geometric.data import DataLoader
 
 
 class GINConv(nn.Module):
+    """
+        Implementation of Graph isomorphism network used in paper `"Strategies for Pre-training Graph Neural Networks"`. <https://arxiv.org/abs/1905.12265>
+
+        Parameters
+        ----------
+        hidden_size : int
+            Size of each hidden unit 
+        input_layer : int, optional
+            The size of input node features if not `None`.
+        edge_emb : list, optional
+            The number of edge types if not `None`
+        edge_encode : int, optional
+            Size of each edge feature if not `None`
+        pooling : str
+            Pooling method.
+    """
     def __init__(
             self,
             hidden_size,
@@ -248,6 +264,10 @@ class GNNPred(nn.Module):
 
 
 class Pretrainer(nn.Module):
+    """
+        Base class for Pre-training Models of paper `"Strategies for Pre-training Graph Neural Networks"`. <https://arxiv.org/abs/1905.12265>
+
+    """
     def __init__(self, args, transform=None):
         super(Pretrainer, self).__init__()
         self.lr = args.lr

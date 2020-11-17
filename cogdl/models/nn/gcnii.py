@@ -33,6 +33,28 @@ class GCNIILayer(nn.Module):
 
 @register_model("gcnii")
 class GCNII(BaseModel):
+    """
+        Implementation of GCNII in paper `"Simple and Deep Graph Convolutional Networks"` <https://arxiv.org/abs/2007.02133>. 
+
+        Parameters
+        -----------
+        in_feats : int
+            Size of each input sample
+        hidden_size : int
+            Size of each hidden unit
+        out_feats : int
+            Size of each out sample
+        num_layers : int
+        dropout : float
+        alpha : float
+            Parameter of initial residual connection
+        lmbda : float
+            Parameter of identity mapping
+        wd1 : float
+            Weight-decay for Fully-connected layers
+        wd2 : float
+            Weight-decay for convolutional layers
+    """
     @staticmethod
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=64)

@@ -13,7 +13,7 @@ from cogdl.utils import (
     batch_mean_pooling
 )
 from cogdl.datasets import build_dataset_from_name
-from cogdl.datasets.strategies_pretrain_gnn_data import *
+from cogdl.datasets.pyg_strategies_data import *
 
 from torch_geometric.data import DataLoader
 

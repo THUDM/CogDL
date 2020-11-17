@@ -6,11 +6,12 @@ from cogdl.data import Data
 from cogdl.datasets import build_dataset
 from cogdl.tasks import build_task
 from cogdl.utils import build_args_from_dict
+from cogdl.models import BaseModel
 from cogdl.models.nn.gcn import GraphConvolution
 
 
 """Define your Model"""
-class MyModel(nn.Module):
+class MyModel(BaseModel):
     def __init__(self, in_feats, hidden_size, out_feats):
         super(MyModel, self).__init__()
         self.layer = GraphConvolution(in_features=in_feats, out_features=hidden_size)
@@ -37,6 +38,7 @@ def get_default_args():
                     'max_epoch': 500,
                     'cpu': not cuda_available,
                     'lr': 0.01,
+                    'device_id': [0],
                     'weight_decay': 5e-4}
     return build_args_from_dict(default_dict)
 
@@ -46,6 +48,7 @@ def main_model():
     # Set the task
     args.task = "node_classification"
     args.dataset = "cora"
+    args.model = "my_model"
     # use dataset in cogdl
     dataset = build_dataset(args)
     hidden_size = args.hidden_size

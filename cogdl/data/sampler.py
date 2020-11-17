@@ -12,7 +12,7 @@ class Sampler:
     and args_params (Dictionary) which represents args parameters needed by the sampler.
     """
     def __init__(self, data, args_params):
-        self.data = data
+        self.data = data.clone()
         self.num_nodes = self.data.x.size()[0]
         self.num_edges = self.data.edge_index.size()[1]
 
@@ -151,7 +151,7 @@ class SAINTSampler(Sampler):
         """
         if phase in ['val', 'test']:
             node_subgraph = np.arange(self.data.num_nodes)
-            data = self.data
+            data = self.data.clone()
             if require_norm:
                 data.norm_aggr = torch.ones(self.num_edges)
                 data.norm_loss = self.norm_loss_test

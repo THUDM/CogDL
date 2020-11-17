@@ -75,6 +75,7 @@ class NodeClassification(BaseTask):
         if self.trainer:
             if issubclass(type(self.trainer), SampledTrainer):
                 self.model = self.trainer.fit(self.model, self.dataset)
+                self.data.apply(lambda x: x.to(self.device))
             else:
                 return dict(Acc=self.trainer.fit(self.model, self.dataset))
         else:

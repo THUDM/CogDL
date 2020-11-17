@@ -59,6 +59,7 @@ class SAINTTrainer(SampledTrainer):
         self.optimizer = torch.optim.Adam(
             model.parameters(), lr=self.lr, weight_decay=self.weight_decay
         )
+        self.model.to(self.device)
         epoch_iter = tqdm(range(self.max_epoch))
         patience = 0
         best_score = 0
@@ -98,7 +99,7 @@ class SAINTTrainer(SampledTrainer):
 
     def _test_step(self, split="val"):
         self.data = self.sampler.get_subgraph(split)
-
+        self.data.apply(lambda x: x.to(self.device))
         self.model.eval()
         if split == "train":
             mask = self.data.train_mask

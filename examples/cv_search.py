@@ -39,7 +39,7 @@ def build_default_args():
         "sample_size": [10, 10],
 
         "task": "node_classification",
-        "model": "graphsage",
+        "model": "gcn",
         "dataset": "cora"
     }
     return build_args_from_dict(args)
@@ -61,7 +61,7 @@ def get_parameters():
 
 def train():
     args = build_default_args()
-    dataset = get_dataset(args)
+    dataset, args = get_dataset(args)
 
     combinations = get_parameters()
     for item in combinations:

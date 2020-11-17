@@ -8,7 +8,7 @@ with open(path.join(here, "README.md"), encoding="utf8") as f:
 
 setup(
     name="cogdl",
-    version="0.1.1",
+    version="0.1.2",
     description="An Extensive Research Toolkit for Deep Learning on Graphs",
     long_description=readme,
     long_description_content_type="text/markdown",

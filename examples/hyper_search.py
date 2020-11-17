@@ -109,6 +109,7 @@ def fixed_hyper_parameters():
         "max_epoch": 500,
         "task": "node_classification",
         "cpu": not torch.cuda.is_available(),
+        "device_id": [0],
         "seed": [0],
         "weight_decay": 5e-4
     }

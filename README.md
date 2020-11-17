@@ -25,14 +25,14 @@ CogDL features:
   - Node classification
   - Link prediction
   - Graph classification
-  - Graph pre-training (todo)
+  - Graph pre-training
   - Graph similarity search (todo)
   - Graph clustering (todo)
   - Combinatorial optimization on graphs (todo)
 
 ## ❗ News
 
-- We set up WeChat groups for CogDL discussion. For Chinese users, [click here to join our community](http://keg.cs.tsinghua.edu.cn/cogdl/cogdl-user-group.png)! For English users, [click here to join our community](http://keg.cs.tsinghua.edu.cn/cogdl/cogdl-community.png)!
+- The new **v0.1.2 release** includes a pre-training task, many examples, OGB datasets, some knowledge graph embedding methods, and some graph neural network models. The coverage of CogDL is increased to 80%. Some new APIs, such as `Trainer` and `Sampler`, are developed and being tested. 
 
 - The new **v0.1.1 release** includes the knowledge link prediction task, many state-of-the-art models, and `optuna` support. We also have a [Chinese WeChat post](https://mp.weixin.qq.com/s/IUh-ctQwtSXGvdTij5eDDg) about the CogDL release.
 

@@ -8,6 +8,11 @@ from .knowledge_base import KGEModel
 
 @register_model("rotate")
 class RotatE(KGEModel):
+    r"""
+    Implementation of RotatE model from the paper `"RotatE: Knowledge Graph Embedding by Relational Rotation in Complex Space"
+    <https://openreview.net/forum?id=HkgEQnRqYQ>`.
+    borrowed from `KnowledgeGraphEmbedding<https://github.com/DeepGraphLearning/KnowledgeGraphEmbedding>`
+    """
     def __init__(self, nentity, nrelation, hidden_dim, gamma, 
                  double_entity_embedding=False, double_relation_embedding=False):
         super(RotatE, self).__init__(nentity, nrelation, hidden_dim, gamma, True, double_relation_embedding)

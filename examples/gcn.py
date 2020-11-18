@@ -4,6 +4,7 @@ from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.utils import build_args_from_dict
 
+
 def get_default_args():
     cuda_available = torch.cuda.is_available()
     default_dict = {'hidden_size': 16,
@@ -12,6 +13,7 @@ def get_default_args():
                     'max_epoch': 500,
                     'cpu': not cuda_available,
                     'lr': 0.01,
+                    'device_id': [0],
                     'weight_decay': 5e-4}
     return build_args_from_dict(default_dict)
 
@@ -20,7 +22,7 @@ if __name__ == "__main__":
     args = get_default_args()
     args.task = 'node_classification'
     args.dataset = 'cora'
-    args.model = 'pyg_gcn'
+    args.model = 'gcn'
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes

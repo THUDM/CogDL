@@ -8,7 +8,10 @@ from .knowledge_base import KGEModel
 
 @register_model("complex")
 class ComplEx(KGEModel):
-
+    r"""
+    the implementation of ComplEx model from the paper `"Complex Embeddings for Simple Link Prediction"<http://proceedings.mlr.press/v48/trouillon16.pdf>`
+    borrowed from `KnowledgeGraphEmbedding<https://github.com/DeepGraphLearning/KnowledgeGraphEmbedding>` 
+    """
     def score(self, head, relation, tail, mode):
         re_head, im_head = torch.chunk(head, 2, dim=2)
         re_relation, im_relation = torch.chunk(relation, 2, dim=2)

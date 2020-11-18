@@ -191,14 +191,14 @@ def select_task(model_name=None, model=None):
             return "HomoLinkPrediction"
 
 class HomoLinkPrediction(nn.Module):
-    def __init__(self, args):
+    def __init__(self, args, dataset=None, model=None):
         super(HomoLinkPrediction, self).__init__()
-        dataset = build_dataset(args)
+        dataset = build_dataset(args) if dataset is None else dataset
         data = dataset[0]
         self.data = data
         if hasattr(dataset, "num_features"):
             args.num_features = dataset.num_features
-        model = build_model(args)
+        model = build_model(args) if model is None else model
         self.model = model
         self.patience = args.patience
         self.max_epoch = args.max_epoch
@@ -234,12 +234,15 @@ class HomoLinkPrediction(nn.Module):
         return dict(ROC_AUC=roc_auc, PR_AUC=pr_auc, F1=f1_score)
 
 class TripleLinkPrediction(nn.Module):
-    def __init__(self, args):
+    """
+    Training process borrowed from `KnowledgeGraphEmbedding<https://github.com/DeepGraphLearning/KnowledgeGraphEmbedding>`
+    """
+    def __init__(self, args, dataset=None, model=None):
         super(TripleLinkPrediction, self).__init__()
-        self.dataset = build_dataset(args)
+        self.dataset = build_dataset(args) if dataset is None else dataset
         args.nentity = self.dataset.num_entities
         args.nrelation = self.dataset.num_relations
-        self.model = build_model(args)
+        self.model = build_model(args) if model is None else model
         self.args = args
         set_logger(args)
         logging.info('Model: %s' % args.model)
@@ -385,8 +388,7 @@ class KGLinkPrediction(nn.Module):
         self.data.apply(lambda x: x.to(self.device))
         args.num_entities = len(torch.unique(self.data.edge_index))
         args.num_rels = len(torch.unique(self.data.edge_attr))
-        if model is None:
-            model = build_model(args) if model is None else model
+        model = build_model(args) if model is None else model
         self.model = model.to(self.device)
         self.max_epoch = args.max_epoch
         self.patience = min(args.patience, 20)
@@ -496,13 +498,14 @@ class LinkPrediction(BaseTask):
 
     def __init__(self, args, dataset=None, model=None):
         super(LinkPrediction, self).__init__(args)
+
         task_type = select_task(args.model, model)
         if task_type == "HomoLinkPrediction":
-            self.task = HomoLinkPrediction(args)
+            self.task = HomoLinkPrediction(args, dataset, model)
         elif task_type == "KGLinkPrediction":
             self.task = KGLinkPrediction(args, dataset, model)
         elif task_type == "TripleLinkPrediction":
-            self.task = TripleLinkPrediction(args)
+            self.task = TripleLinkPrediction(args, dataset, model)
     
     def train(self):
         return self.task.train()

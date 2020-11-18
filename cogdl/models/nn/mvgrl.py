@@ -142,7 +142,7 @@ class MVGRL(BaseModel):
         self.nhid = nhid
         self.nclass = nclass
         self.epochs = max_epochs
-        self.patience = 20
+        self.patience = 50
 
     def train(self, data, dataset_name):
         num_nodes = data.x.shape[0]

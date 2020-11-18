@@ -43,6 +43,7 @@ class MyData(object):
 class MyDataset(object):
     def __init__(self, datalist):
         self.datalist = datalist
+        self.data = self.datalist[0]
         self.num_features = self.datalist[0].num_features
         self.num_classes = self.datalist[0].num_classes
 
@@ -60,6 +61,7 @@ def get_default_args():
                     'max_epoch': 500,
                     'cpu': not cuda_available,
                     'lr': 0.01,
+                    'device_id': [0],
                     'weight_decay': 5e-4}
     return build_args_from_dict(default_dict)
 

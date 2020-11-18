@@ -73,9 +73,9 @@ class GraphClassification(BaseTask):
         parser.add_argument("--kfold", dest="kfold", action="store_true")
         # fmt: on
 
-    def __init__(self, args):
+    def __init__(self, args, dataset=None, model=None):
         super(GraphClassification, self).__init__(args)
-        dataset = build_dataset(args)
+        dataset = build_dataset(args) if dataset is None else dataset
 
         args.max_graph_size = max([ds.num_nodes for ds in dataset])
         args.num_features = dataset.num_features
@@ -91,10 +91,10 @@ class GraphClassification(BaseTask):
             self.train_loader, self.val_loader, self.test_loader = dataset.get_loader(
                 args
             )
-            model = build_model(args)
+            model = build_model(args) if model is None else model
         else:
             self.data = self.generate_data(dataset, args)
-            model = build_model(args)
+            model = build_model(args) if model is None else model
             (
                 self.train_loader,
                 self.val_loader,
@@ -149,6 +149,7 @@ class GraphClassification(BaseTask):
                     self.model = best_model
                     epoch_iter.close()
                     break
+        self.model = best_model
         test_acc, _ = self._test_step(split="test")
         val_acc, _ = self._test_step(split="valid")
         print(f"Test accuracy = {test_acc}")
@@ -251,7 +252,6 @@ class GraphClassification(BaseTask):
                 datalist.append(data)
 
             if args.degree_feature:
-                print("FDSFSDFSDFDFSSF")
                 datalist = node_degree_as_feature(datalist)
                 args.num_features = datalist[0].num_features
             return datalist

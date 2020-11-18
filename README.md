@@ -1,9 +1,10 @@
-![CogDL](docs/source/_static/cogdl-logo.png)
+![CogDL](http://keg.cs.tsinghua.edu.cn/cogdl/cogdl-logo.png)
 ===
 
+[![PyPI Latest Release](https://badge.fury.io/py/cogdl.svg)](https://pypi.org/project/cogdl/)
 [![Build Status](https://travis-ci.org/THUDM/cogdl.svg?branch=master)](https://travis-ci.org/THUDM/cogdl)
-[![Coverage Status](https://coveralls.io/repos/github/THUDM/cogdl/badge.svg?branch=master)](https://coveralls.io/github/THUDM/cogdl?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/cogdl/badge/?version=latest)](https://cogdl.readthedocs.io/en/latest/?badge=latest)
+[![Coverage Status](https://coveralls.io/repos/github/THUDM/cogdl/badge.svg?branch=master)](https://coveralls.io/github/THUDM/cogdl?branch=master)
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
@@ -24,37 +25,74 @@ CogDL features:
   - Node classification
   - Link prediction
   - Graph classification
-  - Graph reasoning (todo)
-  - Graph pre-training (todo)
+  - Graph pre-training
+  - Graph similarity search (todo)
+  - Graph clustering (todo)
   - Combinatorial optimization on graphs (todo)
+
+## ❗ News
+
+- The new **v0.1.2 release** includes a pre-training task, many examples, OGB datasets, some knowledge graph embedding methods, and some graph neural network models. The coverage of CogDL is increased to 80%. Some new APIs, such as `Trainer` and `Sampler`, are developed and being tested. 
+
+- The new **v0.1.1 release** includes the knowledge link prediction task, many state-of-the-art models, and `optuna` support. We also have a [Chinese WeChat post](https://mp.weixin.qq.com/s/IUh-ctQwtSXGvdTij5eDDg) about the CogDL release.
 
 ## Getting Started
 
 ## Requirements and Installation
 
-- PyTorch version >= 1.0.0
 - Python version >= 3.6
-- PyTorch Geometric
-- Deep Graph Library
+- PyTorch version >= 1.0.0
+- PyTorch Geometric (recommended)
+- Deep Graph Library (optional)
 
 Please follow the instructions here to install PyTorch: https://github.com/pytorch/pytorch#installation, PyTorch Geometric https://github.com/rusty1s/pytorch_geometric/#installation and Deep Graph Library https://docs.dgl.ai/install/index.html.
 
-Install other dependencies:
+Install cogdl with other dependencies: 
 
 ```bash
+pip install cogdl
+```
+
+If you want to experiment with the latest CogDL features which did not get released yet, you can install CogDL via:
+
+```bash
+git clone git@github.com:THUDM/cogdl.git
+cd cogdl
 pip install -e .
 ```
 
 ## Usage
 
-You can use `python scripts/train.py --task example_task --dataset example_dataset --model example_method` to run example_method on example_data and evaluate it via example_task.
+### API Usage
 
-### General parameters
+You can run all kinds of experiments through CogDL APIs, including: `build_dataset`, `build_model`, and `build_task`. You can also use your own datasets and models for experiments. Some examples are provided in the [examples/](https://github.com/THUDM/cogdl/tree/master/examples/), including [gcn.py](https://github.com/THUDM/cogdl/tree/master/examples/gcn.py). 
+
+```python
+# Set hyper-parameters for experiments
+args = get_default_args()
+args.task = 'node_classification'
+args.dataset = 'cora'
+args.model = 'gcn'
+# Set datasets
+dataset = build_dataset(args)
+args.num_features = dataset.num_features
+args.num_classes = dataset.num_classes
+args.num_layers = 2
+# Build models
+model = build_model(args)
+# Train and evaluate models
+task = build_task(args, dataset=dataset, model=model)
+ret = task.train()
+```
+
+### Command-Line Usage
+
+You can use `python scripts/train.py --task example_task --dataset example_dataset --model example_method` to run example_method on example_data and evaluate it via example_task.
 
 - --task, downstream tasks to evaluate representation like node_classification, unsupervised_node_classification, link_prediction. More tasks can be found in the [cogdl/tasks](https://github.com/THUDM/cogdl/tree/master/cogdl/tasks).
 - --dataset, dataset name to run, can be a list of datasets with space like `cora citeseer ppi`. Supported datasets include
 'cora', 'citeseer', 'pumbed', 'PPI', 'wikipedia', 'blogcatalog', 'flickr'. More datasets can be found in the [cogdl/datasets](https://github.com/THUDM/cogdl/tree/master/cogdl/datasets).
-- --model, model name to run, can be a list of models like `deepwalk line prone`. Supported datasets include
+- --model, model name to run, can be a list of models like `deepwalk line prone`. Supported models include
 'gcn', 'gat', 'graphsage', 'deepwalk', 'node2vec', 'hope', 'grarep', 'netmf', 'netsmf', 'prone'. More models can be found in the [cogdl/models](https://github.com/THUDM/cogdl/tree/master/cogdl/models).
 
 For example, if you want to run Deepwalk, Line, Netmf on Wikipedia with node classification task, with 5 different seeds:
@@ -73,15 +111,15 @@ Expected output:
 If you want to run parallel experiments on your server with multiple GPUs on multiple models gcn, gat on multiple datasets Cora, Citeseer with node classification task:
 
 ```bash
-$ python scripts/parallel_train.py --task node_classification --dataset cora --model pyg_gcn pyg_gat --device-id 0 1 --seed 0 1 2 3 4
+$ python scripts/parallel_train.py --task node_classification --dataset cora --model gcn gat --device-id 0 1 --seed 0 1 2 3 4
 ```
 
 Expected output:
 
-| Variant             | Acc           |
-|---------------------|---------------|
-| ('cora', 'pyg_gcn') | 0.7922±0.0082 |
-| ('cora', 'pyg_gat') | 0.8092±0.0055 |
+| Variant         | Acc           |
+| --------------- | ------------- |
+| ('cora', 'gcn') | 0.8236±0.0033 |
+| ('cora', 'gat') | 0.8262±0.0032 |
 
 
 ## Model Characteristics
@@ -116,6 +154,12 @@ We summarize the characteristics of all methods for different tasks in the follo
 | GCN         | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 | GraphSAGE   | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 | Chebyshev   | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| GRAND       | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+| GCNII       | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| DeeperGCN   | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| MVGRL       | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| GraphMix    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+| DisenGCN    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
 
 ### Heterogeneous Graph Embedding Methods
 
@@ -156,29 +200,35 @@ This leaderboard reports unsupervised multi-label node classification setting. w
 | ---- | ------------------------------------------------------------ | :-------: | :---------: | :-------: |
 | 1    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf) | **26.32** |  **43.63**  |   57.64   |
 | 2    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) |   24.86   |    43.49    | **58.46** |
-| 3    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) |   23.86   |    42.51    |   53.68   |
+| 3    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754) |   22.97   |    42.29    |   56.00   |
 | 4    | NetSMF [(Qiu et at, WWW'19)](https://arxiv.org/abs/1906.11156) |   24.39   |    43.21    |   51.42   |
-| 5    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) |   22.72   |    42.26    |   50.42   |
-| 6    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) |   23.15   |    39.29    |   49.83   |
-| 7    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) |   23.24   |    35.52    |   52.96   |
-| 8    | SDNE [(Wang et al, KDD'16)](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf) |   20.14   |    40.32    |   48.24   |
-| 9    | GraRep [(Cao et al, CIKM'15)](http://dl.acm.org/citation.cfm?doid=2806416.2806512) |   20.96   |    34.35    |   51.84   |
-| 10   | DNGR [(Cao et al, AAAI'16)](https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/download/12423/11715) |   16.45   |    28.54    |   48.57   |
+| 5    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578) |   23.20   |   39.21   |   52.99   |
+| 6    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) |   22.59   |    42.69    |   51.38   |
+| 7    | Spectral [(Tang et al, Data Min Knowl Disc (2011))](https://link.springer.com/article/10.1007/s10618-010-0210-x) |   23.33   |    42.40    |   50.33   |
+| 8    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) |   22.94   |    34.82    |   55.43   |
+| 9    | SDNE [(Wang et al, KDD'16)](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf) |   20.14   |    40.32    |   48.24   |
+| 10   | GraRep [(Cao et al, CIKM'15)](http://dl.acm.org/citation.cfm?doid=2806416.2806512) |   22.03   |    33.99    |   55.59   |
+| 11   | DNGR [(Cao et al, AAAI'16)](https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/download/12423/11715) |   16.45   |    28.54    |   48.57   |
 
 #### Semi-Supervised Node Classification with Attributes
 
 This leaderboard reports the semi-supervised node classification under a transductive setting including several popular graph neural network methods.
 
-| Rank | Method                                                       |      Cora      |    Citeseer    |     Pubmed     |
-| ---- | ------------------------------------------------------------ | :------------: | :------------: | :------------: |
-| 1    | Graph U-Net [(Gao et al., 2019)](https://arxiv.org/abs/1905.05178) | **84.4 ± 0.6** | **73.2 ± 0.5** |   79.6 ± 0.2   |
-| 2    | MixHop [(Abu-El-Haija et al., ICML'19)](https://arxiv.org/abs/1905.00067) |   81.9 ± 0.4   |   71.4 ± 0.8   | **80.8 ± 0.6** |
-| 3    | DR-GAT [(Zou et al., 2019)](https://arxiv.org/abs/1907.02237) |   83.6 ± 0.5   |   72.8 ± 0.8   |   79.1 ± 0.3   |
-| 4    | GAT [(Veličković et al., ICLR'18)](https://arxiv.org/abs/1710.10903) |   83.0 ± 0.7   |   72.5 ± 0.7   |   79.0 ± 0.3   |
-| 5    | DGI [(Veličković et al., ICLR'19)](https://arxiv.org/abs/1809.10341) |   82.3 ± 0.6   |   71.8 ± 0.7   |   76.8 ± 0.6   |
-| 6    | GCN [(Kipf et al., ICLR'17)](https://arxiv.org/abs/1609.02907) |   81.4 ± 0.5   |   70.9 ± 0.5   |   79.0 ± 0.3   |
-| 7    | GraphSAGE [(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |   80.1 ± 0.2   |   66.2 ± 0.4   |   76.9 ± 0.7   |
-| 8    | Chebyshev [(Defferrard et al., NeurIPS'16)](https://arxiv.org/abs/1606.09375) |   79.2 ± 1.4   |   69.3 ± 1.3   |   68.5 ± 1.2   |
+| Rank | Method                                                       |     Cora      |    Citeseer    |     Pubmed     |
+| ---- | ------------------------------------------------------------ | :-----------: | :------------: | :------------: |
+| 1    | Grand([Feng et al., NIPS'20](https://arxiv.org/pdf/2005.11079.pdf)) |  84.8 ± 0.3   | **75.1 ± 0.3** | **82.4 ± 0.4** |
+| 2    | GCNII([Chen et al., ICML'20](https://arxiv.org/pdf/2007.02133.pdf)) | **85.1± 0.3** |   71.3 ± 0.4   |   80.2 ± 0.3   |
+| 3    | DR-GAT [(Zou et al., 2019)](https://arxiv.org/abs/1907.02237) |  83.6 ± 0.5   |   72.8 ± 0.8   |   79.1 ± 0.3   |
+| 4    | MVGRL [(Hassani et al., KDD'20)](https://arxiv.org/pdf/2006.05582v1.pdf) |  83.6 ± 0.2   |   73.0 ± 0.3   |   80.1 ± 0.7   |
+| 5    | GAT [(Veličković et al., ICLR'18)](https://arxiv.org/abs/1710.10903) |  82.9 ± 0.8   |   71.0 ± 0.3   |   78.9 ± 0.3   |
+| 6    | GCN [(Kipf et al., ICLR'17)](https://arxiv.org/abs/1609.02907) |  82.3 ± 0.3   |   71.4 ± 0.4   |   79.5 ± 0.2   |
+| 7    | SRGCN                                                        |  82.2 ± 0.2   |   72.8 ± 0.2   |   79.0 ± 0.4   |
+| 8    | DGI [(Veličković et al., ICLR'19)](https://arxiv.org/abs/1809.10341) |  82.0 ± 0.2   |   71.2 ± 0.4   |   76.5 ± 0.6   |
+| 9    | GraphSAGE [(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |  80.1 ± 0.2   |   66.2 ± 0.4   |   77.2 ± 0.7   |
+| 10   | GraphSAGE(unsup)[(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |  78.2 ± 0.9   |   65.8 ± 1.0   |   78.2 ± 0.7   |
+| 11   | Chebyshev [(Defferrard et al., NeurIPS'16)](https://arxiv.org/abs/1606.09375) |  79.0 ± 1.0   |   69.8 ± 0.5   |   68.6 ± 1.0   |
+| 12   | Graph U-Net [(Gao et al., 2019)](https://arxiv.org/abs/1905.05178) |     81.8      |      67.1      |      77.3      |
+| 13   | MixHop [(Abu-El-Haija et al., ICML'19)](https://arxiv.org/abs/1905.00067) |  81.9 ± 0.4   |   71.4 ± 0.8   |   80.8 ± 0.6   |
 
 #### Multiplex Node Classification
 
@@ -231,12 +281,12 @@ This leaderboard reports the performance of graph classification methods. we run
 
 | Rank | Method                                                       |   MUTAG   |   IMDB-B   |   IMDB-M   |   PROTEINS   |   COLLAB   |
 | :--- | :----------------------------------------------------------- | :-------: | :--------: | :--------: | :----------: | :--------: |
-| 1    | Infograph [(Sun et al, ICLR'20)](https://openreview.net/forum?id=r1lfF2NYvH) | **88.95** | 74.50  | 51.33  |  73.93   | 78.14  |
-| 2    | GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km) | 88.33 | **76.70**  | 50.80  |  72.86   | 79.52  |
-| 3    | DiffPool [(Ying et al, NeuIPS'18)](https://arxiv.org/abs/1806.08804) | 85.18 | 74.30  | 50.73  |  75.30   | 77.20  |
-| 4    | SortPool [(Zhang et al, AAAI'18)](https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf) | 85.61 | 75.20  | 51.07  |  74.11   | 79.98  |
+| 1 | GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km) | **92.06** | **76.10** | 51.80 | 75.19 | 79.52 |
+| 2   | Infograph [(Sun et al, ICLR'20)](https://openreview.net/forum?id=r1lfF2NYvH) | 88.95 | 74.50  | 51.33  |  73.93   | 79.4 |
+| 3    | DiffPool [(Ying et al, NeuIPS'18)](https://arxiv.org/abs/1806.08804) | 85.18 | 72.40 | 50.50 |  75.30   | 79.27 |
+| 4    | SortPool [(Zhang et al, AAAI'18)](https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf) | 87.25 | 75.40 | 50.47 |  73.23  | 80.07 |
 | 5    | Graph2Vec [(Narayanan et al, CoRR'17)](https://arxiv.org/abs/1707.05005) | 83.68 | 73.90  | **52.27**  |  73.30   | **85.58**  |
-| 6    | PATCH_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf) | 85.12 | 76.00  | 46.20  |  **75.50**   | 75.42  |
+| 6    | PATCH_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf) | 86.12 | 76.00  | 46.40 |  **75.38**  | 74.34 |
 | 7    | DGCNN [(Wang et al, ACM Transactions on Graphics'17)](https://arxiv.org/abs/1801.07829) | 83.33 | 69.50  | 46.33  |  66.67   | 77.45  |
 | 8    | DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417) | 83.68 | 55.00  | 40.40  |  72.59   |   /    |
 

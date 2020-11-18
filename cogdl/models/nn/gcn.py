@@ -99,6 +99,7 @@ class TKipfGCN(BaseModel):
         deg_sqrt = deg.pow(-1/2)
         adj_values = deg_sqrt[adj[1]] * adj_values * deg_sqrt[adj[0]]
 
+        x = F.dropout(x, self.dropout, training=self.training)
         x = F.relu(self.gc1(x, adj, adj_values))
         # h1 = x
         x = F.dropout(x, self.dropout, training=self.training)

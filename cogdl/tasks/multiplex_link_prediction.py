@@ -60,22 +60,19 @@ class MultiplexLinkPrediction(BaseTask):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--hidden-size", type=int, default=200)
-        parser.add_argument("--negative-ratio", type=int, default=5)
         parser.add_argument("--eval-type", type=str, default='all', nargs='+')
         # fmt: on
 
-    def __init__(self, args):
+    def __init__(self, args, dataset=None, model=None):
         super(MultiplexLinkPrediction, self).__init__(args)
 
-        dataset = build_dataset(args)
+        dataset = build_dataset(args) if dataset is None else dataset
         data = dataset[0]
         self.data = data
         if hasattr(dataset, "num_features"):
             args.num_features = dataset.num_features
-        model = build_model(args)
+        model = build_model(args) if model is None else model
         self.model = model
-        self.patience = args.patience
-        self.max_epoch = args.max_epoch
         self.eval_type = args.eval_type
 
     def train(self):

@@ -1,33 +1,11 @@
-import random
-
-import os
-import logging
-import json
-import copy
 import networkx as nx
 import numpy as np
 from collections import defaultdict
-import torch
-from torch import mode
-from torch.optim import Adam, Adagrad, SGD
-from torch.optim.lr_scheduler import StepLR
-from torch.utils.data import DataLoader, Dataset
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.nn import CrossEntropyLoss, MSELoss, NLLLoss, BCELoss, KLDivLoss
-from torch.utils.data import WeightedRandomSampler
-from gensim.models.keyedvectors import Vocab
-from six import iteritems
-from sklearn.metrics import auc, f1_score, precision_recall_curve, roc_auc_score
-from tqdm import tqdm
 
-from cogdl import options
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 
 from . import BaseTask, register_task
-
-from cogdl.datasets.gcc_data import GCCDataset
 
 @register_task("similarity_search")
 class SimilaritySearch(BaseTask):
@@ -36,17 +14,16 @@ class SimilaritySearch(BaseTask):
     @staticmethod
     def add_args(parser):
         """Add task-specific arguments to the parser."""
-        #need no extra argument
+        # need no extra argument
         pass
 
     def __init__(self, args, dataset=None, model=None):
         super(SimilaritySearch, self).__init__(args)
         dataset = build_dataset(args) if dataset is None else dataset
-        #这样dataset就造好了，并且dataset是与self.data是相等的
-        self.data=dataset.data
+        self.data = dataset.data
         model = build_model(args) if model is None else model
-        self.model=model
-        self.hidden_size=args.hidden_size
+        self.model = model
+        self.hidden_size = args.hidden_size
 
 
     def _evaluate(self, emb_1, emb_2, dict_1, dict_2):
@@ -92,5 +69,6 @@ class SimilaritySearch(BaseTask):
     def train(self):
         emb_1 = self._train_wrap(self.data[0])
         emb_2 = self._train_wrap(self.data[1])
-        return dict(self._evaluate(emb_1, emb_2, self.data[0].y, self.data[1].y)
+        return dict(
+            self._evaluate(emb_1, emb_2, self.data[0].y, self.data[1].y)
         )

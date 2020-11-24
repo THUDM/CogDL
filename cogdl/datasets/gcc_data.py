@@ -34,8 +34,8 @@ class GCCDataset(Dataset):
         self.name = name
         super(GCCDataset, self).__init__(root)
 
-        name1=name.split("_")[0]
-        name2=name.split("_")[1]
+        name1 = name.split("_")[0]
+        name2 = name.split("_")[1]
         edge_index_1, dict_1, self.node2id_1 = self.preprocess(root, name1)
         edge_index_2, dict_2, self.node2id_2 = self.preprocess(root, name2)
         self.data = [
@@ -47,8 +47,8 @@ class GCCDataset(Dataset):
     @property
     def raw_file_names(self):
 
-        names = [self.name.split("_")[0]+".dict", self.name.split("_")[0]+".graph",
-                 self.name.split("_")[1]+".dict", self.name.split("_")[1]+".graph"]
+        names = [self.name.split("_")[0] + ".dict", self.name.split("_")[0] + ".graph",
+                 self.name.split("_")[1] + ".dict", self.name.split("_")[1] + ".graph"]
         return names
 
     @property
@@ -59,21 +59,20 @@ class GCCDataset(Dataset):
         assert idx == 0
         return self.data
 
-
     def download(self):
         for name in self.raw_file_names:
             download_url("{}/{}/{}".format(self.url, self.name.lower(), name), self.raw_dir)
 
     def preprocess(self, root, name):
-        dict_path = os.path.join(root, "raw/"+name + ".dict")
-        graph_path = os.path.join(root, "raw/"+name + ".graph")
+        dict_path = os.path.join(root, "raw/" + name + ".dict")
+        graph_path = os.path.join(root, "raw/" + name + ".graph")
 
-        with open(graph_path) as f:
+        with open(graph_path, "r") as f:
             edge_list = []
             node2id = defaultdict(int)
             f.readline()
             for line in f:
-                x, y, t = list(map(int, line.split()))
+                x, y, t = list(map(int, line.strip().split()))
                 # Reindex
                 if x not in node2id:
                     node2id[x] = len(node2id)
@@ -93,8 +92,6 @@ class GCCDataset(Dataset):
                 if x not in node2id:
                     node2id[x] = len(node2id)
                 name_dict[name] = node2id[x]
-
-        num_nodes = len(node2id)
 
         return torch.LongTensor(edge_list).t(), name_dict, node2id
 

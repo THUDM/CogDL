@@ -140,3 +140,10 @@ pretrain:
     - test_chem
     - bbbp
     - bace
+similarity_search:
+  - model:
+    - gcc
+    dataset:
+    - sigir_cikm
+    - kdd_icdm
+    - sigmod_icde

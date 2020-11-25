@@ -72,15 +72,15 @@ class NodeClassification(BaseTask):
 
     def train(self):
         if self.trainer:
-            # if issubclass(type(self.trainer), SampledTrainer):
-            #     self.model = self.trainer.fit(self.model, self.dataset)
-            # else:
-            #     return dict(Acc=self.trainer.fit(self.model, self.dataset.data))
-            result = self.trainer.fit(self.model, self.dataset)
-            if isinstance(result, torch.nn.Module):
-                self.model = result
+            if issubclass(type(self.trainer), SampledTrainer):
+                self.model = self.trainer.fit(self.model, self.dataset)
+                self.data.apply(lambda x: x.to(self.device))
             else:
-                return result
+                result = self.trainer.fit(self.model, self.dataset)
+                if isinstance(result, torch.nn.Module):
+                    self.model = result
+                else:
+                    return result
         else:
             epoch_iter = tqdm(range(self.max_epoch))
             patience = 0

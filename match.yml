@@ -147,3 +147,13 @@ similarity_search:
     - sigir_cikm
     - kdd_icdm
     - sigmod_icde
+attributed_graph_clustering:
+  - model:
+    - deepwalk
+    - prone
+    - netmf
+    - line
+    dataset:
+    - cora
+    - citeseer
+    - pubmed

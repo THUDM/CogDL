@@ -150,10 +150,8 @@ similarity_search:
 attributed_graph_clustering:
   - model:
     - deepwalk
-    - pyg_gcn
     - prone
     - netmf
-    - deepwalk
     - line
     dataset:
     - cora

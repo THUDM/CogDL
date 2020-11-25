@@ -1,16 +1,102 @@
-import json
+import sys
+import time
 import os
 import os.path as osp
-from itertools import product
-
+import requests
+import shutil
+import tqdm
+import pickle
 import numpy as np
-import scipy.io
-import torch
 from collections import defaultdict
+
+import torch
 
 from cogdl.data import Data, Dataset, download_url
 
 from . import register_dataset
+
+
+def untar(path, fname, deleteTar=True):
+    """
+    Unpacks the given archive file to the same directory, then (by default)
+    deletes the archive file.
+    """
+    print('unpacking ' + fname)
+    fullpath = os.path.join(path, fname)
+    shutil.unpack_archive(fullpath, path)
+    if deleteTar:
+        os.remove(fullpath)
+
+
+class GCCDataset(Dataset):
+    url = "https://github.com/cenyk1230/gcc-data/raw/master"
+    def __init__(self, root, name):
+        self.name = name
+        super(GCCDataset, self).__init__(root)
+
+        name1 = name.split("_")[0]
+        name2 = name.split("_")[1]
+        edge_index_1, dict_1, self.node2id_1 = self.preprocess(root, name1)
+        edge_index_2, dict_2, self.node2id_2 = self.preprocess(root, name2)
+        self.data = [
+            Data(x=None, edge_index=edge_index_1, y=dict_1),
+            Data(x=None, edge_index=edge_index_2, y=dict_2),
+        ]
+        self.transform = None
+
+    @property
+    def raw_file_names(self):
+
+        names = [self.name.split("_")[0] + ".dict", self.name.split("_")[0] + ".graph",
+                 self.name.split("_")[1] + ".dict", self.name.split("_")[1] + ".graph"]
+        return names
+
+    @property
+    def processed_file_names(self):
+        return []
+
+    def get(self, idx):
+        assert idx == 0
+        return self.data
+
+    def download(self):
+        for name in self.raw_file_names:
+            download_url("{}/{}/{}".format(self.url, self.name.lower(), name), self.raw_dir)
+
+    def preprocess(self, root, name):
+        dict_path = os.path.join(root, "raw/" + name + ".dict")
+        graph_path = os.path.join(root, "raw/" + name + ".graph")
+
+        with open(graph_path, "r") as f:
+            edge_list = []
+            node2id = defaultdict(int)
+            f.readline()
+            for line in f:
+                x, y, t = list(map(int, line.strip().split()))
+                # Reindex
+                if x not in node2id:
+                    node2id[x] = len(node2id)
+                if y not in node2id:
+                    node2id[y] = len(node2id)
+                # repeat t times
+                for _ in range(t):
+                    # to undirected
+                    edge_list.append([node2id[x], node2id[y]])
+                    edge_list.append([node2id[y], node2id[x]])
+
+        name_dict = dict()
+        with open(dict_path) as f:
+            for line in f:
+                name, str_x = line.split("\t")
+                x = int(str_x)
+                if x not in node2id:
+                    node2id[x] = len(node2id)
+                name_dict[name] = node2id[x]
+
+        return torch.LongTensor(edge_list).t(), name_dict, node2id
+
+    def __repr__(self):
+        return "{}()".format(self.name)
 
 
 class Edgelist(Dataset):
@@ -80,6 +166,26 @@ class Edgelist(Dataset):
 
         torch.save(data, self.processed_paths[0])
 
+@register_dataset("kdd_icdm")
+class KDD_ICDM_GCCDataset(GCCDataset):
+    def __init__(self):
+        dataset = "kdd_icdm"
+        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        super(KDD_ICDM_GCCDataset, self).__init__(path, dataset)
+
+@register_dataset("sigir_cikm")
+class SIGIR_CIKM_GCCDataset(GCCDataset):
+    def __init__(self):
+        dataset = "sigir_cikm"
+        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        super(SIGIR_CIKM_GCCDataset, self).__init__(path, dataset)
+
+@register_dataset("sigmod_icde")
+class SIGMOD_ICDE_GCCDataset(GCCDataset):
+    def __init__(self):
+        dataset = "sigmod_icde"
+        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        super(SIGMOD_ICDE_GCCDataset, self).__init__(path, dataset)
 
 @register_dataset("usa-airport")
 class USAAirportDataset(Edgelist):

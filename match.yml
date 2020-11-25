@@ -159,3 +159,20 @@ pretrain:
     - test_chem
     - bbbp
     - bace
+similarity_search:
+  - model:
+    - gcc
+    dataset:
+    - sigir_cikm
+    - kdd_icdm
+    - sigmod_icde
+attributed_graph_clustering:
+  - model:
+    - deepwalk
+    - prone
+    - netmf
+    - line
+    dataset:
+    - cora
+    - citeseer
+    - pubmed

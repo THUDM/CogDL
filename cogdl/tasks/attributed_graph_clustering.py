@@ -72,7 +72,6 @@ class AttributedGraphClustering(BaseTask):
             else:
                 G.add_edges_from(self.data.edge_index.t().tolist())
             embeddings = self.model.train(G)
-            print(embeddings.shape)
             if self.enhance is not None:
                 embeddings = self.enhance_emb(G, embeddings)
             # Map node2id
@@ -86,6 +85,7 @@ class AttributedGraphClustering(BaseTask):
         #TODO: add gnn training methods
             
         features_matrix = features_matrix.numpy()
+        print("Clustering...")
         if self.cluster_method == "kmeans":
             kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(features_matrix)
             clusters = kmeans.labels_
@@ -94,7 +94,6 @@ class AttributedGraphClustering(BaseTask):
             #features_matrix = 0.5 * (np.abs(features_matrix) + np.abs(features_matrix.transpose()))
             clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="kmeans", random_state=0).fit(features_matrix)
             clusters = clustering.labels_
-        print(clusters)
         return self.evaluate(clusters)
 
     def evaluate(self, clusters):
@@ -104,7 +103,6 @@ class AttributedGraphClustering(BaseTask):
         TN = 0
         FN = 0
         truth = self.data.y.numpy()
-        print(truth)
         for i in range(self.num_nodes):
             for j in range(i + 1, self.num_nodes):
                 if clusters[i] == clusters[j] and truth[i] == truth[j]:
@@ -118,7 +116,7 @@ class AttributedGraphClustering(BaseTask):
         acc = (TP + TN) / (TP + FP + TN + FN)
         precision = TP / (TP + FP)
         recall = TP / (TP + FN)
-        print(TP, FP, TN, FN)
+        print("TP", TP, "FP", FP, "TN", TN, "FN", FN)
         micro_f1 = 2 * (precision * recall) / (precision + recall)
         return dict(Accuracy=precision, NMI=normalized_mutual_info_score(clusters, truth), Micro_F1=micro_f1)
 

@@ -336,6 +336,21 @@ def test_gpt_gnn_cora():
     assert 0 <= ret["Acc"] <= 1
 
 
+def test_sgcpn_cora():
+    args = get_default_args()
+    args.dataset = "cora"
+    args.task = "node_classification"
+    args.model = "sgcpn"
+    args.dropout = 0.6
+    args.num_layers = 10
+    args.norm_mode = "PN"
+    args.norm_scale = 10
+    args.missing_rate = 20
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret["Acc"] < 1
+
+
 if __name__ == "__main__":
     test_gcn_cora()
     test_gat_cora()
@@ -357,3 +372,4 @@ if __name__ == "__main__":
     test_grand_cora()
     test_pyg_gcn_cora_sampler()
     test_gpt_gnn_cora()
+    test_sgcpn_cora()

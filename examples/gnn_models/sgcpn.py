@@ -11,7 +11,7 @@ from cogdl.utils import build_args_from_dict
 DATASET_REGISTRY = {}
 
 
-def build_default_args_for_node_classification(dataset):
+def build_default_args_for_node_classification(dataset, missing_rate=0, num_layers=40):
     cpu = not torch.cuda.is_available()
     args = {
         "lr": 0.005,
@@ -21,10 +21,11 @@ def build_default_args_for_node_classification(dataset):
         "cpu": cpu,
         "device_id": [0],
         "seed": [0, 1, 2, 3, 4],
+        "missing_rate": missing_rate,
         "norm_mode": "PN",
         "norm_scale": 10,
         "dropout": 0.6,
-        "num_layers": 40,
+        "num_layers": num_layers,
         "task": "node_classification",
         "model": "sgcpn",
         "dataset": dataset
@@ -39,98 +40,23 @@ def register_func(name):
     return register_func_name
 
 
-@register_func("cora-missing-0")
+@register_func("cora")
 def cora_config(args):
     return args
 
 
-@register_func("cora-missing-20")
-def cora_config(args):
-    return args
-
-
-@register_func("cora-missing-40")
-def cora_config(args):
-    return args
-
-
-@register_func("cora-missing-60")
-def cora_config(args):
-    return args
-
-
-@register_func("cora-missing-80")
-def cora_config(args):
-    return args
-
-
-@register_func("cora-missing-100")
-def cora_config(args):
-    return args
-
-
-@register_func("citeseer-missing-0")
+@register_func("citeseer")
 def citeseer_config(args):
     return args
 
 
-@register_func("citeseer-missing-20")
-def citeseer_config(args):
-    return args
-
-
-@register_func("citeseer-missing-40")
-def citeseer_config(args):
-    return args
-
-
-@register_func("citeseer-missing-60")
-def citeseer_config(args):
-    return args
-
-
-@register_func("citeseer-missing-80")
-def citeseer_config(args):
-    return args
-
-
-@register_func("citeseer-missing-100")
-def citeseer_config(args):
-    return args
-
-
-@register_func("pubmed-missing-0")
+@register_func("pubmed")
 def pubmed_config(args):
     return args
 
 
-@register_func("pubmed-missing-20")
-def pubmed_config(args):
-    return args
-
-
-@register_func("pubmed-missing-40")
-def pubmed_config(args):
-    return args
-
-
-@register_func("pubmed-missing-60")
-def pubmed_config(args):
-    return args
-
-
-@register_func("pubmed-missing-80")
-def pubmed_config(args):
-    return args
-
-
-@register_func("pubmed-missing-100")
-def pubmed_config(args):
-    return args
-
-
-def run(dataset_name):
-    args = build_default_args_for_node_classification(dataset_name)
+def run(dataset_name, missing_rate=0, num_layers=40):
+    args = build_default_args_for_node_classification(dataset_name, missing_rate=missing_rate, num_layers=num_layers)
     args = DATASET_REGISTRY[dataset_name](args)
     dataset, args = get_dataset(args)
     results = []
@@ -143,15 +69,14 @@ def run(dataset_name):
 
 
 if __name__ == "__main__":
-    datasets = [
-        "cora-missing-0", "cora-missing-20", "cora-missing-40",
-        "cora-missing-60", "cora-missing-80", "cora-missing-100",
-        "citeseer-missing-0", "citeseer-missing-20", "citeseer-missing-40",
-        "citeseer-missing-60", "citeseer-missing-80", "citeseer-missing-100",
-        "pubmed-missing-0", "pubmed-missing-20", "pubmed-missing-40",
-        "pubmed-missing-60", "pubmed-missing-80", "pubmed-missing-100"
-        ]
+    datasets = ["cora", "citeseer", "pubmed"]
+    params0 = [("cora", 0, 7), ("citeseer", 0, 3), ("pubmed", 0, 9)]
+    params20 = [("cora", 20, 7), ("citeseer", 20, 3), ("pubmed", 20, 7)]
+    params40 = [("cora", 40, 7), ("citeseer", 40, 4), ("pubmed", 40, 60)]
+    params60 = [("cora", 60, 20), ("citeseer", 60, 5), ("pubmed", 60, 7)]
+    params80 = [("cora", 80, 25), ("citeseer", 80, 50), ("pubmed", 80, 60)]
+    params100 = [("cora", 100, 40), ("citeseer", 100, 50), ("pubmed", 100, 40)]
     results = []
-    for x in datasets:
-        results += run(x)
+    for param in params0:
+        results += run(dataset_name=param[0], missing_rate=param[1], num_layers=param[2])
     print_result(results, datasets, "sgcpn")

@@ -3,7 +3,7 @@ Datasets of CogDL
 
 CogDL now supports the following datasets for different tasks:
 - unsupervised node classification: PPI, Blogcatalog, Wikipedia
-- semi-supervised node classification: Cora, Citeseer, Pubmed, Cora-missing, Citeseer-missing, Pubmed-missing
+- semi-supervised node classification: Cora, Citeseer, Pubmed
 - heterogeneous node classification: DBLP, ACM, IMDB
 - link prediction: PPI, Wikipedia, Blogcatalog
 - multiplex link prediction: Amazon, YouTube, Twitter

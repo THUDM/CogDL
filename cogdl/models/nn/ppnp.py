@@ -77,7 +77,7 @@ class PPNP(BaseModel):
         #apply personalized pagerank
         if self.propagation == 'ppnp':
             if self.vals is None:
-                self.vals = self.alpha * torch.inverse(torch.eye(x.shape[0]) - (1-self.alpha)* get_ready_format(x, adj, A_hat))
+                self.vals = self.alpha * torch.inverse(torch.eye(x.shape[0]).to(x.device) - (1-self.alpha)* get_ready_format(x, adj, A_hat))
             final_preds = F.dropout(self.vals) @ local_preds
         else: #appnp
             preds = local_preds

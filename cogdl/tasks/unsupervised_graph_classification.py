@@ -1,3 +1,4 @@
+import argparse
 import copy
 import os
 from collections import defaultdict
@@ -22,7 +23,7 @@ from .graph_classification import node_degree_as_feature
 class UnsupervisedGraphClassification(BaseTask):
     r"""Unsupervised graph classification"""
     @staticmethod
-    def add_args(parser):
+    def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--lr", type=float, default=0.001)

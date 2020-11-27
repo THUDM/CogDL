@@ -37,9 +37,10 @@ class PPNP(BaseModel):
         # GCN as a prediction and then apply the personalized page rank on the results
         self.nn = TKipfGCN(nfeat, nhid, nclass, dropout)
         
-        print('Propagation mode invalid. Assuming default appnp')
         if propagation not in ('appnp', 'ppnp'):
             print('Invalid propagation type, using default appnp')
+            propagation = 'appnp'
+        
         self.propagation = propagation
         self.alpha = alpha
         self.niter = niter
@@ -75,7 +76,6 @@ class PPNP(BaseModel):
         adj, A_hat = self._calculate_A_hat(x,adj)
         #apply personalized pagerank
         if self.propagation == 'ppnp':
-            # FIXME this can be optimized if stored 
             if self.vals is None:
                 self.vals = self.alpha * torch.inverse(torch.eye(x.shape[0]) - (1-self.alpha)* get_ready_format(x, adj, A_hat))
             final_preds = F.dropout(self.vals) @ local_preds

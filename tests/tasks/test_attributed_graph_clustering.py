@@ -58,7 +58,14 @@ class TestAttributedGraphClustering(unittest.TestCase):
         assert "Micro_F1" in self.__class__.simple_task_train_result
 
     def test_correct_class_resolved_from_build_task(self):
-        assert isinstance(self.__class__.simple_task, AttributedGraphClustering)
+        args = get_default_args()
+        args.task = graph_clustering_task_name
+        args.dataset = "cora"
+        args.model = "prone"
+        args.step = 5
+        args.theta = 0.5
+        args.mu = 0.2
+        assert isinstance(build_task(args), AttributedGraphClustering)
 
 
 if __name__ == "__main__":

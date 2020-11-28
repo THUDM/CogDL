@@ -18,6 +18,7 @@ node_classification:
     - gcnii
     - gpt_gnn
     - ppnp
+    - sgcpn
     dataset:
     - cora
     - citeseer

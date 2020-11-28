@@ -5,7 +5,6 @@ import torch.nn.functional as F
 
 from .. import register_model, BaseModel
 from cogdl.models.nn.gcn import GraphConvolution
-from torch_geometric.nn import GCNConv
 from cogdl.utils import (
     get_activation, 
     filter_adj,
@@ -95,7 +94,6 @@ class GRACE(BaseModel):
             nn.Linear(proj_hidden_size, hidden_size)
         )
         self.encoder = GraceEncoder(in_feats, hidden_size, num_layers, activation)
-        self.cache_weight = None
 
     def forward(
         self,

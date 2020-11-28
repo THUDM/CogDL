@@ -84,7 +84,6 @@ class GCNII(BaseModel):
         self.fc_layers = nn.ModuleList()
         self.fc_layers.append(nn.Linear(in_features=in_feats, out_features=hidden_size))
         self.fc_layers.append(nn.Linear(in_features=hidden_size, out_features=out_feats))
-        self.fc_layers.append(nn.Linear(in_features=hidden_size, out_features=out_feats))
 
         self.dropout = dropout
         self.alpha = alpha

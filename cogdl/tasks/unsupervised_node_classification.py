@@ -73,6 +73,13 @@ class UnsupervisedNodeClassification(BaseTask):
         self.args = args
         self.is_weighted = self.data.edge_attr is not None
 
+        self.trainer = self.model.get_trainer(UnsupervisedNodeClassification, args)(
+            args
+        ) if self.model.get_trainer(
+            UnsupervisedNodeClassification,
+            args
+        ) else None
+
     def enhance_emb(self, G, embs):
         A = sp.csr_matrix(nx.adjacency_matrix(G))
         if self.args.enhance == "prone":
@@ -102,6 +109,8 @@ class UnsupervisedNodeClassification(BaseTask):
         np.save(name, embs)
 
     def train(self):
+        if self.trainer is not None:
+            return self.trainer.fit(self.model, self.data)
         if 'gcc' in self.model_name:
             features_matrix = self.model.train(self.data)
         elif 'dgi' in self.model_name or "graphsage" in self.model_name:

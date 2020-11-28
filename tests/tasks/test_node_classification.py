@@ -336,6 +336,29 @@ def test_gpt_gnn_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+def test_ppnp_citeseer():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.model = 'ppnp'
+    args.dataset = 'citeseer'
+    args.propagation_type = 'ppnp'
+    args.alpha = 0.1
+    args.num_iterations = 10
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret['Acc'] < 1
+
+def test_appnp_citeseer():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.model = 'ppnp'
+    args.dataset = 'citeseer'
+    args.propagation_type = 'appnp'
+    args.alpha = 0.1
+    args.num_iterations = 10
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret['Acc'] < 1
 
 def test_sgcpn_cora():
     args = get_default_args()
@@ -373,4 +396,6 @@ if __name__ == "__main__":
     test_grand_cora()
     test_pyg_gcn_cora_sampler()
     test_gpt_gnn_cora()
+    test_ppnp_citeseer()
+    test_appnp_citeseer()
     test_sgcpn_cora()

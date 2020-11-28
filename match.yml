@@ -58,6 +58,7 @@ graph_classification:
     - sortpool
     - dgcnn
     - patchy_san
+    - sagpool
     dataset:
     - mutag
     - imdb-b

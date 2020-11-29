@@ -70,12 +70,11 @@ class NodeClassification(BaseTask):
     """Node classification task."""
 
     @staticmethod
-    def add_args(_: argparse.ArgumentParser):
+    def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
-        # parser.add_argument("--num-features", type=int)
-        # fmt: on
         parser.add_argument("--missing-rate", type=int, default=-1)
+        # fmt: on
 
     def __init__(
         self,

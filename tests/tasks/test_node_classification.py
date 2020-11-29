@@ -374,6 +374,39 @@ def test_sgcpn_cora():
     ret = task.train()
     assert 0 < ret["Acc"] < 1
 
+def test_sgc_citeseer():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "citeseer"
+    args.model = "sgc"
+    args.lr = 0.4
+    args.weight_decay = 5e-4
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+def test_sgc_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "sgc"
+    args.lr = 0.4
+    args.weight_decay = 5e-3
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+def test_sgc_pubmed():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "pubmed"
+    args.model = "sgc"
+    args.lr = 0.4
+    args.weight_decay = 5e-4
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
 
 if __name__ == "__main__":
     test_gcn_cora()
@@ -399,3 +432,6 @@ if __name__ == "__main__":
     test_ppnp_citeseer()
     test_appnp_citeseer()
     test_sgcpn_cora()
+    test_sgc_citeseer()
+    test_sgc_cora()
+    test_sgc_pubmed()

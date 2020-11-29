@@ -1,5 +1,5 @@
+import argparse
 import copy
-import random
 from typing import Optional
 import scipy.sparse as sp
 
@@ -8,7 +8,6 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from cogdl import options
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificationModel
@@ -71,7 +70,7 @@ class NodeClassification(BaseTask):
     """Node classification task."""
 
     @staticmethod
-    def add_args(parser):
+    def add_args(_: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
         # parser.add_argument("--num-features", type=int)

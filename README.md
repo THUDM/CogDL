@@ -38,7 +38,7 @@ CogDL features:
 
 ## Getting Started
 
-## Requirements and Installation
+### Requirements and Installation
 
 - Python version >= 3.6
 - PyTorch version >= 1.0.0
@@ -60,6 +60,31 @@ git clone git@github.com:THUDM/cogdl.git
 cd cogdl
 pip install -e .
 ```
+
+### Docker container
+
+You might also opt to use a Docker container. There is an image available in this repo that you can build with the Torch and CUDA versions available in your system. To build the docker image just run:
+
+```
+docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VERSION --tag cogdl .
+```
+
+Where `YOUR_CUDA_VERSION` should be cuxxx representing your cuda version (or just cpu) and `YOUR_TORCH_VERSION` should be the version of PyTorch you want to use. For example, to run with CUDA 10.1 and PyTorch 1.7.0 you can run:
+```
+docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.0 --tag cogdl .
+```
+
+Then you can start the container by running:
+```
+docker run -it -v cogdl:/cogdl cogdl /bin/bash
+```
+
+And then clone your fork or this repository into the cogdl folder:
+```
+git clone https://github.com/THUDM/cogdl /cogdl
+```
+
+**Note:** if you install a version of torch different from 1.7.0, there might be some problems with the libraries torchvision and torchaudio. You might have to reinstall them by hand.
 
 ## Usage
 

@@ -69,9 +69,9 @@ You might also opt to use a Docker container. There is an image available in thi
 docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VERSION --tag cogdl .
 ```
 
-Where `YOUR_CUDA_VERSION` should be cuxxx representing your cuda version and `YOUR_TORCH_VERSION` should be the version of PyTorch you want to use. For example, to run with CUDA 10.2 and PyTorch 1.7.0 you can run:
+Where `YOUR_CUDA_VERSION` should be cuxxx representing your cuda version (or just cpu) and `YOUR_TORCH_VERSION` should be the version of PyTorch you want to use. For example, to run with CUDA 10.1 and PyTorch 1.7.0 you can run:
 ```
-docker build --build-arg CUDA=cu102 --build-arg TORCH=1.7.0 --tag cogdl .
+docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.0 --tag cogdl .
 ```
 
 Then you can start the container by running:

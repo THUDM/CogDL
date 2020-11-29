@@ -22,6 +22,26 @@ def get_default_args():
     return build_args_from_dict(default_dict)
 
 
+def test_gdc_gcn_cora():
+    args.task = 'node_classification'
+    args.dataset = 'cora'
+    args.model = 'gdc_gcn'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_layers = 1
+    args.alpha = 0.05 # ppr filter param
+    args.t = 5.0 # heat filter param
+    args.k = 128 # top k entries to be retained
+    args.eps = 0.01 # change depending on gdc_type
+    args.dataset = dataset
+    args.gdc_type = 'ppr' # ppr, heat, none
+
+    model = build_model(args)
+    task = build_task(args, dataset=dataset, model=model)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
 def test_gcn_cora():
     args = get_default_args()
     args.task = "node_classification"

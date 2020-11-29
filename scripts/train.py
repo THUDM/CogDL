@@ -19,7 +19,7 @@ def main(args):
         torch.cuda.set_device(args.device_id[0])
 
     set_random_seed(args.seed)
-    
+
     task = build_task(args)
     result = task.train()
     if "ValAcc" in result:

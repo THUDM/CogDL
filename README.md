@@ -305,3 +305,13 @@ If you have a unique and interesting dataset and are willing to publish it, you 
 ### Implement Your Own Model
 
 If you have a well-performed algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request,  detailed information can be found [here](https://help.github.com/en/articles/creating-a-pull-request). 
+
+#### A brief guide to having a successful pull request (unit test)
+
+To have a successful pull request, you need to have at least (1) your model script and (2) a unit test.
+
+You might be confused why your pull request was rejected because of 'Coverage decreased ...' issue even though your model is working fine locally. This is because you have not included a unit test, which essentially runs through the extra lines of code you added. The Travis CI service used by Github conducts all unit tests on the code you committed and checks how many lines of the code have been checked by the unit tests, and if a significant portion of your code has not been checked (insufficient coverage), the pull request is rejected.
+
+So how do you do a unit test? Let's say you implement a GNN model in a script models/nn/abcgnn.py that does the task of node classification. Then, you need to add a unit test inside the script tests/tasks/test_node_classification.py (or whatever relevant task your model does). To add the unit test, you simply add a function test_abcgnn_cora() (just follow the format of the other unit tests already in the script), fill it with required arguments and the last line in the function 'assert 0 <= ret["Acc"] <= 1' is the very basic sanity check conducted by the unit test. Then, in the main section, remember to call your test_abcgnn_cora() function. After modifying tests/tasks/test_node_classification.py, commit it together with your models/nn/abcgnn.py and your pull request should pass.
+
+It is also a good idea to include an example script examples/gnn_models/abcgnn.py to show how your model can be run with appropriate arguments.

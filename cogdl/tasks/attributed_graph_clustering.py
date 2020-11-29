@@ -33,7 +33,7 @@ class AttributedGraphClustering(BaseTask):
         self,
         args,
         dataset=None,
-        model=None,
+        _=None,
     ):
         super(AttributedGraphClustering, self).__init__(args)
 

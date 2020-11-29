@@ -1,5 +1,6 @@
 node_classification:
   - model:
+    - gdc_gcn
     - gcn
     - gat
     - drgat
@@ -17,6 +18,8 @@ node_classification:
     - deepergcn
     - gcnii
     - gpt_gnn
+    - ppnp
+    - sgcpn
     dataset:
     - cora
     - citeseer
@@ -56,6 +59,7 @@ graph_classification:
     - sortpool
     - dgcnn
     - patchy_san
+    - sagpool
     dataset:
     - mutag
     - imdb-b

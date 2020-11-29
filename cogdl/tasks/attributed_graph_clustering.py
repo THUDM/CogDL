@@ -30,7 +30,10 @@ class AttributedGraphClustering(BaseTask):
         # fmt: on
 
     def __init__(
-        self, args, dataset=None, model=None,
+        self,
+        args,
+        dataset=None,
+        model=None,
     ):
         super(AttributedGraphClustering, self).__init__(args)
 
@@ -48,9 +51,9 @@ class AttributedGraphClustering(BaseTask):
 
         self.momentum = args.momentum
         self.num_clusters = args.num_clusters
-        if not args.cluster_method in ["kmeans", "spectral"]:
+        if args.cluster_method not in ["kmeans", "spectral"]:
             raise Exception("cluster method must be kmeans or spectral")
-        if not args.model_type in ["emb", "nn"]:
+        if args.model_type not in ["emb", "nn"]:
             raise Exception("model type must be emb or nn")
         self.cluster_method = args.cluster_method
         self.model_type = args.model_type
@@ -89,7 +92,9 @@ class AttributedGraphClustering(BaseTask):
         else:
             # features_matrix = np.dot(features_matrix, features_matrix.transpose())
             # features_matrix = 0.5 * (np.abs(features_matrix) + np.abs(features_matrix.transpose()))
-            clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="kmeans", random_state=0).fit(features_matrix)
+            clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="kmeans", random_state=0).fit(
+                features_matrix
+            )
             clusters = clustering.labels_
         return self.__evaluate(clusters)
 
@@ -110,10 +115,9 @@ class AttributedGraphClustering(BaseTask):
                     FN += 1
                 if clusters[i] != clusters[j] and truth[i] != truth[j]:
                     TN += 1
-        acc = (TP + TN) / (TP + FP + TN + FN)
+        _ = (TP + TN) / (TP + FP + TN + FN)
         precision = TP / (TP + FP)
         recall = TP / (TP + FN)
         print("TP", TP, "FP", FP, "TN", TN, "FN", FN)
         micro_f1 = 2 * (precision * recall) / (precision + recall)
         return dict(Accuracy=precision, NMI=normalized_mutual_info_score(clusters, truth), Micro_F1=micro_f1)
-

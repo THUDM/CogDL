@@ -1,7 +1,6 @@
 node_classification:
   - model:
-    - sign_basic
-    - gdc_ppr_gcn
+    - gdc_gcn
     - gcn
     - gat
     - drgat
@@ -24,7 +23,6 @@ node_classification:
     - citeseer
     - pubmed
     - ogbn-arxiv
-    - ogbn-products
 unsupervised_node_classification:
   - model:
     - prone

@@ -23,6 +23,7 @@ def get_default_args():
 
 
 def test_gdc_gcn_cora():
+    args = get_default_args()
     args.task = 'node_classification'
     args.dataset = 'cora'
     args.model = 'gdc_gcn'
@@ -357,6 +358,7 @@ def test_gpt_gnn_cora():
 
 
 if __name__ == "__main__":
+    test_gdc_gcn_cora()
     test_gcn_cora()
     test_gat_cora()
     test_mlp_pubmed()

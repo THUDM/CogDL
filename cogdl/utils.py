@@ -152,6 +152,10 @@ def remove_self_loops(indices):
     return indices, mask
 
 
+def filter_adj(row, col, edge_attr, mask):
+    return torch.stack([row[mask], col[mask]]), None if edge_attr is None else edge_attr[mask]
+
+
 def get_activation(act):
     if act == "relu":
         return F.relu

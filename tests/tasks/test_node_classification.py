@@ -294,6 +294,8 @@ def test_deepergcn_cora():
     args.num_layers = 2
     args.connection = "res+"
     args.cluster_number = 3
+    args.max_epoch = 10
+    args.patience = 1
     args.learn_beta = True
     args.learn_msg_scale = True
     args.aggr = "softmax_sg"

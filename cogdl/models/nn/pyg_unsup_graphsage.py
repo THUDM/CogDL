@@ -12,9 +12,23 @@ from cogdl.models.nn.graphsage import sage_sampler, GraphSAGELayer
 
 
 class SAGE(nn.Module):
-    def sampling(self, edge_index, num_sample):
-        return sage_sampler(self.adjlist, edge_index, num_sample)
+    """
+        Implementation of unsupervised GraphSAGE in paper `"Inductive Representation Learning on Large Graphs"` <https://cs.stanford.edu/people/jure/pubs/graphsage-nips17.pdf>
 
+        Parameters
+        ----------
+        num_features : int
+            Size of each input sample
+        hidden_size : int
+        num_layers : int
+            The number of GNN layers.
+        samples_size : list
+            The number sampled neighbors of different orders 
+        dropout : float
+        walk_length : int
+            The length of random walk
+        negative_samples : int
+    """
     def __init__(
         self, num_features, hidden_size, num_layers, sample_size, dropout, walk_length, negative_samples
     ):
@@ -78,6 +92,10 @@ class SAGE(nn.Module):
     def embed(self, data):
         emb = self.forward(data.x, data.edge_index)
         return emb
+    
+    def sampling(self, edge_index, num_sample):
+        return sage_sampler(self.adjlist, edge_index, num_sample)
+
 
 
 @register_model("unsup_graphsage")

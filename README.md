@@ -230,7 +230,7 @@ This leaderboard reports the semi-supervised node classification under a transdu
 | 12   | Chebyshev [(Defferrard et al., NeurIPS'16)](https://arxiv.org/abs/1606.09375) |  79.0 ± 1.0   |   69.8 ± 0.5   |   68.6 ± 1.0   |
 | 13   | Graph U-Net [(Gao et al., 2019)](https://arxiv.org/abs/1905.05178) |     81.8      |      67.1      |      77.3      |
 | 14   | MixHop [(Abu-El-Haija et al., ICML'19)](https://arxiv.org/abs/1905.00067) |  81.9 ± 0.4   |   71.4 ± 0.8   |   80.8 ± 0.6   |
-| 15   | SGC-PN [(Zhao & Akoglu, 2019)](https://arxiv.org/abs/1909.12223) |  76.4 ± 0.3   |   64.6 ± 0.6   |   79.6 ± 0.2   |
+| 15   | SGC-PN [(Zhao & Akoglu, 2019)](https://arxiv.org/abs/1909.12223) |  76.4 ± 0.3   |   64.6 ± 0.6   |   79.6 ± 0.3   |
 
 #### Multiplex Node Classification
 

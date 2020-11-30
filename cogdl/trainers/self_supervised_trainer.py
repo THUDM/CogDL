@@ -19,7 +19,6 @@ class SelfSupervisedTrainer(BaseTrainer):
 
     def fit(self, model, data):
         best = 1e9
-        best_t = 0
         cnt_wait = 0
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0)
 
@@ -96,13 +95,10 @@ class LogRegTrainer(object):
         labels = labels.to(device)
 
         train_embs = data[idx_train]
-        val_embs = data[idx_val]
         test_embs = data[idx_test]
 
         train_lbls = labels[idx_train]
-        val_lbls = labels[idx_val]
         test_lbls = labels[idx_test]
-
         tot = 0
 
         xent = nn.CrossEntropyLoss()

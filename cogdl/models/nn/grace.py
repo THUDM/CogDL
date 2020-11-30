@@ -68,7 +68,8 @@ class GRACE(BaseModel):
             drop_feature_rates=args.drop_feature_rates,
             drop_edge_rates=args.drop_edge_rates,
             tau=args.tau,
-            activation=args.activation
+            activation=args.activation,
+            batch_size=args.batch_size,
         )
 
     def __init__(
@@ -80,13 +81,15 @@ class GRACE(BaseModel):
         drop_feature_rates: List[float],
         drop_edge_rates: List[float],
         tau: float = 0.5,
-        activation: str = "relu"
+        activation: str = "relu",
+        batch_size: int = -1,
     ):
         super(GRACE, self).__init__()
 
         self.tau = tau
         self.drop_feature_rates = drop_feature_rates
         self.drop_edge_rates = drop_edge_rates
+        self.batch_size = batch_size
 
         self.project_head = nn.Sequential(
             nn.Linear(hidden_size, proj_hidden_size),
@@ -152,14 +155,13 @@ class GRACE(BaseModel):
             train_indices = indices[i * batch_size: (i+1) * batch_size]
             _loss = self.contrastive_loss(z1[train_indices], z2)
             losses.append(_loss)
-        return torch.mean(losses)
+        return sum(losses) / len(losses)
 
     def loss(
         self, 
         x: torch.Tensor, 
         edge_index: torch.Tensor, 
         edge_weight: Optional[torch.Tensor] = None,
-        batch_size: int = -1
     ):
         z1 = self.prop(x, edge_index, edge_weight, self.drop_feature_rates[0], self.drop_edge_rates[0])
         z2 = self.prop(x, edge_index, edge_weight, self.drop_feature_rates[1], self.drop_edge_rates[1])
@@ -167,8 +169,8 @@ class GRACE(BaseModel):
         z1 = self.project_head(z1)
         z2 = self.project_head(z2)
 
-        if batch_size > 0:
-            return 0.5 * (self.batched_loss(z1, z2, batch_size) + self.batched_loss(z2, z1, batch_size))
+        if self.batch_size > 0:
+            return 0.5 * (self.batched_loss(z1, z2, self.batch_size) + self.batched_loss(z2, z1, self.batch_size))
         else:
             return 0.5 * (self.contrastive_loss(z1, z2) + self.contrastive_loss(z2, z1))
     
@@ -209,19 +211,6 @@ class GRACE(BaseModel):
             masks = torch.bernoulli(1. - drop_rates).unsqueeze(0).expand_as(x)
             x = masks.to(x.device) * x
         return x
-
-    # def drop_feature(
-    #     self,
-    #     x: torch.Tensor,
-    #     drop_rate: float,
-    # ):
-    #     drop_mask = torch.empty(
-    #         (x.size(1),),
-    #         dtype=torch.float32,
-    #         device=x.device).uniform_(0, 1) < drop_rate
-    #     x = x.clone()
-    #     x[:, drop_mask] = 0
-    #     return x
 
     @staticmethod
     def get_trainer(tasktype: Any, args):

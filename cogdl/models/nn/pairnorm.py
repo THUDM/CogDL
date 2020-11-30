@@ -345,6 +345,7 @@ class PairNorm(BaseModel):
         super(PairNorm, self).__init__()
 
         print((pn_model, hidden_layers, nhead, dropout, nlayer, residual, norm_mode, norm_scale, no_fea_norm, missing_rate, num_features, num_classes))
+
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu')
         self.criterion = torch.nn.CrossEntropyLoss()
@@ -367,8 +368,7 @@ class PairNorm(BaseModel):
     def forward(self,x, edge_index):
         self.x = torch.Tensor(x).to(self.device)
 
-        if self.adj == None:  
-            print('started building adjacancy matrix')        
+        if self.adj == None:       
             n = len(self.x)
             adj = sp.csr_matrix(
                 (np.ones(edge_index.shape[1]), edge_index), shape=(n, n))
@@ -376,7 +376,6 @@ class PairNorm(BaseModel):
                 adj.multiply(adj.T > adj) + sp.eye(adj.shape[0])
             adj = normalize_adj_row(adj)
             self.adj = to_torch_sparse(adj).to(self.device)
-            print('finished building adjacancy matrix')
 
         return F.log_softmax(self.pn_model(self.x, self.adj),dim=1)
 

@@ -38,7 +38,7 @@ CogDL features:
 
 ## Getting Started
 
-## Requirements and Installation
+### Requirements and Installation
 
 - Python version >= 3.6
 - PyTorch version >= 1.0.0
@@ -60,6 +60,31 @@ git clone git@github.com:THUDM/cogdl.git
 cd cogdl
 pip install -e .
 ```
+
+### Docker container
+
+You might also opt to use a Docker container. There is an image available in this repo that you can build with the Torch and CUDA versions available in your system. To build the docker image just run:
+
+```
+docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VERSION --tag cogdl .
+```
+
+Where `YOUR_CUDA_VERSION` should be cuxxx representing your cuda version (or just cpu) and `YOUR_TORCH_VERSION` should be the version of PyTorch you want to use. For example, to run with CUDA 10.1 and PyTorch 1.7.0 you can run:
+```
+docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.0 --tag cogdl .
+```
+
+Then you can start the container by running:
+```
+docker run -it -v cogdl:/cogdl cogdl /bin/bash
+```
+
+And then clone your fork or this repository into the cogdl folder:
+```
+git clone https://github.com/THUDM/cogdl /cogdl
+```
+
+**Note:** if you install a version of torch different from 1.7.0, there might be some problems with the libraries torchvision and torchaudio. You might have to reinstall them by hand.
 
 ## Usage
 
@@ -160,7 +185,7 @@ We summarize the characteristics of all methods for different tasks in the follo
 | MVGRL       | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 | GraphMix    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
 | DisenGCN    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-
+| PPNP/APPNP  | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 ### Heterogeneous Graph Embedding Methods
 
 | Algorithm    |     Multi-Node     |     Multi-Edge     |     Attribute      |     Supervised     |      MetaPath      |  Reproducibility   |    GPU support     |
@@ -184,6 +209,7 @@ We summarize the characteristics of all methods for different tasks in the follo
 | PATCHY_SAN | :heavy_check_mark: |                    | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: |
 | DGCNN      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
 | DGK        |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    |                    |
+| SAGPool    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
 
 
 ## Leaderboard
@@ -220,15 +246,17 @@ This leaderboard reports the semi-supervised node classification under a transdu
 | 2    | GCNII([Chen et al., ICML'20](https://arxiv.org/pdf/2007.02133.pdf)) | **85.1± 0.3** |   71.3 ± 0.4   |   80.2 ± 0.3   |
 | 3    | DR-GAT [(Zou et al., 2019)](https://arxiv.org/abs/1907.02237) |  83.6 ± 0.5   |   72.8 ± 0.8   |   79.1 ± 0.3   |
 | 4    | MVGRL [(Hassani et al., KDD'20)](https://arxiv.org/pdf/2006.05582v1.pdf) |  83.6 ± 0.2   |   73.0 ± 0.3   |   80.1 ± 0.7   |
-| 5    | GAT [(Veličković et al., ICLR'18)](https://arxiv.org/abs/1710.10903) |  82.9 ± 0.8   |   71.0 ± 0.3   |   78.9 ± 0.3   |
-| 6    | GCN [(Kipf et al., ICLR'17)](https://arxiv.org/abs/1609.02907) |  82.3 ± 0.3   |   71.4 ± 0.4   |   79.5 ± 0.2   |
-| 7    | SRGCN                                                        |  82.2 ± 0.2   |   72.8 ± 0.2   |   79.0 ± 0.4   |
-| 8    | DGI [(Veličković et al., ICLR'19)](https://arxiv.org/abs/1809.10341) |  82.0 ± 0.2   |   71.2 ± 0.4   |   76.5 ± 0.6   |
-| 9    | GraphSAGE [(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |  80.1 ± 0.2   |   66.2 ± 0.4   |   77.2 ± 0.7   |
-| 10   | GraphSAGE(unsup)[(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |  78.2 ± 0.9   |   65.8 ± 1.0   |   78.2 ± 0.7   |
-| 11   | Chebyshev [(Defferrard et al., NeurIPS'16)](https://arxiv.org/abs/1606.09375) |  79.0 ± 1.0   |   69.8 ± 0.5   |   68.6 ± 1.0   |
-| 12   | Graph U-Net [(Gao et al., 2019)](https://arxiv.org/abs/1905.05178) |     81.8      |      67.1      |      77.3      |
-| 13   | MixHop [(Abu-El-Haija et al., ICML'19)](https://arxiv.org/abs/1905.00067) |  81.9 ± 0.4   |   71.4 ± 0.8   |   80.8 ± 0.6   |
+| 5    | APPNP [(Klicpera et al., ICLR'19)](https://arxiv.org/pdf/1810.05997.pdf) |  82.5 ± 0.8   |   71.2 ± 0.2   |   80.2 ± 0.2   |
+| 6    | GAT [(Veličković et al., ICLR'18)](https://arxiv.org/abs/1710.10903) |  82.9 ± 0.8   |   71.0 ± 0.3   |   78.9 ± 0.3   |
+| 7    | GCN [(Kipf et al., ICLR'17)](https://arxiv.org/abs/1609.02907) |  82.3 ± 0.3   |   71.4 ± 0.4   |   79.5 ± 0.2   |
+| 8    | SRGCN                                                        |  82.2 ± 0.2   |   72.8 ± 0.2   |   79.0 ± 0.4   |
+| 9    | DGI [(Veličković et al., ICLR'19)](https://arxiv.org/abs/1809.10341) |  82.0 ± 0.2   |   71.2 ± 0.4   |   76.5 ± 0.6   |
+| 10    | GraphSAGE [(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |  80.1 ± 0.2   |   66.2 ± 0.4   |   77.2 ± 0.7   |
+| 11   | GraphSAGE(unsup)[(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |  78.2 ± 0.9   |   65.8 ± 1.0   |   78.2 ± 0.7   |
+| 12   | Chebyshev [(Defferrard et al., NeurIPS'16)](https://arxiv.org/abs/1606.09375) |  79.0 ± 1.0   |   69.8 ± 0.5   |   68.6 ± 1.0   |
+| 13   | Graph U-Net [(Gao et al., 2019)](https://arxiv.org/abs/1905.05178) |     81.8      |      67.1      |      77.3      |
+| 14   | MixHop [(Abu-El-Haija et al., ICML'19)](https://arxiv.org/abs/1905.00067) |  81.9 ± 0.4   |   71.4 ± 0.8   |   80.8 ± 0.6   |
+| 15   | SGC-PN [(Zhao & Akoglu, 2019)](https://arxiv.org/abs/1909.12223) |  76.4 ± 0.3   |   64.6 ± 0.6   |   79.6 ± 0.2   |
 
 #### Multiplex Node Classification
 
@@ -288,7 +316,8 @@ This leaderboard reports the performance of graph classification methods. we run
 | 5    | Graph2Vec [(Narayanan et al, CoRR'17)](https://arxiv.org/abs/1707.05005) | 83.68 | 73.90  | **52.27**  |  73.30   | **85.58**  |
 | 6    | PATCH_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf) | 86.12 | 76.00  | 46.40 |  **75.38**  | 74.34 |
 | 7    | DGCNN [(Wang et al, ACM Transactions on Graphics'17)](https://arxiv.org/abs/1801.07829) | 83.33 | 69.50  | 46.33  |  66.67   | 77.45  |
-| 8    | DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417) | 83.68 | 55.00  | 40.40  |  72.59   |   /    |
+| 8    | SAGPool [(J. Lee, ICML'19)](https://arxiv.org/abs/1904.08082) | 55.55 | 63.00  | 51.33  |  72.59   |   /    |
+| 9    | DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417) | 83.68 | 55.00  | 40.40  |  72.59   |   /    |
 
 If you have ANY difficulties to get things working in the above steps, feel free to open an issue. You can expect a reply within 24 hours.
 

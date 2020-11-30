@@ -7,26 +7,17 @@ import copy
 import networkx as nx
 import numpy as np
 import torch
-from torch import mode
-from torch.optim import Adam, Adagrad, SGD
-from torch.optim.lr_scheduler import StepLR
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 import torch.nn as nn
-import torch.nn.functional as F
-from torch.nn import CrossEntropyLoss, MSELoss, NLLLoss, BCELoss, KLDivLoss
-from torch.utils.data import WeightedRandomSampler
-from gensim.models.keyedvectors import Vocab
-from six import iteritems
 from sklearn.metrics import auc, f1_score, precision_recall_curve, roc_auc_score
 from tqdm import tqdm
 
-from cogdl import options
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 
 from . import BaseTask, register_task
 
-from cogdl.datasets.kg_data import KnowledgeGraphDataset, BidirectionalOneShotIterator, TrainDataset
+from cogdl.datasets.kg_data import BidirectionalOneShotIterator, TrainDataset
 
 def save_model(model, optimizer, save_variable_list, args):
     '''

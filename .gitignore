@@ -105,3 +105,4 @@ venv.bak/
 
 data/
 *.npy
+venv.bat

@@ -9,6 +9,7 @@ node_classification:
     - srgcn
     - mixhop
     - graphsage
+    - pairnorm
     - unet
     - gcnii
     - chebyshev

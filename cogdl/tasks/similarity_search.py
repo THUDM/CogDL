@@ -1,3 +1,4 @@
+import argparse
 import networkx as nx
 import numpy as np
 from collections import defaultdict
@@ -12,7 +13,7 @@ class SimilaritySearch(BaseTask):
     """Similarity Search task."""
 
     @staticmethod
-    def add_args(parser):
+    def add_args(_: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # need no extra argument
         pass

@@ -5,9 +5,6 @@ import numpy as np
 from cogdl.tasks import build_task
 from cogdl.utils import build_args_from_dict
 
-random.seed(1)
-torch.random.manual_seed(1)
-np.random.seed(1)
 
 def get_strategies_for_pretrain_args():
     cuda_available = torch.cuda.is_available()

@@ -1,16 +1,11 @@
-import copy
-import random
-from typing import Optional
-
+import argparse
 import numpy as np
 import networkx as nx
 from sklearn.cluster import KMeans, SpectralClustering
 from sklearn.metrics.cluster import normalized_mutual_info_score
 import torch
 import torch.nn.functional as F
-from tqdm import tqdm
 
-from cogdl import options
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 
@@ -21,7 +16,7 @@ class AttributedGraphClustering(BaseTask):
     """Attributed graph clustring task."""
 
     @staticmethod
-    def add_args(parser):
+    def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
         # parser.add_argument("--num-features", type=int)

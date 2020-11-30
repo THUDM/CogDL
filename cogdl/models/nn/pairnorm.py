@@ -344,11 +344,8 @@ class PairNorm(BaseModel):
     def __init__(self, pn_model, hidden_layers, nhead, dropout, nlayer, residual, norm_mode, norm_scale, no_fea_norm, missing_rate, num_features, num_classes):
         super(PairNorm, self).__init__()
 
-        print((pn_model, hidden_layers, nhead, dropout, nlayer, residual, norm_mode, norm_scale, no_fea_norm, missing_rate, num_features, num_classes))
-
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu')
-        self.criterion = torch.nn.CrossEntropyLoss()
 
         self.adj = None
 

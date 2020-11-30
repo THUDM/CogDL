@@ -20,6 +20,7 @@ node_classification:
     - gpt_gnn
     - ppnp
     - sgcpn
+    - sgc
     dataset:
     - cora
     - citeseer

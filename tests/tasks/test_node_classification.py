@@ -18,9 +18,31 @@ def get_default_args():
         "cpu": not cuda_available,
         "lr": 0.01,
         "weight_decay": 5e-4,
+        "missing_rate": -1,
     }
     return build_args_from_dict(default_dict)
 
+
+def test_gdc_gcn_cora():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.dataset = 'cora'
+    args.model = 'gdc_gcn'
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_layers = 1
+    args.alpha = 0.05 # ppr filter param
+    args.t = 5.0 # heat filter param
+    args.k = 128 # top k entries to be retained
+    args.eps = 0.01 # change depending on gdc_type
+    args.dataset = dataset
+    args.gdc_type = 'ppr' # ppr, heat, none
+
+    model = build_model(args)
+    task = build_task(args, dataset=dataset, model=model)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
 
 def test_gcn_cora():
     args = get_default_args()
@@ -272,6 +294,8 @@ def test_deepergcn_cora():
     args.num_layers = 2
     args.connection = "res+"
     args.cluster_number = 3
+    args.max_epoch = 10
+    args.patience = 1
     args.learn_beta = True
     args.learn_msg_scale = True
     args.aggr = "softmax_sg"
@@ -352,7 +376,55 @@ def test_jknet_jknet_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+def test_ppnp_citeseer():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.model = 'ppnp'
+    args.dataset = 'citeseer'
+    args.propagation_type = 'ppnp'
+    args.alpha = 0.1
+    args.num_iterations = 10
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret['Acc'] < 1
+
+def test_appnp_citeseer():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.model = 'ppnp'
+    args.dataset = 'citeseer'
+    args.propagation_type = 'appnp'
+    args.alpha = 0.1
+    args.num_iterations = 10
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret['Acc'] < 1
+
+def test_sgcpn_cora():
+    args = get_default_args()
+    args.dataset = "cora"
+    args.task = "node_classification"
+    args.model = "sgcpn"
+    args.dropout = 0.6
+    args.num_layers = 10
+    args.norm_mode = "PN"
+    args.norm_scale = 10
+    args.missing_rate = 20
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret["Acc"] < 1
+
+def test_sgc_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "sgc"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+    
 if __name__ == "__main__":
+    test_gdc_gcn_cora()
     test_gcn_cora()
     test_gat_cora()
     test_mlp_pubmed()
@@ -374,3 +446,7 @@ if __name__ == "__main__":
     test_pyg_gcn_cora_sampler()
     test_gpt_gnn_cora()
     test_jknet_jknet_cora()
+    test_ppnp_citeseer()
+    test_appnp_citeseer()
+    test_sgcpn_cora()
+    test_sgc_cora()

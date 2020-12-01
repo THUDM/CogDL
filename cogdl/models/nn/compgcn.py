@@ -45,6 +45,26 @@ class BasesRelEmbLayer(nn.Module):
 
 
 class CompGCNLayer(nn.Module):
+    """
+        Implementation of CompGCN in paper `"Composition-based Multi-Relational Graph Convolutional Networks"`
+        <https://arxiv.org/abs/1911.03082>
+
+        Parameters
+        ----------
+        in_feats : int
+            Size of each input embedding
+        out_feats : int
+            Size of each output embedding
+        num_rel : int
+            The number of relations
+        opn : str
+            Operation to mix two head and tail embeddings
+        num_bases : Optional[Int]
+            The number of basis, default : ``None``.
+        activation : Function
+        dropout : float
+        bias : bool
+    """
     def __init__(self, in_feats, out_feats, num_rels, opn="mult", num_bases=None, activation=lambda x:x, dropout=0.0, bias=True):
         super(CompGCNLayer, self).__init__()
         self.in_feats = in_feats

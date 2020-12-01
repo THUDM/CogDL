@@ -857,9 +857,9 @@ class TestBioDataset(InMemoryDataset):
                  pre_transform=None,
                  pre_filter=None):
         super(TestBioDataset, self).__init__(root, transform, pre_transform, pre_filter)
-        num_nodes = 10
-        num_edges = 10
-        num_graphs = 100
+        num_nodes = 20
+        num_edges = 20
+        num_graphs = 200
 
         def cycle_index(num, shift):
             arr = torch.arange(num) + shift
@@ -889,10 +889,14 @@ class TestBioDataset(InMemoryDataset):
         if data_type == "supervised":
             pretrain_tasks = 10
             downstream_tasks = 5
-            go_target_pretrain = torch.zeros(pretrain_tasks * num_graphs)
-            go_target_downstream = torch.zeros(downstream_tasks * num_graphs)
-            go_target_pretrain[torch.arange(0, pretrain_tasks*num_graphs, pretrain_tasks)] = 1
-            go_target_downstream[torch.arange(0, downstream_tasks*num_graphs, downstream_tasks)] = 1
+            # go_target_pretrain = torch.zeros(pretrain_tasks * num_graphs)
+            # go_target_downstream = torch.zeros(downstream_tasks * num_graphs)
+
+            go_target_downstream = torch.randint(0, 2, (downstream_tasks * num_graphs, ))
+            go_target_pretrain = torch.randint(0, 2, (pretrain_tasks * num_graphs, ))
+
+            # go_target_pretrain[torch.randint(0, pretrain_tasks*num_graphs, pretrain_tasks)] = 1
+            # go_target_downstream[torch.arange(0, downstream_tasks*num_graphs, downstream_tasks)] = 1
             self.data.go_target_downstream = go_target_downstream
             self.data.go_target_pretrain = go_target_pretrain
             self.slices["go_target_pretrain"] = torch.arange(0, (num_graphs + 1) * pretrain_tasks)

@@ -369,6 +369,11 @@ def test_sign_cora():
     args.num_layers = 3
     args.num_propagations = 3
     args.dropout = 0.3
+    args.directed = False
+    args.dropedge_rate = 0.2
+    args.asymm_norm = False
+    args.set_diag = False
+    args.remove_diag = False
     task = build_task(args)
     ret = task.train()
     assert 0 < ret['Acc'] < 1

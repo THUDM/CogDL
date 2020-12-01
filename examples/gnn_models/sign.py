@@ -28,6 +28,11 @@ def build_default_args_for_node_classification(dataset):
         "num_propagations": 3,
         "num_layers": 3,
         "dropout": 0.5,
+        "directed": False,
+        "dropedge_rate": 0.2,
+        "asymm_norm": False,
+        "set_diag": False,
+        "remove_diag": False,
 
         "task": "node_classification",
         "model": "sign",

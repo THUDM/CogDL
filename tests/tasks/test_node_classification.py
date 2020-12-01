@@ -107,13 +107,14 @@ def test_pairnorm_cora_deepgcn():
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <=1
-    
+
+
 def test_pairnorm_cora_gcn():
     args = get_default_args()
     args.task = "node_classification"
-    args.dataset = "GCN"
+    args.dataset = "cora"
     args.model = "pairnorm"
-    args.pn_model = "DeepGCN"
+    args.pn_model = "GCN"
     args.nlayer = 10
     args.missing_rate = 100
     args.norm_mode = 'PN-SI'
@@ -126,12 +127,12 @@ def test_pairnorm_cora_gcn():
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <=1
-    
-    
+
+
 def test_pairnorm_cora_sgc():
     args = get_default_args()
     args.task = "node_classification"
-    args.dataset = "GCN"
+    args.dataset = "cora"
     args.model = "pairnorm"
     args.pn_model = "SGC"
     args.nlayer = 10
@@ -146,12 +147,12 @@ def test_pairnorm_cora_sgc():
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <=1
-    
-    
+
+
 def test_pairnorm_cora_deepgat():
     args = get_default_args()
     args.task = "node_classification"
-    args.dataset = "GCN"
+    args.dataset = "cora"
     args.model = "pairnorm"
     args.pn_model = "DeepGAT"
     args.nlayer = 10
@@ -503,13 +504,13 @@ def test_sgc_cora():
     assert 0 <= ret["Acc"] <= 1
     
 if __name__ == "__main__":
-    test_pairnorm_cora_deepgcn()
-    test_pairnorm_cora_deepgat()
-    test_pairnorm_cora_sgc()
-    test_pairnorm_cora_gcn()
     test_gdc_gcn_cora()
     test_gcn_cora()
     test_gat_cora()
+    test_pairnorm_cora_deepgcn()
+    test_pairnorm_cora_deepgat()
+    test_pairnorm_cora_gcn()
+    test_pairnorm_cora_sgc()
     test_mlp_pubmed()
     test_mixhop_citeseer()
     test_graphsage_cora()

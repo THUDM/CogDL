@@ -438,6 +438,23 @@ def test_gpt_gnn_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+def test_jknet_jknet_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "jknet_cora"
+    args.model = "jknet"
+    args.lr = 0.005
+    args.layer_aggregation = 'maxpool'
+    args.node_aggregation = 'sum'
+    args.n_layers = 6
+    args.n_units = 16
+    args.in_features = 1433
+    args.out_features = 7
+    args.max_epoch = 100
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
 def test_ppnp_citeseer():
     args = get_default_args()
     args.task = 'node_classification'
@@ -476,7 +493,15 @@ def test_sgcpn_cora():
     ret = task.train()
     assert 0 < ret["Acc"] < 1
 
-
+def test_sgc_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "sgc"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+    
 if __name__ == "__main__":
     test_pairnorm_cora_deepgcn()
     test_pairnorm_cora_deepgat()
@@ -503,6 +528,8 @@ if __name__ == "__main__":
     test_grand_cora()
     test_pyg_gcn_cora_sampler()
     test_gpt_gnn_cora()
+    test_jknet_jknet_cora()
     test_ppnp_citeseer()
     test_appnp_citeseer()
     test_sgcpn_cora()
+    test_sgc_cora()

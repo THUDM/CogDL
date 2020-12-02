@@ -24,7 +24,7 @@ script:
   - coverage combine
   - cd docs && make clean && make html && cd ..
 
-after_success:
+after_success: 
 - coveralls
 
 notifications:

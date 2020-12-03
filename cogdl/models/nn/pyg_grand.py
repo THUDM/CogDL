@@ -42,6 +42,36 @@ class MLPLayer(nn.Module):
 
 @register_model("grand")
 class Grand(BaseModel):
+    """
+        Implementation of GRAND in paper `"Graph Random Neural Networks for Semi-Supervised Learning on Graphs"`
+        <https://arxiv.org/abs/2005.11079>
+
+        Parameters
+        ----------
+        nfeat : int
+            Size of each input features.
+        nhid : int
+            Size of hidden features.
+        nclass : int
+            Number of output classes.
+        input_droprate : float
+            Dropout rate of input features.
+        hidden_droprate : float
+            Dropout rate of hidden features.
+        use_bn : bool
+            Using batch normalization.
+        dropnode_rate : float
+            Rate of dropping elements of input features
+        tem : float
+            Temperature to sharpen predictions.
+        lam : float
+             Proportion of consistency loss of unlabelled data
+        order : int
+            Order of adjacency matrix
+        sample : int
+            Number of augmentations for consistency loss
+        alpha : float
+    """
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""

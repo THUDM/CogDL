@@ -1,7 +1,10 @@
-import numpy as np
-import networkx as nx
-from gensim.models import Word2Vec, KeyedVectors
 import random
+
+import networkx as nx
+import numpy as np
+from gensim.models import KeyedVectors, Word2Vec
+from tqdm import tqdm
+
 from .. import BaseModel, register_model
 
 
@@ -61,6 +64,7 @@ class DeepWalk(BaseModel):
         self.G = G
         walks = self._simulate_walks(self.walk_length, self.walk_num)
         walks = [[str(node) for node in walk] for walk in walks]
+        print("training word2vec...")
         model = Word2Vec(
             walks,
             size=self.dimension,
@@ -92,8 +96,8 @@ class DeepWalk(BaseModel):
         walks = []
         nodes = list(G.nodes())
         print("node number:", len(nodes))
-        for walk_iter in range(num_walks):
-            print(str(walk_iter + 1), "/", str(num_walks))
+        print("generating random walks...")
+        for walk_iter in tqdm(range(num_walks)):
             random.shuffle(nodes)
             for node in nodes:
                 walks.append(self._walk(node, walk_length))

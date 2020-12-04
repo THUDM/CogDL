@@ -1,6 +1,8 @@
 import os.path as osp
-
+import os
 import torch
+import numpy as np
+import scipy.sparse as sp
 
 import torch_geometric.transforms as T
 from torch_geometric.datasets import Planetoid, Reddit, TUDataset, QM9
@@ -131,7 +133,6 @@ class RedditMulti5K(TUDataset):
         super(RedditMulti5K, self).__init__(path, name=dataset)
 
 
-
 @register_dataset("reddit-multi-12k")
 class RedditMulti12K(TUDataset):
     def __init__(self):
@@ -199,7 +200,8 @@ class QM9Dataset(QM9):
         dataset = "QM9"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
 
-        target=0
+        target = 0
+
         class MyTransform(object):
             def __call__(self, data):
                 # Specify target.

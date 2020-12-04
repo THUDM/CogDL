@@ -18,9 +18,7 @@ install:
 script:
   - black .
   - export DGLBACKEND=pytorch
-  - coverage run --source=cogdl -p -m pytest -n 3 --dist=loadfile tests/tasks
-  - coverage run --source=cogdl -p -m pytest -n 3 --dist=loadfile tests/datasets
-  - coverage run --source=cogdl -p -m pytest -n 5 tests/test_options.py
+  - coverage run --source=cogdl -p -m pytest -n 2 --dist=loadfile tests
   - coverage combine
   - cd docs && make clean && make html && cd ..
 

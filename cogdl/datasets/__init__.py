@@ -1,4 +1,6 @@
+from collections import defaultdict
 import importlib
+from multiprocessing import Lock
 import os
 
 from cogdl.data.dataset import Dataset
@@ -21,6 +23,25 @@ else:
 DATASET_REGISTRY = {}
 
 
+class CacheLock:
+    def __init__(self) -> None:
+        self.lock = Lock()
+        self.locks = defaultdict(Lock)
+
+    def acquire(self, name: str):
+        with self.lock:
+            lock = self.locks[name]
+        lock.acquire()
+
+    def release(self, name: str):
+        with self.lock:
+            lock = self.locks[name]
+        lock.release()
+
+
+locker = CacheLock()
+
+
 def register_dataset(name):
     """
     New dataset types can be added to cogdl with the :func:`register_dataset`
@@ -39,16 +60,12 @@ def register_dataset(name):
     def register_dataset_cls(cls):
         if name in DATASET_REGISTRY:
             raise ValueError("Cannot register duplicate dataset ({})".format(name))
-        if not issubclass(cls, Dataset) and (
-            pyg and not issubclass(cls, torch_geometric.data.Dataset)
-        ) and (
-            dgl_import and not issubclass(cls, TUDataset)
+        if (
+            not issubclass(cls, Dataset)
+            and (pyg and not issubclass(cls, torch_geometric.data.Dataset))
+            and (dgl_import and not issubclass(cls, TUDataset))
         ):
-            raise ValueError(
-                "Dataset ({}: {}) must extend cogdl.data.Dataset".format(
-                    name, cls.__name__
-                )
-            )
+            raise ValueError("Dataset ({}: {}) must extend cogdl.data.Dataset".format(name, cls.__name__))
         DATASET_REGISTRY[name] = cls
         return cls
 
@@ -67,8 +84,12 @@ for file in os.listdir(os.path.dirname(__file__)):
 
 
 def build_dataset(args):
-    return DATASET_REGISTRY[args.dataset]()
+    return build_dataset_from_name(args.dataset)
 
 
 def build_dataset_from_name(dataset):
-    return DATASET_REGISTRY[dataset]()
+    locker.acquire(dataset)
+    try:
+        return DATASET_REGISTRY[dataset]()
+    finally:
+        locker.release(dataset)

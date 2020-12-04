@@ -373,6 +373,28 @@ def test_sgcpn_cora():
     task = build_task(args)
     ret = task.train()
     assert 0 < ret["Acc"] < 1
+    
+def test_gnnbp_cora():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.model = 'gnnbp'
+    args.dataset = 'cora'
+    args.num_layers = 2
+    args.alpha = 0.1
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret['Acc'] < 1
+    
+def test_gnnbp_citeseer():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.model = 'gnnbp'
+    args.dataset = 'citeseer'
+    args.num_layers = 2
+    args.alpha = 0.1
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret['Acc'] < 1    
 
 
 if __name__ == "__main__":
@@ -399,3 +421,5 @@ if __name__ == "__main__":
     test_ppnp_citeseer()
     test_appnp_citeseer()
     test_sgcpn_cora()
+    test_gnnbp_cora()
+    test_gnnbp_citeseer()

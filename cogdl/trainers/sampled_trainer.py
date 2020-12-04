@@ -22,6 +22,7 @@ from cogdl.models.supervised_model import (
 )
 from cogdl.trainers.supervised_trainer import SupervisedHeterogeneousNodeClassificationTrainer
 
+
 class SampledTrainer(SupervisedHeterogeneousNodeClassificationTrainer):
     @abstractmethod
     def fit(self, model: SupervisedHeterogeneousNodeClassificationModel, dataset: Dataset):
@@ -41,6 +42,21 @@ class SampledTrainer(SupervisedHeterogeneousNodeClassificationTrainer):
         self.max_epoch = args.max_epoch
         self.lr = args.lr
         self.weight_decay = args.weight_decay
+        self.args_sampler = self.sampler_from_args(args)
+
+    @staticmethod
+    def build_trainer_from_args(args):
+        pass
+
+    def sampler_from_args(self, args):
+        args_sampler = {}
+        args_sampler["sampler"] = args.sampler
+        args_sampler["sample_coverage"] = args.sample_coverage
+        args_sampler["size_subgraph"] = args.size_subgraph
+        args_sampler["num_walks"] = args.num_walks
+        args_sampler["walk_length"] = args.walk_length
+        args_sampler["size_frontier"] = args.size_frontier
+        return args_sampler
 
     def train(self):
         epoch_iter = tqdm(range(self.max_epoch))
@@ -81,7 +97,7 @@ class SAINTTrainer(SampledTrainer):
 
     @staticmethod
     def build_trainer_from_args(args):
-        pass
+        SAINTTrainer(args)
 
     def sampler_from_args(self, args):
         args_sampler = {
@@ -117,6 +133,7 @@ class SAINTTrainer(SampledTrainer):
 
     def _train_step(self):
         self.data = self.sampler.get_subgraph("train")
+        self.data.apply(lambda x: x.to(self.device))
         self.model.train()
         self.optimizer.zero_grad()
         self.model.loss(self.data).backward()
@@ -124,7 +141,7 @@ class SAINTTrainer(SampledTrainer):
 
     def _test_step(self, split="val"):
         self.data = self.sampler.get_subgraph(split)
-
+        self.data.apply(lambda x: x.to(self.device))
         self.model.eval()
         if split == "train":
             mask = self.data.train_mask
@@ -184,7 +201,6 @@ class NeighborSamplingTrainer(SampledTrainer):
         epoch_iter = tqdm(range(self.max_epoch))
         patience = 0
         best_score = 0
-        best_loss = np.inf
         max_score = 0
         min_loss = np.inf
         best_model = copy.deepcopy(self.model)
@@ -200,7 +216,6 @@ class NeighborSamplingTrainer(SampledTrainer):
                 )
                 if val_loss <= min_loss or val_acc >= max_score:
                     if val_acc >= best_score:  # SAINT loss is not accurate
-                        best_loss = val_loss
                         best_score = val_acc
                         best_model = copy.deepcopy(self.model)
                     min_loss = np.min((min_loss, val_loss))

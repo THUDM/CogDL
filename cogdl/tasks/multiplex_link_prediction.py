@@ -1,18 +1,12 @@
+import argparse
 import random
 from collections import defaultdict
 
-import copy
 import networkx as nx
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from gensim.models.keyedvectors import Vocab
 from six import iteritems
 from sklearn.metrics import auc, f1_score, precision_recall_curve, roc_auc_score
-from tqdm import tqdm
 
-from cogdl import options
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 
@@ -56,7 +50,7 @@ def evaluate(embs, true_edges, false_edges):
 @register_task("multiplex_link_prediction")
 class MultiplexLinkPrediction(BaseTask):
     @staticmethod
-    def add_args(parser):
+    def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--hidden-size", type=int, default=200)

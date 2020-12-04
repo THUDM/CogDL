@@ -1,5 +1,6 @@
 node_classification:
   - model:
+    - gdc_gcn
     - gcn
     - gat
     - drgat
@@ -9,6 +10,7 @@ node_classification:
     - srgcn
     - mixhop
     - graphsage
+    - pairnorm
     - unet
     - gcnii
     - chebyshev
@@ -17,12 +19,17 @@ node_classification:
     - deepergcn
     - gcnii
     - gpt_gnn
+    - jknet
+    - ppnp
+    - sgcpn
+    - sgc
     dataset:
     - cora
     - citeseer
     - pubmed
     - ogbn-arxiv
     - reddit
+    - jknet_cora
 unsupervised_node_classification:
   - model:
     - prone
@@ -58,6 +65,7 @@ graph_classification:
     - sortpool
     - dgcnn
     - patchy_san
+    - sagpool
     dataset:
     - mutag
     - imdb-b
@@ -142,3 +150,20 @@ pretrain:
     - test_chem
     - bbbp
     - bace
+similarity_search:
+  - model:
+    - gcc
+    dataset:
+    - sigir_cikm
+    - kdd_icdm
+    - sigmod_icde
+attributed_graph_clustering:
+  - model:
+    - deepwalk
+    - prone
+    - netmf
+    - line
+    dataset:
+    - cora
+    - citeseer
+    - pubmed

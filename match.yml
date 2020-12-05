@@ -23,6 +23,7 @@ node_classification:
     - ppnp
     - sgcpn
     - sgc
+    - ssp
     dataset:
     - cora
     - citeseer

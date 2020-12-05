@@ -280,6 +280,16 @@ def test_pyg_drgat_cora():
     assert 0 <= ret["Acc"] <= 1
 
 
+def test_pyg_ssp_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "ssp"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+
 def test_disengcn_cora():
     args = get_default_args()
     args.task = "node_classification"
@@ -534,3 +544,4 @@ if __name__ == "__main__":
     test_jknet_jknet_cora()
     test_ppnp_citeseer()
     test_appnp_citeseer()
+    test_pyg_ssp_cora()

@@ -161,7 +161,6 @@ We summarize the characteristics of all methods for different tasks in the follo
 | GraphMix    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
 | DisenGCN    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
 | PPNP/APPNP  | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| GNNBP       | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 
 ### Heterogeneous Graph Embedding Methods
 

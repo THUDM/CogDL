@@ -38,7 +38,7 @@ CogDL features:
 
 ## Getting Started
 
-## Requirements and Installation
+### Requirements and Installation
 
 - Python version >= 3.6
 - PyTorch version >= 1.0.0
@@ -60,6 +60,31 @@ git clone git@github.com:THUDM/cogdl.git
 cd cogdl
 pip install -e .
 ```
+
+### Docker container
+
+You might also opt to use a Docker container. There is an image available in this repo that you can build with the Torch and CUDA versions available in your system. To build the docker image just run:
+
+```
+docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VERSION --tag cogdl .
+```
+
+Where `YOUR_CUDA_VERSION` should be cuxxx representing your cuda version (or just cpu) and `YOUR_TORCH_VERSION` should be the version of PyTorch you want to use. For example, to run with CUDA 10.1 and PyTorch 1.7.0 you can run:
+```
+docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.0 --tag cogdl .
+```
+
+Then you can start the container by running:
+```
+docker run -it -v cogdl:/cogdl cogdl /bin/bash
+```
+
+And then clone your fork or this repository into the cogdl folder:
+```
+git clone https://github.com/THUDM/cogdl /cogdl
+```
+
+**Note:** if you install a version of torch different from 1.7.0, there might be some problems with the libraries torchvision and torchaudio. You might have to reinstall them by hand.
 
 ## Usage
 
@@ -185,6 +210,7 @@ We summarize the characteristics of all methods for different tasks in the follo
 | PATCHY_SAN | :heavy_check_mark: |                    | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: |
 | DGCNN      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
 | DGK        |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    |                    |
+| SAGPool    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
 
 
 ## Leaderboard
@@ -291,7 +317,8 @@ This leaderboard reports the performance of graph classification methods. we run
 | 5    | Graph2Vec [(Narayanan et al, CoRR'17)](https://arxiv.org/abs/1707.05005) | 83.68 | 73.90  | **52.27**  |  73.30   | **85.58**  |
 | 6    | PATCH_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf) | 86.12 | 76.00  | 46.40 |  **75.38**  | 74.34 |
 | 7    | DGCNN [(Wang et al, ACM Transactions on Graphics'17)](https://arxiv.org/abs/1801.07829) | 83.33 | 69.50  | 46.33  |  66.67   | 77.45  |
-| 8    | DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417) | 83.68 | 55.00  | 40.40  |  72.59   |   /    |
+| 8    | SAGPool [(J. Lee, ICML'19)](https://arxiv.org/abs/1904.08082) | 55.55 | 63.00  | 51.33  |  72.59   |   /    |
+| 9    | DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417) | 83.68 | 55.00  | 40.40  |  72.59   |   /    |
 
 If you have ANY difficulties to get things working in the above steps, feel free to open an issue. You can expect a reply within 24 hours.
 
@@ -308,3 +335,13 @@ If you have a unique and interesting dataset and are willing to publish it, you 
 ### Implement Your Own Model
 
 If you have a well-performed algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request,  detailed information can be found [here](https://help.github.com/en/articles/creating-a-pull-request). 
+
+#### A brief guide to having a successful pull request (unit test)
+
+To have a successful pull request, you need to have at least (1) your model script and (2) a unit test.
+
+You might be confused why your pull request was rejected because of 'Coverage decreased ...' issue even though your model is working fine locally. This is because you have not included a unit test, which essentially runs through the extra lines of code you added. The Travis CI service used by Github conducts all unit tests on the code you committed and checks how many lines of the code have been checked by the unit tests, and if a significant portion of your code has not been checked (insufficient coverage), the pull request is rejected.
+
+So how do you do a unit test? Let's say you implement a GNN model in a script models/nn/abcgnn.py that does the task of node classification. Then, you need to add a unit test inside the script tests/tasks/test_node_classification.py (or whatever relevant task your model does). To add the unit test, you simply add a function test_abcgnn_cora() (just follow the format of the other unit tests already in the script), fill it with required arguments and the last line in the function 'assert 0 <= ret["Acc"] <= 1' is the very basic sanity check conducted by the unit test. Then, in the main section, remember to call your test_abcgnn_cora() function. After modifying tests/tasks/test_node_classification.py, commit it together with your models/nn/abcgnn.py and your pull request should pass.
+
+It is also a good idea to include an example script examples/gnn_models/abcgnn.py to show how your model can be run with appropriate arguments.

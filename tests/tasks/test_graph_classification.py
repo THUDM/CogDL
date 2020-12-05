@@ -208,6 +208,16 @@ def test_patchy_san_proteins():
     ret = task.train()
     assert ret["Acc"] > 0
 
+def test_hgpsl_san_proteins():
+    args = get_default_args()
+    args = add_patchy_san_args(args)
+    args.dataset = "proteins"
+    args.model = "hgpsl"
+    args.batch_size = 20
+    task = build_task(args)
+    ret = task.train()
+    assert ret["Acc"] > 0
+
 
 if __name__ == "__main__":
 
@@ -227,3 +237,5 @@ if __name__ == "__main__":
 
     test_patchy_san_mutag()
     test_patchy_san_proteins()
+
+    test_hgpsl_san_proteins()

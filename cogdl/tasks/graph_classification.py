@@ -164,7 +164,6 @@ class GraphClassification(BaseTask):
             # batch.y = torch.flatten(batch.y)
             self.optimizer.zero_grad()
             output, loss = self.model(batch)
-            print('loss', loss)
             loss_n += loss.item()
             loss.backward()
             self.optimizer.step()

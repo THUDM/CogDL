@@ -7,13 +7,12 @@ from torch.nn.parameter import Parameter
 from torch.autograd import Function
 from torch_geometric.data import Data
 from torch_geometric.nn.conv import MessagePassing
-from torch_geometric.nn import global_mean_pool as gap, global_max_pool as gmp
-from torch_geometric.nn import GCNConv
+from torch_geometric.nn import global_mean_pool as gap, global_max_pool as gmp, GCNConv
 from torch_geometric.nn.pool.topk_pool import topk, filter_adj
 from torch_geometric.utils import softmax, dense_to_sparse, add_remaining_self_loops
 from torch_scatter import scatter_add, scatter_max
 from torch_sparse import spspmm, coalesce
-
+from numpy.core.records import array
 from .. import BaseModel, register_model
 from cogdl.data import DataLoader
 
@@ -428,25 +427,21 @@ class HGPSL(BaseModel):
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument("--num-features", type=int)
-        parser.add_argument("--num-classes", type=int)
         parser.add_argument("--hidden-size", type=int, default=128)
         parser.add_argument("--dropout", type=float, default=0.0)
         parser.add_argument("--pooling", type=float, default=0.5)
-        parser.add_argument("--batch-size", type=int, default=512)
-        parser.add_argument("--train-ratio", type=float, default=0.7)
+        parser.add_argument("--batch-size", type=int, default=64)
+        parser.add_argument("--train-ratio", type=float, default=0.8)
         parser.add_argument("--test-ratio", type=float, default=0.1)
-        parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
-        parser.add_argument('--weight_decay', type=float, default=0.001, help='weight decay')
-        parser.add_argument('--hidden-size', type=int, default=128, help='hidden size')
-        parser.add_argument('--sample_neighbor', type=bool, default=True, help='whether sample neighbors')
-        parser.add_argument('--sparse_attention', type=bool, default=True, help='whether use sparse attention')
-        parser.add_argument('--structure_learning', type=bool, default=True, help='whether perform structure learning')
-        parser.add_argument('--pooling', type=float, default=0.5, help='pooling ratio')
-        parser.add_argument('--dropout', type=float, default=0.0)
+        parser.add_argument('--lr', type=float, default=0.001)
+        parser.add_argument('--weight_decay', type=float, default=0.001)
+        parser.add_argument('--sample_neighbor', type=bool, default=True)
+        parser.add_argument('--sparse_attention', type=bool, default=True)
+        parser.add_argument('--structure_learning', type=bool, default=True)
         parser.add_argument('--lamb', type=float, default=1.0)
-        parser.add_argument('--patience', type=int, default=100, help='patience for early stopping')
-        # parser.add_argument("--lambda", type=float, default=1.0)
+        parser.add_argument('--patience', type=int, default=100)
+        parser.add_argument('--seed', type=array, default=[777], help='random seed')
+
         # fmt: on
 
     @classmethod
@@ -457,6 +452,10 @@ class HGPSL(BaseModel):
             args.hidden_size,
             args.dropout,
             args.pooling,
+            args.sample_neighbor,
+            args.sparse_attention,
+            args.structure_learning,
+            args.lamb
         )
 
     @classmethod
@@ -475,7 +474,7 @@ class HGPSL(BaseModel):
             valid_loader = test_loader
         return train_loader, valid_loader, test_loader
 
-    def __init__(self, num_features, num_classes, hidden_size, dropout, pooling):
+    def __init__(self, num_features, num_classes, hidden_size, dropout, pooling, sample_neighbor, sparse_attention, structure_learning, lamb):
         super(HGPSL, self).__init__()
 
         self.num_features = num_features
@@ -483,10 +482,10 @@ class HGPSL(BaseModel):
         self.num_classes = num_classes
         self.pooling = pooling
         self.dropout = dropout
-        self.sample = True
-        self.sparse = True
-        self.sl = True
-        self.lamb = 1.0
+        self.sample = sample_neighbor
+        self.sparse = sparse_attention
+        self.sl = structure_learning
+        self.lamb = lamb
 
         self.conv1 = GCNConv(self.num_features, self.hidden_size)
         self.conv2 = GCN(self.hidden_size, self.hidden_size)
@@ -536,9 +535,9 @@ class HGPSL(BaseModel):
         x = F.relu(self.lin2(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
+        pred = F.log_softmax(x, dim=-1)
        
-        if data.y is not None and data.x is not None:
-            pred = F.log_softmax(x, dim=-1)
-            loss = F.cross_entropy(pred, data.y)
-            return x, loss
-        return x, None
+        if data.y is not None:
+            loss = F.nll_loss(pred, data.y)
+            return pred, loss
+        return pred, None

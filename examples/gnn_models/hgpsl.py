@@ -14,31 +14,25 @@ DATASET_REGISTRY = {}
 def build_default_args_for_graph_classification(dataset):
     cpu = not torch.cuda.is_available()
     args = {
+        "hidden_size": 128,
+        "dropout": 0.0,
+        "pooling": 0.5,
+        "batch_size": 64,
+        "train_ratio": 0.8,
+        "test_ratio": 0.1,
         "lr": 0.001,
-        "weight_decay": 5e-4,
-        "max_epoch": 500,
+        "weight_decay": 0.001,
         "patience": 100,
+        "max_epoch": 500,
+        "sample_neighbor": True,
+        "sparse_attention": True,
+        "structure_learning": True,
         "cpu": cpu,
         "device_id": [0],
-        "seed": [0],
-
-        "hidden_size": 64,
-        "degree_feature": False,
-        "gamma": 0.5,
-        "kfold": False,
-        "uniform_feature": False,
-        "train_ratio": 0.7,
-        "test_ratio": 0.1,
-        "num_layers": 3,
-        "dropout": 0.5,
-        "batch_size": 128,
-        "kernel_size": 5,
-        "k": 30,
-        "out_channels": 32,
-
+        "seed": [777],
         "task": "graph_classification",
         "model": "hgpsl",
-        "dataset": dataset
+        "dataset": dataset,
     }
     return build_args_from_dict(args)
 
@@ -47,6 +41,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

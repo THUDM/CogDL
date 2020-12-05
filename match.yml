@@ -10,6 +10,7 @@ node_classification:
     - srgcn
     - mixhop
     - graphsage
+    - pairnorm
     - unet
     - gcnii
     - chebyshev
@@ -18,6 +19,7 @@ node_classification:
     - deepergcn
     - gcnii
     - gpt_gnn
+    - jknet
     - ppnp
     - sgcpn
     - sgc
@@ -26,6 +28,7 @@ node_classification:
     - citeseer
     - pubmed
     - ogbn-arxiv
+    - jknet_cora
 unsupervised_node_classification:
   - model:
     - prone

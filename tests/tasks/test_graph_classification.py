@@ -233,6 +233,10 @@ def test_hgpsl_proteins():
     args = add_hgpsl_args(args)
     args.dataset = "proteins"
     args.model = "hgpsl"
+    args.sample_neighbor= True,
+    args.sparse_attention= True,
+    args.structure_learning = True,
+    args.lamb = 1.0
     task = build_task(args)
     ret = task.train()
     assert ret["Acc"] > 0

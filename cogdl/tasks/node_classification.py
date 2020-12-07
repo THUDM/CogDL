@@ -75,7 +75,6 @@ class NodeClassification(BaseTask):
         # fmt: off
         parser.add_argument("--missing-rate", type=int, default=-1)
         # fmt: on
-        parser.add_argument("--missing-rate", type=int, default=-1)
 
     def __init__(
         self,

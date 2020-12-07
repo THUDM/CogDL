@@ -174,9 +174,11 @@ def test_graphsage_cora():
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "graphsage"
-    args.num_layers = 2
-    args.hidden_size = [128]
-    args.sample_size = [10, 10]
+    args.batch_size = 256
+    args.num_layers = 1
+    args.hidden_size = [32]
+    args.sample_size = [3]
+    args.num_workers = 1
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1

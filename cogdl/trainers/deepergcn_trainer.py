@@ -63,7 +63,7 @@ class DeeperGCNTrainer(BaseTrainer):
         self.test_gpu_volume()
         self.subgraph_loader = NeighborSampler(
                                     data.edge_index, 
-                                    sizes=[-1,], 
+                                    sizes=[-1,],
                                     batch_size=self.batch_size,
                                     shuffle=False,
                                     num_workers=10,

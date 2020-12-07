@@ -42,21 +42,10 @@ class SampledTrainer(SupervisedHeterogeneousNodeClassificationTrainer):
         self.max_epoch = args.max_epoch
         self.lr = args.lr
         self.weight_decay = args.weight_decay
-        self.args_sampler = self.sampler_from_args(args)
 
-    @staticmethod
-    def build_trainer_from_args(args):
-        pass
-
-    def sampler_from_args(self, args):
-        args_sampler = {}
-        args_sampler["sampler"] = args.sampler
-        args_sampler["sample_coverage"] = args.sample_coverage
-        args_sampler["size_subgraph"] = args.size_subgraph
-        args_sampler["num_walks"] = args.num_walks
-        args_sampler["walk_length"] = args.walk_length
-        args_sampler["size_frontier"] = args.size_frontier
-        return args_sampler
+    @classmethod
+    def build_trainer_from_args(cls, args):
+        return cls(args)
 
     def train(self):
         epoch_iter = tqdm(range(self.max_epoch))
@@ -95,9 +84,9 @@ class SAINTTrainer(SampledTrainer):
         super(SAINTTrainer, self).__init__(args)
         self.args_sampler = self.sampler_from_args(args)
 
-    @staticmethod
-    def build_trainer_from_args(args):
-        SAINTTrainer(args)
+    @classmethod
+    def build_trainer_from_args(cls, args):
+        return cls(args)
 
     def sampler_from_args(self, args):
         args_sampler = {
@@ -128,8 +117,7 @@ class SAINTTrainer(SampledTrainer):
         )
         best_model = self.train()
         self.model = best_model
-        test_acc, _ = self._test_step(split="test")
-        return dict(Acc=test_acc)
+        return self.model
 
     def _train_step(self):
         self.data = self.sampler.get_subgraph("train")
@@ -207,7 +195,7 @@ class NeighborSamplingTrainer(SampledTrainer):
         for epoch in epoch_iter:
             self._train_step()
             if (epoch + 1) % self.eval_per_epoch == 0:
-                acc, loss = self._test_step(split="val")
+                acc, loss = self._test_step()
                 train_acc = acc["train"]
                 val_acc = acc["val"]
                 val_loss = loss["val"]

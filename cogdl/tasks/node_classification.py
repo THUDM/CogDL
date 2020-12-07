@@ -14,7 +14,7 @@ from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificatio
 from cogdl.trainers.supervised_trainer import (
     SupervisedHomogeneousNodeClassificationTrainer,
 )
-from cogdl.trainers.sampled_trainer import SampledTrainer
+from cogdl.trainers.sampled_trainer import SAINTTrainer
 
 from . import BaseTask, register_task
 
@@ -125,12 +125,12 @@ class NodeClassification(BaseTask):
 
     def train(self):
         if self.trainer:
-            if issubclass(type(self.trainer), SampledTrainer):
+            if isinstance(self.trainer, SAINTTrainer):
                 self.model = self.trainer.fit(self.model, self.dataset)
                 self.data.apply(lambda x: x.to(self.device))
             else:
                 result = self.trainer.fit(self.model, self.dataset)
-                if isinstance(result, torch.nn.Module):
+                if issubclass(type(result), torch.nn.Module):
                     self.model = result
                 else:
                     return result

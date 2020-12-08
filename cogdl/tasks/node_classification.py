@@ -103,6 +103,7 @@ class NodeClassification(BaseTask):
         args.num_nodes = dataset.data.x.shape[0]
 
         self.model: SupervisedHomogeneousNodeClassificationModel = build_model(args) if model is None else model
+        self.model.set_device(self.device)
 
         self.trainer: Optional[
             SupervisedHomogeneousNodeClassificationTrainer

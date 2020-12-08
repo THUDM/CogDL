@@ -18,9 +18,16 @@ class BaseModel(nn.Module):
             "Models must implement the build_model_from_args method"
         )
 
+    def __init__(self):
+        super(BaseModel, self).__init__()
+        self.device = "cpu"
+
     def _forward_unimplemented(self, *input: Any) -> None:  # abc warning
         pass
 
     @staticmethod
     def get_trainer(taskType: Any, args: Any) -> Optional[Type[BaseTrainer]]:
         return None
+
+    def set_device(self, device):
+        self.device = device

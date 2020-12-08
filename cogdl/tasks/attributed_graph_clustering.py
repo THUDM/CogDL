@@ -44,22 +44,24 @@ class AttributedGraphClustering(BaseTask):
         self.data = dataset[0]
         self.num_nodes = self.data.y.shape[0]
 
-        self.hidden_size = args.hidden_size = dataset.num_features
+        self.hidden_size = args.hidden_size = args.num_features = dataset.num_features
         self.model = build_model(args)
         
         self.momentum = args.momentum
         self.num_clusters = args.num_clusters
         if not args.cluster_method in ["kmeans", "spectral"]:
             raise Exception("cluster method must be kmeans or spectral")
-        if not args.model_type in ["emb", "nn"]:
-            raise Exception("model type must be emb or nn")
+        if not args.model_type in ["content", "spectral", "both"]:
+            raise Exception("model type must be content, spectral or both")
         self.cluster_method = args.cluster_method
         self.model_type = args.model_type
         self.is_weighted = self.data.edge_attr is not None
         self.enhance = args.enhance
 
     def train(self):
-        if self.model_type == "emb":
+        if self.model_type == "content":
+            features_matrix = self.data.x
+        elif self.model_type == "spectral":
             G = nx.Graph()
             if self.is_weighted:
                 edges, weight = (
@@ -82,6 +84,11 @@ class AttributedGraphClustering(BaseTask):
             features_matrix = F.normalize(features_matrix, p=2, dim=1)
             node_attr = F.normalize(self.data.x, p=2, dim=1)
             features_matrix = self.momentum * node_attr + (1 - self.momentum) * features_matrix
+        else:
+            trainer = self.model.get_trainer(AttributedGraphClustering, self.args)(self.args)
+            self.model = trainer.fit(self.model, self.data)
+            features_matrix = self.model.get_features(self.data)
+            
         #TODO: add gnn training methods
             
         features_matrix = features_matrix.numpy()

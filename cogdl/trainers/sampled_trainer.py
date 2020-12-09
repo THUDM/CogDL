@@ -179,7 +179,6 @@ class NeighborSamplingTrainer(SampledTrainer):
         self.model = model.to(self.device)
         self.model.set_data_device(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        self.train()
         best_model = self.train()
         self.model = best_model
         acc, loss = self._test_step()

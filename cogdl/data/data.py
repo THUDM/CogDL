@@ -243,10 +243,8 @@ class Data(object):
         # Reindexing: target nodes are always put at the front
         _node_idx = list(batch) + list(set(_node_idx).difference(set(batch)))
         node_dict = {val: key for key, val in enumerate(_node_idx)}
-        edge_index = torch.stack([
-            row,
-            torch.Tensor([node_dict[i] for i in col])
-        ])
+        new_col = torch.LongTensor([node_dict[i] for i in col])
+        edge_index = torch.stack([row.long(), new_col])
 
         node_idx = torch.Tensor(_node_idx).long().to(self.x.device)
         edge_index = edge_index.long().to(self.x.device)

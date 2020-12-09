@@ -146,7 +146,7 @@ class GTNDataset(Dataset):
 
 @register_dataset("gtn-acm")
 class ACM_GTNDataset(GTNDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "gtn-acm"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(ACM_GTNDataset, self).__init__(path, dataset)
@@ -154,7 +154,7 @@ class ACM_GTNDataset(GTNDataset):
 
 @register_dataset("gtn-dblp")
 class DBLP_GTNDataset(GTNDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "gtn-dblp"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(DBLP_GTNDataset, self).__init__(path, dataset)
@@ -162,7 +162,7 @@ class DBLP_GTNDataset(GTNDataset):
 
 @register_dataset("gtn-imdb")
 class IMDB_GTNDataset(GTNDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "gtn-imdb"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(IMDB_GTNDataset, self).__init__(path, dataset)

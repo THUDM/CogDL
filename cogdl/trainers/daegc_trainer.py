@@ -69,6 +69,7 @@ class DAEGCTrainer(BaseTrainer):
             Q = self.getQ(z)
             if epoch % self.T == 0:
                 P = self.getP(Q).detach()
+            #print(self.cluster_loss(P, Q))
             loss = model.recon_loss(z, data.adj) + self.gamma * self.cluster_loss(P, Q)
             loss.backward()
             optimizer.step()
@@ -98,7 +99,7 @@ class DAEGCTrainer(BaseTrainer):
         return P
 
     def cluster_loss(self, P, Q):
-        return nn.MSELoss(reduce=True, size_average=False)(P, Q)
+        #return nn.MSELoss(reduce=True, size_average=False)(P, Q)
         return nn.KLDivLoss(reduce=True, size_average=False)(
             P.log(),
             Q

@@ -27,9 +27,9 @@ class GraphConvolution(nn.Module):
 
     def reset_parameters(self):
         stdv = 1.0 / math.sqrt(self.weight.size(1))
-        self.weight.data.normal_(-stdv, stdv)
+        self.weight.data.uniform_(-stdv, stdv)
         if self.bias is not None:
-            self.bias.data.normal_(-stdv, stdv)
+            self.bias.data.zero_()
 
     def forward(self, input, edge_index, edge_attr=None):
         if edge_attr is None:

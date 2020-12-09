@@ -4,9 +4,6 @@ import torch
 import numpy as np
 import scipy.sparse as sparse
 from torch_geometric.data import Data as pyg_data
-import time
-
-import torch_sparse
 
 
 class Data(object):
@@ -230,9 +227,7 @@ class Data(object):
         if isinstance(batch, torch.Tensor):
             batch = batch.cpu().numpy()
 
-        step1 = time.time()
         adj = self.__adj[batch].tocsr()
-        step2 = time.time()
         batch_size = len(batch)
         if size == -1:
             adj = adj.tocoo()
@@ -245,28 +240,16 @@ class Data(object):
         col = col.numpy()
         _node_idx = node_idx.numpy()
 
-        step3 = time.time()
-
         # Reindexing: target nodes are always put at the front
         _node_idx = list(batch) + list(set(_node_idx).difference(set(batch)))
-        step4 = time.time()
         node_dict = {val: key for key, val in enumerate(_node_idx)}
-        step5 = time.time()
         edge_index = torch.stack([
             row,
             torch.Tensor([node_dict[i] for i in col])
         ])
-        step6 = time.time()
-
-        # print("after step2:", step2 - step1)
-        # print("End:", step3 - step2)
-        # print("build_set:", step4 - step3)
-        # print("build_dict:", step5 - step4)
-        # print("reindex:", step6 - step5)
 
         node_idx = torch.Tensor(_node_idx).long().to(self.x.device)
         edge_index = edge_index.long().to(self.x.device)
-        # print("ALL:", time.time() - step1)
         return node_idx, edge_index
 
     def _sample_adj(self, batch_size, indices, indptr, size):

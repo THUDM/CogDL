@@ -179,7 +179,6 @@ class NeighborSamplingTrainer(SampledTrainer):
         self.model = model.to(self.device)
         self.model.set_data_device(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        self.train()
         best_model = self.train()
         self.model = best_model
         acc, loss = self._test_step()
@@ -203,7 +202,7 @@ class NeighborSamplingTrainer(SampledTrainer):
                     f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
                 )
                 if val_loss <= min_loss or val_acc >= max_score:
-                    if val_acc >= best_score:  # SAINT loss is not accurate
+                    if val_loss <= min_loss:
                         best_score = val_acc
                         best_model = copy.deepcopy(self.model)
                     min_loss = np.min((min_loss, val_loss))

@@ -99,6 +99,23 @@ class GENConv(nn.Module):
 
 
 class DeepGCNLayer(nn.Module):
+    """
+        Implementation of DeeperGCN in paper `"DeeperGCN: All You Need to Train Deeper GCNs"` <https://arxiv.org/abs/2006.07739>
+
+        Parameters
+        -----------
+        in_feat : int
+            Size of each input sample
+        out_feat : int
+            Size of each output sample
+        conv : class
+            Base convolution layer.
+        connection : str
+            Residual connection type, `res` or `res+`.
+        activation : str
+        dropout : float
+        checkpoint_grad : bool
+    """
     def __init__(
             self,
             in_feat,

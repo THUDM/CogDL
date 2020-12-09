@@ -67,7 +67,7 @@ for file in os.listdir(os.path.dirname(__file__)):
 
 
 def build_dataset(args):
-    return DATASET_REGISTRY[args.dataset]()
+    return DATASET_REGISTRY[args.dataset](args=args)
 
 
 def build_dataset_from_name(dataset):

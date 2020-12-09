@@ -10,7 +10,9 @@ def get_default_args():
                     'num_shuffle': 1,
                     'cpu': True,
                     'enhance': None,
-                    'save_dir': ".",}
+                    'save_dir': ".",
+                    'task': 'unsupervised_node_classification'
+                    }
     return build_args_from_dict(default_dict)
 
 def test_deepwalk_wikipedia():
@@ -201,8 +203,16 @@ def get_unsupervised_nn_args():
         'num_shuffle': 2,
         'save_dir': ',',
         'enhance': None,
+        'device_id': [0,],
+        'task': 'unsupervised_node_classification'
     }
     return build_args_from_dict(default_dict)
+
+def build_nn_dataset(args):
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    return args, dataset
 
 def test_unsupervised_graphsage():
     args = get_unsupervised_nn_args()
@@ -214,9 +224,7 @@ def test_unsupervised_graphsage():
     args.dataset = "cora"
     args.max_epochs = 2
     args.model = "unsup_graphsage"
-    dataset = build_dataset(args)
-    args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
+    args, dataset = build_nn_dataset(args)
     task = build_task(args)
     ret = task.train()
     assert ret['Acc'] > 0
@@ -242,12 +250,30 @@ def test_mvgrl():
     args.dataset = "cora"
     args.max_epochs = 2
     args.model = "mvgrl"
-    dataset = build_dataset(args)
-    args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
+    args, dataset = build_nn_dataset(args)
     task = build_task(args)
     ret = task.train()
     assert ret['Acc'] > 0
+
+def test_grace():
+    args = get_unsupervised_nn_args()
+    args.model = "grace"
+    args.num_layers = 2
+    args.max_epoch = 2
+    args.drop_feature_rates = [0.1, 0.2]
+    args.drop_edge_rates = [0.2, 0.3]
+    args.activation = "relu"
+    args.proj_hidden_size = 32
+    args.tau = 0.5
+    args.dataset = "cora"
+    args, dataset = build_nn_dataset(args)
+
+    for bs in [-1, 512]:
+        args.batch_size = bs
+        task = build_task(args)
+        ret = task.train()
+        assert ret['Acc'] > 0
+
 
 def test_gcc_usa_airport():
     args = get_default_args()
@@ -277,3 +303,4 @@ if __name__ == "__main__":
     test_prone_usa_airport()
     test_spectral_ppi()
     test_gcc_usa_airport()
+    test_grace()

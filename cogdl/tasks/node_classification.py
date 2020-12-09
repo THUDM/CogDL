@@ -1,5 +1,5 @@
+import argparse
 import copy
-import random
 from typing import Optional
 import scipy.sparse as sp
 
@@ -8,7 +8,6 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from cogdl import options
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificationModel
@@ -71,12 +70,11 @@ class NodeClassification(BaseTask):
     """Node classification task."""
 
     @staticmethod
-    def add_args(parser):
+    def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
-        # parser.add_argument("--num-features", type=int)
-        # fmt: on
         parser.add_argument("--missing-rate", type=int, default=-1)
+        # fmt: on
 
     def __init__(
         self,
@@ -91,12 +89,12 @@ class NodeClassification(BaseTask):
         self.device = args.device_id[0] if not args.cpu else "cpu"
         dataset = build_dataset(args) if dataset is None else dataset
         if args.missing_rate >= 0:
-            assert args.dataset in ['cora', 'citeseer', 'pubmed']
-            assert args.model == 'sgcpn'
-            dataset.data = preprocess_data_sgcpn(dataset.data, normalize_feature=True, missing_rate=0)
-            adj_slice = torch.tensor(dataset.data.adj.size())
-            adj_slice[0] = 0
-            dataset.slices['adj'] = adj_slice
+            if args.model == 'sgcpn':
+                assert args.dataset in ['cora', 'citeseer', 'pubmed']
+                dataset.data = preprocess_data_sgcpn(dataset.data, normalize_feature=True, missing_rate=0)
+                adj_slice = torch.tensor(dataset.data.adj.size())
+                adj_slice[0] = 0
+                dataset.slices['adj'] = adj_slice
 
         self.dataset = dataset
         self.data = dataset[0]

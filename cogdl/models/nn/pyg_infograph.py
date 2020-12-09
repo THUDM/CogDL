@@ -19,7 +19,6 @@ class SUPEncoder(torch.nn.Module):
     r"""Encoder used in supervised model with Set2set in paper `"Order Matters: Sequence to sequence for sets"
     <https://arxiv.org/abs/1511.06391>` and NNConv in paper `"Dynamic Edge-Conditioned Filters in Convolutional Neural Networks on
     Graphs" <https://arxiv.org/abs/1704.02901>`
-
     """
     def __init__(self, num_features, dim, num_layers=1):
         super(SUPEncoder, self).__init__()

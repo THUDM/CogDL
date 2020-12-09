@@ -79,6 +79,7 @@ def add_patchy_san_args(args):
     args.test_ratio = 0.1
     return args
 
+
 def add_hgpsl_args(args):
     args.hidden_size = 128
     args.dropout = 0.0
@@ -87,6 +88,15 @@ def add_hgpsl_args(args):
     args.train_ratio = 0.8
     args.test_ratio = 0.1
     args.lr = 0.001
+    return args
+
+def add_sagpool_args(args):
+    args.hidden_size = 128
+    args.batch_size = 20
+    args.train_ratio = 0.7
+    args.test_ratio = 0.1
+    args.pooling_ratio = 0.5
+    args.pooling_layer_type = "gcnconv"
     return args
 
 def test_gin_mutag():
@@ -217,11 +227,37 @@ def test_patchy_san_proteins():
     ret = task.train()
     assert ret["Acc"] > 0
 
+
 def test_hgpsl_proteins():
     args = get_default_args()
     args = add_hgpsl_args(args)
     args.dataset = "proteins"
     args.model = "hgpsl"
+    args.sample_neighbor= True,
+    args.sparse_attention= True,
+    args.structure_learning = True,
+    args.lamb = 1.0
+    task = build_task(args)
+    ret = task.train()
+    assert ret["Acc"] > 0
+
+def test_sagpool_mutag():
+    args = get_default_args()
+    args = add_sagpool_args(args)
+    args.dataset = "mutag"
+    args.model = "sagpool"
+    args.batch_size = 20
+    task = build_task(args)
+    ret = task.train()
+    assert ret["Acc"] > 0
+
+
+def test_sagpool_proteins():
+    args = get_default_args()
+    args = add_sagpool_args(args)
+    args.dataset = "proteins"
+    args.model = "sagpool"
+    args.batch_size = 20
     task = build_task(args)
     ret = task.train()
     assert ret["Acc"] > 0
@@ -246,4 +282,8 @@ if __name__ == "__main__":
     test_patchy_san_mutag()
     test_patchy_san_proteins()
 
+
     test_hgpsl_proteins()
+
+    test_sagpool_mutag()
+    test_sagpool_proteins()

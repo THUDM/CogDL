@@ -187,7 +187,6 @@ class NeighborSamplingTrainer(SampledTrainer):
     def train(self):
         epoch_iter = tqdm(range(self.max_epoch))
         patience = 0
-        best_score = 0
         max_score = 0
         min_loss = np.inf
         best_model = copy.deepcopy(self.model)
@@ -203,7 +202,6 @@ class NeighborSamplingTrainer(SampledTrainer):
                 )
                 if val_loss <= min_loss or val_acc >= max_score:
                     if val_loss <= min_loss:
-                        best_score = val_acc
                         best_model = copy.deepcopy(self.model)
                     min_loss = np.min((min_loss, val_loss))
                     max_score = np.max((max_score, val_acc))

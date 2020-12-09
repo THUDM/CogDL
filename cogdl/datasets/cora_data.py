@@ -13,7 +13,7 @@ class CoraDataset(Dataset):
 
     url = 'https://github.com/mori97/JKNet-dgl/raw/master/datasets/cora'
 
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "jknet_cora"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):

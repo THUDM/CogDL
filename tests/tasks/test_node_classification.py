@@ -442,6 +442,7 @@ def test_gpt_gnn_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+
 def test_jknet_jknet_cora():
     args = get_default_args()
     args.task = "node_classification"
@@ -483,6 +484,7 @@ def test_appnp_cora():
     ret = task.train()
     assert 0 < ret["Acc"] < 1
 
+
 def test_sgcpn_cora():
     args = get_default_args()
     args.dataset = "cora"
@@ -497,6 +499,7 @@ def test_sgcpn_cora():
     ret = task.train()
     assert 0 < ret["Acc"] < 1
 
+
 def test_sgc_cora():
     args = get_default_args()
     args.task = "node_classification"
@@ -506,6 +509,7 @@ def test_sgc_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
     
+
 if __name__ == "__main__":
     test_gdc_gcn_cora()
     test_gcn_cora()

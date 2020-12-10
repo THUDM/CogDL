@@ -90,6 +90,9 @@ def parse_args_and_arch(parser, args):
     TASK_REGISTRY[args.task].add_args(parser)
     for model in args.model:
         MODEL_REGISTRY[model].add_args(parser)
+    for dataset in args.dataset:
+        if hasattr(DATASET_REGISTRY[dataset], 'add_args'):
+            DATASET_REGISTRY[dataset].add_args(parser)
     # Parse a second time.
     args = parser.parse_args()
 

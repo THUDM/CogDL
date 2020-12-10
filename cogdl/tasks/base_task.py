@@ -11,5 +11,5 @@ class BaseTask(ABC):
     def __init__(self, args):
         pass
 
-    def train(self, num_epoch: int):
+    def train(self):
         raise NotImplementedError

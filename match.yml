@@ -65,6 +65,7 @@ graph_classification:
     - sortpool
     - dgcnn
     - patchy_san
+    - hgpsl
     - sagpool
     dataset:
     - mutag

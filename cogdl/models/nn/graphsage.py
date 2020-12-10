@@ -82,6 +82,7 @@ class Graphsage(BaseModel):
         self, num_features, num_classes, hidden_size, num_layers, sample_size, dropout
     ):
         super(Graphsage, self).__init__()
+        assert num_layers == len(sample_size)
         self.adjlist = {}
         self.num_features = num_features
         self.num_classes = num_classes
@@ -90,7 +91,6 @@ class Graphsage(BaseModel):
         self.sample_size = sample_size
         self.dropout = dropout
         shapes = [num_features] + hidden_size + [num_classes]
-        # print(shapes)
         self.convs = nn.ModuleList(
             [
                 GraphSAGELayer(shapes[layer], shapes[layer+1])
@@ -98,38 +98,47 @@ class Graphsage(BaseModel):
             ]
         )
 
-    # @profile
-    # def forward(self, x, edge_index):
-    #     for i in range(self.num_layers):
-    #         edge_index_sp = self.sampling(edge_index, self.sample_size[i]).to(x.device)
-    #         x = self.convs[i](x, edge_index_sp)
-    #         if i != self.num_layers - 1:
-    #             x = F.relu(x)
-    #             x = F.dropout(x, p=self.dropout, training=self.training)
-    #     return F.log_softmax(x, dim=1)
-    #
-    # def loss(self, data):
-    #     return F.nll_loss(
-    #         self.forward(data.x, data.edge_index)[data.train_mask],
-    #         data.y[data.train_mask],
-    #     )
+    def mini_forward(self, x, edge_index):
+        for i in range(self.num_layers):
+            edge_index_sp = self.sampling(edge_index, self.sample_size[i]).to(x.device)
+            x = self.convs[i](x, edge_index_sp)
+            if i != self.num_layers - 1:
+                x = F.relu(x)
+                x = F.dropout(x, p=self.dropout, training=self.training)
+        return F.log_softmax(x, dim=1)
+
+    def mini_loss(self, data):
+        return F.nll_loss(
+            self.forward(data.x, data.edge_index)[data.train_mask],
+            data.y[data.train_mask],
+        )
 
     def predict(self, data):
         return self.forward(data.x, data.edge_index)
 
-    def forward(self, x, adjs):
-        for i, (src_id, edge_index, size) in enumerate(adjs):
-            edge_index = edge_index.to(self.device)
-            output = self.convs[i](x, edge_index)
-            x = output[0: size[1]]
-            if i != self.num_layers - 1:
-                x = F.relu(x)
-                x = F.dropout(x, p=self.dropout, training=self.training)
-        return F.log_softmax(x, dim=-1)
+    def forward(self, *args):
+        assert len(args) == 2
+        if isinstance(args[1], torch.Tensor):
+            return self.mini_forward(*args)
+        else:
+            x, adjs = args
+            for i, (src_id, edge_index, size) in enumerate(adjs):
+                edge_index = edge_index.to(self.device)
+                output = self.convs[i](x, edge_index)
+                x = output[0: size[1]]
+                if i != self.num_layers - 1:
+                    x = F.relu(x)
+                    x = F.dropout(x, p=self.dropout, training=self.training)
+            return F.log_softmax(x, dim=-1)
 
-    def loss(self, x, adjs, y):
-        pred = self.forward(x, adjs)
-        return F.nll_loss(pred, y)
+    def loss(self, *args):
+        assert len(args) == 1 or len(args) == 3
+        if len(args) == 1:
+            return self.mini_loss(*args)
+        else:
+            x, adjs, y = args
+            pred = self.forward(x, adjs)
+            return F.nll_loss(pred, y)
 
     def inference(self, x_all, data_loader):
         for i in range(len(self.convs)):
@@ -147,7 +156,8 @@ class Graphsage(BaseModel):
 
     @staticmethod
     def get_trainer(taskType: Any, args: Any):
-        return NeighborSamplingTrainer
+        if args.dataset not in ["cora", "citeseer"]:
+            return NeighborSamplingTrainer
 
     def set_data_device(self, device):
         self.device = device

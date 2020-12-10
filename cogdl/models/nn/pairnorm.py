@@ -198,7 +198,6 @@ class DeepGCN(nn.Module):
         self.out_layer = GraphConvolution(nfeat if nlayer == 1 else nhid, nclass)
 
         self.dropout = nn.Dropout(p=dropout)
-        self.dropout_rate = dropout
         self.relu = nn.ReLU(True)
         self.norm = PairNormNorm(norm_mode, norm_scale)
         self.skip = residual

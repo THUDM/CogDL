@@ -8,6 +8,7 @@ Subpackages
 
     models.emb
     models.nn
+    models.agc
 
 Submodules
 ----------

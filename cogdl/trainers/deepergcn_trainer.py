@@ -54,20 +54,12 @@ class DeeperGCNTrainer(BaseTrainer):
         self.data = None
         self.optimizer = None
         self.edge_index, self.train_index = None, None
-        self.subgraph_loader = None
 
     def fit(self, model, data):
         data = data[0]
         self.model = model.to(self.device)
         self.data = data
         self.test_gpu_volume()
-        self.subgraph_loader = NeighborSampler(
-                                    data.edge_index, 
-                                    sizes=[-1,], 
-                                    batch_size=self.batch_size,
-                                    shuffle=False,
-                                    num_workers=10,
-                                )
 
         self.optimizer = torch.optim.Adam(
             self.model.parameters(),
@@ -179,10 +171,6 @@ class DeeperGCNTrainer(BaseTrainer):
         self.data.apply(lambda x: x.to(self.data_device))
         self.model.to(self.device)
         return acc, loss
-
-    def _mini_batch_test_step(self, split="val"):
-        self.model.eval()
-
 
     def loss(self, data):
         return F.nll_loss(

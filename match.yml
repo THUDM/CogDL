@@ -28,6 +28,7 @@ node_classification:
     - citeseer
     - pubmed
     - ogbn-arxiv
+    - reddit
     - jknet_cora
 unsupervised_node_classification:
   - model:

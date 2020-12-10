@@ -10,7 +10,7 @@ def get_default_args():
     cuda_available = torch.cuda.is_available()
     default_dict = {
         "task": "graph_classification",
-        "hidden_size": 64,
+        "hidden_size": 32,
         "dropout": 0.5,
         "patience": 1,
         "max_epoch": 2,
@@ -93,10 +93,13 @@ def test_gin_mutag():
     args = add_gin_args(args)
     args.dataset = "mutag"
     args.model = "gin"
-    args.batch_size = 32
-    task = build_task(args)
-    ret = task.train()
-    assert ret["Acc"] > 0
+    args.batch_size = 5
+    for kfold in [True, False]:
+        args.kfold = kfold
+        args.seed = 0
+        task = build_task(args)
+        ret = task.train()
+        assert ret["Acc"] > 0
 
 
 def test_gin_imdb_binary():
@@ -140,16 +143,6 @@ def test_diffpool_proteins():
     task = build_task(args)
     ret = task.train()
     assert ret["Acc"] > 0
-
-
-# def test_dgcnn_modelnet10():
-#     args = get_default_args()
-#     args = add_dgcnn_args(args)
-#     args.dataset = 'ModelNet10'
-#     args.model = 'pyg_dgcnn'
-#     task = build_task(args)
-#     ret = task.train()
-#     assert ret["Acc"] > 0
 
 
 def test_dgcnn_proteins():
@@ -216,6 +209,7 @@ def test_patchy_san_proteins():
     ret = task.train()
     assert ret["Acc"] > 0
 
+
 def test_sagpool_mutag():
     args = get_default_args()
     args = add_sagpool_args(args)
@@ -252,7 +246,6 @@ if __name__ == "__main__":
 
     test_dgcnn_proteins()
     test_dgcnn_imdb_binary()
-    # test_dgcnn_modelnet10()
 
     test_patchy_san_mutag()
     test_patchy_san_proteins()

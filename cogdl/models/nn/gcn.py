@@ -40,7 +40,7 @@ class GraphConvolution(nn.Module):
             (input.shape[0], input.shape[0]),
         ).to(input.device)
         support = torch.mm(input, self.weight)
-        output = torch.spmm(adj, support)
+        output = torch.sparse.mm(adj, support)
         if self.bias is not None:
             return output + self.bias
         else:
@@ -55,6 +55,21 @@ class GraphConvolution(nn.Module):
             + str(self.out_features)
             + ")"
         )
+
+
+def drop_edge(adj, adj_values, dropedge_rate, train):
+    if train:
+        import numpy as np
+        n_edge = adj.shape[1]
+        _remaining_edges = np.arange(n_edge)
+        np.random.shuffle(_remaining_edges)
+        _remaining_edges = np.sort(_remaining_edges[:int((1 - dropedge_rate) * n_edge)])
+        new_adj = adj[:, _remaining_edges]
+        new_adj_values = adj_values[_remaining_edges]
+    else:
+        new_adj = adj
+        new_adj_values = adj_values
+    return new_adj, new_adj_values
 
 
 @register_model("gcn")
@@ -77,39 +92,69 @@ class TKipfGCN(BaseModel):
         parser.add_argument("--num-classes", type=int)
         parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--dropout", type=float, default=0.5)
+        parser.add_argument("--num-layers", type=int, default=2)
+        parser.add_argument("--dropedge", type=float, default=0.0)
         # fmt: on
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.num_features, args.hidden_size, args.num_classes, args.dropout)
+        return cls(args.num_features, args.hidden_size, args.num_classes, args.dropout, args.num_layers, args.dropedge)
 
-    def __init__(self, nfeat, nhid, nclass, dropout):
+    def __init__(self, nfeat, nhid, nclass, dropout, num_layers, dropedge):
         super(TKipfGCN, self).__init__()
 
-        self.gc1 = GraphConvolution(nfeat, nhid)
-        self.gc2 = GraphConvolution(nhid, nclass)
+        # self.gc1 = GraphConvolution(nfeat, nhid)
+        # self.gc2 = GraphConvolution(nhid, nclass)
+        self.gcs = nn.ModuleList()
+        self.gcs.append(GraphConvolution(nfeat, nhid))
+        for _ in range(num_layers - 2):
+            self.gcs.append(GraphConvolution(nhid, nhid))
+        self.gcs.append(GraphConvolution(nhid, nclass))
         self.dropout = dropout
+        self.dropedge = dropedge  # 0 correspond to no dropedge
         # self.nonlinear = nn.SELU()
 
     def forward(self, x, adj):
         device = x.device
         adj_values = torch.ones(adj.shape[1]).to(device)
-        adj, adj_values = add_remaining_self_loops(adj, adj_values, 1, x.shape[0])
-        deg = spmm(adj, adj_values, torch.ones(x.shape[0], 1).to(device)).squeeze()
-        deg_sqrt = deg.pow(-1/2)
-        adj_values = deg_sqrt[adj[1]] * adj_values * deg_sqrt[adj[0]]
-
-        x = F.dropout(x, self.dropout, training=self.training)
-        x = F.relu(self.gc1(x, adj, adj_values))
-        # h1 = x
-        x = F.dropout(x, self.dropout, training=self.training)
-        x = self.gc2(x, adj, adj_values)
-
-        # x = F.relu(x)
-        # x = torch.sigmoid(x)
-        # return x
-        # h2 = x
+        original_adj = adj
+        original_adj_values = adj_values
+        original_x_shape = x.shape[0]
+        for idx, gc_layer in enumerate(self.gcs):
+            adj, adj_values = drop_edge(original_adj, original_adj_values, self.dropedge, self.training)
+            adj, adj_values = add_remaining_self_loops(adj, adj_values, 1, original_x_shape)
+            deg = spmm(adj, adj_values, torch.ones(original_x_shape, 1).to(device)).squeeze()
+            deg_sqrt = deg.pow(-1 / 2)
+            adj_values = deg_sqrt[adj[1]] * adj_values * deg_sqrt[adj[0]]
+            x = F.dropout(x, self.dropout, training=self.training)
+            x = gc_layer(x, adj, adj_values)
+            if idx != len(self.gcs) - 1:
+                x = F.relu(x)
         return F.log_softmax(x, dim=-1)
+
+        # # TODO: implement drop edge here.
+        # adj, adj_values = drop_edge(original_adj, original_adj_values, self.dropedge, self.training)
+        # adj, adj_values = add_remaining_self_loops(adj, adj_values, 1, x.shape[0])
+        # deg = spmm(adj, adj_values, torch.ones(x.shape[0], 1).to(device)).squeeze()
+        # deg_sqrt = deg.pow(-1/2)
+        # adj_values = deg_sqrt[adj[1]] * adj_values * deg_sqrt[adj[0]]
+        #
+        # x = F.dropout(x, self.dropout, training=self.training)
+        # x = F.relu(self.gc1(x, adj, adj_values))
+        # # h1 = x
+        # x = F.dropout(x, self.dropout, training=self.training)
+        # adj, adj_values = drop_edge(original_adj, original_adj_values, self.dropedge, self.training)
+        # adj, adj_values = add_remaining_self_loops(adj, adj_values, 1, x.shape[0])
+        # deg = spmm(adj, adj_values, torch.ones(x.shape[0], 1).to(device)).squeeze()
+        # deg_sqrt = deg.pow(-1 / 2)
+        # adj_values = deg_sqrt[adj[1]] * adj_values * deg_sqrt[adj[0]]
+        # x = self.gc2(x, adj, adj_values)
+        #
+        # # x = F.relu(x)
+        # # x = torch.sigmoid(x)
+        # # return x
+        # # h2 = x
+        # return F.log_softmax(x, dim=-1)
     
     def loss(self, data):
         return F.nll_loss(

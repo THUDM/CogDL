@@ -511,7 +511,7 @@ def test_sgc_cora():
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
-    
+
 
 if __name__ == "__main__":
     test_gdc_gcn_cora()
@@ -542,5 +542,6 @@ if __name__ == "__main__":
     test_pyg_gcn_cora_sampler()
     test_gpt_gnn_cora()
     test_jknet_jknet_cora()
+    test_sgcpn_cora()
     test_ppnp_cora()
     test_appnp_cora()

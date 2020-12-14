@@ -180,13 +180,26 @@ class SRGCN(BaseModel):
             normalization=args.normalization
         )
 
-    def __init__(self, num_features, hidden_size, num_classes, attention, activation, nhop, normalization, dropout,
-                 node_dropout, alpha, nhead, subheads):
+    def __init__(
+            self,
+            in_feats,
+            hidden_size,
+            out_feats,
+            attention,
+            activation,
+            nhop,
+            normalization,
+            dropout,
+            node_dropout,
+            alpha,
+            nhead,
+            subheads
+    ):
         super(SRGCN, self).__init__()
         attn_f = act_attention(attention)
         activate_f = act_map(activation)
         norm_f = act_normalization(normalization)
-        self.attentions = [SrgcnHead(num_features=num_features,
+        self.attentions = [SrgcnHead(num_features=in_feats,
                                      out_feats=hidden_size,
                                      attention=attn_f,
                                      activation=activate_f,
@@ -201,7 +214,7 @@ class SRGCN(BaseModel):
         for i, attention in enumerate(self.attentions):
             self.add_module('attention_{}'.format(i), attention)
         self.out_att = SrgcnSoftmaxHead(num_features=hidden_size * nhead * subheads,
-                                        out_feats=num_classes,
+                                        out_feats=out_feats,
                                         attention=attn_f,
                                         activation=activate_f,
                                         normalization=act_normalization('row_softmax'),
@@ -213,13 +226,7 @@ class SRGCN(BaseModel):
         x = torch.cat([att(batch.x, batch.edge_index, batch.edge_attr) for att in self.attentions], dim=1)
         x = F.elu(x)
         x = self.out_att(x, batch.edge_index, batch.edge_attr)
-        return F.log_softmax(x, dim=1)
-
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data)[data.train_mask],
-            data.y[data.train_mask],
-        )
+        return x
 
     def predict(self, data):
         return self.forward(data)

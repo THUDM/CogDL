@@ -25,27 +25,27 @@ class UNet(BaseModel):
     def build_model_from_args(cls, args):
         return cls(
             args.num_features,
-            args.num_classes,
             args.hidden_size,
+            args.num_classes,
             args.num_layers,
             args.dropout,
             args.num_nodes
         )
 
-    def __init__(self, num_features, num_classes, hidden_size, num_layers, dropout, num_nodes):
+    def __init__(self, in_feats, hidden_size, out_feats, num_layers, dropout, num_nodes):
         super(UNet, self).__init__()
 
-        self.num_features = num_features
-        self.num_classes = num_classes
+        self.in_feats = in_feats
+        self.out_feats = out_feats
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.dropout = dropout
         self.num_nodes = 0
 
         self.unet = GraphUNet(
-            self.num_features,
+            self.in_feats,
             self.hidden_size,
-            self.num_classes,
+            self.out_feats,
             depth=3,
             pool_ratios=[2000 / num_nodes, 0.5],
             act=F.elu
@@ -59,13 +59,7 @@ class UNet(BaseModel):
         x = F.dropout(x, p=self.dropout, training=self.training)
 
         x = self.unet(x, edge_index)
-        return F.log_softmax(x, dim=1)
-
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask],
-        )
+        return x
     
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

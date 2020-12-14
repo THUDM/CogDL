@@ -136,14 +136,7 @@ class GCNII(BaseModel):
             h = self.activation(h)
         h = F.dropout(h, p=self.dropout, training=self.training)
         out = self.fc_layers[1](h)
-        return F.log_softmax(out, dim=-1)
-    
-    def loss(self, data):
-        loss_n = F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask]
-        )
-        return loss_n
+        return out
     
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

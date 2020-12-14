@@ -463,8 +463,7 @@ class GNNHomoLinkPrediction(nn.Module):
         self.evaluate_interval = args.evaluate_interval
         dataset = build_dataset(args) if dataset is None else dataset
         self.data = dataset[0]
-        self._train_test_edge_split()
-        self.data.apply(lambda x: x.to(self.device))
+
         self.num_nodes = self.data.x.size(0)
         args.num_features = dataset.num_features
         args.num_classes = args.hidden_size
@@ -472,9 +471,15 @@ class GNNHomoLinkPrediction(nn.Module):
         model = build_model(args) if model is None else model
         self.model = model.to(self.device)
 
+        if hasattr(self.model, "split_dataset"):
+            self.data = self.model.split_dataset(self.data)
+        else:
+            self._train_test_edge_split()
+            self.data.apply(lambda x: x.to(self.device))
+
         self.max_epoch = args.max_epoch
         self.patience = args.patience
-        self.grad_norm = 1.0
+        self.grad_norm = 1.5
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.lr,
             weight_decay=args.weight_decay
@@ -514,12 +519,16 @@ class GNNHomoLinkPrediction(nn.Module):
         edge_index = torch.cat([train_pos_edges, train_neg_edges], dim=1)
         labels = self.get_link_labels(train_pos_edges.shape[1], train_neg_edges.shape[1], self.device)
 
-        # link prediction loss
-        emb = self.model(self.data.x, edge_index)
-        pred = (emb[edge_index[0]] * emb[edge_index[1]]).sum(1)
-        pred = torch.sigmoid(pred)
-        loss = torch.nn.BCELoss()(pred, labels)
+        if hasattr(self.model, "link_prediction_loss"):
+            loss = self.model.link_prediction_loss(self.data.x, edge_index, labels)
+        else:
+            # link prediction loss
+            emb = self.model(self.data.x, edge_index)
+            pred = (emb[edge_index[0]] * emb[edge_index[1]]).sum(1)
+            pred = torch.sigmoid(pred)
+            loss = torch.nn.BCELoss()(pred, labels)
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_norm)
         self.optimizer.step()
         return loss.item()
 
@@ -557,7 +566,7 @@ class GNNHomoLinkPrediction(nn.Module):
         self.data.test_neg_edges = test_false_edges
 
     @staticmethod
-    def train_test_edge_split(edge_index, num_nodes, val_ratio=0.05, test_ratio=0.1):
+    def train_test_edge_split(edge_index, num_nodes, val_ratio=0.1, test_ratio=0.2):
         row, col = edge_index
         mask = row > col
         row, col = row[mask], col[mask]

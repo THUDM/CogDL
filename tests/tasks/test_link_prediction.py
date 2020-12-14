@@ -278,22 +278,49 @@ def test_complex_fb13s():
     ret = task.train()
     assert 0 <= ret["MRR"] <= 1
 
+
+def get_gnn_link_prediction_args():
+    args = {
+        "hidden_size": 32,
+        "dataset": "cora",
+        "model": "gcn",
+        "task": "link_prediction",
+        "lr": 0.005,
+        "weight_decay": 5e-4,
+        "max_epoch": 60,
+        "patience": 2,
+        "evaluate_interval": 1,
+        "cpu": True,
+        "device_id": [0],
+        "dropout": 0.5,
+    }
+    return build_args_from_dict(args)
+
+
+def test_gcn_cora():
+    args = get_gnn_link_prediction_args()
+    task = build_task(args)
+    ret = task.train()
+    assert 0.5 <= ret["AUC"] <= 1.0
+
+
 if __name__ == "__main__":
-    test_deepwalk_ppi()
-    test_line_wikipedia()
-    test_node2vec_ppi()
-    test_hope_ppi()
-    test_grarep_ppi()
-    test_netmf_ppi()
-    test_netsmf_ppi()
-    test_prone_flickr()
-    test_sdne_ppi()
-    test_dngr_ppi()
-
-    test_rgcn_wn18()
-    test_compgcn_wn18rr()
-
-    test_distmult_fb13s()
-    test_rotate_fb13s()
-    test_transe_fb13s()
-    test_complex_fb13s()
+    # test_deepwalk_ppi()
+    # test_line_wikipedia()
+    # test_node2vec_ppi()
+    # test_hope_ppi()
+    # test_grarep_ppi()
+    # test_netmf_ppi()
+    # test_netsmf_ppi()
+    # test_prone_flickr()
+    # test_sdne_ppi()
+    # test_dngr_ppi()
+    #
+    # test_rgcn_wn18()
+    # test_compgcn_wn18rr()
+    #
+    # test_distmult_fb13s()
+    # test_rotate_fb13s()
+    # test_transe_fb13s()
+    # test_complex_fb13s()
+    test_gcn_cora()

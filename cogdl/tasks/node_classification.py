@@ -173,7 +173,7 @@ class NodeClassification(BaseTask):
     def _train_step(self):
         self.model.train()
         self.optimizer.zero_grad()
-        self.model.loss(self.data).backward()
+        self.model.node_classification_loss(self.data).backward()
         self.optimizer.step()
 
     def _test_step(self, split="val", logits=None):

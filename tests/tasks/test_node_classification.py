@@ -27,6 +27,11 @@ def test_gcn_cora():
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "gcn"
+    args.num_layers = 0
+    args.withloop = False
+    args.withbn = False
+    args.dropedge = 0.0
+    args.normalization = "AugNorm"
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1

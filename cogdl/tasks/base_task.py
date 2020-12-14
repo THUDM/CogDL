@@ -1,22 +1,15 @@
-import torch
-import torch.nn as nn
+from abc import ABC
+import argparse
 
 
-class BaseTask(object):
+class BaseTask(ABC):
     @staticmethod
-    def add_args(parser):
+    def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         pass
-
-    # @classmethod
-    # def build_task_from_args(cls, args):
-    #     """Build a new task instance."""
-    #     raise NotImplementedError(
-    #         "Tasks must implement the build_task_from_args method"
-    #     )
 
     def __init__(self, args):
         pass
 
-    def train(self, num_epoch):
+    def train(self):
         raise NotImplementedError

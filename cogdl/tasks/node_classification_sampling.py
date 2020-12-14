@@ -1,3 +1,4 @@
+import argparse
 import copy
 import random
 
@@ -6,7 +7,6 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from cogdl import options
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 
@@ -27,7 +27,7 @@ class NodeClassificationSampling(BaseTask):
     """Node classification task with sampling."""
 
     @staticmethod
-    def add_args(parser):
+    def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--batch-size", type=int, default=20)

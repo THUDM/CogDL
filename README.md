@@ -38,7 +38,7 @@ CogDL features:
 
 ## Getting Started
 
-## Requirements and Installation
+### Requirements and Installation
 
 - Python version >= 3.6
 - PyTorch version >= 1.0.0
@@ -60,6 +60,31 @@ git clone git@github.com:THUDM/cogdl.git
 cd cogdl
 pip install -e .
 ```
+
+### Docker container
+
+You might also opt to use a Docker container. There is an image available in this repo that you can build with the Torch and CUDA versions available in your system. To build the docker image just run:
+
+```
+docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VERSION --tag cogdl .
+```
+
+Where `YOUR_CUDA_VERSION` should be cuxxx representing your cuda version (or just cpu) and `YOUR_TORCH_VERSION` should be the version of PyTorch you want to use. For example, to run with CUDA 10.1 and PyTorch 1.7.0 you can run:
+```
+docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.0 --tag cogdl .
+```
+
+Then you can start the container by running:
+```
+docker run -it -v cogdl:/cogdl cogdl /bin/bash
+```
+
+And then clone your fork or this repository into the cogdl folder:
+```
+git clone https://github.com/THUDM/cogdl /cogdl
+```
+
+**Note:** if you install a version of torch different from 1.7.0, there might be some problems with the libraries torchvision and torchaudio. You might have to reinstall them by hand.
 
 ## Usage
 
@@ -160,6 +185,7 @@ We summarize the characteristics of all methods for different tasks in the follo
 | MVGRL       | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 | GraphMix    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
 | DisenGCN    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+| PPNP/APPNP  | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 
 ### Heterogeneous Graph Embedding Methods
 
@@ -184,6 +210,8 @@ We summarize the characteristics of all methods for different tasks in the follo
 | PATCHY_SAN | :heavy_check_mark: |                    | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: |
 | DGCNN      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
 | DGK        |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    |                    |
+| HGP-SL     | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
+| SAGPool    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
 
 
 ## Leaderboard
@@ -220,15 +248,17 @@ This leaderboard reports the semi-supervised node classification under a transdu
 | 2    | GCNII([Chen et al., ICML'20](https://arxiv.org/pdf/2007.02133.pdf)) | **85.1± 0.3** |   71.3 ± 0.4   |   80.2 ± 0.3   |
 | 3    | DR-GAT [(Zou et al., 2019)](https://arxiv.org/abs/1907.02237) |  83.6 ± 0.5   |   72.8 ± 0.8   |   79.1 ± 0.3   |
 | 4    | MVGRL [(Hassani et al., KDD'20)](https://arxiv.org/pdf/2006.05582v1.pdf) |  83.6 ± 0.2   |   73.0 ± 0.3   |   80.1 ± 0.7   |
-| 5    | GAT [(Veličković et al., ICLR'18)](https://arxiv.org/abs/1710.10903) |  82.9 ± 0.8   |   71.0 ± 0.3   |   78.9 ± 0.3   |
-| 6    | GCN [(Kipf et al., ICLR'17)](https://arxiv.org/abs/1609.02907) |  82.3 ± 0.3   |   71.4 ± 0.4   |   79.5 ± 0.2   |
-| 7    | SRGCN                                                        |  82.2 ± 0.2   |   72.8 ± 0.2   |   79.0 ± 0.4   |
-| 8    | DGI [(Veličković et al., ICLR'19)](https://arxiv.org/abs/1809.10341) |  82.0 ± 0.2   |   71.2 ± 0.4   |   76.5 ± 0.6   |
-| 9    | GraphSAGE [(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |  80.1 ± 0.2   |   66.2 ± 0.4   |   77.2 ± 0.7   |
-| 10   | GraphSAGE(unsup)[(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |  78.2 ± 0.9   |   65.8 ± 1.0   |   78.2 ± 0.7   |
-| 11   | Chebyshev [(Defferrard et al., NeurIPS'16)](https://arxiv.org/abs/1606.09375) |  79.0 ± 1.0   |   69.8 ± 0.5   |   68.6 ± 1.0   |
-| 12   | Graph U-Net [(Gao et al., 2019)](https://arxiv.org/abs/1905.05178) |     81.8      |      67.1      |      77.3      |
-| 13   | MixHop [(Abu-El-Haija et al., ICML'19)](https://arxiv.org/abs/1905.00067) |  81.9 ± 0.4   |   71.4 ± 0.8   |   80.8 ± 0.6   |
+| 5    | APPNP [(Klicpera et al., ICLR'19)](https://arxiv.org/pdf/1810.05997.pdf) |  82.5 ± 0.8   |   71.2 ± 0.2   |   80.2 ± 0.2   |
+| 6    | GAT [(Veličković et al., ICLR'18)](https://arxiv.org/abs/1710.10903) |  82.9 ± 0.8   |   71.0 ± 0.3   |   78.9 ± 0.3   |
+| 7    | GCN [(Kipf et al., ICLR'17)](https://arxiv.org/abs/1609.02907) |  82.3 ± 0.3   |   71.4 ± 0.4   |   79.5 ± 0.2   |
+| 8    | SRGCN                                                        |  82.2 ± 0.2   |   72.8 ± 0.2   |   79.0 ± 0.4   |
+| 9    | DGI [(Veličković et al., ICLR'19)](https://arxiv.org/abs/1809.10341) |  82.0 ± 0.2   |   71.2 ± 0.4   |   76.5 ± 0.6   |
+| 10    | GraphSAGE [(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |  80.1 ± 0.2   |   66.2 ± 0.4   |   77.2 ± 0.7   |
+| 11   | GraphSAGE(unsup)[(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |  78.2 ± 0.9   |   65.8 ± 1.0   |   78.2 ± 0.7   |
+| 12   | Chebyshev [(Defferrard et al., NeurIPS'16)](https://arxiv.org/abs/1606.09375) |  79.0 ± 1.0   |   69.8 ± 0.5   |   68.6 ± 1.0   |
+| 13   | Graph U-Net [(Gao et al., 2019)](https://arxiv.org/abs/1905.05178) |     81.8      |      67.1      |      77.3      |
+| 14   | MixHop [(Abu-El-Haija et al., ICML'19)](https://arxiv.org/abs/1905.00067) |  81.9 ± 0.4   |   71.4 ± 0.8   |   80.8 ± 0.6   |
+| 15   | SGC-PN [(Zhao & Akoglu, 2019)](https://arxiv.org/abs/1909.12223) |  76.4 ± 0.3   |   64.6 ± 0.6   |   79.6 ± 0.3   |
 
 #### Multiplex Node Classification
 
@@ -281,14 +311,16 @@ This leaderboard reports the performance of graph classification methods. we run
 
 | Rank | Method                                                       |   MUTAG   |   IMDB-B   |   IMDB-M   |   PROTEINS   |   COLLAB   |
 | :--- | :----------------------------------------------------------- | :-------: | :--------: | :--------: | :----------: | :--------: |
-| 1 | GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km) | **92.06** | **76.10** | 51.80 | 75.19 | 79.52 |
-| 2   | Infograph [(Sun et al, ICLR'20)](https://openreview.net/forum?id=r1lfF2NYvH) | 88.95 | 74.50  | 51.33  |  73.93   | 79.4 |
+| 1    | GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km) | **92.06** | **76.10** | 51.80 | 75.19 | 79.52 |
+| 2    | Infograph [(Sun et al, ICLR'20)](https://openreview.net/forum?id=r1lfF2NYvH) | 88.95 | 74.50  | 51.33  |  73.93   | 79.4 |
 | 3    | DiffPool [(Ying et al, NeuIPS'18)](https://arxiv.org/abs/1806.08804) | 85.18 | 72.40 | 50.50 |  75.30   | 79.27 |
 | 4    | SortPool [(Zhang et al, AAAI'18)](https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf) | 87.25 | 75.40 | 50.47 |  73.23  | 80.07 |
 | 5    | Graph2Vec [(Narayanan et al, CoRR'17)](https://arxiv.org/abs/1707.05005) | 83.68 | 73.90  | **52.27**  |  73.30   | **85.58**  |
 | 6    | PATCH_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf) | 86.12 | 76.00  | 46.40 |  **75.38**  | 74.34 |
-| 7    | DGCNN [(Wang et al, ACM Transactions on Graphics'17)](https://arxiv.org/abs/1801.07829) | 83.33 | 69.50  | 46.33  |  66.67   | 77.45  |
-| 8    | DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417) | 83.68 | 55.00  | 40.40  |  72.59   |   /    |
+| 7    | HGP-SL [(Zhang et al, AAAI'20)](https://arxiv.org/abs/1911.05954) | 81.93 | 74.00 | 49.53 |  73.94   |   82.08   |
+| 8    | DGCNN [(Wang et al, ACM Transactions on Graphics'17)](https://arxiv.org/abs/1801.07829) | 83.33 | 69.50  | 46.33  |  66.67   | 77.45  |
+| 9    | SAGPool [(J. Lee, ICML'19)](https://arxiv.org/abs/1904.08082) | 55.55 | 63.00  | 51.33  |  72.59   |   /    |
+| 10    | DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417) | 83.68 | 55.00  | 40.40  |  72.59   |   /    |
 
 If you have ANY difficulties to get things working in the above steps, feel free to open an issue. You can expect a reply within 24 hours.
 
@@ -305,3 +337,13 @@ If you have a unique and interesting dataset and are willing to publish it, you 
 ### Implement Your Own Model
 
 If you have a well-performed algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request,  detailed information can be found [here](https://help.github.com/en/articles/creating-a-pull-request). 
+
+#### A brief guide to having a successful pull request (unit test)
+
+To have a successful pull request, you need to have at least (1) your model script and (2) a unit test.
+
+You might be confused why your pull request was rejected because of 'Coverage decreased ...' issue even though your model is working fine locally. This is because you have not included a unit test, which essentially runs through the extra lines of code you added. The Travis CI service used by Github conducts all unit tests on the code you committed and checks how many lines of the code have been checked by the unit tests, and if a significant portion of your code has not been checked (insufficient coverage), the pull request is rejected.
+
+So how do you do a unit test? Let's say you implement a GNN model in a script models/nn/abcgnn.py that does the task of node classification. Then, you need to add a unit test inside the script tests/tasks/test_node_classification.py (or whatever relevant task your model does). To add the unit test, you simply add a function test_abcgnn_cora() (just follow the format of the other unit tests already in the script), fill it with required arguments and the last line in the function 'assert 0 <= ret["Acc"] <= 1' is the very basic sanity check conducted by the unit test. Then, in the main section, remember to call your test_abcgnn_cora() function. After modifying tests/tasks/test_node_classification.py, commit it together with your models/nn/abcgnn.py and your pull request should pass.
+
+It is also a good idea to include an example script examples/gnn_models/abcgnn.py to show how your model can be run with appropriate arguments.

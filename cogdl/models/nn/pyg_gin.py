@@ -38,7 +38,7 @@ class GINLayer(nn.Module):
 
     def forward(self, x, edge_index, edge_weight=None):
         edge_index, _ = remove_self_loops(edge_index)
-        edge_weight = torch.ones(edge_index.shape[1]) if edge_weight is None else edge_weight
+        edge_weight = torch.ones(edge_index.shape[1]).to(x.device) if edge_weight is None else edge_weight
         adj = torch.sparse_coo_tensor(edge_index, edge_weight, (x.shape[0], x.shape[0]))
         adj = adj.to(x.device)
         out = (1 + self.eps) * x + torch.spmm(adj, x)

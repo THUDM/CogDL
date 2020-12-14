@@ -10,12 +10,14 @@ import torch.nn.functional as F
 from .base_trainer import BaseTrainer
 from cogdl.utils import add_remaining_self_loops
 
+from torch_geometric.data import NeighborSampler
+
 
 def random_partition_graph(num_nodes, cluster_number=10):
     return np.random.randint(cluster_number, size=num_nodes)
 
 
-def generate_subgraphs(edge_index, parts, cluster_number=10, batch_size=1):
+def generate_subgraphs(edge_index, parts, cluster_number=10):
     num_nodes = torch.max(edge_index) + 1
     num_edges = edge_index.shape[1]
     device = edge_index.device
@@ -24,7 +26,7 @@ def generate_subgraphs(edge_index, parts, cluster_number=10, batch_size=1):
             (np.ones(num_edges), (edge_index_np[0], edge_index_np[1])),
             shape=(num_nodes, num_nodes)
         )
-    num_batches = cluster_number // batch_size
+    num_batches = cluster_number
     sg_nodes = []
     sg_edges = []
 
@@ -127,7 +129,6 @@ class DeeperGCNTrainer(BaseTrainer):
             self.edge_index,
             parts,
             self.cluster_number,
-            batch_size=self.batch_size
         )
 
         idx_clusters = np.arange(len(subgraph_nodes))

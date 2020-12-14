@@ -15,10 +15,10 @@ class NodeAdaptiveEncoder(nn.Module):
 
     def forward(self, x):
         # h = self.fc(x)
-        # h = F.sigmoid(h)
+        # h = torch.sigmoid(h)
         # h = self.dropout(h)
         h = torch.mm(x, self.fc) + self.bf
-        h = F.sigmoid(h)
+        h = torch.sigmoid(h)
         h = self.dropout(h)
 
         return torch.where(x < 0, torch.zeros_like(x), x) + h * torch.where(x > 0, torch.zeros_like(x), x)

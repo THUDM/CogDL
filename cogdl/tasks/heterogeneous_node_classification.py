@@ -1,3 +1,4 @@
+import argparse
 import copy
 from typing import Optional
 
@@ -8,10 +9,7 @@ from tqdm import tqdm
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.models.supervised_model import SupervisedHeterogeneousNodeClassificationModel
-from cogdl.trainers.supervised_trainer import (
-    SupervisedHeterogeneousNodeClassificationTrainer,
-    SupervisedHomogeneousNodeClassificationTrainer,
-)
+from cogdl.trainers.supervised_trainer import SupervisedHeterogeneousNodeClassificationTrainer
 from . import BaseTask, register_task
 
 
@@ -20,7 +18,7 @@ class HeterogeneousNodeClassification(BaseTask):
     """Heterogeneous Node classification task."""
 
     @staticmethod
-    def add_args(parser):
+    def add_args(_: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
         # parser.add_argument("--num-features", type=int)

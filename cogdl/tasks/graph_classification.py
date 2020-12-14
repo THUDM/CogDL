@@ -1,3 +1,4 @@
+import argparse
 import copy
 import random
 
@@ -63,7 +64,7 @@ class GraphClassification(BaseTask):
     r"""Superiviced graph classification task."""
 
     @staticmethod
-    def add_args(parser):
+    def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--degree-feature", dest="degree_feature", action="store_true")

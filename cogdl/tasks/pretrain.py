@@ -1,3 +1,4 @@
+import argparse
 import torch
 
 from . import register_task, BaseTask
@@ -7,7 +8,7 @@ from cogdl.models import build_model
 @register_task("pretrain")
 class PretrainTask(BaseTask):
     @staticmethod
-    def add_args(parser):
+    def add_args(_: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
         # parser.add_argument("--num-features", type=int)

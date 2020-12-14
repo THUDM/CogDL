@@ -14,7 +14,7 @@ from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificatio
 from cogdl.trainers.supervised_trainer import (
     SupervisedHomogeneousNodeClassificationTrainer,
 )
-from cogdl.trainers.sampled_trainer import SampledTrainer
+from cogdl.trainers.sampled_trainer import SAINTTrainer
 
 from . import BaseTask, register_task
 
@@ -89,12 +89,12 @@ class NodeClassification(BaseTask):
         self.device = args.device_id[0] if not args.cpu else "cpu"
         dataset = build_dataset(args) if dataset is None else dataset
         if args.missing_rate >= 0:
-            assert args.dataset in ['cora', 'citeseer', 'pubmed']
-            assert args.model == 'sgcpn'
-            dataset.data = preprocess_data_sgcpn(dataset.data, normalize_feature=True, missing_rate=0)
-            adj_slice = torch.tensor(dataset.data.adj.size())
-            adj_slice[0] = 0
-            dataset.slices['adj'] = adj_slice
+            if args.model == 'sgcpn':
+                assert args.dataset in ['cora', 'citeseer', 'pubmed']
+                dataset.data = preprocess_data_sgcpn(dataset.data, normalize_feature=True, missing_rate=0)
+                adj_slice = torch.tensor(dataset.data.adj.size())
+                adj_slice[0] = 0
+                dataset.slices['adj'] = adj_slice
 
         self.dataset = dataset
         self.data = dataset[0]
@@ -103,6 +103,7 @@ class NodeClassification(BaseTask):
         args.num_nodes = dataset.data.x.shape[0]
 
         self.model: SupervisedHomogeneousNodeClassificationModel = build_model(args) if model is None else model
+        self.model.set_device(self.device)
 
         self.trainer: Optional[
             SupervisedHomogeneousNodeClassificationTrainer
@@ -125,12 +126,12 @@ class NodeClassification(BaseTask):
 
     def train(self):
         if self.trainer:
-            if issubclass(type(self.trainer), SampledTrainer):
+            if isinstance(self.trainer, SAINTTrainer):
                 self.model = self.trainer.fit(self.model, self.dataset)
                 self.data.apply(lambda x: x.to(self.device))
             else:
                 result = self.trainer.fit(self.model, self.dataset)
-                if isinstance(result, torch.nn.Module):
+                if issubclass(type(result), torch.nn.Module):
                     self.model = result
                 else:
                     return result

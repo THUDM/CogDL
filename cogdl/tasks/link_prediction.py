@@ -174,7 +174,7 @@ def select_task(model_name=None, model=None):
             return "KGLinkPrediction"
         elif model_name in ["distmult", "transe", "rotate", "complex"]:
             return "TripleLinkPrediction"
-        elif model_name in ["prone", "netmf", "deepwalk", "link", "hope", "node2vec", "netmf", "netsmf", "sdne"]:
+        elif model_name in ["prone", "netmf", "deepwalk", "line", "hope", "node2vec", "netmf", "netsmf", "sdne", "grarep", "dngr"]:
             return "HomoLinkPrediction"
         else:
             return "GNNLinkPrediction"
@@ -185,7 +185,7 @@ def select_task(model_name=None, model=None):
             return "KGLinkPrediction"
         elif type(model) in [distmult.DistMult, rotate.RotatE, transe.TransE, complex.ComplEx]:
             return "TripleLinkPrediction"
-        elif type(model) in [HOPE, ProNE, LINE, DeepWalk, Node2vec, NetSMF, NetMF, SDNE]:
+        elif type(model) in [HOPE, ProNE, LINE, DeepWalk, Node2vec, NetSMF, NetMF, SDNE, GraRep, DNGR]:
             return "HomoLinkPrediction"
         else:
             return "GNNLinkPrediction"

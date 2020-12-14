@@ -228,7 +228,7 @@ def get_kge_default_args():
         "uni_weight": False,
         "learning_rate": 0.0001,
         "warm_up_steps": None,
-        "max_steps": 10,
+        "max_epoch": 10,
         "log_steps": 100,
         "test_log_steps": 100,
         "gamma": 12,
@@ -299,6 +299,7 @@ def get_gnn_link_prediction_args():
 
 def test_gcn_cora():
     args = get_gnn_link_prediction_args()
+    print(args.evaluate_interval)
     task = build_task(args)
     ret = task.train()
     assert 0.5 <= ret["AUC"] <= 1.0

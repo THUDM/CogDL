@@ -166,9 +166,9 @@ class SRGCN(BaseModel):
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            num_features=args.num_features,
+            in_feats=args.num_features,
             hidden_size=args.hidden_size,
-            num_classes=args.num_classes,
+            out_feats=args.num_classes,
             dropout=args.dropout,
             node_dropout=args.node_dropout,
             nhead=args.num_heads,
@@ -227,6 +227,12 @@ class SRGCN(BaseModel):
         x = F.elu(x)
         x = self.out_att(x, batch.edge_index, batch.edge_attr)
         return x
+
+    def node_classification_loss(self, data):
+        return F.nll_loss(
+            self.forward(data)[data.train_mask],
+            data.y[data.train_mask],
+        )
 
     def predict(self, data):
         return self.forward(data)

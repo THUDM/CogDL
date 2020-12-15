@@ -23,7 +23,7 @@ class NodeAttention(nn.Module):
         device = x.device
         N, dim = x.shape
         diag_val = self.p(x)
-        diag_val = F.sigmoid(diag_val)
+        diag_val = torch.sigmoid(diag_val)
         self.dropout(diag_val)
 
         row, col = edge_index

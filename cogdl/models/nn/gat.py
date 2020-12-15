@@ -146,14 +146,14 @@ class PetarVSpGAT(BaseModel):
             args.nheads,
         )
 
-    def __init__(self, nfeat, nhid, nclass, dropout, alpha, nheads):
+    def __init__(self, in_feats, hidden_size, out_features, dropout, alpha, nheads):
         """Sparse version of GAT."""
         super(PetarVSpGAT, self).__init__()
         self.dropout = dropout
 
         self.attentions = [
             SpGraphAttentionLayer(
-                nfeat, nhid, dropout=dropout, alpha=alpha, concat=True
+                in_feats, hidden_size, dropout=dropout, alpha=alpha, concat=True
             )
             for _ in range(nheads)
         ]
@@ -161,7 +161,7 @@ class PetarVSpGAT(BaseModel):
             self.add_module("attention_{}".format(i), attention)
 
         self.out_att = SpGraphAttentionLayer(
-            nhid * nheads, nclass, dropout=dropout, alpha=alpha, concat=False
+            hidden_size * nheads, out_features, dropout=dropout, alpha=alpha, concat=False
         )
 
     def forward(self, x, edge_index):
@@ -170,13 +170,7 @@ class PetarVSpGAT(BaseModel):
         x = torch.cat([att(x, edge_index) for att in self.attentions], dim=1)
         x = F.dropout(x, self.dropout, training=self.training)
         x = F.elu(self.out_att(x, edge_index))
-        return F.log_softmax(x, dim=1)
-    
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask],
-        )
+        return x
     
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

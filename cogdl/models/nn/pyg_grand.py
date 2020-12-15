@@ -188,16 +188,20 @@ class Grand(BaseModel):
             x = self.bn2(x)
         x = F.dropout(x, self.hidden_droprate, training = self.training)
         x = self.layer2(x)
+        return x
 
-        return F.log_softmax(x, dim=-1)
-    
-    def loss(self, data):
+    def node_classification_loss(self, data):
         output_list = []
         for i in range(self.sample):
-            output_list.append(self.forward(data.x, data.edge_index))
+            output_list.append(
+                F.log_softmax(self.forward(data.x, data.edge_index), dim=-1)
+            )
         loss_train = 0.
         for output in output_list:
-            loss_train += F.nll_loss(output[data.train_mask], data.y[data.train_mask])
+            loss_train += F.nll_loss(
+                output[data.train_mask],
+                data.y[data.train_mask]
+            )
         loss_train = loss_train/self.sample
         loss_consis = self.consis_loss(output_list, data.train_mask)
         

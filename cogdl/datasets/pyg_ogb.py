@@ -35,7 +35,7 @@ class OGBNDataset(PygNodePropPredDataset):
 
 @register_dataset("ogbn-arxiv")
 class OGBArxivDataset(OGBNDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "ogbn-arxiv"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
@@ -49,7 +49,7 @@ class OGBArxivDataset(OGBNDataset):
 
 @register_dataset("ogbn-products")
 class OGBProductsDataset(OGBNDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "ogbn-products"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
@@ -58,7 +58,7 @@ class OGBProductsDataset(OGBNDataset):
 
 @register_dataset("ogbn-proteins")
 class OGBProductsDataset(OGBNDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "ogbn-proteins"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
@@ -67,7 +67,7 @@ class OGBProductsDataset(OGBNDataset):
 
 @register_dataset("ogbn-mag")
 class OGBProductsDataset(OGBNDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "ogbn-mag"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
@@ -76,7 +76,7 @@ class OGBProductsDataset(OGBNDataset):
 
 @register_dataset("ogbn-papers100M")
 class OGBPapers100MDataset(OGBNDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "ogbn-papers100M"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
@@ -101,7 +101,7 @@ class OGBGDataset(PygGraphPropPredDataset):
     
 @register_dataset("ogbg-molbace")
 class OGBMolbaceDataset(OGBGDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "ogbg-molbace"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
@@ -110,7 +110,7 @@ class OGBMolbaceDataset(OGBGDataset):
 
 @register_dataset("ogbg-molhiv")
 class OGBMolhivDataset(OGBGDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "ogbg-molhiv"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
@@ -119,7 +119,7 @@ class OGBMolhivDataset(OGBGDataset):
 
 @register_dataset("ogbg-molpcba")
 class OGBMolpcbaDataset(OGBGDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "ogbg-molpcba"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
@@ -128,7 +128,7 @@ class OGBMolpcbaDataset(OGBGDataset):
 
 @register_dataset("ogbg-ppa")
 class OGBPpaDataset(OGBGDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "ogbg-ppa"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
@@ -137,7 +137,7 @@ class OGBPpaDataset(OGBGDataset):
 
 @register_dataset("ogbg-code")
 class OGBCodeDataset(OGBGDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "ogbg-code"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):

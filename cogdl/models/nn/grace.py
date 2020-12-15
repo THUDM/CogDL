@@ -157,7 +157,7 @@ class GRACE(BaseModel):
             losses.append(_loss)
         return sum(losses) / len(losses)
 
-    def loss(
+    def node_classification_loss(
         self, 
         x: torch.Tensor, 
         edge_index: torch.Tensor, 

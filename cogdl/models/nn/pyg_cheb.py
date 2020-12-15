@@ -24,23 +24,23 @@ class Chebyshev(BaseModel):
     def build_model_from_args(cls, args):
         return cls(
             args.num_features,
-            args.num_classes,
             args.hidden_size,
+            args.num_classes,
             args.num_layers,
             args.dropout,
             args.filter_size,
         )
 
-    def __init__(self, num_features, num_classes, hidden_size, num_layers, dropout, filter_size):
+    def __init__(self, in_feats, hidden_size, out_feats, num_layers, dropout, filter_size):
         super(Chebyshev, self).__init__()
 
-        self.num_features = num_features
-        self.num_classes = num_classes
+        self.num_features = in_feats
+        self.num_classes = out_feats
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.dropout = dropout
         self.filter_size = filter_size
-        shapes = [num_features] + [hidden_size] * (num_layers - 1) + [num_classes]
+        shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
         self.convs = nn.ModuleList(
             [
                 ChebConv(shapes[layer], shapes[layer + 1], filter_size)
@@ -53,13 +53,7 @@ class Chebyshev(BaseModel):
             x = F.relu(conv(x, edge_index))
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.convs[-1](x, edge_index)
-        return F.log_softmax(x, dim=1)
-
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask],
-        )
+        return x
     
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

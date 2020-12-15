@@ -258,10 +258,11 @@ class DeeperGCN(BaseModel):
         h = self.activation(self.norm(h))
         h = F.dropout(h, p=self.dropout, training=self.training)
         h = self.fc(h)
-        return F.log_softmax(h, dim=-1)
+        return h
 
-    def loss(self, x, edge_index, y, x_mask):
-        pred = self.forward(x, edge_index)[x_mask]
+    def node_classification_loss(self, x, edge_index, y, x_mask):
+        pred = self.forward(x, edge_index)
+        pred = F.log_softmax(pred, dim=-1)[x_mask]
         return F.nll_loss(pred, y)
 
     def predict(self, x, edge_index):

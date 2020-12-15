@@ -83,11 +83,11 @@ class TKipfGCN(BaseModel):
     def build_model_from_args(cls, args):
         return cls(args.num_features, args.hidden_size, args.num_classes, args.dropout)
 
-    def __init__(self, nfeat, nhid, nclass, dropout):
+    def __init__(self, in_feats, hidden_size, out_feats, dropout):
         super(TKipfGCN, self).__init__()
 
-        self.gc1 = GraphConvolution(nfeat, nhid)
-        self.gc2 = GraphConvolution(nhid, nclass)
+        self.gc1 = GraphConvolution(in_feats, hidden_size)
+        self.gc2 = GraphConvolution(hidden_size, out_feats)
         self.dropout = dropout
         # self.nonlinear = nn.SELU()
 
@@ -101,21 +101,9 @@ class TKipfGCN(BaseModel):
 
         x = F.dropout(x, self.dropout, training=self.training)
         x = F.relu(self.gc1(x, adj, adj_values))
-        # h1 = x
         x = F.dropout(x, self.dropout, training=self.training)
         x = self.gc2(x, adj, adj_values)
-
-        # x = F.relu(x)
-        # x = torch.sigmoid(x)
-        # return x
-        # h2 = x
-        return F.log_softmax(x, dim=-1)
-    
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask],
-        )
+        return x
     
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

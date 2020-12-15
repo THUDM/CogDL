@@ -542,8 +542,6 @@ if __name__ == "__main__":
     test_pyg_gcn_cora_sampler()
     test_gpt_gnn_cora()
     test_jknet_jknet_cora()
-    test_ppnp_citeseer()
-    test_appnp_citeseer()
     test_sgcpn_cora()
     test_ppnp_cora()
     test_appnp_cora()

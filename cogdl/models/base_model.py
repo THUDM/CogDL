@@ -1,6 +1,7 @@
 from typing import Optional, Type, Any
 
 import torch.nn as nn
+import torch.nn.functional as F
 
 from cogdl.trainers.base_trainer import BaseTrainer
 
@@ -24,6 +25,17 @@ class BaseModel(nn.Module):
 
     def _forward_unimplemented(self, *input: Any) -> None:  # abc warning
         pass
+
+    def forward(self, *args):
+        raise NotImplementedError
+
+    def node_classification_loss(self, data):
+        pred = self.forward(data.x, data.edge_index)
+        pred = F.log_softmax(pred, dim=-1)
+        return F.nll_loss(
+            pred[data.train_mask],
+            data.y[data.train_mask],
+        )
 
     @staticmethod
     def get_trainer(taskType: Any, args: Any) -> Optional[Type[BaseTrainer]]:

@@ -291,6 +291,12 @@ def test_pyg_ssp_cora():
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "ssp"
+
+    args.eps = 0.01
+    args.update_freq = 128 
+    args.alpha = None
+    args.gamma = 100
+
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
@@ -300,7 +306,7 @@ def test_pyg_ssp_citeseer():
     args.task = "node_classification"
     args.dataset = "citeseer"
     args.model = "ssp"
-    
+
     args.eps = 0.01
     args.update_freq = 128 
     args.alpha = None
@@ -567,10 +573,8 @@ if __name__ == "__main__":
     test_pyg_gcn_cora_sampler()
     test_gpt_gnn_cora()
     test_jknet_jknet_cora()
-    test_ppnp_citeseer()
-    test_appnp_citeseer()
     test_pyg_ssp_cora()
-    test_pyg_ssp_citesee()
+    test_pyg_ssp_citeseer()
     test_sgcpn_cora()
     test_ppnp_cora()
     test_appnp_cora()

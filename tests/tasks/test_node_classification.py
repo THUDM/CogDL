@@ -445,6 +445,24 @@ def test_gpt_gnn_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+def test_sign_cora():
+    args = get_default_args()
+    args.task = 'node_classification'
+    args.model = 'sign'
+    args.dataset = 'cora'
+    args.lr = 0.00005
+    args.hidden_size = 2048
+    args.num_layers = 3
+    args.num_propagations = 3
+    args.dropout = 0.3
+    args.directed = False
+    args.dropedge_rate = 0.2
+    args.asymm_norm = False
+    args.set_diag = False
+    args.remove_diag = False
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret['Acc'] < 1
 
 def test_jknet_jknet_cora():
     args = get_default_args()
@@ -541,9 +559,8 @@ if __name__ == "__main__":
     test_grand_cora()
     test_pyg_gcn_cora_sampler()
     test_gpt_gnn_cora()
+    test_sign_cora()
     test_jknet_jknet_cora()
-    test_ppnp_citeseer()
-    test_appnp_citeseer()
     test_sgcpn_cora()
     test_ppnp_cora()
     test_appnp_cora()

@@ -124,7 +124,7 @@ class SAINTTrainer(SampledTrainer):
         self.data.apply(lambda x: x.to(self.device))
         self.model.train()
         self.optimizer.zero_grad()
-        self.model.loss(self.data).backward()
+        self.model.node_classification_loss(self.data).backward()
         self.optimizer.step()
 
     def _test_step(self, split="val"):
@@ -220,7 +220,7 @@ class NeighborSamplingTrainer(SampledTrainer):
             self.optimizer.zero_grad()
             x_src = self.data.x[n_id].to(self.device)
             y = self.data.y[target_id].to(self.device)
-            loss = self.model.loss(x_src, adjs, y)
+            loss = self.model.node_classification_loss(x_src, adjs, y)
             loss.backward()
             self.optimizer.step()
 

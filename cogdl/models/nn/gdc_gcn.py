@@ -73,8 +73,6 @@ class GDC_GCN(BaseModel):
         self.dropout = dropout
 
     def forward(self, x, edge_index):
-        device = x.device
-
         edge_index, edge_attr = add_remaining_self_loops(edge_index)
         edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
         adj_values = edge_attr
@@ -84,14 +82,15 @@ class GDC_GCN(BaseModel):
 
         x = F.dropout(x, self.dropout, training=self.training)
         x = self.gc2(x, edge_index, adj_values)
+        return x
 
-        return F.log_softmax(x, dim=-1)
-
-    def loss(self, data):
+    def node_classification_loss(self, data):
         if self.data is None:
             self.reset_data(data)
+        pred = self.forward(self.data.x, self.data.edge_index)
+        pred = F.log_softmax(pred, dim=-1)
         return F.nll_loss(
-            self.forward(self.data.x, self.data.edge_index)[self.data.train_mask],
+            pred[self.data.train_mask],
             self.data.y[self.data.train_mask],
         )
 

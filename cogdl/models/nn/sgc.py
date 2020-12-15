@@ -47,25 +47,20 @@ class sgc(BaseModel):
         super(sgc, self).__init__()
         self.sgc1 = SimpleGraphConvolution(in_feats, out_feats)
 
-    def forward(self, x, adj):
+    def forward(self, x, edge_index):
         device = x.device
-        adj_values = torch.ones(adj.shape[1]).to(
-            device)  # Returns a tensor filled with the scalar value 1 with specific device, the shape defined by the variable argument size.
-        adj, adj_values = add_remaining_self_loops(adj, adj_values, 1, x.shape[0])
-        deg = spmm(adj, adj_values,
-                   torch.ones(x.shape[0], 1).to(device)).squeeze()  # spmm([2,12431], [12431], [3327,1])
+        edge_attr = torch.ones(edge_index.shape[1]).to(device)
+        edge_index, edge_attr = add_remaining_self_loops(edge_index, edge_attr, 1, x.shape[0])
+        deg = spmm(
+            edge_index,
+            edge_attr,
+            torch.ones(x.shape[0], 1).to(device)
+        ).squeeze()
         deg_sqrt = deg.pow(-1 / 2)
-        adj_values = deg_sqrt[adj[1]] * adj_values * deg_sqrt[adj[0]]
+        edge_attr = deg_sqrt[edge_index[1]] * edge_attr * deg_sqrt[edge_index[0]]
 
-        x = self.sgc1(x, adj, adj_values)
-
-        return F.log_softmax(x, dim=-1)
-
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask],
-        )
+        x = self.sgc1(x, edge_index, edge_attr)
+        return x
 
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

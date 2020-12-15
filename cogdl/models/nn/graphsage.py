@@ -131,7 +131,7 @@ class Graphsage(BaseModel):
                     x = F.dropout(x, p=self.dropout, training=self.training)
             return F.log_softmax(x, dim=-1)
 
-    def loss(self, *args):
+    def node_classification_loss(self, *args):
         assert len(args) == 1 or len(args) == 3
         if len(args) == 1:
             return self.mini_loss(*args)

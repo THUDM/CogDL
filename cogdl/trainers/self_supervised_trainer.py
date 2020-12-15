@@ -33,7 +33,7 @@ class SelfSupervisedTrainer(BaseTrainer):
         for epoch in epoch_iter:
             optimizer.zero_grad()
 
-            loss = model.loss(features, edge_index, edge_weight)
+            loss = model.node_classification_loss(features, edge_index, edge_weight)
             epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss.item(): .4f}")
 
             if loss < best:

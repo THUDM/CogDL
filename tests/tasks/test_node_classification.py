@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 from cogdl import options
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
@@ -519,44 +520,56 @@ def test_dropedge_gcn_cora():
     args.dataset = "cora"
     args.model = "dropedge_gcn"
     args.baseblock = "mutigcn"
+    args.inputlayer = "gcn"
+    args.outputlayer = "gcn"
+    args.hidden_size = 64
+    args.dropout = 0.5
+    args.withbn = False
+    args.withloop = False
+    args.nhiddenlayer = 1
+    args.nbaseblocklayer = 0
+    args.aggrmethod = "default"
+    args.activation = F.relu
     args.task_type = "full"
+    args.mixmode = False
+
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
 
 if __name__ == "__main__":
-    test_gdc_gcn_cora()
-    test_gcn_cora()
-    test_gat_cora()
-    test_pairnorm_cora_deepgcn()
-    test_pairnorm_cora_deepgat()
-    test_pairnorm_cora_gcn()
-    test_pairnorm_cora_sgc()
-    test_sgcpn_cora()
-    test_sgc_cora()
-    test_mlp_pubmed()
-    test_mixhop_citeseer()
-    test_graphsage_cora()
-    test_pyg_cheb_cora()
-    test_pyg_gcn_cora()
-    test_pyg_gat_cora()
-    test_pyg_infomax_cora()
-    test_pyg_unet_cora()
-    test_pyg_drgcn_cora()
-    test_pyg_drgat_cora()
-    test_disengcn_cora()
-    test_graph_mix()
-    test_srgcn_cora()
-    test_gcnii_cora()
-    test_deepergcn_cora()
-    test_grand_cora()
-    test_pyg_gcn_cora_sampler()
-    test_gpt_gnn_cora()
-    test_jknet_jknet_cora()
-    test_ppnp_citeseer()
-    test_appnp_citeseer()
-    test_sgcpn_cora()
-    test_ppnp_cora()
-    test_appnp_cora()
+    # test_gdc_gcn_cora()
+    # test_gcn_cora()
+    # test_gat_cora()
+    # test_pairnorm_cora_deepgcn()
+    # test_pairnorm_cora_deepgat()
+    # test_pairnorm_cora_gcn()
+    # test_pairnorm_cora_sgc()
+    # test_sgcpn_cora()
+    # test_sgc_cora()
+    # test_mlp_pubmed()
+    # test_mixhop_citeseer()
+    # test_graphsage_cora()
+    # test_pyg_cheb_cora()
+    # test_pyg_gcn_cora()
+    # test_pyg_gat_cora()
+    # test_pyg_infomax_cora()
+    # test_pyg_unet_cora()
+    # test_pyg_drgcn_cora()
+    # test_pyg_drgat_cora()
+    # test_disengcn_cora()
+    # test_graph_mix()
+    # test_srgcn_cora()
+    # test_gcnii_cora()
+    # test_deepergcn_cora()
+    # test_grand_cora()
+    # test_pyg_gcn_cora_sampler()
+    # test_gpt_gnn_cora()
+    # test_jknet_jknet_cora()
+    # test_ppnp_citeseer()
+    # test_appnp_citeseer()
+    # test_sgcpn_cora()
+    # test_ppnp_cora()
+    # test_appnp_cora()
     test_dropedge_gcn_cora()

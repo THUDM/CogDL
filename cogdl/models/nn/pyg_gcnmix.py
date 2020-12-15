@@ -222,7 +222,7 @@ class GCNMix(BaseModel):
     def forward_ema(self, x, edge_index):
         return self.ema_gnn(x, edge_index)
 
-    def loss(self, data):
+    def node_classification_loss(self, data):
         opt = {
             "epoch": self.epoch,
             "final_consistency_weight": self.final_consistency_weight,

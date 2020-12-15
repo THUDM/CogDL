@@ -301,6 +301,21 @@ def test_pyg_ssp_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+def test_pyg_ssp_citeseer():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "citeseer"
+    args.model = "ssp"
+    
+    args.eps = 0.01
+    args.update_freq = 128 
+    args.alpha = None
+    args.gamma = 100
+
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
 
 def test_disengcn_cora():
     args = get_default_args()
@@ -561,6 +576,7 @@ if __name__ == "__main__":
     test_ppnp_citeseer()
     test_appnp_citeseer()
     test_pyg_ssp_cora()
+    test_pyg_ssp_citesee()
     test_sgcpn_cora()
     test_ppnp_cora()
     test_appnp_cora()

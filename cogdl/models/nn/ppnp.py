@@ -85,14 +85,7 @@ class PPNP(BaseModel):
                 A_dropped = get_ready_format(x, adj, F.dropout(A_hat, self.dropout, training=self.training))
                 preds = torch.spmm((1 - self.alpha) * A_dropped, preds) + self.alpha * local_preds
             final_preds = preds
-
-        return F.log_softmax(final_preds, dim=-1)
-
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask],
-        )
+        return final_preds
 
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

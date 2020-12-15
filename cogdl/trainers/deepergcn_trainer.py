@@ -145,7 +145,7 @@ class DeeperGCNTrainer(BaseTrainer):
 
             targets = y[intersection_index].to(self.device)
 
-            loss_n = self.model.loss(_x, edges, targets, training_index)
+            loss_n = self.model.node_classification_loss(_x, edges, targets, training_index)
             loss_n.backward()
             self.optimizer.step()
 

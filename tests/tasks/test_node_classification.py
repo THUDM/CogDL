@@ -519,7 +519,7 @@ def test_dropedge_gcn_cora():
     args.dataset = "cora"
     args.model = "dropedge_gcn"
     args.baseblock = "mutigcn"
-    arg.task_type = "full"
+    args.task_type = "full"
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1

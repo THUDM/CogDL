@@ -514,6 +514,8 @@ class DropEdge_GCN(BaseModel):
 
         parser.add_argument("--mixmode", default=False, help="cpu and gpu")
 
+        # fmt: on
+
 
     @classmethod
     def build_model_from_args(cls, args):

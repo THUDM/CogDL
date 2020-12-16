@@ -37,6 +37,21 @@ def test_gcn_cora():
     assert 0 <= ret["Acc"] <= 1
 
 
+def test_dropedge_gcn_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "dropedge_gcn"
+    args.num_layers = 0
+    args.withloop = False
+    args.withbn = False
+    args.dropedge = 0.0
+    args.normalization = "AugNorm"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+
 def test_gat_cora():
     args = get_default_args()
     args.task = "node_classification"
@@ -343,6 +358,7 @@ def test_gpt_gnn_cora():
 
 if __name__ == "__main__":
     test_gcn_cora()
+    test_dropedge_gcn_cora()
     test_gat_cora()
     test_mlp_pubmed()
     test_mixhop_citeseer()

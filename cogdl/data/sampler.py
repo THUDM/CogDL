@@ -1,9 +1,13 @@
+from typing import List
+
+import random
 import numpy as np
-import networkx as nx
 import scipy.sparse as sp
 import torch
+import torch.utils.data
 
 from cogdl.data import Data
+
 
 class Sampler:
     r"""
@@ -18,6 +22,7 @@ class Sampler:
 
     def sample(self):
         pass
+
 
 class SAINTSampler(Sampler):
     r"""
@@ -34,8 +39,8 @@ class SAINTSampler(Sampler):
     """
     def __init__(self, data, args_params):
         super().__init__(data, args_params)
-        self.adj = sp.coo_matrix((np.ones(self.num_edges), (self.data.edge_index[0], self.data.edge_index[1])), 
-                            shape = (self.num_nodes, self.num_nodes)).tocsr()
+        self.adj = sp.coo_matrix((np.ones(self.num_edges), (self.data.edge_index[0], self.data.edge_index[1])),
+                                 shape=(self.num_nodes, self.num_nodes)).tocsr()
         self.node_train = np.arange(1, self.num_nodes + 1) * self.data.train_mask.numpy()
         self.node_train = self.node_train[self.node_train != 0] - 1
 
@@ -67,7 +72,8 @@ class SAINTSampler(Sampler):
         tot_sampled_nodes = 0
         while True:
             tot_sampled_nodes += self.gen_subgraph()
-            print("\rGenerating subgraphs %.2lf%%" % (tot_sampled_nodes * 100 / self.data.num_nodes / self.sample_coverage), end = "", flush = True)
+            print("\rGenerating subgraphs %.2lf%%" % (
+                        tot_sampled_nodes * 100 / self.data.num_nodes / self.sample_coverage), end="", flush=True)
             if tot_sampled_nodes > self.sample_coverage * self.num_nodes:
                 break
         num_subg = len(self.subgraphs_nodes)
@@ -77,10 +83,10 @@ class SAINTSampler(Sampler):
         for v in range(self.data.num_nodes):
             i_s = self.adj.indptr[v]
             i_e = self.adj.indptr[v + 1]
-            val = np.clip(self.norm_loss_train[v] / self.norm_aggr_train[i_s : i_e], 0, 1e4)
+            val = np.clip(self.norm_loss_train[v] / self.norm_aggr_train[i_s: i_e], 0, 1e4)
             val[np.isnan(val)] = 0.1
-            self.norm_aggr_train[i_s : i_e] = val
-        self.norm_loss_train[np.where(self.norm_loss_train==0)[0]] = 0.1
+            self.norm_aggr_train[i_s: i_e] = val
+        self.norm_loss_train[np.where(self.norm_loss_train == 0)[0]] = 0.1
         self.norm_loss_train[self.node_train] = num_subg / self.norm_loss_train[self.node_train] / self.node_train.size
         self.norm_loss_train = torch.from_numpy(self.norm_loss_train.astype(np.float32))
 
@@ -96,14 +102,14 @@ class SAINTSampler(Sampler):
     def sample(self):
         pass
 
-    def extract_subgraph(self, edge_idx, directed = True):
+    def extract_subgraph(self, edge_idx, directed=True):
         edge_idx = np.unique(edge_idx)
         subg_edge = self.data.edge_index.t()[edge_idx].numpy()
         if not directed:
-            subg_edge = np.concatenate((subg_edge, subg_edge[:,[1, 0]]))
-        subg_edge = np.unique(subg_edge, axis = 0)
-        #get nodes whose degree != 0
-        nodes = np.zeros(self.num_nodes, dtype = int)
+            subg_edge = np.concatenate((subg_edge, subg_edge[:, [1, 0]]))
+        subg_edge = np.unique(subg_edge, axis=0)
+        # get nodes whose degree != 0
+        nodes = np.zeros(self.num_nodes, dtype=int)
         for e in subg_edge:
             nodes[e[0]] = 1
             nodes[e[1]] = 1
@@ -113,13 +119,13 @@ class SAINTSampler(Sampler):
                 for i in range(self.adj.indptr[e[0]], self.adj.indptr[e[0] + 1]):
                     if self.adj.indices[i] == e[1]:
                         edge_idx.append(i)
-            edge_idx = np.array(edge_idx, dtype = int)
+            edge_idx = np.array(edge_idx, dtype=int)
         node_idx = np.arange(1, self.num_nodes + 1) * np.array(nodes)
         node_idx = node_idx[node_idx != 0] - 1
 
-        #mapping nodes to new indices
+        # mapping nodes to new indices
         orig2subg = {n: i for i, n in enumerate(node_idx)}
-        indptr = np.zeros(node_idx.size + 1, dtype = int)
+        indptr = np.zeros(node_idx.size + 1, dtype=int)
         for ind, u in enumerate(subg_edge[:, 0]):
             if ind + 1 > indptr[orig2subg[u] + 1]:
                 indptr[orig2subg[u] + 1] = ind + 1
@@ -133,7 +139,7 @@ class SAINTSampler(Sampler):
         assert indptr[-1] == indices.size == subg_edge.size // 2
         return indptr, indices, data, node_idx, edge_idx
 
-    def get_subgraph(self, phase, require_norm = True):
+    def get_subgraph(self, phase, require_norm=True):
         r"""
         Generate one minibatch for model. In the 'train' mode, one minibatch corresponds
         to one subgraph of the training graph. In the 'valid' or 'test' mode, one batch
@@ -162,22 +168,22 @@ class SAINTSampler(Sampler):
             node_subgraph = self.subgraphs_nodes.pop()
             edge_subgraph = self.subgraphs_edge_index.pop()
             num_nodes_subgraph = node_subgraph.size
-            adj = sp.csr_matrix((self.subgraphs_data.pop(), self.subgraphs_indices.pop(), self.subgraphs_indptr.pop()), 
-                            shape =(num_nodes_subgraph, num_nodes_subgraph))
+            adj = sp.csr_matrix((self.subgraphs_data.pop(), self.subgraphs_indices.pop(), self.subgraphs_indptr.pop()),
+                                shape=(num_nodes_subgraph, num_nodes_subgraph))
 
             if require_norm:
                 adj.data[:] = self.norm_aggr_train[edge_subgraph][:]
-                #normalization
+                # normalization
                 D = adj.sum(1).flatten()
-                norm_diag = sp.dia_matrix((1 / D, 0), shape = adj.shape)
+                norm_diag = sp.dia_matrix((1 / D, 0), shape=adj.shape)
                 adj = norm_diag.dot(adj)
                 adj.sort_indices()
 
             adj = adj.tocoo()
-            data = Data(self.data.x[node_subgraph], 
+            data = Data(self.data.x[node_subgraph],
                         torch.LongTensor(np.vstack((adj.row, adj.col))),
-                        None if self.data.edge_attr is None else self.data.edge_attr[edge_subgraph], 
-                        self.data.y[node_subgraph], 
+                        None if self.data.edge_attr is None else self.data.edge_attr[edge_subgraph],
+                        self.data.y[node_subgraph],
                         None if self.data.pos is None else self.data.pos[node_subgraph])
 
             if require_norm:
@@ -189,6 +195,7 @@ class SAINTSampler(Sampler):
 
         return data
 
+
 class NodeSampler(SAINTSampler):
     r"""
     randomly select nodes, then adding edges connecting these nodes 
@@ -199,7 +206,7 @@ class NodeSampler(SAINTSampler):
     def __init__(self, data, args_params):
         self.node_num_subgraph = args_params["size_subgraph"]
         super().__init__(data, args_params)
-        
+
     def sample(self):
         node_idx = np.random.choice(np.arange(self.num_nodes), self.node_num_subgraph)
         node_idx = np.unique(node_idx)
@@ -210,7 +217,7 @@ class NodeSampler(SAINTSampler):
         subg_edge_index = []
         for nid in node_idx:
             idx_s, idx_e = self.adj.indptr[nid], self.adj.indptr[nid + 1]
-            neighs = self.adj.indices[idx_s : idx_e]
+            neighs = self.adj.indices[idx_s: idx_e]
             for i_n, n in enumerate(neighs):
                 if n in orig2subg:
                     indices.append(orig2subg[n])
@@ -222,7 +229,8 @@ class NodeSampler(SAINTSampler):
         data = np.ones(indices.size)
         assert indptr[-1] == indices.size == subg_edge_index.size
         return indptr, indices, data, node_idx, subg_edge_index
-        
+
+
 class EdgeSampler(SAINTSampler):
     r"""
     randomly select edges, then adding nodes connected by these edges 
@@ -237,6 +245,7 @@ class EdgeSampler(SAINTSampler):
     def sample(self):
         edge_idx = np.random.choice(np.arange(self.num_edges), self.edge_num_subgraph)
         return self.extract_subgraph(edge_idx)
+
 
 class RWSampler(SAINTSampler):
     r"""
@@ -261,8 +270,9 @@ class RWSampler(SAINTSampler):
                 e = np.random.randint(idx_s, idx_e)
                 edge_idx.append(e)
                 u = self.adj.indices[e]
-        
+
         return self.extract_subgraph(np.array(edge_idx))
+
 
 class MRWSampler(SAINTSampler):
     r"""
@@ -300,6 +310,7 @@ class MRWSampler(SAINTSampler):
 
         return self.extract_subgraph(np.array(edge_idx))
 
+
 class LayerSampler(Sampler):
     def __init__(self, data, model, params_args):
         super().__init__(data, params_args)
@@ -313,9 +324,55 @@ class LayerSampler(Sampler):
         total = train_nodes.shape[0]
         for i in range(0, total, batch_size):
             if i + batch_size <= total:
-                cur_nodes = train_nodes[i: i+batch_size]
+                cur_nodes = train_nodes[i: i + batch_size]
                 cur_labels = train_labels[cur_nodes]
                 yield cur_nodes, cur_labels
+
+
+class NeighborSampler(torch.utils.data.DataLoader):
+    def __init__(self, data: Data, sizes: List[int], mask=None, **kwargs):
+        self.data = data
+        self.sizes = sizes
+        node_idx = np.arange(0, data.x.shape[0])
+        if mask is not None:
+            node_idx = node_idx[mask]
+        node_idx = node_idx.tolist()
+        super(NeighborSampler, self).__init__(node_idx, collate_fn=self.sample, **kwargs)
+
+    def sample(self, batch):
+        """
+            Sample a subgraph with neighborhood sampling
+        Args:
+            batch: torch.Tensor / np.array
+                Target nodes
+        Returns:
+            if `size` is `[-1,]`,
+                (
+                    source_nodes_id: Tensor,
+                    sampled_edges: Tensor,
+                    (number_of_source_nodes, number_of_target_nodes): Tuple[int]
+                )
+            otherwise,
+                (
+                    target_nodes_id: Tensor
+                    all_sampled_nodes_id: Tensor,
+                    sampled_adjs: List[Tuple(Tensor, Tensor, Tuple[int]]
+                )
+        """
+        node_id = batch
+        adj_list = []
+        for size in self.sizes:
+            src_id, _edge_index = self.data.sample_adj(node_id, size, replace=False)
+            size = (len(src_id), len(node_id))
+            adj_list.append((src_id, _edge_index, size)) # src_id, edge_index, (src_size, target_size)
+            node_id = src_id
+        if self.sizes == [-1]:
+            src_id, edge_index, _ = adj_list[0]
+            size = (len(src_id), len(batch))
+            return src_id, edge_index, size
+        else:
+            return batch, node_id, adj_list[::-1]
+
 
 """class FastGCNSampler(LayerSampler):
     def __init__(self, data, params_args):

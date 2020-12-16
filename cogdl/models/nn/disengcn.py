@@ -149,13 +149,7 @@ class DisenGCN(BaseModel):
             # h = F.leaky_relu(h)
             h = F.dropout(h, p=self.dropout, training=self.training)
         out = torch.matmul(h, self.weight) + self.bias
-        return F.log_softmax(out, dim=-1)
-
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask]
-        )
+        return out
 
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

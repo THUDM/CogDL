@@ -88,7 +88,7 @@ class SGC(BaseModel):
         x = self.linear(x)
         return x
 
-    def loss(self, data):
+    def node_classification_loss(self, data):
         output = self.forward(data.x, data.adj)
         criterion = torch.nn.CrossEntropyLoss()
         loss = criterion(output[data.train_mask], data.y[data.train_mask])

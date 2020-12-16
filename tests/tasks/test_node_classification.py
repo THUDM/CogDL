@@ -536,50 +536,6 @@ def test_dropedge_gcn_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
-def test_dropedge_gcn_citeseer():
-    args = get_default_args()
-    args.task = "node_classification"
-    args.dataset = "citeseer"
-    args.model = "dropedge_gcn"
-    args.baseblock = "mutigcn"
-    args.inputlayer = "gcn"
-    args.outputlayer = "gcn"
-    args.hidden_size = 64
-    args.dropout = 0.5
-    args.withbn = False
-    args.withloop = False
-    args.nhiddenlayer = 1
-    args.nbaseblocklayer = 0
-    args.aggrmethod = "default"
-    args.activation = F.relu
-    args.task_type = "full"
-
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-def test_dropedge_gcn_pubmed():
-    args = get_default_args()
-    args.task = "node_classification"
-    args.dataset = "pubmed"
-    args.model = "dropedge_gcn"
-    args.baseblock = "mutigcn"
-    args.inputlayer = "gcn"
-    args.outputlayer = "none"
-    args.hidden_size = 64
-    args.dropout = 0.5
-    args.withbn = False
-    args.withloop = False
-    args.nhiddenlayer = 1
-    args.nbaseblocklayer = 0
-    args.aggrmethod = "default"
-    args.activation = F.relu
-    args.task_type = "full"
-
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
 def test_dropedge_resgcn_cora():
     args = get_default_args()
     args.task = "node_classification"
@@ -676,14 +632,10 @@ if __name__ == "__main__":
     test_pyg_gcn_cora_sampler()
     test_gpt_gnn_cora()
     test_jknet_jknet_cora()
-    test_ppnp_citeseer()
-    test_appnp_citeseer()
     test_sgcpn_cora()
     test_ppnp_cora()
     test_appnp_cora()
     test_dropedge_gcn_cora()
-    test_dropedge_gcn_citeseer()
-    test_dropedge_gcn_pubmed()
     test_dropedge_resgcn_cora()
     test_dropedge_inceptiongcn_cora()
     test_dropedge_densegcn_cora()

@@ -88,41 +88,43 @@ class MLP(BaseModel):
             bn.reset_parameters()
 
 
-    def _preprocessing(self, data):
+    def _preprocessing(self, x, edge_index):
+        num_nodes = x.shape[0]
+
         op_embedding = []
-        op_embedding.append(data.x)
+        op_embedding.append(x)
 
         # Convert to numpy arrays on cpu
-        edge_index, _ = dropout_adj(data.edge_index, p=self.dropedge_rate, num_nodes=data.num_nodes)
+        edge_index, _ = dropout_adj(edge_index, p=self.dropedge_rate, num_nodes=num_nodes)
         row, col = edge_index
 
         if self.undirected:
-            edge_index = to_undirected(edge_index, data.num_nodes)
+            edge_index = to_undirected(edge_index, num_nodes)
             row, col = edge_index
         
         # adj matrix
-        adj = get_adj(row, col, data.num_nodes, 
+        adj = get_adj(row, col, num_nodes, 
             asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag)
 
-        x = data.x
+        nx = x
         for _ in range(self.num_propagations):
-            x = adj @ x
-            op_embedding.append(x)
+            nx = adj @ nx
+            op_embedding.append(nx)
 
         # transpose adj matrix
-        adj = get_adj(col, row, data.num_nodes, 
+        adj = get_adj(col, row, num_nodes, 
             asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag)
 
-        x = data.x
+        nx = x
         for _ in range(self.num_propagations):
-            x = adj @ x
-            op_embedding.append(x)
+            nx = adj @ nx
+            op_embedding.append(nx)
 
         return torch.cat(op_embedding, dim=1)
 
 
-    def forward(self, data):
-        x = self._preprocessing(data)
+    def forward(self, x, edge_index):
+        x = self._preprocessing(x, edge_index)
         for i, lin in enumerate(self.lins[:-1]):
             x = lin(x)
             x = self.bns[i](x)
@@ -134,10 +136,10 @@ class MLP(BaseModel):
 
     def loss(self, data):
         return F.nll_loss(
-            self.forward(data)[data.train_mask],
+            self.forward(data.x, data.edge_index)[data.train_mask],
             data.y[data.train_mask],
         )
   
 
     def predict(self, data):
-        return self.forward(data)
+        return self.forward(data.x, data.edge_index)

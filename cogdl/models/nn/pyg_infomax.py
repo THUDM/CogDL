@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from sklearn.linear_model import LogisticRegression
 from torch_geometric.nn import GCNConv, DeepGraphInfomax
 
 from .. import BaseModel, register_model
+
 
 class Encoder(nn.Module):
     def __init__(self, in_channels, hidden_channels):
@@ -17,8 +17,10 @@ class Encoder(nn.Module):
         x = self.prelu(x)
         return x
 
+
 def corruption(x, edge_index):
     return x[torch.randperm(x.size(0))], edge_index
+
 
 @register_model("infomax")
 class Infomax(BaseModel):
@@ -54,7 +56,7 @@ class Infomax(BaseModel):
     def forward(self, x, edge_index):
         return self.model(x, edge_index)
 
-    def loss(self, data):
+    def node_classification_loss(self, data):
         pos_z, neg_z, summary = self.forward(data.x, data.edge_index)
         loss = self.model.loss(pos_z, neg_z, summary)
         return loss

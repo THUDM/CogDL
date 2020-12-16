@@ -55,13 +55,7 @@ class DrGAT(BaseModel):
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.se2(x)
         x = F.elu(self.conv2(x, edge_index))
-        return F.log_softmax(x, dim=1)
-
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask],
-        )
+        return x
     
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

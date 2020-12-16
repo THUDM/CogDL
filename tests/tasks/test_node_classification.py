@@ -630,7 +630,6 @@ def test_dropedge_inceptiongcn_cora():
     assert 0 <= ret["Acc"] <= 1
 
 
-
 if __name__ == "__main__":
     test_gdc_gcn_cora()
     test_gcn_cora()

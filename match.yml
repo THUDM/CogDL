@@ -20,6 +20,7 @@ node_classification:
     - gcnii
     - gpt_gnn
     - jknet
+    - jkn
     - ppnp
     - sgcpn
     - sgc

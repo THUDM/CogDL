@@ -40,11 +40,12 @@ class AGCTrainer(BaseTrainer):
             for i in range(t):
                 x = torch.spmm(adj, x)
             k = torch.mm(x, x.t())
-            w = (torch.abs(k) + torch.abs(k.t()))
-            clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="kmeans", random_state=0).fit(w)
+            w = (torch.abs(k) + torch.abs(k.t())) / 2
+            clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="discretize", random_state=0).fit(w)
             clusters = clustering.labels_ 
             intra = self.compute_intra(x.cpu().numpy(), clusters)
             print("iter #%d, intra = %.4lf" % (t, intra))
+            self.evaluate(clusters, data.y.cpu().numpy())
             if intra > pre_intra:
                 model.features_matrix = pre_feat
                 model.k = t - 1
@@ -62,10 +63,11 @@ class AGCTrainer(BaseTrainer):
         for i in range(num_nodes):
             for j in range(i + 1, num_nodes):
                 if clusters[i] == clusters[j]:
-                    intra[clusters[i]] += np.sum((x[i] - x[j]) ** 2)
+                    intra[clusters[i]] += np.sum((x[i] - x[j]) ** 2) ** 0.5
                     num_per_cluster[clusters[i]] += 1
         intra = np.array(list(filter(lambda x: x > 0, intra)))
         num_per_cluster = np.array(list(filter(lambda x: x > 0, num_per_cluster)))
+        print(intra / num_per_cluster)
         return np.mean(intra / num_per_cluster)
 
     def evaluate(self, clusters, truth):

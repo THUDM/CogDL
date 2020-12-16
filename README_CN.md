@@ -207,6 +207,21 @@ CogDL统一对有监督和无监督的图分类算法在相同的若干个真实
 | 7    | DGCNN [(Wang et al, ACM Transactions on Graphics'17)](https://arxiv.org/abs/1801.07829) | 83.33 | 69.50  | 46.33  |  66.67   | 77.45  |
 | 8    | DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417) | 83.68 | 55.00  | 40.40  |  72.59   |   /    |
 
+### 基于结点属性的图聚类
+
+对于属性图聚类，我们采用了Accuracy、NMI和Micro F1三个指标。我们只在Cora数据集上进行评估，citeeser和Pubmed数据集的实验仍在进行中。
+
+| Rank | Method                                                       |   Accuracy   |   NMI   |   Micro F1   |
+| :--- | :----------------------------------------------------------- | :-------: | :--------: | :--------: |
+| 1 | DAEGC [(Wang et al, IJCAI'19)](https://arxiv.org/pdf/1906.06532.pdf) | 43.59 | **45.96** | **47.70** |
+| 2   | AGC [(Zhang et al, IJCAI'20)](https://arxiv.org/pdf/1906.01210.pdf) | **47.71** | 42.15  | 45.93  |
+| 3    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) | 45.48 | 40.92 | 40.20 |
+| 4    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) | 38.34 | 38.90 | 39.07 |
+| 5    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf)  | 31.12 | 30.76  | 33.02  |
+| 6    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578)  | 26.17 | 25.48  | 28.15  |
+| 7    | KMeans  | 33.47 | 14.55  | 27.11  |
+| 8    | Spectral  | 24.14 | 14.39  | 25.53  |
+
 
 ## 使用说明：
 

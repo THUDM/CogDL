@@ -321,6 +321,22 @@ This leaderboard reports the performance of graph classification methods. we run
 
 If you have ANY difficulties to get things working in the above steps, feel free to open an issue. You can expect a reply within 24 hours.
 
+### Attributed graph clustering
+
+For attributed graph clustering, we adopt accuracy, normalized mutual information(NMI) and Micro F1 score. We only evaluate these measures on Cora dataset because we are still working on experiments with Citeseer and Pubmed dataset.
+
+| Rank | Method                                                       |   Accuracy   |   NMI   |   Micro F1   |
+| :--- | :----------------------------------------------------------- | :-------: | :--------: | :--------: |
+| 1 | DAEGC [(Wang et al, IJCAI'19)](https://arxiv.org/pdf/1906.06532.pdf) | 43.59 | **45.96** | **47.70** |
+| 2   | AGC [(Zhang et al, IJCAI'20)](https://arxiv.org/pdf/1906.01210.pdf) | **47.71** | 42.15  | 45.93  |
+| 3    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) | 45.48 | 40.92 | 40.20 |
+| 4    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) | 38.34 | 38.90 | 39.07 |
+| 5    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf)  | 31.12 | 30.76  | 33.02  |
+| 6    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578)  | 26.17 | 25.48  | 28.15  |
+| 7    | KMeans  | 33.47 | 14.55  | 27.11  |
+| 8    | Spectral  | 24.14 | 14.39  | 25.53  |
+
+
 ## Customization
 
 ### Submit Your State-of-the-art

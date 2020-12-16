@@ -13,7 +13,7 @@ from cogdl.models.supervised_model import (
     SupervisedHomogeneousNodeClassificationModel,
 )
 from cogdl.trainers.supervised_trainer import SupervisedHomogeneousNodeClassificationTrainer
-from cogdl.trainers.self_task import EdgeMask, PairwiseDistance, Distance2Clusters, PairwiseAttrSim
+from cogdl.trainers.self_task import EdgeMask, PairwiseDistance, Distance2Clusters, PairwiseAttrSim, Distance2ClustersPP
 
 class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
     def __init__(self, args):
@@ -55,8 +55,10 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
             self.agent = Distance2Clusters(self.data.edge_index, self.data.x, self.hidden_size, 30, self.device)
         elif self.auxiliary_task == "pairwise-attr-sim":
             self.agent = PairwiseAttrSim(self.data.edge_index, self.data.x, self.hidden_size, 5, self.device)
+        elif self.auxiliary_task == "distance2clusters++":
+            self.agent = Distance2ClustersPP(self.data.edge_index, self.data.x, self.data.y, self.hidden_size, 5, 1, self.device)
         else:
-            raise Exception("auxiliary task must be edgemask, pairwise-distance, distance2clusters or pairwise-attr-sim")
+            raise Exception("auxiliary task must be edgemask, pairwise-distance, distance2clusters, distance2clusters++ or pairwise-attr-sim")
         self.model = model
 
         self.optimizer = torch.optim.Adam(
@@ -72,6 +74,8 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         min_loss = np.inf
 
         for epoch in epoch_iter:
+            if self.auxiliary_task == "distance2clusters++" and epoch % 40 == 0:
+                self.agent.update_cluster()
             self._train_step()
             train_acc, _ = self._test_step(split="train")
             val_acc, val_loss = self._test_step(split="val")

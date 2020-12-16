@@ -142,7 +142,7 @@ class GraphBaseBlock(Module):
             self.hiddenlayers.append(layer)
 
     def _doconcat(self, x, subx):
-        if x is None:
+        if x == None:
             return subx
         if self.aggrmethod == "concat":
             return torch.cat((x, subx), 1)
@@ -162,7 +162,11 @@ class GraphBaseBlock(Module):
 
         if not self.dense:
             return self._doconcat(x, input)
-        return self._doconcat(x, denseout)
+
+        if denseout == None:
+            return x
+        else:
+            return self._doconcat(x, denseout)
 
     def get_outdim(self):
         return self.out_features
@@ -468,13 +472,6 @@ class DropEdge_GCN(BaseModel):
         :param withloop: using self feature modeling in graph convolution.
         :param aggrmethod: the aggregation function for baseblock, can be "concat" and "add". For "resgcn", the default
                            is "add", for others the default is "concat".
-        :param mixmode: enable cpu-gpu mix mode. If true, put the inputlayer to cpu.
-
-    default:
-            lr = 0.02
-            weight_decay = 5e-4
-            epochs = 800
-            seed = 42
     """
 
 
@@ -512,8 +509,6 @@ class DropEdge_GCN(BaseModel):
 
         parser.add_argument("--activation", default=F.relu, help="activiation function")
 
-        parser.add_argument("--mixmode", default=False, help="cpu and gpu")
-
         # fmt: on
 
 
@@ -523,7 +518,7 @@ class DropEdge_GCN(BaseModel):
                     args.nhiddenlayer, args.dropout, args.baseblock,
                     args.inputlayer, args.outputlayer, args.nbaseblocklayer,
                     args.activation, args.withbn, args.withloop,
-                    args.aggrmethod, args.mixmode)
+                    args.aggrmethod)
 
     def __init__(self,
                  nfeat,
@@ -538,11 +533,9 @@ class DropEdge_GCN(BaseModel):
                  activation,
                  withbn,
                  withloop,
-                 aggrmethod,
-                 mixmode=False):
+                 aggrmethod):
         super(DropEdge_GCN, self).__init__()
 
-        self.mixmode = mixmode
         self.dropout = dropout
 
         if baseblock == "resgcn":
@@ -595,9 +588,7 @@ class DropEdge_GCN(BaseModel):
         self.outgc = GraphConvolutionBS(baseblockinput, nclass, outactivation, withbn, withloop)
 
         self.reset_parameters()
-        if mixmode:
-            self.midlayer = self.midlayer.to(device)
-            self.outgc = self.outgc.to(device)
+
 
 
     def reset_parameters(self):
@@ -617,14 +608,9 @@ class DropEdge_GCN(BaseModel):
         # get correct format
         adj = fix_adj_format(fea, adj)
         # input
-        if self.mixmode:
-            x = self.ingc(fea, adj.cpu())
-        else:
-            x = self.ingc(fea, adj)
+        x = self.ingc(fea, adj)
 
         x = F.dropout(x, self.dropout, training=self.training)
-        if self.mixmode:
-            x = x.to(device)
 
         # mid block connections
         # for i in xrange(len(self.midlayer)):

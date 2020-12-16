@@ -531,7 +531,6 @@ def test_dropedge_gcn_cora():
     args.aggrmethod = "default"
     args.activation = F.relu
     args.task_type = "full"
-    args.mixmode = False
 
     task = build_task(args)
     ret = task.train()
@@ -554,7 +553,6 @@ def test_dropedge_gcn_citeseer():
     args.aggrmethod = "default"
     args.activation = F.relu
     args.task_type = "full"
-    args.mixmode = False
 
     task = build_task(args)
     ret = task.train()
@@ -567,7 +565,7 @@ def test_dropedge_gcn_pubmed():
     args.model = "dropedge_gcn"
     args.baseblock = "mutigcn"
     args.inputlayer = "gcn"
-    args.outputlayer = "gcn"
+    args.outputlayer = "none"
     args.hidden_size = 64
     args.dropout = 0.5
     args.withbn = False
@@ -577,7 +575,6 @@ def test_dropedge_gcn_pubmed():
     args.aggrmethod = "default"
     args.activation = F.relu
     args.task_type = "full"
-    args.mixmode = False
 
     task = build_task(args)
     ret = task.train()
@@ -597,10 +594,31 @@ def test_dropedge_resgcn_cora():
     args.withloop = False
     args.nhiddenlayer = 1
     args.nbaseblocklayer = 0
+    args.aggrmethod = "concat"
+    args.activation = F.relu
+    args.task_type = "full"
+
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+def test_dropedge_densegcn_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "dropedge_gcn"
+    args.baseblock = "densegcn"
+    args.inputlayer = "gcn"
+    args.outputlayer = "none"
+    args.hidden_size = 64
+    args.dropout = 0.5
+    args.withbn = False
+    args.withloop = False
+    args.nhiddenlayer = 1
+    args.nbaseblocklayer = 0
     args.aggrmethod = "add"
     args.activation = F.relu
     args.task_type = "full"
-    args.mixmode = False
 
     task = build_task(args)
     ret = task.train()
@@ -623,7 +641,6 @@ def test_dropedge_inceptiongcn_cora():
     args.aggrmethod = "add"
     args.activation = F.relu
     args.task_type = "full"
-    args.mixmode = False
 
     task = build_task(args)
     ret = task.train()
@@ -669,3 +686,4 @@ if __name__ == "__main__":
     test_dropedge_gcn_pubmed()
     test_dropedge_resgcn_cora()
     test_dropedge_inceptiongcn_cora()
+    test_dropedge_densegcn_cora()

@@ -92,7 +92,7 @@ class Model_Maker:
     def create_model_file(self):
         self.inputs["model_name"] = self.inputs["model_name"].replace("[^\w\s]", "")
         self.model_name = self.inputs["model_name"].lower()
-        template_file = open("cogdl/models/nn/template.py", "r")
+        template_file = open("templates/base_model.py", "r")
         model_file = open("cogdl/models/nn/%s.py" % self.model_name, "w")
         for line in template_file.readlines():
             if "@register_model" in line:
@@ -110,7 +110,7 @@ class Model_Maker:
     def create_model_example(self):
         self.model_type = "gnn" if self.inputs["model_type"] == "GNN method" else "emb"
         self.model_task = self.inputs["model_task"].replace(" ", "_").lower()
-        template_file = open("examples/template.py", "r")
+        template_file = open("templates/base_example.py", "r")
         model_file = open(
             "examples/%s_models/%s.py" % (self.model_type, self.model_name), "w"
         )

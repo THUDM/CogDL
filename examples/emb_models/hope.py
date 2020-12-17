@@ -13,12 +13,10 @@ def build_default_args_for_unsupervised_node_classification(dataset):
         "enhance": None,
         "save_dir": ".",
         "seed": [0, 1, 2],
-
         "beta": 0.01,
-
         "task": "unsupervised_node_classification",
         "model": "hope",
-        "dataset": dataset
+        "dataset": dataset,
     }
     return build_args_from_dict(args)
 
@@ -27,6 +25,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

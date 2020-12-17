@@ -13,8 +13,8 @@ from . import register_dataset
 def normalize_feature(data):
     x_sum = torch.sum(data.x, dim=1)
     x_rev = x_sum.pow(-1).flatten()
-    x_rev[torch.isnan(x_rev)] = 0.
-    x_rev[torch.isinf(x_rev)] = 0.
+    x_rev[torch.isnan(x_rev)] = 0.0
+    x_rev[torch.isinf(x_rev)] = 0.0
     data.x = data.x * x_rev.unsqueeze(-1).expand_as(data.x)
     return data
 
@@ -228,7 +228,7 @@ class QM9Dataset(QM9):
                 data.edge_index = edge_index
                 return data
 
-        transform = T.Compose([MyTransform(), Complete(), T.Distance(norm=False)])
+        # transform = T.Compose([MyTransform(), Complete(), T.Distance(norm=False)])
         if not osp.exists(path):
             QM9(path)
         super(QM9Dataset, self).__init__(path)

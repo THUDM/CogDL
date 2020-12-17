@@ -20,7 +20,7 @@ def mix_hidden_state(feat, target, train_index, alpha):
 
 
 def sharpen(prob, temperature):
-    prob = torch.pow(prob, 1./temperature)
+    prob = torch.pow(prob, 1.0 / temperature)
     row_sum = torch.sum(prob, dim=1).reshape(-1, 1)
     return prob / row_sum
 
@@ -51,7 +51,7 @@ class GCNConv(nn.Module):
         self.weight = nn.Linear(in_features=in_feats, out_features=out_feats)
         self.edge_index = None
         self.edge_attr = None
-    
+
     def forward(self, x, edge_index, edge_attr=None):
         if self.edge_index is None:
             num_nodes = torch.max(edge_index) + 1
@@ -59,22 +59,13 @@ class GCNConv(nn.Module):
             self.edge_attr = symmetric_normalization(num_nodes, edge_index)
         h = spmm(self.edge_index, self.edge_attr, x)
         return self.weight(h)
-    
+
     def forward_aux(self, x):
         return self.weight(x)
 
 
 class BaseGNNMix(BaseModel):
-    def __init__(
-        self,
-        in_feat,
-        hidden_size,
-        num_classes,
-        k,
-        temperature,
-        alpha,
-        dropout
-    ):
+    def __init__(self, in_feat, hidden_size, num_classes, k, temperature, alpha, dropout):
         super(BaseGNNMix, self).__init__()
         self.dropout = dropout
         self.alpha = alpha
@@ -92,7 +83,7 @@ class BaseGNNMix(BaseModel):
         h = F.dropout(h, p=self.dropout, training=self.training)
         h = self.hidden_gnn(h, edge_index)
         return h
-    
+
     def forward_aux(self, x, label, train_index, mix_hidden=True, layer_mix=1):
         h = F.dropout(x, p=self.dropout, training=self.training)
         assert layer_mix in (0, 1)
@@ -109,7 +100,7 @@ class BaseGNNMix(BaseModel):
 
     def update_aux(self, data, vector_labels, train_index, opt):
         device = data.x.device
-        train_unlabelled = torch.where(data.train_mask == False)[0].to(device)
+        train_unlabelled = torch.where(data.train_mask == False)[0].to(device)  # noqa E712
         temp_labels = torch.zeros(self.k, vector_labels.shape[0], vector_labels.shape[1]).to(device)
         with torch.no_grad():
             for i in range(self.k):
@@ -118,7 +109,7 @@ class BaseGNNMix(BaseModel):
         target_labels = temp_labels.mean(dim=0)
         target_labels = sharpen(target_labels, self.temperature)
         vector_labels[train_unlabelled] = target_labels[train_unlabelled]
-        sampled_unlabelled = torch.randint(0, train_unlabelled.shape[0], size=(train_index.shape[0], ))
+        sampled_unlabelled = torch.randint(0, train_unlabelled.shape[0], size=(train_index.shape[0],))
         train_unlabelled = train_unlabelled[sampled_unlabelled]
 
         def get_loss(index):
@@ -130,11 +121,8 @@ class BaseGNNMix(BaseModel):
         unsup_loss = get_loss(train_unlabelled)
 
         mixup_weight = get_current_consistency_weight(
-                            opt["final_consistency_weight"],
-                            opt["rampup_starts"],
-                            opt["rampup_ends"],
-                            opt["epoch"]
-                        )
+            opt["final_consistency_weight"], opt["rampup_starts"], opt["rampup_ends"], opt["epoch"]
+        )
 
         loss_sum = sup_loss + mixup_weight * unsup_loss
         return loss_sum
@@ -177,17 +165,19 @@ class GCNMix(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(in_feat=args.num_features,
-                   hidden_size=args.hidden_size,
-                   num_classes=args.num_classes,
-                   k=args.k,
-                   temperature=args.temperature,
-                   alpha=args.alpha,
-                   rampup_starts=args.rampup_starts,
-                   rampup_ends=args.rampup_ends,
-                   final_consistency_weight=args.mixup_consistency,
-                   ema_decay=args.ema_decay,
-                   dropout=args.dropout)
+        return cls(
+            in_feat=args.num_features,
+            hidden_size=args.hidden_size,
+            num_classes=args.num_classes,
+            k=args.k,
+            temperature=args.temperature,
+            alpha=args.alpha,
+            rampup_starts=args.rampup_starts,
+            rampup_ends=args.rampup_ends,
+            final_consistency_weight=args.mixup_consistency,
+            ema_decay=args.ema_decay,
+            dropout=args.dropout,
+        )
 
     def __init__(
         self,
@@ -201,7 +191,7 @@ class GCNMix(BaseModel):
         rampup_ends,
         final_consistency_weight,
         ema_decay,
-        dropout
+        dropout,
     ):
         super(GCNMix, self).__init__()
         self.final_consistency_weight = final_consistency_weight
@@ -218,7 +208,7 @@ class GCNMix(BaseModel):
 
     def forward(self, x, edge_index):
         return self.base_gnn.forward(x, edge_index)
-    
+
     def forward_ema(self, x, edge_index):
         return self.ema_gnn(x, edge_index)
 
@@ -227,14 +217,14 @@ class GCNMix(BaseModel):
             "epoch": self.epoch,
             "final_consistency_weight": self.final_consistency_weight,
             "rampup_starts": self.rampup_starts,
-            "rampup_ends": self.rampup_ends
+            "rampup_ends": self.rampup_ends,
         }
         self.base_gnn.train()
         loss_n = self.base_gnn.loss(data, opt)
 
-        alpha = min(1 - 1/(self.epoch+1), self.ema_decay)
+        alpha = min(1 - 1 / (self.epoch + 1), self.ema_decay)
         for ema_param, param in zip(self.ema_gnn.parameters(), self.base_gnn.parameters()):
-            ema_param.data.mul_(alpha).add_((1-alpha) * param.data)
+            ema_param.data.mul_(alpha).add_((1 - alpha) * param.data)
         self.epoch += 1
         return loss_n
 

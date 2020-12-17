@@ -14,6 +14,7 @@ def get_default_args():
     }
     return build_args_from_dict(default_dict)
 
+
 def test_gcc_kdd_icdm():
     args = get_default_args()
     args.task = "similarity_search"
@@ -23,6 +24,7 @@ def test_gcc_kdd_icdm():
     ret = task.train()
     assert 0 <= ret["Recall @ 20"] <= 1
 
+
 def test_gcc_sigir_cikm():
     args = get_default_args()
     args.task = "similarity_search"
@@ -31,6 +33,7 @@ def test_gcc_sigir_cikm():
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Recall @ 20"] <= 1
+
 
 def test_gcc_sigmod_icde():
     args = get_default_args()

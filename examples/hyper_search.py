@@ -15,6 +15,7 @@ class HyperSearch(object):
         func_fixed: function to obtain fixed hyper-parameters
         func_search: function to obtain hyper-parameters to search
     """
+
     def __init__(self, func_fixed, func_search, n_trials=30):
         self.func_fixed = func_fixed
         self.func_search = func_search
@@ -46,7 +47,7 @@ class HyperSearch(object):
 
         assert type(result) == dict
         result = list(result.values())
-        return 1.0 - sum(result)/len(result)
+        return 1.0 - sum(result) / len(result)
 
     def final_result(self, best_params):
         params = self.func_fixed()
@@ -71,11 +72,8 @@ class HyperSearch(object):
         best_values = 1 - study.best_value
 
         result = self.final_result(best_params)
-        return {
-            "best_params": best_params,
-            "best_result_in_search": best_values,
-            "result": result
-        }
+        return {"best_params": best_params, "best_result_in_search": best_values, "result": result}
+
 
 # To tune the hyper-parameters of a given model.
 # Just fill in the hyper-parameters you want to search in function `hyper_parameters_to_search`
@@ -85,8 +83,8 @@ class HyperSearch(object):
 
 def hyper_parameters_to_search(trial):
     """
-        Fill in hyper-parameters to search of your model
-        Return hyper-parameters to search
+    Fill in hyper-parameters to search of your model
+    Return hyper-parameters to search
     """
     return {
         # "lr": trial.suggest_loguniform("lr", 1e-5, 1e-2),
@@ -99,8 +97,8 @@ def hyper_parameters_to_search(trial):
 
 def fixed_hyper_parameters():
     """
-        Fill in fixed and necessary hyper-parameters of your model
-        Return fixed parameters
+    Fill in fixed and necessary hyper-parameters of your model
+    Return fixed parameters
     """
     return {
         "dataset": "cora",
@@ -111,7 +109,7 @@ def fixed_hyper_parameters():
         "cpu": not torch.cuda.is_available(),
         "device_id": [0],
         "seed": [0],
-        "weight_decay": 5e-4
+        "weight_decay": 5e-4,
     }
 
 

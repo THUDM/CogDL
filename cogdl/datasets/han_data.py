@@ -22,23 +22,25 @@ def untar(path, fname, deleteTar=True):
     Unpacks the given archive file to the same directory, then (by default)
     deletes the archive file.
     """
-    print('unpacking ' + fname)
+    print("unpacking " + fname)
     fullpath = os.path.join(path, fname)
     shutil.unpack_archive(fullpath, path)
     if deleteTar:
         os.remove(fullpath)
 
-def sample_mask(idx, l):
+
+def sample_mask(idx, length):
     """Create mask."""
-    mask = np.zeros(l)
+    mask = np.zeros(length)
     mask[idx] = 1
     return np.array(mask, dtype=np.bool)
+
 
 class HANDataset(Dataset):
     r"""The network datasets "ACM", "DBLP" and "IMDB" from the
     `"Heterogeneous Graph Attention Network"
     <https://arxiv.org/abs/1903.07293>`_ paper.
-    
+
     Args:
         root (string): Root directory where the dataset should be saved.
         name (string): The name of the dataset (:obj:`"han-acm"`,
@@ -47,7 +49,7 @@ class HANDataset(Dataset):
 
     def __init__(self, root, name):
         self.name = name
-        self.url = f'https://github.com/cenyk1230/han-data/blob/master/{name}.zip?raw=true'
+        self.url = f"https://github.com/cenyk1230/han-data/blob/master/{name}.zip?raw=true"
         super(HANDataset, self).__init__(root)
         self.data = torch.load(self.processed_paths[0])
         self.num_classes = torch.max(self.data.train_target).item() + 1
@@ -64,23 +66,31 @@ class HANDataset(Dataset):
         return ["data.pt"]
 
     def read_gtn_data(self, folder):
-        data = sio.loadmat(osp.join(folder, 'data.mat'))
-        if self.name == 'han-acm' or self.name == 'han-imdb':
-            truelabels, truefeatures = data['label'], data['feature'].astype(float)
-        elif self.name == 'han-dblp':
-            truelabels, truefeatures = data['label'], data['features'].astype(float)
+        data = sio.loadmat(osp.join(folder, "data.mat"))
+        if self.name == "han-acm" or self.name == "han-imdb":
+            truelabels, truefeatures = data["label"], data["feature"].astype(float)
+        elif self.name == "han-dblp":
+            truelabels, truefeatures = data["label"], data["features"].astype(float)
         num_nodes = truefeatures.shape[0]
-        if self.name == 'han-acm':
-            rownetworks = [data['PAP'] - np.eye(num_nodes), data['PLP'] - np.eye(num_nodes)]
-        elif self.name == 'han-dblp':
-            rownetworks = [data['net_APA'] - np.eye(num_nodes), data['net_APCPA'] - np.eye(num_nodes), data['net_APTPA'] - np.eye(num_nodes)]
-        elif self.name == 'han-imdb':
-            rownetworks = [data['MAM'] - np.eye(num_nodes), data['MDM'] - np.eye(num_nodes), data['MYM'] - np.eye(num_nodes)]
+        if self.name == "han-acm":
+            rownetworks = [data["PAP"] - np.eye(num_nodes), data["PLP"] - np.eye(num_nodes)]
+        elif self.name == "han-dblp":
+            rownetworks = [
+                data["net_APA"] - np.eye(num_nodes),
+                data["net_APCPA"] - np.eye(num_nodes),
+                data["net_APTPA"] - np.eye(num_nodes),
+            ]
+        elif self.name == "han-imdb":
+            rownetworks = [
+                data["MAM"] - np.eye(num_nodes),
+                data["MDM"] - np.eye(num_nodes),
+                data["MYM"] - np.eye(num_nodes),
+            ]
 
         y = truelabels
-        train_idx = data['train_idx']
-        val_idx = data['val_idx']
-        test_idx = data['test_idx']
+        train_idx = data["train_idx"]
+        val_idx = data["val_idx"]
+        test_idx = data["test_idx"]
 
         train_mask = sample_mask(train_idx, y.shape[0])
         val_mask = sample_mask(val_idx, y.shape[0])
@@ -91,12 +101,12 @@ class HANDataset(Dataset):
         y_test = np.argmax(y[test_mask, :], axis=1)
 
         data = Data()
-        A = []                     
+        A = []
         for i, edge in enumerate(rownetworks):
             edge_tmp = torch.from_numpy(np.vstack((edge.nonzero()[0], edge.nonzero()[1]))).type(torch.LongTensor)
             value_tmp = torch.ones(edge_tmp.shape[1]).type(torch.FloatTensor)
             A.append((edge_tmp, value_tmp))
-        edge_tmp = torch.stack((torch.arange(0,num_nodes), torch.arange(0,num_nodes))).type(torch.LongTensor)
+        edge_tmp = torch.stack((torch.arange(0, num_nodes), torch.arange(0, num_nodes))).type(torch.LongTensor)
         value_tmp = torch.ones(num_nodes).type(torch.FloatTensor)
         A.append((edge_tmp, value_tmp))
         data.adj = A
@@ -115,7 +125,7 @@ class HANDataset(Dataset):
     def get(self, idx):
         assert idx == 0
         return self.data
-    
+
     def apply_to_device(self, device):
         self.data.x = self.data.x.to(device)
 
@@ -133,8 +143,8 @@ class HANDataset(Dataset):
         self.data.adj = new_adj
 
     def download(self):
-        download_url(self.url, self.raw_dir, name=self.name + '.zip')
-        untar(self.raw_dir, self.name + '.zip')
+        download_url(self.url, self.raw_dir, name=self.name + ".zip")
+        untar(self.raw_dir, self.name + ".zip")
 
     def process(self):
         self.read_gtn_data(self.raw_dir)

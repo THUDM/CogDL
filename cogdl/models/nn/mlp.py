@@ -37,9 +37,7 @@ class MLP(BaseModel):
         self.num_layers = num_layers
         self.dropout = dropout
         shapes = [num_features] + [hidden_size] * (num_layers - 1) + [num_classes]
-        self.mlp = nn.ModuleList(
-            [nn.Linear(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)]
-        )
+        self.mlp = nn.ModuleList([nn.Linear(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
 
     def forward(self, x, edge_index):
         for fc in self.mlp[:-1]:
@@ -48,6 +46,6 @@ class MLP(BaseModel):
         x = self.mlp[-1](x)
         return x
         # return F.log_softmax(x, dim=1)
-    
+
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

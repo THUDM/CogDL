@@ -28,7 +28,7 @@ def build_default_args_for_node_classification(dataset, missing_rate=0, num_laye
         "num_layers": num_layers,
         "task": "node_classification",
         "model": "sgcpn",
-        "dataset": dataset
+        "dataset": dataset,
     }
     return build_args_from_dict(args)
 
@@ -37,6 +37,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

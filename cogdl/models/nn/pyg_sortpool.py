@@ -61,6 +61,7 @@ class SortPool(BaseModel):
     dropout : float, optional
         Size of dropout, default: ``0.5``.
     """
+
     @staticmethod
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=64)
@@ -83,7 +84,7 @@ class SortPool(BaseModel):
             args.out_channels,
             args.kernel_size,
             args.k,
-            args.dropout
+            args.dropout,
         )
 
     @classmethod
@@ -107,7 +108,7 @@ class SortPool(BaseModel):
         self.num_layers = num_layers
         self.gnn_convs = nn.ModuleList()
         self.gnn_convs.append(SAGEConv(in_feats, hidden_dim))
-        for _ in range(self.num_layers-1):
+        for _ in range(self.num_layers - 1):
             self.gnn_convs.append(SAGEConv(hidden_dim, hidden_dim))
         self.conv1d = nn.Conv1d(hidden_dim, out_channel, kernel_size)
         self.fc1 = nn.Linear(out_channel * (self.k - kernel_size + 1), hidden_dim)
@@ -131,7 +132,7 @@ class SortPool(BaseModel):
         batch_h = batch_h[order].view(batch_size, num_nodes, xdim)
 
         if num_nodes >= self.k:
-            batch_h = batch_h[:, :self.k].contiguous()
+            batch_h = batch_h[:, : self.k].contiguous()
         else:
             fill_batch = batch_h.new_full((batch_size, self.k - num_nodes, xdim), fill_value)
             batch_h = torch.cat([batch_h, fill_batch], dim=1)
@@ -139,7 +140,7 @@ class SortPool(BaseModel):
         h = batch_h
 
         # h = h.view(batch_size, self.k, -1).permute(0, 2, 1) # bn * hidden * k
-        h = h.permute(0, 2, 1) # bn * hidden * k
+        h = h.permute(0, 2, 1)  # bn * hidden * k
         h = F.relu(self.conv1d(h)).view(batch_size, -1)
         h = F.relu(self.fc1(h))
         h = F.dropout(h, p=self.dropout, training=self.training)
@@ -149,7 +150,3 @@ class SortPool(BaseModel):
             loss = F.nll_loss(pred, batch.y)
             return h, loss
         return h, None
-
-
-
-

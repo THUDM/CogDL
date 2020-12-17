@@ -8,6 +8,7 @@ from dgl.nn.pytorch import NNConv, Set2Set
 from dgl.nn.pytorch.conv import GINConv
 from dgl.nn.pytorch.glob import AvgPooling, MaxPooling, SumPooling
 
+
 class GATLayer(nn.Module):
     def __init__(self, g, in_dim, out_dim):
         super(GATLayer, self).__init__()
@@ -16,24 +17,25 @@ class GATLayer(nn.Module):
         self.attn_fc = nn.Linear(2 * out_dim, 1, bias=False)
 
     def edge_attention(self, edges):
-        z2 = torch.cat([edges.src['z'], edges.dst['z']], dim=1)
+        z2 = torch.cat([edges.src["z"], edges.dst["z"]], dim=1)
         a = self.attn_fc(z2)
-        return {'e': F.leaky_relu(a)}
+        return {"e": F.leaky_relu(a)}
 
     def message_func(self, edges):
-        return {'z': edges.src['z'], 'e': edges.data['e']}
+        return {"z": edges.src["z"], "e": edges.data["e"]}
 
     def reduce_func(self, nodes):
-        alpha = F.softmax(nodes.mailbox['e'], dim=1)
-        h = torch.sum(alpha * nodes.mailbox['z'], dim=1)
-        return {'h': h}
+        alpha = F.softmax(nodes.mailbox["e"], dim=1)
+        h = torch.sum(alpha * nodes.mailbox["z"], dim=1)
+        return {"h": h}
 
     def forward(self, h):
         z = self.fc(h)
-        self.g.ndata['z'] = z
+        self.g.ndata["z"] = z
         self.g.apply_edges(self.edge_attention)
         self.g.update_all(self.message_func, self.reduce_func)
-        return self.g.ndata.pop('h')
+        return self.g.ndata.pop("h")
+
 
 class SELayer(nn.Module):
     """Squeeze-and-excitation networks"""
@@ -121,9 +123,7 @@ class MLP(nn.Module):
 
             for layer in range(num_layers - 1):
                 self.batch_norms.append(
-                    SELayer(hidden_dim, int(np.sqrt(hidden_dim)))
-                    if use_selayer
-                    else nn.BatchNorm1d(hidden_dim)
+                    SELayer(hidden_dim, int(np.sqrt(hidden_dim))) if use_selayer else nn.BatchNorm1d(hidden_dim)
                 )
 
     def forward(self, x):
@@ -139,9 +139,7 @@ class MLP(nn.Module):
 
 
 class UnsupervisedGAT(nn.Module):
-    def __init__(
-        self, node_input_dim, node_hidden_dim, edge_input_dim, num_layers, num_heads
-    ):
+    def __init__(self, node_input_dim, node_hidden_dim, edge_input_dim, num_layers, num_heads):
         super(UnsupervisedGAT, self).__init__()
         assert node_hidden_dim % num_heads == 0
         self.layers = nn.ModuleList(
@@ -307,13 +305,9 @@ class UnsupervisedGIN(nn.Module):
 
         for layer in range(self.num_layers - 1):
             if layer == 0:
-                mlp = MLP(
-                    num_mlp_layers, input_dim, hidden_dim, hidden_dim, use_selayer
-                )
+                mlp = MLP(num_mlp_layers, input_dim, hidden_dim, hidden_dim, use_selayer)
             else:
-                mlp = MLP(
-                    num_mlp_layers, hidden_dim, hidden_dim, hidden_dim, use_selayer
-                )
+                mlp = MLP(num_mlp_layers, hidden_dim, hidden_dim, hidden_dim, use_selayer)
 
             self.ginlayers.append(
                 GINConv(
@@ -324,9 +318,7 @@ class UnsupervisedGIN(nn.Module):
                 )
             )
             self.batch_norms.append(
-                SELayer(hidden_dim, int(np.sqrt(hidden_dim)))
-                if use_selayer
-                else nn.BatchNorm1d(hidden_dim)
+                SELayer(hidden_dim, int(np.sqrt(hidden_dim))) if use_selayer else nn.BatchNorm1d(hidden_dim)
             )
 
         # Linear function for graph poolings of output of each layer
@@ -463,9 +455,7 @@ class GraphEncoder(nn.Module):
         self.degree_input = degree_input
 
         if degree_input:
-            self.degree_embedding = nn.Embedding(
-                num_embeddings=max_degree + 1, embedding_dim=degree_embedding_size
-            )
+            self.degree_embedding = nn.Embedding(num_embeddings=max_degree + 1, embedding_dim=degree_embedding_size)
 
         self.set2set = Set2Set(node_hidden_dim, num_step_set2set, num_layer_set2set)
         self.lin_readout = nn.Sequential(

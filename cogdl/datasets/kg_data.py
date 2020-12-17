@@ -190,7 +190,7 @@ def read_triplet_data(folder):
     relation_dic = {}
     for filename in filenames:
         with open(osp.join(folder, filename), "r") as f:
-            # num = int(f.readline().strip())
+            _ = int(f.readline().strip())
             if "train" in filename:
                 train_start_idx = len(triples)
             elif "valid" in filename:

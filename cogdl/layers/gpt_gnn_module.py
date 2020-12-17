@@ -1,6 +1,5 @@
 import math
-from collections import OrderedDict
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 
 import numpy as np
 import pandas as pd
@@ -8,9 +7,9 @@ import scipy.sparse as sp
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from gensim.parsing.preprocessing import *
+from gensim.parsing.preprocessing import preprocess_string
 from texttable import Texttable
-from torch_geometric.nn import GCNConv, GATConv
+from torch_geometric.nn import GATConv, GCNConv
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.nn.inits import glorot
 from torch_geometric.utils import softmax
@@ -62,9 +61,7 @@ def normalize(mx):
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     """Convert a scipy sparse matrix to a torch sparse tensor."""
     sparse_mx = sparse_mx.tocoo().astype(np.float32)
-    indices = torch.from_numpy(
-        np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64)
-    )
+    indices = torch.from_numpy(np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64))
     values = torch.from_numpy(sparse_mx.data)
     shape = torch.Size(sparse_mx.shape)
     return torch.sparse.FloatTensor(indices, values, shape)
@@ -78,7 +75,6 @@ def feature_OAG(layer_data, graph):
     feature = {}
     times = {}
     indxs = {}
-    texts = []
     for _type in layer_data:
         if len(layer_data[_type]) == 0:
             continue
@@ -86,21 +82,14 @@ def feature_OAG(layer_data, graph):
         tims = np.array(list(layer_data[_type].values()))[:, 1]
 
         if "node_emb" in graph.node_feature[_type]:
-            feature[_type] = np.array(
-                list(graph.node_feature[_type].loc[idxs, "node_emb"]), dtype=np.float
-            )
+            feature[_type] = np.array(list(graph.node_feature[_type].loc[idxs, "node_emb"]), dtype=np.float)
         else:
             feature[_type] = np.zeros([len(idxs), 400])
         feature[_type] = np.concatenate(
             (
                 feature[_type],
                 list(graph.node_feature[_type].loc[idxs, "emb"]),
-                np.log10(
-                    np.array(
-                        list(graph.node_feature[_type].loc[idxs, "citation"])
-                    ).reshape(-1, 1)
-                    + 0.01
-                ),
+                np.log10(np.array(list(graph.node_feature[_type].loc[idxs, "citation"])).reshape(-1, 1) + 0.01),
             ),
             axis=1,
         )
@@ -109,9 +98,7 @@ def feature_OAG(layer_data, graph):
         indxs[_type] = idxs
 
         if _type == "paper":
-            attr = np.array(
-                list(graph.node_feature[_type].loc[idxs, "title"]), dtype=np.str
-            )
+            attr = np.array(list(graph.node_feature[_type].loc[idxs, "title"]), dtype=np.str)
     return feature, times, indxs, attr
 
 
@@ -119,16 +106,13 @@ def feature_reddit(layer_data, graph):
     feature = {}
     times = {}
     indxs = {}
-    texts = []
     for _type in layer_data:
         if len(layer_data[_type]) == 0:
             continue
         idxs = np.array(list(layer_data[_type].keys()))
         tims = np.array(list(layer_data[_type].values()))[:, 1]
 
-        feature[_type] = np.array(
-            list(graph.node_feature[_type].loc[idxs, "emb"]), dtype=np.float
-        )
+        feature[_type] = np.array(list(graph.node_feature[_type].loc[idxs, "emb"]), dtype=np.float)
         times[_type] = tims
         indxs[_type] = idxs
 
@@ -218,24 +202,16 @@ class Graph:
             return ser
         return nfl[node["id"]]
 
-    def add_edge(
-        self, source_node, target_node, time=None, relation_type=None, directed=True
-    ):
+    def add_edge(self, source_node, target_node, time=None, relation_type=None, directed=True):
         edge = [self.add_node(source_node), self.add_node(target_node)]
         """
             Add bi-directional edges with different relation type
         """
-        self.edge_list[target_node["type"]][source_node["type"]][relation_type][
-            edge[1]
-        ][edge[0]] = time
+        self.edge_list[target_node["type"]][source_node["type"]][relation_type][edge[1]][edge[0]] = time
         if directed:
-            self.edge_list[source_node["type"]][target_node["type"]][
-                "rev_" + relation_type
-            ][edge[0]][edge[1]] = time
+            self.edge_list[source_node["type"]][target_node["type"]]["rev_" + relation_type][edge[0]][edge[1]] = time
         else:
-            self.edge_list[source_node["type"]][target_node["type"]][relation_type][
-                edge[0]
-            ][edge[1]] = time
+            self.edge_list[source_node["type"]][target_node["type"]][relation_type][edge[0]][edge[1]] = time
         self.times[time] = True
 
     def update_node(self, node):
@@ -246,7 +222,7 @@ class Graph:
                 nbl[ser][k] = node[k]
 
     def get_meta_graph(self):
-        types = self.get_types()
+        # types = self.get_types()
         metas = []
         for target_type in self.edge_list:
             for source_type in self.edge_list[target_type]:
@@ -258,7 +234,7 @@ class Graph:
         return list(self.node_feature.keys())
 
 
-def sample_subgraph(
+def sample_subgraph(  # noqa: C901
     graph,
     time_range,
     sampled_depth=2,
@@ -267,20 +243,14 @@ def sample_subgraph(
     feature_extractor=feature_OAG,
 ):
     """
-        Sample Sub-Graph based on the connection of other nodes with currently sampled nodes
-        We maintain budgets for each node type, indexed by <node_id, time>.
-        Currently sampled nodes are stored in layer_data.
-        After nodes are sampled, we construct the sampled adjacancy matrix.
+    Sample Sub-Graph based on the connection of other nodes with currently sampled nodes
+    We maintain budgets for each node type, indexed by <node_id, time>.
+    Currently sampled nodes are stored in layer_data.
+    After nodes are sampled, we construct the sampled adjacancy matrix.
     """
     layer_data = defaultdict(lambda: {})  # target_type  # {target_id: [ser, time]}
-    budget = defaultdict(  # source_type
-        lambda: defaultdict(lambda: [0.0, 0])  # source_id  # [sampled_score, time]
-    )
-    new_layer_adj = defaultdict(  # target_type
-        lambda: defaultdict(  # source_type
-            lambda: defaultdict(lambda: [])  # relation_type  # [target_id, source_id]
-        )
-    )
+    budget = defaultdict(lambda: defaultdict(lambda: [0.0, 0]))  # source_type  # source_id  # [sampled_score, time]
+
     """
         For each node being sampled, we find out all its neighborhood, 
         adding the degree count of these nodes in the budget.
@@ -298,17 +268,12 @@ def sample_subgraph(
                 if len(adl) < sampled_number:
                     sampled_ids = list(adl.keys())
                 else:
-                    sampled_ids = np.random.choice(
-                        list(adl.keys()), sampled_number, replace=False
-                    )
+                    sampled_ids = np.random.choice(list(adl.keys()), sampled_number, replace=False)
                 for source_id in sampled_ids:
                     source_time = adl[source_id]
-                    if source_time == None:
+                    if source_time is None:
                         source_time = target_time
-                    if (
-                        source_time > np.max(list(time_range.keys()))
-                        or source_id in layer_data[source_type]
-                    ):
+                    if source_time > np.max(list(time_range.keys())) or source_id in layer_data[source_type]:
                         continue
                     budget[source_type][source_id][0] += 1.0 / len(sampled_ids)
                     budget[source_type][source_id][1] = source_time
@@ -335,18 +300,16 @@ def sample_subgraph(
             keys = np.array(list(budget[source_type].keys()))
             if sampled_number > len(keys):
                 """
-                    Directly sample all the nodes
+                Directly sample all the nodes
                 """
                 sampled_ids = np.arange(len(keys))
             else:
                 """
-                    Sample based on accumulated degree
+                Sample based on accumulated degree
                 """
                 score = np.array(list(budget[source_type].values()))[:, 0] ** 2
                 score = score / np.sum(score)
-                sampled_ids = np.random.choice(
-                    len(score), sampled_number, p=score, replace=False
-                )
+                sampled_ids = np.random.choice(len(score), sampled_number, p=score, replace=False)
             sampled_keys = keys[sampled_ids]
             """
                 First adding the sampled nodes then updating budget.
@@ -365,9 +328,7 @@ def sample_subgraph(
     feature, times, indxs, texts = feature_extractor(layer_data, graph)
 
     edge_list = defaultdict(  # target_type
-        lambda: defaultdict(  # source_type
-            lambda: defaultdict(lambda: [])  # relation_type  # [target_id, source_id]
-        )
+        lambda: defaultdict(lambda: defaultdict(lambda: []))  # source_type  # relation_type  # [target_id, source_id]
     )
     for _type in layer_data:
         for _key in layer_data[_type]:
@@ -391,21 +352,19 @@ def sample_subgraph(
                     target_ser = tld[target_key][0]
                     for source_key in tesr[target_key]:
                         """
-                            Check whether each link (target_id, source_id) exist in original adjacancy matrix
+                        Check whether each link (target_id, source_id) exist in original adjacancy matrix
                         """
                         if source_key in sld:
                             source_ser = sld[source_key][0]
-                            edge_list[target_type][source_type][relation_type] += [
-                                [target_ser, source_ser]
-                            ]
+                            edge_list[target_type][source_type][relation_type] += [[target_ser, source_ser]]
     return feature, times, edge_list, indxs, texts
 
 
 def to_torch(feature, time, edge_list, graph):
     """
-        Transform a sampled sub-graph into pytorch Tensor
-        node_dict: {node_type: <node_number, node_type_ID>} node_number is used to trace back the nodes in original graph.
-        edge_dict: {edge_type: edge_type_ID}
+    Transform a sampled sub-graph into pytorch Tensor
+    node_dict: {node_type: <node_number, node_type_ID>} node_number is used to trace back the nodes in original graph.
+    edge_dict: {edge_type: edge_type_ID}
     """
     node_dict = {}
     node_feature = []
@@ -437,9 +396,7 @@ def to_torch(feature, time, edge_list, graph):
     for target_type in edge_list:
         for source_type in edge_list[target_type]:
             for relation_type in edge_list[target_type][source_type]:
-                for ii, (ti, si) in enumerate(
-                    edge_list[target_type][source_type][relation_type]
-                ):
+                for ii, (ti, si) in enumerate(edge_list[target_type][source_type][relation_type]):
                     tid, sid = (
                         ti + node_dict[target_type][0],
                         si + node_dict[source_type][0],
@@ -473,16 +430,7 @@ def to_torch(feature, time, edge_list, graph):
 
 class HGTConv(MessagePassing):
     def __init__(
-        self,
-        in_dim,
-        out_dim,
-        num_types,
-        num_relations,
-        n_heads,
-        dropout=0.2,
-        use_norm=True,
-        use_RTE=True,
-        **kwargs
+        self, in_dim, out_dim, num_types, num_relations, n_heads, dropout=0.2, use_norm=True, use_RTE=True, **kwargs
     ):
         super(HGTConv, self).__init__(aggr="add", **kwargs)
 
@@ -515,12 +463,8 @@ class HGTConv(MessagePassing):
             TODO: make relation_pri smaller, as not all <st, rt, tt> pair exist in meta relation list.
         """
         self.relation_pri = nn.Parameter(torch.ones(num_relations, self.n_heads))
-        self.relation_att = nn.Parameter(
-            torch.Tensor(num_relations, n_heads, self.d_k, self.d_k)
-        )
-        self.relation_msg = nn.Parameter(
-            torch.Tensor(num_relations, n_heads, self.d_k, self.d_k)
-        )
+        self.relation_att = nn.Parameter(torch.Tensor(num_relations, n_heads, self.d_k, self.d_k))
+        self.relation_msg = nn.Parameter(torch.Tensor(num_relations, n_heads, self.d_k, self.d_k))
         self.skip = nn.Parameter(torch.ones(num_types))
         self.drop = nn.Dropout(dropout)
         self.emb = RelTemporalEncoding(in_dim)
@@ -548,7 +492,7 @@ class HGTConv(MessagePassing):
         edge_time,
     ):
         """
-            j: source, i: target; <j, i>
+        j: source, i: target; <j, i>
         """
         data_size = edge_index_i.size(0)
         """
@@ -566,7 +510,7 @@ class HGTConv(MessagePassing):
                 q_linear = self.q_linears[target_type]
                 for relation_type in range(self.num_relations):
                     """
-                        idx is all the edges with meta relation <source_type, relation_type, target_type>
+                    idx is all the edges with meta relation <source_type, relation_type, target_type>
                     """
                     idx = (edge_type == int(relation_type)) & tb
                     if idx.sum() == 0:
@@ -583,21 +527,13 @@ class HGTConv(MessagePassing):
                     """
                     q_mat = q_linear(target_node_vec).view(-1, self.n_heads, self.d_k)
                     k_mat = k_linear(source_node_vec).view(-1, self.n_heads, self.d_k)
-                    k_mat = torch.bmm(
-                        k_mat.transpose(1, 0), self.relation_att[relation_type]
-                    ).transpose(1, 0)
-                    res_att[idx] = (
-                        (q_mat * k_mat).sum(dim=-1)
-                        * self.relation_pri[relation_type]
-                        / self.sqrt_dk
-                    )
+                    k_mat = torch.bmm(k_mat.transpose(1, 0), self.relation_att[relation_type]).transpose(1, 0)
+                    res_att[idx] = (q_mat * k_mat).sum(dim=-1) * self.relation_pri[relation_type] / self.sqrt_dk
                     """
                         Step 2: Heterogeneous Message Passing
                     """
                     v_mat = v_linear(source_node_vec).view(-1, self.n_heads, self.d_k)
-                    res_msg[idx] = torch.bmm(
-                        v_mat.transpose(1, 0), self.relation_msg[relation_type]
-                    ).transpose(1, 0)
+                    res_msg[idx] = torch.bmm(v_mat.transpose(1, 0), self.relation_msg[relation_type]).transpose(1, 0)
         """
             Softmax based on target node's id (edge_index_i). Store attention value in self.att for later visualization.
         """
@@ -608,8 +544,8 @@ class HGTConv(MessagePassing):
 
     def update(self, aggr_out, node_inp, node_type):
         """
-            Step 3: Target-specific Aggregation
-            x = W[node_type] * gelu(Agg(x)) + x
+        Step 3: Target-specific Aggregation
+        x = W[node_type] * gelu(Agg(x)) + x
         """
         aggr_out = F.gelu(aggr_out)
         res = torch.zeros(aggr_out.size(0), self.out_dim).to(node_inp.device)
@@ -623,9 +559,7 @@ class HGTConv(MessagePassing):
             """
             alpha = torch.sigmoid(self.skip[target_type])
             if self.use_norm:
-                res[idx] = self.norms[target_type](
-                    trans_out * alpha + node_inp[idx] * (1 - alpha)
-                )
+                res[idx] = self.norms[target_type](trans_out * alpha + node_inp[idx] * (1 - alpha))
             else:
                 res[idx] = trans_out * alpha + node_inp[idx] * (1 - alpha)
         return self.drop(res)
@@ -642,7 +576,7 @@ class HGTConv(MessagePassing):
 
 class RelTemporalEncoding(nn.Module):
     """
-        Implement the Temporal Encoding (Sinusoid) function.
+    Implement the Temporal Encoding (Sinusoid) function.
     """
 
     def __init__(self, n_hid, max_len=240, dropout=0.2):
@@ -651,12 +585,8 @@ class RelTemporalEncoding(nn.Module):
         position = torch.arange(0.0, max_len).unsqueeze(1)
         div_term = 1 / (10000 ** (torch.arange(0.0, n_hid * 2, 2.0)) / n_hid / 2)
         self.emb = nn.Embedding(max_len, n_hid * 2)
-        self.emb.weight.data[:, 0::2] = torch.sin(position * div_term) / math.sqrt(
-            n_hid
-        )
-        self.emb.weight.data[:, 1::2] = torch.cos(position * div_term) / math.sqrt(
-            n_hid
-        )
+        self.emb.weight.data[:, 0::2] = torch.sin(position * div_term) / math.sqrt(n_hid)
+        self.emb.weight.data[:, 1::2] = torch.cos(position * div_term) / math.sqrt(n_hid)
         self.emb.requires_grad = False
         self.lin = nn.Linear(n_hid * 2, n_hid)
 
@@ -731,9 +661,9 @@ class GNN(nn.Module):
         self.n_hid = n_hid
         self.adapt_ws = nn.ModuleList()
         self.drop = nn.Dropout(dropout)
-        for t in range(num_types):
+        for _ in range(num_types):
             self.adapt_ws.append(nn.Linear(in_dim, n_hid))
-        for l in range(n_layers - 1):
+        for _ in range(n_layers - 1):
             self.gcs.append(
                 GeneralConv(
                     conv_name,
@@ -799,9 +729,7 @@ class GPT_GNN(nn.Module):
             for relation_type in rem_edge_list[source_type]:
                 print(source_type, relation_type)
                 matcher = Matcher(gnn.n_hid, gnn.n_hid)
-                self.neg_queue[source_type][relation_type] = torch.FloatTensor([]).to(
-                    device
-                )
+                self.neg_queue[source_type][relation_type] = torch.FloatTensor([]).to(device)
                 self.link_dec_dict[source_type][relation_type] = matcher
                 self.params.append(matcher)
         self.attr_decoder = attr_decoder
@@ -868,15 +796,11 @@ class GPT_GNN(nn.Module):
                 negative_source_ids = [neg_ids[:sn] for neg_ids in negative_source_ids]
 
                 source_ids = torch.LongTensor(
-                    np.concatenate((positive_source_ids, negative_source_ids), axis=-1)
-                    + node_dict[source_type][0]
+                    np.concatenate((positive_source_ids, negative_source_ids), axis=-1) + node_dict[source_type][0]
                 )
                 emb = node_emb[source_ids]
 
-                if (
-                    use_queue
-                    and len(self.neg_queue[source_type][relation_type]) // n_nodes > 0
-                ):
+                if use_queue and len(self.neg_queue[source_type][relation_type]) // n_nodes > 0:
                     tmp = self.neg_queue[source_type][relation_type]
                     stx = len(tmp) // n_nodes
                     tmp = tmp[: stx * n_nodes].reshape(n_nodes, stx, -1)
@@ -893,11 +817,7 @@ class GPT_GNN(nn.Module):
                 res = res.reshape(n_nodes, rep_size)
                 ress += [res.detach()]
                 losses += F.log_softmax(res, dim=-1)[:, 0].mean()
-                if (
-                    update_queue
-                    and "L1" not in relation_type
-                    and "L2" not in relation_type
-                ):
+                if update_queue and "L1" not in relation_type and "L2" not in relation_type:
                     tmp = self.neg_queue[source_type][relation_type]
                     self.neg_queue[source_type][relation_type] = torch.cat(
                         [node_emb[source_node_ids].detach(), tmp], dim=0
@@ -921,10 +841,7 @@ class GPT_GNN(nn.Module):
             for i, idx in enumerate(idxs):
                 inp_idxs += [idx + [pad for _ in range(mxl - len(idx) - 1)]]
                 out_idxs += [idx[1:] + [pad for _ in range(mxl - len(idx))]]
-                masks += [
-                    [1 for _ in range(len(idx))]
-                    + [0 for _ in range(mxl - len(idx) - 1)]
-                ]
+                masks += [[1 for _ in range(len(idx))] + [0 for _ in range(mxl - len(idx) - 1)]]
             return (
                 torch.LongTensor(inp_idxs).transpose(0, 1).to(device),
                 torch.LongTensor(out_idxs).transpose(0, 1).to(device),
@@ -951,15 +868,13 @@ class Classifier(nn.Module):
         return torch.log_softmax(tx.squeeze(), dim=-1)
 
     def __repr__(self):
-        return "{}(n_hid={}, n_out={})".format(
-            self.__class__.__name__, self.n_hid, self.n_out
-        )
+        return "{}(n_hid={}, n_out={})".format(self.__class__.__name__, self.n_hid, self.n_out)
 
 
 class Matcher(nn.Module):
     """
-        Matching between a pair of nodes to conduct link prediction.
-        Use multi-head attention as matching model.
+    Matching between a pair of nodes to conduct link prediction.
+    Use multi-head attention as matching model.
     """
 
     def __init__(self, n_hid, n_out, temperature=0.1):
@@ -1004,7 +919,6 @@ class RNNModel(nn.Module):
         return decoded
 
     def from_w2v(self, w2v):
-        initrange = 0.1
         self.encoder.weight.data = w2v
         self.decoder.weight = self.encoder.weight
 
@@ -1019,9 +933,7 @@ class RNNModel(nn.Module):
 
 def preprocess_dataset(dataset) -> Graph:
     graph_reddit = Graph()
-    el = defaultdict(
-        lambda: defaultdict(lambda: int)
-    )  # target_id  # source_id(  # time
+    el = defaultdict(lambda: defaultdict(lambda: int))  # target_id  # source_id(  # time
     for i, j in tqdm(dataset.data.edge_index.t()):
         el[i.item()][j.item()] = 1
 

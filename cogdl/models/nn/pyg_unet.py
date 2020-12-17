@@ -23,14 +23,7 @@ class UNet(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(
-            args.num_features,
-            args.hidden_size,
-            args.num_classes,
-            args.num_layers,
-            args.dropout,
-            args.num_nodes
-        )
+        return cls(args.num_features, args.hidden_size, args.num_classes, args.num_layers, args.dropout, args.num_nodes)
 
     def __init__(self, in_feats, hidden_size, out_feats, num_layers, dropout, num_nodes):
         super(UNet, self).__init__()
@@ -43,23 +36,17 @@ class UNet(BaseModel):
         self.num_nodes = 0
 
         self.unet = GraphUNet(
-            self.in_feats,
-            self.hidden_size,
-            self.out_feats,
-            depth=3,
-            pool_ratios=[2000 / num_nodes, 0.5],
-            act=F.elu
+            self.in_feats, self.hidden_size, self.out_feats, depth=3, pool_ratios=[2000 / num_nodes, 0.5], act=F.elu
         )
 
     def forward(self, x, edge_index):
-        edge_index, _ = dropout_adj(edge_index, p=0.2,
-                                    force_undirected=True,
-                                    num_nodes=x.shape[0],
-                                    training=self.training)
+        edge_index, _ = dropout_adj(
+            edge_index, p=0.2, force_undirected=True, num_nodes=x.shape[0], training=self.training
+        )
         x = F.dropout(x, p=self.dropout, training=self.training)
 
         x = self.unet(x, edge_index)
         return x
-    
+
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

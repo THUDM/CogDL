@@ -10,7 +10,7 @@ from .. import BaseModel, register_model, alias_draw, alias_setup
 class PTE(BaseModel):
     r"""The PTE model from the `"PTE: Predictive Text Embedding through Large-scale Heterogeneous Text Networks"
     <https://arxiv.org/abs/1508.00200>`_ paper.
-    
+
     Args:
         hidden_size (int) : The dimension of node representation.
         walk_length (int) : The walk length.
@@ -19,7 +19,7 @@ class PTE(BaseModel):
         batch_size (int) : The batch size of training in PTE.
         alpha (float) : The initial learning rate of SGD.
     """
-    
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -47,9 +47,7 @@ class PTE(BaseModel):
             args.alpha,
         )
 
-    def __init__(
-        self, dimension, walk_length, walk_num, negative, batch_size, alpha
-    ):
+    def __init__(self, dimension, walk_length, walk_num, negative, batch_size, alpha):
         super(PTE, self).__init__()
         self.dimension = dimension
         self.walk_length = walk_length
@@ -64,32 +62,32 @@ class PTE(BaseModel):
         self.num_node = G.number_of_nodes()
         self.num_edge = G.number_of_edges()
         self.num_sampling_edge = self.walk_length * self.walk_num * self.num_node
-        
+
         self.num_node_type = len(set(self.node_type))
-        context_node = [nid for nid, ntype in enumerate(self.node_type) if ntype==0]
-        
+        context_node = [nid for nid, ntype in enumerate(self.node_type) if ntype == 0]
+
         self.edges, self.edges_prob = [[] for _ in range(self.num_node_type)], []
         self.node_prob, self.id2node = [], [dict() for _ in range(self.num_node_type)]
-        
+
         subgraphs = []
         for i in range(self.num_node_type):
-            for j in range(i+1, self.num_node_type):
-                context_node = [nid for nid, ntype in enumerate(self.node_type) if ntype==i or ntype ==j]
+            for j in range(i + 1, self.num_node_type):
+                context_node = [nid for nid, ntype in enumerate(self.node_type) if ntype == i or ntype == j]
                 sub_graph = nx.Graph()
                 sub_graph = self.G.subgraph(context_node)
                 if sub_graph.number_of_edges() != 0:
                     subgraphs.append(sub_graph)
         self.num_graph = len(subgraphs)
         print("number of subgraph", self.num_graph)
-        
+
         for i in range(self.num_graph):
             self.edges[i] = [[e[0], e[1]] for e in subgraphs[i].edges()]
             edges_prob = np.asarray([subgraphs[i][u][v].get("weight", 1.0) for u, v in self.edges[i]])
             edges_prob /= np.sum(edges_prob)
             edges_table_prob = alias_setup(edges_prob)
             self.edges_prob.append(edges_table_prob)
-            
-            context_node = subgraphs[i].nodes()    
+
+            context_node = subgraphs[i].nodes()
             self.id2node[i] = dict(zip(range(len(context_node)), context_node))
             node2id = dict(zip(context_node, range(len(context_node))))
 
@@ -100,14 +98,11 @@ class PTE(BaseModel):
 
             node_prob = np.power(degree_weight, 0.75)
             node_prob /= np.sum(node_prob)
-            nodes_table_prob = alias_setup(node_prob) 
+            nodes_table_prob = alias_setup(node_prob)
             self.node_prob.append(nodes_table_prob)
 
-
         print("train pte with 2-order")
-        self.emb_vertex = (
-            np.random.random((self.num_node, self.dimension)) - 0.5
-        ) / self.dimension
+        self.emb_vertex = (np.random.random((self.num_node, self.dimension)) - 0.5) / self.dimension
         self.emb_context = self.emb_vertex
         self._train_line()
         embedding = preprocessing.normalize(self.emb_vertex, "l2")
@@ -120,7 +115,9 @@ class PTE(BaseModel):
         vec_error += g * vec_v
         vec_v += g * vec_u
 
-    def _train_line(self,):
+    def _train_line(
+        self,
+    ):
         # train Line model with order
         self.alpha = self.init_alpha
         batch_size = self.batch_size
@@ -133,7 +130,7 @@ class PTE(BaseModel):
                     f"Progress: {b *1.0/num_batch * 100:.4f}%, alpha: {self.alpha:.6f}, time: {time.time() - t0:.4f}"
                 )
                 self.alpha = self.init_alpha * max((1 - b * 1.0 / num_batch), 0.0001)
-            
+
             for k in range(self.num_graph):
                 u, v = [0] * batch_size, [0] * batch_size
                 for i in range(batch_size):
@@ -148,7 +145,5 @@ class PTE(BaseModel):
                         for i in range(batch_size):
                             neg_node = alias_draw(self.node_prob[k][0], self.node_prob[k][1])
                             target[i] = self.id2node[k][neg_node]
-                        self._update(
-                            self.emb_vertex[u], self.emb_context[target], vec_error, label
-                        )
+                        self._update(self.emb_vertex[u], self.emb_context[target], vec_error, label)
                 self.emb_vertex[u] += vec_error

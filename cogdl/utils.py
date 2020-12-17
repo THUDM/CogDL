@@ -58,8 +58,7 @@ def add_remaining_self_loops(edge_index, edge_weight=None, fill_value=1, num_nod
 
     inv_mask = ~mask
 
-    loop_weight = torch.full((N,), fill_value, dtype=edge_weight.dtype,
-                             device=edge_weight.device)
+    loop_weight = torch.full((N,), fill_value, dtype=edge_weight.dtype, device=edge_weight.device)
     remaining_edge_weight = edge_weight[inv_mask]
     if remaining_edge_weight.numel() > 0:
         loop_weight[row[inv_mask]] = remaining_edge_weight
@@ -83,7 +82,7 @@ def symmetric_normalization(num_nodes, edge_index, edge_weight=None):
         edge_weight = torch.ones(edge_index.shape[1]).to(device)
     row_sum = spmm(edge_index, edge_weight, torch.ones(num_nodes, 1).to(device)).view(-1)
     row_sum_inv_sqrt = row_sum.pow(-0.5)
-    row_sum_inv_sqrt[row_sum_inv_sqrt == float('inf')] = 0
+    row_sum_inv_sqrt[row_sum_inv_sqrt == float("inf")] = 0
     return row_sum_inv_sqrt[edge_index[1]] * edge_weight * row_sum_inv_sqrt[edge_index[0]]
 
 
@@ -195,10 +194,10 @@ def batch_mean_pooling(x, batch):
 
 
 def negative_edge_sampling(
-        edge_index: torch.Tensor,
-        num_nodes: Optional[int] = None,
-        num_neg_samples: Optional[int] = None,
-        undirected: bool = False,
+    edge_index: torch.Tensor,
+    num_nodes: Optional[int] = None,
+    num_neg_samples: Optional[int] = None,
+    undirected: bool = False,
 ):
     if num_nodes is None:
         num_nodes = len(torch.unique(edge_index))
@@ -211,13 +210,10 @@ def negative_edge_sampling(
     row, col = edge_index
     unique_pair = row * num_nodes + col
 
-    num_samples = int(
-                    num_neg_samples \
-                    * abs(1 / (1 - 1.1 * edge_index.size(1) / size))
-                    )
+    num_samples = int(num_neg_samples * abs(1 / (1 - 1.1 * edge_index.size(1) / size)))
     sample_result = torch.LongTensor(random.sample(range(size), min(num_samples, num_samples)))
     mask = torch.from_numpy(np.isin(sample_result, unique_pair.to("cpu"))).to(torch.bool)
-    selected = sample_result[~mask][: num_neg_samples].to(edge_index.device)
+    selected = sample_result[~mask][:num_neg_samples].to(edge_index.device)
 
     row = selected // num_nodes
     col = selected % num_nodes
@@ -264,5 +260,5 @@ def set_random_seed(seed):
 
 
 if __name__ == "__main__":
-    args = build_args_from_dict({'a': 1, 'b': 2})
+    args = build_args_from_dict({"a": 1, "b": 2})
     print(args.a, args.b)

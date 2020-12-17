@@ -15,35 +15,34 @@ if TYPE_CHECKING:
 class SupervisedModel(BaseModel, ABC):
     @abstractmethod
     def loss(self, data: Any) -> Any:
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class SupervisedHeterogeneousNodeClassificationModel(BaseModel, ABC):
     @abstractmethod
     def loss(self, data: Any) -> Any:
-        raise NotImplemented
+        raise NotImplementedError
 
     def evaluate(self, data: Any, nodes: Any, targets: Any) -> Any:
-        raise NotImplemented
+        raise NotImplementedError
 
     @staticmethod
-    def get_trainer(
-        taskType: Any, args: Any
-    ) -> "Optional[Type[SupervisedHeterogeneousNodeClassificationTrainer]]":
+    def get_trainer(taskType: Any, args: Any) -> "Optional[Type[SupervisedHeterogeneousNodeClassificationTrainer]]":
         return None
 
 
 class SupervisedHomogeneousNodeClassificationModel(BaseModel, ABC):
     @abstractmethod
     def loss(self, data: Any) -> Any:
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def predict(self, data: Any) -> Any:
-        raise NotImplemented
+        raise NotImplementedError
 
     @staticmethod
     def get_trainer(
-        taskType: Any, args: Any,
+        taskType: Any,
+        args: Any,
     ) -> "Optional[Type[SupervisedHomogeneousNodeClassificationTrainer]]":
         return None

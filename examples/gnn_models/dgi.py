@@ -22,16 +22,13 @@ def build_default_args_for_node_classification(dataset):
         "device_id": [0],
         "seed": [0],
         "num_shuffle": 5,
-
         "dropout": 0.0,
         "hidden_size": 512,
         "num_layers": 2,
         "sampler": "none",
-
         "task": "unsupervised_node_classification",
         "model": "dgi",
         "dataset": dataset,
-
         "save_dir": "./saved",
         "enhance": None,
     }
@@ -42,6 +39,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

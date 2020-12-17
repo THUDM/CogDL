@@ -21,7 +21,6 @@ def build_default_args_for_node_classification(dataset):
         "cpu": cpu,
         "device_id": [0],
         "seed": [0, 1, 2],
-
         "num_features": 1,
         "hidden_size": 2048,
         "out_channels": 1,
@@ -33,10 +32,9 @@ def build_default_args_for_node_classification(dataset):
         "asymm_norm": False,
         "set_diag": False,
         "remove_diag": False,
-
         "task": "node_classification",
         "model": "sign",
-        "dataset": dataset
+        "dataset": dataset,
     }
     return build_args_from_dict(args)
 
@@ -45,6 +43,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

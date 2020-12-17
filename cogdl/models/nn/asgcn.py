@@ -11,6 +11,7 @@ from torch.nn.parameter import Parameter
 
 from .. import BaseModel, register_model
 
+
 class GraphConvolution(nn.Module):
     """
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
@@ -42,14 +43,8 @@ class GraphConvolution(nn.Module):
             return output
 
     def __repr__(self):
-        return (
-            self.__class__.__name__
-            + " ("
-            + str(self.in_features)
-            + " -> "
-            + str(self.out_features)
-            + ")"
-        )
+        return self.__class__.__name__ + " (" + str(self.in_features) + " -> " + str(self.out_features) + ")"
+
 
 @register_model("asgcn")
 class ASGCN(BaseModel):
@@ -62,7 +57,7 @@ class ASGCN(BaseModel):
         parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--dropout", type=float, default=0.5)
         parser.add_argument("--num-layers", type=int, default=3)
-        parser.add_argument("--sample-size", type=int, nargs='+', default=[64,64,32])
+        parser.add_argument("--sample-size", type=int, nargs='+', default=[64, 64, 32])
         # fmt: on
 
     @classmethod
@@ -90,15 +85,10 @@ class ASGCN(BaseModel):
         self.w_s1 = Parameter(torch.FloatTensor(num_features))
 
         shapes = [num_features] + [hidden_size] * (num_layers - 1) + [num_classes]
-        self.convs = nn.ModuleList(
-            [
-                GraphConvolution(shapes[layer], shapes[layer + 1])
-                for layer in range(num_layers)
-            ]
-        )
+        self.convs = nn.ModuleList([GraphConvolution(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
 
         self.reset_parameters()
-    
+
     def reset_parameters(self):
         stdv = 1.0 / math.sqrt(self.hidden_size)
         self.w_s0.data.normal_(-stdv, stdv)
@@ -116,7 +106,7 @@ class ASGCN(BaseModel):
     def compute_adjlist(self, sp_adj, max_degree=32):
         """Transfer sparse adjacent matrix to adj-list format"""
         num_data = sp_adj.shape[0]
-        adj = num_data + np.zeros((num_data+1, max_degree), dtype=np.int32)
+        adj = num_data + np.zeros((num_data + 1, max_degree), dtype=np.int32)
 
         for v in range(num_data):
             neighbors = np.nonzero(sp_adj[v, :])[1]
@@ -133,7 +123,7 @@ class ASGCN(BaseModel):
         """Transfer adj-list format to sparsetensor"""
         u_sampled, index = torch.unique(torch.flatten(adj), return_inverse=True)
 
-        row = (torch.range(0, index.shape[0]-1) / adj.shape[1]).long().to(adj.device)
+        row = (torch.range(0, index.shape[0] - 1) / adj.shape[1]).long().to(adj.device)
         col = index
         values = torch.ones(index.shape[0]).float().to(adj.device)
         indices = torch.cat([row.unsqueeze(1), col.unsqueeze(1)], axis=1).t()
@@ -145,7 +135,6 @@ class ASGCN(BaseModel):
 
     def _sample_one_layer(self, x, adj, v, sample_size):
         support, u = self.from_adjlist(adj)
-
 
         h_v = torch.sum(torch.matmul(x[v], self.w_s1))
         h_u = torch.matmul(x[u], self.w_s0)
@@ -161,7 +150,7 @@ class ASGCN(BaseModel):
 
         samples = torch.multinomial(p1, sample_size, False)
         u_sampled = u[samples]
-            
+
         support_sampled = torch.index_select(support, 1, samples)
 
         return u_sampled, support_sampled

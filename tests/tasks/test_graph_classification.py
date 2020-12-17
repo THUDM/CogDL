@@ -99,6 +99,22 @@ def add_sagpool_args(args):
     args.pooling_layer_type = "gcnconv"
     return args
 
+def add_pna_args(args):
+    args.hidden_size = 60
+    args.avg_deg = 3
+    args.layer = 1
+    args.train_ratio = 0.7
+    args.test_ratio = 0.1
+    args.pooling_ratio = 0.5
+    args.pre_layers =  1
+    args.towers =  1
+    args.post_layers =  1
+    args.edge_dim =  None
+    args.aggregators =  ['mean']
+    args.scalers = ['identity']
+    args.divide_input =  False
+    return args
+
 def test_gin_mutag():
     args = get_default_args()
     args = add_gin_args(args)
@@ -256,27 +272,39 @@ def test_sagpool_proteins():
     ret = task.train()
     assert ret["Acc"] > 0
 
+def test_pna_proteins():
+    args = get_default_args()
+    args = add_pna_args(args)
+    args.dataset = "proteins"
+    args.model = "pyg_pna"
+    args.batch_size = 20
+    task = build_task(args)
+    ret = task.train()
+    assert ret["Acc"] > 0
+
 
 if __name__ == "__main__":
 
-    test_gin_imdb_binary()
-    test_gin_mutag()
-    test_gin_proteins()
+    # test_gin_imdb_binary()
+    # test_gin_mutag()
+    # test_gin_proteins()
 
-    test_sortpool_mutag()
-    test_sortpool_proteins()
+    # test_sortpool_mutag()
+    # test_sortpool_proteins()
 
-    test_diffpool_mutag()
-    test_diffpool_proteins()
+    # test_diffpool_mutag()
+    # test_diffpool_proteins()
 
-    test_dgcnn_proteins()
-    test_dgcnn_imdb_binary()
+    # test_dgcnn_proteins()
+    # test_dgcnn_imdb_binary()
 
-    test_patchy_san_mutag()
-    test_patchy_san_proteins()
+    # test_patchy_san_mutag()
+    # test_patchy_san_proteins()
 
 
-    test_hgpsl_proteins()
+    # test_hgpsl_proteins()
 
-    test_sagpool_mutag()
-    test_sagpool_proteins()
+    # test_sagpool_mutag()
+    # test_sagpool_proteins()
+
+    test_pna_proteins()

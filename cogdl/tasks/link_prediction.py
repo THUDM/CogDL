@@ -1,25 +1,23 @@
+import copy
+import json
+import logging
+import os
 import random
 
-import os
-import logging
-import json
-import copy
 import networkx as nx
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
 import torch.nn as nn
+from cogdl.datasets import build_dataset
+from cogdl.datasets.kg_data import BidirectionalOneShotIterator, TrainDataset
+from cogdl.models import build_model
+from cogdl.models.emb import DNGR, HOPE, LINE, SDNE, DeepWalk, GraRep, NetMF, NetSMF, Node2vec, ProNE
+from cogdl.utils import negative_edge_sampling
 from sklearn.metrics import auc, f1_score, precision_recall_curve, roc_auc_score
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from cogdl.datasets import build_dataset
-from cogdl.models import build_model
-
 from . import BaseTask, register_task
-
-from cogdl.datasets.kg_data import BidirectionalOneShotIterator, TrainDataset
-from cogdl.utils import negative_edge_sampling
-from cogdl.models.emb import *
 
 
 def save_model(model, optimizer, save_variable_list, args):
@@ -32,24 +30,16 @@ def save_model(model, optimizer, save_variable_list, args):
     with open(os.path.join(args.save_path, "config.json"), "w") as fjson:
         json.dump(argparse_dict, fjson)
 
-    torch.save({
-        **save_variable_list,
-        "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict()},
-        os.path.join(args.save_path, "checkpoint")
+    torch.save(
+        {**save_variable_list, "model_state_dict": model.state_dict(), "optimizer_state_dict": optimizer.state_dict()},
+        os.path.join(args.save_path, "checkpoint"),
     )
 
     entity_embedding = model.entity_embedding.detach().cpu().numpy()
-    np.save(
-        os.path.join(args.save_path, "entity_embedding"),
-        entity_embedding
-    )
+    np.save(os.path.join(args.save_path, "entity_embedding"), entity_embedding)
 
     relation_embedding = model.relation_embedding.detach().cpu().numpy()
-    np.save(
-        os.path.join(args.save_path, "relation_embedding"),
-        relation_embedding
-    )
+    np.save(os.path.join(args.save_path, "relation_embedding"), relation_embedding)
 
 
 def set_logger(args):
@@ -67,7 +57,7 @@ def set_logger(args):
         level=logging.INFO,
         datefmt="%Y-%m-%d %H:%M:%S",
         filename=log_file,
-        filemode="w"
+        filemode="w",
     )
     console = logging.StreamHandler()
     console.setLevel(logging.INFO)
@@ -88,11 +78,7 @@ def divide_data(input_list, division_rate):
     local_division = len(input_list) * np.cumsum(np.array(division_rate))
     random.shuffle(input_list)
     return [
-        input_list[
-        int(round(local_division[i - 1]))
-        if i > 0
-        else 0: int(round(local_division[i]))
-        ]
+        input_list[int(round(local_division[i - 1])) if i > 0 else 0 : int(round(local_division[i]))]
         for i in range(len(local_division))
     ]
 
@@ -127,18 +113,14 @@ def gen_node_pairs(train_data, test_data, negative_ratio=5):
     for u, v in test_data:
         if u in training_nodes and v in training_nodes:
             test_true_data.append((u, v))
-    test_false_data = randomly_choose_false_edges(
-        list(training_nodes), train_data, len(test_data) * negative_ratio
-    )
+    test_false_data = randomly_choose_false_edges(list(training_nodes), train_data, len(test_data) * negative_ratio)
     return (test_true_data, test_false_data)
 
 
 def get_score(embs, node1, node2):
     vector1 = embs[int(node1)]
     vector2 = embs[int(node2)]
-    return np.dot(vector1, vector2) / (
-            np.linalg.norm(vector1) * np.linalg.norm(vector2)
-    )
+    return np.dot(vector1, vector2) / (np.linalg.norm(vector1) * np.linalg.norm(vector2))
 
 
 def evaluate(embs, true_edges, false_edges):
@@ -174,13 +156,26 @@ def select_task(model_name=None, model=None):
             return "KGLinkPrediction"
         elif model_name in ["distmult", "transe", "rotate", "complex"]:
             return "TripleLinkPrediction"
-        elif model_name in ["prone", "netmf", "deepwalk", "line", "hope", "node2vec", "netmf", "netsmf", "sdne", "grarep", "dngr"]:
+        elif model_name in [
+            "prone",
+            "netmf",
+            "deepwalk",
+            "line",
+            "hope",
+            "node2vec",
+            "netmf",
+            "netsmf",
+            "sdne",
+            "grarep",
+            "dngr",
+        ]:
             return "HomoLinkPrediction"
         else:
             return "GNNLinkPrediction"
     else:
-        from cogdl.models.nn import rgcn, compgcn
-        from cogdl.models.emb import distmult, rotate, transe, complex
+        from cogdl.models.emb import complex, distmult, rotate, transe
+        from cogdl.models.nn import compgcn, rgcn
+
         if type(model) in [rgcn.LinkPredictRGCN, compgcn.LinkPredictCompGCN]:
             return "KGLinkPrediction"
         elif type(model) in [distmult.DistMult, rotate.RotatE, transe.TransE, complex.ComplEx]:
@@ -211,13 +206,9 @@ class HomoLinkPrediction(nn.Module):
             if (edge[0], edge[1]) not in edge_set and (edge[1], edge[0]) not in edge_set:
                 edge_set.add(edge)
         edge_list = list(edge_set)
-        self.train_data, self.test_data = divide_data(
-            edge_list, [0.90, 0.10]
-        )
+        self.train_data, self.test_data = divide_data(edge_list, [0.90, 0.10])
 
-        self.test_data = gen_node_pairs(
-            self.train_data, self.test_data, args.negative_ratio
-        )
+        self.test_data = gen_node_pairs(self.train_data, self.test_data, args.negative_ratio)
 
     def train(self):
         G = nx.Graph()
@@ -229,9 +220,7 @@ class HomoLinkPrediction(nn.Module):
             embs[node] = embeddings[vid]
 
         roc_auc, f1_score, pr_auc = evaluate(embs, self.test_data[0], self.test_data[1])
-        print(
-            f"Test ROC-AUC = {roc_auc:.4f}, F1 = {f1_score:.4f}, PR-AUC = {pr_auc:.4f}"
-        )
+        print(f"Test ROC-AUC = {roc_auc:.4f}, F1 = {f1_score:.4f}, PR-AUC = {pr_auc:.4f}")
         return dict(ROC_AUC=roc_auc, PR_AUC=pr_auc, F1=f1_score)
 
 
@@ -256,11 +245,11 @@ class TripleLinkPrediction(nn.Module):
 
     def train(self):
 
-        train_triples = self.dataset.triples[self.dataset.train_start_idx:self.dataset.valid_start_idx]
+        train_triples = self.dataset.triples[self.dataset.train_start_idx : self.dataset.valid_start_idx]
         logging.info("#train: %d" % len(train_triples))
-        valid_triples = self.dataset.triples[self.dataset.valid_start_idx:self.dataset.test_start_idx]
+        valid_triples = self.dataset.triples[self.dataset.valid_start_idx : self.dataset.test_start_idx]
         logging.info("#valid: %d" % len(valid_triples))
-        test_triples = self.dataset.triples[self.dataset.test_start_idx:]
+        test_triples = self.dataset.triples[self.dataset.test_start_idx :]
         logging.info("#test: %d" % len(test_triples))
 
         all_true_triples = train_triples + valid_triples + test_triples
@@ -272,14 +261,14 @@ class TripleLinkPrediction(nn.Module):
                 TrainDataset(train_triples, nentity, nrelation, self.args.negative_sample_size, "head-batch"),
                 batch_size=self.args.batch_size,
                 shuffle=True,
-                collate_fn=TrainDataset.collate_fn
+                collate_fn=TrainDataset.collate_fn,
             )
 
             train_dataloader_tail = DataLoader(
                 TrainDataset(train_triples, nentity, nrelation, self.args.negative_sample_size, "tail-batch"),
                 batch_size=self.args.batch_size,
                 shuffle=True,
-                collate_fn=TrainDataset.collate_fn
+                collate_fn=TrainDataset.collate_fn,
             )
 
             train_iterator = BidirectionalOneShotIterator(train_dataloader_head, train_dataloader_tail)
@@ -287,8 +276,7 @@ class TripleLinkPrediction(nn.Module):
             # Set training configuration
             current_learning_rate = self.args.learning_rate
             optimizer = torch.optim.Adam(
-                filter(lambda p: p.requires_grad, self.model.parameters()),
-                lr=current_learning_rate
+                filter(lambda p: p.requires_grad, self.model.parameters()), lr=current_learning_rate
             )
             if self.args.warm_up_steps:
                 warm_up_steps = self.args.warm_up_steps
@@ -339,8 +327,7 @@ class TripleLinkPrediction(nn.Module):
                     current_learning_rate = current_learning_rate / 10
                     logging.info("Change learning_rate to %f at step %d" % (current_learning_rate, step))
                     optimizer = torch.optim.Adam(
-                        filter(lambda p: p.requires_grad, self.model.parameters()),
-                        lr=current_learning_rate
+                        filter(lambda p: p.requires_grad, self.model.parameters()), lr=current_learning_rate
                     )
                     warm_up_steps = warm_up_steps * 3
 
@@ -348,7 +335,7 @@ class TripleLinkPrediction(nn.Module):
                     save_variable_list = {
                         "step": step,
                         "current_learning_rate": current_learning_rate,
-                        "warm_up_steps": warm_up_steps
+                        "warm_up_steps": warm_up_steps,
                     }
                     save_model(self.model, optimizer, save_variable_list, self.args)
 
@@ -367,7 +354,7 @@ class TripleLinkPrediction(nn.Module):
             save_variable_list = {
                 "step": step,
                 "current_learning_rate": current_learning_rate,
-                "warm_up_steps": warm_up_steps
+                "warm_up_steps": warm_up_steps,
             }
             save_model(self.model, optimizer, save_variable_list, self.args)
 
@@ -396,10 +383,7 @@ class KGLinkPrediction(nn.Module):
         self.max_epoch = args.max_epoch
         self.patience = min(args.patience, 20)
         self.grad_norm = 1.0
-        self.optimizer = torch.optim.AdamW(
-            self.model.parameters(), lr=args.lr,
-            weight_decay=args.weight_decay
-        )
+        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     def train(self):
         epoch_iter = tqdm(range(self.max_epoch))
@@ -428,9 +412,7 @@ class KGLinkPrediction(nn.Module):
             )
         self.model = best_model
         test_mrr, test_hits = self._test_step("test")
-        print(
-            f"Test MRR:{test_mrr}, Hits@1/3/10: {test_hits}"
-        )
+        print(f"Test MRR:{test_mrr}, Hits@1/3/10: {test_hits}")
         return dict(MRR=test_mrr, HITS1=test_hits[0], HITS3=test_hits[1], HITS10=test_hits[2])
 
     def _train_step(self, split="train"):
@@ -480,10 +462,7 @@ class GNNHomoLinkPrediction(nn.Module):
         self.max_epoch = args.max_epoch
         self.patience = args.patience
         self.grad_norm = 1.5
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(), lr=args.lr,
-            weight_decay=args.weight_decay
-        )
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     def train(self):
         best_model = None
@@ -579,8 +558,8 @@ class GNNHomoLinkPrediction(nn.Module):
         num_test = int(num_edges * test_ratio)
 
         index = [[0, num_val], [num_val, num_val + num_test], [num_val + num_test, -1]]
-        sampled_rows = [row[l:r] for l, r in index]
-        sampled_cols = [col[l:r] for l, r in index]
+        sampled_rows = [row[l:r] for l, r in index]  # noqa E741
+        sampled_cols = [col[l:r] for l, r in index]  # noqa E741
 
         # sample false edges
         num_false = num_val + num_test
@@ -604,7 +583,7 @@ class GNNHomoLinkPrediction(nn.Module):
             num_val = int(ratio * num_val)
             num_test = int(ratio * num_test)
         val_false_edges = torch.from_numpy(edge_index_false[:, 0:num_val])
-        test_fal_edges = torch.from_numpy(edge_index_false[:, num_val: num_test + num_val])
+        test_fal_edges = torch.from_numpy(edge_index_false[:, num_val : num_test + num_val])
 
         def to_undirected(_row, _col):
             _edge_index = torch.stack([_row, _col], dim=0)

@@ -15,7 +15,7 @@ from tqdm import tqdm
 from cogdl import options
 from cogdl.datasets import build_dataset
 from cogdl.tasks import build_task
-from train import gen_variants, tabulate_results
+from cogdl.utils import set_random_seed, tabulate_results
 
 
 def main(args):
@@ -23,10 +23,7 @@ def main(args):
         pid = mp.current_process().pid
         torch.cuda.set_device(args.pid_to_cuda[pid])
 
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    torch.cuda.manual_seed(args.seed)
+    set_random_seed(args.seed)
 
     task = build_task(args)
     result = task.train()
@@ -60,9 +57,7 @@ if __name__ == "__main__":
     args.dataset = datasets
 
     print(args)
-    variants = list(
-        gen_variants(dataset=args.dataset, model=args.model, seed=args.seed)
-    )
+    variants = list(gen_variants(dataset=args.dataset, model=args.model, seed=args.seed))
 
     device_ids = args.device_id
     if args.cpu:
@@ -76,6 +71,7 @@ if __name__ == "__main__":
         # Map process to cuda device
         pids = pool.map(getpid, range(num_workers))
         pid_to_cuda = dict(zip(pids, device_ids))
+
         # yield all variants
         def variant_args_generator():
             """Form variants as group with size of num_workers"""

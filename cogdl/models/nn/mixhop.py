@@ -47,10 +47,7 @@ class MixHop(BaseModel):
         shapes = [num_features] + [sum(layer1_pows), sum(layer2_pows)]
 
         self.mixhops = nn.ModuleList(
-            [
-                MixHopLayer(shapes[layer], [0, 1, 2], layer_pows[layer])
-                for layer in range(len(layer_pows))
-            ]
+            [MixHopLayer(shapes[layer], [0, 1, 2], layer_pows[layer]) for layer in range(len(layer_pows))]
         )
         self.fc = nn.Linear(shapes[-1], num_classes)
 
@@ -61,6 +58,6 @@ class MixHop(BaseModel):
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.fc(x)
         return x
-    
+
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

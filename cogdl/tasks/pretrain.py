@@ -19,6 +19,6 @@ class PretrainTask(BaseTask):
         self.device = torch.device("cpu" if args.cpu else "cuda")
         self.model = build_model(args)
         self.model = self.model.to(self.device)
-    
+
     def train(self):
         return self.model.trainer.fit()

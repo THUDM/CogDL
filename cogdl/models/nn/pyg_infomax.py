@@ -47,11 +47,13 @@ class Infomax(BaseModel):
         self.num_features = num_features
         self.num_classes = num_classes
         self.hidden_size = hidden_size
-        
+
         self.model = DeepGraphInfomax(
-            hidden_channels=hidden_size, encoder=Encoder(num_features, hidden_size),
+            hidden_channels=hidden_size,
+            encoder=Encoder(num_features, hidden_size),
             summary=lambda z, *args, **kwargs: torch.sigmoid(z.mean(dim=0)),
-            corruption=corruption)
+            corruption=corruption,
+        )
 
     def forward(self, x, edge_index):
         return self.model(x, edge_index)
@@ -60,10 +62,10 @@ class Infomax(BaseModel):
         pos_z, neg_z, summary = self.forward(data.x, data.edge_index)
         loss = self.model.loss(pos_z, neg_z, summary)
         return loss
-    
+
     def predict(self, data):
         z, _, _ = self.forward(data.x, data.edge_index)
-        clf = LogisticRegression(solver='lbfgs', multi_class='auto', max_iter=150)
+        clf = LogisticRegression(solver="lbfgs", multi_class="auto", max_iter=150)
         clf.fit(z[data.train_mask].detach().cpu().numpy(), data.y[data.train_mask].detach().cpu().numpy())
         logits = torch.Tensor(clf.predict_proba(z.detach().cpu().numpy()))
         if z.is_cuda:

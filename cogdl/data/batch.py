@@ -28,7 +28,7 @@ class Batch(Data):
 
         keys = [set(data.keys) for data in data_list]
         keys = list(set.union(*keys))
-        assert 'batch' not in keys
+        assert "batch" not in keys
 
         batch = Batch()
         batch.__data_class__ = data_list[0].__class__
@@ -38,7 +38,7 @@ class Batch(Data):
             batch[key] = []
 
         for key in follow_batch:
-            batch['{}_batch'.format(key)] = []
+            batch["{}_batch".format(key)] = []
 
         cumsum = {key: 0 for key in keys}
         batch.batch = []
@@ -56,12 +56,12 @@ class Batch(Data):
                 batch[key].append(item)
 
                 if key in follow_batch:
-                    item = torch.full((size, ), i, dtype=torch.long)
-                    batch['{}_batch'.format(key)].append(item)
+                    item = torch.full((size,), i, dtype=torch.long)
+                    batch["{}_batch".format(key)].append(item)
 
             num_nodes = data.num_nodes
             if num_nodes is not None:
-                item = torch.full((num_nodes, ), i, dtype=torch.long)
+                item = torch.full((num_nodes,), i, dtype=torch.long)
                 batch.batch.append(item)
 
         if num_nodes is None:
@@ -69,8 +69,7 @@ class Batch(Data):
         for key in batch.keys:
             item = batch[key][0]
             if torch.is_tensor(item):
-                batch[key] = torch.cat(batch[key],
-                                       dim=data_list[0].cat_dim(key, item))
+                batch[key] = torch.cat(batch[key], dim=data_list[0].cat_dim(key, item))
             elif isinstance(item, int) or isinstance(item, float):
                 batch[key] = torch.tensor(batch[key])
         return batch.contiguous()
@@ -95,10 +94,13 @@ class Batch(Data):
 
         if self.__slices__ is None:
             raise RuntimeError(
-                ('Cannot reconstruct data list from batch because the batch '
-                 'object was not created using Batch.from_data_list()'))
+                (
+                    "Cannot reconstruct data list from batch because the batch "
+                    "object was not created using Batch.from_data_list()"
+                )
+            )
 
-        keys = [key for key in self.keys if key[-5:] != 'batch']
+        keys = [key for key in self.keys if key[-5:] != "batch"]
         cumsum = {key: 0 for key in keys}
         data_list = []
         for i in range(len(self.__slices__[keys[0]]) - 1):
@@ -106,19 +108,18 @@ class Batch(Data):
             for key in keys:
                 if torch.is_tensor(self[key]):
                     data[key] = self[key].narrow(
-                        data.cat_dim(key,
-                                         self[key]), self.__slices__[key][i],
-                        self.__slices__[key][i + 1] - self.__slices__[key][i])
+                        data.cat_dim(key, self[key]),
+                        self.__slices__[key][i],
+                        self.__slices__[key][i + 1] - self.__slices__[key][i],
+                    )
                     if self[key].dtype != torch.bool:
                         data[key] = data[key] - cumsum[key]
                 else:
-                    data[key] = self[key][self.__slices__[key][i]:self.
-                                          __slices__[key][i + 1]]
+                    data[key] = self[key][self.__slices__[key][i] : self.__slices__[key][i + 1]]
                 cumsum[key] = cumsum[key] + data.__inc__(key, data[key])
             data_list.append(data)
 
         return data_list
-
 
     @property
     def num_graphs(self):

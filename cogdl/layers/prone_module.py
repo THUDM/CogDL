@@ -63,7 +63,7 @@ class Gaussian(object):
         self.mu = mu
         self.k = k
         self.rescale = rescale
-        self.coefs = [(-1) ** i * iv(i, self.theta) for i in range(k+3)]
+        self.coefs = [(-1) ** i * iv(i, self.theta) for i in range(k + 3)]
         self.coefs[0] = self.coefs[0] / 2
 
     # adj: 1 mul + 3 add,  emb: 2*k mul, 3*k add
@@ -94,8 +94,9 @@ class Gaussian(object):
 
 class PPR(object):
     """
-        applying sparsification to accelerate computation
+    applying sparsification to accelerate computation
     """
+
     def __init__(self, alpha=0.5, k=10):
         self.alpha = alpha
         self.k = k
@@ -108,7 +109,7 @@ class PPR(object):
             # stable state
             row, col = mx.nonzero
             degree = mx.sum(1).A.squeeze()
-            degree_sqrt_inv_mx = sp.csc_matrix((np.sqrt(1. / degree), (row, col)), shape=(row, col))
+            degree_sqrt_inv_mx = sp.csc_matrix((np.sqrt(1.0 / degree), (row, col)), shape=(row, col))
             identity = sp.csc_matrix((np.ones(row_num), (np.arange(row), np.arange(col_num))), shape=(row, col))
             ppr_mx = identity - (1 - self.alpha) * degree_sqrt_inv_mx.dot(mx).dot(degree_sqrt_inv_mx)
             return self.alpha * sp.linalg.inv(ppr_mx).dot(emb)
@@ -126,10 +127,11 @@ class PPR(object):
 
 class SignalRescaling(object):
     """
-        - rescale signal of each node according to the degree of the node:
-            - sigmoid(degree)
-            - sigmoid(1/degree)
+    - rescale signal of each node according to the degree of the node:
+        - sigmoid(degree)
+        - sigmoid(1/degree)
     """
+
     def __init__(self):
         pass
 
@@ -137,8 +139,8 @@ class SignalRescaling(object):
         mx = preprocessing.normalize(mx, "l1")
         degree = mx.sum(1).A.squeeze()
 
-        degree_inv = 1. / degree
-        signal_val = 1./(1+np.exp(-degree_inv))
+        degree_inv = 1.0 / degree
+        signal_val = 1.0 / (1 + np.exp(-degree_inv))
 
         row_num, col_num = mx.shape
         q_ = sp.csc_matrix((signal_val, (np.arange(row_num), np.arange(col_num))), shape=(row_num, col_num))
@@ -152,7 +154,7 @@ class SignalRescaling(object):
 class ProNE(object):
     def __call__(self, A, a, order=10, mu=0.1, s=0.5):
         # NE Enhancement via Spectral Propagation
-        print('Chebyshev Series -----------------')
+        print("Chebyshev Series -----------------")
 
         if order == 1:
             return a
@@ -160,7 +162,7 @@ class ProNE(object):
         node_number = a.shape[0]
 
         A = sp.eye(node_number) + A
-        DA = preprocessing.normalize(A, norm='l1')
+        DA = preprocessing.normalize(A, norm="l1")
         L = sp.eye(node_number) - DA
 
         M = L - mu * sp.eye(node_number)
@@ -188,14 +190,14 @@ class ProNE(object):
 
 class NodeAdaptiveEncoder(object):
     """
-        - shrink negative values in signal/feature matrix
-        - no learning
+    - shrink negative values in signal/feature matrix
+    - no learning
     """
 
     @staticmethod
     def prop(signal):
         mean_signal = signal.mean(1)
-        mean_signal = 1./(1 + np.exp(-mean_signal))
+        mean_signal = 1.0 / (1 + np.exp(-mean_signal))
         sel_row, sel_col = np.where(signal < 0)
         mean_signal = mean_signal[sel_row]
         signal[sel_row, sel_col] = signal[sel_row, sel_col] * mean_signal

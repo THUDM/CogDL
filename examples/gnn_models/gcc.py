@@ -15,13 +15,11 @@ def build_default_args_for_multiplex_node_classification(dataset):
         "enhance": None,
         "save_dir": ".",
         "seed": [0, 1, 2],
-
         "epoch": 0,
         "load_path": "./saved/gcc_pretrained.pth",
-
         "task": "multiplex_node_classification",
         "model": "gcc",
-        "dataset": dataset
+        "dataset": dataset,
     }
     return build_args_from_dict(args)
 
@@ -30,6 +28,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

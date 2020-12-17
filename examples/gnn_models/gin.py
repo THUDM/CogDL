@@ -21,7 +21,6 @@ def build_default_args_for_node_classification(dataset):
         "cpu": cpu,
         "device_id": [0],
         "seed": [0],
-
         "hidden_size": 32,
         "degree_feature": False,
         "gamma": 0.5,
@@ -36,10 +35,9 @@ def build_default_args_for_node_classification(dataset):
         "train_epsilon": True,
         "pooling": "sum",
         "batch_size": 128,
-
         "task": "graph_classification",
         "model": "gin",
-        "dataset": dataset
+        "dataset": dataset,
     }
     return build_args_from_dict(args)
 
@@ -48,6 +46,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

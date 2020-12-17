@@ -18,17 +18,15 @@ class EntropyLoss(nn.Module):
     def forward(self, adj, anext, s_l):
         # entropy.mean(-1).mean(-1): 1/n in node and batch
         # entropy = (torch.distributions.Categorical(
-            # probs=s_l).entropy()).sum(-1).mean(-1)
-        entropy = (torch.distributions.Categorical(
-            probs=s_l).entropy()).mean()
+        # probs=s_l).entropy()).sum(-1).mean(-1)
+        entropy = (torch.distributions.Categorical(probs=s_l).entropy()).mean()
         assert not torch.isnan(entropy)
         return entropy
 
 
 class LinkPredLoss(nn.Module):
     def forward(self, adj, anext, s_l):
-        link_pred_loss = (
-            adj - s_l.matmul(s_l.transpose(-1, -2))).norm(dim=(1, 2))
+        link_pred_loss = (adj - s_l.matmul(s_l.transpose(-1, -2))).norm(dim=(1, 2))
         link_pred_loss = link_pred_loss / (adj.size(1) * adj.size(2))
         return link_pred_loss.mean()
 
@@ -48,7 +46,10 @@ class GraphSAGE(nn.Module):
         dropout (float, optional) : Size of dropout, default: ``0.5``.
         normalize (bool, optional) : Normalze features after each layer if True, default: ``True``.
     """
-    def __init__(self, in_feats, hidden_dim, out_feats, num_layers, dropout=0.5, normalize=False, concat=False, use_bn=False):
+
+    def __init__(
+        self, in_feats, hidden_dim, out_feats, num_layers, dropout=0.5, normalize=False, concat=False, use_bn=False
+    ):
         super(GraphSAGE, self).__init__()
         self.convlist = nn.ModuleList()
         self.bn_list = nn.ModuleList()
@@ -69,12 +70,12 @@ class GraphSAGE(nn.Module):
 
     def forward(self, x, edge_index, edge_weight=None):
         h = x
-        for i in range(self.num_layers-1):
+        for i in range(self.num_layers - 1):
             h = F.dropout(h, p=self.dropout, training=self.training)
             h = self.convlist[i](h, edge_index, edge_weight)
             if self.use_bn:
                 h = self.bn_list[i](h)
-        return self.convlist[self.num_layers-1](h, edge_index, edge_weight)
+        return self.convlist[self.num_layers - 1](h, edge_index, edge_weight)
 
 
 class BatchedGraphSAGE(nn.Module):
@@ -86,13 +87,14 @@ class BatchedGraphSAGE(nn.Module):
         use_bn (bool) : Apply batch normalization if True, default: ``True``.
         self_loop (bool) : Add self loop if True, default: ``True``.
     """
+
     def __init__(self, in_feats, out_feats, use_bn=True, self_loop=True):
         super(BatchedGraphSAGE, self).__init__()
         self.self_loop = self_loop
         self.use_bn = use_bn
         self.weight = nn.Linear(in_feats, out_feats, bias=True)
 
-        nn.init.xavier_uniform_(self.weight.weight.data, gain=nn.init.calculate_gain('relu'))
+        nn.init.xavier_uniform_(self.weight.weight.data, gain=nn.init.calculate_gain("relu"))
 
     def forward(self, x, adj):
         device = x.device
@@ -135,7 +137,10 @@ class BatchedDiffPoolLayer(nn.Module):
     link_pred_loss : bool, optional
         Use link prediction loss if True, default: ``True``.
     """
-    def __init__(self, in_feats, out_feats, assign_dim, batch_size, dropout=0.5, link_pred_loss=True, entropy_loss=True):
+
+    def __init__(
+        self, in_feats, out_feats, assign_dim, batch_size, dropout=0.5, link_pred_loss=True, entropy_loss=True
+    ):
         super(BatchedDiffPoolLayer, self).__init__()
         self.assign_dim = assign_dim
         self.dropout = dropout
@@ -146,7 +151,6 @@ class BatchedDiffPoolLayer(nn.Module):
 
         self.loss_dict = dict()
 
-
     def forward(self, x, edge_index, batch, edge_weight=None):
         embed = self.embd_gnn(x, edge_index)
         pooled = F.softmax(self.pool_gnn(x, edge_index), dim=-1)
@@ -155,7 +159,7 @@ class BatchedDiffPoolLayer(nn.Module):
         value_set, value_counts = torch.unique(batch, return_counts=True)
         batch_size = len(value_set)
         for i in value_counts:
-            masked = torch.ones((i, int(pooled.size()[1]/batch_size)))
+            masked = torch.ones((i, int(pooled.size()[1] / batch_size)))
             masked_tensor.append(masked)
         masked = torch.FloatTensor(block_diag(*masked_tensor)).to(device)
 
@@ -206,7 +210,10 @@ class BatchedDiffPool(nn.Module):
     use_entropy : bool, optioinal
         Use entropy prediction loss if True, default: ``True``.
     """
-    def __init__(self, in_feats, next_size, emb_size, use_bn=True, self_loop=True, use_link_loss=False, use_entropy=True):
+
+    def __init__(
+        self, in_feats, next_size, emb_size, use_bn=True, self_loop=True, use_link_loss=False, use_entropy=True
+    ):
         super(BatchedDiffPool, self).__init__()
         self.use_link_loss = use_link_loss
         self.use_bn = use_bn
@@ -243,9 +250,11 @@ class BatchedDiffPool(nn.Module):
 
 
 def toBatchedGraph(batch_adj, batch_feat, node_per_pool_graph):
-    adj_list = [batch_adj[i:i+node_per_pool_graph, i:i+node_per_pool_graph]
-                for i in range(0, batch_adj.size()[0], node_per_pool_graph)]
-    feat_list = [batch_feat[i:i+node_per_pool_graph, :] for i in range(0, batch_adj.size()[0], node_per_pool_graph)]
+    adj_list = [
+        batch_adj[i : i + node_per_pool_graph, i : i + node_per_pool_graph]
+        for i in range(0, batch_adj.size()[0], node_per_pool_graph)
+    ]
+    feat_list = [batch_feat[i : i + node_per_pool_graph, :] for i in range(0, batch_adj.size()[0], node_per_pool_graph)]
     adj_list = list(map(lambda x: torch.unsqueeze(x, 0), adj_list))
     feat_list = list(map(lambda x: torch.unsqueeze(x, 0), feat_list))
     adj = torch.cat(adj_list, dim=0)
@@ -311,7 +320,7 @@ class DiffPool(BaseModel):
             args.pooling_ratio,
             args.batch_size,
             args.dropout,
-            args.no_link_pred
+            args.no_link_pred,
         )
 
     @classmethod
@@ -328,8 +337,22 @@ class DiffPool(BaseModel):
             valid_loader = test_loader
         return train_loader, valid_loader, test_loader
 
-    def __init__(self, in_feats, hidden_dim, embed_dim, num_classes, num_layers, num_pool_layers,  assign_dim,
-                 pooling_ratio, batch_size, dropout=0.5, no_link_pred=True, concat=False, use_bn=False):
+    def __init__(
+        self,
+        in_feats,
+        hidden_dim,
+        embed_dim,
+        num_classes,
+        num_layers,
+        num_pool_layers,
+        assign_dim,
+        pooling_ratio,
+        batch_size,
+        dropout=0.5,
+        no_link_pred=True,
+        concat=False,
+        use_bn=False,
+    ):
         super(DiffPool, self).__init__()
         self.assign_dim = assign_dim
         self.assign_dim_list = [assign_dim]
@@ -338,23 +361,28 @@ class DiffPool(BaseModel):
         self.use_link_loss = not no_link_pred
         # assert num_layers > 3, "layers > 3"
         self.diffpool_layers = nn.ModuleList()
-        self.before_pooling = GraphSAGE(in_feats, hidden_dim, embed_dim,
-                                        num_layers=num_layers, dropout=dropout, use_bn=self.use_bn)
-        self.init_diffpool = BatchedDiffPoolLayer(embed_dim, hidden_dim, assign_dim, batch_size, dropout, self.use_link_loss)
+        self.before_pooling = GraphSAGE(
+            in_feats, hidden_dim, embed_dim, num_layers=num_layers, dropout=dropout, use_bn=self.use_bn
+        )
+        self.init_diffpool = BatchedDiffPoolLayer(
+            embed_dim, hidden_dim, assign_dim, batch_size, dropout, self.use_link_loss
+        )
 
         pooled_emb_dim = embed_dim
         self.after_pool = nn.ModuleList()
         after_per_pool = nn.ModuleList()
-        for _ in range(num_layers-1):
+        for _ in range(num_layers - 1):
             after_per_pool.append(BatchedGraphSAGE(hidden_dim, hidden_dim))
         after_per_pool.append(BatchedGraphSAGE(hidden_dim, pooled_emb_dim))
         self.after_pool.append(after_per_pool)
 
-        for _ in range(num_pool_layers-1):
-            self.assign_dim = int(self.assign_dim//batch_size * pooling_ratio) * batch_size
-            self.diffpool_layers.append(BatchedDiffPool(
-                pooled_emb_dim, self.assign_dim, hidden_dim, use_bn=self.use_bn, use_link_loss=self.use_link_loss
-            ))
+        for _ in range(num_pool_layers - 1):
+            self.assign_dim = int(self.assign_dim // batch_size * pooling_ratio) * batch_size
+            self.diffpool_layers.append(
+                BatchedDiffPool(
+                    pooled_emb_dim, self.assign_dim, hidden_dim, use_bn=self.use_bn, use_link_loss=self.use_link_loss
+                )
+            )
 
             for _ in range(num_layers - 1):
                 after_per_pool.append(BatchedGraphSAGE(hidden_dim, hidden_dim))
@@ -364,7 +392,7 @@ class DiffPool(BaseModel):
             self.assign_dim_list.append(self.assign_dim)
 
         if concat:
-            out_dim = pooled_emb_dim * (num_pool_layers+1)
+            out_dim = pooled_emb_dim * (num_pool_layers + 1)
         else:
             out_dim = pooled_emb_dim
         self.fc = nn.Linear(out_dim, num_classes)
@@ -372,9 +400,9 @@ class DiffPool(BaseModel):
     def reset_parameters(self):
         for i in self.modules():
             if isinstance(i, nn.Linear):
-                nn.init.xavier_uniform_(i.weight.data, gain=nn.init.calculate_gain('relu'))
+                nn.init.xavier_uniform_(i.weight.data, gain=nn.init.calculate_gain("relu"))
                 if i.bias is not None:
-                    nn.init.constant_(i.bias.data, 0.)
+                    nn.init.constant_(i.bias.data, 0.0)
 
     def after_pooling_forward(self, gnn_layers, adj, x, concat=False):
         readouts = []
@@ -382,7 +410,7 @@ class DiffPool(BaseModel):
         for layer in gnn_layers:
             h = layer(h, adj)
             readouts.append(h)
-        readout = torch.cat(readouts, dim=1)
+        # readout = torch.cat(readouts, dim=1)
         return h
 
     def forward(self, batch):
@@ -392,14 +420,14 @@ class DiffPool(BaseModel):
         adj, h = self.init_diffpool(init_emb, batch.edge_index, batch.batch)
         value_set, value_counts = torch.unique(batch.batch, return_counts=True)
         batch_size = len(value_set)
-        adj, h = toBatchedGraph(adj, h, adj.size(0)//batch_size)
+        adj, h = toBatchedGraph(adj, h, adj.size(0) // batch_size)
         h = self.after_pooling_forward(self.after_pool[0], adj, h)
         readout = torch.sum(h, dim=1)
         readouts_all.append(readout)
 
         for i, diff_layer in enumerate(self.diffpool_layers):
             h, adj = diff_layer(h, adj)
-            h = self.after_pooling_forward(self.after_pool[i+1], adj, h)
+            h = self.after_pooling_forward(self.after_pool[i + 1], adj, h)
             readout = torch.sum(h, dim=1)
             readouts_all.append(readout)
         pred = self.fc(readout)
@@ -414,4 +442,3 @@ class DiffPool(BaseModel):
         for layer in self.diffpool_layers:
             loss_n += layer.get_loss()
         return loss_n
-

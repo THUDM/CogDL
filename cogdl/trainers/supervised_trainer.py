@@ -12,32 +12,28 @@ from cogdl.trainers.base_trainer import BaseTrainer
 class SupervisedTrainer(BaseTrainer, ABC):
     @abstractmethod
     def fit(self) -> None:
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def predict(self) -> Any:
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class SupervisedHeterogeneousNodeClassificationTrainer(BaseTrainer, ABC):
     @abstractmethod
-    def fit(
-        self, model: SupervisedHeterogeneousNodeClassificationModel, dataset: Dataset
-    ) -> None:
-        raise NotImplemented
+    def fit(self, model: SupervisedHeterogeneousNodeClassificationModel, dataset: Dataset) -> None:
+        raise NotImplementedError
 
     # @abstractmethod
     # def evaluate(self, data: Any, nodes: Any, targets: Any) -> Any:
-    #     raise NotImplemented
+    #     raise NotImplementedError
 
 
 class SupervisedHomogeneousNodeClassificationTrainer(BaseTrainer, ABC):
     @abstractmethod
-    def fit(
-        self, model: SupervisedHomogeneousNodeClassificationModel, dataset: Dataset
-    ) -> None:
-        raise NotImplemented
+    def fit(self, model: SupervisedHomogeneousNodeClassificationModel, dataset: Dataset) -> None:
+        raise NotImplementedError
 
     # @abstractmethod
     # def predictAll(self) -> Any:
-    #     raise NotImplemented
+    #     raise NotImplementedError

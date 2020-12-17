@@ -39,9 +39,7 @@ class sgc(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(
-            in_feats=args.num_features,
-            out_feats=args.num_classes)
+        return cls(in_feats=args.num_features, out_feats=args.num_classes)
 
     def __init__(self, in_feats, out_feats):
         super(sgc, self).__init__()
@@ -51,11 +49,7 @@ class sgc(BaseModel):
         device = x.device
         edge_attr = torch.ones(edge_index.shape[1]).to(device)
         edge_index, edge_attr = add_remaining_self_loops(edge_index, edge_attr, 1, x.shape[0])
-        deg = spmm(
-            edge_index,
-            edge_attr,
-            torch.ones(x.shape[0], 1).to(device)
-        ).squeeze()
+        deg = spmm(edge_index, edge_attr, torch.ones(x.shape[0], 1).to(device)).squeeze()
         deg_sqrt = deg.pow(-1 / 2)
         edge_attr = deg_sqrt[edge_index[1]] * edge_attr * deg_sqrt[edge_index[0]]
 

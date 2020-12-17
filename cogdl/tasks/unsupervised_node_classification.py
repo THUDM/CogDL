@@ -6,7 +6,6 @@ from collections import defaultdict
 import networkx as nx
 import numpy as np
 import scipy.sparse as sp
-from scipy import sparse as sp
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score
 from sklearn.multiclass import OneVsRestClassifier
@@ -54,8 +53,8 @@ class UnsupervisedNodeClassification(BaseTask):
             self.label_matrix = self.data.y
             self.num_nodes, self.num_classes = self.data.y.shape
 
-        args.num_classes = dataset.num_classes if hasattr(dataset, 'num_classes') else 0
-        args.num_features = dataset.num_features if hasattr(dataset, 'num_features') else 0
+        args.num_classes = dataset.num_classes if hasattr(dataset, "num_classes") else 0
+        args.num_features = dataset.num_features if hasattr(dataset, "num_features") else 0
         self.model = build_model(args) if model is None else model
 
         self.model_name = args.model
@@ -67,17 +66,16 @@ class UnsupervisedNodeClassification(BaseTask):
         self.args = args
         self.is_weighted = self.data.edge_attr is not None
 
-        self.trainer = self.model.get_trainer(UnsupervisedNodeClassification, args)(
-            args
-        ) if self.model.get_trainer(
-            UnsupervisedNodeClassification,
-            args
-        ) else None
+        self.trainer = (
+            self.model.get_trainer(UnsupervisedNodeClassification, args)(args)
+            if self.model.get_trainer(UnsupervisedNodeClassification, args)
+            else None
+        )
 
     def enhance_emb(self, G, embs):
         A = sp.csr_matrix(nx.adjacency_matrix(G))
         if self.args.enhance == "prone":
-            self.args.model = 'prone'
+            self.args.model = "prone"
             self.args.step, self.args.theta, self.args.mu = 5, 0.5, 0.2
             model = build_model(self.args)
             embs = model._chebyshev_gaussian(A, embs)
@@ -99,18 +97,18 @@ class UnsupervisedNodeClassification(BaseTask):
         return embs
 
     def save_emb(self, embs):
-        name = os.path.join(self.save_dir, self.model_name + '_emb.npy')
+        name = os.path.join(self.save_dir, self.model_name + "_emb.npy")
         np.save(name, embs)
 
     def train(self):
         if self.trainer is not None:
             return self.trainer.fit(self.model, self.data)
-        if 'gcc' in self.model_name:
+        if "gcc" in self.model_name:
             features_matrix = self.model.train(self.data)
-        elif 'dgi' in self.model_name or "graphsage" in self.model_name:
+        elif "dgi" in self.model_name or "graphsage" in self.model_name:
             acc = self.model.train(self.data)
             return dict(Acc=acc)
-        elif 'mvgrl' in self.model_name:
+        elif "mvgrl" in self.model_name:
             acc = self.model.train(self.data, self.dataset_name)
             return dict(Acc=acc)
         else:
@@ -120,9 +118,7 @@ class UnsupervisedNodeClassification(BaseTask):
                     self.data.edge_index.t().tolist(),
                     self.data.edge_attr.tolist(),
                 )
-                G.add_weighted_edges_from(
-                    [(edges[i][0], edges[i][1], weight[0][i]) for i in range(len(edges))]
-                )
+                G.add_weighted_edges_from([(edges[i][0], edges[i][1], weight[0][i]) for i in range(len(edges))])
             else:
                 G.add_edges_from(self.data.edge_index.t().tolist())
             embeddings = self.model.train(G)

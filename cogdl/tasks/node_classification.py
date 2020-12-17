@@ -23,7 +23,7 @@ def normalize_adj_row(adj):
     """Row-normalize sparse matrix"""
     rowsum = np.array(adj.sum(1))
     r_inv = np.power(rowsum, -1).flatten()
-    r_inv[np.isinf(r_inv)] = 0.
+    r_inv[np.isinf(r_inv)] = 0.0
     r_mat_inv = sp.diags(r_inv)
     mx = r_mat_inv.dot(adj)
     return mx
@@ -32,8 +32,7 @@ def normalize_adj_row(adj):
 def to_torch_sparse(sparse_mx):
     """Convert a scipy sparse matrix to a torch sparse tensor."""
     sparse_mx = sparse_mx.tocoo().astype(np.float32)
-    indices = torch.from_numpy(
-        np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64))
+    indices = torch.from_numpy(np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64))
     values = torch.from_numpy(sparse_mx.data)
     shape = torch.Size(sparse_mx.shape)
     return torch.sparse.FloatTensor(indices, values, shape)
@@ -41,7 +40,7 @@ def to_torch_sparse(sparse_mx):
 
 def row_l1_normalize(X):
     norm = 1e-6 + X.sum(dim=1, keepdim=True)
-    return X/norm
+    return X / norm
 
 
 def preprocess_data_sgcpn(data, normalize_feature=True, missing_rate=0):
@@ -89,12 +88,12 @@ class NodeClassification(BaseTask):
         self.device = args.device_id[0] if not args.cpu else "cpu"
         dataset = build_dataset(args) if dataset is None else dataset
         if args.missing_rate >= 0:
-            if args.model == 'sgcpn':
-                assert args.dataset in ['cora', 'citeseer', 'pubmed']
+            if args.model == "sgcpn":
+                assert args.dataset in ["cora", "citeseer", "pubmed"]
                 dataset.data = preprocess_data_sgcpn(dataset.data, normalize_feature=True, missing_rate=0)
                 adj_slice = torch.tensor(dataset.data.adj.size())
                 adj_slice[0] = 0
-                dataset.slices['adj'] = adj_slice
+                dataset.slices["adj"] = adj_slice
 
         self.dataset = dataset
         self.data = dataset[0]
@@ -105,22 +104,20 @@ class NodeClassification(BaseTask):
         self.model: SupervisedHomogeneousNodeClassificationModel = build_model(args) if model is None else model
         self.model.set_device(self.device)
 
-        self.trainer: Optional[
-            SupervisedHomogeneousNodeClassificationTrainer
-        ] = self.model.get_trainer(NodeClassification, self.args)(
-            self.args
-        ) if self.model.get_trainer(
-            NodeClassification, self.args
-        ) else None
+        self.trainer: Optional[SupervisedHomogeneousNodeClassificationTrainer] = (
+            self.model.get_trainer(NodeClassification, self.args)(self.args)
+            if self.model.get_trainer(NodeClassification, self.args)
+            else None
+        )
 
         if not self.trainer:
-            self.optimizer = torch.optim.Adam(
-                self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
-            ) if not hasattr(self.model, "get_optimizer") else self.model.get_optimizer(args)
-            self.data.apply(lambda x: x.to(self.device))
-            self.model: SupervisedHomogeneousNodeClassificationModel = self.model.to(
-                self.device
+            self.optimizer = (
+                torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+                if not hasattr(self.model, "get_optimizer")
+                else self.model.get_optimizer(args)
             )
+            self.data.apply(lambda x: x.to(self.device))
+            self.model: SupervisedHomogeneousNodeClassificationModel = self.model.to(self.device)
             self.patience = args.patience
             self.max_epoch = args.max_epoch
 
@@ -147,9 +144,7 @@ class NodeClassification(BaseTask):
                 self._train_step()
                 train_acc, _ = self._test_step(split="train")
                 val_acc, val_loss = self._test_step(split="val")
-                epoch_iter.set_description(
-                    f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
-                )
+                epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
                 if val_loss <= min_loss or val_acc >= max_score:
                     if val_loss <= best_loss:  # and val_acc >= best_score:
                         best_loss = val_loss

@@ -15,9 +15,7 @@ class BaseModel(nn.Module):
     @classmethod
     def build_model_from_args(cls, args):
         """Build a new model instance."""
-        raise NotImplementedError(
-            "Models must implement the build_model_from_args method"
-        )
+        raise NotImplementedError("Models must implement the build_model_from_args method")
 
     def __init__(self):
         super(BaseModel, self).__init__()

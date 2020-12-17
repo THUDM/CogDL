@@ -47,14 +47,7 @@ class GraphConvolution(nn.Module):
             return output
 
     def __repr__(self):
-        return (
-            self.__class__.__name__
-            + " ("
-            + str(self.in_features)
-            + " -> "
-            + str(self.out_features)
-            + ")"
-        )
+        return self.__class__.__name__ + " (" + str(self.in_features) + " -> " + str(self.out_features) + ")"
 
 
 @register_model("gcn")
@@ -96,7 +89,7 @@ class TKipfGCN(BaseModel):
         adj_values = torch.ones(adj.shape[1]).to(device)
         adj, adj_values = add_remaining_self_loops(adj, adj_values, 1, x.shape[0])
         deg = spmm(adj, adj_values, torch.ones(x.shape[0], 1).to(device)).squeeze()
-        deg_sqrt = deg.pow(-1/2)
+        deg_sqrt = deg.pow(-1 / 2)
         adj_values = deg_sqrt[adj[1]] * adj_values * deg_sqrt[adj[0]]
 
         x = F.dropout(x, self.dropout, training=self.training)
@@ -104,6 +97,6 @@ class TKipfGCN(BaseModel):
         x = F.dropout(x, self.dropout, training=self.training)
         x = self.gc2(x, adj, adj_values)
         return x
-    
+
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

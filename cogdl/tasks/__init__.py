@@ -25,9 +25,7 @@ def register_task(name):
         if name in TASK_REGISTRY:
             raise ValueError("Cannot register duplicate task ({})".format(name))
         if not issubclass(cls, BaseTask):
-            raise ValueError(
-                "Task ({}: {}) must extend BaseTask".format(name, cls.__name__)
-            )
+            raise ValueError("Task ({}: {}) must extend BaseTask".format(name, cls.__name__))
         TASK_REGISTRY[name] = cls
         return cls
 

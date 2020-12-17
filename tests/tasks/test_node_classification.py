@@ -32,12 +32,12 @@ def test_gdc_gcn_cora():
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
     args.num_layers = 1
-    args.alpha = 0.05 # ppr filter param
-    args.t = 5.0 # heat filter param
-    args.k = 128 # top k entries to be retained
-    args.eps = 0.01 # change depending on gdc_type
+    args.alpha = 0.05  # ppr filter param
+    args.t = 5.0  # heat filter param
+    args.k = 128  # top k entries to be retained
+    args.eps = 0.01  # change depending on gdc_type
     args.dataset = dataset
-    args.gdc_type = "ppr" # ppr, heat, none
+    args.gdc_type = "ppr"  # ppr, heat, none
 
     model = build_model(args)
     task = build_task(args, dataset=dataset, model=model)
@@ -107,7 +107,7 @@ def test_pairnorm_cora_deepgcn():
     args.no_fea_norm = "store_false"
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret["Acc"] <=1
+    assert 0 <= ret["Acc"] <= 1
 
 
 def test_pairnorm_cora_gcn():
@@ -127,7 +127,7 @@ def test_pairnorm_cora_gcn():
     args.no_fea_norm = "store_false"
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret["Acc"] <=1
+    assert 0 <= ret["Acc"] <= 1
 
 
 def test_pairnorm_cora_sgc():
@@ -147,7 +147,7 @@ def test_pairnorm_cora_sgc():
     args.no_fea_norm = "store_false"
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret["Acc"] <=1
+    assert 0 <= ret["Acc"] <= 1
 
 
 def test_pairnorm_cora_deepgat():
@@ -445,11 +445,12 @@ def test_gpt_gnn_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+
 def test_sign_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.model = 'sign'
-    args.dataset = 'cora'
+    args.task = "node_classification"
+    args.model = "sign"
+    args.dataset = "cora"
     args.lr = 0.00005
     args.hidden_size = 2048
     args.num_layers = 3
@@ -462,7 +463,8 @@ def test_sign_cora():
     args.remove_diag = False
     task = build_task(args)
     ret = task.train()
-    assert 0 < ret['Acc'] < 1
+    assert 0 < ret["Acc"] < 1
+
 
 def test_jknet_jknet_cora():
     args = get_default_args()
@@ -481,6 +483,7 @@ def test_jknet_jknet_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+
 def test_ppnp_cora():
     args = get_default_args()
     args.task = "node_classification"
@@ -492,6 +495,7 @@ def test_ppnp_cora():
     task = build_task(args)
     ret = task.train()
     assert 0 < ret["Acc"] < 1
+
 
 def test_appnp_cora():
     args = get_default_args()

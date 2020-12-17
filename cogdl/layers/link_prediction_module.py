@@ -18,10 +18,10 @@ def cal_mrr(embedding, rel_embedding, edge_index, edge_type, scoring, protocol="
             raise NotImplementedError
         else:
             raise ValueError
-        mrr = (1. / ranks).mean()
+        mrr = (1.0 / ranks).mean()
         hits_count = []
         # for hit in hits:
-            # hits_count.append(torch.mean((ranks <= hit).float()).item())
+        # hits_count.append(torch.mean((ranks <= hit).float()).item())
         for hit in hits:
             hits_count.append(np.mean((ranks <= hit).astype(np.float)))
     # return mrr.item(), hits_count
@@ -53,15 +53,17 @@ class ConvELayer(nn.Module):
         self.hidden_drop = nn.Dropout(dropout)
         self.hidden_drop2 = nn.Dropout(dropout)
         self.feature_drop = nn.Dropout(dropout)
-        self.conv = nn.Conv2d(1, out_channels=num_filter, kernel_size=(kernel_size, kernel_size), stride=1, padding=0, bias=True)
+        self.conv = nn.Conv2d(
+            1, out_channels=num_filter, kernel_size=(kernel_size, kernel_size), stride=1, padding=0, bias=True
+        )
 
-        flat_size_h = int(2*self.k_w) - kernel_size + 1
+        flat_size_h = int(2 * self.k_w) - kernel_size + 1
         flat_size_w = self.k_h - kernel_size + 1
         self.flat_size = flat_size_h * flat_size_w * num_filter
         self.fc = nn.Linear(self.flat_size, dim)
 
         self.bias = nn.Parameter(torch.zeros(dim))
-    
+
     def concat(self, ent, rel):
         ent = ent.view(-1, 1, self.dim)
         rel = rel.view(-1, 1, self.dim)
@@ -106,7 +108,7 @@ class GNNLinkPredict(nn.Module):
             raise NotImplementedError
 
     def forward(self, edge_index, edge_type):
-        raise NotImplemented
+        raise NotImplementedError
 
     def get_score(self, heads, tails, rels):
         return self.scoring(heads, tails, rels)
@@ -130,7 +132,9 @@ class GNNLinkPredict(nn.Module):
         return loss
 
 
-def sampling_edge_uniform(edge_index, edge_types, edge_set, sampling_rate, num_rels, label_smoothing=0.0, num_entities=1):
+def sampling_edge_uniform(
+    edge_index, edge_types, edge_set, sampling_rate, num_rels, label_smoothing=0.0, num_entities=1
+):
     """
     Args:
         edge_index: edge index of graph
@@ -139,7 +143,7 @@ def sampling_edge_uniform(edge_index, edge_types, edge_set, sampling_rate, num_r
         sampling_rate:
         num_rels:
         label_smoothing(Optional):
-        num_entities (Optional):  
+        num_entities (Optional):
 
     Returns:
         sampled_edges: sampled existing edges
@@ -184,7 +188,7 @@ def sampling_edge_uniform(edge_index, edge_types, edge_set, sampling_rate, num_r
     edge_types_all = torch.cat((edge_types[selected_edges], _edge_types), dim=-1)
     labels = torch.tensor([1] * num_sampled_edges + [0] * _edge_index.shape[1]).to(edge_index.device)
     if label_smoothing > 0:
-        labels = (1.0 - label_smoothing) * labels + 1. / num_entities
+        labels = (1.0 - label_smoothing) * labels + 1.0 / num_entities
     return sampled_edges, torch.from_numpy(rels), sampled_edges_all, edge_types_all, labels
 
 

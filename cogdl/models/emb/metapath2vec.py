@@ -11,7 +11,7 @@ class Metapath2vec(BaseModel):
     Learning for Heterogeneous Networks"
     <https://ericdongyx.github.io/papers/
     KDD17-dong-chawla-swami-metapath2vec.pdf>`_ paper
-    
+
     Args:
         hidden_size (int) : The dimension of node representation.
         walk_length (int) : The walk length.
@@ -19,7 +19,7 @@ class Metapath2vec(BaseModel):
         window_size (int) : The actual context size which is considered in language model.
         worker (int) : The number of workers for word2vec.
         iteration (int) : The number of training iteration in word2vec.
-        schema (str) : The metapath schema used in model. Metapaths are splited with ",", 
+        schema (str) : The metapath schema used in model. Metapaths are splited with ",",
         while each node type are connected with "-" in each metapath. For example:"0-1-0,0-2-0,1-0-2-0-1".
     """
 
@@ -50,12 +50,10 @@ class Metapath2vec(BaseModel):
             args.window_size,
             args.worker,
             args.iteration,
-            args.schema
+            args.schema,
         )
 
-    def __init__(
-        self, dimension, walk_length, walk_num, window_size, worker, iteration, schema
-    ):
+    def __init__(self, dimension, walk_length, walk_num, window_size, worker, iteration, schema):
         super(Metapath2vec, self).__init__()
         self.dimension = dimension
         self.walk_length = walk_length
@@ -85,22 +83,18 @@ class Metapath2vec(BaseModel):
         return embeddings
 
     def _walk(self, start_node, walk_length, schema=None):
-        # Simulate a random walk starting from start node. 
+        # Simulate a random walk starting from start node.
         # Note that metapaths in schema should be like '0-1-0', '0-2-0' or '1-0-2-0-1'.
         if schema:
             schema_items = schema.split("-")
             assert schema_items[0] == schema_items[-1]
-        
+
         walk = [start_node]
         while len(walk) < walk_length:
             cur = walk[-1]
             candidates = []
             for node in list(self.G.neighbors(cur)):
-                if (
-                    schema == None
-                    or self.node_type[node]
-                    == schema_items[len(walk) % (len(schema_items) - 1)]
-                ):
+                if schema is None or self.node_type[node] == schema_items[len(walk) % (len(schema_items) - 1)]:
                     candidates.append(node)
             if candidates:
                 walk.append(random.choice(candidates))

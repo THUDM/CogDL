@@ -11,7 +11,7 @@ from .. import BaseModel, register_model
 class DeepGraphKernel(BaseModel):
     r"""The Hin2vec model from the `"Deep Graph Kernels"
     <https://dl.acm.org/citation.cfm?id=2783417&CFID=763322570&CFTOKEN=93890155>`_ paper.
-    
+
     Args:
         hidden_size (int) : The dimension of node representation.
         min_count (int) : Parameter in word2vec.
@@ -21,6 +21,7 @@ class DeepGraphKernel(BaseModel):
         epoch (int) : The number of training iteration.
         alpha (float) : The learning rate of word2vec.
     """
+
     @staticmethod
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=128)
@@ -31,17 +32,10 @@ class DeepGraphKernel(BaseModel):
         parser.add_argument("--epoch", type=int, default=20)
         parser.add_argument("--alpha", type=float, default=0.01)
 
-
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            args.hidden_size,
-            args.min_count,
-            args.window_size,
-            args.sampling,
-            args.iteration,
-            args.epoch,
-            args.alpha
+            args.hidden_size, args.min_count, args.window_size, args.sampling, args.iteration, args.epoch, args.alpha
         )
 
     @staticmethod
@@ -56,7 +50,7 @@ class DeepGraphKernel(BaseModel):
 
     @staticmethod
     def wl_iterations(graph, features, rounds):
-        #TODO: solve hash and number
+        # TODO: solve hash and number
         nodes = graph.nodes
         wl_features = [str(val) for _, val in features.items()]
         for i in range(rounds):
@@ -90,7 +84,7 @@ class DeepGraphKernel(BaseModel):
             self.gl_collections = Parallel(n_jobs=self.n_workers)(
                 delayed(DeepGraphKernel.feature_extractor)(graph, self.rounds, str(i)) for i, graph in enumerate(graphs)
             )
-        
+
         model = Word2Vec(
             self.gl_collections,
             size=self.hidden_dim,
@@ -99,12 +93,12 @@ class DeepGraphKernel(BaseModel):
             sample=self.sampling_rate,
             workers=self.n_workers,
             iter=self.epoch,
-            alpha=self.alpha
+            alpha=self.alpha,
         )
         vectors = np.asarray([model.wv[str(node)] for node in model.wv.index2word])
-        S = vectors.dot(vectors.T)        
+        S = vectors.dot(vectors.T)
         node2id = dict(zip(model.wv.index2word, range(len(model.wv.index2word))))
-        
+
         num_graph, size_vocab = len(graphs), len(node2id)
         norm_prob = np.zeros((num_graph, size_vocab))
         for i, gls in enumerate(self.gl_collections):

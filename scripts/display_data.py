@@ -47,12 +47,7 @@ def plot_graph(args):
         print(tabulate(tab_data, headers=col_names, tablefmt="psql"))
 
         G = nx.Graph()
-        G.add_edges_from(
-            [
-                tuple(data.edge_index[:, i].numpy())
-                for i in range(data.edge_index.shape[1])
-            ]
-        )
+        G.add_edges_from([tuple(data.edge_index[:, i].numpy()) for i in range(data.edge_index.shape[1])])
 
         s = random.choice(list(G.nodes()))
         q = [s]

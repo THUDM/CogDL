@@ -285,26 +285,26 @@ def test_pna_proteins():
 
 if __name__ == "__main__":
 
-    # test_gin_imdb_binary()
-    # test_gin_mutag()
-    # test_gin_proteins()
+    test_gin_imdb_binary()
+    test_gin_mutag()
+    test_gin_proteins()
 
-    # test_sortpool_mutag()
-    # test_sortpool_proteins()
+    test_sortpool_mutag()
+    test_sortpool_proteins()
 
-    # test_diffpool_mutag()
-    # test_diffpool_proteins()
+    test_diffpool_mutag()
+    test_diffpool_proteins()
 
-    # test_dgcnn_proteins()
-    # test_dgcnn_imdb_binary()
+    test_dgcnn_proteins()
+    test_dgcnn_imdb_binary()
 
-    # test_patchy_san_mutag()
-    # test_patchy_san_proteins()
+    test_patchy_san_mutag()
+    test_patchy_san_proteins()
 
 
-    # test_hgpsl_proteins()
+    test_hgpsl_proteins()
 
-    # test_sagpool_mutag()
-    # test_sagpool_proteins()
+    test_sagpool_mutag()
+    test_sagpool_proteins()
 
     test_pna_proteins()

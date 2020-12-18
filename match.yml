@@ -24,7 +24,7 @@ node_classification:
     - ppnp
     - sgcpn
     - sgc
-    -dropedge_gcn
+    - dropedge_gcn
     dataset:
     - cora
     - citeseer

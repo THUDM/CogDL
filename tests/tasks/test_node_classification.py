@@ -558,6 +558,7 @@ def test_dropedge_gcn_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+
 def test_dropedge_resgcn_cora():
     args = get_default_args()
     args.task = "node_classification"
@@ -580,6 +581,7 @@ def test_dropedge_resgcn_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+
 def test_dropedge_densegcn_cora():
     args = get_default_args()
     args.task = "node_classification"
@@ -601,6 +603,7 @@ def test_dropedge_densegcn_cora():
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
+
 
 def test_dropedge_inceptiongcn_cora():
     args = get_default_args()

@@ -42,11 +42,7 @@ class GraphConvolutionBS(Module):
 
         # Parameter setting.
         self.weight = Parameter(torch.FloatTensor(in_features, out_features))
-        self.self_weight = (
-            Parameter(torch.FloatTensor(in_features, out_features))
-            if withloop
-            else None
-        )
+        self.self_weight = Parameter(torch.FloatTensor(in_features, out_features)) if withloop else None
 
         self.bn = torch.nn.BatchNorm1d(out_features) if withbn else None
         self.bias = Parameter(torch.FloatTensor(out_features)) if bias else None
@@ -67,11 +63,7 @@ class GraphConvolutionBS(Module):
         output = torch.spmm(adj, support)
 
         # Self-loop
-        output = (
-            output + torch.mm(input, self.self_weight)
-            if self.self_weight is not None
-            else output
-        )
+        output = output + torch.mm(input, self.self_weight) if self.self_weight is not None else output
 
         output = output + self.bias if self.bias is not None else output
         # BN
@@ -80,14 +72,7 @@ class GraphConvolutionBS(Module):
         return self.sigma(output) + input if self.res else self.sigma(output)
 
     def __repr__(self):
-        return (
-            self.__class__.__name__
-            + " ("
-            + str(self.in_features)
-            + " -> "
-            + str(self.out_features)
-            + ")"
-        )
+        return self.__class__.__name__ + " (" + str(self.in_features) + " -> " + str(self.out_features) + ")"
 
 
 class GraphBaseBlock(Module):
@@ -133,22 +118,18 @@ class GraphBaseBlock(Module):
         self.hiddenlayers = nn.ModuleList()
         self.__makehidden()
 
-        if self.aggrmethod == "concat" and dense == False:
+        if self.aggrmethod == "concat" and dense is False:
             self.out_features = in_features + out_features
-        elif self.aggrmethod == "concat" and dense == True:
+        elif self.aggrmethod == "concat" and dense is True:
             self.out_features = in_features + out_features * nbaselayer
         elif self.aggrmethod == "add":
             if in_features != self.hiddendim:
-                raise RuntimeError(
-                    "The dimension of in_features and hiddendim should be matched in add model."
-                )
+                raise RuntimeError("The dimension of in_features and hiddendim should be matched in add model.")
             self.out_features = out_features
         elif self.aggrmethod == "nores":
             self.out_features = out_features
         else:
-            raise NotImplementedError(
-                "The aggregation method only support 'concat','add' and 'nores'."
-            )
+            raise NotImplementedError("The aggregation method only support 'concat','add' and 'nores'.")
 
     def __makehidden(self):
         # for i in xrange(self.nhiddenlayer):
@@ -172,7 +153,7 @@ class GraphBaseBlock(Module):
             self.hiddenlayers.append(layer)
 
     def _doconcat(self, x, subx):
-        if x == None:
+        if x is None:
             return subx
         if self.aggrmethod == "concat":
             return torch.cat((x, subx), 1)
@@ -433,14 +414,10 @@ class InecptionGCNBlock(Module):
             self.out_features = in_features + out_features * nbaselayer
         elif self.aggrmethod == "add":
             if in_features != self.hiddendim:
-                raise RuntimeError(
-                    "The dimension of in_features and hiddendim should be matched in 'add' model."
-                )
+                raise RuntimeError("The dimension of in_features and hiddendim should be matched in 'add' model.")
             self.out_features = out_features
         else:
-            raise NotImplementedError(
-                "The aggregation method only support 'concat', 'add'."
-            )
+            raise NotImplementedError("The aggregation method only support 'concat', 'add'.")
 
     def __makehidden(self):
         # for j in xrange(self.nhiddenlayer):
@@ -502,9 +479,7 @@ class Dense(Module):
     Simple Dense layer, Do not consider adj.
     """
 
-    def __init__(
-        self, in_features, out_features, activation=lambda x: x, bias=True, res=False
-    ):
+    def __init__(self, in_features, out_features, activation=lambda x: x, bias=True, res=False):
         super(Dense, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -528,14 +503,7 @@ class Dense(Module):
         return self.sigma(output)
 
     def __repr__(self):
-        return (
-            self.__class__.__name__
-            + " ("
-            + str(self.in_features)
-            + " -> "
-            + str(self.out_features)
-            + ")"
-        )
+        return self.__class__.__name__ + " (" + str(self.in_features) + " -> " + str(self.out_features) + ")"
 
 
 @register_model("dropedge_gcn")
@@ -651,9 +619,7 @@ class DropEdge_GCN(BaseModel):
         elif baseblock == "inceptiongcn":
             self.BASEBLOCK = InecptionGCNBlock
         else:
-            raise NotImplementedError(
-                "Current baseblock %s is not supported." % (baseblock)
-            )
+            raise NotImplementedError("Current baseblock %s is not supported." % (baseblock))
         if inputlayer == "gcn":
             # input gc
             self.ingc = GraphConvolutionBS(nfeat, nhid, activation, withbn, withloop)
@@ -665,11 +631,9 @@ class DropEdge_GCN(BaseModel):
             self.ingc = Dense(nfeat, nhid, activation)
             baseblockinput = nhid
 
-        outactivation = lambda x: x
+        outactivation = lambda x: x  # noqa E731
         if outputlayer == "gcn":
-            self.outgc = GraphConvolutionBS(
-                baseblockinput, nclass, outactivation, withbn, withloop
-            )
+            self.outgc = GraphConvolutionBS(baseblockinput, nclass, outactivation, withbn, withloop)
         # elif outputlayer ==  "none": #here can not be none
         #    self.outgc = lambda x: x
         else:
@@ -694,10 +658,8 @@ class DropEdge_GCN(BaseModel):
             self.midlayer.append(gcb)
             baseblockinput = gcb.get_outdim()
         # output gc
-        outactivation = lambda x: x  # we donot need nonlinear activation here.
-        self.outgc = GraphConvolutionBS(
-            baseblockinput, nclass, outactivation, withbn, withloop
-        )
+        outactivation = lambda x: x  # noqa E731 we donot need nonlinear activation here.
+        self.outgc = GraphConvolutionBS(baseblockinput, nclass, outactivation, withbn, withloop)
 
         self.reset_parameters()
 

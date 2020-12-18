@@ -146,6 +146,14 @@ Expected output:
 | ('cora', 'gat') | 0.8262±0.0032 |
 
 
+### Creating a model
+
+You can use the following command to create the necessary files for your model via our CLI.
+
+```bash
+$ python scripts/model_maker.py
+```
+
 ## Model Characteristics
 
 We summarize the characteristics of all methods for different tasks in the following, where reproducibility means whether the model is reproduced in our experimental setting currently. 

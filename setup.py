@@ -61,6 +61,8 @@ setup(
         "texttable",
         "gensim",
         "ogb",
+        "emoji",
+        "pyinquirer",
         "pre-commit",
     ],
     # List additional groups of dependencies here (e.g. development

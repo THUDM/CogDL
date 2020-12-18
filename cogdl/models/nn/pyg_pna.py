@@ -1,15 +1,10 @@
 import random
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from torch.nn import ModuleList, Embedding
-from torch.nn import Sequential, ReLU, Linear
-
+from torch.nn import ModuleList, Embedding, Sequential, ReLU, Linear
 from .. import BaseModel, register_model
 from cogdl.data import DataLoader
-
 from torch_geometric.nn import PNAConv, BatchNorm, global_add_pool
 
 @register_model("pyg_pna")
@@ -29,12 +24,10 @@ class PNA(BaseModel):
         parser.add_argument("--towers", type=int, default=5)
         parser.add_argument("--post_layers", type=int, default=1)
         parser.add_argument("--edge_dim", type=int, default=None)
-
         parser.add_argument("--aggregators", type=str, nargs="+", default=['mean', 'min', 'max', 'std'])
         parser.add_argument("--scalers", type=str, nargs="+", default=['identity', 'amplification', 'attenuation'])
-        
         parser.add_argument("--divide_input", action='store_true', default=False)
-        
+
         parser.add_argument("--batch-size", type=int, default=20)
         parser.add_argument("--train-ratio", type=float, default=0.7)
         parser.add_argument("--test-ratio", type=float, default=0.1)
@@ -58,7 +51,6 @@ class PNA(BaseModel):
 
     @classmethod
     def split_dataset(cls, dataset, args):
-        
         random.shuffle(dataset)
         train_size = int(len(dataset) * args.train_ratio)
         test_size = int(len(dataset) * args.test_ratio)
@@ -77,10 +69,8 @@ class PNA(BaseModel):
                  edge_dim=None,
                  aggregators=['mean', 'min', 'max', 'std'],
                  scalers = ['identity', 'amplification', 'attenuation'],
-                 divide_input=False
-                 ):
+                 divide_input=False ):
         super(PNA, self).__init__()
-
         self.hidden_size = hidden_size
         self.edge_dim = edge_dim
 
@@ -101,8 +91,13 @@ class PNA(BaseModel):
             self.convs.append(conv)
             self.batch_norms.append(BatchNorm(self.hidden_size))
 
-        self.mlp = Sequential(Linear(self.hidden_size, self.hidden_size//2), ReLU(), Linear(self.hidden_size//2, self.hidden_size//4), ReLU(),
+        self.mlp = Sequential(Linear(self.hidden_size, self.hidden_size//2), 
+                              ReLU(), 
+                              Linear(self.hidden_size//2, self.hidden_size//4), 
+                              ReLU(),
                               Linear(self.hidden_size//4, num_classes))
+
+        self.criterion = nn.CrossEntropyLoss()
 
     def forward(self, b):
         x = b.x
@@ -125,12 +120,5 @@ class PNA(BaseModel):
         out =  self.mlp(x)
 
         if b.y is not None:
-            return out, self.loss(out, b.y)
-            print(loss)
+            return out, self.criterion(out, b.y)
         return out, None
-
-    def loss(self, prediction, label):
-        criterion = nn.CrossEntropyLoss()
-        loss_n = criterion(prediction, label)
-        return loss_n
-

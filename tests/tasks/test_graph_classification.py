@@ -301,7 +301,6 @@ if __name__ == "__main__":
     test_patchy_san_mutag()
     test_patchy_san_proteins()
 
-
     test_hgpsl_proteins()
 
     test_sagpool_mutag()

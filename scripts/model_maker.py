@@ -10,23 +10,16 @@ from PyInquirer import Validator, ValidationError
 
 class Model_name_Validator(Validator):
     def validate(self, document):
-        err = False
         name = document.text
 
-        model_name = name.replace("[^\w\s]", "").lower()
+        model_name = name.replace(r"[^\w\s]", "").lower()
         model_file = path.exists("../cogdl/models/nn/" + model_name + ".py")
-        if len(name) > 6:
-            raise ValidationError(
-                message="The name of the model is too long", cursor_position=len(name)
-            )
+        if len(name) > 10:
+            raise ValidationError(message="The name of the model is too long", cursor_position=len(name))
         elif len(name) < 2:
-            raise ValidationError(
-                message="The name of the model is too short", cursor_position=len(name)
-            )
+            raise ValidationError(message="The name of the model is too short", cursor_position=len(name))
         elif model_file:
-            raise ValidationError(
-                message="The model already exists in CogDL", cursor_position=len(name)
-            )
+            raise ValidationError(message="The model already exists in CogDL", cursor_position=len(name))
 
 
 class Model_Maker:
@@ -90,7 +83,7 @@ class Model_Maker:
         self.readme_reminder()
 
     def create_model_file(self):
-        self.inputs["model_name"] = self.inputs["model_name"].replace("[^\w\s]", "")
+        self.inputs["model_name"] = self.inputs["model_name"].replace(r"[^\w\s]", "")
         self.model_name = self.inputs["model_name"].lower()
         template_file = open("templates/base_model.py", "r")
         model_file = open("cogdl/models/nn/%s.py" % self.model_name, "w")
@@ -111,9 +104,7 @@ class Model_Maker:
         self.model_type = "gnn" if self.inputs["model_type"] == "GNN method" else "emb"
         self.model_task = self.inputs["model_task"].replace(" ", "_").lower()
         template_file = open("templates/base_example.py", "r")
-        model_file = open(
-            "examples/%s_models/%s.py" % (self.model_type, self.model_name), "w"
-        )
+        model_file = open("examples/%s_models/%s.py" % (self.model_type, self.model_name), "w")
         for line in template_file.readlines():
             if '"task"' in line:
                 line = line.replace("model_task", self.model_task)
@@ -124,10 +115,7 @@ class Model_Maker:
             model_file.write(line)
         model_file.close()
 
-        print(
-            "Created example file --- examples/%s_models/%s.py"
-            % (self.model_type, self.model_name)
-        )
+        print("Created example file --- examples/%s_models/%s.py" % (self.model_type, self.model_name))
         template_file.close()
 
     def create_model_unit_test(self):
@@ -138,9 +126,7 @@ class Model_Maker:
         test_file = open("tests/tasks/test_%s.py" % self.model_task, "w")
         for line in lines:
             if "def test" in line and not created_args:
-                line = (
-                    "def add_%s_args(args):\n\treturn args\n\n" % self.model_name + line
-                )
+                line = "def add_%s_args(args):\n\treturn args\n\n" % self.model_name + line
                 created_args = True
             elif "if __name__" in line:
                 line = (
@@ -159,23 +145,19 @@ class Model_Maker:
         lines = match_file.readlines()
         match_file.close()
         match_file = open("match.yml", "w")
-        
+
         for line in lines:
-            if self.model_task+':\n' == line:
+            if self.model_task + ":\n" == line:
                 found_task = True
-            if 'dataset' in line and found_task:
-                line = " "*4+'- %s\n'%self.model_name + line
+            if "dataset" in line and found_task:
+                line = " " * 4 + "- %s\n" % self.model_name + line
                 found_task = False
             match_file.write(line)
-            
+
         print("Added model to the list --- match.yml")
 
     def readme_reminder(self):
-        print(
-            emoji.emojize(
-                "\nAll done! Don't forget to add your model to README.md :thumbs_up:"
-            )
-        )
+        print(emoji.emojize("\nAll done! Don't forget to add your model to README.md :thumbs_up:"))
 
 
 if __name__ == "__main__":

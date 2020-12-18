@@ -24,7 +24,11 @@ class ModelName(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.num_features, args.hidden_size, args.num_classes,)
+        return cls(
+            args.num_features,
+            args.hidden_size,
+            args.num_classes,
+        )
 
     def __init__(self, in_feats, hidden_dim, out_feats, k=20, dropout=0.5):
         super(ModelName, self).__init__()

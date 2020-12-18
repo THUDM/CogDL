@@ -565,7 +565,7 @@ def test_dropedge_resgcn_cora():
     args.dataset = "cora"
     args.model = "dropedge_gcn"
     args.baseblock = "resgcn"
-    args.inputlayer = "none"
+    args.inputlayer = "gcn"
     args.outputlayer = "gcn"
     args.hidden_size = 64
     args.dropout = 0.5

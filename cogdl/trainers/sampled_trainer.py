@@ -8,14 +8,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from cogdl.data import Dataset, Data
-from cogdl.data.sampler import (
-    NodeSampler,
-    EdgeSampler,
-    RWSampler,
-    MRWSampler,
-    LayerSampler,
-    NeighborSampler
-)
+from cogdl.data.sampler import NodeSampler, EdgeSampler, RWSampler, MRWSampler, LayerSampler, NeighborSampler
 from cogdl.models.supervised_model import (
     SupervisedHeterogeneousNodeClassificationModel,
     SupervisedHomogeneousNodeClassificationModel,
@@ -26,7 +19,7 @@ from cogdl.trainers.supervised_trainer import SupervisedHeterogeneousNodeClassif
 class SampledTrainer(SupervisedHeterogeneousNodeClassificationTrainer):
     @abstractmethod
     def fit(self, model: SupervisedHeterogeneousNodeClassificationModel, dataset: Dataset):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def _train_step(self):
@@ -51,7 +44,7 @@ class SampledTrainer(SupervisedHeterogeneousNodeClassificationTrainer):
         epoch_iter = tqdm(range(self.max_epoch))
         patience = 0
         best_score = 0
-        best_loss = np.inf
+        # best_loss = np.inf
         max_score = 0
         min_loss = np.inf
         best_model = copy.deepcopy(self.model)
@@ -59,12 +52,10 @@ class SampledTrainer(SupervisedHeterogeneousNodeClassificationTrainer):
             self._train_step()
             train_acc, _ = self._test_step(split="train")
             val_acc, val_loss = self._test_step(split="val")
-            epoch_iter.set_description(
-                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
-            )
+            epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
             if val_loss <= min_loss or val_acc >= max_score:
                 if val_acc >= best_score:  # SAINT loss is not accurate
-                    best_loss = val_loss
+                    # best_loss = val_loss
                     best_score = val_acc
                     best_model = copy.deepcopy(self.model)
                 min_loss = np.min((min_loss, val_loss))
@@ -95,7 +86,7 @@ class SAINTTrainer(SampledTrainer):
             "size_subgraph": args.size_subgraph,
             "num_walks": args.num_walks,
             "walk_length": args.walk_length,
-            "size_frontier": args.size_frontier
+            "size_frontier": args.size_frontier,
         }
         return args_sampler
 
@@ -112,9 +103,7 @@ class SAINTTrainer(SampledTrainer):
         elif self.args_sampler["sampler"] == "mrw":
             self.sampler = MRWSampler(self.data, self.args_sampler)
 
-        self.optimizer = torch.optim.Adam(
-            model.parameters(), lr=self.lr, weight_decay=self.weight_decay
-        )
+        self.optimizer = torch.optim.Adam(model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         best_model = self.train()
         self.model = best_model
         return self.model
@@ -140,7 +129,9 @@ class SAINTTrainer(SampledTrainer):
 
         with torch.no_grad():
             logits = self.model.predict(self.data)
-            loss = (torch.nn.NLLLoss(reduction="none")(logits[mask], self.data.y[mask]) * self.data.norm_loss[mask]).sum()
+            loss = (
+                torch.nn.NLLLoss(reduction="none")(logits[mask], self.data.y[mask]) * self.data.norm_loss[mask]
+            ).sum()
 
         pred = logits[mask].max(1)[1]
         acc = pred.eq(self.data.y[mask]).sum().item() / mask.sum().item()
@@ -162,19 +153,15 @@ class NeighborSamplingTrainer(SampledTrainer):
     def fit(self, model, dataset):
         self.data = Data.from_pyg_data(dataset[0])
         self.train_loader = NeighborSampler(
-                data=self.data,
-                mask=self.data.train_mask,
-                sizes=self.sample_size,
-                batch_size=self.batch_size,
-                num_workers=self.num_workers,
-                shuffle=True
+            data=self.data,
+            mask=self.data.train_mask,
+            sizes=self.sample_size,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            shuffle=True,
         )
         self.test_loader = NeighborSampler(
-            data=self.data,
-            mask=None,
-            sizes=[-1],
-            batch_size=self.batch_size,
-            shuffle=False
+            data=self.data, mask=None, sizes=[-1], batch_size=self.batch_size, shuffle=False
         )
         self.model = model.to(self.device)
         self.model.set_data_device(self.device)
@@ -197,9 +184,7 @@ class NeighborSamplingTrainer(SampledTrainer):
                 train_acc = acc["train"]
                 val_acc = acc["val"]
                 val_loss = loss["val"]
-                epoch_iter.set_description(
-                    f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
-                )
+                epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
                 if val_loss <= min_loss or val_acc >= max_score:
                     if val_loss <= min_loss:
                         best_model = copy.deepcopy(self.model)
@@ -226,31 +211,19 @@ class NeighborSamplingTrainer(SampledTrainer):
 
     def _test_step(self, split="val"):
         self.model.eval()
-        masks = {
-            "train": self.data.train_mask,
-            "val": self.data.val_mask,
-            "test": self.data.test_mask
-        }
+        masks = {"train": self.data.train_mask, "val": self.data.val_mask, "test": self.data.test_mask}
         with torch.no_grad():
             logits = self.model.inference(self.data.x, self.test_loader)
 
-        loss = {
-            key: F.nll_loss(logits[val], self.data.y[val])
-            for key, val in masks.items()
-        }
-        pred = {
-            key: logits[val].max(1)[1]
-            for key, val in masks.items()
-        }
-        acc = {
-            key: pred[key].eq(self.data.y[val]).sum().item() / val.sum().item()
-            for key, val in masks.items()
-        }
+        loss = {key: F.nll_loss(logits[val], self.data.y[val]) for key, val in masks.items()}
+        pred = {key: logits[val].max(1)[1] for key, val in masks.items()}
+        acc = {key: pred[key].eq(self.data.y[val]).sum().item() / val.sum().item() for key, val in masks.items()}
         return acc, loss
 
     @classmethod
     def build_trainer_from_args(cls, args):
         return cls(args)
+
 
 """
 class LayerSampledTrainer(SampledTrainer):

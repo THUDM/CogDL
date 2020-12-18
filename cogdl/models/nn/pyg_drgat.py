@@ -39,14 +39,10 @@ class DrGAT(BaseModel):
         self.hidden_size = hidden_size
         self.num_heads = num_heads
         self.dropout = dropout
-        self.conv1 = GATConv(
-            num_features, hidden_size, heads=num_heads, dropout=dropout
-        )
+        self.conv1 = GATConv(num_features, hidden_size, heads=num_heads, dropout=dropout)
         self.conv2 = GATConv(hidden_size * num_heads, num_classes, dropout=dropout)
         self.se1 = SELayer(num_features, se_channels=int(np.sqrt(num_features)))
-        self.se2 = SELayer(
-            hidden_size * num_heads, se_channels=int(np.sqrt(hidden_size * num_heads))
-        )
+        self.se2 = SELayer(hidden_size * num_heads, se_channels=int(np.sqrt(hidden_size * num_heads)))
 
     def forward(self, x, edge_index):
         x = F.dropout(x, p=self.dropout, training=self.training)
@@ -56,6 +52,6 @@ class DrGAT(BaseModel):
         x = self.se2(x)
         x = F.elu(self.conv2(x, edge_index))
         return x
-    
+
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

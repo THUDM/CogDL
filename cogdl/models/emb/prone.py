@@ -15,13 +15,14 @@ from .. import BaseModel, register_model
 class ProNE(BaseModel):
     r"""The ProNE model from the `"ProNE: Fast and Scalable Network Representation Learning"
     <https://www.ijcai.org/Proceedings/2019/0594.pdf>`_ paper.
-    
+
     Args:
         hidden_size (int) : The dimension of node representation.
         step (int) : The number of items in the chebyshev expansion.
         mu (float) : Parameter in ProNE.
         theta (float) : Parameter in ProNE.
-    """    
+    """
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -52,9 +53,7 @@ class ProNE(BaseModel):
         features_matrix = self._pre_factorization(self.matrix0, self.matrix0)
         t_2 = time.time()
 
-        embeddings_matrix = self._chebyshev_gaussian(
-            self.matrix0, features_matrix, self.step, self.mu, self.theta
-        )
+        embeddings_matrix = self._chebyshev_gaussian(self.matrix0, features_matrix, self.step, self.mu, self.theta)
         t_3 = time.time()
 
         print("sparse NE time", t_2 - t_1)
@@ -65,11 +64,9 @@ class ProNE(BaseModel):
 
     def _get_embedding_rand(self, matrix):
         # Sparse randomized tSVD for fast embedding
-        l = matrix.shape[0]
+        # l = matrix.shape[0]
         smat = sp.csc_matrix(matrix)  # convert to sparse CSC format
-        U, Sigma, VT = randomized_svd(
-            smat, n_components=self.dimension, n_iter=5, random_state=None
-        )
+        U, Sigma, VT = randomized_svd(smat, n_components=self.dimension, n_iter=5, random_state=None)
         U = U * np.sqrt(Sigma)
         U = preprocessing.normalize(U, "l2")
         return U
@@ -77,9 +74,7 @@ class ProNE(BaseModel):
     def _get_embedding_dense(self, matrix, dimension):
         # get dense embedding via SVD
         t1 = time.time()
-        U, s, Vh = linalg.svd(
-            matrix, full_matrices=False, check_finite=False, overwrite_a=True
-        )
+        U, s, Vh = linalg.svd(matrix, full_matrices=False, check_finite=False, overwrite_a=True)
         U = np.array(U)
         U = U[:, :dimension]
         s = s[:dimension]

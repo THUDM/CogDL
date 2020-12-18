@@ -9,7 +9,7 @@ from .. import BaseModel, register_model
 class NetMF(BaseModel):
     r"""The NetMF model from the `"Network Embedding as Matrix Factorization: Unifying DeepWalk, LINE, PTE, and node2vec"
     <http://arxiv.org/abs/1710.02971>`_ paper.
-    
+
     Args:
         hidden_size (int) : The dimension of node representation.
         window_size (int) : The actual context size which is considered in language model.
@@ -17,7 +17,7 @@ class NetMF(BaseModel):
         negative (int) : The number of nagative samples in negative sampling.
         is-large (bool) : When window size is large, use approximated deepwalk matrix to decompose.
     """
-    
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -30,9 +30,7 @@ class NetMF(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(
-            args.hidden_size, args.window_size, args.rank, args.negative, args.is_large
-        )
+        return cls(args.hidden_size, args.window_size, args.rank, args.negative, args.is_large)
 
     def __init__(self, dimension, window_size, rank, negative, is_large=False):
         self.dimension = dimension
@@ -45,16 +43,12 @@ class NetMF(BaseModel):
         A = sp.csr_matrix(nx.adjacency_matrix(G))
         if not self.is_large:
             print("Running NetMF for a small window size...")
-            deepwalk_matrix = self._compute_deepwalk_matrix(
-                A, window=self.window_size, b=self.negative
-            )
+            deepwalk_matrix = self._compute_deepwalk_matrix(A, window=self.window_size, b=self.negative)
 
         else:
             print("Running NetMF for a large window size...")
             vol = float(A.sum())
-            evals, D_rt_invU = self._approximate_normalized_laplacian(
-                A, rank=self.rank, which="LA"
-            )
+            evals, D_rt_invU = self._approximate_normalized_laplacian(A, rank=self.rank, which="LA")
             deepwalk_matrix = self._approximate_deepwalk_matrix(
                 evals, D_rt_invU, window=self.window_size, vol=vol, b=self.negative
             )
@@ -91,9 +85,7 @@ class NetMF(BaseModel):
         X = sp.identity(n) - L
         print("Eigen decomposition...")
         evals, evecs = sp.linalg.eigsh(X, rank, which=which)
-        print(
-            "Maximum eigenvalue %f, minimum eigenvalue %f", np.max(evals), np.min(evals)
-        )
+        print("Maximum eigenvalue %f, minimum eigenvalue %f", np.max(evals), np.min(evals))
         print("Computing D^{-1/2}U..")
         D_rt_inv = sp.diags(d_rt ** -1)
         D_rt_invU = D_rt_inv.dot(evecs)

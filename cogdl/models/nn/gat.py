@@ -14,7 +14,7 @@ class SpecialSpmmFunction(torch.autograd.Function):
 
     @staticmethod
     def forward(ctx, indices, values, shape, b):
-        assert indices.requires_grad == False
+        assert indices.requires_grad is False
         a = torch.sparse_coo_tensor(indices, values, shape)
         ctx.save_for_backward(a, b)
         ctx.N = shape[0]
@@ -75,9 +75,7 @@ class SpGraphAttentionLayer(nn.Module):
         assert not torch.isnan(edge_e).any()
         # edge_e: E
 
-        e_rowsum = self.special_spmm(
-            edge, edge_e, torch.Size([N, N]), torch.ones(size=(N, 1)).to(input.device)
-        )
+        e_rowsum = self.special_spmm(edge, edge_e, torch.Size([N, N]), torch.ones(size=(N, 1)).to(input.device))
         # e_rowsum: N x 1
 
         edge_e = self.dropout(edge_e)
@@ -99,14 +97,7 @@ class SpGraphAttentionLayer(nn.Module):
             return h_prime
 
     def __repr__(self):
-        return (
-            self.__class__.__name__
-            + " ("
-            + str(self.in_features)
-            + " -> "
-            + str(self.out_features)
-            + ")"
-        )
+        return self.__class__.__name__ + " (" + str(self.in_features) + " -> " + str(self.out_features) + ")"
 
 
 @register_model("gat")
@@ -152,9 +143,7 @@ class PetarVSpGAT(BaseModel):
         self.dropout = dropout
 
         self.attentions = [
-            SpGraphAttentionLayer(
-                in_feats, hidden_size, dropout=dropout, alpha=alpha, concat=True
-            )
+            SpGraphAttentionLayer(in_feats, hidden_size, dropout=dropout, alpha=alpha, concat=True)
             for _ in range(nheads)
         ]
         for i, attention in enumerate(self.attentions):
@@ -171,6 +160,6 @@ class PetarVSpGAT(BaseModel):
         x = F.dropout(x, self.dropout, training=self.training)
         x = F.elu(self.out_att(x, edge_index))
         return x
-    
+
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

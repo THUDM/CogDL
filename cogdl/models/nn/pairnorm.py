@@ -12,13 +12,12 @@ from cogdl.utils import row_normalization, spmm
 
 def softmax(src, index, num_nodes=None):
     """
-        sparse softmax
+    sparse softmax
     """
     num_nodes = index.max().item() + 1 if num_nodes is None else num_nodes
     out = src - scatter_max(src, index, dim=0, dim_size=num_nodes)[0][index]
     out = out.exp()
-    out = out / (scatter_add(out, index, dim=0,
-                             dim_size=num_nodes)[index] + 1e-16)
+    out = out / (scatter_add(out, index, dim=0, dim_size=num_nodes)[index] + 1e-16)
     return out
 
 
@@ -28,8 +27,9 @@ class GraphAttConv(nn.Module):
         assert out_features % heads == 0
         out_perhead = out_features // heads
 
-        self.graph_atts = nn.ModuleList([GraphAttConvOneHead(
-            in_features, out_perhead, dropout=dropout) for _ in range(heads)])
+        self.graph_atts = nn.ModuleList(
+            [GraphAttConvOneHead(in_features, out_perhead, dropout=dropout) for _ in range(heads)]
+        )
 
         self.in_features = in_features
         self.out_perhead = out_perhead
@@ -41,8 +41,7 @@ class GraphAttConv(nn.Module):
         return output
 
     def __repr__(self):
-        return self.__class__.__name__ + "({}->[{}x{}])".format(
-            self.in_features, self.heads, self.out_perhead)
+        return self.__class__.__name__ + "({}->[{}x{}])".format(self.in_features, self.heads, self.out_perhead)
 
 
 class GraphAttConvOneHead(nn.Module):
@@ -52,14 +51,11 @@ class GraphAttConvOneHead(nn.Module):
 
     def __init__(self, in_features, out_features, dropout=0.6, alpha=0.2):
         super(GraphAttConvOneHead, self).__init__()
-        self.weight = nn.Parameter(torch.zeros(
-            size=(in_features, out_features)))
+        self.weight = nn.Parameter(torch.zeros(size=(in_features, out_features)))
         self.a = nn.Parameter(torch.zeros(size=(1, 2 * out_features)))
         # init
-        nn.init.xavier_normal_(
-            self.weight.data, gain=nn.init.calculate_gain("relu"))  # look at here
-        nn.init.xavier_normal_(
-            self.a.data, gain=nn.init.calculate_gain("relu"))
+        nn.init.xavier_normal_(self.weight.data, gain=nn.init.calculate_gain("relu"))  # look at here
+        nn.init.xavier_normal_(self.a.data, gain=nn.init.calculate_gain("relu"))
 
         self.dropout = nn.Dropout(dropout)
         self.leakyrelu = nn.LeakyReLU(alpha)
@@ -81,15 +77,15 @@ class GraphAttConvOneHead(nn.Module):
 class PairNormNorm(nn.Module):
     def __init__(self, mode="PN", scale=1):
         """
-            mode:
-              "None" : No normalization 
-              "PN"   : Original version
-              "PN-SI"  : Scale-Individually version
-              "PN-SCS" : Scale-and-Center-Simultaneously version
+        mode:
+          "None" : No normalization
+          "PN"   : Original version
+          "PN-SI"  : Scale-Individually version
+          "PN-SCS" : Scale-and-Center-Simultaneously version
 
-            ("SCS"-mode is not in the paper but we found it works well in practice, 
-              especially for GCN and GAT.)
-            PairNormNorm is typically used after each graph convolution operation. 
+        ("SCS"-mode is not in the paper but we found it works well in practice,
+          especially for GCN and GAT.)
+        PairNormNorm is typically used after each graph convolution operation.
         """
         assert mode in ["None", "PN", "PN-SI", "PN-SCS"]
         super(PairNormNorm, self).__init__()
@@ -112,13 +108,11 @@ class PairNormNorm(nn.Module):
 
         if self.mode == "PN-SI":
             x = x - col_mean
-            rownorm_individual = (
-                    1e-6 + x.pow(2).sum(dim=1, keepdim=True)).sqrt()
+            rownorm_individual = (1e-6 + x.pow(2).sum(dim=1, keepdim=True)).sqrt()
             x = self.scale * x / rownorm_individual
 
         if self.mode == "PN-SCS":
-            rownorm_individual = (
-                    1e-6 + x.pow(2).sum(dim=1, keepdim=True)).sqrt()
+            rownorm_individual = (1e-6 + x.pow(2).sum(dim=1, keepdim=True)).sqrt()
             x = self.scale * x / rownorm_individual - col_mean
 
         return x
@@ -144,8 +138,7 @@ class SGC(nn.Module):
 
 
 class GCN(nn.Module):
-    def __init__(self, nfeat, nhid, nclass, dropout,
-                 norm_mode="None", norm_scale=1, **kwargs):
+    def __init__(self, nfeat, nhid, nclass, dropout, norm_mode="None", norm_scale=1, **kwargs):
         super(GCN, self).__init__()
         self.gc1 = GraphConvolution(nfeat, nhid)
         self.gc2 = GraphConvolution(nhid, nclass)
@@ -165,8 +158,7 @@ class GCN(nn.Module):
 
 
 class GAT(nn.Module):
-    def __init__(self, nfeat, nhid, nclass, dropout, nhead,
-                 norm_mode="None", norm_scale=1, **kwargs):
+    def __init__(self, nfeat, nhid, nclass, dropout, nhead, norm_mode="None", norm_scale=1, **kwargs):
         super(GAT, self).__init__()
         alpha_droprate = dropout
         self.gac1 = GraphAttConv(nfeat, nhid, nhead, alpha_droprate)
@@ -187,14 +179,12 @@ class GAT(nn.Module):
 
 
 class DeepGCN(nn.Module):
-    def __init__(self, nfeat, nhid, nclass, dropout, nlayer=2, residual=0,
-                 norm_mode="None", norm_scale=1, **kwargs):
+    def __init__(self, nfeat, nhid, nclass, dropout, nlayer=2, residual=0, norm_mode="None", norm_scale=1, **kwargs):
         super(DeepGCN, self).__init__()
         assert nlayer >= 1
-        self.hidden_layers = nn.ModuleList([
-            GraphConvolution(nfeat if i == 0 else nhid, nhid)
-            for i in range(nlayer - 1)
-        ])
+        self.hidden_layers = nn.ModuleList(
+            [GraphConvolution(nfeat if i == 0 else nhid, nhid) for i in range(nlayer - 1)]
+        )
         self.out_layer = GraphConvolution(nfeat if nlayer == 1 else nhid, nclass)
 
         self.dropout = nn.Dropout(p=dropout)
@@ -219,18 +209,16 @@ class DeepGCN(nn.Module):
 
 
 class DeepGAT(nn.Module):
-    def __init__(self, nfeat, nhid, nclass, dropout, nlayer=2, residual=0, nhead=1,
-                 norm_mode="None", norm_scale=1, **kwargs):
+    def __init__(
+        self, nfeat, nhid, nclass, dropout, nlayer=2, residual=0, nhead=1, norm_mode="None", norm_scale=1, **kwargs
+    ):
         super(DeepGAT, self).__init__()
         assert nlayer >= 1
         alpha_droprate = dropout
-        self.hidden_layers = nn.ModuleList([
-            GraphAttConv(nfeat if i == 0 else nhid,
-                         nhid, nhead, alpha_droprate)
-            for i in range(nlayer - 1)
-        ])
-        self.out_layer = GraphAttConv(
-            nfeat if nlayer == 1 else nhid, nclass, 1, alpha_droprate)
+        self.hidden_layers = nn.ModuleList(
+            [GraphAttConv(nfeat if i == 0 else nhid, nhid, nhead, alpha_droprate) for i in range(nlayer - 1)]
+        )
+        self.out_layer = GraphAttConv(nfeat if nlayer == 1 else nhid, nclass, 1, alpha_droprate)
 
         self.dropout = nn.Dropout(p=dropout)
         self.relu = nn.ELU(True)
@@ -257,54 +245,72 @@ class DeepGAT(nn.Module):
 class PairNorm(BaseModel):
     @staticmethod
     def add_args(parser):
-        parser.add_argument("--pn_model", type=str,
-                            default="GCN", help="{SGC, DeepGCN, DeepGAT}")
-        parser.add_argument("--hidden_layers", type=int,
-                            default=64, help="Number of hidden units.")
-        parser.add_argument("--nhead", type=int, default=1,
-                            help="Number of head attentions.")
-        parser.add_argument("--dropout", type=float,
-                            default=0.6, help="Dropout rate.")
-        parser.add_argument("--nlayer", type=int, default=2,
-                            help="Number of layers, works for Deep model.")
-        parser.add_argument("--residual", type=int,
-                            default=0, help="Residual connection")
-        parser.add_argument("--norm_mode", type=str, default="None",
-                            help="Mode for PairNorm, {None, PN, PN-SI, PN-SCS}")
-        parser.add_argument("--norm_scale", type=float,
-                            default=1.0, help="Row-normalization scale")
-        parser.add_argument("--no_fea_norm", action="store_false",
-                            default=True, help="not normalize feature")
-        parser.add_argument("--missing_rate", type=int,
-                            default=0, help="missing rate, from 0 to 100")
-        parser.add_argument("--weight_decay", type=float, default=5e-4,
-                            help="Weight decay (L2 loss on parameters).")
-        parser.add_argument("--lr", type=float, default=0.005,
-                            help="Initial learning rate.")
+        parser.add_argument("--pn_model", type=str, default="GCN", help="{SGC, DeepGCN, DeepGAT}")
+        parser.add_argument("--hidden_layers", type=int, default=64, help="Number of hidden units.")
+        parser.add_argument("--nhead", type=int, default=1, help="Number of head attentions.")
+        parser.add_argument("--dropout", type=float, default=0.6, help="Dropout rate.")
+        parser.add_argument("--nlayer", type=int, default=2, help="Number of layers, works for Deep model.")
+        parser.add_argument("--residual", type=int, default=0, help="Residual connection")
+        parser.add_argument(
+            "--norm_mode", type=str, default="None", help="Mode for PairNorm, {None, PN, PN-SI, PN-SCS}"
+        )
+        parser.add_argument("--norm_scale", type=float, default=1.0, help="Row-normalization scale")
+        parser.add_argument("--no_fea_norm", action="store_false", default=True, help="not normalize feature")
+        parser.add_argument("--missing_rate", type=int, default=0, help="missing rate, from 0 to 100")
+        parser.add_argument("--weight_decay", type=float, default=5e-4, help="Weight decay (L2 loss on parameters).")
+        parser.add_argument("--lr", type=float, default=0.005, help="Initial learning rate.")
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.pn_model, args.hidden_layers, args.nhead, args.dropout, args.nlayer, args.residual,
-                   args.norm_mode, args.norm_scale, args.no_fea_norm, args.missing_rate, args.num_features,
-                   args.num_classes)
+        return cls(
+            args.pn_model,
+            args.hidden_layers,
+            args.nhead,
+            args.dropout,
+            args.nlayer,
+            args.residual,
+            args.norm_mode,
+            args.norm_scale,
+            args.no_fea_norm,
+            args.missing_rate,
+            args.num_features,
+            args.num_classes,
+        )
 
-    def __init__(self, pn_model, hidden_layers, nhead, dropout, nlayer, residual, norm_mode, norm_scale, no_fea_norm,
-                 missing_rate, num_features, num_classes):
+    def __init__(
+        self,
+        pn_model,
+        hidden_layers,
+        nhead,
+        dropout,
+        nlayer,
+        residual,
+        norm_mode,
+        norm_scale,
+        no_fea_norm,
+        missing_rate,
+        num_features,
+        num_classes,
+    ):
         super(PairNorm, self).__init__()
         self.edge_attr = None
 
         if pn_model == "GCN":
-            self.pn_model = GCN(num_features, hidden_layers, num_classes,
-                                dropout, norm_mode, norm_scale).to(self.device)
+            self.pn_model = GCN(num_features, hidden_layers, num_classes, dropout, norm_mode, norm_scale).to(
+                self.device
+            )
         elif pn_model == "SGC":
-            self.pn_model = SGC(num_features, hidden_layers, num_classes,
-                                dropout, nlayer, norm_mode, norm_scale).to(self.device)
+            self.pn_model = SGC(num_features, hidden_layers, num_classes, dropout, nlayer, norm_mode, norm_scale).to(
+                self.device
+            )
         elif pn_model == "DeepGCN":
-            self.pn_model = DeepGCN(num_features, hidden_layers, num_classes,
-                                    dropout, nlayer, residual, norm_mode, norm_scale).to(self.device)
+            self.pn_model = DeepGCN(
+                num_features, hidden_layers, num_classes, dropout, nlayer, residual, norm_mode, norm_scale
+            ).to(self.device)
         else:
-            self.pn_model = DeepGAT(num_features, hidden_layers, num_classes, dropout,
-                                    nlayer, residual, nhead, norm_mode, norm_scale).to(self.device)
+            self.pn_model = DeepGAT(
+                num_features, hidden_layers, num_classes, dropout, nlayer, residual, nhead, norm_mode, norm_scale
+            ).to(self.device)
 
     def forward(self, x, edge_index):
         if self.edge_attr is None:

@@ -3,10 +3,10 @@ from torch.nn.modules import activation
 
 from .. import BaseModel, register_model
 from cogdl.layers.strategies_layers import (
-    ContextPredictTrainer, 
-    Finetuner, 
-    MaskTrainer, 
-    InfoMaxTrainer, 
+    ContextPredictTrainer,
+    Finetuner,
+    MaskTrainer,
+    InfoMaxTrainer,
     SupervisedTrainer,
 )
 
@@ -14,8 +14,9 @@ from cogdl.layers.strategies_layers import (
 @register_model("stpgnn")
 class stpgnn(BaseModel):
     """
-        Implementation of models in paper `"Strategies for Pre-training Graph Neural Networks"`. <https://arxiv.org/abs/1905.12265>
+    Implementation of models in paper `"Strategies for Pre-training Graph Neural Networks"`. <https://arxiv.org/abs/1905.12265>
     """
+
     @staticmethod
     def add_args(parser):
         # fmt: off

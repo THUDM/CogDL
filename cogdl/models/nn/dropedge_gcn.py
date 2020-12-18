@@ -367,7 +367,7 @@ class DenseGCNBlock(Module):
         )
 
 
-class InecptionGCNBlock(Module):
+class InceptionGCNBlock(Module):
     """
     The multiple layer GCN with inception connection block.
     """
@@ -397,7 +397,7 @@ class InecptionGCNBlock(Module):
                            is "add", for others the default is "concat".
         :param dense: not applied. The default is False, cannot be changed.
         """
-        super(InecptionGCNBlock, self).__init__()
+        super(InceptionGCNBlock, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.hiddendim = out_features
@@ -565,7 +565,7 @@ class DropEdge_GCN(BaseModel):
         parser.add_argument("--nbaseblocklayer", type=int, default=0,
                             help="The number of layers in each baseblock")
         parser.add_argument("--aggrmethod", default="default",
-                            help="The aggrmethod for the layer aggreation. The options includes add and concat. Only valid in resgcn, densegcn and inecptiongcn")
+                            help="The aggrmethod for the layer aggreation. The options includes add and concat. Only valid in resgcn, densegcn and inceptiongcn")
         parser.add_argument("--task_type", default="full", help="The node classification task type (full and semi). Only valid for cora, citeseer and pubmed dataset.")
 
         parser.add_argument("--activation", default=F.relu, help="activiation function")
@@ -617,7 +617,7 @@ class DropEdge_GCN(BaseModel):
         elif baseblock == "mutigcn":
             self.BASEBLOCK = MultiLayerGCNBlock
         elif baseblock == "inceptiongcn":
-            self.BASEBLOCK = InecptionGCNBlock
+            self.BASEBLOCK = InceptionGCNBlock
         else:
             raise NotImplementedError("Current baseblock %s is not supported." % (baseblock))
         if inputlayer == "gcn":
@@ -693,12 +693,6 @@ class DropEdge_GCN(BaseModel):
         x = self.outgc(x, adj)
         x = F.log_softmax(x, dim=1)
         return x
-
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask],
-        )
 
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

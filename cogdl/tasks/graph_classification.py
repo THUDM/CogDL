@@ -29,23 +29,14 @@ def node_degree_as_feature(data):
         edge_weight = torch.ones((edge_index.size(1),), device=edge_index.device)
         fill_value = 1
         num_nodes = graph.num_nodes
-        edge_index, edge_weight = add_remaining_self_loops(
-            edge_index, edge_weight, fill_value, num_nodes
-        )
+        edge_index, edge_weight = add_remaining_self_loops(edge_index, edge_weight, fill_value, num_nodes)
         row, col = edge_index
-        deg = (
-            torch.zeros(num_nodes)
-            .to(edge_index.device)
-            .scatter_add_(0, row, edge_weight)
-            .long()
-        )
+        deg = torch.zeros(num_nodes).to(edge_index.device).scatter_add_(0, row, edge_weight).long()
         degrees.append(deg.cpu() - 1)
         max_degree = max(torch.max(deg), max_degree)
     max_degree = int(max_degree)
     for i in range(len(data)):
-        one_hot = torch.zeros(data[i].num_nodes, max_degree).scatter_(
-            1, degrees[i].unsqueeze(1), 1
-        )
+        one_hot = torch.zeros(data[i].num_nodes, max_degree).scatter_(1, degrees[i].unsqueeze(1), 1)
         data[i].x = one_hot.to(data[i].y.device)
     return data
 
@@ -89,9 +80,7 @@ class GraphClassification(BaseTask):
         self.device = args.device_id[0] if not args.cpu else "cpu"
         if args.dataset.startswith("ogbg"):
             self.data = dataset.data
-            self.train_loader, self.val_loader, self.test_loader = dataset.get_loader(
-                args
-            )
+            self.train_loader, self.val_loader, self.test_loader = dataset.get_loader(args)
             model = build_model(args) if model is None else model
         else:
             self.data = self.generate_data(dataset, args)
@@ -106,12 +95,8 @@ class GraphClassification(BaseTask):
         self.patience = args.patience
         self.max_epoch = args.max_epoch
 
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
-        )
-        self.scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer=self.optimizer, step_size=50, gamma=0.5
-        )
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(optimizer=self.optimizer, step_size=50, gamma=0.5)
 
     def train(self):
         if self.kfold:
@@ -122,7 +107,6 @@ class GraphClassification(BaseTask):
     def _train(self):
         epoch_iter = tqdm(range(self.max_epoch))
         patience = 0
-        best_score = 0
         best_model = None
         best_loss = np.inf
         max_score = 0
@@ -139,7 +123,6 @@ class GraphClassification(BaseTask):
             if val_loss < min_loss or val_acc > max_score:
                 if val_loss <= best_loss:  # and val_acc >= best_score:
                     best_loss = val_loss
-                    best_score = val_acc
                     best_model = copy.deepcopy(self.model)
                 min_loss = np.min((min_loss, val_loss))
                 max_score = np.max((max_score, val_acc))
@@ -200,9 +183,7 @@ class GraphClassification(BaseTask):
 
     def _kfold_train(self):
         y = [x.y for x in self.data]
-        kf = StratifiedKFold(
-            n_splits=self.folds, shuffle=True, random_state=self.args.seed
-        )
+        kf = StratifiedKFold(n_splits=self.folds, shuffle=True, random_state=self.args.seed)
         acc = []
         for train_index, test_index in kf.split(self.data, y=y):
             model = build_model(self.args)
@@ -229,9 +210,7 @@ class GraphClassification(BaseTask):
                 lr=self.args.lr,
                 weight_decay=self.args.weight_decay,
             )
-            self.scheduler = torch.optim.lr_scheduler.StepLR(
-                optimizer=self.optimizer, step_size=50, gamma=0.5
-            )
+            self.scheduler = torch.optim.lr_scheduler.StepLR(optimizer=self.optimizer, step_size=50, gamma=0.5)
 
             res = self._train()
             acc.append(res["Acc"])

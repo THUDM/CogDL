@@ -126,7 +126,9 @@ class Search(object):
 
         neg_infos = []
         for idx, smoothed in enumerate(prop_emb_list):
-            neg_info = np.exp(np.sum(np.tile(smoothed[:, np.newaxis, :], (1, self.batch_size, 1)) * self.neg_emb, -1) / T).sum(-1)
+            neg_info = np.exp(
+                np.sum(np.tile(smoothed[:, np.newaxis, :], (1, self.batch_size, 1)) * self.neg_emb, -1) / T
+            ).sum(-1)
             assert neg_info.shape == (self.num_nodes,)
             neg_infos.append(neg_info + pos_infos[idx])
 
@@ -135,7 +137,7 @@ class Search(object):
             pos_neg = np.nan_to_num(pos_neg)
 
         loss = -np.log(pos_neg).mean()
-        return loss/10
+        return loss / 10
 
     def infomax_loss(self, prop_emb_list, neg_prop_emb_list):
         prop_result = np.concatenate(prop_emb_list, axis=1)
@@ -143,7 +145,7 @@ class Search(object):
             prop_result = get_embedding_dense(prop_result, self.dim)
 
         def sigmoid(x):
-            return 1. / (1 + np.exp(-x))
+            return 1.0 / (1 + np.exp(-x))
 
         pos_glb = prop_result.mean(0)
         pos_info = sigmoid(pos_glb.dot(prop_result.T))
@@ -185,12 +187,14 @@ class ProNEPP(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(filter_types=args.filter_types,
-                   max_evals=args.max_evals,
-                   loss_type=args.loss,
-                   svd=not args.no_svd,
-                   n_workers=args.num_workers,
-                   search=not args.no_search)
+        return cls(
+            filter_types=args.filter_types,
+            max_evals=args.max_evals,
+            loss_type=args.loss,
+            svd=not args.no_svd,
+            n_workers=args.num_workers,
+            search=not args.no_search,
+        )
 
     def __init__(self, filter_types, svd, search, max_evals=None, loss_type=None, n_workers=None):
         super(ProNEPP, self).__init__()

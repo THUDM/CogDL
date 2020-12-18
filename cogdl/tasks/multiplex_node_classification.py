@@ -35,9 +35,8 @@ class MultiplexNodeClassification(BaseTask):
         self.hidden_size = args.hidden_size
         self.model = build_model(args) if model is None else model
         self.args = args
-        self.device = torch.device('cpu' if args.cpu else 'cuda')
+        self.device = torch.device("cpu" if args.cpu else "cuda")
         self.model = self.model.to(self.device)
-
 
     def train(self):
         G = nx.DiGraph()
@@ -47,12 +46,12 @@ class MultiplexNodeClassification(BaseTask):
         else:
             embeddings = self.model.train(self.data)
         embeddings = np.hstack((embeddings, self.data.x.numpy()))
-                    
-        # Select nodes which have label as training data        
+
+        # Select nodes which have label as training data
         train_index = torch.cat((self.data.train_node, self.data.valid_node)).numpy()
         test_index = self.data.test_node.numpy()
         y = self.data.y.numpy()
-        
+
         X_train, y_train = embeddings[train_index], y[train_index]
         X_test, y_test = embeddings[test_index], y[test_index]
         clf = LogisticRegression()

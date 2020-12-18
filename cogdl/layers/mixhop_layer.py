@@ -5,8 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
-class MixHopLayer(nn.Module):
 
+class MixHopLayer(nn.Module):
     def __init__(self, num_features, adj_pows, dim_per_pow):
         super(MixHopLayer, self).__init__()
         self.num_features = num_features
@@ -30,17 +30,15 @@ class MixHopLayer(nn.Module):
 
     def forward(self, x, edge_index):
         adj = torch.sparse_coo_tensor(
-            edge_index,
-            torch.ones(edge_index.shape[1]).float(),
-            (x.shape[0], x.shape[0]),
-            device=x.device
+            edge_index, torch.ones(edge_index.shape[1]).float(), (x.shape[0], x.shape[0]), device=x.device
         )
         output_list = []
         for p, linear in zip(self.adj_pows, self.linears):
             output = linear(self.adj_pow_x(x, adj, p))
             output_list.append(output)
-        
+
         return torch.cat(output_list, dim=1)
+
 
 if __name__ == "__main__":
     layer = MixHopLayer(10, [1, 3], [16, 32])

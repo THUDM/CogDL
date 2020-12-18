@@ -50,11 +50,19 @@ class GDC_GCN(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.num_features, args.hidden_size, args.num_classes, args.dropout,
-                   args.alpha, args.t, args.k, args.eps, args.gdc_type)
+        return cls(
+            args.num_features,
+            args.hidden_size,
+            args.num_classes,
+            args.dropout,
+            args.alpha,
+            args.t,
+            args.k,
+            args.eps,
+            args.gdc_type,
+        )
 
-    def __init__(self, nfeat, nhid, nclass, dropout,
-                 alpha, t, k, eps, gdctype):
+    def __init__(self, nfeat, nhid, nclass, dropout, alpha, t, k, eps, gdctype):
         super(GDC_GCN, self).__init__()
 
         # preproc params
@@ -73,8 +81,6 @@ class GDC_GCN(BaseModel):
         self.dropout = dropout
 
     def forward(self, x, edge_index):
-        device = x.device
-
         edge_index, edge_attr = add_remaining_self_loops(edge_index)
         edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
         adj_values = edge_attr
@@ -84,14 +90,15 @@ class GDC_GCN(BaseModel):
 
         x = F.dropout(x, self.dropout, training=self.training)
         x = self.gc2(x, edge_index, adj_values)
+        return x
 
-        return F.log_softmax(x, dim=-1)
-
-    def loss(self, data):
+    def node_classification_loss(self, data):
         if self.data is None:
             self.reset_data(data)
+        pred = self.forward(self.data.x, self.data.edge_index)
+        pred = F.log_softmax(pred, dim=-1)
         return F.nll_loss(
-            self.forward(self.data.x, self.data.edge_index)[self.data.train_mask],
+            pred[self.data.train_mask],
             self.data.y[self.data.train_mask],
         )
 
@@ -148,7 +155,7 @@ class GDC_GCN(BaseModel):
             y=data.y,
             train_mask=data.train_mask,
             test_mask=data.test_mask,
-            val_mask=data.val_mask
+            val_mask=data.val_mask,
         )
         data.apply(lambda x: x.to(self.device))
 
@@ -157,21 +164,17 @@ class GDC_GCN(BaseModel):
     def _get_adj_matrix(self, x, edge_index):
         num_nodes = x.shape[0]
         adj_matrix = np.zeros(shape=(num_nodes, num_nodes))
-        adj_matrix[edge_index[0], edge_index[1]] = 1.
+        adj_matrix[edge_index[0], edge_index[1]] = 1.0
         return adj_matrix
 
-    def _get_ppr_matrix(self,
-                        adj_matrix,
-                        alpha=0.1):
+    def _get_ppr_matrix(self, adj_matrix, alpha=0.1):
         num_nodes = adj_matrix.shape[0]
         A_tilde = adj_matrix + np.eye(num_nodes)
         D_tilde = np.diag(1 / np.sqrt(A_tilde.sum(axis=1)))
         H = D_tilde @ A_tilde @ D_tilde
         return alpha * np.linalg.inv(np.eye(num_nodes) - (1 - alpha) * H)
 
-    def _get_heat_matrix(self,
-                         adj_matrix,
-                         t=5.0):
+    def _get_heat_matrix(self, adj_matrix, t=5.0):
         num_nodes = adj_matrix.shape[0]
         A_tilde = adj_matrix + np.eye(num_nodes)
         D_tilde = np.diag(1 / np.sqrt(A_tilde.sum(axis=1)))
@@ -181,14 +184,13 @@ class GDC_GCN(BaseModel):
     def _get_top_k_matrix(self, A, k=128):
         num_nodes = A.shape[0]
         row_idx = np.arange(num_nodes)
-        A[A.argsort(axis=0)[:num_nodes - k], row_idx] = 0.
+        A[A.argsort(axis=0)[: num_nodes - k], row_idx] = 0.0
         norm = A.sum(axis=0)
         norm[norm <= 0] = 1  # avoid dividing by zero
         return A / norm
 
     def _get_clipped_matrix(self, A, eps=0.01):
-        num_nodes = A.shape[0]
-        A[A < eps] = 0.
+        A[A < eps] = 0.0
         norm = A.sum(axis=0)
         norm[norm <= 0] = 1  # avoid dividing by zero
         return A / norm

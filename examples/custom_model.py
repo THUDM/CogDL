@@ -11,12 +11,14 @@ from cogdl.models.nn.gcn import GraphConvolution
 
 
 """Define your Model"""
+
+
 class MyModel(BaseModel):
     def __init__(self, in_feats, hidden_size, out_feats):
         super(MyModel, self).__init__()
         self.layer = GraphConvolution(in_features=in_feats, out_features=hidden_size)
         self.fc = nn.Linear(hidden_size, out_feats)
-    
+
     def forward(self, x, edge_index):
         h = self.layer(x, edge_index)
         return F.log_softmax(self.fc(h))
@@ -25,21 +27,23 @@ class MyModel(BaseModel):
         out = self.forward(data.x, data.edge_index)[data.train_mask]
         loss_n = F.nll_loss(out, data.y[data.train_mask])
         return loss_n
-    
+
     def predict(self, data):
         return self.forward(data.x, data.edge_index)
 
 
 def get_default_args():
     cuda_available = torch.cuda.is_available()
-    default_dict = {'hidden_size': 16,
-                    'dropout': 0.5,
-                    'patience': 100,
-                    'max_epoch': 500,
-                    'cpu': not cuda_available,
-                    'lr': 0.01,
-                    'device_id': [0],
-                    'weight_decay': 5e-4}
+    default_dict = {
+        "hidden_size": 16,
+        "dropout": 0.5,
+        "patience": 100,
+        "max_epoch": 500,
+        "cpu": not cuda_available,
+        "lr": 0.01,
+        "device_id": [0],
+        "weight_decay": 5e-4,
+    }
     return build_args_from_dict(default_dict)
 
 

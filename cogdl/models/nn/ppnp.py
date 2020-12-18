@@ -13,7 +13,6 @@ from .gcn import TKipfGCN
 
 @register_model("ppnp")
 class PPNP(BaseModel):
-
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -29,8 +28,15 @@ class PPNP(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.num_features, args.hidden_size, args.num_classes,
-                   args.dropout, args.propagation_type, args.alpha, args.num_iterations)
+        return cls(
+            args.num_features,
+            args.hidden_size,
+            args.num_classes,
+            args.dropout,
+            args.propagation_type,
+            args.alpha,
+            args.num_iterations,
+        )
 
     def __init__(self, nfeat, nhid, nclass, dropout, propagation, alpha, niter):
         super(PPNP, self).__init__()
@@ -77,7 +83,8 @@ class PPNP(BaseModel):
         if self.propagation == "ppnp":
             if self.vals is None:
                 self.vals = self.alpha * torch.inverse(
-                    torch.eye(x.shape[0]).to(x.device) - (1 - self.alpha) * get_ready_format(x, adj, A_hat))
+                    torch.eye(x.shape[0]).to(x.device) - (1 - self.alpha) * get_ready_format(x, adj, A_hat)
+                )
             final_preds = F.dropout(self.vals) @ local_preds
         else:  # appnp
             preds = local_preds
@@ -85,14 +92,7 @@ class PPNP(BaseModel):
                 A_dropped = get_ready_format(x, adj, F.dropout(A_hat, self.dropout, training=self.training))
                 preds = torch.spmm((1 - self.alpha) * A_dropped, preds) + self.alpha * local_preds
             final_preds = preds
-
-        return F.log_softmax(final_preds, dim=-1)
-
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask],
-        )
+        return final_preds
 
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

@@ -17,13 +17,11 @@ def build_default_args_for_heterogeneous_node_classification(dataset):
         "lr": 0.005,
         "weight_decay": 0.001,
         "seed": [0, 1, 2],
-
         "num_layers": 2,
         "num_channels": 2,
-
         "task": "heterogeneous_node_classification",
         "model": "gtn",
-        "dataset": dataset
+        "dataset": dataset,
     }
     return build_args_from_dict(args)
 
@@ -32,6 +30,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

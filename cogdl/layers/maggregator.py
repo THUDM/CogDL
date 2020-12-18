@@ -3,9 +3,7 @@ import torch.nn as nn
 
 
 class MeanAggregator(torch.nn.Module):
-    def __init__(
-        self, in_channels, out_channels, improved=False, cached=False, bias=True
-    ):
+    def __init__(self, in_channels, out_channels, improved=False, cached=False, bias=True):
         super(MeanAggregator, self).__init__()
 
         self.in_channels = in_channels
@@ -41,6 +39,4 @@ class MeanAggregator(torch.nn.Module):
         return aggr_out
 
     def __repr__(self):
-        return "{}({}, {})".format(
-            self.__class__.__name__, self.in_channels, self.out_channels
-        )
+        return "{}({}, {})".format(self.__class__.__name__, self.in_channels, self.out_channels)

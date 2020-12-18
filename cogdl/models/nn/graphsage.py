@@ -59,7 +59,7 @@ class Graphsage(BaseModel):
         # fmt: off
         parser.add_argument("--hidden-size", type=int, nargs='+', default=[128])
         parser.add_argument("--num-layers", type=int, default=2)
-        parser.add_argument("--sample-size",type=int, nargs='+', default=[10, 10])
+        parser.add_argument("--sample-size", type=int, nargs='+', default=[10, 10])
         parser.add_argument("--dropout", type=float, default=0.5)
         parser.add_argument("--batch-size", type=int, default=128)
         # fmt: on
@@ -78,9 +78,7 @@ class Graphsage(BaseModel):
     def sampling(self, edge_index, num_sample):
         return sage_sampler(self.adjlist, edge_index, num_sample)
 
-    def __init__(
-        self, num_features, num_classes, hidden_size, num_layers, sample_size, dropout
-    ):
+    def __init__(self, num_features, num_classes, hidden_size, num_layers, sample_size, dropout):
         super(Graphsage, self).__init__()
         assert num_layers == len(sample_size)
         self.adjlist = {}
@@ -91,12 +89,7 @@ class Graphsage(BaseModel):
         self.sample_size = sample_size
         self.dropout = dropout
         shapes = [num_features] + hidden_size + [num_classes]
-        self.convs = nn.ModuleList(
-            [
-                GraphSAGELayer(shapes[layer], shapes[layer+1])
-                for layer in range(num_layers)
-            ]
-        )
+        self.convs = nn.ModuleList([GraphSAGELayer(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
 
     def mini_forward(self, x, edge_index):
         for i in range(self.num_layers):
@@ -125,13 +118,13 @@ class Graphsage(BaseModel):
             for i, (src_id, edge_index, size) in enumerate(adjs):
                 edge_index = edge_index.to(self.device)
                 output = self.convs[i](x, edge_index)
-                x = output[0: size[1]]
+                x = output[0 : size[1]]
                 if i != self.num_layers - 1:
                     x = F.relu(x)
                     x = F.dropout(x, p=self.dropout, training=self.training)
             return F.log_softmax(x, dim=-1)
 
-    def loss(self, *args):
+    def node_classification_loss(self, *args):
         assert len(args) == 1 or len(args) == 3
         if len(args) == 1:
             return self.mini_loss(*args)
@@ -147,7 +140,7 @@ class Graphsage(BaseModel):
                 x = x_all[src_id].to(self.device)
                 edge_index = edge_index.to(self.device)
                 x = self.convs[i](x, edge_index)
-                x = x[:size[1]]
+                x = x[: size[1]]
                 if i != self.num_layers - 1:
                     x = F.relu(x)
                 output.append(x.cpu())

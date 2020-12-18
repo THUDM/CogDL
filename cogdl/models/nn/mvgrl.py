@@ -47,12 +47,13 @@ class Discriminator(nn.Module):
         logits = torch.cat((sc_1, sc_2, sc_3, sc_4), 1)
         return logits
 
+
 # Borrowed from https://github.com/kavehhassani/mvgrl
 class Model(nn.Module):
     def __init__(self, n_in, n_h):
         super(Model, self).__init__()
-        self.gcn1 = GCN(n_in, n_h, 'prelu')
-        self.gcn2 = GCN(n_in, n_h, 'prelu')
+        self.gcn1 = GCN(n_in, n_h, "prelu")
+        self.gcn2 = GCN(n_in, n_h, "prelu")
         self.read = AvgReadout()
 
         self.sigm = nn.Sigmoid()
@@ -82,45 +83,48 @@ class Model(nn.Module):
         h_2 = self.gcn2(seq, diff, sparse)
         return (h_1 + h_2).detach(), c.detach()
 
+
 def preprocess_features(features):
     """Row-normalize feature matrix and convert to tuple representation"""
     rowsum = np.array(features.sum(1))
     r_inv = np.power(rowsum, -1).flatten()
-    r_inv[np.isinf(r_inv)] = 0.
+    r_inv[np.isinf(r_inv)] = 0.0
     r_mat_inv = sp.diags(r_inv)
     features = r_mat_inv.dot(features)
     return features
+
 
 def normalize_adj(adj):
     """Symmetrically normalize adjacency matrix."""
     adj = sp.coo_matrix(adj)
     rowsum = np.array(adj.sum(1))
     d_inv_sqrt = np.power(rowsum, -0.5).flatten()
-    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
+    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.0
     d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
     return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
+
 
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     """Convert a scipy sparse matrix to a torch sparse tensor."""
     sparse_mx = sparse_mx.tocoo().astype(np.float32)
-    indices = torch.from_numpy(
-        np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64))
+    indices = torch.from_numpy(np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64))
     values = torch.from_numpy(sparse_mx.data)
     shape = torch.Size(sparse_mx.shape)
     return torch.sparse.FloatTensor(indices, values, shape)
 
+
 def compute_ppr(graph: nx.Graph, alpha=0.2, self_loop=True):
     a = nx.convert_matrix.to_numpy_array(graph)
     if self_loop:
-        a = a + np.eye(a.shape[0])                                # A^ = A + I_n
-    d = np.diag(np.sum(a, 1))                                     # D^ = Sigma A^_ii
-    dinv = fractional_matrix_power(d, -0.5)                       # D^(-1/2)
-    at = np.matmul(np.matmul(dinv, a), dinv)                      # A~ = D^(-1/2) x A^ x D^(-1/2)
-    return alpha * inv((np.eye(a.shape[0]) - (1 - alpha) * at))   # a(I_n-(1-a)A~)^-1
+        a = a + np.eye(a.shape[0])  # A^ = A + I_n
+    d = np.diag(np.sum(a, 1))  # D^ = Sigma A^_ii
+    dinv = fractional_matrix_power(d, -0.5)  # D^(-1/2)
+    at = np.matmul(np.matmul(dinv, a), dinv)  # A~ = D^(-1/2) x A^ x D^(-1/2)
+    return alpha * inv((np.eye(a.shape[0]) - (1 - alpha) * at))  # a(I_n-(1-a)A~)^-1
+
 
 @register_model("mvgrl")
 class MVGRL(BaseModel):
-
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -137,7 +141,7 @@ class MVGRL(BaseModel):
     def __init__(self, nfeat, nhid, nclass, max_epochs):
         super(MVGRL, self).__init__()
 
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = Model(nfeat, nhid).to(self.device)
         self.nhid = nhid
         self.nclass = nclass
@@ -159,11 +163,12 @@ class MVGRL(BaseModel):
         g.add_edges_from(data.edge_index.numpy().transpose())
         diff = compute_ppr(g, 0.2)
 
-        if dataset_name == 'citeseer':
+        if dataset_name == "citeseer":
             epsilons = [1e-5, 1e-4, 1e-3, 1e-2]
             avg_degree = np.sum(adj) / adj.shape[0]
-            epsilon = epsilons[np.argmin([abs(avg_degree - np.argwhere(diff >= e).shape[0] / diff.shape[0])
-                                        for e in epsilons])]
+            epsilon = epsilons[
+                np.argmin([abs(avg_degree - np.argwhere(diff >= e).shape[0] / diff.shape[0]) for e in epsilons])
+            ]
 
             diff[diff < epsilon] = 0.0
             scaler = MinMaxScaler()
@@ -171,7 +176,6 @@ class MVGRL(BaseModel):
             diff = scaler.transform(diff)
 
         best = 1e9
-        best_t = 0
         cnt_wait = 0
         sparse = False
         b_xent = nn.BCEWithLogitsLoss()
@@ -193,9 +197,9 @@ class MVGRL(BaseModel):
             idx = np.random.randint(0, adj.shape[-1] - sample_size + 1, batch_size)
             ba, bd, bf = [], [], []
             for i in idx:
-                ba.append(adj[i: i + sample_size, i: i + sample_size])
-                bd.append(diff[i: i + sample_size, i: i + sample_size])
-                bf.append(features[i: i + sample_size])
+                ba.append(adj[i : i + sample_size, i : i + sample_size])
+                bd.append(diff[i : i + sample_size, i : i + sample_size])
+                bf.append(features[i : i + sample_size])
 
             ba = np.array(ba).reshape(batch_size, sample_size, sample_size)
             bd = np.array(bd)
@@ -222,22 +226,21 @@ class MVGRL(BaseModel):
 
             loss = b_xent(logits, lbl)
 
-            epoch_iter.set_description(f'Epoch: {epoch:03d}, Loss: {loss.item()}')
+            epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss.item()}")
 
             if loss < best:
                 best = loss
-                best_t = epoch
                 cnt_wait = 0
             else:
                 cnt_wait += 1
 
             if cnt_wait == self.patience:
-                print('Early stopping!')
+                print("Early stopping!")
                 break
 
             loss.backward()
             optimizer.step()
-        
+
         if sparse:
             adj = sparse_mx_to_torch_sparse_tensor(sp.coo_matrix(adj))
             diff = sparse_mx_to_torch_sparse_tensor(sp.coo_matrix(diff))
@@ -249,22 +252,22 @@ class MVGRL(BaseModel):
         embeds, _ = self.model.embed(features, adj, diff, sparse, None)
 
         idx_train = data.train_mask.to(self.device)
-        idx_val = data.val_mask.to(self.device)
+        # idx_val = data.val_mask.to(self.device)
         idx_test = data.test_mask.to(self.device)
         labels = data.y.to(self.device)
 
         train_embs = embeds[0, idx_train]
-        val_embs = embeds[0, idx_val]
+        # val_embs = embeds[0, idx_val]
         test_embs = embeds[0, idx_test]
 
         train_lbls = labels[idx_train]
-        val_lbls = labels[idx_val]
+        # val_lbls = labels[idx_val]
         test_lbls = labels[idx_test]
 
         tot = 0
 
         xent = nn.CrossEntropyLoss()
-        wd = 0.01 if dataset_name == 'citeseer' else 0.0
+        wd = 0.01 if dataset_name == "citeseer" else 0.0
         for _ in range(50):
             log = LogReg(self.nhid, self.nclass)
             opt = torch.optim.Adam(log.parameters(), lr=0.01, weight_decay=wd)
@@ -276,7 +279,7 @@ class MVGRL(BaseModel):
 
                 logits = log(train_embs)
                 loss = xent(logits, train_lbls)
-                
+
                 loss.backward()
                 opt.step()
 

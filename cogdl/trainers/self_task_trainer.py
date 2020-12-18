@@ -13,7 +13,7 @@ from cogdl.models.supervised_model import (
     SupervisedHomogeneousNodeClassificationModel,
 )
 from cogdl.trainers.supervised_trainer import SupervisedHomogeneousNodeClassificationTrainer
-from cogdl.trainers.self_task import EdgeMask, PairwiseDistance, Distance2Clusters, PairwiseAttrSim, Distance2ClustersPP
+from cogdl.trainers.self_task import EdgeMask, PairwiseDistance, Distance2Clusters, PairwiseAttrSim, Distance2ClustersPP, ScalableDistancePred
 
 class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
     def __init__(self, args):
@@ -57,13 +57,20 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
             self.agent = PairwiseAttrSim(self.data.edge_index, self.data.x, self.hidden_size, 5, self.device)
         elif self.auxiliary_task == "distance2clusters++":
             self.agent = Distance2ClustersPP(self.data.edge_index, self.data.x, self.data.y, self.hidden_size, 5, 1, self.device)
+        elif self.auxiliary_task == "scalable-distance-pred":
+            self.agent = ScalableDistancePred(self.data.edge_index, self.data.x, self.data.y, self.hidden_size, 10, 1, self.device)
         else:
-            raise Exception("auxiliary task must be edgemask, pairwise-distance, distance2clusters, distance2clusters++ or pairwise-attr-sim")
+            raise Exception("auxiliary task must be edgemask, pairwise-distance, scalable-distance-pred, distance2clusters, distance2clusters++ or pairwise-attr-sim")
         self.model = model
 
-        self.optimizer = torch.optim.Adam(
-            list(model.parameters()) + list(self.agent.linear.parameters()), lr=self.lr, weight_decay=self.weight_decay
-        )
+        if self.auxiliary_task != "scalable-distance-pred":
+            self.optimizer = torch.optim.Adam(
+                list(model.parameters()) + list(self.agent.linear.parameters()), lr=self.lr, weight_decay=self.weight_decay
+            )
+        else:
+            self.optimizer = torch.optim.Adam(
+                list(model.parameters()) + list(self.agent.linear1.parameters()), lr=self.lr, weight_decay=self.weight_decay
+            )
         self.model.to(self.device)
         epoch_iter = tqdm(range(self.max_epoch))
 
@@ -76,6 +83,8 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         for epoch in epoch_iter:
             if self.auxiliary_task == "distance2clusters++" and epoch % 40 == 0:
                 self.agent.update_cluster()
+            elif self.auxiliary_task == "scalable-distance-pred" and epoch % 10 == 0:
+                self.agent.update()
             self._train_step()
             train_acc, _ = self._test_step(split="train")
             val_acc, val_loss = self._test_step(split="val")
@@ -100,7 +109,7 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         self.model.train()
         self.optimizer.zero_grad()
         embeddings = self.model.get_embeddings(self.data.x, self.data.edge_index)
-        loss = self.model.loss(self.data) + self.alpha * self.agent.make_loss(embeddings)
+        loss = self.model.node_classification_loss(self.data) + self.alpha * self.agent.make_loss(embeddings)
         loss.backward()
         self.optimizer.step()
 

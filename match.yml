@@ -31,6 +31,7 @@ node_classification:
     - ogbn-arxiv
     - reddit
     - jknet_cora
+    - test_small
 unsupervised_node_classification:
   - model:
     - prone

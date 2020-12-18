@@ -2,6 +2,7 @@ node_classification:
   - model:
     - gdc_gcn
     - gcn
+    - dropedge_gcn
     - gat
     - drgat
     - grand

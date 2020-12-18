@@ -14,8 +14,11 @@ install:
   - pip install -e .
   - pip install -r docs/requirements.txt
 
-script:
+before_script:
   - black .
+  - flake8 .
+
+script:
   - export DGLBACKEND=pytorch
   - coverage run --source=cogdl -m pytest tests
   - cd docs && make clean && make html && cd ..

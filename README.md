@@ -26,9 +26,8 @@ CogDL features:
   - Link prediction
   - Graph classification
   - Graph pre-training
-  - Graph similarity search (todo)
-  - Graph clustering (todo)
-  - Combinatorial optimization on graphs (todo)
+  - Graph clustering
+  - Graph similarity search
 
 ## ❗ News
 
@@ -340,19 +339,17 @@ For attributed graph clustering, we adopt accuracy, normalized mutual informatio
 | 8    | Spectral  | 24.14 | 14.39  | 25.53  |
 
 
-## Customization
-
-### Submit Your State-of-the-art
-
-If you have a well-performed algorithm and are willing to publish it, you can submit your implementation via [opening an issue](https://github.com/THUDM/cogdl/issues) or [join our slack group](https://join.slack.com/t/cogdl/shared_invite/enQtODgyMjY5MTY0NTY3LWQ5YTMwMWQzN2U2YTY0YWM2ZjhkNWUyZmE5ZmQyMTEyMGVkMzI0MjdlMGZlYmYzOWIwMTkyZGZmYTRjNGYxOGM). After evaluating its originality, creativity and efficiency, we will add your method's performance into our leaderboard.
+## Contributing
 
 ### Add Your Own Dataset
 
-If you have a unique and interesting dataset and are willing to publish it, you can submit your dataset via opening an issue in our repository or commenting on slack group, we will run all suitable methods on your dataset and update our leaderboard. 
+If you have a unique and interesting dataset and are willing to publish it, you can submit your dataset via [opening an issue](https://github.com/THUDM/cogdl/issues) in our repository, we will run all suitable methods on your dataset and update our leaderboard. 
 
 ### Implement Your Own Model
 
-If you have a well-performed algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request,  detailed information can be found [here](https://help.github.com/en/articles/creating-a-pull-request). 
+If you have a well-performed algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request, detailed information can be found [here](https://help.github.com/en/articles/creating-a-pull-request). 
+
+Before committing your modification, please first run `pre-commit install` to setup the git hook for checking code format and style using `black` and `flake8`. Then the `pre-commit` will run automatically on `git commit`! Detailed information of `pre-commit` can be found [here](https://pre-commit.com/).
 
 #### A brief guide to having a successful pull request (unit test)
 

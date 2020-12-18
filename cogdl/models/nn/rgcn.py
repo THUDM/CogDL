@@ -11,32 +11,44 @@ from .. import register_model, BaseModel
 
 class RGCNLayer(nn.Module):
     """
-        Implementation of Relational-GCN in paper `"Modeling Relational Data with Graph Convolutional Networks"`
-         <https://arxiv.org/abs/1703.06103>
+    Implementation of Relational-GCN in paper `"Modeling Relational Data with Graph Convolutional Networks"`
+     <https://arxiv.org/abs/1703.06103>
 
-         Parameters
-         ----------
-         in_feats : int
-            Size of each input embedding.
-        out_feats : int
-            Size of each output embedding.
-        num_edge_type : int
-            The number of edge type in knowledge graph.
-        regularizer : str, optional
-            Regularizer used to avoid overfitting, ``basis`` or ``bdd``, default : ``basis``.
-        num_bases : int, optional
-            The number of basis, only used when `regularizer` is `basis`, default : ``None``.
-        self_loop : bool, optional
-            Add self loop embedding if True, default : ``True``.
-        dropout : float
-        self_dropout : float, optional
-            Dropout rate of self loop embedding, default : ``0.0``
-        layer_norm : bool, optional
-            Use layer normalization if True, default : ``True``
-        bias : bool
+     Parameters
+     ----------
+     in_feats : int
+        Size of each input embedding.
+    out_feats : int
+        Size of each output embedding.
+    num_edge_type : int
+        The number of edge type in knowledge graph.
+    regularizer : str, optional
+        Regularizer used to avoid overfitting, ``basis`` or ``bdd``, default : ``basis``.
+    num_bases : int, optional
+        The number of basis, only used when `regularizer` is `basis`, default : ``None``.
+    self_loop : bool, optional
+        Add self loop embedding if True, default : ``True``.
+    dropout : float
+    self_dropout : float, optional
+        Dropout rate of self loop embedding, default : ``0.0``
+    layer_norm : bool, optional
+        Use layer normalization if True, default : ``True``
+    bias : bool
     """
-    def __init__(self, in_feats, out_feats, num_edge_types, regularizer="basis", num_bases=None, self_loop=True,
-                 dropout=0.0, self_dropout=0.0, layer_norm=True, bias=True):
+
+    def __init__(
+        self,
+        in_feats,
+        out_feats,
+        num_edge_types,
+        regularizer="basis",
+        num_bases=None,
+        self_loop=True,
+        dropout=0.0,
+        self_dropout=0.0,
+        layer_norm=True,
+        bias=True,
+    ):
         super(RGCNLayer, self).__init__()
         self.num_bases = num_bases
         self.regularizer = regularizer
@@ -61,7 +73,8 @@ class RGCNLayer(nn.Module):
             self.block_in_feats = in_feats // num_bases
             self.block_out_feats = out_feats // num_bases
             self.weight = nn.Parameter(
-                torch.Tensor(num_edge_types, self.num_bases, self.block_in_feats * self.block_out_feats))
+                torch.Tensor(num_edge_types, self.num_bases, self.block_in_feats * self.block_out_feats)
+            )
         else:
             raise NotImplementedError
 
@@ -119,7 +132,7 @@ class RGCNLayer(nn.Module):
 
         h_list = []
         for edge_t in range(self.num_edge_types):
-            edge_mask = (edge_type == edge_t)
+            edge_mask = edge_type == edge_t
             _edge_index_t = edge_index.t()[edge_mask].t()
             temp = spmm(_edge_index_t, edge_weight[edge_mask], h[edge_t])
             h_list.append(temp)
@@ -134,7 +147,7 @@ class RGCNLayer(nn.Module):
         h_list = []
         for edge_t in range(self.num_edge_types):
             _weight = self.weight[edge_t].view(self.num_bases, self.block_in_feats, self.block_out_feats)
-            edge_mask = (edge_type == edge_t)
+            edge_mask = edge_type == edge_t
             _edge_index_t = edge_index.t()[edge_mask].t()
             h_t = torch.einsum("abc,bcd->abd", _x, _weight).reshape(-1, self.out_feats)
             h_t = spmm(_edge_index_t, edge_weight[edge_mask], h_t)
@@ -144,8 +157,18 @@ class RGCNLayer(nn.Module):
 
 
 class RGCN(nn.Module):
-    def __init__(self, in_feats, out_feats, num_layers, num_rels, regularizer="basis", num_bases=None, self_loop=True,
-                 dropout=0.0, self_dropout=0.0):
+    def __init__(
+        self,
+        in_feats,
+        out_feats,
+        num_layers,
+        num_rels,
+        regularizer="basis",
+        num_bases=None,
+        self_loop=True,
+        dropout=0.0,
+        self_dropout=0.0,
+    ):
         super(RGCN, self).__init__()
         shapes = [in_feats] + [out_feats] * num_layers
         self.num_layers = num_layers
@@ -192,11 +215,23 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
             sampling_rate=args.sampling_rate,
             penalty=args.penalty,
             dropout=args.dropout,
-            self_dropout=args.self_dropout
+            self_dropout=args.self_dropout,
         )
 
-    def __init__(self, num_entities, num_rels, hidden_size, num_layers, regularizer="basis", num_bases=None,
-                 self_loop=True, sampling_rate=0.01, penalty=0, dropout=0.0, self_dropout=0.0):
+    def __init__(
+        self,
+        num_entities,
+        num_rels,
+        hidden_size,
+        num_layers,
+        regularizer="basis",
+        num_bases=None,
+        self_loop=True,
+        sampling_rate=0.01,
+        penalty=0,
+        dropout=0.0,
+        self_dropout=0.0,
+    ):
         BaseModel.__init__(self)
         GNNLinkPredict.__init__(self, "distmult", hidden_size)
         self.penalty = penalty
@@ -216,7 +251,8 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
             num_bases=num_bases,
             self_loop=self_loop,
             dropout=dropout,
-            self_dropout=self_dropout,)
+            self_dropout=self_dropout,
+        )
         # self.rel_weight = nn.Parameter(torch.Tensor(num_rels, hidden_size))
         # nn.init.xavier_normal_(self.rel_weight, gain=nn.init.calculate_gain("relu"))
         # self.emb = nn.Parameter(torch.Tensor(num_entities, hidden_size))
@@ -242,20 +278,32 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
         edge_index, edge_types = data.edge_index[:, mask], data.edge_attr[mask]
 
         self.get_edge_set(edge_index, edge_types)
-        batch_edges, batch_attr, samples, rels, labels = sampling_edge_uniform(edge_index, edge_types, self.edge_set, self.sampling_rate, self.num_rels)
+        batch_edges, batch_attr, samples, rels, labels = sampling_edge_uniform(
+            edge_index, edge_types, self.edge_set, self.sampling_rate, self.num_rels
+        )
         output = self.forward(batch_edges, batch_attr)
         edge_weight = self.rel_weight(rels)
         sampled_nodes, reindexed_edges = torch.unique(samples, sorted=True, return_inverse=True)
         assert (sampled_nodes == self.cahce_index).any()
         sampled_types = torch.unique(rels)
 
-        loss_n = self._loss(output[reindexed_edges[0]], output[reindexed_edges[1]], edge_weight, labels) \
-                 + self.penalty * self._regularization([self.emb(sampled_nodes), self.rel_weight(sampled_types)])
+        loss_n = self._loss(
+            output[reindexed_edges[0]], output[reindexed_edges[1]], edge_weight, labels
+        ) + self.penalty * self._regularization([self.emb(sampled_nodes), self.rel_weight(sampled_types)])
         return loss_n
 
     def predict(self, edge_index, edge_type):
         indices = torch.arange(0, self.num_nodes).to(edge_index.device)
         x = self.emb(indices)
         output = self.model(x, edge_index, edge_type)
-        mrr, hits = cal_mrr(output, self.rel_weight.weight, edge_index, edge_type, scoring=self.scoring, protocol="raw", batch_size=500, hits=[1, 3, 10])
+        mrr, hits = cal_mrr(
+            output,
+            self.rel_weight.weight,
+            edge_index,
+            edge_type,
+            scoring=self.scoring,
+            protocol="raw",
+            batch_size=500,
+            hits=[1, 3, 10],
+        )
         return mrr, hits

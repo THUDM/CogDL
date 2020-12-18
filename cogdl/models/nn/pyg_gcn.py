@@ -7,6 +7,7 @@ from .. import BaseModel, register_model
 from cogdl.trainers.sampled_trainer import SAINTTrainer
 from cogdl.trainers.self_task_trainer import SelfTaskTrainer
 
+
 @register_model("pyg_gcn")
 class GCN(BaseModel):
     @staticmethod
@@ -40,7 +41,7 @@ class GCN(BaseModel):
         )
 
     def get_trainer(self, task, args):
-        if args.sampler != 'none':
+        if args.sampler != "none":
             return SAINTTrainer
         elif args.auxiliary_task != 'none':
             return SelfTaskTrainer
@@ -57,13 +58,10 @@ class GCN(BaseModel):
         self.dropout = dropout
         shapes = [num_features] + [hidden_size] * (num_layers - 1) + [num_classes]
         self.convs = nn.ModuleList(
-            [
-                GCNConv(shapes[layer], shapes[layer + 1], cached=False)
-                for layer in range(num_layers)
-            ]
+            [GCNConv(shapes[layer], shapes[layer + 1], cached=False) for layer in range(num_layers)]
         )
 
-    def forward(self, x, edge_index, weight = None):
+    def forward(self, x, edge_index, weight=None):
         for conv in self.convs[:-1]:
             x = F.relu(conv(x, edge_index, weight))
             x = F.dropout(x, p=self.dropout, training=self.training)
@@ -78,9 +76,9 @@ class GCN(BaseModel):
 
     def node_classification_loss(self, data):
         return F.nll_loss(
-            self.forward(data.x, data.edge_index, None if not "norm_aggr" in data else data.norm_aggr)[data.train_mask],
+            self.forward(data.x, data.edge_index, None if "norm_aggr" not in data else data.norm_aggr)[data.train_mask],
             data.y[data.train_mask],
         )
-    
+
     def predict(self, data):
-        return self.forward(data.x, data.edge_index, None if not "norm_aggr" in data else data.norm_aggr)
+        return self.forward(data.x, data.edge_index, None if "norm_aggr" not in data else data.norm_aggr)

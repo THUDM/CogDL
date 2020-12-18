@@ -42,10 +42,7 @@ class Chebyshev(BaseModel):
         self.filter_size = filter_size
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
         self.convs = nn.ModuleList(
-            [
-                ChebConv(shapes[layer], shapes[layer + 1], filter_size)
-                for layer in range(num_layers)
-            ]
+            [ChebConv(shapes[layer], shapes[layer + 1], filter_size) for layer in range(num_layers)]
         )
 
     def forward(self, x, edge_index):
@@ -54,6 +51,6 @@ class Chebyshev(BaseModel):
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.convs[-1](x, edge_index)
         return x
-    
+
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

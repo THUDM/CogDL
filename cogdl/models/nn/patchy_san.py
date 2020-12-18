@@ -1,5 +1,3 @@
-
-
 import math
 import random
 
@@ -18,7 +16,7 @@ import functools
 class PatchySAN(BaseModel):
     r"""The Patchy-SAN model from the `"Learning Convolutional Neural Networks for Graphs"
     <https://arxiv.org/abs/1605.05273>`_ paper.
-    
+
     Args:
         batch_size (int) : The batch size of training.
         sample (int) : Number of chosen vertexes.
@@ -26,26 +24,37 @@ class PatchySAN(BaseModel):
         neighbor (int) : The number of neighbor for each node.
         iteration (int) : The number of training iteration.
     """
+
     @staticmethod
     def add_args(parser):
         parser.add_argument("--batch-size", type=int, default=20)
-        parser.add_argument('--sample', default=30, type=int, help='Number of chosen vertexes')
-        parser.add_argument('--stride', default=1, type=int, help='Stride of chosen vertexes')
-        parser.add_argument('--neighbor', default=10, type=int, help='Number of neighbor in constructing features')
-        parser.add_argument('--iteration', default=5, type=int, help='Number of iteration')
+        parser.add_argument("--sample", default=30, type=int, help="Number of chosen vertexes")
+        parser.add_argument("--stride", default=1, type=int, help="Stride of chosen vertexes")
+        parser.add_argument("--neighbor", default=10, type=int, help="Number of neighbor in constructing features")
+        parser.add_argument("--iteration", default=5, type=int, help="Number of iteration")
         parser.add_argument("--train-ratio", type=float, default=0.7)
         parser.add_argument("--test-ratio", type=float, default=0.1)
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.batch_size, args.num_features, args.num_classes, args.sample, args.stride, args.neighbor, args.iteration)
-    
-    @classmethod        
+        return cls(
+            args.batch_size,
+            args.num_features,
+            args.num_classes,
+            args.sample,
+            args.stride,
+            args.neighbor,
+            args.iteration,
+        )
+
+    @classmethod
     def split_dataset(self, dataset, args):
         random.shuffle(dataset)
         # process each graph and add it into Data() as attribute tx
         for i, data in enumerate(dataset):
-            new_feature = get_single_feature(dataset[i], args.num_features, args.num_classes, args.sample, args.neighbor, args.stride)
+            new_feature = get_single_feature(
+                dataset[i], args.num_features, args.num_classes, args.sample, args.neighbor, args.stride
+            )
             dataset[i].tx = torch.from_numpy(new_feature)
 
         train_size = int(len(dataset) * args.train_ratio)
@@ -61,7 +70,7 @@ class PatchySAN(BaseModel):
 
     def __init__(self, batch_size, num_features, num_classes, num_sample, stride, num_neighbor, iteration):
         super(PatchySAN, self).__init__()
-        
+
         self.batch_size = batch_size
         self.num_features = num_features
         self.num_classes = num_classes
@@ -69,20 +78,19 @@ class PatchySAN(BaseModel):
         self.stride = stride
         self.num_neighbor = num_neighbor
         self.iteration = iteration
-        
-        self.build_model(self.num_features, self.num_sample, self.num_neighbor, self.num_classes)
 
+        self.build_model(self.num_features, self.num_sample, self.num_neighbor, self.num_classes)
 
     def build_model(self, num_channel, num_sample, num_neighbor, num_class):
         rep1, stride1 = 4, 4
         num_filter1, num_filter2 = 16, 8
         self.conv1 = nn.Conv1d(num_channel, num_filter1, rep1, stride=stride1, groups=1)
         self.conv2 = nn.Conv1d(num_filter1, num_filter2, num_neighbor, stride=1, groups=1)
-        
-        num_lin = (int(num_sample * num_neighbor/ stride1 ) - num_neighbor + 1)  * num_filter2
+
+        num_lin = (int(num_sample * num_neighbor / stride1) - num_neighbor + 1) * num_filter2
         self.lin1 = torch.nn.Linear(num_lin, 128)
         self.lin2 = torch.nn.Linear(128, num_class)
-        
+
         self.nn = nn.Sequential(
             self.conv1,
             nn.ReLU(),
@@ -95,16 +103,16 @@ class PatchySAN(BaseModel):
             self.lin2,
             nn.Softmax(),
         )
-        
+
         self.criterion = nn.CrossEntropyLoss()
         # self.criterion = nn.NLLLoss()
 
     def forward(self, batch):
-        logits= self.nn(batch.tx)
+        logits = self.nn(batch.tx)
         if batch.y is not None:
             return logits, self.criterion(logits, batch.y)
         return logits, None
-    
+
 
 def assemble_neighbor(G, node, num_neighbor, sorted_nodes):
     """assemble neighbors for node with BFS strategy"""
@@ -137,8 +145,8 @@ def assemble_neighbor(G, node, num_neighbor, sorted_nodes):
 
 
 def cmp(s1, s2):
-    list1 = [int(l) for l in s1.strip().split(" ")]
-    list2 = [int(l) for l in s2.strip().split(" ")]
+    list1 = [int(l) for l in s1.strip().split(" ")]  # noqa E741
+    list2 = [int(l) for l in s2.strip().split(" ")]  # noqa E741
     i = 0
     while i < len(list1) and i < len(list2):
         if list1[i] < list2[i]:
@@ -176,7 +184,7 @@ def one_dim_wl(graph_list, init_labels, iteration=5):
                 labels = dict()
                 for id, v in enumerate(graph_list[i].nodes()):
                     neighbor_labels = [graph_label_list[i][v2] for v2 in graph_list[i].neighbors(v)]
-                    sorted_labels = [str(l) for l in sorted(neighbor_labels)]
+                    sorted_labels = [str(l) for l in sorted(neighbor_labels)]  # noqa E741
                     # concentrate node label and its sorted neighbors' labels
                     new_label = str(graph_label_list[i][v]) + " " + " ".join(sorted_labels)
                     new_label_dict[new_label] = 1
@@ -201,7 +209,6 @@ def node_selection_with_1d_wl(G, features, num_channel, num_sample, num_neighbor
     """construct features for cnn"""
     X = np.zeros((num_channel, num_sample, num_neighbor), dtype=np.float32)
     node2id = dict([(node, vid) for vid, node in enumerate(G.nodes())])
-    id2node = dict(zip(node2id.values(), node2id.keys()))
     betweenness = nx.betweenness_centrality(G)
     sorted_nodes = sorted(betweenness.items(), key=lambda d: d[1], reverse=False)
     # obtain normalized neighbors' features for each vertex
@@ -249,4 +256,4 @@ def get_single_feature(data, num_features, num_classes, num_sample, num_neighbor
         if G.number_of_nodes() > num_neighbor:
             X[i] = node_selection_with_1d_wl(G, features.cpu().numpy(), num_features, num_sample, num_neighbor, stride)
     X = X.astype(np.float32)
-    return X    
+    return X

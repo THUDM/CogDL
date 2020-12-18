@@ -12,7 +12,7 @@ from .. import BaseModel, register_model
 class Graph2Vec(BaseModel):
     r"""The Graph2Vec model from the `"graph2vec: Learning Distributed Representations of Graphs"
     <https://arxiv.org/abs/1707.05005>`_ paper
-    
+
     Args:
         hidden_size (int) : The dimension of node representation.
         min_count (int) : Parameter in doc2vec.
@@ -23,6 +23,7 @@ class Graph2Vec(BaseModel):
         epoch (int) : The max epoches in training step.
         lr (float) : Learning rate in doc2vec.
     """
+
     @staticmethod
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=128)
@@ -34,7 +35,6 @@ class Graph2Vec(BaseModel):
         parser.add_argument("--epoch", type=int, default=10)
         parser.add_argument("--lr", type=float, default=0.025)
 
-
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
@@ -45,7 +45,7 @@ class Graph2Vec(BaseModel):
             args.dm,
             args.iteration,
             args.epoch,
-            args.lr
+            args.lr,
         )
 
     @staticmethod
@@ -61,7 +61,7 @@ class Graph2Vec(BaseModel):
 
     @staticmethod
     def wl_iterations(graph, features, rounds):
-        #TODO: solve hash and number
+        # TODO: solve hash and number
         nodes = graph.nodes
         wl_features = [str(val) for _, val in features.items()]
         for i in range(rounds):
@@ -105,9 +105,9 @@ class Graph2Vec(BaseModel):
             sample=self.sampling_rate,
             workers=self.worker,
             epochs=self.epoch,
-            alpha=self.lr
+            alpha=self.lr,
         )
-        vectors = np.array([self.model["g_"+str(i)] for i in range(len(graphs))])
+        vectors = np.array([self.model["g_" + str(i)] for i in range(len(graphs))])
         return vectors, None
 
     def save_embedding(self, output_path):

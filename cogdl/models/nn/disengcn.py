@@ -8,8 +8,9 @@ from cogdl.utils import mul_edge_softmax, remove_self_loops
 
 class DisenGCNLayer(nn.Module):
     """
-        Implementation of "Disentangled Graph Convolutional Networks" <http://proceedings.mlr.press/v97/ma19a.html>.
+    Implementation of "Disentangled Graph Convolutional Networks" <http://proceedings.mlr.press/v97/ma19a.html>.
     """
+
     def __init__(self, in_feats, out_feats, K, iterations, tau=1.0, activation="leaky_relu"):
         super(DisenGCNLayer, self).__init__()
         self.K = K
@@ -56,13 +57,15 @@ class DisenGCNLayer(nn.Module):
         for _ in range(self.iterations):
             src_edge_attr = h_dst[edge_index[0]] * h_src[edge_index[1]]
             src_edge_attr = src_edge_attr.sum(dim=-1) / self.tau  # shape: (N, K)
-            edge_attr_softmax = mul_edge_softmax(edge_index, src_edge_attr, shape=(num_nodes, num_nodes)) # shape: (E, K)
+            edge_attr_softmax = mul_edge_softmax(
+                edge_index, src_edge_attr, shape=(num_nodes, num_nodes)
+            )  # shape: (E, K)
             edge_attr_softmax = edge_attr_softmax.t().unsqueeze(-1)  # shape: (K, E, 1)
 
             dst_edge_attr = h_src.index_select(0, edge_index[1]).permute(1, 0, 2)  # shape: (E, K, d) -> (K, E, d)
             dst_edge_attr = dst_edge_attr * edge_attr_softmax
             edge_index_ = edge_index[0].unsqueeze(-1).unsqueeze(0).repeat(self.K, 1, h.shape[-1])
-            node_attr = torch.zeros(add_shape).to(device).scatter_add_(1, edge_index_, dst_edge_attr) # (K, N, d)
+            node_attr = torch.zeros(add_shape).to(device).scatter_add_(1, edge_index_, dst_edge_attr)  # (K, N, d)
             node_attr = node_attr + h_normed
             node_attr_norm = node_attr.pow(2).sum(-1).sqrt().unsqueeze(-1)  # shape: (K, N, 1)
             node_attr = (node_attr / node_attr_norm).permute(1, 0, 2)  # shape: (N, K, d)
@@ -133,8 +136,7 @@ class DisenGCN(BaseModel):
 
         shapes = [in_feats] + [hidden_size] * self.num_layers
         self.layers = nn.ModuleList(
-            DisenGCNLayer(shapes[i], shapes[i + 1], K[i], iterations, tau, activation)
-            for i in range(self.num_layers)
+            DisenGCNLayer(shapes[i], shapes[i + 1], K[i], iterations, tau, activation) for i in range(self.num_layers)
         )
 
     def reset_parameters(self):

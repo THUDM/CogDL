@@ -35,9 +35,7 @@ class GAT(BaseModel):
         self.hidden_size = hidden_size
         self.num_heads = num_heads
         self.dropout = dropout
-        self.conv1 = GATConv(
-            in_feats, hidden_size, heads=num_heads, dropout=dropout
-        )
+        self.conv1 = GATConv(in_feats, hidden_size, heads=num_heads, dropout=dropout)
         self.conv2 = GATConv(hidden_size * num_heads, out_feats, dropout=dropout)
 
     def forward(self, x, edge_index):
@@ -46,6 +44,6 @@ class GAT(BaseModel):
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = F.elu(self.conv2(x, edge_index))
         return x
-    
+
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

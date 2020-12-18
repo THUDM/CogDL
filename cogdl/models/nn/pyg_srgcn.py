@@ -1,5 +1,10 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from cogdl.layers.srgcn_module import act_attention, act_map, act_normalization
 from cogdl.utils import add_remaining_self_loops
-from cogdl.layers.srgcn_module import *
+from torch_sparse import spmm, spspmm
+
 from .. import BaseModel, register_model
 
 
@@ -25,8 +30,20 @@ class NodeAdaptiveEncoder(nn.Module):
 
 
 class SrgcnHead(nn.Module):
-    def __init__(self, num_features, out_feats, attention, activation, normalization, nhop, subheads=2, dropout=0.5,
-                 node_dropout=0.5, alpha=0.2, concat=True):
+    def __init__(
+        self,
+        num_features,
+        out_feats,
+        attention,
+        activation,
+        normalization,
+        nhop,
+        subheads=2,
+        dropout=0.5,
+        node_dropout=0.5,
+        alpha=0.2,
+        concat=True,
+    ):
         super(SrgcnHead, self).__init__()
 
         self.subheads = subheads
@@ -62,9 +79,10 @@ class SrgcnHead(nn.Module):
         nl_adj_mat_ind = add_remaining_self_loops(edge_index, num_nodes=N)[0]
         nl_adj_mat_val = torch.ones(nl_adj_mat_ind.shape[1]).to(x.device)
 
-        for _ in range(self.nhop-1):
-            nl_adj_mat_ind, nl_adj_mat_val = spspmm(nl_adj_mat_ind, nl_adj_mat_val, nl_adj_mat_ind, nl_adj_mat_val, N,
-                                                    N, N, True)
+        for _ in range(self.nhop - 1):
+            nl_adj_mat_ind, nl_adj_mat_val = spspmm(
+                nl_adj_mat_ind, nl_adj_mat_val, nl_adj_mat_ind, nl_adj_mat_val, N, N, N, True
+            )
 
         result = []
         for i in range(self.subheads):
@@ -95,8 +113,18 @@ class SrgcnHead(nn.Module):
 
 
 class SrgcnSoftmaxHead(nn.Module):
-    def __init__(self, num_features, out_feats, attention, activation, nhop, normalization, dropout=0.5,
-                 node_dropout=0.5, alpha=0.2):
+    def __init__(
+        self,
+        num_features,
+        out_feats,
+        attention,
+        activation,
+        nhop,
+        normalization,
+        dropout=0.5,
+        node_dropout=0.5,
+        alpha=0.2,
+    ):
         super(SrgcnSoftmaxHead, self).__init__()
 
         self.alpha = alpha
@@ -123,7 +151,7 @@ class SrgcnSoftmaxHead(nn.Module):
 
         h = torch.mm(x, self.weight)
         h = F.dropout(h, p=self.dropout, training=self.training)
-        for _ in range(self.nhop-1):
+        for _ in range(self.nhop - 1):
             adj_mat_ind, adj_mat_val = spspmm(adj_mat_ind, adj_mat_val, adj_mat_ind, adj_mat_val, N, N, N, True)
 
         adj_mat_ind, adj_mat_val = self.attention(h, adj_mat_ind, adj_mat_val)
@@ -151,17 +179,17 @@ class SrgcnSoftmaxHead(nn.Module):
 class SRGCN(BaseModel):
     @staticmethod
     def add_args(parser):
-        parser.add_argument('--hidden-size', type=int, default=8)
-        parser.add_argument('--num-heads', type=int, default=8)
-        parser.add_argument('--dropout', type=float, default=0.5)
-        parser.add_argument('--node-dropout', type=float, default=0.5)
-        parser.add_argument('--alpha', type=float, default=0.2)
-        parser.add_argument('--lr', type=float, default=0.005)
-        parser.add_argument('--subheads', type=int, default=1)
-        parser.add_argument('--attention-type', type=str, default='node')
-        parser.add_argument('--activation', type=str, default='leaky_relu')
-        parser.add_argument('--nhop', type=int, default=1)
-        parser.add_argument('--normalization', type=str, default='row_uniform')
+        parser.add_argument("--hidden-size", type=int, default=8)
+        parser.add_argument("--num-heads", type=int, default=8)
+        parser.add_argument("--dropout", type=float, default=0.5)
+        parser.add_argument("--node-dropout", type=float, default=0.5)
+        parser.add_argument("--alpha", type=float, default=0.2)
+        parser.add_argument("--lr", type=float, default=0.005)
+        parser.add_argument("--subheads", type=int, default=1)
+        parser.add_argument("--attention-type", type=str, default="node")
+        parser.add_argument("--activation", type=str, default="leaky_relu")
+        parser.add_argument("--nhop", type=int, default=1)
+        parser.add_argument("--normalization", type=str, default="row_uniform")
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -177,50 +205,56 @@ class SRGCN(BaseModel):
             attention=args.attention_type,
             activation=args.activation,
             nhop=args.nhop,
-            normalization=args.normalization
+            normalization=args.normalization,
         )
 
     def __init__(
-            self,
-            in_feats,
-            hidden_size,
-            out_feats,
-            attention,
-            activation,
-            nhop,
-            normalization,
-            dropout,
-            node_dropout,
-            alpha,
-            nhead,
-            subheads
+        self,
+        in_feats,
+        hidden_size,
+        out_feats,
+        attention,
+        activation,
+        nhop,
+        normalization,
+        dropout,
+        node_dropout,
+        alpha,
+        nhead,
+        subheads,
     ):
         super(SRGCN, self).__init__()
         attn_f = act_attention(attention)
         activate_f = act_map(activation)
         norm_f = act_normalization(normalization)
-        self.attentions = [SrgcnHead(num_features=in_feats,
-                                     out_feats=hidden_size,
-                                     attention=attn_f,
-                                     activation=activate_f,
-                                     nhop=nhop,
-                                     normalization=norm_f,
-                                     subheads=subheads,
-                                     dropout=dropout,
-                                     node_dropout=node_dropout,
-                                     alpha=alpha,
-                                     concat=True)
-                           for _ in range(nhead)]
+        self.attentions = [
+            SrgcnHead(
+                num_features=in_feats,
+                out_feats=hidden_size,
+                attention=attn_f,
+                activation=activate_f,
+                nhop=nhop,
+                normalization=norm_f,
+                subheads=subheads,
+                dropout=dropout,
+                node_dropout=node_dropout,
+                alpha=alpha,
+                concat=True,
+            )
+            for _ in range(nhead)
+        ]
         for i, attention in enumerate(self.attentions):
-            self.add_module('attention_{}'.format(i), attention)
-        self.out_att = SrgcnSoftmaxHead(num_features=hidden_size * nhead * subheads,
-                                        out_feats=out_feats,
-                                        attention=attn_f,
-                                        activation=activate_f,
-                                        normalization=act_normalization('row_softmax'),
-                                        nhop=nhop,
-                                        dropout=dropout,
-                                        node_dropout=node_dropout)
+            self.add_module("attention_{}".format(i), attention)
+        self.out_att = SrgcnSoftmaxHead(
+            num_features=hidden_size * nhead * subheads,
+            out_feats=out_feats,
+            attention=attn_f,
+            activation=activate_f,
+            normalization=act_normalization("row_softmax"),
+            nhop=nhop,
+            dropout=dropout,
+            node_dropout=node_dropout,
+        )
 
     def forward(self, batch):
         x = torch.cat([att(batch.x, batch.edge_index, batch.edge_attr) for att in self.attentions], dim=1)
@@ -236,4 +270,3 @@ class SRGCN(BaseModel):
 
     def predict(self, data):
         return self.forward(data)
-

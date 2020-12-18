@@ -14,14 +14,16 @@ from torch_geometric.nn import GCNConv, GATConv
 
 from .. import BaseModel, register_model
 
+
 class AttentionLayer(nn.Module):
     def __init__(self, num_features):
         super(AttentionLayer, self).__init__()
         self.linear = nn.Linear(num_features, 1)
-    
+
     def forward(self, x):
         att = self.linear(x).view(-1, 1, x.shape[1])
         return torch.matmul(att, x).squeeze(1)
+
 
 class HANLayer(nn.Module):
     def __init__(self, num_edge, w_in, w_out):
@@ -36,8 +38,9 @@ class HANLayer(nn.Module):
         for i, edge in enumerate(adj):
             output.append(self.gat_layer[i](x, edge[0]))
         output = torch.stack(output, dim=1)
-        
+
         return self.att_layer(output)
+
 
 @register_model("han")
 class HAN(BaseModel):
@@ -56,7 +59,7 @@ class HAN(BaseModel):
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            args.num_edge, 
+            args.num_edge,
             args.num_features,
             args.hidden_size,
             args.num_classes,
@@ -94,7 +97,7 @@ class HAN(BaseModel):
     def loss(self, data):
         loss, y = self.forward(data.adj, data.x, data.train_node, data.train_target)
         return loss
-    
+
     def evaluate(self, data, nodes, targets):
         loss, y = self.forward(data.adj, data.x, nodes, targets)
         f1 = torch.mean(f1_score(torch.argmax(y, dim=1), targets, num_classes=3))

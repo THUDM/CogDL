@@ -32,31 +32,23 @@ def build_default_args():
         "cpu": cpu,
         "device_id": [0],
         "seed": [0, 1, 2],
-
         "dropout": 0.5,
         "hidden_size": 128,
         "num_layers": 2,
         "sample_size": [10, 10],
-
         "task": "node_classification",
         "model": "gcn",
-        "dataset": "cora"
+        "dataset": "cora",
     }
     return build_args_from_dict(args)
 
 
 def get_parameters():
-    scope = {
-        "epoch": [10, 20, 30],
-        "lr": [0.01, 0.001, 0.0001]
-    }
+    scope = {"epoch": [10, 20, 30], "lr": [0.01, 0.001, 0.0001]}
     keys = list(scope.keys())
     values = list(scope.values())
     combination = product(*values)
-    return [
-        {keys[i]: val[i] for i in range(len(keys))}
-        for val in combination
-    ]
+    return [{keys[i]: val[i] for i in range(len(keys))} for val in combination]
 
 
 def train():

@@ -9,12 +9,12 @@ from .. import BaseModel, register_model
 class HOPE(BaseModel):
     r"""The HOPE model from the `"Grarep: Asymmetric transitivity preserving graph embedding"
     <http://dl.acm.org/citation.cfm?doid=2939672.2939751>`_ paper.
-    
+
     Args:
         hidden_size (int) : The dimension of node representation.
         beta (float) : Parameter in katz decomposition.
     """
-    
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""

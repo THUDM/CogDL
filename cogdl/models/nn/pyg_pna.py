@@ -19,7 +19,6 @@ class PNA(BaseModel):
         parser.add_argument("--num_classes", type=int)
         parser.add_argument("--hidden_size", type=int, default=60)
         parser.add_argument("--avg_deg", type=int, default=1)
-
         parser.add_argument("--layer", type=int, default=4)
         parser.add_argument("--pre_layers", type=int, default=1)
         parser.add_argument("--towers", type=int, default=5)
@@ -28,7 +27,6 @@ class PNA(BaseModel):
         parser.add_argument("--aggregators", type=str, nargs="+", default=['mean', 'min', 'max', 'std'])
         parser.add_argument("--scalers", type=str, nargs="+", default=['identity', 'amplification', 'attenuation'])
         parser.add_argument("--divide_input", action='store_true', default=False)
-
         parser.add_argument("--batch-size", type=int, default=20)
         parser.add_argument("--train-ratio", type=float, default=0.7)
         parser.add_argument("--test-ratio", type=float, default=0.1)
@@ -62,7 +60,6 @@ class PNA(BaseModel):
             valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
         else:
             valid_loader = test_loader
-
         return train_loader, valid_loader, test_loader
 
     def __init__(self, num_feature, num_classes, hidden_size, avg_deg,

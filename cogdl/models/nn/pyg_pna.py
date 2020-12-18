@@ -7,6 +7,7 @@ from .. import BaseModel, register_model
 from cogdl.data import DataLoader
 from torch_geometric.nn import PNAConv, BatchNorm, global_add_pool
 
+
 @register_model("pyg_pna")
 class PNA(BaseModel):
     r"""Implements a single convolutional layer of the Principal Neighbourhood Aggregation Networks 
@@ -31,7 +32,7 @@ class PNA(BaseModel):
         parser.add_argument("--batch-size", type=int, default=20)
         parser.add_argument("--train-ratio", type=float, default=0.7)
         parser.add_argument("--test-ratio", type=float, default=0.1)
-        
+
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
@@ -65,11 +66,11 @@ class PNA(BaseModel):
         return train_loader, valid_loader, test_loader
 
     def __init__(self, num_feature, num_classes, hidden_size, avg_deg,
-                 layer=4, pre_layers=1,towers=5, post_layers=1,
+                 layer=4, pre_layers=1, towers=5, post_layers=1,
                  edge_dim=None,
                  aggregators=['mean', 'min', 'max', 'std'],
-                 scalers = ['identity', 'amplification', 'attenuation'],
-                 divide_input=False ):
+                 scalers=['identity', 'amplification', 'attenuation'],
+                 divide_input=False):
         super(PNA, self).__init__()
         self.hidden_size = hidden_size
         self.edge_dim = edge_dim
@@ -78,7 +79,7 @@ class PNA(BaseModel):
         emd_side = self.hidden_size // num_feature
         self.hidden_size = emd_side * num_feature
         self.node_emb = Embedding(num_feature, emd_side)
-        if not self.edge_dim is None:
+        if self.edge_dim is not None:
             self.edge_emb = Embedding(4, edge_dim)        
 
         self.convs = ModuleList()
@@ -91,11 +92,11 @@ class PNA(BaseModel):
             self.convs.append(conv)
             self.batch_norms.append(BatchNorm(self.hidden_size))
 
-        self.mlp = Sequential(Linear(self.hidden_size, self.hidden_size//2), 
+        self.mlp = Sequential(Linear(self.hidden_size, self.hidden_size // 2), 
                               ReLU(), 
-                              Linear(self.hidden_size//2, self.hidden_size//4), 
+                              Linear(self.hidden_size // 2, self.hidden_size // 4), 
                               ReLU(),
-                              Linear(self.hidden_size//4, num_classes))
+                              Linear(self.hidden_size // 4, num_classes))
 
         self.criterion = nn.CrossEntropyLoss()
 
@@ -107,8 +108,8 @@ class PNA(BaseModel):
         n = x.shape[0]
 
         x = self.node_emb(x.long())
-        x = x.reshape([n,-1])
-        
+        x = x.reshape([n, -1])
+
         if self.edge_dim is None:
             edge_attr = None
         else:
@@ -117,7 +118,7 @@ class PNA(BaseModel):
         for conv, batch_norm in zip(self.convs, self.batch_norms):
             x = F.relu(batch_norm(conv(x, edge_index, edge_attr)))
         x = global_add_pool(x, batch_h)
-        out =  self.mlp(x)
+        out = self.mlp(x)
 
         if b.y is not None:
             return out, self.criterion(out, b.y)

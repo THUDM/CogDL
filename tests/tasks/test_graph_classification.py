@@ -100,6 +100,7 @@ def add_sagpool_args(args):
     args.pooling_layer_type = "gcnconv"
     return args
 
+
 def add_pna_args(args):
     args.hidden_size = 60
     args.avg_deg = 3
@@ -107,14 +108,15 @@ def add_pna_args(args):
     args.train_ratio = 0.7
     args.test_ratio = 0.1
     args.pooling_ratio = 0.5
-    args.pre_layers =  1
-    args.towers =  1
-    args.post_layers =  1
-    args.edge_dim =  None
-    args.aggregators =  ['mean']
+    args.pre_layers = 1
+    args.towers = 1
+    args.post_layers = 1
+    args.edge_dim = None
+    args.aggregators = ['mean']
     args.scalers = ['identity']
-    args.divide_input =  False
+    args.divide_input = False
     return args
+
 
 def test_gin_mutag():
     args = get_default_args()
@@ -272,6 +274,7 @@ def test_sagpool_proteins():
     task = build_task(args)
     ret = task.train()
     assert ret["Acc"] > 0
+
 
 def test_pna_proteins():
     args = get_default_args()

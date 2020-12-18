@@ -8,6 +8,7 @@ from cogdl.utils import build_args_from_dict
 
 DATASET_REGISTRY = {}
 
+
 def build_default_args_for_graph_classification(dataset):
     cpu = not torch.cuda.is_available()
     args = {
@@ -42,15 +43,18 @@ def build_default_args_for_graph_classification(dataset):
     }
     return build_args_from_dict(args)
 
+
 def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
     return register_func_name
 
+
 @register_func("proteins")
 def proteins_config(args):
     return args
+
 
 def run(dataset_name):
     args = build_default_args_for_graph_classification(dataset_name)
@@ -63,6 +67,7 @@ def run(dataset_name):
         result = task.train()
         results.append(result)
     return results
+
 
 if __name__ == "__main__":
     datasets = ["proteins"]

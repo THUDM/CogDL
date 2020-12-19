@@ -8,7 +8,7 @@ from .. import BaseModel, register_model
 from cogdl.utils import add_remaining_self_loops
 
 
-@register_model("unet")
+@register_model("pyg_unet")
 class UNet(BaseModel):
     @staticmethod
     def add_args(parser):

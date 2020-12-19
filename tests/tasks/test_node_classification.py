@@ -20,6 +20,8 @@ def get_default_args():
         "lr": 0.01,
         "weight_decay": 5e-4,
         "missing_rate": -1,
+        "task": "node_classification",
+        "dataset": "cora"
     }
     return build_args_from_dict(default_dict)
 
@@ -258,8 +260,25 @@ def test_pyg_unet_cora():
     args = get_default_args()
     args.task = "node_classification"
     args.dataset = "cora"
-    args.model = "unet"
+    args.model = "pyg_unet"
     args.num_layers = 2
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+
+def test_unet_cora():
+    args = get_default_args()
+    args.cpu = True
+    args.model = "unet"
+    args.pool_rate = [0.5, 0.5]
+    args.n_pool = 2
+    args.adj_dropout = 0.3
+    args.n_dropout = 0.8
+    args.hidden_size = 16
+    args.improved = True
+    args.aug_adj = True
+    args.activation = "elu"
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
@@ -665,3 +684,4 @@ if __name__ == "__main__":
     test_dropedge_resgcn_cora()
     test_dropedge_inceptiongcn_cora()
     test_dropedge_densegcn_cora()
+    test_unet_cora()

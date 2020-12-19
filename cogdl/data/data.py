@@ -194,7 +194,7 @@ class Data(object):
         adj_coo = sparse.coo_matrix(adj)
         row, col = adj_coo.row, adj_coo.col
         edge_attr = torch.from_numpy(adj_coo.data).to(self.x.device)
-        edge_index = torch.from_numpy(np.concatenate([row, col], axis=0)).to(self.x.device)
+        edge_index = torch.from_numpy(np.stack([row, col], axis=0)).to(self.x.device).long()
         keys = self.keys
         attrs = {key: self[key][node_idx] for key in keys if "edge" not in key}
         attrs["edge_attr"] = edge_attr

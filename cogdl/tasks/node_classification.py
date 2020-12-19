@@ -174,6 +174,7 @@ class NodeClassification(BaseTask):
     def _test_step(self, split="val", logits=None):
         self.model.eval()
         logits = logits if logits else self.model.predict(self.data)
+        logits = F.log_softmax(logits, dim=-1)
         if split == "train":
             mask = self.data.train_mask
         elif split == "val":

@@ -2,7 +2,6 @@ import torch as torch
 import torch.nn.functional as F
 import torch.nn as nn
 import numpy as np
-import scipy.sparse as sp
 from torch_scatter import scatter_max, scatter_add
 
 from .. import BaseModel, register_model

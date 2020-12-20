@@ -13,7 +13,7 @@ from .. import BaseModel, register_model, alias_draw, alias_setup
 class NetSMF(BaseModel):
     r"""The NetSMF model from the `"NetSMF: Large-Scale Network Embedding as Sparse Matrix Factorization"
     <http://arxiv.org/abs/1710.02971>`_ paper.
-    
+
     Args:
         hidden_size (int) : The dimension of node representation.
         window_size (int) : The actual context size which is considered in language model.
@@ -21,7 +21,7 @@ class NetSMF(BaseModel):
         num_round (int) : The number of round in NetSMF.
         worker (int) : The number of workers for NetSMF.
     """
-    
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -64,24 +64,15 @@ class NetSMF(BaseModel):
 
         id2node = dict(zip(node2id.values(), node2id.keys()))
 
-        self.num_neigh = np.asarray(
-            [len(list(self.G.neighbors(id2node[i]))) for i in range(self.num_node)]
-        )
-        self.neighbors = [
-            [node2id[v] for v in self.G.neighbors(id2node[i])]
-            for i in range(self.num_node)
-        ]
+        self.num_neigh = np.asarray([len(list(self.G.neighbors(id2node[i]))) for i in range(self.num_node)])
+        self.neighbors = [[node2id[v] for v in self.G.neighbors(id2node[i])] for i in range(self.num_node)]
         s = time.time()
         self.alias_nodes = {}
         self.node_weight = {}
         for i in range(self.num_node):
-            unnormalized_probs = [
-                G[id2node[i]][nbr].get("weight", 1.0) for nbr in G.neighbors(id2node[i])
-            ]
+            unnormalized_probs = [G[id2node[i]][nbr].get("weight", 1.0) for nbr in G.neighbors(id2node[i])]
             norm_const = sum(unnormalized_probs)
-            normalized_probs = [
-                float(u_prob) / norm_const for u_prob in unnormalized_probs
-            ]
+            normalized_probs = [float(u_prob) / norm_const for u_prob in unnormalized_probs]
             self.alias_nodes[i] = alias_setup(normalized_probs)
             self.node_weight[i] = dict(
                 zip(
@@ -94,9 +85,7 @@ class NetSMF(BaseModel):
         print("alias_nodes", t - s)
 
         # run netsmf algorithm with multiprocessing and apply randomized svd
-        print(
-            "number of sample edges ", self.num_round * self.num_edge * self.window_size
-        )
+        print("number of sample edges ", self.num_round * self.num_edge * self.window_size)
         print("random walk start...")
         t0 = time.time()
         results = []
@@ -132,12 +121,10 @@ class NetSMF(BaseModel):
     def _get_embedding_rand(self, matrix):
         # Sparse randomized tSVD for fast embedding
         t1 = time.time()
-        l = matrix.shape[0]
+        l = matrix.shape[0]  # noqa E741
         smat = sp.csc_matrix(matrix)
         print("svd sparse", smat.data.shape[0] * 1.0 / l ** 2)
-        U, Sigma, VT = randomized_svd(
-            smat, n_components=self.dimension, n_iter=5, random_state=None
-        )
+        U, Sigma, VT = randomized_svd(smat, n_components=self.dimension, n_iter=5, random_state=None)
         U = U * np.sqrt(Sigma)
         U = preprocessing.normalize(U, "l2")
         print("sparsesvd time", time.time() - t1)
@@ -148,15 +135,11 @@ class NetSMF(BaseModel):
         k = np.random.randint(r) + 1
         zp, rand_u, rand_v = 1e-20, k - 1, r - k
         for i in range(rand_u):
-            new_u = self.neighbors[u][
-                alias_draw(self.alias_nodes[u][0], self.alias_nodes[u][1])
-            ]
+            new_u = self.neighbors[u][alias_draw(self.alias_nodes[u][0], self.alias_nodes[u][1])]
             zp += 2.0 / self.node_weight[u][new_u]
             u = new_u
         for j in range(rand_v):
-            new_v = self.neighbors[v][
-                alias_draw(self.alias_nodes[v][0], self.alias_nodes[v][1])
-            ]
+            new_v = self.neighbors[v][alias_draw(self.alias_nodes[v][0], self.alias_nodes[v][1])]
             zp += 2.0 / self.node_weight[v][new_v]
             v = new_v
         return u, v, zp
@@ -168,10 +151,7 @@ class NetSMF(BaseModel):
         t0 = time.time()
         for round in range(int(self.num_round / self.worker)):
             if round % 10 == 0 and pid == 0:
-                print(
-                    "round %d / %d, time: %lf"
-                    % (round * self.worker, self.num_round, time.time() - t0)
-                )
+                print("round %d / %d, time: %lf" % (round * self.worker, self.num_round, time.time() - t0))
             for i in range(self.num_edge):
                 u, v = self.edges[i]
                 if not self.is_directed and np.random.rand() > 0.5:

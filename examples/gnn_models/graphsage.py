@@ -20,16 +20,18 @@ def build_default_args_for_node_classification(dataset):
         "patience": 100,
         "cpu": cpu,
         "device_id": [0],
-        "seed": [0,],
-
+        "seed": [
+            0,
+        ],
         "dropout": 0.5,
-        "hidden_size": [128, ],
+        "hidden_size": [
+            128,
+        ],
         "num_layers": 2,
         "sample_size": [10, 10],
-
         "task": "node_classification",
         "model": "graphsage",
-        "dataset": dataset
+        "dataset": dataset,
     }
     return build_args_from_dict(args)
 
@@ -44,21 +46,21 @@ def build_default_args_for_unsupervised_node_classification(dataset):
         "patience": 100,
         "cpu": cpu,
         "device_id": 0,
-        "seed": [0,],
+        "seed": [
+            0,
+        ],
         "num_shuffle": 5,
         "save_dir": ".",
         "enhance": None,
-
         "negative_samples": 30,
         "dropout": 0.5,
         "hidden_size": 128,
         "num_layers": 2,
         "sample_size": [10, 10],
         "walk_length": 10,
-
         "task": "unsupervised_node_classification",
         "model": "unsup_graphsage",
-        "dataset": dataset
+        "dataset": dataset,
     }
     return build_args_from_dict(args)
 
@@ -67,6 +69,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 
@@ -86,7 +89,7 @@ def pubmed_config(args):
 
 
 def run(dataset_name):
-    unsup = False # unsupervised or supervised node classification
+    unsup = False  # unsupervised or supervised node classification
     if unsup:
         args = build_default_args_for_unsupervised_node_classification(dataset_name)
     else:

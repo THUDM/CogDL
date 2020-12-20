@@ -7,19 +7,17 @@ from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.utils import build_args_from_dict
 
+
 def get_default_args():
-    default_dict = {'hidden_size': 16,
-                    'negative_ratio': 3,
-                    'patience': 1,
-                    'max_epoch': 1,
-                    'cpu': True}
+    default_dict = {"hidden_size": 16, "negative_ratio": 3, "patience": 1, "max_epoch": 1, "cpu": True}
     return build_args_from_dict(default_dict)
+
 
 def test_deepwalk_ppi():
     args = get_default_args()
-    args.task = 'link_prediction'
-    args.dataset = 'ppi'
-    args.model = 'deepwalk'
+    args.task = "link_prediction"
+    args.dataset = "ppi"
+    args.model = "deepwalk"
     args.walk_length = 5
     args.walk_num = 1
     args.window_size = 3
@@ -27,13 +25,14 @@ def test_deepwalk_ppi():
     args.iteration = 1
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret['ROC_AUC'] <= 1
+    assert 0 <= ret["ROC_AUC"] <= 1
+
 
 def test_line_wikipedia():
     args = get_default_args()
-    args.task = 'link_prediction'
-    args.dataset = 'wikipedia'
-    args.model = 'line'
+    args.task = "link_prediction"
+    args.dataset = "wikipedia"
+    args.model = "line"
     args.walk_length = 5
     args.walk_num = 1
     args.negative = 3
@@ -42,13 +41,14 @@ def test_line_wikipedia():
     args.order = 1
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret['ROC_AUC'] <= 1
+    assert 0 <= ret["ROC_AUC"] <= 1
+
 
 def test_node2vec_ppi():
     args = get_default_args()
-    args.task = 'link_prediction'
-    args.dataset = 'ppi'
-    args.model = 'node2vec'
+    args.task = "link_prediction"
+    args.dataset = "ppi"
+    args.model = "node2vec"
     args.walk_length = 5
     args.walk_num = 1
     args.window_size = 3
@@ -58,72 +58,77 @@ def test_node2vec_ppi():
     args.q = 1.0
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret['ROC_AUC'] <= 1
+    assert 0 <= ret["ROC_AUC"] <= 1
+
 
 def test_hope_ppi():
     args = get_default_args()
-    args.task = 'link_prediction'
-    args.dataset = 'ppi'
-    args.model = 'hope'
+    args.task = "link_prediction"
+    args.dataset = "ppi"
+    args.model = "hope"
     args.beta = 0.001
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret['ROC_AUC'] <= 1
+    assert 0 <= ret["ROC_AUC"] <= 1
 
 
 def test_grarep_ppi():
     args = get_default_args()
-    args.task = 'link_prediction'
-    args.dataset = 'ppi'
-    args.model = 'grarep'
+    args.task = "link_prediction"
+    args.dataset = "ppi"
+    args.model = "grarep"
     args.step = 1
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret['ROC_AUC'] <= 1
-    
+    assert 0 <= ret["ROC_AUC"] <= 1
+
+
 def test_netmf_ppi():
     args = get_default_args()
-    args.task = 'link_prediction'
-    args.dataset = 'ppi'
-    args.model = 'netmf'
+    args.task = "link_prediction"
+    args.dataset = "ppi"
+    args.model = "netmf"
     args.window_size = 2
     args.rank = 32
     args.negative = 3
     args.is_large = False
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret['ROC_AUC'] <= 1
+    assert 0 <= ret["ROC_AUC"] <= 1
+
 
 def test_netsmf_ppi():
     args = get_default_args()
-    args.task = 'link_prediction'
-    args.dataset = 'ppi'
-    args.model = 'netsmf'
+    args.task = "link_prediction"
+    args.dataset = "ppi"
+    args.model = "netsmf"
     args.window_size = 3
     args.negative = 1
     args.num_round = 2
     args.worker = 5
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret['ROC_AUC'] <= 1
+    assert 0 <= ret["ROC_AUC"] <= 1
+
 
 def test_prone_flickr():
     args = get_default_args()
-    args.task = 'link_prediction'
-    args.dataset = 'flickr'
-    args.model = 'prone'
+    args.task = "link_prediction"
+    args.dataset = "flickr"
+    args.model = "prone"
     args.step = 3
     args.theta = 0.5
     args.mu = 0.2
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret['ROC_AUC'] <= 1
+    assert 0 <= ret["ROC_AUC"] <= 1
+
 
 def test_sdne_ppi():
     args = get_default_args()
-    args.task = 'link_prediction'
-    args.dataset = 'ppi'
-    args.model = 'sdne'
+    args.task = "link_prediction"
+    args.dataset = "ppi"
+    args.model = "sdne"
     args.hidden_size1 = 100
     args.hidden_size2 = 16
     args.droput = 0.2
@@ -135,13 +140,14 @@ def test_sdne_ppi():
     args.lr = 0.001
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret['ROC_AUC'] <= 1
+    assert 0 <= ret["ROC_AUC"] <= 1
+
 
 def test_dngr_ppi():
     args = get_default_args()
-    args.task = 'link_prediction'
-    args.dataset = 'ppi'
-    args.model = 'dngr'
+    args.task = "link_prediction"
+    args.dataset = "ppi"
+    args.model = "dngr"
     args.hidden_size1 = 100
     args.hidden_size2 = 16
     args.noise = 0.2
@@ -151,7 +157,7 @@ def test_dngr_ppi():
     args.lr = 0.001
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret['ROC_AUC'] <= 1
+    assert 0 <= ret["ROC_AUC"] <= 1
 
 
 def get_kg_default_args():
@@ -178,6 +184,7 @@ def get_nums(dataset, args):
     args.num_entities = len(torch.unique(data.edge_index))
     args.num_rels = len(torch.unique(data.edge_attr))
     return args
+
 
 def test_rgcn_wn18():
     args = get_kg_default_args()
@@ -228,7 +235,7 @@ def get_kge_default_args():
         "uni_weight": False,
         "learning_rate": 0.0001,
         "warm_up_steps": None,
-        "max_steps": 10,
+        "max_epoch": 10,
         "log_steps": 100,
         "test_log_steps": 100,
         "gamma": 12,
@@ -278,22 +285,50 @@ def test_complex_fb13s():
     ret = task.train()
     assert 0 <= ret["MRR"] <= 1
 
+
+def get_gnn_link_prediction_args():
+    args = {
+        "hidden_size": 32,
+        "dataset": "cora",
+        "model": "gcn",
+        "task": "link_prediction",
+        "lr": 0.005,
+        "weight_decay": 5e-4,
+        "max_epoch": 60,
+        "patience": 2,
+        "evaluate_interval": 1,
+        "cpu": True,
+        "device_id": [0],
+        "dropout": 0.5,
+    }
+    return build_args_from_dict(args)
+
+
+def test_gcn_cora():
+    args = get_gnn_link_prediction_args()
+    print(args.evaluate_interval)
+    task = build_task(args)
+    ret = task.train()
+    assert 0.5 <= ret["AUC"] <= 1.0
+
+
 if __name__ == "__main__":
-    test_deepwalk_ppi()
-    test_line_wikipedia()
-    test_node2vec_ppi()
-    test_hope_ppi()
-    test_grarep_ppi()
-    test_netmf_ppi()
-    test_netsmf_ppi()
-    test_prone_flickr()
-    test_sdne_ppi()
-    test_dngr_ppi()
-
-    test_rgcn_wn18()
-    test_compgcn_wn18rr()
-
-    test_distmult_fb13s()
-    test_rotate_fb13s()
-    test_transe_fb13s()
-    test_complex_fb13s()
+    # test_deepwalk_ppi()
+    # test_line_wikipedia()
+    # test_node2vec_ppi()
+    # test_hope_ppi()
+    # test_grarep_ppi()
+    # test_netmf_ppi()
+    # test_netsmf_ppi()
+    # test_prone_flickr()
+    # test_sdne_ppi()
+    # test_dngr_ppi()
+    #
+    # test_rgcn_wn18()
+    # test_compgcn_wn18rr()
+    #
+    # test_distmult_fb13s()
+    # test_rotate_fb13s()
+    # test_transe_fb13s()
+    # test_complex_fb13s()
+    test_gcn_cora()

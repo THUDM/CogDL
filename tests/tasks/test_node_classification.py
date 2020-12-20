@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 from cogdl import options
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
@@ -19,30 +20,33 @@ def get_default_args():
         "lr": 0.01,
         "weight_decay": 5e-4,
         "missing_rate": -1,
+        "task": "node_classification",
+        "dataset": "cora"
     }
     return build_args_from_dict(default_dict)
 
 
 def test_gdc_gcn_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.dataset = 'cora'
-    args.model = 'gdc_gcn'
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "gdc_gcn"
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
     args.num_layers = 1
-    args.alpha = 0.05 # ppr filter param
-    args.t = 5.0 # heat filter param
-    args.k = 128 # top k entries to be retained
-    args.eps = 0.01 # change depending on gdc_type
+    args.alpha = 0.05  # ppr filter param
+    args.t = 5.0  # heat filter param
+    args.k = 128  # top k entries to be retained
+    args.eps = 0.01  # change depending on gdc_type
     args.dataset = dataset
-    args.gdc_type = 'ppr' # ppr, heat, none
+    args.gdc_type = "ppr"  # ppr, heat, none
 
     model = build_model(args)
     task = build_task(args, dataset=dataset, model=model)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
+
 
 def test_gcn_cora():
     args = get_default_args()
@@ -173,10 +177,17 @@ def test_graphsage_cora():
     args = get_default_args()
     args.task = "node_classification"
     args.dataset = "cora"
-    args.model = "graphsage"
-    args.num_layers = 2
-    args.hidden_size = [128]
-    args.sample_size = [10, 10]
+    args.model = "pairnorm"
+    args.pn_model = "DeepGCN"
+    args.nlayer = 10
+    args.missing_rate = 100
+    args.norm_mode = "PN-SI"
+    args.residual = 0
+    args.hidden_layers = 64
+    args.nhead = 1
+    args.dropout = 0.6
+    args.norm_scale = 1.0
+    args.no_fea_norm = "store_false"
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
@@ -251,8 +262,25 @@ def test_pyg_unet_cora():
     args = get_default_args()
     args.task = "node_classification"
     args.dataset = "cora"
-    args.model = "unet"
+    args.model = "pyg_unet"
     args.num_layers = 2
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+
+def test_unet_cora():
+    args = get_default_args()
+    args.cpu = True
+    args.model = "unet"
+    args.pool_rate = [0.5, 0.5]
+    args.n_pool = 2
+    args.adj_dropout = 0.3
+    args.n_dropout = 0.8
+    args.hidden_size = 16
+    args.improved = True
+    args.aug_adj = True
+    args.activation = "elu"
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
@@ -439,46 +467,70 @@ def test_gpt_gnn_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+
+def test_sign_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.model = "sign"
+    args.dataset = "cora"
+    args.lr = 0.00005
+    args.hidden_size = 2048
+    args.num_layers = 3
+    args.num_propagations = 3
+    args.dropout = 0.3
+    args.directed = False
+    args.dropedge_rate = 0.2
+    args.asymm_norm = False
+    args.set_diag = False
+    args.remove_diag = False
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret["Acc"] < 1
+
+
 def test_jknet_jknet_cora():
     args = get_default_args()
     args.task = "node_classification"
     args.dataset = "jknet_cora"
     args.model = "jknet"
     args.lr = 0.005
-    args.layer_aggregation = 'maxpool'
-    args.node_aggregation = 'sum'
-    args.n_layers = 6
+    args.layer_aggregation = "maxpool"
+    args.node_aggregation = "sum"
+    args.n_layers = 3
     args.n_units = 16
     args.in_features = 1433
     args.out_features = 7
-    args.max_epoch = 100
+    args.max_epoch = 2
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
-def test_ppnp_citeseer():
-    args = get_default_args()
-    args.task = 'node_classification'
-    args.model = 'ppnp'
-    args.dataset = 'citeseer'
-    args.propagation_type = 'ppnp'
-    args.alpha = 0.1
-    args.num_iterations = 10
-    task = build_task(args)
-    ret = task.train()
-    assert 0 < ret['Acc'] < 1
 
-def test_appnp_citeseer():
+def test_ppnp_cora():
     args = get_default_args()
-    args.task = 'node_classification'
-    args.model = 'ppnp'
-    args.dataset = 'citeseer'
-    args.propagation_type = 'appnp'
+    args.task = "node_classification"
+    args.model = "ppnp"
+    args.dataset = "cora"
+    args.propagation_type = "ppnp"
     args.alpha = 0.1
     args.num_iterations = 10
     task = build_task(args)
     ret = task.train()
-    assert 0 < ret['Acc'] < 1
+    assert 0 < ret["Acc"] < 1
+
+
+def test_appnp_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.model = "ppnp"
+    args.dataset = "cora"
+    args.propagation_type = "appnp"
+    args.alpha = 0.1
+    args.num_iterations = 10
+    task = build_task(args)
+    ret = task.train()
+    assert 0 < ret["Acc"] < 1
+
 
 def test_sgcpn_cora():
     args = get_default_args()
@@ -494,6 +546,7 @@ def test_sgcpn_cora():
     ret = task.train()
     assert 0 < ret["Acc"] < 1
 
+
 def test_sgc_cora():
     args = get_default_args()
     args.task = "node_classification"
@@ -502,7 +555,100 @@ def test_sgc_cora():
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
-    
+
+
+def test_dropedge_gcn_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "dropedge_gcn"
+    args.baseblock = "mutigcn"
+    args.inputlayer = "gcn"
+    args.outputlayer = "gcn"
+    args.hidden_size = 64
+    args.dropout = 0.5
+    args.withbn = False
+    args.withloop = False
+    args.nhiddenlayer = 1
+    args.nbaseblocklayer = 1
+    args.aggrmethod = "default"
+    args.activation = F.relu
+    args.task_type = "full"
+
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+
+def test_dropedge_resgcn_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "dropedge_gcn"
+    args.baseblock = "resgcn"
+    args.inputlayer = "gcn"
+    args.outputlayer = "gcn"
+    args.hidden_size = 64
+    args.dropout = 0.5
+    args.withbn = False
+    args.withloop = False
+    args.nhiddenlayer = 1
+    args.nbaseblocklayer = 1
+    args.aggrmethod = "concat"
+    args.activation = F.relu
+    args.task_type = "full"
+
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+
+def test_dropedge_densegcn_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "dropedge_gcn"
+    args.baseblock = "densegcn"
+    args.inputlayer = ""
+    args.outputlayer = "none"
+    args.hidden_size = 64
+    args.dropout = 0.5
+    args.withbn = False
+    args.withloop = False
+    args.nhiddenlayer = 1
+    args.nbaseblocklayer = 1
+    args.aggrmethod = "add"
+    args.activation = F.relu
+    args.task_type = "full"
+
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+
+def test_dropedge_inceptiongcn_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "dropedge_gcn"
+    args.baseblock = "inceptiongcn"
+    args.inputlayer = "gcn"
+    args.outputlayer = "gcn"
+    args.hidden_size = 64
+    args.dropout = 0.5
+    args.withbn = False
+    args.withloop = False
+    args.nhiddenlayer = 1
+    args.nbaseblocklayer = 1
+    args.aggrmethod = "add"
+    args.activation = F.relu
+    args.task_type = "full"
+
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+
 if __name__ == "__main__":
     test_gdc_gcn_cora()
     test_gcn_cora()
@@ -531,6 +677,13 @@ if __name__ == "__main__":
     test_grand_cora()
     test_pyg_gcn_cora_sampler()
     test_gpt_gnn_cora()
+    test_sign_cora()
     test_jknet_jknet_cora()
-    test_ppnp_citeseer()
-    test_appnp_citeseer()
+    test_sgcpn_cora()
+    test_ppnp_cora()
+    test_appnp_cora()
+    test_dropedge_gcn_cora()
+    test_dropedge_resgcn_cora()
+    test_dropedge_inceptiongcn_cora()
+    test_dropedge_densegcn_cora()
+    test_unet_cora()

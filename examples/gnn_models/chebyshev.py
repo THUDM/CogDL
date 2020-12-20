@@ -21,15 +21,13 @@ def build_default_args_for_node_classification(dataset):
         "cpu": cpu,
         "device_id": [0],
         "seed": [0, 1, 2],
-
         "dropout": 0.5,
         "hidden_size": 64,
         "num_layers": 2,
         "filter_size": 5,
-
         "task": "node_classification",
         "model": "chebyshev",
-        "dataset": dataset
+        "dataset": dataset,
     }
     return build_args_from_dict(args)
 
@@ -38,6 +36,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

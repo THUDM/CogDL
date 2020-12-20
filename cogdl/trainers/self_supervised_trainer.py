@@ -33,18 +33,17 @@ class SelfSupervisedTrainer(BaseTrainer):
         for epoch in epoch_iter:
             optimizer.zero_grad()
 
-            loss = model.loss(features, edge_index, edge_weight)
+            loss = model.node_classification_loss(features, edge_index, edge_weight)
             epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss.item(): .4f}")
 
             if loss < best:
                 best = loss
-                best_t = epoch
                 cnt_wait = 0
             else:
                 cnt_wait += 1
 
             if cnt_wait == self.patience:
-                print('Early stopping!')
+                print("Early stopping!")
                 break
 
             loss.backward()
@@ -58,7 +57,7 @@ class SelfSupervisedTrainer(BaseTrainer):
             "idx_train": data.train_mask,
             "idx_val": data.val_mask,
             "idx_test": data.test_mask,
-            "num_classes": nclass
+            "num_classes": nclass,
         }
         result = LogRegTrainer().train(embeds, data.y, opt)
         print(f"TestAcc: {result: .4f}")
@@ -88,7 +87,6 @@ class LogRegTrainer(object):
     def train(self, data, labels, opt):
         device = data.device
         idx_train = opt["idx_train"].to(device)
-        idx_val = opt["idx_val"].to(device)
         idx_test = opt["idx_test"].to(device)
         nclass = opt["num_classes"]
         nhid = data.shape[-1]

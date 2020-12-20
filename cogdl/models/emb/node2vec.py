@@ -10,7 +10,7 @@ from .. import BaseModel, register_model, alias_draw, alias_setup
 class Node2vec(BaseModel):
     r"""The node2vec model from the `"node2vec: Scalable feature learning for networks"
     <http://dl.acm.org/citation.cfm?doid=2939672.2939754>`_ paper
-    
+
     Args:
         hidden_size (int) : The dimension of node representation.
         walk_length (int) : The walk length.
@@ -55,9 +55,7 @@ class Node2vec(BaseModel):
             args.q,
         )
 
-    def __init__(
-        self, dimension, walk_length, walk_num, window_size, worker, iteration, p, q
-    ):
+    def __init__(self, dimension, walk_length, walk_num, window_size, worker, iteration, p, q):
         super(Node2vec, self).__init__()
         self.dimension = dimension
         self.walk_length = walk_length
@@ -88,9 +86,7 @@ class Node2vec(BaseModel):
             iter=self.iteration,
         )
         id2node = dict([(vid, node) for vid, node in enumerate(G.nodes())])
-        self.embeddings = np.asarray(
-            [model.wv[str(id2node[i])] for i in range(len(id2node))]
-        )
+        self.embeddings = np.asarray([model.wv[str(id2node[i])] for i in range(len(id2node))])
         return self.embeddings
 
     def _node2vec_walk(self, walk_length, start_node):
@@ -106,16 +102,10 @@ class Node2vec(BaseModel):
             cur_nbrs = list(G.neighbors(cur))
             if len(cur_nbrs) > 0:
                 if len(walk) == 1:
-                    walk.append(
-                        cur_nbrs[alias_draw(alias_nodes[cur][0], alias_nodes[cur][1])]
-                    )
+                    walk.append(cur_nbrs[alias_draw(alias_nodes[cur][0], alias_nodes[cur][1])])
                 else:
                     prev = walk[-2]
-                    next = cur_nbrs[
-                        alias_draw(
-                            alias_edges[(prev, cur)][0], alias_edges[(prev, cur)][1]
-                        )
-                    ]
+                    next = cur_nbrs[alias_draw(alias_edges[(prev, cur)][0], alias_edges[(prev, cur)][1])]
                     walk.append(next)
             else:
                 break
@@ -133,9 +123,7 @@ class Node2vec(BaseModel):
                 print(str(walk_iter + 1), "/", str(num_walks))
             random.shuffle(nodes)
             for node in nodes:
-                walks.append(
-                    self._node2vec_walk(walk_length=walk_length, start_node=node)
-                )
+                walks.append(self._node2vec_walk(walk_length=walk_length, start_node=node))
 
         return walks
 
@@ -168,9 +156,7 @@ class Node2vec(BaseModel):
         for node in G.nodes():
             unnormalized_probs = [G[node][nbr]["weight"] for nbr in G.neighbors(node)]
             norm_const = sum(unnormalized_probs)
-            normalized_probs = [
-                float(u_prob) / norm_const for u_prob in unnormalized_probs
-            ]
+            normalized_probs = [float(u_prob) / norm_const for u_prob in unnormalized_probs]
             alias_nodes[node] = alias_setup(normalized_probs)
 
         t = time.time()

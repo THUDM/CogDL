@@ -1,6 +1,7 @@
 import itertools
 import random
 from collections import defaultdict
+from typing import Optional
 
 import numpy as np
 import torch
@@ -11,6 +12,7 @@ from tabulate import tabulate
 class ArgClass(object):
     def __init__(self):
         pass
+
 
 def build_args_from_dict(dic):
     args = ArgClass()
@@ -29,12 +31,13 @@ def add_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):
         fill_value = 1
 
     N = num_nodes
-    self_weight = torch.full((num_nodes, ), fill_value, dtype=edge_weight.dtype).to(edge_weight.device)
+    self_weight = torch.full((num_nodes,), fill_value, dtype=edge_weight.dtype).to(edge_weight.device)
     loop_index = torch.arange(0, N, dtype=edge_index.dtype, device=edge_index.device)
     loop_index = loop_index.unsqueeze(0).repeat(2, 1)
     edge_index = torch.cat([edge_index, loop_index], dim=1)
     edge_weight = torch.cat([edge_weight, self_weight])
     return edge_index, edge_weight
+
 
 def add_remaining_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):
     device = edge_index.device
@@ -44,7 +47,7 @@ def add_remaining_self_loops(edge_index, edge_weight=None, fill_value=1, num_nod
         num_nodes = torch.max(edge_index) + 1
     if fill_value is None:
         fill_value = 1
-        
+
     N = num_nodes
     row, col = edge_index[0], edge_index[1]
     mask = row != col
@@ -55,8 +58,7 @@ def add_remaining_self_loops(edge_index, edge_weight=None, fill_value=1, num_nod
 
     inv_mask = ~mask
 
-    loop_weight = torch.full((N, ), fill_value, dtype=edge_weight.dtype,
-                                device=edge_weight.device)
+    loop_weight = torch.full((N,), fill_value, dtype=edge_weight.dtype, device=edge_weight.device)
     remaining_edge_weight = edge_weight[inv_mask]
     if remaining_edge_weight.numel() > 0:
         loop_weight[row[inv_mask]] = remaining_edge_weight
@@ -80,7 +82,7 @@ def symmetric_normalization(num_nodes, edge_index, edge_weight=None):
         edge_weight = torch.ones(edge_index.shape[1]).to(device)
     row_sum = spmm(edge_index, edge_weight, torch.ones(num_nodes, 1).to(device)).view(-1)
     row_sum_inv_sqrt = row_sum.pow(-0.5)
-    row_sum_inv_sqrt[row_sum_inv_sqrt == float('inf')] = 0
+    row_sum_inv_sqrt[row_sum_inv_sqrt == float("inf")] = 0
     return row_sum_inv_sqrt[edge_index[1]] * edge_weight * row_sum_inv_sqrt[edge_index[0]]
 
 
@@ -109,7 +111,7 @@ def get_degrees(indices, num_nodes=None):
         num_nodes = torch.max(values) + 1
     b = torch.ones((num_nodes, 1)).to(device)
     degrees = spmm(indices, values, b).view(-1)
-    return degrees 
+    return degrees
 
 
 def edge_softmax(indices, values, shape):
@@ -178,7 +180,7 @@ def cycle_index(num, shift):
 
 
 def batch_sum_pooling(x, batch):
-    batch_size = torch.max(batch.cpu())+1
+    batch_size = torch.max(batch.cpu()) + 1
     # batch_size = len(torch.unique(batch))
     res = torch.zeros(batch_size, x.size(1)).to(x.device)
     return res.scatter_add_(dim=0, index=batch.unsqueeze(-1).expand_as(x), src=x)
@@ -189,6 +191,34 @@ def batch_mean_pooling(x, batch):
     res = torch.zeros(len(values), x.size(1)).to(x.device)
     res = res.scatter_add_(dim=0, index=batch.unsqueeze(-1).expand_as(x), src=x)
     return res / counts.unsqueeze(-1)
+
+
+def negative_edge_sampling(
+    edge_index: torch.Tensor,
+    num_nodes: Optional[int] = None,
+    num_neg_samples: Optional[int] = None,
+    undirected: bool = False,
+):
+    if num_nodes is None:
+        num_nodes = len(torch.unique(edge_index))
+    if num_neg_samples is None:
+        num_neg_samples = edge_index.shape[1]
+
+    size = num_nodes * num_nodes
+    num_neg_samples = min(num_neg_samples, size - edge_index.size(1))
+
+    row, col = edge_index
+    unique_pair = row * num_nodes + col
+
+    num_samples = int(num_neg_samples * abs(1 / (1 - 1.1 * edge_index.size(1) / size)))
+    sample_result = torch.LongTensor(random.sample(range(size), min(num_samples, num_samples)))
+    mask = torch.from_numpy(np.isin(sample_result, unique_pair.to("cpu"))).to(torch.bool)
+    selected = sample_result[~mask][:num_neg_samples].to(edge_index.device)
+
+    row = selected // num_nodes
+    col = selected % num_nodes
+    return torch.stack([row, col]).long()
+
 
 def tabulate_results(results_dict):
     # Average for different seeds
@@ -217,7 +247,7 @@ def print_result(results, datasets, model_name):
     num_datasets = len(datasets)
     num_seed = len(results) // num_datasets
     for i, res in enumerate(results):
-        results_dict[(model_name, datasets[i//num_seed])].append(res)
+        results_dict[(model_name, datasets[i // num_seed])].append(res)
     tab_data = tabulate_results(results_dict)
     print(tabulate(tab_data, headers=table_header, tablefmt="github"))
 
@@ -230,5 +260,5 @@ def set_random_seed(seed):
 
 
 if __name__ == "__main__":
-    args = build_args_from_dict({'a': 1, 'b': 2})
+    args = build_args_from_dict({"a": 1, "b": 2})
     print(args.a, args.b)

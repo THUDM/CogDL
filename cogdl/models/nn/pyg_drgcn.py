@@ -42,16 +42,10 @@ class DrGCN(BaseModel):
         self.dropout = dropout
         shapes = [num_features] + [hidden_size] * (num_layers - 1) + [num_classes]
         self.convs = nn.ModuleList(
-            [
-                GCNConv(shapes[layer], shapes[layer + 1], cached=True)
-                for layer in range(num_layers)
-            ]
+            [GCNConv(shapes[layer], shapes[layer + 1], cached=True) for layer in range(num_layers)]
         )
         self.ses = nn.ModuleList(
-            [
-                SELayer(shapes[layer], se_channels=int(np.sqrt(shapes[layer])))
-                for layer in range(num_layers)
-            ]
+            [SELayer(shapes[layer], se_channels=int(np.sqrt(shapes[layer]))) for layer in range(num_layers)]
         )
 
     def forward(self, x, edge_index):
@@ -61,13 +55,7 @@ class DrGCN(BaseModel):
             x = se(x)
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.convs[-1](x, edge_index)
-        return F.log_softmax(x, dim=1)
+        return x
 
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask],
-        )
-    
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

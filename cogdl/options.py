@@ -21,7 +21,7 @@ def get_parser():
     parser.add_argument('--weight-decay', default=5e-4, type=float)
     parser.add_argument('--cpu', action='store_true', help='use CPU instead of CUDA')
     parser.add_argument('--device-id', default=[0], type=int, nargs='+',
-                       help='which GPU to use')
+                        help='which GPU to use')
     parser.add_argument('--save-dir', default='.', type=str)
     parser.add_argument('--enhance', type=str, default=None, help='use prone or prone++ to enhance embedding')
 
@@ -70,7 +70,7 @@ def get_training_parser():
 def get_display_data_parser():
     parser = get_parser()
     add_dataset_args(parser)
-    parser.add_argument('--depth', default=3, type=int)
+    parser.add_argument("--depth", default=3, type=int)
 
     return parser
 
@@ -90,6 +90,9 @@ def parse_args_and_arch(parser, args):
     TASK_REGISTRY[args.task].add_args(parser)
     for model in args.model:
         MODEL_REGISTRY[model].add_args(parser)
+    for dataset in args.dataset:
+        if hasattr(DATASET_REGISTRY[dataset], "add_args"):
+            DATASET_REGISTRY[dataset].add_args(parser)
     # Parse a second time.
     args = parser.parse_args()
 

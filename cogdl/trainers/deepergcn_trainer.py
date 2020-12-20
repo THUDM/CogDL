@@ -20,12 +20,8 @@ def random_partition_graph(num_nodes, cluster_number=10):
 def generate_subgraphs(edge_index, parts, cluster_number=10):
     num_nodes = torch.max(edge_index) + 1
     num_edges = edge_index.shape[1]
-    device = edge_index.device
     edge_index_np = edge_index.cpu().numpy()
-    adj = sparse.csr_matrix(
-            (np.ones(num_edges), (edge_index_np[0], edge_index_np[1])),
-            shape=(num_nodes, num_nodes)
-        )
+    adj = sparse.csr_matrix((np.ones(num_edges), (edge_index_np[0], edge_index_np[1])), shape=(num_nodes, num_nodes))
     num_batches = cluster_number
     sg_nodes = []
     sg_edges = []
@@ -54,50 +50,31 @@ class DeeperGCNTrainer(BaseTrainer):
         self.data = None
         self.optimizer = None
         self.edge_index, self.train_index = None, None
-        self.subgraph_loader = None
 
     def fit(self, model, data):
         data = data[0]
         self.model = model.to(self.device)
         self.data = data
         self.test_gpu_volume()
-        self.subgraph_loader = NeighborSampler(
-                                    data.edge_index, 
-                                    sizes=[-1,], 
-                                    batch_size=self.batch_size,
-                                    shuffle=False,
-                                    num_workers=10,
-                                )
 
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(),
-            lr=self.lr,
-            weight_decay=self.weight_decay
-        )
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         self.edge_index, _ = add_remaining_self_loops(
-            data.edge_index,
-            torch.ones(data.edge_index.shape[1]).to(data.x.device),
-            1,
-            data.x.shape[0]
+            data.edge_index, torch.ones(data.edge_index.shape[1]).to(data.x.device), 1, data.x.shape[0]
         )
         self.train_index = torch.where(data.train_mask)[0].tolist()
 
         epoch_iter = tqdm(range(self.max_epoch))
         patience = 0
         best_score = 0
-        best_loss = np.inf
         max_score = 0
         min_loss = np.inf
         for epoch in epoch_iter:
             self._train_step()
             if epoch % 5 == 0:
                 val_acc, val_loss = self._test_step(split="val")
-                epoch_iter.set_description(
-                    f"Epoch: {epoch:03d}, Val: {val_acc:.4f}"
-                )
+                epoch_iter.set_description(f"Epoch: {epoch:03d}, Val: {val_acc:.4f}")
                 if val_loss <= min_loss or val_acc >= max_score:
                     if val_acc >= best_score:  # SAINT loss is not accurate
-                        best_loss = val_loss
                         best_score = val_acc
                         best_model = copy.deepcopy(self.model)
                     min_loss = np.min((min_loss, val_loss))
@@ -129,10 +106,7 @@ class DeeperGCNTrainer(BaseTrainer):
         y = self.data.y
         num_nodes = x.shape[1]
 
-        parts = random_partition_graph(
-            num_nodes=num_nodes,
-            cluster_number=self.cluster_number
-        )
+        parts = random_partition_graph(num_nodes=num_nodes, cluster_number=self.cluster_number)
         subgraph_nodes, subgraph_edges = generate_subgraphs(
             self.edge_index,
             parts,
@@ -153,7 +127,7 @@ class DeeperGCNTrainer(BaseTrainer):
 
             targets = y[intersection_index].to(self.device)
 
-            loss_n = self.model.loss(_x, edges, targets, training_index)
+            loss_n = self.model.node_classification_loss(_x, edges, targets, training_index)
             loss_n.backward()
             self.optimizer.step()
 
@@ -180,15 +154,8 @@ class DeeperGCNTrainer(BaseTrainer):
         self.model.to(self.device)
         return acc, loss
 
-    def _mini_batch_test_step(self, split="val"):
-        self.model.eval()
-
-
     def loss(self, data):
-        return F.nll_loss(
-            self.model(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask]
-        )
+        return F.nll_loss(self.model(data.x, data.edge_index)[data.train_mask], data.y[data.train_mask])
 
     def predict(self, data):
         return self.model(data.x, data.edge_index)

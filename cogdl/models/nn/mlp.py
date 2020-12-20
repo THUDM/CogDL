@@ -37,22 +37,15 @@ class MLP(BaseModel):
         self.num_layers = num_layers
         self.dropout = dropout
         shapes = [num_features] + [hidden_size] * (num_layers - 1) + [num_classes]
-        self.mlp = nn.ModuleList(
-            [nn.Linear(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)]
-        )
+        self.mlp = nn.ModuleList([nn.Linear(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
 
     def forward(self, x, edge_index):
         for fc in self.mlp[:-1]:
             x = F.relu(fc(x))
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.mlp[-1](x)
-        return F.log_softmax(x, dim=1)
+        return x
+        # return F.log_softmax(x, dim=1)
 
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask],
-        )
-    
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

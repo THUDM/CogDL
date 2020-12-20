@@ -21,7 +21,7 @@ def untar(path, fname, deleteTar=True):
     Unpacks the given archive file to the same directory, then (by default)
     deletes the archive file.
     """
-    print('unpacking ' + fname)
+    print("unpacking " + fname)
     fullpath = os.path.join(path, fname)
     shutil.unpack_archive(fullpath, path)
     if deleteTar:
@@ -30,6 +30,7 @@ def untar(path, fname, deleteTar=True):
 
 class GCCDataset(Dataset):
     url = "https://github.com/cenyk1230/gcc-data/raw/master"
+
     def __init__(self, root, name):
         self.name = name
         super(GCCDataset, self).__init__(root)
@@ -47,8 +48,12 @@ class GCCDataset(Dataset):
     @property
     def raw_file_names(self):
 
-        names = [self.name.split("_")[0] + ".dict", self.name.split("_")[0] + ".graph",
-                 self.name.split("_")[1] + ".dict", self.name.split("_")[1] + ".graph"]
+        names = [
+            self.name.split("_")[0] + ".dict",
+            self.name.split("_")[0] + ".graph",
+            self.name.split("_")[1] + ".dict",
+            self.name.split("_")[1] + ".graph",
+        ]
         return names
 
     @property
@@ -166,30 +171,34 @@ class Edgelist(Dataset):
 
         torch.save(data, self.processed_paths[0])
 
+
 @register_dataset("kdd_icdm")
 class KDD_ICDM_GCCDataset(GCCDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "kdd_icdm"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(KDD_ICDM_GCCDataset, self).__init__(path, dataset)
 
+
 @register_dataset("sigir_cikm")
 class SIGIR_CIKM_GCCDataset(GCCDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "sigir_cikm"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(SIGIR_CIKM_GCCDataset, self).__init__(path, dataset)
 
+
 @register_dataset("sigmod_icde")
 class SIGMOD_ICDE_GCCDataset(GCCDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "sigmod_icde"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(SIGMOD_ICDE_GCCDataset, self).__init__(path, dataset)
 
+
 @register_dataset("usa-airport")
 class USAAirportDataset(Edgelist):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "usa-airport"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(USAAirportDataset, self).__init__(path, dataset)

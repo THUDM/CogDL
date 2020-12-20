@@ -110,7 +110,7 @@ def test_pairnorm_cora_deepgcn():
     args.no_fea_norm = "store_false"
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret["Acc"] <=1
+    assert 0 <= ret["Acc"] <= 1
 
 
 def test_pairnorm_cora_gcn():
@@ -130,7 +130,7 @@ def test_pairnorm_cora_gcn():
     args.no_fea_norm = "store_false"
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret["Acc"] <=1
+    assert 0 <= ret["Acc"] <= 1
 
 
 def test_pairnorm_cora_sgc():
@@ -150,7 +150,7 @@ def test_pairnorm_cora_sgc():
     args.no_fea_norm = "store_false"
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret["Acc"] <=1
+    assert 0 <= ret["Acc"] <= 1
 
 
 def test_pairnorm_cora_deepgat():
@@ -170,25 +170,26 @@ def test_pairnorm_cora_deepgat():
     args.no_fea_norm = "store_false"
     task = build_task(args)
     ret = task.train()
-    assert 0 <= ret["Acc"] <=1
+    assert 0 <= ret["Acc"] <= 1
 
 
 def test_graphsage_cora():
     args = get_default_args()
     args.task = "node_classification"
-    args.dataset = "cora"
     args.model = "graphsage"
-    args.num_layers = 2	
-    args.patience = 1	
-    args.max_epoch = 5	
-    args.hidden_size = [32, 32]	
-    args.sample_size = [3, 5]	
-    args.num_workers = 1	
-    for dataset in ["cora", "pubmed"]:	
-        args.dataset = dataset	
-        task = build_task(args)	
-        ret = task.train()	
-    assert 0 <= ret["Acc"] <= 1	
+    args.batch_size = 256
+    args.num_layers = 2
+    args.patience = 1
+    args.max_epoch = 5
+    args.hidden_size = [32, 32]
+    args.sample_size = [3, 5]
+    args.num_workers = 1
+    for dataset in ["cora", "pubmed"]:
+        args.dataset = dataset
+        task = build_task(args)
+        ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
 
 def test_pyg_cheb_cora():
     args = get_default_args()

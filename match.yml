@@ -11,6 +11,7 @@ node_classification:
     - mixhop
     - graphsage
     - pairnorm
+    - chuan-pairnorm
     - unet
     - gcnii
     - chebyshev

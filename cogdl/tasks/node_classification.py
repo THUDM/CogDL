@@ -89,9 +89,9 @@ class NodeClassification(BaseTask):
         self.device = args.device_id[0] if not args.cpu else "cpu"
         dataset = build_dataset(args) if dataset is None else dataset
         if args.missing_rate >= 0:
-            if args.model == 'sgcpn':
+            if args.model == 'sgcpn' or args.model == 'chuan-pairnorm':
                 assert args.dataset in ['cora', 'citeseer', 'pubmed']
-                dataset.data = preprocess_data_sgcpn(dataset.data, normalize_feature=True, missing_rate=0)
+                dataset.data = preprocess_data_sgcpn(dataset.data, normalize_feature=True, missing_rate=args.missing_rate)
                 adj_slice = torch.tensor(dataset.data.adj.size())
                 adj_slice[0] = 0
                 dataset.slices['adj'] = adj_slice

@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from .. import BaseModel, register_model
 from .gcn import GraphConvolution
 from cogdl.data import Data
-from cogdl.utils import get_activation, row_normalization, add_remaining_self_loops
+from cogdl.utils import get_activation, row_normalization, add_remaining_self_loops, dropout_adj
 
 from torch_sparse import spspmm
 
@@ -45,8 +45,10 @@ class Pool(nn.Module):
         values, indices = torch.topk(scores, max(2, num))
 
         if self.aug_adj:
-            edge_attr = torch.ones(edge_index.shape[1]).to(x.device)
+            edge_attr = torch.ones(edge_index.shape[1])
+            edge_index = edge_index.cpu()
             edge_index, _ = spspmm(edge_index, edge_attr,  edge_index, edge_attr, org_n_nodes, org_n_nodes, org_n_nodes)
+            edge_index = edge_index.to(x.device)
 
         batch = Data(x=x, edge_index=edge_index)
         new_batch = batch.subgraph(indices)
@@ -108,7 +110,10 @@ class GraphUnetLayer(nn.Module):
         h_init = x
         h = x
         for i in range(self.pooling_layer):
+            h = F.dropout(h, p=self.dropout, training=self.training)
             h = self.down_gnns[i](h, edge_index, edge_attr)
+            h = self.act(h)
+
             adjs.append(edge_index)
             adj_attr.append(edge_attr)
             down_hidden.append(h)
@@ -117,15 +122,21 @@ class GraphUnetLayer(nn.Module):
             s_g, index = self.poolings[i](h, edge_index)
             h, edge_index, edge_attr = s_g.x, s_g.edge_index, s_g.edge_attr
             indices.append(index)
+
+        h = F.dropout(h, p=self.dropout, training=self.training)
         h = self.gcn(h, edge_index, edge_attr)
         h = self.act(h)
+
         for _i in range(self.pooling_layer):
             i = self.pooling_layer - _i - 1
             edge_index = adjs[i]
             edge_attr = adj_attr[i]
             index = indices[i]
             h = self.unpoolings[i](num_nodes[i], h, index)
+
+            h = F.dropout(h, p=self.dropout, training=self.training)
             h = self.up_gnns[i](h, edge_index, edge_attr)
+            h = self.act(h)
             h = h + down_hidden[i]
             h_list.append(h)
         h = h.add(h_init)
@@ -140,10 +151,10 @@ class GraphUnet(BaseModel):
         # fmt: off
         parser.add_argument("--hidden-size", type=int, default=128)
         parser.add_argument("--n-dropout", type=float, default=0.8)
-        parser.add_argument("--adj-dropout", type=float, default=0.4)
+        parser.add_argument("--adj-dropout", type=float, default=0.0)
         parser.add_argument("--n-pool", type=int, default=4)
         parser.add_argument("--pool-rate", nargs="+", default=[0.7, 0.5, 0.5, 0.4])
-        parser.add_argument("--activation", type=str, default="elu")
+        parser.add_argument("--activation", type=str, default="relu")
         parser.add_argument("--improved", action="store_true")
         parser.add_argument("--aug-adj", action="store_true")
         # fmt: on
@@ -179,6 +190,7 @@ class GraphUnet(BaseModel):
         super(GraphUnet, self).__init__()
         self.improved = improved
         self.n_dropout = n_dropout
+        self.adj_dropout = adj_dropout
         self.act = get_activation(activation)
         assert pooling_layer <= len(pooling_rates)
         pooling_rates = pooling_rates[:pooling_layer]
@@ -186,7 +198,6 @@ class GraphUnet(BaseModel):
 
         self.in_gcn = GraphConvolution(in_feats, hidden_size)
         self.out_gcn = GraphConvolution(hidden_size, out_feats)
-        self.adj_drop = nn.Dropout(adj_dropout) if adj_dropout > 0.001 else nn.Identity()
 
         self.cache_edge_index = None
         self.cache_edge_attr = None
@@ -208,10 +219,13 @@ class GraphUnet(BaseModel):
         else:
             edge_index = self.cache_edge_index
             edge_attr = self.cache_edge_attr
+        if self.training and self.adj_dropout > 0:
+            edge_index, edge_attr = dropout_adj(edge_index, edge_attr, self.adj_dropout)
         x = F.dropout(x, p=self.n_dropout, training=self.training)
         h = self.in_gcn(x, edge_index, edge_attr)
         h = self.act(h)
         h_list = self.unet(h, edge_index, edge_attr)
+
         h = h_list[-1]
         h = F.dropout(h, p=self.n_dropout, training=self.training)
         return self.out_gcn(h, edge_index, edge_attr)

@@ -164,7 +164,7 @@ def test_pairnorm_cora_deepgat():
     args.norm_mode = "PN-SI"
     args.residual = 0
     args.hidden_layers = 64
-    args.nhead = 1
+    args.nhead = 2
     args.dropout = 0.6
     args.norm_scale = 1.0
     args.no_fea_norm = "store_false"

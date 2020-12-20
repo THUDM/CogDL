@@ -177,21 +177,18 @@ def test_graphsage_cora():
     args = get_default_args()
     args.task = "node_classification"
     args.dataset = "cora"
-    args.model = "pairnorm"
-    args.pn_model = "DeepGCN"
-    args.nlayer = 10
-    args.missing_rate = 100
-    args.norm_mode = "PN-SI"
-    args.residual = 0
-    args.hidden_layers = 64
-    args.nhead = 1
-    args.dropout = 0.6
-    args.norm_scale = 1.0
-    args.no_fea_norm = "store_false"
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
+    args.model = "graphsage"
+    args.num_layers = 2	
+    args.patience = 1	
+    args.max_epoch = 5	
+    args.hidden_size = [32, 32]	
+    args.sample_size = [3, 5]	
+    args.num_workers = 1	
+    for dataset in ["cora", "pubmed"]:	
+        args.dataset = dataset	
+        task = build_task(args)	
+        ret = task.train()	
+    assert 0 <= ret["Acc"] <= 1	
 
 def test_pyg_cheb_cora():
     args = get_default_args()

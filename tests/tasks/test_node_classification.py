@@ -101,7 +101,7 @@ def test_pairnorm_cora_deepgcn():
     args.pn_model = "DeepGCN"
     args.nlayer = 10
     args.missing_rate = 100
-    args.norm_mode = 'PN-SI'
+    args.norm_mode = "PN-SI"
     args.residual = 0
     args.hidden_layers = 64
     args.nhead = 1
@@ -121,7 +121,7 @@ def test_pairnorm_cora_gcn():
     args.pn_model = "GCN"
     args.nlayer = 10
     args.missing_rate = 100
-    args.norm_mode = 'PN-SI'
+    args.norm_mode = "PN-SI"
     args.residual = 0
     args.hidden_layers = 64
     args.nhead = 1
@@ -141,7 +141,7 @@ def test_pairnorm_cora_sgc():
     args.pn_model = "SGC"
     args.nlayer = 10
     args.missing_rate = 100
-    args.norm_mode = 'PN-SI'
+    args.norm_mode = "PN-SI"
     args.residual = 0
     args.hidden_layers = 64
     args.nhead = 1
@@ -161,7 +161,7 @@ def test_pairnorm_cora_deepgat():
     args.pn_model = "DeepGAT"
     args.nlayer = 10
     args.missing_rate = 100
-    args.norm_mode = 'PN-SI'
+    args.norm_mode = "PN-SI"
     args.residual = 0
     args.hidden_layers = 64
     args.nhead = 1

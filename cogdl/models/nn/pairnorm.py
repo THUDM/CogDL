@@ -8,6 +8,10 @@ from torch_scatter import scatter_max, scatter_add
 from .. import BaseModel, register_model
 
 
+def row_l1_normalize(X):
+    norm = 1e-6 + X.sum(dim=1, keepdim=True)
+    return X/norm
+
 def to_torch_sparse(sparse_mx):
     """Convert a scipy sparse matrix to a torch sparse tensor."""
     sparse_mx = sparse_mx.tocoo().astype(np.float32)
@@ -344,10 +348,14 @@ class PairNorm(BaseModel):
     def __init__(self, pn_model, hidden_layers, nhead, dropout, nlayer, residual, norm_mode, norm_scale, no_fea_norm, missing_rate, num_features, num_classes):
         super(PairNorm, self).__init__()
 
+        self.missing_rate = missing_rate
+
+        self.no_fea_norm = no_fea_norm
+
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu')
 
-        self.adj = None
+        self.data = None
 
         if pn_model == 'GCN':
             self.pn_model = GCN(num_features, hidden_layers, num_classes,
@@ -358,30 +366,55 @@ class PairNorm(BaseModel):
         elif pn_model == 'DeepGCN':
             self.pn_model = DeepGCN(num_features, hidden_layers, num_classes,
                                     dropout, nlayer, residual, norm_mode, norm_scale).to(self.device)
-        else:
+        elif pn_model == 'DeepGAT':
             self.pn_model = DeepGAT(num_features, hidden_layers, num_classes, dropout,
                                     nlayer, residual, nhead, norm_mode, norm_scale).to(self.device)
+        elif pn_model == 'GAT':
+            self.pn_model = GAT(num_features, hidden_layers, num_classes, dropout, nhead, norm_mode).to(self.device)
+        else:
+            print('Provide valid pn_model argument')
 
-    def forward(self,x, edge_index):
-        self.x = torch.Tensor(x).to(self.device)
+    def data_setup(self, data):
+        data.train_mask = data.train_mask.type(torch.bool)
+        data.val_mask = data.val_mask.type(torch.bool)
+        data.test_mask = ~(data.train_mask + data.val_mask)
+        n = len(data.x)
+        adj = sp.csr_matrix((np.ones(data.edge_index.shape[1]), data.edge_index), shape=(n,n))
+        adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj) + sp.eye(adj.shape[0])
+        adj = normalize_adj_row(adj)
 
-        if self.adj == None:       
-            n = len(self.x)
-            adj = sp.csr_matrix(
-                (np.ones(edge_index.shape[1]), edge_index), shape=(n, n))
-            adj = adj + adj.T.multiply(adj.T > adj) - \
-                adj.multiply(adj.T > adj) + sp.eye(adj.shape[0])
-            adj = normalize_adj_row(adj)
-            self.adj = to_torch_sparse(adj).to(self.device)
+        if self.no_fea_norm:
+            data.x = row_l1_normalize(data.x)
+            
+        erasing_pool = torch.arange(n)[~data.train_mask] # keep training set always full feature
+        size = int(len(erasing_pool) * (self.missing_rate/100))
+        idx_erased = np.random.choice(erasing_pool, size=size, replace=False)
+        if self.missing_rate > 0:
+            data.x[idx_erased] = 0
 
-        return F.log_softmax(self.pn_model(self.x, self.adj),dim=1)
+        self.x = torch.Tensor(data.x).to(self.device)
+        self.adj = to_torch_sparse(adj).to(self.device)
+        self.data = data.to(self.device)
 
-    def loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask],
-        )
-    
-    def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+    def forward(self):
+        return self.pn_model(self.x, self.adj)
 
+    def loss(self, d):
+        if self.data == None:
+            self.data_setup(d)
+
+        output = self.forward()
+        criterion = torch.nn.CrossEntropyLoss()
+        loss = criterion(output[self.data.train_mask], self.data.y[self.data.train_mask])
+        return loss
+
+    # def forward(self):
+    #     return F.log_softmax(self.pn_model(self.x, self.adj),dim=1)
+
+    # def loss(self, d):
+    #     if self.data == None:
+    #         self.data_setup(d)
+    #     return F.nll_loss(self.forward()[self.data.train_mask], self.data.y[self.data.train_mask])
+
+    def predict(self, d):
+        return self.forward()

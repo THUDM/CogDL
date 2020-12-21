@@ -9,10 +9,14 @@ import numpy as np
 import torch
 from tabulate import tabulate
 
+
 from cogdl import options
 from cogdl.tasks import build_task
 from cogdl.utils import set_random_seed, tabulate_results
-
+from cogdl.models import MODEL_REGISTRY
+import cogdl
+print(cogdl.__file__)
+print(MODEL_REGISTRY.keys())
 
 def main(args):
     if torch.cuda.is_available() and not args.cpu:

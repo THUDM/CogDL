@@ -1,6 +1,7 @@
 node_classification:
   - model:
     - gdc_gcn
+    - mygcn
     - gcn
     - gat
     - drgat

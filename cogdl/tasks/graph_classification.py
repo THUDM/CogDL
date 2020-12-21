@@ -141,16 +141,38 @@ class GraphClassification(BaseTask):
 
     def _train_step(self):
         self.model.train()
-        loss_n = 0
-        for batch in self.train_loader:
-            batch = batch.to(self.device)
-            # batch.x = batch.x.to(dtype=torch.float32)
-            # batch.y = torch.flatten(batch.y)
-            self.optimizer.zero_grad()
-            output, loss = self.model(batch)
-            loss_n += loss.item()
-            loss.backward()
-            self.optimizer.step()
+        if self.args.model == "capsgnn":
+            batch_count = 0
+            batch_loss = None
+            for data in self.train_loader:
+                data = data.to(self.device)
+                batch_count += 1
+                output, loss = self.model(data)
+                if batch_loss is None:
+                    batch_loss = loss / self.args.batch_size
+                else:
+                    batch_loss += loss / self.args.batch_size
+                if batch_count >= self.args.batch_size:
+                    self.optimizer.zero_grad()
+                    batch_loss.backward()
+                    self.optimizer.step()
+                    batch_loss = None
+                    batch_count = 0
+            if batch_count > 0:
+                self.optimizer.zero_grad()
+                batch_loss.backward()
+                self.optimizer.step()
+        else:
+            loss_n = 0
+            for batch in self.train_loader:
+                batch = batch.to(self.device)
+                # batch.x = batch.x.to(dtype=torch.float32)
+                # batch.y = torch.flatten(batch.y)
+                self.optimizer.zero_grad()
+                output, loss = self.model(batch)
+                loss_n += loss.item()
+                loss.backward()
+                self.optimizer.step()
 
     def _test_step(self, split="val"):
         self.model.eval()

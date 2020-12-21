@@ -70,6 +70,7 @@ graph_classification:
     - patchy_san
     - hgpsl
     - sagpool
+    - capsgnn
     dataset:
     - mutag
     - imdb-b

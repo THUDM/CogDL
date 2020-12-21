@@ -258,6 +258,24 @@ def test_sagpool_proteins():
     ret = task.train()
     assert ret["Acc"] > 0
 
+def test_capsgnn_mutag():
+    args = get_default_args()
+    args.dataset = "mutag"
+    args.model = "capsgnn"
+    args.batch_size = 50
+    args.gcn_filters = 20
+    args.gcn_layers = 2
+    args.capsule_dimensions = 8
+    args.inner_attention_dimensions = 20
+    args.number_of_capsules = 8
+    args.lambd = 0.5
+    args.theta = 0.1
+    args.train_ratio = 0.7
+    args.test_ratio = 0.1
+    task = build_task(args)
+    ret = task.train()
+    assert ret["Acc"] > 0
+
 
 if __name__ == "__main__":
 
@@ -281,3 +299,5 @@ if __name__ == "__main__":
 
     test_sagpool_mutag()
     test_sagpool_proteins()
+
+    test_capsgnn_mutag()

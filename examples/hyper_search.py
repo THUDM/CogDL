@@ -102,13 +102,13 @@ def hyper_parameters_to_search(trial):
     Return hyper-parameters to search
     """
     return {
-        "lr": trial.suggest_categorical("lr", [1e-5, 1e-4, 1e-3, 1e-2]),
-        "hidden_size": trial.suggest_categorical("hidden_size", [64, 128]),
+        "lr": trial.suggest_categorical("lr", [1e-3, 5e-3, 1e-2]),
+        "hidden_size": trial.suggest_categorical("hidden_size", [32, 64, 128]),
         "n_dropout": trial.suggest_uniform("n_dropout", 0.5, 0.92),
         "adj_dropout": trial.suggest_uniform("adj_dropout", 0.0, 0.3),
         "aug_adj": trial.suggest_categorical("aug_adj", [True, False]),
         "improved": trial.suggest_categorical("improved", [True, False]),
-        "activation": trial.suggest_categorical("activation", ["relu", "identity"]),
+        # "activation": trial.suggest_categorical("activation", ["relu", "identity"]),
         # "num_layers": trial.suggest_int("num_layers", 1, 3),
     }
 
@@ -132,6 +132,7 @@ def fixed_hyper_parameters():
         "n_pool": 4,
         "pool_rate": [0.7, 0.5, 0.5, 0.4],
         "missing_rate": -1,
+        "activation": "identity",
     }
 
 

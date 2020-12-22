@@ -21,7 +21,6 @@ def build_default_args_for_node_classification(dataset):
         "cpu": cpu,
         "device_id": [0],
         "seed": [0, 1, 2],
-
         "dropout": 0.1,
         "hidden_size": 64,
         "alpha": 0.5,
@@ -31,11 +30,9 @@ def build_default_args_for_node_classification(dataset):
         "norm": "sym",
         "eps": 1e-4,
         "k": 32,
-
         "eval_step": 5,
         "batch_size": 1024,
         "test_batch_size": 10240,
-
         "task": "node_classification",
         "model": "pprgo",
         "dataset": dataset,

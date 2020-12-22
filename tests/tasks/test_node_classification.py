@@ -21,7 +21,7 @@ def get_default_args():
         "weight_decay": 5e-4,
         "missing_rate": -1,
         "task": "node_classification",
-        "dataset": "cora"
+        "dataset": "cora",
     }
     return build_args_from_dict(default_dict)
 

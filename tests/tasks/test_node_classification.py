@@ -647,6 +647,27 @@ def test_dropedge_inceptiongcn_cora():
     assert 0 <= ret["Acc"] <= 1
 
 
+def test_pprgo_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "pprgo"
+    args.k = 32
+    args.alpha = 0.5
+    args.eval_step = 1
+    args.batch_size = 32
+    args.test_batch_size = 128
+    args.activation = "relu"
+    args.num_layers = 2
+    args.nprop_inference = 2
+    args.eps = 0.001
+    for norm in ["sym", "row"]:
+        args.norm = norm
+        task = build_task(args)
+        ret = task.train()
+        assert 0 <= ret["Acc"] <= 1
+
+
 if __name__ == "__main__":
     test_gdc_gcn_cora()
     test_gcn_cora()
@@ -685,3 +706,4 @@ if __name__ == "__main__":
     test_dropedge_inceptiongcn_cora()
     test_dropedge_densegcn_cora()
     test_unet_cora()
+    test_pprgo_cora()

@@ -90,15 +90,15 @@ class PPRGoTrainer(object):
             self.model.eval()
         preds = []
         loss_items = []
-        with torch.set_grad_enabled(is_train):
-            for batch in loader:
-                x, targets, ppr_scores, y = [item.to(self.device) for item in batch]
-                if is_train:
-                    loss = self.model.node_classification_loss(x, targets, ppr_scores, y)
-                    self.optimizer.zero_grad()
-                    loss.backward()
-                    self.optimizer.step()
-                else:
+        for batch in loader:
+            x, targets, ppr_scores, y = [item.to(self.device) for item in batch]
+            if is_train:
+                loss = self.model.node_classification_loss(x, targets, ppr_scores, y)
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+            else:
+                with torch.no_grad():
                     pred = self.model(x, targets, ppr_scores)
                     pred = torch.nn.functional.log_softmax(pred, dim=-1)
                     loss = torch.nn.functional.nll_loss(pred, y)
@@ -106,7 +106,8 @@ class PPRGoTrainer(object):
                     pred = pred.max(1)[1]
                     pred = pred.eq(y)
                     preds.append(pred)
-                loss_items.append(loss.item())
+            loss_items.append(loss.item())
+
         if is_train:
             return sum(loss_items) / len(loss_items)
         else:

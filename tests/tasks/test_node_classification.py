@@ -646,6 +646,19 @@ def test_dropedge_inceptiongcn_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+def test_ap_gcn_citeseer():
+    args = get_default_args()
+    args.weight_decay = 0.001
+    args.niter = 10
+    args.prop_penalty = 0.005
+    args.lr = 0.001
+    args.task = "node_classification"
+    args.dataset = "citeseer"
+    args.model = "ap_gcn"
+
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
 
 if __name__ == "__main__":
     test_gdc_gcn_cora()
@@ -685,3 +698,4 @@ if __name__ == "__main__":
     test_dropedge_inceptiongcn_cora()
     test_dropedge_densegcn_cora()
     test_unet_cora()
+    test_ap_gcn_citeseer()

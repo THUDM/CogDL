@@ -123,7 +123,7 @@ class AP_GCN(BaseModel):
         self.weight_decay = weight_decay
         self.layers = ModuleList(layers)
         self.reg_params = list(layers[0].parameters())
-        self.non_reg_params = list([p for l in layers[1:] for p in l.parameters()])
+        self.non_reg_params = list([p for layer in layers[1:] for p in layer.parameters()])
 
         self.dropout = Dropout(p=dropout)
         self.act_fn = ReLU()

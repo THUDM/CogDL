@@ -7,8 +7,8 @@ import torch.nn.functional as F
 from .. import BaseModel, register_model
 from .gcn import GraphConvolution
 from cogdl.data import Data
-from cogdl.utils import get_activation, row_normalization, add_remaining_self_loops, dropout_adj
 
+from cogdl.utils import get_activation, row_normalization, add_remaining_self_loops, dropout_adj
 from torch_sparse import spspmm
 
 
@@ -137,6 +137,7 @@ class GraphUnetLayer(nn.Module):
             h = F.dropout(h, p=self.dropout, training=self.training)
             h = self.up_gnns[i](h, edge_index, edge_attr)
             h = self.act(h)
+
             h = h + down_hidden[i]
             h_list.append(h)
         h = h.add(h_init)
@@ -151,10 +152,12 @@ class GraphUnet(BaseModel):
         # fmt: off
         parser.add_argument("--hidden-size", type=int, default=128)
         parser.add_argument("--n-dropout", type=float, default=0.8)
+
         parser.add_argument("--adj-dropout", type=float, default=0.0)
         parser.add_argument("--n-pool", type=int, default=4)
         parser.add_argument("--pool-rate", nargs="+", default=[0.7, 0.5, 0.5, 0.4])
         parser.add_argument("--activation", type=str, default="relu")
+
         parser.add_argument("--improved", action="store_true")
         parser.add_argument("--aug-adj", action="store_true")
         # fmt: on
@@ -191,6 +194,7 @@ class GraphUnet(BaseModel):
         self.improved = improved
         self.n_dropout = n_dropout
         self.adj_dropout = adj_dropout
+
         self.act = get_activation(activation)
         assert pooling_layer <= len(pooling_rates)
         pooling_rates = pooling_rates[:pooling_layer]
@@ -221,6 +225,7 @@ class GraphUnet(BaseModel):
             edge_attr = self.cache_edge_attr
         if self.training and self.adj_dropout > 0:
             edge_index, edge_attr = dropout_adj(edge_index, edge_attr, self.adj_dropout)
+
         x = F.dropout(x, p=self.n_dropout, training=self.training)
         h = self.in_gcn(x, edge_index, edge_attr)
         h = self.act(h)

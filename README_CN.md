@@ -208,7 +208,14 @@ CogDL统一对有监督和无监督的图分类算法在相同的若干个真实
 | 8    | DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417) | 83.68 | 55.00  | 40.40  |  72.59   |   /    |
 
 
-## 使用说明：
+## 安装说明
+
+### 系统配置要求
+
+- Python 版本 >= 3.6
+- PyTorch 版本 >= 1.0.0
+- PyTorch Geometric (推荐)
+- Deep Graph Library (可选)
 
 CogDL安装请按照这里的说明来安装PyTorch和其他依赖项:
 
@@ -216,6 +223,74 @@ CogDL安装请按照这里的说明来安装PyTorch和其他依赖项:
 - https://github.com/rusty1s/pytorch_geometric/#installation
 - pip install -e .
 
+安装cogdl和其他依赖
+```bash
+pip install cogdl
+```
+
+如果您想尝试尚未发布的最新CogDL功能，可以通过以下方式安装CogDL：
+
+```bash
+git clone git@github.com:THUDM/cogdl.git
+cd cogdl
+pip install -e .
+```
+
+### Docker
+
+您也可以选择使用Docker。要构建Docker镜像，只需运行以下命令。
+
+```bash
+docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VERSION --tag cogdl .
+```
+请根据您的CUDA版本（或CPU）更换 `YOUR_CUDA_VERSION` 以及 更换 `YOUR_TORCH_VERSION` 为您使用的PyTorch版本。
+
+
+例如，使用 CUDA 10.1 和 PyTorch 1.7.0 一起运行
+
+```bash
+docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.0 --tag cogdl .
+```
+
+启动容器
+
+```bash
+docker run -it -v cogdl:/cogdl cogdl /bin/bash
+```
+
+将此存储库克隆到cogdl文件夹中：
+
+```bash    
+git clone https://github.com/THUDM/cogdl /cogdl
+```
+
+注意：如果安装的Torch版本不同于1.7.0，则torchvision和torchaudio库可能存在一些问题。您可能需要手动重新安装。
+
+## 使用说明
+
+### API
+
+您可以通过CogDL API进行各种实验，包括：`build_dataset`，`build_model`，和`build_task`。您也可以使用自己的数据集和模型进行实验。example/ 文件夹里提供了一些例子。
+
+```bash
+# Set hyper-parameters for experiments
+args = get_default_args()
+args.task = 'node_classification'
+args.dataset = 'cora'
+args.model = 'gcn'
+# Set datasets
+dataset = build_dataset(args)
+args.num_features = dataset.num_features
+args.num_classes = dataset.num_classes
+args.num_layers = 2
+# Build models
+model = build_model(args)
+# Train and evaluate models
+task = build_task(args, dataset=dataset, model=model)
+ret = task.train()
+```
+
+### 命令行
 基本用法可以使用 `python train.py --task example_task --dataset example_dataset --model example_method` 来在 `example_data` 上运行 `example_method` 并使用 `example_task` 来评测结果。
 
 - --task, 运行的任务名称，像node_classification, unsupervised_node_classification, link_prediction这样来评测表示质量的下游任务。
@@ -224,7 +299,6 @@ CogDL安装请按照这里的说明来安装PyTorch和其他依赖项:
 
 如果你想在Cora数据集上运行GCN模型,并用node classification评测,可以使用如下指令:
 `python train.py --task node_classification --dataset cora --model gcn`
-
 
 ## 自定义数据集或模型
 

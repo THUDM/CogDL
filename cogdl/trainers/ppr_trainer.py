@@ -131,5 +131,5 @@ class PPRGoTrainer(object):
         predictions = predictions.argmax(1)
         labels = data.y[data.test_mask]
         pred = predictions[data.test_mask]
-        acc = pred.eq(labels).sum() / pred.shape[0]
+        acc = pred.eq(labels).sum().item() / pred.shape[0]
         return acc

@@ -97,6 +97,8 @@ class NodeClassification(BaseTask):
 
         self.dataset = dataset
         self.data = dataset[0]
+        print(self.data.edge_index)
+        print(self.data.edge_index.shape)
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
         args.num_nodes = dataset.data.x.shape[0]

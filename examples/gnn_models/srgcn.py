@@ -20,8 +20,9 @@ def build_default_args_for_node_classification(dataset):
         "patience": 100,
         "cpu": cpu,
         "device_id": [0],
-        "seed": [0, ],
-
+        "seed": [
+            0,
+        ],
         "dropout": 0.5,
         "hidden_size": 8,
         "attention_type": "node",
@@ -32,10 +33,9 @@ def build_default_args_for_node_classification(dataset):
         "subheads": 1,
         "activation": "leaky_relu",
         "alpha": 0.2,
-
         "task": "node_classification",
         "model": "gcn",
-        "dataset": dataset
+        "dataset": dataset,
     }
     return build_args_from_dict(args)
 
@@ -44,6 +44,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

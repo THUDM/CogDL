@@ -31,8 +31,8 @@ graph_pool = None
 
 def node_classification_sample(args, target_type, seed, nodes, time_range):
     """
-        sub-graph sampling and label preparation for node classification:
-        (1) Sample batch_size number of output nodes (papers) and their time.
+    sub-graph sampling and label preparation for node classification:
+    (1) Sample batch_size number of output nodes (papers) and their time.
     """
     global graph_pool
     np.random.seed(seed)
@@ -40,11 +40,7 @@ def node_classification_sample(args, target_type, seed, nodes, time_range):
     feature, times, edge_list, _, texts = sample_subgraph(
         graph_pool,
         time_range,
-        inp={
-            target_type: np.concatenate([samp_nodes, np.ones(args.batch_size)])
-            .reshape(2, -1)
-            .transpose()
-        },
+        inp={target_type: np.concatenate([samp_nodes, np.ones(args.batch_size)]).reshape(2, -1).transpose()},
         sampled_depth=args.sample_depth,
         sampled_number=args.sample_width,
         feature_extractor=feature_reddit,
@@ -72,11 +68,9 @@ def node_classification_sample(args, target_type, seed, nodes, time_range):
     )
 
 
-def prepare_data(
-    args, graph, target_type, train_target_nodes, valid_target_nodes, pool
-):
+def prepare_data(args, graph, target_type, train_target_nodes, valid_target_nodes, pool):
     """
-        Sampled and prepare training and validation data using multi-process parallization.
+    Sampled and prepare training and validation data using multi-process parallization.
     """
     jobs = []
     for batch_id in np.arange(args.n_batch):
@@ -98,9 +92,7 @@ class GPT_GNNHomogeneousTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         super(GPT_GNNHomogeneousTrainer, self).__init__()
         self.args = args
 
-    def fit(
-        self, model: SupervisedHeterogeneousNodeClassificationModel, dataset: Dataset
-    ) -> None:
+    def fit(self, model: SupervisedHeterogeneousNodeClassificationModel, dataset: Dataset) -> None:
         args = self.args
         self.device = args.device_id[0] if not args.cpu else "cpu"
 
@@ -150,9 +142,7 @@ class GPT_GNNHomogeneousTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         )
 
         if args.use_pretrain:
-            self.gnn.load_state_dict(
-                load_gnn(torch.load(args.pretrain_model_dir)), strict=False
-            )
+            self.gnn.load_state_dict(load_gnn(torch.load(args.pretrain_model_dir)), strict=False)
             print("Load Pre-trained Model from (%s)" % args.pretrain_model_dir)
 
         self.classifier = Classifier(args.n_hid, self.data.y.max().item() + 1)
@@ -171,9 +161,7 @@ class GPT_GNNHomogeneousTrainer(SupervisedHomogeneousNodeClassificationTrainer):
                 total_steps=args.n_batch * args.n_epoch + 1,
             )
         elif args.scheduler == "cosine":
-            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-                self.optimizer, 500, eta_min=1e-6
-            )
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, 500, eta_min=1e-6)
         else:
             assert False
 
@@ -187,7 +175,7 @@ class GPT_GNNHomogeneousTrainer(SupervisedHomogeneousNodeClassificationTrainer):
 
         for epoch in np.arange(self.args.n_epoch) + 1:
             """
-                Prepare Training and Validation Data
+            Prepare Training and Validation Data
             """
             train_data = [job.get() for job in self.jobs[:-1]]
             valid_data = self.jobs[-1].get()
@@ -270,9 +258,7 @@ class GPT_GNNHomogeneousTrainer(SupervisedHomogeneousNodeClassificationTrainer):
                 """
                     Calculate Valid F1. Update the best model based on highest F1 score.
                 """
-                valid_f1 = f1_score(
-                    ylabel.tolist(), res.argmax(dim=1).cpu().tolist(), average="micro"
-                )
+                valid_f1 = f1_score(ylabel.tolist(), res.argmax(dim=1).cpu().tolist(), average="micro")
 
                 if valid_f1 > self.best_val:
                     self.best_val = valid_f1
@@ -288,9 +274,7 @@ class GPT_GNNHomogeneousTrainer(SupervisedHomogeneousNodeClassificationTrainer):
 
                 self.st = time.time()
                 print(
-                    (
-                        "Epoch: %d (%.1fs)  LR: %.5f Train Loss: %.2f  Valid Loss: %.2f  Valid F1: %.4f"
-                    )
+                    ("Epoch: %d (%.1fs)  LR: %.5f Train Loss: %.2f  Valid Loss: %.2f  Valid F1: %.4f")
                     % (
                         epoch,
                         (self.st - self.et),
@@ -339,9 +323,7 @@ class GPT_GNNHomogeneousTrainer(SupervisedHomogeneousNodeClassificationTrainer):
                     edge_type.to(self.device),
                 )[x_ids]
                 res = classifier.forward(paper_rep)
-                test_acc = accuracy_score(
-                    ylabel.tolist(), res.argmax(dim=1).cpu().tolist()
-                )
+                test_acc = accuracy_score(ylabel.tolist(), res.argmax(dim=1).cpu().tolist())
                 test_res += [test_acc]
             return dict(Acc=np.average(test_res))
         #     # print("Best Test F1: %.4f" % np.average(test_res))
@@ -356,7 +338,7 @@ class GPT_GNNHeterogeneousTrainer(SupervisedHeterogeneousNodeClassificationTrain
         super(GPT_GNNHeterogeneousTrainer, self).__init__(model, dataset)
 
     def fit(self) -> None:
-        raise NotImplemented
+        raise NotImplementedError
 
     def evaluate(self, data: Any, nodes: Any, targets: Any) -> Any:
-        raise NotImplemented
+        raise NotImplementedError

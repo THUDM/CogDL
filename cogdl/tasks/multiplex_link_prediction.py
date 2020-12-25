@@ -1,18 +1,12 @@
+import argparse
 import random
 from collections import defaultdict
 
-import copy
 import networkx as nx
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from gensim.models.keyedvectors import Vocab
 from six import iteritems
 from sklearn.metrics import auc, f1_score, precision_recall_curve, roc_auc_score
-from tqdm import tqdm
 
-from cogdl import options
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 
@@ -22,9 +16,7 @@ from . import BaseTask, register_task
 def get_score(embs, node1, node2):
     vector1 = embs[int(node1)]
     vector2 = embs[int(node2)]
-    return np.dot(vector1, vector2) / (
-        np.linalg.norm(vector1) * np.linalg.norm(vector2)
-    )
+    return np.dot(vector1, vector2) / (np.linalg.norm(vector1) * np.linalg.norm(vector2))
 
 
 def evaluate(embs, true_edges, false_edges):
@@ -56,7 +48,7 @@ def evaluate(embs, true_edges, false_edges):
 @register_task("multiplex_link_prediction")
 class MultiplexLinkPrediction(BaseTask):
     @staticmethod
-    def add_args(parser):
+    def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--hidden-size", type=int, default=200)
@@ -91,9 +83,7 @@ class MultiplexLinkPrediction(BaseTask):
                         embs[node] = embeddings[vid]
                 else:
                     embs = all_embs[key]
-                roc_auc, f1_score, pr_auc = evaluate(
-                    embs, self.data.test_data[key][0], self.data.test_data[key][1]
-                )
+                roc_auc, f1_score, pr_auc = evaluate(embs, self.data.test_data[key][0], self.data.test_data[key][1])
                 total_roc_auc.append(roc_auc)
                 total_f1_score.append(f1_score)
                 total_pr_auc.append(pr_auc)
@@ -103,7 +93,5 @@ class MultiplexLinkPrediction(BaseTask):
             np.mean(total_f1_score),
             np.mean(total_pr_auc),
         )
-        print(
-            f"Test ROC-AUC = {roc_auc:.4f}, F1 = {f1_score:.4f}, PR-AUC = {pr_auc:.4f}"
-        )
+        print(f"Test ROC-AUC = {roc_auc:.4f}, F1 = {f1_score:.4f}, PR-AUC = {pr_auc:.4f}")
         return dict(ROC_AUC=roc_auc, PR_AUC=pr_auc, F1=f1_score)

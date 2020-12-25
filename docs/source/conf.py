@@ -16,7 +16,7 @@ import os
 import sys
 
 # print('current path', os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../../cogdl'))
+sys.path.insert(0, os.path.abspath("../../cogdl"))
 # print(sys.path)
 
 # -- Project information -----------------------------------------------------
@@ -52,11 +52,11 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "recommonmark",
-    'autoapi.extension',
-    'sphinx_markdown_tables'
+    "autoapi.extension",
+    "sphinx_markdown_tables",
 ]
 
-autoapi_dirs = ['../../cogdl']
+autoapi_dirs = ["../../cogdl"]
 
 
 # generate autosummary pages
@@ -68,7 +68,7 @@ templates_path = ["_templates"]
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-source_suffix = ['.rst', '.md']
+source_suffix = [".rst", ".md"]
 # source_suffix = ".rst"
 
 # The master toctree document.

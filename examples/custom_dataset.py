@@ -8,6 +8,8 @@ from cogdl.data import Dataset
 
 
 """Define your data"""
+
+
 class MyData(object):
     def __init__(self):
         num_nodes = 100
@@ -20,11 +22,11 @@ class MyData(object):
 
         # set train/val/test mask in node_classification task
         self.train_mask = torch.zeros(num_nodes).bool()
-        self.train_mask[0:int(0.3*num_nodes)] = True
+        self.train_mask[0 : int(0.3 * num_nodes)] = True
         self.val_mask = torch.zeros(num_nodes).bool()
-        self.val_mask[int(0.3*num_nodes):int(0.7*num_nodes)] = True
+        self.val_mask[int(0.3 * num_nodes) : int(0.7 * num_nodes)] = True
         self.test_mask = torch.zeros(num_nodes).bool()
-        self.test_mask[int(0.7*num_nodes):] = True
+        self.test_mask[int(0.7 * num_nodes) :] = True
 
     def apply(self, func):
         for name, value in vars(self).items():
@@ -33,13 +35,15 @@ class MyData(object):
     @property
     def num_features(self):
         return self.x.shape[1]
-    
+
     @property
     def num_classes(self):
         return int(torch.max(self.y)) + 1
 
 
 """Define your dataset"""
+
+
 class MyDataset(object):
     def __init__(self, datalist):
         self.datalist = datalist
@@ -52,17 +56,18 @@ class MyDataset(object):
         return self.datalist[index]
 
 
-
 def get_default_args():
     cuda_available = torch.cuda.is_available()
-    default_dict = {'hidden_size': 16,
-                    'dropout': 0.5,
-                    'patience': 100,
-                    'max_epoch': 500,
-                    'cpu': not cuda_available,
-                    'lr': 0.01,
-                    'device_id': [0],
-                    'weight_decay': 5e-4}
+    default_dict = {
+        "hidden_size": 16,
+        "dropout": 0.5,
+        "patience": 100,
+        "max_epoch": 500,
+        "cpu": not cuda_available,
+        "lr": 0.01,
+        "device_id": [0],
+        "weight_decay": 5e-4,
+    }
     return build_args_from_dict(default_dict)
 
 

@@ -1,13 +1,10 @@
 import torch
 import random
-import numpy as np 
+import numpy as np
 
 from cogdl.tasks import build_task
 from cogdl.utils import build_args_from_dict
 
-random.seed(1)
-torch.random.manual_seed(1)
-np.random.seed(1)
 
 def get_strategies_for_pretrain_args():
     cuda_available = torch.cuda.is_available()
@@ -34,12 +31,14 @@ def get_strategies_for_pretrain_args():
     }
     return build_args_from_dict(args)
 
+
 def test_stpgnn_infomax():
     args = get_strategies_for_pretrain_args()
     args.pretrain_task = "infomax"
     task = build_task(args)
     ret = task.train()
     assert 0 < ret["Acc"] <= 1
+
 
 def test_stpgnn_contextpred():
     args = get_strategies_for_pretrain_args()
@@ -53,6 +52,7 @@ def test_stpgnn_contextpred():
         ret = task.train()
         assert 0 < ret["Acc"] <= 1
 
+
 def test_stpgnn_mask():
     args = get_strategies_for_pretrain_args()
     args.pretrain_task = "mask"
@@ -61,6 +61,7 @@ def test_stpgnn_mask():
     ret = task.train()
     assert 0 < ret["Acc"] <= 1
 
+
 def test_stpgnn_supervised():
     args = get_strategies_for_pretrain_args()
     args.pretrain_task = "supervised"
@@ -68,7 +69,8 @@ def test_stpgnn_supervised():
     args.checkpoint = None
     task = build_task(args)
     ret = task.train()
-    # assert 0 < ret["Acc"] <= 1
+    assert 0 < ret["Acc"] <= 1
+
 
 def test_stpgnn_finetune():
     args = get_strategies_for_pretrain_args()
@@ -80,6 +82,7 @@ def test_stpgnn_finetune():
     ret = task.train()
     assert 0 < ret["Acc"] <= 1
 
+
 def test_chem_infomax():
     args = get_strategies_for_pretrain_args()
     args.dataset = "test_chem"
@@ -87,6 +90,7 @@ def test_chem_infomax():
     task = build_task(args)
     ret = task.train()
     assert 0 < ret["Acc"] <= 1
+
 
 def test_chem_contextpred():
     args = get_strategies_for_pretrain_args()
@@ -101,6 +105,7 @@ def test_chem_contextpred():
         ret = task.train()
         assert 0 < ret["Acc"] <= 1
 
+
 def test_chem_mask():
     args = get_strategies_for_pretrain_args()
     args.dataset = "test_chem"
@@ -109,6 +114,7 @@ def test_chem_mask():
     task = build_task(args)
     ret = task.train()
     assert 0 < ret["Acc"] <= 1
+
 
 def test_chem_supervised():
     args = get_strategies_for_pretrain_args()
@@ -120,6 +126,7 @@ def test_chem_supervised():
     ret = task.train()
     assert 0 < ret["Acc"] <= 1
 
+
 def test_bbbp():
     args = get_strategies_for_pretrain_args()
     args.dataset = "bbbp"
@@ -130,6 +137,7 @@ def test_bbbp():
     task = build_task(args)
     ret = task.train()
     assert 0 < ret["Acc"] <= 1
+
 
 def test_bace():
     args = get_strategies_for_pretrain_args()

@@ -16,13 +16,13 @@ class GCN(nn.Module):
     def __init__(self, in_ft, out_ft, act, bias=True):
         super(GCN, self).__init__()
         self.fc = nn.Linear(in_ft, out_ft, bias=False)
-        self.act = nn.PReLU() if act == 'prelu' else act
-        
+        self.act = nn.PReLU() if act == "prelu" else act
+
         if bias:
             self.bias = nn.Parameter(torch.FloatTensor(out_ft))
             self.bias.data.fill_(0.0)
         else:
-            self.register_parameter('bias', None)
+            self.register_parameter("bias", None)
 
         for m in self.modules():
             self.weights_init(m)
@@ -42,8 +42,9 @@ class GCN(nn.Module):
             out = torch.bmm(adj, seq_fts)
         if self.bias is not None:
             out += self.bias
-        
+
         return self.act(out)
+
 
 # Borrowed from https://github.com/PetarV-/DGI
 class AvgReadout(nn.Module):
@@ -89,6 +90,7 @@ class Discriminator(nn.Module):
 
         return logits
 
+
 # Borrowed from https://github.com/PetarV-/DGI
 class LogReg(nn.Module):
     def __init__(self, ft_in, nb_classes):
@@ -113,18 +115,18 @@ class LogRegTrainer(object):
     def train(self, data, labels, opt):
         device = data.device
         idx_train = opt["idx_train"].to(device)
-        idx_val = opt["idx_val"].to(device)
+        # idx_val = opt["idx_val"].to(device)
         idx_test = opt["idx_test"].to(device)
         nclass = opt["num_classes"]
         nhid = data.shape[-1]
         labels = labels.to(device)
 
         train_embs = data[idx_train]
-        val_embs = data[idx_val]
+        # val_embs = data[idx_val]
         test_embs = data[idx_test]
 
         train_lbls = labels[idx_train]
-        val_lbls = labels[idx_val]
+        # val_lbls = labels[idx_val]
         test_lbls = labels[idx_test]
 
         tot = 0
@@ -183,36 +185,38 @@ class DGIModel(nn.Module):
 
         return h_1.detach(), c.detach()
 
+
 def preprocess_features(features):
     """Row-normalize feature matrix and convert to tuple representation"""
     rowsum = np.array(features.sum(1))
     r_inv = np.power(rowsum, -1).flatten()
-    r_inv[np.isinf(r_inv)] = 0.
+    r_inv[np.isinf(r_inv)] = 0.0
     r_mat_inv = sp.diags(r_inv)
     features = r_mat_inv.dot(features)
     return features
+
 
 def normalize_adj(adj):
     """Symmetrically normalize adjacency matrix."""
     adj = sp.coo_matrix(adj)
     rowsum = np.array(adj.sum(1))
     d_inv_sqrt = np.power(rowsum, -0.5).flatten()
-    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
+    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.0
     d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
     return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
+
 
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     """Convert a scipy sparse matrix to a torch sparse tensor."""
     sparse_mx = sparse_mx.tocoo().astype(np.float32)
-    indices = torch.from_numpy(
-        np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64))
+    indices = torch.from_numpy(np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64))
     values = torch.from_numpy(sparse_mx.data)
     shape = torch.Size(sparse_mx.shape)
     return torch.sparse.FloatTensor(indices, values, shape)
 
+
 @register_model("dgi")
 class DGI(BaseModel):
-
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -229,8 +233,8 @@ class DGI(BaseModel):
     def __init__(self, nfeat, nhid, nclass, max_epochs):
         super(DGI, self).__init__()
 
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.model = DGIModel(nfeat, nhid, 'prelu').to(self.device)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = DGIModel(nfeat, nhid, "prelu").to(self.device)
         self.nhid = nhid
         self.nclass = nclass
         self.epochs = max_epochs
@@ -247,11 +251,10 @@ class DGI(BaseModel):
         )
         adj = normalize_adj(adj + sp.eye(adj.shape[0]))
         sp_adj = sparse_mx_to_torch_sparse_tensor(adj)
-        
+
         sp_adj = sp_adj.to(self.device)
 
         best = 1e9
-        best_t = 0
         cnt_wait = 0
         b_xent = nn.BCEWithLogitsLoss()
         optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001, weight_decay=0.0)
@@ -270,22 +273,21 @@ class DGI(BaseModel):
 
             shuf_fts = shuf_fts.to(self.device)
             lbl = lbl.to(self.device)
-            
+
             logits = self.model(features, shuf_fts, sp_adj, True, None, None, None)
 
             loss = b_xent(logits, lbl)
 
-            epoch_iter.set_description(f'Epoch: {epoch:03d}, Loss: {loss.item()}')
+            epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss.item()}")
 
             if loss < best:
                 best = loss
-                best_t = epoch
                 cnt_wait = 0
             else:
                 cnt_wait += 1
 
             if cnt_wait == self.patience:
-                print('Early stopping!')
+                print("Early stopping!")
                 break
 
             loss.backward()
@@ -296,7 +298,7 @@ class DGI(BaseModel):
             "idx_train": data.train_mask,
             "idx_val": data.val_mask,
             "idx_test": data.test_mask,
-            "num_classes": self.nclass
+            "num_classes": self.nclass,
         }
         result = LogRegTrainer().train(embeds[0], data.y, opt)
         return result

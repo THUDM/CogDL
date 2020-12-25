@@ -1,32 +1,50 @@
 import copy
 import math
 import os
-from sklearn.metrics import roc_auc_score, accuracy_score
 
+import numpy as np
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from cogdl.utils import (
-    add_self_loops,
-    cycle_index,
-    batch_sum_pooling,
-    batch_mean_pooling
-)
 from cogdl.datasets import build_dataset_from_name
-from cogdl.datasets.pyg_strategies_data import *
-
+from cogdl.datasets.pyg_strategies_data import (
+    BioDataset,
+    ChemExtractSubstructureContextPair,
+    DataLoaderFinetune,
+    DataLoaderMasking,
+    DataLoaderSubstructContext,
+    ExtractSubstructureContextPair,
+    MaskAtom,
+    MaskEdge,
+    MoleculeDataset,
+    TestBioDataset,
+    TestChemDataset,
+)
+from cogdl.utils import add_self_loops, batch_mean_pooling, batch_sum_pooling, cycle_index
+from sklearn.metrics import roc_auc_score
 from torch_geometric.data import DataLoader
 
 
 class GINConv(nn.Module):
+    """
+    Implementation of Graph isomorphism network used in paper `"Strategies for Pre-training Graph Neural Networks"`. <https://arxiv.org/abs/1905.12265>
+
+    Parameters
+    ----------
+    hidden_size : int
+        Size of each hidden unit
+    input_layer : int, optional
+        The size of input node features if not `None`.
+    edge_emb : list, optional
+        The number of edge types if not `None`
+    edge_encode : int, optional
+        Size of each edge feature if not `None`
+    pooling : str
+        Pooling method.
+    """
+
     def __init__(
-            self,
-            hidden_size,
-            input_layer=None,
-            edge_emb=None,
-            edge_encode=None,
-            pooling="sum",
-            feature_concat=False
+        self, hidden_size, input_layer=None, edge_emb=None, edge_encode=None, pooling="sum", feature_concat=False
     ):
         super(GINConv, self).__init__()
         in_feat = 2 * hidden_size if feature_concat else hidden_size
@@ -34,7 +52,7 @@ class GINConv(nn.Module):
             torch.nn.Linear(in_feat, 2 * hidden_size),
             torch.nn.BatchNorm1d(2 * hidden_size),
             torch.nn.ReLU(),
-            torch.nn.Linear(2 * hidden_size, hidden_size)
+            torch.nn.Linear(2 * hidden_size, hidden_size),
         )
 
         self.input_node_embeddings = input_layer
@@ -44,10 +62,7 @@ class GINConv(nn.Module):
         self.pooling = pooling
 
         if edge_emb is not None:
-            self.edge_embeddings = [
-                nn.Embedding(num, hidden_size)
-                for num in edge_emb
-            ]
+            self.edge_embeddings = [nn.Embedding(num, hidden_size) for num in edge_emb]
         if input_layer is not None:
             self.input_node_embeddings = nn.Embedding(input_layer, hidden_size)
             nn.init.xavier_uniform_(self.input_node_embeddings.weight.data)
@@ -65,10 +80,7 @@ class GINConv(nn.Module):
         if self.edge_embeddings is not None:
             for i in range(edge_index.shape[0]):
                 self.edge_embeddings[i].to(x.device)
-            edge_embeddings = sum([
-                self.edge_embeddings[i](edge_attr[:, i])
-                for i in range(edge_index.shape[0])
-            ])
+            edge_embeddings = sum([self.edge_embeddings[i](edge_attr[:, i]) for i in range(edge_index.shape[0])])
         elif self.edge_encoder is not None:
             edge_embeddings = self.edge_encoder(edge_attr)
         else:
@@ -95,17 +107,17 @@ class GINConv(nn.Module):
 
 class GNN(nn.Module):
     def __init__(
-            self,
-            num_layers,
-            hidden_size,
-            JK="last",
-            dropout=0.5,
-            input_layer=None,
-            edge_encode=None,
-            edge_emb=None,
-            num_atom_type=None,
-            num_chirality_tag=None,
-            concat=False,
+        self,
+        num_layers,
+        hidden_size,
+        JK="last",
+        dropout=0.5,
+        input_layer=None,
+        edge_encode=None,
+        edge_emb=None,
+        num_atom_type=None,
+        num_chirality_tag=None,
+        concat=False,
     ):
         super(GNN, self).__init__()
         self.num_layers = num_layers
@@ -129,22 +141,17 @@ class GNN(nn.Module):
                         input_layer=input_layer,
                         edge_emb=edge_emb,
                         edge_encode=edge_encode,
-                        feature_concat=concat
+                        feature_concat=concat,
                     )
                 )
             else:
                 self.gnn.append(
-                    GINConv(
-                        hidden_size=hidden_size,
-                        edge_emb=edge_emb,
-                        edge_encode=edge_encode,
-                        feature_concat=True
-                    )
+                    GINConv(hidden_size=hidden_size, edge_emb=edge_emb, edge_encode=edge_encode, feature_concat=True)
                 )
 
     def forward(self, x, edge_index, edge_attr, self_loop_index=None, self_loop_type=None):
         if self.atom_type_embedder is not None and self.chirality_tag_embedder is not None:
-            x = self.atom_type_embedder(x[:,0]) + self.chirality_tag_embedder(x[:,1])
+            x = self.atom_type_embedder(x[:, 0]) + self.chirality_tag_embedder(x[:, 1])
         h_list = [x]
         for i in range(self.num_layers):
             h = self.gnn[i](h_list[i], edge_index, edge_attr, self_loop_index, self_loop_type)
@@ -165,19 +172,19 @@ class GNN(nn.Module):
 
 class GNNPred(nn.Module):
     def __init__(
-            self,
-            num_layers,
-            hidden_size,
-            num_tasks,
-            JK="last",
-            dropout=0,
-            graph_pooling="mean",
-            input_layer=None,
-            edge_encode=None,
-            edge_emb=None,
-            num_atom_type=None,
-            num_chirality_tag=None,
-            concat=True,
+        self,
+        num_layers,
+        hidden_size,
+        num_tasks,
+        JK="last",
+        dropout=0,
+        graph_pooling="mean",
+        input_layer=None,
+        edge_encode=None,
+        edge_emb=None,
+        num_atom_type=None,
+        num_chirality_tag=None,
+        concat=True,
     ):
         super(GNNPred, self).__init__()
         self.num_layers = num_layers
@@ -210,7 +217,7 @@ class GNNPred(nn.Module):
             edge_emb=edge_emb,
             num_atom_type=num_atom_type,
             num_chirality_tag=num_chirality_tag,
-            concat=concat
+            concat=concat,
         )
 
         self.graph_pred_linear = torch.nn.Linear(2 * self.hidden_size, self.num_tasks)
@@ -220,13 +227,7 @@ class GNNPred(nn.Module):
 
     def forward(self, data, self_loop_index, self_loop_type):
         x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
-        node_representation = self.gnn(
-            x,
-            edge_index,
-            edge_attr,
-            self_loop_index,
-            self_loop_type
-        )
+        node_representation = self.gnn(x, edge_index, edge_attr, self_loop_index, self_loop_type)
 
         pooled = self.pool(node_representation, batch)
         if hasattr(data, "center_node_idx"):
@@ -248,6 +249,11 @@ class GNNPred(nn.Module):
 
 
 class Pretrainer(nn.Module):
+    """
+    Base class for Pre-training Models of paper `"Strategies for Pre-training Graph Neural Networks"`. <https://arxiv.org/abs/1905.12265>
+
+    """
+
     def __init__(self, args, transform=None):
         super(Pretrainer, self).__init__()
         self.lr = args.lr
@@ -262,10 +268,7 @@ class Pretrainer(nn.Module):
         self.output_model_file = os.path.join(args.output_model_file, args.pretrain_task)
         self.finetune = args.finetune
 
-        self.dataset, self.opt = self.get_dataset(
-            dataset_name=args.dataset,
-            transform=transform
-        )
+        self.dataset, self.opt = self.get_dataset(dataset_name=args.dataset, transform=transform)
 
         if self.dataset_name in ("bio", "chem", "test_bio", "test_chem", "bbbp", "bace"):
             self.self_loop_index = self.opt["self_loop_index"]
@@ -325,7 +328,7 @@ class Pretrainer(nn.Module):
 
     def fit(self):
         print("Start training...")
-        train_acc = 0.
+        train_acc = 0.0
         for i in range(self.max_epoch):
             train_loss, train_acc = self._train_step()
             if self.device != "cpu":
@@ -355,7 +358,7 @@ class Discriminator(nn.Module):
 
     def reset_parameters(self):
         size = self.weight.size(0)
-        nn.init.xavier_uniform_(self.weight, gain=1. / math.sqrt(size))
+        nn.init.xavier_uniform_(self.weight, gain=1.0 / math.sqrt(size))
 
     def forward(self, x, summary):
         h = torch.matmul(summary, self.weight)
@@ -372,10 +375,7 @@ class InfoMaxTrainer(Pretrainer):
         super(InfoMaxTrainer, self).__init__(args)
         self.hidden_size = args.hidden_size
         self.dataloader = DataLoader(
-            self.dataset,
-            batch_size=args.batch_size,
-            shuffle=True,
-            num_workers=args.num_workers
+            self.dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers
         )
         self.model = GNN(
             num_layers=args.num_layers,
@@ -406,7 +406,7 @@ class InfoMaxTrainer(Pretrainer):
                 edge_index=batch.edge_index,
                 edge_attr=batch.edge_attr,
                 self_loop_index=self.self_loop_index,
-                self_loop_type=self.self_loop_type
+                self_loop_type=self.self_loop_type,
             )
             summary_h = torch.sigmoid(batch_mean_pooling(hidden, batch.batch))
 
@@ -418,21 +418,17 @@ class InfoMaxTrainer(Pretrainer):
             neg_scores = self.discriminator(hidden, neg_summary)
 
             self.optimizer.zero_grad()
-            loss = self.loss_fn(
-                pos_scores,
-                torch.ones_like(pos_scores)
-            ) + \
-                   self.loss_fn(
-                       neg_scores,
-                       torch.zeros_like(neg_scores)
-                   )
+            loss = self.loss_fn(pos_scores, torch.ones_like(pos_scores)) + self.loss_fn(
+                neg_scores, torch.zeros_like(neg_scores)
+            )
 
             loss.backward()
             self.optimizer.step()
 
             loss_items.append(loss.item())
             acc_items.append(
-                ((pos_scores > 0).float().sum() + (neg_scores < 0).float().sum()) / (pos_scores.shape[0] * 2))
+                ((pos_scores > 0).float().sum() + (neg_scores < 0).float().sum()) / (pos_scores.shape[0] * 2)
+            )
         return sum(loss_items) / len(loss_items), sum(acc_items) / len(acc_items)
 
 
@@ -454,13 +450,14 @@ class ContextPredictTrainer(Pretrainer):
         super(ContextPredictTrainer, self).__init__(args, transform)
         self.mode = args.mode
         self.context_pooling = "sum"
-        self.negative_samples = args.negative_samples % args.batch_size if args.batch_size > args.negative_samples else args.negative_samples
+        self.negative_samples = (
+            args.negative_samples % args.batch_size
+            if args.batch_size > args.negative_samples
+            else args.negative_samples
+        )
 
         self.dataloader = DataLoaderSubstructContext(
-            self.dataset,
-            batch_size=args.batch_size,
-            shuffle=True,
-            num_workers=args.num_workers
+            self.dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers
         )
 
         self.model = GNN(
@@ -490,15 +487,9 @@ class ContextPredictTrainer(Pretrainer):
         )
         self.model.to(self.device)
         self.model_context.to(self.device)
-        self.optimizer_neighbor = torch.optim.Adam(
-            self.model.parameters(),
-            lr=args.lr,
-            weight_decay=args.weight_decay
-        )
+        self.optimizer_neighbor = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
         self.optimizer_context = torch.optim.Adam(
-            self.model_context.parameters(),
-            lr=args.lr,
-            weight_decay=args.weight_decay
+            self.model_context.parameters(), lr=args.lr, weight_decay=args.weight_decay
         )
 
         self.loss_fn = nn.BCEWithLogitsLoss()
@@ -515,26 +506,22 @@ class ContextPredictTrainer(Pretrainer):
                 batch.edge_index_substruct,
                 batch.edge_attr_substruct,
                 self.self_loop_index,
-                self.self_loop_type
+                self.self_loop_type,
             )[batch.center_substruct_idx]
             overlapped_node_rep = self.model_context(
                 batch.x_context,
                 batch.edge_index_context,
                 batch.edge_attr_context,
                 self.self_loop_index,
-                self.self_loop_type
+                self.self_loop_type,
             )[batch.overlap_context_substruct_idx]
             if self.mode == "cbow":
                 pos_scores, neg_scores = self.get_cbow_pred(
-                    overlapped_node_rep,
-                    batch.batch_overlapped_context,
-                    neighbor_rep
+                    overlapped_node_rep, batch.batch_overlapped_context, neighbor_rep
                 )
             else:
                 pos_scores, neg_scores = self.get_skipgram_pred(
-                    overlapped_node_rep,
-                    batch.overlapped_context_size,
-                    neighbor_rep
+                    overlapped_node_rep, batch.overlapped_context_size, neighbor_rep
                 )
             self.optimizer_neighbor.zero_grad()
             self.optimizer_context.zero_grad()
@@ -549,17 +536,12 @@ class ContextPredictTrainer(Pretrainer):
 
             loss_items.append(loss.item())
             acc_items.append(
-                ((pos_scores > 0).float().sum() + (neg_scores < 0).float().sum() / self.negative_samples) / (
-                            pos_scores.shape[0] * 2)
+                ((pos_scores > 0).float().sum() + (neg_scores < 0).float().sum() / self.negative_samples)
+                / (pos_scores.shape[0] * 2)
             )
         return sum(loss_items) / len(loss_items), sum(acc_items) / len(acc_items)
 
-    def get_cbow_pred(
-            self,
-            overlapped_rep,
-            overlapped_context,
-            neighbor_rep
-    ):
+    def get_cbow_pred(self, overlapped_rep, overlapped_context, neighbor_rep):
         if self.context_pooling == "sum":
             context_rep = batch_sum_pooling(overlapped_rep, overlapped_context)
         elif self.context_pooling == "mean":
@@ -570,32 +552,16 @@ class ContextPredictTrainer(Pretrainer):
         batch_size = context_rep.size(0)
 
         neg_context_rep = torch.cat(
-            [
-                context_rep[cycle_index(batch_size, i + 1)]
-                for i in range(self.negative_samples)
-            ],
-            dim=0
+            [context_rep[cycle_index(batch_size, i + 1)] for i in range(self.negative_samples)], dim=0
         )
 
         pos_scores = torch.sum(neighbor_rep * context_rep, dim=1)
-        neg_scores = torch.sum(
-            neighbor_rep.repeat(self.negative_samples, 1) * neg_context_rep,
-            dim=1
-        )
+        neg_scores = torch.sum(neighbor_rep.repeat(self.negative_samples, 1) * neg_context_rep, dim=1)
         return pos_scores, neg_scores
 
-    def get_skipgram_pred(
-            self,
-            overlapped_rep,
-            overlapped_context_size,
-            neighbor_rep
-    ):
+    def get_skipgram_pred(self, overlapped_rep, overlapped_context_size, neighbor_rep):
         expanded_neighbor_rep = torch.cat(
-            [
-                neighbor_rep[i].repeat(overlapped_context_size[i], 1)
-                for i in range(len(neighbor_rep))
-            ],
-            dim=0
+            [neighbor_rep[i].repeat(overlapped_context_size[i], 1) for i in range(len(neighbor_rep))], dim=0
         )
         assert overlapped_rep.shape == expanded_neighbor_rep.shape
         pos_scores = torch.sum(expanded_neighbor_rep * overlapped_rep, dim=1)
@@ -605,15 +571,9 @@ class ContextPredictTrainer(Pretrainer):
         for i in range(self.negative_samples):
             neg_neighbor_rep = neighbor_rep[cycle_index(batch_size, i + 1)]
             expanded_neg_neighbor_rep = torch.cat(
-                [
-                    neg_neighbor_rep[i].repeat(overlapped_context_size[k], 1)
-                    for k in range(len(neg_neighbor_rep))
-                ],
-                dim=0
+                [neg_neighbor_rep[i].repeat(overlapped_context_size[k], 1) for k in range(len(neg_neighbor_rep))], dim=0
             )
-            neg_scores.append(
-                torch.sum(expanded_neg_neighbor_rep * overlapped_rep, dim=1)
-            )
+            neg_scores.append(torch.sum(expanded_neg_neighbor_rep * overlapped_rep, dim=1))
         neg_scores = torch.cat(neg_scores)
         return pos_scores, neg_scores
 
@@ -630,12 +590,7 @@ class MaskTrainer(Pretrainer):
             transform = MaskAtom(mask_rate=args.mask_rate, num_atom_type=119, num_edge_type=5)
         args.data_type = "unsupervised"
         super(MaskTrainer, self).__init__(args, transform)
-        self.dataloader = DataLoaderMasking(
-            self.dataset,
-            args.batch_size,
-            shuffle=True,
-            num_workers=args.num_workers
-        )
+        self.dataloader = DataLoaderMasking(self.dataset, args.batch_size, shuffle=True, num_workers=args.num_workers)
         self.model = GNN(
             num_layers=args.num_layers,
             hidden_size=args.hidden_size,
@@ -656,23 +611,13 @@ class MaskTrainer(Pretrainer):
             self.linear = nn.Linear(args.hidden_size, 120)
         else:
             raise NotImplementedError
-        self.optmizer_gnn = torch.optim.Adam(
-            self.model.parameters(),
-            lr=args.lr,
-            weight_decay=args.weight_decay
-        )
-        self.optmizer_linear = torch.optim.Adam(
-            self.linear.parameters(),
-            lr=args.lr,
-            weight_decay=args.weight_decay
-        )
+        self.optmizer_gnn = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+        self.optmizer_linear = torch.optim.Adam(self.linear.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
         if "chem" in args.dataset:
             self.linear_bonds = torch.nn.Linear(args.hidden_size, 6)
             self.optmizer_linear_bonds = torch.optim.Adam(
-                self.linear_bonds.parameters(),
-                lr=args.lr,
-                weight_decay=args.weight_decay
+                self.linear_bonds.parameters(), lr=args.lr, weight_decay=args.weight_decay
             )
 
         self.loss_fn = nn.CrossEntropyLoss()
@@ -688,7 +633,7 @@ class MaskTrainer(Pretrainer):
                 edge_index=batch.edge_index,
                 edge_attr=batch.edge_attr,
                 self_loop_index=self.self_loop_index,
-                self_loop_type=self.self_loop_type
+                self_loop_type=self.self_loop_type,
             )
             if "bio" in self.dataset_name:
                 masked_edges = batch.edge_index[:, batch.masked_edge_idx]
@@ -704,20 +649,20 @@ class MaskTrainer(Pretrainer):
                 self.optmizer_gnn.step()
                 self.optmizer_linear.step()
                 loss_items.append(loss.item())
-                acc_items.append(
-                    (torch.max(pred, dim=1)[1] == labels).float().sum().cpu().numpy() / len(pred)
-                )
+                acc_items.append((torch.max(pred, dim=1)[1] == labels).float().sum().cpu().numpy() / len(pred))
             elif "chem" in self.dataset_name:
+
                 def compute_accuracy(pred, target):
-                    return float(torch.sum(torch.max(pred.detach(), dim = 1)[1] == target).cpu().item())/len(pred)
+                    return float(torch.sum(torch.max(pred.detach(), dim=1)[1] == target).cpu().item()) / len(pred)
+
                 pred_node = self.linear(hidden[batch.masked_atom_indices])
-                loss = self.loss_fn(pred_node.double(), batch.mask_node_label[:,0])
-                acc_node = compute_accuracy(pred_node, batch.mask_node_label[:,0])
+                loss = self.loss_fn(pred_node.double(), batch.mask_node_label[:, 0])
+                acc_node = compute_accuracy(pred_node, batch.mask_node_label[:, 0])
                 masked_edge_index = batch.edge_index[:, batch.connected_edge_indices]
                 edge_rep = hidden[masked_edge_index[0]] + hidden[masked_edge_index[1]]
                 pred_edge = self.linear_bonds(edge_rep)
-                loss += self.loss_fn(pred_edge.double(), batch.mask_edge_label[:,0])
-                acc_edge = compute_accuracy(pred_edge, batch.mask_edge_label[:,0])
+                loss += self.loss_fn(pred_edge.double(), batch.mask_edge_label[:, 0])
+                acc_edge = compute_accuracy(pred_edge, batch.mask_edge_label[:, 0])
                 self.optmizer_gnn.zero_grad()
                 self.optmizer_linear.zero_grad()
                 self.optmizer_linear_bonds.zero_grad()
@@ -772,12 +717,7 @@ class SupervisedTrainer(Pretrainer):
         self.train_ratio = 0.9
         train_index = torch.LongTensor(indices[: int(length * self.train_ratio)])
         dataset = self.dataset[train_index]
-        dataloader = DataLoader(
-            dataset=dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers
-        )
+        dataloader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
         return dataloader
 
     def _train_step(self):
@@ -787,22 +727,18 @@ class SupervisedTrainer(Pretrainer):
         self.model.train()
         for batch in self.dataloader:
             batch = batch.to(self.device)
-            pred = self.model(
-                batch,
-                self.self_loop_index,
-                self.self_loop_type
-            )
+            pred = self.model(batch, self.self_loop_index, self.self_loop_type)
             self.optimizer.zero_grad()
             if "bio" in self.dataset_name:
                 target = batch.go_target_pretrain.view(pred.shape).to(torch.float64)
-                is_valid = (target != -1)
+                is_valid = target != -1
             elif "chem" in self.dataset_name:
                 target = batch.y.view(pred.shape).to(torch.float64)
-                is_valid = target**2 > 0
+                is_valid = target ** 2 > 0
                 target = (target + 1) / 2
             else:
                 raise NotImplementedError
-            
+
             loss = self.loss_fn(pred, target)
             loss = torch.where(is_valid, loss, torch.zeros(loss.shape).to(loss.device).to(loss.dtype))
             loss = torch.sum(loss) / torch.sum(is_valid)
@@ -819,10 +755,10 @@ class SupervisedTrainer(Pretrainer):
                 auc_scores = []
                 for i in range(len(pred[0])):
                     if "chem" in self.dataset_name:
-                        is_valid = y_labels[:,i]**2 > 0
-                        y_labels[:,i] = (y_labels[:,i] + 1) / 2
+                        is_valid = y_labels[:, i] ** 2 > 0
+                        y_labels[:, i] = (y_labels[:, i] + 1) / 2
                     elif "bio" in self.dataset_name:
-                        is_valid = y_labels[:,i] != -1
+                        is_valid = y_labels[:, i] != -1
                     else:
                         raise NotImplementedError
                     if (y_labels[is_valid, i] == 1).sum() > 0 and (y_labels[is_valid, i] == 0).sum() > 0:
@@ -831,9 +767,7 @@ class SupervisedTrainer(Pretrainer):
                         # All zeros or all ones
                         auc_scores.append(np.nan)
                 auc_scores = np.array(auc_scores)
-                auc_items.append(
-                    np.mean(auc_scores[np.where(~np.isnan(auc_scores))])
-                )
+                auc_items.append(np.mean(auc_scores[np.where(~np.isnan(auc_scores))]))
         return np.mean(loss_items), np.mean(auc_items)
 
 
@@ -858,11 +792,7 @@ class Finetuner(Pretrainer):
         ) = self.split_data()
 
         self.model = self.build_model(args)
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(),
-            lr=self.lr,
-            weight_decay=self.weight_decay
-        )
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         self.loss_fn = nn.BCEWithLogitsLoss()
 
     def build_model(self, args):
@@ -893,8 +823,8 @@ class Finetuner(Pretrainer):
         indices = np.arange(length)
         np.random.shuffle(indices)
         train_index = torch.LongTensor(indices[: int(length * self.train_ratio)])
-        valid_index = torch.LongTensor(indices[int(length * self.train_ratio): -int(length * self.test_ratio)])
-        test_index = torch.LongTensor(indices[-int(length * self.test_ratio):])
+        valid_index = torch.LongTensor(indices[int(length * self.train_ratio) : -int(length * self.test_ratio)])
+        test_index = torch.LongTensor(indices[-int(length * self.test_ratio) :])
 
         datasets = [self.dataset[train_index], self.dataset[valid_index], self.dataset[test_index]]
         dataloaders = [
@@ -902,7 +832,7 @@ class Finetuner(Pretrainer):
                 dataset=item,
                 batch_size=self.batch_size * (1 + int(idx == 0) * 9),
                 shuffle=(idx == 0),
-                num_workers=self.num_workers
+                num_workers=self.num_workers,
             )
             for idx, item in enumerate(datasets)
         ]
@@ -947,7 +877,7 @@ class Finetuner(Pretrainer):
             if "bio" in self.dataset_name:
                 target = batch.go_target_downstream.view(pred.shape)
             else:
-                target =  batch.y.view(pred.shape)
+                target = batch.y.view(pred.shape)
             y_labels.append(target)
         y_pred = torch.cat(y_pred, dim=0)
         y_labels = torch.cat(y_labels, dim=0)
@@ -958,10 +888,10 @@ class Finetuner(Pretrainer):
         auc_scores = []
         for i in range(len(y_pred[1])):
             if "bio" in self.dataset_name:
-                is_valid = y_labels[:,i] != -1
+                is_valid = y_labels[:, i] != -1
             else:
-                is_valid = y_labels[:,i]**2 > 0
-                y_labels[:,i] = (y_labels[:,i] + 1) / 2
+                is_valid = y_labels[:, i] ** 2 > 0
+                y_labels[:, i] = (y_labels[:, i] + 1) / 2
             if (y_labels[is_valid, i] == 1).sum() > 0 and (y_labels[is_valid, i] == 0).sum() > 0:
                 auc_scores.append(roc_auc_score(y_labels[:, i], y_pred[:, i]))
             else:
@@ -971,7 +901,7 @@ class Finetuner(Pretrainer):
         return np.mean(auc_scores[np.where(~np.isnan(auc_scores))]), loss.item()
 
     def fit(self):
-        best_loss = 100000.
+        best_loss = 100000.0
         best_model = None
         patience = 0
         for epoch in range(self.max_epoch):

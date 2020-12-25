@@ -9,6 +9,7 @@ from torch.nn.parameter import Parameter
 
 from .. import BaseModel, register_model
 
+
 class GraphConvolution(nn.Module):
     """
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
@@ -40,14 +41,8 @@ class GraphConvolution(nn.Module):
             return output
 
     def __repr__(self):
-        return (
-            self.__class__.__name__
-            + " ("
-            + str(self.in_features)
-            + " -> "
-            + str(self.out_features)
-            + ")"
-        )
+        return self.__class__.__name__ + " (" + str(self.in_features) + " -> " + str(self.out_features) + ")"
+
 
 @register_model("fastgcn")
 class FastGCN(BaseModel):
@@ -60,7 +55,7 @@ class FastGCN(BaseModel):
         parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--dropout", type=float, default=0.5)
         parser.add_argument("--num-layers", type=int, default=3)
-        parser.add_argument("--sample-size", type=int, nargs='+', default=[512,256,256])
+        parser.add_argument("--sample-size", type=int, nargs='+', default=[512, 256, 256])
         # fmt: on
 
     @classmethod
@@ -85,19 +80,14 @@ class FastGCN(BaseModel):
         self.sample_size = sample_size
 
         shapes = [num_features] + [hidden_size] * (num_layers - 1) + [num_classes]
-        self.convs = nn.ModuleList(
-            [
-                GraphConvolution(shapes[layer], shapes[layer + 1])
-                for layer in range(num_layers)
-            ]
-        )
+        self.convs = nn.ModuleList([GraphConvolution(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
 
     def set_adj(self, edge_index, num_nodes):
         self.adj = collections.defaultdict(list)
         for i in range(edge_index.shape[1]):
             self.adj[edge_index[0, i]].append(edge_index[1, i])
             self.adj[edge_index[1, i]].append(edge_index[0, i])
-    
+
     def _sample_one_layer(self, sampled, sample_size):
         total = []
         for node in sampled:
@@ -120,9 +110,7 @@ class FastGCN(BaseModel):
                     edgelist.append([mapping[node], i])
         edgetensor = torch.LongTensor(edgelist)
         valuetensor = torch.ones(edgetensor.shape[0]).float()
-        t = torch.sparse_coo_tensor(
-            edgetensor.t(), valuetensor, (len(sample1), len(sample2))
-        )
+        t = torch.sparse_coo_tensor(edgetensor.t(), valuetensor, (len(sample1), len(sample2)))
         return t
 
     def sampling(self, x, v):

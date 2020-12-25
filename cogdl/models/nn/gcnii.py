@@ -19,7 +19,7 @@ class GCNIILayer(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        stdv = 1./ math.sqrt(self.n_channels)
+        stdv = 1.0 / math.sqrt(self.n_channels)
         self.weight.data.uniform_(-stdv, stdv)
 
     def forward(self, x, edge_index, edge_attr, init_x):
@@ -33,6 +33,29 @@ class GCNIILayer(nn.Module):
 
 @register_model("gcnii")
 class GCNII(BaseModel):
+    """
+    Implementation of GCNII in paper `"Simple and Deep Graph Convolutional Networks"` <https://arxiv.org/abs/2007.02133>.
+
+    Parameters
+    -----------
+    in_feats : int
+        Size of each input sample
+    hidden_size : int
+        Size of each hidden unit
+    out_feats : int
+        Size of each out sample
+    num_layers : int
+    dropout : float
+    alpha : float
+        Parameter of initial residual connection
+    lmbda : float
+        Parameter of identity mapping
+    wd1 : float
+        Weight-decay for Fully-connected layers
+    wd2 : float
+        Weight-decay for convolutional layers
+    """
+
     @staticmethod
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=64)
@@ -62,35 +85,33 @@ class GCNII(BaseModel):
         self.fc_layers = nn.ModuleList()
         self.fc_layers.append(nn.Linear(in_features=in_feats, out_features=hidden_size))
         self.fc_layers.append(nn.Linear(in_features=hidden_size, out_features=out_feats))
-        self.fc_layers.append(nn.Linear(in_features=hidden_size, out_features=out_feats))
 
         self.dropout = dropout
         self.alpha = alpha
         self.lmbda = lmbda
         self.wd1 = wd1
         self.wd2 = wd2
-    
+
         self.layers = nn.ModuleList(
-            GCNIILayer(hidden_size, self.alpha, math.log(self.lmbda / (i+1) + 1))
-            for i in range(num_layers)
+            GCNIILayer(hidden_size, self.alpha, math.log(self.lmbda / (i + 1) + 1)) for i in range(num_layers)
         )
         self.activation = F.relu
 
         self.fc_parameters = list(self.fc_layers.parameters())
         self.conv_parameters = list(self.layers.parameters())
         self.edge_attr = None
-    
+
     def forward(self, x, edge_index, edge_attr=None):
         if self.edge_attr is None:
             if edge_attr is not None:
                 self.edge_attr = edge_attr
             else:
                 edge_index, edge_weight = add_remaining_self_loops(
-                                                edge_index=edge_index, 
-                                                edge_weight=torch.ones(edge_index.shape[1]).to(x.device),
-                                                fill_value=1,
-                                                num_nodes=x.shape[0]
-                                            )
+                    edge_index=edge_index,
+                    edge_weight=torch.ones(edge_index.shape[1]).to(x.device),
+                    fill_value=1,
+                    num_nodes=x.shape[0],
+                )
                 self.edge_attr = symmetric_normalization(
                     num_nodes=x.shape[0],
                     edge_index=edge_index,
@@ -98,11 +119,11 @@ class GCNII(BaseModel):
                 )
         else:
             edge_index, _ = add_remaining_self_loops(
-                                        edge_index=edge_index, 
-                                        edge_weight=torch.ones(edge_index.shape[1]).to(x.device),
-                                        fill_value=1,
-                                        num_nodes=x.shape[0]
-                                    )
+                edge_index=edge_index,
+                edge_weight=torch.ones(edge_index.shape[1]).to(x.device),
+                fill_value=1,
+                num_nodes=x.shape[0],
+            )
 
         init_h = F.dropout(x, p=self.dropout, training=self.training)
         init_h = F.relu(self.fc_layers[0](init_h))
@@ -115,20 +136,16 @@ class GCNII(BaseModel):
             h = self.activation(h)
         h = F.dropout(h, p=self.dropout, training=self.training)
         out = self.fc_layers[1](h)
-        return F.log_softmax(out, dim=-1)
-    
-    def loss(self, data):
-        loss_n = F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
-            data.y[data.train_mask]
-        )
-        return loss_n
-    
+        return out
+
     def predict(self, data):
         return self.forward(data.x, data.edge_index)
-    
+
     def get_optimizer(self, args):
-        return torch.optim.Adam([
-            {"params": self.fc_parameters, "weight_decay": self.wd1},
-            {"params": self.conv_parameters, "weight_decay": self.wd2}
-        ], lr=args.lr)
+        return torch.optim.Adam(
+            [
+                {"params": self.fc_parameters, "weight_decay": self.wd1},
+                {"params": self.conv_parameters, "weight_decay": self.wd2},
+            ],
+            lr=args.lr,
+        )

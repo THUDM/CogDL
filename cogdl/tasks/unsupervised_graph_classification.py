@@ -1,3 +1,4 @@
+import argparse
 import copy
 import os
 from collections import defaultdict
@@ -21,8 +22,9 @@ from .graph_classification import node_degree_as_feature
 @register_task("unsupervised_graph_classification")
 class UnsupervisedGraphClassification(BaseTask):
     r"""Unsupervised graph classification"""
+
     @staticmethod
-    def add_args(parser):
+    def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--lr", type=float, default=0.001)
@@ -32,17 +34,18 @@ class UnsupervisedGraphClassification(BaseTask):
 
     def __init__(self, args, dataset=None, model=None):
         super(UnsupervisedGraphClassification, self).__init__(args)
-        self.device = args.device_id[0] if not args.cpu else 'cpu'
+        self.device = args.device_id[0] if not args.cpu else "cpu"
 
         dataset = build_dataset(args) if dataset is None else dataset
-        if 'gcc' in args.model:
+        if "gcc" in args.model:
             self.label = dataset.graph_labels[:, 0]
             self.data = dataset.graph_lists
         else:
             self.label = np.array([data.y for data in dataset])
             self.data = [
-                Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr,
-                    pos=data.pos).apply(lambda x:x.to(self.device))
+                Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr, pos=data.pos).apply(
+                    lambda x: x.to(self.device)
+                )
                 for data in dataset
             ]
         args.num_features = dataset.num_features
@@ -65,12 +68,10 @@ class UnsupervisedGraphClassification(BaseTask):
         self.num_shuffle = args.num_shuffle
         self.save_dir = args.save_dir
         self.epoch = args.epoch
-        self.use_nn = args.model in ('infograph', )
+        self.use_nn = args.model in ("infograph",)
 
         if self.use_nn:
-            self.optimizer = torch.optim.Adam(
-                self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
-            )
+            self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
             self.data_loader = DataLoader(self.data, batch_size=args.batch_size, shuffle=True)
 
     def train(self):
@@ -88,9 +89,7 @@ class UnsupervisedGraphClassification(BaseTask):
                     self.optimizer.step()
                     loss_n.append(loss.item())
                 loss_n = np.mean(loss_n)
-                epoch_iter.set_description(
-                    f"Epoch: {epoch:03d}, TrainLoss: {np.mean(loss_n)} "
-                )
+                epoch_iter.set_description(f"Epoch: {epoch:03d}, TrainLoss: {np.mean(loss_n)} ")
                 if loss_n < best_loss:
                     best_loss = loss_n
                     best_model = copy.deepcopy(self.model)
@@ -106,7 +105,7 @@ class UnsupervisedGraphClassification(BaseTask):
                     label.extend(batch.y.cpu().numpy())
                 prediction = np.array(prediction).reshape(len(label), -1)
                 label = np.array(label).reshape(-1)
-        elif 'gcc' in self.model_name:
+        elif "gcc" in self.model_name:
             prediction = self.model.train(self.data)
             label = self.label
         else:
@@ -118,7 +117,7 @@ class UnsupervisedGraphClassification(BaseTask):
             return self._evaluate(prediction, label)
 
     def save_emb(self, embs):
-        name = os.path.join(self.save_dir, self.model_name + '_emb.npy')
+        name = os.path.join(self.save_dir, self.model_name + "_emb.npy")
         np.save(name, embs)
 
     def _evaluate(self, embeddings, labels):

@@ -15,17 +15,18 @@ from cogdl.trainers.deepergcn_trainer import DeeperGCNTrainer
 
 
 class GENConv(nn.Module):
-    def __init__(self,
-                 in_feat,
-                 out_feat,
-                 aggr="softmax_sg",
-                 beta=1.0,
-                 p=1.0,
-                 learn_beta=False,
-                 learn_p=False,
-                 use_msg_norm=False,
-                 learn_msg_scale=True,
-                 ):
+    def __init__(
+        self,
+        in_feat,
+        out_feat,
+        aggr="softmax_sg",
+        beta=1.0,
+        p=1.0,
+        learn_beta=False,
+        learn_p=False,
+        use_msg_norm=False,
+        learn_msg_scale=True,
+    ):
         super(GENConv, self).__init__()
         self.use_msg_norm = use_msg_norm
         self.mlp = nn.Linear(in_feat, out_feat)
@@ -34,16 +35,30 @@ class GENConv(nn.Module):
 
         self.aggr = aggr
         if aggr == "softmax_sg":
-            self.beta = torch.nn.Parameter(torch.Tensor([beta, ]), requires_grad=learn_beta)
+            self.beta = torch.nn.Parameter(
+                torch.Tensor(
+                    [
+                        beta,
+                    ]
+                ),
+                requires_grad=learn_beta,
+            )
         else:
             self.register_buffer("beta", None)
         if aggr == "powermean":
-            self.p = torch.nn.Parameter(torch.Tensor([p, ]), requires_grad=learn_p)
+            self.p = torch.nn.Parameter(
+                torch.Tensor(
+                    [
+                        p,
+                    ]
+                ),
+                requires_grad=learn_p,
+            )
         else:
             self.register_buffer("p", None)
         self.eps = 1e-7
 
-        self.s = torch.nn.Parameter(torch.Tensor([1.]), requires_grad=learn_msg_scale)
+        self.s = torch.nn.Parameter(torch.Tensor([1.0]), requires_grad=learn_msg_scale)
         self.act = nn.ReLU()
 
     def message_norm(self, x, msg):
@@ -56,28 +71,20 @@ class GENConv(nn.Module):
         device = x.device
         dim = x.shape[1]
         num_nodes = x.shape[0]
-        edge_msg = x[edge_index[1]] # if edge_attr is None else x[edge_index[1]] + edge_attr
+        edge_msg = x[edge_index[1]]  # if edge_attr is None else x[edge_index[1]] + edge_attr
         edge_msg = self.act(edge_msg) + self.eps
 
         if self.aggr == "softmax_sg":
-            h = mul_edge_softmax(
-                edge_index,
-                self.beta * edge_msg,
-                shape=(num_nodes, num_nodes)
-            )
+            h = mul_edge_softmax(edge_index, self.beta * edge_msg, shape=(num_nodes, num_nodes))
             h = edge_msg * h
         elif self.aggr == "softmax":
-            h = mul_edge_softmax(
-                edge_index,
-                edge_msg,
-                shape=(num_nodes, num_nodes)
-            )
+            h = mul_edge_softmax(edge_index, edge_msg, shape=(num_nodes, num_nodes))
             h = edge_msg * h
         elif self.aggr == "powermean":
             deg = spmm(
                 indices=edge_index,
                 values=torch.ones(edge_index.shape[1]),
-                b=torch.ones(num_nodes).unsqueeze(-1).to(device)
+                b=torch.ones(num_nodes).unsqueeze(-1).to(device),
             ).view(-1)
             h = edge_msg.pow(self.t) / deg[edge_index[0]].unsqueeze(-1)
         elif self.aggr == "max":
@@ -85,13 +92,9 @@ class GENConv(nn.Module):
         else:
             raise NotImplementedError
 
-        h = torch.zeros_like(x).scatter_add_(
-            dim=0,
-            index=edge_index[0].unsqueeze(-1).repeat(1, dim),
-            src=h
-        )
+        h = torch.zeros_like(x).scatter_add_(dim=0, index=edge_index[0].unsqueeze(-1).repeat(1, dim), src=h)
         if self.aggr == "powermean":
-            h = h.pow(1. / self.p)
+            h = h.pow(1.0 / self.p)
         if self.use_msg_norm:
             h = self.message_norm(x, h)
         h = self.mlp(h)
@@ -99,15 +102,33 @@ class GENConv(nn.Module):
 
 
 class DeepGCNLayer(nn.Module):
+    """
+    Implementation of DeeperGCN in paper `"DeeperGCN: All You Need to Train Deeper GCNs"` <https://arxiv.org/abs/2006.07739>
+
+    Parameters
+    -----------
+    in_feat : int
+        Size of each input sample
+    out_feat : int
+        Size of each output sample
+    conv : class
+        Base convolution layer.
+    connection : str
+        Residual connection type, `res` or `res+`.
+    activation : str
+    dropout : float
+    checkpoint_grad : bool
+    """
+
     def __init__(
-            self,
-            in_feat,
-            out_feat,
-            conv,
-            connection="res",
-            activation="relu",
-            dropout=0.0,
-            checkpoint_grad=False,
+        self,
+        in_feat,
+        out_feat,
+        conv,
+        connection="res",
+        activation="relu",
+        dropout=0.0,
+        checkpoint_grad=False,
     ):
         super(DeepGCNLayer, self).__init__()
         self.conv = conv
@@ -182,25 +203,25 @@ class DeeperGCN(BaseModel):
             learn_beta=args.learn_beta,
             learn_p=args.learn_p,
             learn_msg_scale=args.learn_msg_scale,
-            use_msg_norm=args.use_msg_norm
+            use_msg_norm=args.use_msg_norm,
         )
 
     def __init__(
-            self,
-            in_feat,
-            hidden_size,
-            out_feat,
-            num_layers,
-            connection="res+",
-            activation="relu",
-            dropout=.0,
-            aggr="max",
-            beta=1.0,
-            p=1.0,
-            learn_beta=False,
-            learn_p=False,
-            learn_msg_scale=True,
-            use_msg_norm=False
+        self,
+        in_feat,
+        hidden_size,
+        out_feat,
+        num_layers,
+        connection="res+",
+        activation="relu",
+        dropout=0.0,
+        aggr="max",
+        beta=1.0,
+        p=1.0,
+        learn_beta=False,
+        learn_p=False,
+        learn_msg_scale=True,
+        use_msg_norm=False,
     ):
         super(DeeperGCN, self).__init__()
         self.dropout = dropout
@@ -222,7 +243,7 @@ class DeeperGCN(BaseModel):
                         learn_beta=learn_beta,
                         learn_p=learn_p,
                         use_msg_norm=use_msg_norm,
-                        learn_msg_scale=learn_msg_scale
+                        learn_msg_scale=learn_msg_scale,
                     ),
                     connection=connection,
                     activation=activation,
@@ -241,10 +262,11 @@ class DeeperGCN(BaseModel):
         h = self.activation(self.norm(h))
         h = F.dropout(h, p=self.dropout, training=self.training)
         h = self.fc(h)
-        return F.log_softmax(h, dim=-1)
+        return h
 
-    def loss(self, x, edge_index, y, x_mask):
-        pred = self.forward(x, edge_index)[x_mask]
+    def node_classification_loss(self, x, edge_index, y, x_mask):
+        pred = self.forward(x, edge_index)
+        pred = F.log_softmax(pred, dim=-1)[x_mask]
         return F.nll_loss(pred, y)
 
     def predict(self, x, edge_index):

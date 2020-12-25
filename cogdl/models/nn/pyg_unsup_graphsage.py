@@ -12,12 +12,25 @@ from cogdl.models.nn.graphsage import sage_sampler, GraphSAGELayer
 
 
 class SAGE(nn.Module):
-    def sampling(self, edge_index, num_sample):
-        return sage_sampler(self.adjlist, edge_index, num_sample)
+    """
+    Implementation of unsupervised GraphSAGE in paper `"Inductive Representation Learning on Large Graphs"` <https://cs.stanford.edu/people/jure/pubs/graphsage-nips17.pdf>
 
-    def __init__(
-        self, num_features, hidden_size, num_layers, sample_size, dropout, walk_length, negative_samples
-    ):
+    Parameters
+    ----------
+    num_features : int
+        Size of each input sample
+    hidden_size : int
+    num_layers : int
+        The number of GNN layers.
+    samples_size : list
+        The number sampled neighbors of different orders
+    dropout : float
+    walk_length : int
+        The length of random walk
+    negative_samples : int
+    """
+
+    def __init__(self, num_features, hidden_size, num_layers, sample_size, dropout, walk_length, negative_samples):
         super(SAGE, self).__init__()
         self.adjlist = {}
         self.num_features = num_features
@@ -33,12 +46,7 @@ class SAGE(nn.Module):
 
         shapes = [num_features] + [hidden_size] * num_layers
 
-        self.convs = nn.ModuleList(
-            [
-                GraphSAGELayer(shapes[layer], shapes[layer+1])
-                for layer in range(num_layers)
-            ]
-        )
+        self.convs = nn.ModuleList([GraphSAGELayer(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
 
     def forward(self, x, edge_index):
         for i in range(self.num_layers):
@@ -53,9 +61,12 @@ class SAGE(nn.Module):
         x = self.forward(data.x, data.edge_index)
         device = x.device
         # if self.walk_res is None:
-        self.walk_res = random_walk(data.edge_index[0], data.edge_index[1],
-                                    start=torch.arange(0, x.shape[0]).to(device),
-                                    walk_length=self.walk_length)[:, 1:]
+        self.walk_res = random_walk(
+            data.edge_index[0],
+            data.edge_index[1],
+            start=torch.arange(0, x.shape[0]).to(device),
+            walk_length=self.walk_length,
+        )[:, 1:]
 
         if not self.num_nodes:
             self.num_nodes = int(torch.max(data.edge_index)) + 1
@@ -66,18 +77,21 @@ class SAGE(nn.Module):
         ).to(device)
 
         pos_loss = -torch.log(
-            torch.sigmoid(
-                torch.sum(x.unsqueeze(1).repeat(1, self.walk_length, 1) * x[self.walk_res], dim=-1)
-            )
+            torch.sigmoid(torch.sum(x.unsqueeze(1).repeat(1, self.walk_length, 1) * x[self.walk_res], dim=-1))
         ).mean()
         neg_loss = -torch.log(
-            torch.sigmoid(-torch.sum(x.unsqueeze(1).repeat(1, self.num_negative_samples, 1) * x[self.negative_samples], dim=-1))
+            torch.sigmoid(
+                -torch.sum(x.unsqueeze(1).repeat(1, self.num_negative_samples, 1) * x[self.negative_samples], dim=-1)
+            )
         ).mean()
-        return (pos_loss + neg_loss)/2
+        return (pos_loss + neg_loss) / 2
 
     def embed(self, data):
         emb = self.forward(data.x, data.edge_index)
         return emb
+
+    def sampling(self, edge_index, num_sample):
+        return sage_sampler(self.adjlist, edge_index, num_sample)
 
 
 @register_model("unsup_graphsage")
@@ -115,8 +129,18 @@ class Graphsage(BaseModel):
         )
 
     def __init__(
-            self, num_features, hidden_size, num_classes, num_layers,
-            sample_size, dropout, walk_length, negative_samples, lr, epochs, patience
+        self,
+        num_features,
+        hidden_size,
+        num_classes,
+        num_layers,
+        sample_size,
+        dropout,
+        walk_length,
+        negative_samples,
+        lr,
+        epochs,
+        patience,
     ):
         super(Graphsage, self).__init__()
         self.model = SAGE(num_features, hidden_size, num_layers, sample_size, dropout, walk_length, negative_samples)
@@ -125,12 +149,11 @@ class Graphsage(BaseModel):
         self.lr = lr
         self.nhid = hidden_size
         self.nclass = num_classes
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def train(self, data):
         data.apply(lambda x: x.to(self.device))
         self.model.to(self.device)
-        device = data.x.device
         best = 1e9
         cnt_wait = 0
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=0.0)
@@ -141,17 +164,16 @@ class Graphsage(BaseModel):
             optimizer.zero_grad()
 
             loss = self.model.loss(data)
-            epoch_iter.set_description(f'Epoch: {epoch:03d}, Loss: {loss.item():.4f}')
+            epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss.item():.4f}")
 
             if loss < best:
                 best = loss
-                best_t = epoch
                 cnt_wait = 0
             else:
                 cnt_wait += 1
 
             if cnt_wait == self.patience:
-                print('Early stopping!')
+                print("Early stopping!")
                 break
 
             loss.backward()
@@ -163,8 +185,7 @@ class Graphsage(BaseModel):
             "idx_train": data.train_mask,
             "idx_val": data.val_mask,
             "idx_test": data.test_mask,
-            "num_classes": self.nclass
+            "num_classes": self.nclass,
         }
         result = LogRegTrainer().train(embeds, data.y, opt)
         return result
-

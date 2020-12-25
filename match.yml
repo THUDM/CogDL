@@ -1,5 +1,6 @@
 node_classification:
   - model:
+    - gdc_gcn
     - gcn
     - gat
     - drgat
@@ -9,7 +10,8 @@ node_classification:
     - srgcn
     - mixhop
     - graphsage
-    - unet
+    - pairnorm
+    - pyg_unet
     - gcnii
     - chebyshev
     - pyg_gcn
@@ -18,11 +20,21 @@ node_classification:
     - gcnii
     - gpt_gnn
     - jknet
+    - sign
+    - jknet
+    - ppnp
+    - sgcpn
+    - sgc
+    - dropedge_gcn
+    - unet
+    - pprgo
     dataset:
     - cora
     - citeseer
     - pubmed
     - ogbn-arxiv
+    - reddit
+    - jknet_cora
 unsupervised_node_classification:
   - model:
     - prone
@@ -46,6 +58,7 @@ unsupervised_node_classification:
     - unsup_graphsage
     - dgi
     - mvgrl
+    - grace
     dataset:
     - cora
     - citeseer
@@ -57,6 +70,8 @@ graph_classification:
     - sortpool
     - dgcnn
     - patchy_san
+    - hgpsl
+    - sagpool
     dataset:
     - mutag
     - imdb-b
@@ -99,6 +114,23 @@ link_prediction:
     - wn18
     - wn18rr
     - fb13s
+  - model:
+    - gcn
+    - gat
+    - grand
+    - mlp
+    - gcnii
+    - ppnp
+    - appnp
+    - chebyshev
+    - srgcn
+    - unet
+    - sgc
+    - mixhop
+    dataset:
+    - cora
+    - pubmed
+    - citeseer
 multiplex_link_prediction:
   - model:
     - gatne

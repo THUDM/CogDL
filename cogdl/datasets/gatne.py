@@ -23,9 +23,7 @@ def read_gatne_data(folder):
             items = line.strip().split()
             if items[0] not in valid_data:
                 valid_data[items[0]] = [[], []]
-            valid_data[items[0]][1 - int(items[3])].append(
-                [int(items[1]), int(items[2])]
-            )
+            valid_data[items[0]][1 - int(items[3])].append([int(items[1]), int(items[2])])
 
     test_data = {}
     with open(osp.join(folder, "{}".format("test.txt")), "r") as f:
@@ -33,9 +31,7 @@ def read_gatne_data(folder):
             items = line.strip().split()
             if items[0] not in test_data:
                 test_data[items[0]] = [[], []]
-            test_data[items[0]][1 - int(items[3])].append(
-                [int(items[1]), int(items[2])]
-            )
+            test_data[items[0]][1 - int(items[3])].append([int(items[1]), int(items[2])])
 
     data = Data()
     data.train_data = train_data
@@ -89,7 +85,7 @@ class GatneDataset(Dataset):
 
 @register_dataset("amazon")
 class AmazonDataset(GatneDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "amazon"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(AmazonDataset, self).__init__(path, dataset)
@@ -97,7 +93,7 @@ class AmazonDataset(GatneDataset):
 
 @register_dataset("twitter")
 class TwitterDataset(GatneDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "twitter"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(TwitterDataset, self).__init__(path, dataset)
@@ -105,7 +101,7 @@ class TwitterDataset(GatneDataset):
 
 @register_dataset("youtube")
 class YouTubeDataset(GatneDataset):
-    def __init__(self):
+    def __init__(self, args=None):
         dataset = "youtube"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(YouTubeDataset, self).__init__(path, dataset)

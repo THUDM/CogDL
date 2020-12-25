@@ -8,10 +8,7 @@ from torch_geometric.nn import NNConv, Set2Set
 
 from .pyg_gin import GINLayer, GINMLP
 from cogdl.data import DataLoader
-from cogdl.utils import (
-    batch_mean_pooling,
-    batch_sum_pooling
-)
+from cogdl.utils import batch_mean_pooling, batch_sum_pooling
 from .. import BaseModel, register_model
 
 
@@ -19,14 +16,14 @@ class SUPEncoder(torch.nn.Module):
     r"""Encoder used in supervised model with Set2set in paper `"Order Matters: Sequence to sequence for sets"
     <https://arxiv.org/abs/1511.06391>` and NNConv in paper `"Dynamic Edge-Conditioned Filters in Convolutional Neural Networks on
     Graphs" <https://arxiv.org/abs/1704.02901>`
-
     """
+
     def __init__(self, num_features, dim, num_layers=1):
         super(SUPEncoder, self).__init__()
         self.lin0 = torch.nn.Linear(num_features, dim)
 
         nnu = nn.Sequential(nn.Linear(5, 128), nn.ReLU(), nn.Linear(128, dim * dim))
-        self.conv = NNConv(dim, dim, nnu, aggr='mean', root_weight=False)
+        self.conv = NNConv(dim, dim, nnu, aggr="mean", root_weight=False)
         self.gru = nn.GRU(dim, dim)
 
         self.set2set = Set2Set(dim, processing_steps=3)
@@ -65,7 +62,8 @@ class Encoder(nn.Module):
         Aggragation type, default : ``sum``.
 
     """
-    def __init__(self, in_feats, hidden_dim, num_layers=3, num_mlp_layers=2, pooling='sum'):
+
+    def __init__(self, in_feats, hidden_dim, num_layers=3, num_mlp_layers=2, pooling="sum"):
         super(Encoder, self).__init__()
         self.num_layers = num_layers
         self.gnn_layers = nn.ModuleList()
@@ -75,12 +73,10 @@ class Encoder(nn.Module):
                 mlp = GINMLP(in_feats, hidden_dim, hidden_dim, num_mlp_layers, use_bn=True)
             else:
                 mlp = GINMLP(hidden_dim, hidden_dim, hidden_dim, num_mlp_layers, use_bn=True)
-            self.gnn_layers.append(GINLayer(
-               mlp, eps=0, train_eps=True
-            ))
+            self.gnn_layers.append(GINLayer(mlp, eps=0, train_eps=True))
             self.bn_layers.append(nn.BatchNorm1d(hidden_dim))
 
-        if pooling == 'sum':
+        if pooling == "sum":
             self.pooling = batch_sum_pooling
         elif pooling == "mean":
             self.pooling = batch_mean_pooling
@@ -114,6 +110,7 @@ class FF(nn.Module):
     out_feats : int
         Size of each output sample
     """
+
     def __init__(self, in_feats, out_feats):
         super(FF, self).__init__()
         self.block = GINMLP(in_feats, out_feats, out_feats, num_layers=3, use_bn=False)
@@ -144,9 +141,8 @@ class InfoGraph(BaseModel):
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=512)
         parser.add_argument("--batch-size", type=int, default=20)
-        parser.add_argument("--target", dest='target', type=int, default=0,
-                            help='')
-        parser.add_argument("--train-num", dest='train_num', type=int, default=5000)
+        parser.add_argument("--target", dest="target", type=int, default=0, help="")
+        parser.add_argument("--train-num", dest="train_num", type=int, default=5000)
         parser.add_argument("--num-layers", type=int, default=1)
         parser.add_argument("--sup", dest="sup", action="store_true")
         parser.add_argument("--epoch", type=int, default=15)
@@ -156,22 +152,19 @@ class InfoGraph(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(
-            args.num_features,
-            args.hidden_size,
-            args.num_classes,
-            args.num_layers,
-            args.sup
-        )
+        return cls(args.num_features, args.hidden_size, args.num_classes, args.num_layers, args.sup)
 
     @classmethod
     def split_dataset(cls, dataset, args):
         if args.dataset == "qm9":
             test_dataset = dataset[:10000]
             val_dataset = dataset[10000:20000]
-            train_dataset = dataset[20000:20000 + args.train_num]
-            return DataLoader(train_dataset, batch_size=args.batch_size), DataLoader(val_dataset, batch_size=args.batch_size),\
-                   DataLoader(test_dataset, batch_size=args.batch_size)
+            train_dataset = dataset[20000 : 20000 + args.train_num]
+            return (
+                DataLoader(train_dataset, batch_size=args.batch_size),
+                DataLoader(val_dataset, batch_size=args.batch_size),
+                DataLoader(test_dataset, batch_size=args.batch_size),
+            )
         else:
             random.shuffle(dataset)
             train_size = int(len(dataset) * args.train_ratio)
@@ -192,7 +185,7 @@ class InfoGraph(BaseModel):
         self.emb_dim = hidden_dim
         self.out_feats = out_feats
 
-        self.sem_fc1 = nn.Linear(num_layers*hidden_dim, hidden_dim)
+        self.sem_fc1 = nn.Linear(num_layers * hidden_dim, hidden_dim)
         self.sem_fc2 = nn.Linear(hidden_dim, out_feats)
 
         if not sup:
@@ -201,10 +194,10 @@ class InfoGraph(BaseModel):
         else:
             self.unsup_encoder = Encoder(in_feats, hidden_dim, num_layers)
             self.sem_encoder = Encoder(in_feats, hidden_dim, num_layers)
-        self._fc1 = FF(num_layers*hidden_dim, hidden_dim)
-        self._fc2 = FF(num_layers*hidden_dim, hidden_dim)
-        self.local_dis = FF(num_layers*hidden_dim, hidden_dim)
-        self.global_dis = FF(num_layers*hidden_dim, hidden_dim)
+        self._fc1 = FF(num_layers * hidden_dim, hidden_dim)
+        self._fc2 = FF(num_layers * hidden_dim, hidden_dim)
+        self.local_dis = FF(num_layers * hidden_dim, hidden_dim)
+        self.global_dis = FF(num_layers * hidden_dim, hidden_dim)
 
         self.criterion = nn.MSELoss()
 
@@ -253,7 +246,7 @@ class InfoGraph(BaseModel):
             pos_mask[nid][gid] = 1
             neg_mask[nid][gid] = 0
         glob_local_mi = torch.mm(local_encode, global_encode.t())
-        loss = InfoGraph.mi_loss(pos_mask, neg_mask, glob_local_mi, num_nodes, num_nodes * (num_graphs-1))
+        loss = InfoGraph.mi_loss(pos_mask, neg_mask, glob_local_mi, num_nodes, num_nodes * (num_graphs - 1))
         return graph_feat, loss
 
     def unsup_sup_loss(self, x, edge_index, batch):
@@ -276,8 +269,8 @@ class InfoGraph(BaseModel):
         pos_mi = pos_mask * mi
         neg_mi = neg_mask * mi
 
-        pos_loss = (-math.log(2.) + F.softplus(-pos_mi)).sum()
-        neg_loss = (-math.log(2.) + F.softplus(-neg_mi) + neg_mi).sum()
+        pos_loss = (-math.log(2.0) + F.softplus(-pos_mi)).sum()
+        neg_loss = (-math.log(2.0) + F.softplus(-neg_mi) + neg_mi).sum()
         # pos_loss = F.softplus(-pos_mi).sum()
         # neg_loss = (F.softplus(neg_mi)).sum()
         # pos_loss = pos_mi.sum()

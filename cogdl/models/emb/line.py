@@ -10,7 +10,7 @@ from .. import BaseModel, register_model, alias_draw, alias_setup
 class LINE(BaseModel):
     r"""The LINE model from the `"Line: Large-scale information network embedding"
     <http://arxiv.org/abs/1503.03578>`_ paper.
-    
+
     Args:
         hidden_size (int) : The dimension of node representation.
         walk_length (int) : The walk length.
@@ -18,10 +18,10 @@ class LINE(BaseModel):
         negative (int) : The number of nagative samples for each edge.
         batch_size (int) : The batch size of training in LINE.
         alpha (float) : The initial learning rate of SGD.
-        order (int) : 1 represents perserving 1-st order proximity, 2 represents 2-nd, 
+        order (int) : 1 represents perserving 1-st order proximity, 2 represents 2-nd,
         while 3 means both of them (each of them having dimension/2 node representation).
     """
-    
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -52,9 +52,7 @@ class LINE(BaseModel):
             args.order,
         )
 
-    def __init__(
-        self, dimension, walk_length, walk_num, negative, batch_size, alpha, order
-    ):
+    def __init__(self, dimension, walk_length, walk_num, negative, batch_size, alpha, order):
         self.dimension = dimension
         self.walk_length = walk_length
         self.walk_num = walk_num
@@ -91,17 +89,13 @@ class LINE(BaseModel):
         if self.order == 1 or self.order == 3:
             print("train line with 1-order")
             print(type(self.dimension))
-            self.emb_vertex = (
-                np.random.random((self.num_node, self.dimension)) - 0.5
-            ) / self.dimension
+            self.emb_vertex = (np.random.random((self.num_node, self.dimension)) - 0.5) / self.dimension
             self._train_line(order=1)
             embedding1 = preprocessing.normalize(self.emb_vertex, "l2")
 
         if self.order == 2 or self.order == 3:
             print("train line with 2-order")
-            self.emb_vertex = (
-                np.random.random((self.num_node, self.dimension)) - 0.5
-            ) / self.dimension
+            self.emb_vertex = (np.random.random((self.num_node, self.dimension)) - 0.5) / self.dimension
             self.emb_context = self.emb_vertex
             self._train_line(order=2)
             embedding2 = preprocessing.normalize(self.emb_vertex, "l2")
@@ -150,11 +144,7 @@ class LINE(BaseModel):
                     for i in range(batch_size):
                         target[i] = alias_draw(self.node_table, self.node_prob)
                 if order == 1:
-                    self._update(
-                        self.emb_vertex[u], self.emb_vertex[target], vec_error, label
-                    )
+                    self._update(self.emb_vertex[u], self.emb_vertex[target], vec_error, label)
                 else:
-                    self._update(
-                        self.emb_vertex[u], self.emb_context[target], vec_error, label
-                    )
+                    self._update(self.emb_vertex[u], self.emb_context[target], vec_error, label)
             self.emb_vertex[u] += vec_error

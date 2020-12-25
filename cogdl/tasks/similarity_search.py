@@ -1,3 +1,4 @@
+import argparse
 import networkx as nx
 import numpy as np
 from collections import defaultdict
@@ -7,12 +8,13 @@ from cogdl.models import build_model
 
 from . import BaseTask, register_task
 
+
 @register_task("similarity_search")
 class SimilaritySearch(BaseTask):
     """Similarity Search task."""
 
     @staticmethod
-    def add_args(parser):
+    def add_args(_: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # need no extra argument
         pass
@@ -24,7 +26,6 @@ class SimilaritySearch(BaseTask):
         model = build_model(args) if model is None else model
         self.model = model
         self.hidden_size = args.hidden_size
-
 
     def _evaluate(self, emb_1, emb_2, dict_1, dict_2):
         shared_keys = set(dict_1.keys()) & set(dict_2.keys())
@@ -40,7 +41,7 @@ class SimilaritySearch(BaseTask):
         reindex_dict = dict([(x, i) for i, x in enumerate(reindex)])
         emb_2 = emb_2[reindex]
         k_list = [20, 40]
-        id2name = dict([(dict_2[k], k) for k in dict_2])
+        # id2name = dict([(dict_2[k], k) for k in dict_2])
 
         all_results = defaultdict(list)
         for key in shared_keys:
@@ -50,9 +51,7 @@ class SimilaritySearch(BaseTask):
             idxs = scores.argsort()[::-1]
             for k in k_list:
                 all_results[k].append(int(reindex_dict[dict_2[key]] in idxs[:k]))
-        res = dict(
-            (f"Recall @ {k}", sum(all_results[k]) / len(all_results[k])) for k in k_list
-        )
+        res = dict((f"Recall @ {k}", sum(all_results[k]) / len(all_results[k])) for k in k_list)
 
         return res
 
@@ -69,6 +68,4 @@ class SimilaritySearch(BaseTask):
     def train(self):
         emb_1 = self._train_wrap(self.data[0])
         emb_2 = self._train_wrap(self.data[1])
-        return dict(
-            self._evaluate(emb_1, emb_2, self.data[0].y, self.data[1].y)
-        )
+        return dict(self._evaluate(emb_1, emb_2, self.data[0].y, self.data[1].y))

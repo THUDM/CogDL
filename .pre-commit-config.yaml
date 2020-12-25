@@ -1,0 +1,13 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 20.8b1
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=120] # this should be in pyproject.toml not sure why its not picked up
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.8.4
+    hooks:
+      - id: flake8
+        additional_dependencies: [flake8-typing-imports==1.9.0]
+        args: ['--config=.flake8']

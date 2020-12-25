@@ -23,7 +23,7 @@ class NodeAttention(nn.Module):
         device = x.device
         N, dim = x.shape
         diag_val = self.p(x)
-        diag_val = F.sigmoid(diag_val)
+        diag_val = torch.sigmoid(diag_val)
         self.dropout(diag_val)
 
         row, col = edge_index
@@ -45,7 +45,6 @@ class EdgeAttention(nn.Module):
         self.dropout = nn.Dropout(0.5)
 
     def forward(self, x, edge_index, edge_attr):
-        device = x.device
         N, dim = x.shape
 
         row, col = edge_index
@@ -128,9 +127,11 @@ class PPR(nn.Module):
         theta = self.alpha * (1 - self.alpha)
         result = [theta * adj]
 
-        for i in range(1, self.steps-1):
+        for i in range(1, self.steps - 1):
             theta = theta * (1 - self.alpha)
-            adj_ind, adj_val = spspmm(edge_index, edge_attr_t, result[i-1]._indices(), result[i-1]._values(), N, N, N, True)
+            adj_ind, adj_val = spspmm(
+                edge_index, edge_attr_t, result[i - 1]._indices(), result[i - 1]._values(), N, N, N, True
+            )
             result.append(torch.sparse_coo_tensor(adj_ind, adj_val, size=(N, N)))
 
         identity = torch.sparse_coo_tensor([range(N)] * 2, torch.ones(N), size=(N, N)).to(x.device)
@@ -146,7 +147,11 @@ class PPR(nn.Module):
 class HeatKernel(nn.Module):
     def __init__(self, in_feat):
         super(HeatKernel, self).__init__()
-        self.t = nn.Parameter(torch.zeros(1,))
+        self.t = nn.Parameter(
+            torch.zeros(
+                1,
+            )
+        )
 
     def forward(self, x, edge_index, edge_attr):
         row, col = edge_index
@@ -191,7 +196,7 @@ class RowUniform(nn.Module):
     def forward(self, edge_index, edge_attr, N):
         device = edge_attr.device
         ones = torch.ones(N, 1, device=device)
-        rownorm = 1. / spmm(edge_index, edge_attr, N, N, ones).view(-1)
+        rownorm = 1.0 / spmm(edge_index, edge_attr, N, N, ones).view(-1)
         row = rownorm[edge_index[0]]
         edge_attr_t = row * edge_attr
 
@@ -206,7 +211,7 @@ class RowSoftmax(nn.Module):
         device = edge_attr.device
         edge_attr_t = torch.exp(edge_attr)
         ones = torch.ones(N, 1, device=device)
-        rownorm = 1. / spmm(edge_index, edge_attr_t, N, N, ones).view(-1)
+        rownorm = 1.0 / spmm(edge_index, edge_attr_t, N, N, ones).view(-1)
         row = rownorm[edge_index[0]]
         edge_attr_t = row * edge_attr_t
 
@@ -220,7 +225,7 @@ class ColumnUniform(nn.Module):
     def forward(self, edge_index, edge_attr, N):
         device = edge_attr.device
         ones = torch.ones(N, 1, device=device)
-        rownorm = 1. / spmm(edge_index, edge_attr, N, N, ones).view(-1)
+        rownorm = 1.0 / spmm(edge_index, edge_attr, N, N, ones).view(-1)
         col = rownorm[edge_index[1]]
         edge_attr_t = col * edge_attr
 
@@ -258,8 +263,9 @@ def act_normalization(norm_type):
 
 
 # ============
-# activation 
+# activation
 # ============
+
 
 def act_map(act):
     if act == "linear":

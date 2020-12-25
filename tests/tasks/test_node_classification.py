@@ -512,6 +512,19 @@ def test_sgc_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+def test_xss_jknet():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "xss-jknet"
+    args.hidden_size = 32
+    args.lr = 0.006
+    args.n_layers = 3
+    args.aggregation = "sum"
+    args.sparse = True
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
 
 if __name__ == "__main__":
     test_gdc_gcn_cora()
@@ -547,3 +560,4 @@ if __name__ == "__main__":
     test_sgcpn_cora()
     test_ppnp_cora()
     test_appnp_cora()
+    test_xss_jknet()

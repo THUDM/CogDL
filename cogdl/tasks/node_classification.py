@@ -97,8 +97,13 @@ class NodeClassification(BaseTask):
 
         self.dataset = dataset
         self.data = dataset[0]
-        print(self.data.edge_index)
-        print(self.data.edge_index.shape)
+
+        # add dropedge args
+        self.dropedge = float(args.dropedge)
+        # store the original edge index
+        self.original_edge_idx = torch.tensor(self.data.edge_index)
+        self.original_edge_num = self.original_edge_idx.shape[1]
+
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
         args.num_nodes = dataset.data.x.shape[0]
@@ -170,6 +175,13 @@ class NodeClassification(BaseTask):
     def _train_step(self):
         self.model.train()
         self.optimizer.zero_grad()
+
+        # drop the edge
+        remaining_edge_num = int((1 - self.dropedge) * self.original_edge_num)
+        perm = np.random.permutation(self.original_edge_num)
+        remaining_edge = perm[:remaining_edge_num]
+        self.data.edge_index = self.original_edge_idx[:, remaining_edge]
+
         self.model.node_classification_loss(self.data).backward()
         self.optimizer.step()
 

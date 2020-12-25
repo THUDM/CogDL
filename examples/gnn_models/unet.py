@@ -14,19 +14,25 @@ DATASET_REGISTRY = {}
 def build_default_args_for_node_classification(dataset):
     cpu = not torch.cuda.is_available()
     args = {
-        "lr": 0.001,
-        "weight_decay": 0.001,
+        "lr": 0.01,
+        "weight_decay": 0.0005,
         "max_epoch": 1000,
-        "patience": 200,
+        "patience": 100,
         "cpu": cpu,
         "device_id": [0],
         "seed": [1],
-        "dropout": 0.92,
-        "hidden_size": 32,
-        "num_layers": 2,
+        "n_dropout": 0.90,
+        "adj_dropout": 0.05,
+        "hidden_size": 128,
+        "aug_adj": False,
+        "improved": False,
+        "n_pool": 4,
+        "pool_rate": [0.7, 0.5, 0.5, 0.4],
+        "activation": "relu",
         "task": "node_classification",
         "model": "unet",
         "dataset": dataset,
+        "missing_rate": -1,
     }
     return build_args_from_dict(args)
 

@@ -32,6 +32,16 @@ def test_gcn_cora():
     assert 0 <= ret["Acc"] <= 1
 
 
+def test_jknet_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "jknet"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+
 def test_gat_cora():
     args = get_default_args()
     args.task = "node_classification"

@@ -1,0 +1,13 @@
+python scripts/train.py --task unsupervised_node_classification --dataset wikipedia --model deepwalk --cpu
+
+python scripts/train.py --task node_classification --dataset citeseer --model gcn
+
+python scripts/train.py --task heterogeneous_node_classification --dataset gtn-acm --model han --cpu
+
+python -m pip uninstall numba
+python -m pip install numba
+
+cd C:\cogdl\cogdl
+
+
+python scripts/train.py --task node_classification --dataset citeseer --model gat --cpu

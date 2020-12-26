@@ -1,6 +1,9 @@
+from __future__ import division
 import itertools
 import random
 from collections import defaultdict
+
+from torch_scatter import scatter_add
 
 import numpy as np
 import torch
@@ -223,6 +226,42 @@ def set_random_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
+
+
+def precision(pred, target, num_classes):
+    tp = []
+    fp = []
+    for i in range(num_classes):
+        tp.append(((pred == i) & (target == i)).sum())
+        fp.append(((pred == i) & (target != i)).sum())
+    tp = torch.tensor(tp).to(torch.float)
+    fp = torch.tensor(fp).to(torch.float)
+    out = tp / (tp + fp)
+    out[torch.isnan(out)] = 0
+    return out
+
+
+def recall(pred, target, num_classes):
+    tp = []
+    fn = []
+    for i in range(num_classes):
+        tp.append(((pred == i) & (target == i)).sum())
+        fn.append(((pred != i) & (target == i)).sum())
+    tp = torch.tensor(tp).to(torch.float)
+    fn = torch.tensor(fn).to(torch.float)
+    out = tp / (tp + fn)
+    out[torch.isnan(out)] = 0
+    return out
+
+
+def f1_score(pred, target, num_classes):
+    prec = precision(pred, target, num_classes)
+    rec = recall(pred, target, num_classes)
+
+    score = 2 * (prec * rec) / (prec + rec)
+    score[torch.isnan(score)] = 0
+
+    return score
 
 
 if __name__ == "__main__":

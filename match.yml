@@ -126,6 +126,7 @@ heterogeneous_node_classification:
   - model:
     - gtn
     - han
+    - unpyg_han
     dataset:
     - gtn-dblp
     - gtn-acm

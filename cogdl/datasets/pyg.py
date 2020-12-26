@@ -79,7 +79,7 @@ class DDDataset(TUDataset):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
-        super(MUTAGDataset, self).__init__(path, name=dataset)
+        super(DDDataset, self).__init__(path, name=dataset)
 
 
 @register_dataset("imdb-b")

@@ -26,6 +26,7 @@ node_classification:
     - sgc
     - dropedge_gcn
     - gunet
+    - gcnbg
     dataset:
     - cora
     - citeseer

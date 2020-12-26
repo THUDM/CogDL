@@ -11,3 +11,5 @@ cd C:\cogdl\cogdl
 
 
 python scripts/train.py --task node_classification --dataset citeseer --model gat --cpu
+
+python scripts/train.py --task heterogeneous_node_classification --dataset gtn-acm --model unpyg_han --cpu

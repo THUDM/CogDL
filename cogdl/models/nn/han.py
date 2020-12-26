@@ -13,7 +13,7 @@ import torch_sparse
 # from torch_geometric.nn import GCNConv, GATConv
 
 # from torch_geometric.utils import f1_score
-from torch_geometric.nn import GATConv
+# from torch_geometric.nn import GATConv
 
 from cogdl.utils import f1_score
 

@@ -72,6 +72,15 @@ class MUTAGDataset(TUDataset):
             TUDataset(path, name=dataset)
         super(MUTAGDataset, self).__init__(path, name=dataset)
 
+@register_dataset("dd")
+class MUTAGDataset(TUDataset):
+    def __init__(self, args=None):
+        dataset = "DD"
+        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        if not osp.exists(path):
+            TUDataset(path, name=dataset)
+        super(MUTAGDataset, self).__init__(path, name=dataset)
+
 
 @register_dataset("imdb-b")
 class ImdbBinaryDataset(TUDataset):

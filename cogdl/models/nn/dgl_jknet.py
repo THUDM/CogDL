@@ -1,51 +1,31 @@
+"""Train Jumping Knowledge Network with Cora dataset.
+"""
+import numpy as np
+import networkx as nx
+import scipy.sparse as sp
+from sklearn import preprocessing
+from .. import BaseModel, register_model
+from tqdm import tqdm
+import argparse
+
+import dgl
+import numpy as np
+from sklearn.model_selection import train_test_split
 import torch
 import torch.nn.functional as F
-import dgl
+
 import dgl.function as fn
-import numpy as np
-from tqdm import tqdm
+
+import torch.nn.functional as F
+
+
+from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificationModel
+from .. import register_model
 
 from cogdl.trainers.supervised_trainer import (
     SupervisedHomogeneousNodeClassificationTrainer,
 )
-from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificationModel
-from .. import register_model
 
-class GraphConvLayer(torch.nn.Module):
-    """Graph convolution layer.
-
-    Args:
-        in_features (int): Size of each input node.
-        out_features (int): Size of each output node.
-        aggregation (str): 'sum', 'mean' or 'max'.
-                           Specify the way to aggregate the neighbourhoods.
-    """
-    AGGREGATIONS = {
-        'sum': torch.sum,
-        'mean': torch.mean,
-        'max': torch.max,
-    }
-
-    def __init__(self, in_features, out_features, aggregation='sum'):
-        super(GraphConvLayer, self).__init__()
-
-        if aggregation not in self.AGGREGATIONS.keys():
-            raise ValueError("'aggregation' argument has to be one of "
-                             "'sum', 'mean' or 'max'.")
-        self.aggregate = lambda nodes: self.AGGREGATIONS[aggregation](nodes, dim=1)
-
-        self.linear = torch.nn.Linear(in_features, out_features)
-        self.self_loop_w = torch.nn.Linear(in_features, out_features)
-        self.bias = torch.nn.Parameter(torch.zeros(out_features))
-
-    def forward(self, graph, x):
-        graph.ndata['h'] = x
-        graph.update_all(
-            fn.copy_src(src='h', out='msg'),
-            lambda nodes: {'h': self.aggregate(nodes.mailbox['msg'])})
-        h = graph.ndata.pop('h')
-        h = self.linear(h)
-        return h + self.self_loop_w(x) + self.bias
 
 class JKNetConcat(torch.nn.Module):
     """An implementation of Jumping Knowledge Network (arxiv 1806.03536) which
@@ -83,6 +63,7 @@ class JKNetConcat(torch.nn.Module):
         h = torch.cat(layer_outputs, dim=1)
         return self.last_linear(h)
 
+
 class JKNetMaxpool(torch.nn.Module):
     """An implementation of Jumping Knowledge Network (arxiv 1806.03536) which
     combine layers with Maxpool.
@@ -119,6 +100,43 @@ class JKNetMaxpool(torch.nn.Module):
         h = torch.stack(layer_outputs, dim=0)
         h = torch.max(h, dim=0)[0]
         return self.last_linear(h)
+        # return F.log_softmax(self.last_linear(h),dim=1)
+
+
+
+class GraphConvLayer(torch.nn.Module):
+    """Graph convolution layer.
+
+    Args:
+        in_features (int): Size of each input node.
+        out_features (int): Size of each output node.
+        aggregation (str): 'sum', 'mean' or 'max'.
+                           Specify the way to aggregate the neighbourhoods.
+    """
+
+    AGGREGATIONS = {
+        "sum": torch.sum,
+        "mean": torch.mean,
+        "max": torch.max,
+    }
+
+    def __init__(self, in_features, out_features, aggregation="sum"):
+        super(GraphConvLayer, self).__init__()
+
+        if aggregation not in self.AGGREGATIONS.keys():
+            raise ValueError("'aggregation' argument has to be one of " "'sum', 'mean' or 'max'.")
+        self.aggregate = lambda nodes: self.AGGREGATIONS[aggregation](nodes, dim=1)
+
+        self.linear = torch.nn.Linear(in_features, out_features)
+        self.self_loop_w = torch.nn.Linear(in_features, out_features)
+        self.bias = torch.nn.Parameter(torch.zeros(out_features))
+
+    def forward(self, graph, x):
+        graph.ndata["h"] = x
+        graph.update_all(fn.copy_src(src="h", out="msg"), lambda nodes: {"h": self.aggregate(nodes.mailbox["msg"])})
+        h = graph.ndata.pop("h")
+        h = self.linear(h)
+        return h + self.self_loop_w(x) + self.bias
 
 class JKNetTrainer(SupervisedHomogeneousNodeClassificationTrainer):
     @classmethod
@@ -136,7 +154,7 @@ class JKNetTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         self.model.loss(self.data).backward()
         self.optimizer.step()
 
-    def _test_step(self, split='val', logits=None):
+    def _test_step(self, split="val", logits=None):
         self.model.eval()
         logits = logits if logits else self.model.predict(self.data)
         if split == "train":
@@ -152,17 +170,15 @@ class JKNetTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         return acc, loss
 
     def fit(self, model: SupervisedHomogeneousNodeClassificationModel, dataset):
-        self.optimizer = torch.optim.Adam(
-            model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay
-        )
+        self.optimizer = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay)
         device = self.args.device_id[0] if not self.args.cpu else "cpu"
         data = dataset[0]
         data.apply(lambda x: x.to(device))
         self.max_epoch = self.args.max_epoch
 
-        edge_index = np.array(data.edge_index.to('cpu'))
+        edge_index = np.array(data.edge_index.to("cpu"))
         num_edge = edge_index.shape[1]
-        num_node = data.x.to('cpu').shape[0]
+        num_node = data.x.to("cpu").shape[0]
         self.graph.add_nodes(num_node)
         for i in range(num_edge):
             src, dst = edge_index[:, i]
@@ -182,9 +198,7 @@ class JKNetTrainer(SupervisedHomogeneousNodeClassificationTrainer):
             self._train_step()
             train_acc, _ = self._test_step(split="train")
             val_acc, val_loss = self._test_step(split="val")
-            epoch_iter.set_description(
-                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
-            )
+            epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
             if val_loss <= min_loss or val_acc >= max_score:
                 if val_loss <= best_loss:  # and val_acc >= best_score:
                     best_loss = val_loss
@@ -194,11 +208,11 @@ class JKNetTrainer(SupervisedHomogeneousNodeClassificationTrainer):
 
         print(f"Best accurracy = {best_score}")
 
-        test_acc, _ = self._test_step(split='test')
+        test_acc, _ = self._test_step(split="test")
         print(f"Test accuracy = {test_acc}")
         return dict(Acc=test_acc)
 
-@register_model("jknet")
+@register_model("dgljknet")
 class JKNet(SupervisedHomogeneousNodeClassificationModel):
     @staticmethod
     def add_args(parser):
@@ -233,7 +247,7 @@ class JKNet(SupervisedHomogeneousNodeClassificationModel):
         parser.add_argument('--max-epoch',
                             help='Epochs to train',
                             type=int, default=100)
-        # fmt: on
+
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -249,7 +263,7 @@ class JKNet(SupervisedHomogeneousNodeClassificationModel):
     def __init__(self, in_features, out_features, n_layers, n_units, node_aggregation, layer_aggregation):
         model_args = (in_features, out_features, n_layers, n_units, node_aggregation)
         super(JKNet, self).__init__()
-        if layer_aggregation == 'maxpool':
+        if layer_aggregation == "maxpool":
             self.model = JKNetMaxpool(*model_args)
         else:
             self.model = JKNetConcat(*model_args)
@@ -262,10 +276,7 @@ class JKNet(SupervisedHomogeneousNodeClassificationModel):
         return self.forward(self.graph, data.x)
 
     def loss(self, data):
-        return F.nll_loss(
-            self.forward(self.graph, data.x)[data.train_mask],
-            data.y[data.train_mask]
-        )
+        return F.nll_loss(self.forward(self.graph, data.x)[data.train_mask], data.y[data.train_mask])
 
     def set_graph(self, graph):
         self.graph = graph

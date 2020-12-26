@@ -18,16 +18,16 @@ node_classification:
     - deepergcn
     - gcnii
     - gpt_gnn
-    - jknet
     - ppnp
     - sgcpn
     - sgc
+    - dgljknet
     dataset:
     - cora
     - citeseer
     - pubmed
     - ogbn-arxiv
-    - jknet_cora
+    - dgljknet-cora
 unsupervised_node_classification:
   - model:
     - prone

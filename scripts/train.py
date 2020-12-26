@@ -14,6 +14,7 @@ from cogdl.tasks import build_task
 from cogdl.utils import set_random_seed, tabulate_results
 
 
+
 def main(args):
     if torch.cuda.is_available() and not args.cpu:
         torch.cuda.set_device(args.device_id[0])

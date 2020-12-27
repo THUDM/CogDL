@@ -1,5 +1,6 @@
 node_classification:
   - model:
+    - dropedge_gcn
     - gdc_gcn
     - gcn
     - gat
@@ -24,7 +25,6 @@ node_classification:
     - ppnp
     - sgcpn
     - sgc
-    - dropedge_gcn
     - unet
     - pprgo
     dataset:

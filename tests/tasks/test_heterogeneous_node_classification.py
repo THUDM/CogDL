@@ -39,6 +39,24 @@ def test_gtn_gtn_imdb():
     assert ret["f1"] >= 0 and ret["f1"] <= 1
 
 
+def test_unpyg_gtn_gtn_imdb():
+    args = get_default_args()
+    args.task = "heterogeneous_node_classification"
+    args.dataset = "gtn-imdb"
+    args.model = "unpyg_gtn"
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_edge = dataset.num_edge
+    args.num_nodes = dataset.num_nodes
+    args.num_channels = 2
+    args.num_layers = 2
+    # model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret["f1"] >= 0 and ret["f1"] <= 1
+
+
 def test_han_gtn_acm():
     args = get_default_args()
     args.task = "heterogeneous_node_classification"
@@ -67,7 +85,24 @@ def test_unpyg_han_gtn_acm():
     args.num_edge = dataset.num_edge
     args.num_nodes = dataset.num_nodes
     args.num_layers = 2
-    model = build_model(args)
+    # model = build_model(args)
+    task = build_task(args)
+    ret = task.train()
+    assert ret["f1"] >= 0 and ret["f1"] <= 1
+
+
+def test_unpyg_gtn_gtn_acm():
+    args = get_default_args()
+    args.task = "heterogeneous_node_classification"
+    args.dataset = "gtn-acm"
+    args.model = "unpyg_gtn"
+    dataset = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_edge = dataset.num_edge
+    args.num_nodes = dataset.num_nodes
+    args.num_layers = 2
+    # model = build_model(args)
     task = build_task(args)
     ret = task.train()
     assert ret["f1"] >= 0 and ret["f1"] <= 1

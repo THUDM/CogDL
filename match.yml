@@ -125,6 +125,7 @@ multiplex_node_classification:
 heterogeneous_node_classification:
   - model:
     - gtn
+    - unpyg_gtn
     - han
     - unpyg_han
     dataset:

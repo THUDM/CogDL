@@ -15,7 +15,7 @@ import torch_sparse
 # from torch_geometric.utils import f1_score
 # from torch_geometric.nn import GATConv
 
-from cogdl.utils import f1_score
+from cogdl.utils import f1_score, add_remaining_self_loops
 
 from . import gat
 from .. import BaseModel, register_model
@@ -32,25 +32,34 @@ class AttentionLayer(nn.Module):
 class HANLayer(nn.Module):
     def __init__(self, num_edge, w_in, w_out):
         super(HANLayer, self).__init__()
+        self.num_heads = 8
         self.gat_layer = []
         for _ in range(num_edge):
-        	L = [
-	            gat.SpGraphAttentionLayer(
-	                w_in, w_out // 8, dropout=0, alpha=0.2, concat=True
-	            )
-	            for _ in range(8)
-	        ]
-	        self.gat_layer.append(L)
+            L = [
+                gat.SpGraphAttentionLayer(
+                    w_in, w_out // num_heads, dropout=0, alpha=0.2, concat=True
+                )
+                for _ in range(num_heads)
+            ]
+            # L = gat.SpGraphAttentionLayer(
+            #         w_in, w_out , dropout=0, alpha=0.2, concat=True
+            #     )
+            self.gat_layer.append(L)
             # self.gat_layer.append(GATConv(w_in, w_out // 8, 8))
         self.att_layer = AttentionLayer(w_out)
 
     def forward(self, x, adj):
         output = []
         for i, edge in enumerate(adj):
+            # print(edge[0].shape)
+            # edge_index, _ = add_remaining_self_loops(edge)
             # output.append(self.gat_layer[i](x, edge[0]))
+            
+            # for j in range(self.num_heads):
             output.append(torch.cat([att(x, edge[0]) for att in self.gat_layer[i]], dim=1))
+            # print(i, output[0].shape) 5, 8994*64
         output = torch.stack(output, dim=1)
-        
+        # print(output.shape) 8994*5*64
         return self.att_layer(output)
 
 @register_model("unpyg_han")
@@ -86,6 +95,7 @@ class HAN(BaseModel):
         self.w_out = w_out
         self.num_class = num_class
         self.num_layers = num_layers
+        num_heads = 8
         layers = []
         for i in range(num_layers):
             if i == 0:

@@ -9,6 +9,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from tabulate import tabulate
+from typing import Optional
 
 
 class ArgClass(object):
@@ -149,10 +150,14 @@ def mul_edge_softmax(indices, values, shape):
     return softmax_values
 
 
-def remove_self_loops(indices):
+def remove_self_loops(indices, edge_attr: Optional[torch.Tensor] = None):
     mask = indices[0] != indices[1]
     indices = indices[:, mask]
-    return indices, mask
+    # return indices, mask
+    if edge_attr is None:
+        return indices, mask
+    else:
+        return indices, edge_attr[mask]
 
 
 def get_activation(act):

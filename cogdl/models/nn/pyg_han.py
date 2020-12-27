@@ -28,6 +28,7 @@ class AttentionLayer(nn.Module):
 class HANLayer(nn.Module):
     def __init__(self, num_edge, w_in, w_out):
         super(HANLayer, self).__init__()
+        print(w_in, w_out)
         self.gat_layer = nn.ModuleList()
         for _ in range(num_edge):
             self.gat_layer.append(GATConv(w_in, w_out // 8, 8))
@@ -39,6 +40,7 @@ class HANLayer(nn.Module):
             output.append(self.gat_layer[i](x, edge[0]))
         output = torch.stack(output, dim=1)
 
+        # print(output.shape) #8994*5*64
         return self.att_layer(output)
 
 

@@ -646,7 +646,6 @@ def test_dropedge_inceptiongcn_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
-
 def test_pprgo_cora():
     args = get_default_args()
     args.cpu = True
@@ -668,7 +667,7 @@ def test_pprgo_cora():
         ret = task.train()
         assert 0 <= ret["Acc"] <= 1
        
- def test_dropedge_gcn_cora():
+def test_dropedge_gcn_cora():
     args = get_default_args()
     args.task = "node_classification"
     args.dataset = "cora"
@@ -679,7 +678,7 @@ def test_pprgo_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
     
- def test_dropedge_gcn_citeseer():
+def test_dropedge_gcn_citeseer():
     args = get_default_args()
     args.task = "node_classification"
     args.dataset = "citeseer"
@@ -690,7 +689,7 @@ def test_pprgo_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
- def test_dropedge_gcn_pubmed():
+def test_dropedge_gcn_pubmed():
     args = get_default_args()
     args.task = "node_classification"
     args.dataset = "pubmed"
@@ -700,7 +699,7 @@ def test_pprgo_cora():
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
-
+    
 if __name__ == "__main__":
     test_gdc_gcn_cora()
     test_gcn_cora()

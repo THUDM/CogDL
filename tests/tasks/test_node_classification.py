@@ -651,6 +651,7 @@ def test_dropedge_gcnbg_citeseer():
     args.task = "node_classification"
     args.dataset = "citeseer"
     args.model = "gcnbg"
+    args.dropedge = '0.05'
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1

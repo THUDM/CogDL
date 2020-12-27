@@ -21,9 +21,93 @@ def get_default_args():
         "weight_decay": 5e-4,
         "missing_rate": -1,
         "task": "node_classification",
-        "dataset": "cora"
+        "dataset": "cora",
     }
     return build_args_from_dict(default_dict)
+
+
+def test_gbp_citeseer():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "citeseer"
+    args.model = "gbp"
+
+    dataset = build_dataset(args)
+
+    args.cpu = True
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_layers = 2
+    args.hidden_size = 64
+    args.dropout = 0.5
+    args.alpha = 0.1
+    args.rmax = 1e-5
+    args.rrz = 0.0
+    args.weight_decay = 0.0005
+    args.patience = 100
+    args.max_epoch = 500
+    args.missing_rate = -1
+
+    model = build_model(args)
+    task = build_task(args, dataset=dataset, model=model)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+
+def test_gbp_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "gbp"
+
+    dataset = build_dataset(args)
+
+    args.cpu = True
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_layers = 2
+    args.hidden_size = 64
+    args.dropout = 0.5
+    args.alpha = 0.1
+    args.rmax = 1e-5
+    args.rrz = 0.0
+    args.weight_decay = 0.0005
+    args.patience = 100
+    args.max_epoch = 500
+    args.missing_rate = -1
+
+    model = build_model(args)
+    task = build_task(args, dataset=dataset, model=model)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
+
+def test_gbp_pubmed():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "pubmed"
+    args.model = "gbp"
+
+    dataset = build_dataset(args)
+
+    args.cpu = True
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    args.num_layers = 2
+    args.hidden_size = 64
+    args.dropout = 0.5
+    args.alpha = 0.1
+    args.rmax = 1e-5
+    args.rrz = 0.0
+    args.weight_decay = 0.0005
+    args.patience = 100
+    args.max_epoch = 500
+    args.missing_rate = -1
+
+    model = build_model(args)
+    task = build_task(args, dataset=dataset, model=model)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
 
 
 def test_gdc_gcn_cora():
@@ -648,6 +732,9 @@ def test_dropedge_inceptiongcn_cora():
 
 
 if __name__ == "__main__":
+    test_gbp_citeseer()
+    test_gbp_cora()
+    test_gbp_pubmed()
     test_gdc_gcn_cora()
     test_gcn_cora()
     test_gat_cora()

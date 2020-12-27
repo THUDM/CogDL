@@ -32,3 +32,4 @@ if __name__ == "__main__":
     model = build_model(args)
     task = build_task(args, dataset=dataset, model=model)
     ret = task.train()
+    print(ret)

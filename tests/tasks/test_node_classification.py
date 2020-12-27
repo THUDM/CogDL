@@ -645,6 +645,28 @@ def test_dropedge_inceptiongcn_cora():
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
+    
+def test_dropedgev2_gcn_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "dropedge_gcn"
+    args.baseblock = "inceptiongcn"
+    args.inputlayer = "gcn"
+    args.outputlayer = "gcn"
+    args.hidden_size = 64
+    args.dropout = 0.5
+    args.withbn = False
+    args.withloop = False
+    args.nhiddenlayer = 1
+    args.nbaseblocklayer = 1
+    args.aggrmethod = "add"
+    args.activation = F.relu
+    args.task_type = "full"
+
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
 
 
 def test_pprgo_cora():
@@ -670,6 +692,7 @@ def test_pprgo_cora():
 
 
 if __name__ == "__main__":
+    test_dropedgev2_gcn_cora()
     test_gdc_gcn_cora()
     test_gcn_cora()
     test_gat_cora()

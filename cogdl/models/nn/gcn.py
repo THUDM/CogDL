@@ -76,8 +76,8 @@ class GraphConvolutionBGNorm(nn.Module):
             edge_attr = torch.ones(edge_index.shape[1]).float().to(input.device)
         normalization_attr = torch.ones(input.shape[0]).float().to(input.device)
         normalization_idx = torch.arange(input.shape[0]).repeat(2,1).to(input.device)
-        edge_attr = torch.hstack((edge_attr, normalization_attr)).to(input.device)
-        edge_index = torch.hstack((edge_index, normalization_idx))
+        edge_attr = torch.cat((edge_attr, normalization_attr)).to(input.device)
+        edge_index = torch.cat((edge_index, normalization_idx), dim=1)
         adj = torch.sparse_coo_tensor(
             edge_index,
             edge_attr,

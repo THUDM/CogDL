@@ -22,6 +22,7 @@ def get_default_args():
         "missing_rate": -1,
         "task": "node_classification",
         "dataset": "cora",
+        "dropedge": 0.0,
     }
     return build_args_from_dict(default_dict)
 
@@ -651,7 +652,7 @@ def test_dropedge_gcnbg_citeseer():
     args.task = "node_classification"
     args.dataset = "citeseer"
     args.model = "gcnbg"
-    args.dropedge = '0.05'
+    args.dropedge = 0.05
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1

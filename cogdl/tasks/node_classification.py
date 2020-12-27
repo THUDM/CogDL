@@ -99,10 +99,7 @@ class NodeClassification(BaseTask):
         self.data = dataset[0]
 
         # add dropedge args
-        try:
-            self.dropedge = float(args.dropedge)
-        except:
-            self.dropedge = 0.0
+        self.dropedge = float(args.dropedge)
         # store the original edge index
         self.original_edge_idx = torch.tensor(self.data.edge_index)
         self.original_edge_num = self.original_edge_idx.shape[1]

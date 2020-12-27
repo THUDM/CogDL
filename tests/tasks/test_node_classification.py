@@ -47,6 +47,7 @@ def test_gbp_citeseer():
     args.patience = 100
     args.max_epoch = 500
     args.missing_rate = -1
+    args.bias = "none"
 
     model = build_model(args)
     task = build_task(args, dataset=dataset, model=model)
@@ -75,6 +76,7 @@ def test_gbp_cora():
     args.patience = 100
     args.max_epoch = 500
     args.missing_rate = -1
+    args.bias = "none"
 
     model = build_model(args)
     task = build_task(args, dataset=dataset, model=model)
@@ -103,6 +105,7 @@ def test_gbp_pubmed():
     args.patience = 100
     args.max_epoch = 500
     args.missing_rate = -1
+    args.bias = "none"
 
     model = build_model(args)
     task = build_task(args, dataset=dataset, model=model)

@@ -104,25 +104,14 @@ class PPR(object):
         self.epsilon = 1e-3
 
     def prop(self, mx, emb):
-        row_num, col_num = mx.shape
-        if row_num < 1000:
-            # stable state
-            row, col = mx.nonzero
-            degree = mx.sum(1).A.squeeze()
-            degree_sqrt_inv_mx = sp.csc_matrix((np.sqrt(1.0 / degree), (row, col)), shape=(row, col))
-            identity = sp.csc_matrix((np.ones(row_num), (np.arange(row), np.arange(col_num))), shape=(row, col))
-            ppr_mx = identity - (1 - self.alpha) * degree_sqrt_inv_mx.dot(mx).dot(degree_sqrt_inv_mx)
-            return self.alpha * sp.linalg.inv(ppr_mx).dot(emb)
-        else:
-            # k-1 add, k-1 mul
-            mx_norm = preprocessing.normalize(mx, "l1")
+        mx_norm = preprocessing.normalize(mx, "l1")
 
-            Lx = emb
-            conv = self.alpha * Lx
-            for i in range(1, self.k):
-                Lx = (1 - self.alpha) * mx_norm.dot(Lx)
-                conv += Lx
-            return conv
+        Lx = emb
+        conv = self.alpha * Lx
+        for i in range(1, self.k):
+            Lx = (1 - self.alpha) * mx_norm.dot(Lx)
+            conv += Lx
+        return conv
 
 
 class SignalRescaling(object):

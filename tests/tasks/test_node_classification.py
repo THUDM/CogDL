@@ -21,7 +21,7 @@ def get_default_args():
         "weight_decay": 5e-4,
         "missing_rate": -1,
         "task": "node_classification",
-        "dataset": "cora"
+        "dataset": "cora",
     }
     return build_args_from_dict(default_dict)
 
@@ -656,6 +656,28 @@ def test_dropedge_gcnbg_citeseer():
     assert 0 <= ret["Acc"] <= 1
 
 
+def test_pprgo_cora():
+    args = get_default_args()
+    args.cpu = True
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "pprgo"
+    args.k = 32
+    args.alpha = 0.5
+    args.eval_step = 1
+    args.batch_size = 32
+    args.test_batch_size = 128
+    args.activation = "relu"
+    args.num_layers = 2
+    args.nprop_inference = 2
+    args.eps = 0.001
+    for norm in ["sym", "row"]:
+        args.norm = norm
+        task = build_task(args)
+        ret = task.train()
+        assert 0 <= ret["Acc"] <= 1
+
+
 if __name__ == "__main__":
     test_gdc_gcn_cora()
     test_gcn_cora()
@@ -695,3 +717,4 @@ if __name__ == "__main__":
     test_dropedge_densegcn_cora()
     test_unet_cora()
     test_dropedge_gcnbg_citeseer()
+    test_pprgo_cora()

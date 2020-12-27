@@ -158,7 +158,25 @@ def filter_adj(row, col, edge_attr, mask):
     return torch.stack([row[mask], col[mask]]), None if edge_attr is None else edge_attr[mask]
 
 
-def get_activation(act):
+def dropout_adj(
+        edge_index: torch.Tensor,
+        edge_weight: Optional[torch.Tensor] = None,
+        drop_rate: float = 0.5,
+        renorm: bool = True
+):
+    if drop_rate < 0.0 or drop_rate > 1.0:
+        raise ValueError("Dropout probability has to be between 0 and 1, " "but got {}".format(drop_rate))
+
+    num_nodes = int(torch.max(edge_index)) + 1
+    mask = edge_index.new_full((edge_index.size(1),), 1 - drop_rate, dtype=torch.float)
+    mask = torch.bernoulli(mask).to(torch.bool)
+    edge_index, edge_weight = filter_adj(edge_index[0], edge_index[1], edge_weight, mask)
+    if renorm:
+        edge_weight = symmetric_normalization(num_nodes, edge_index)
+    return edge_index, edge_weight
+
+
+def get_activation(act: str):
     if act == "relu":
         return F.relu
     elif act == "sigmoid":
@@ -169,6 +187,8 @@ def get_activation(act):
         return F.gelu
     elif act == "prelu":
         return F.prelu
+    elif act == "identity":
+        return lambda x: x
     else:
         return F.relu
 
@@ -180,7 +200,7 @@ def cycle_index(num, shift):
 
 
 def batch_sum_pooling(x, batch):
-    batch_size = torch.max(batch.cpu()) + 1
+    batch_size = int(torch.max(batch.cpu())) + 1
     # batch_size = len(torch.unique(batch))
     res = torch.zeros(batch_size, x.size(1)).to(x.device)
     return res.scatter_add_(dim=0, index=batch.unsqueeze(-1).expand_as(x), src=x)

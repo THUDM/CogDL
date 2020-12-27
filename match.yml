@@ -11,7 +11,7 @@ node_classification:
     - mixhop
     - graphsage
     - pairnorm
-    - unet
+    - pyg_unet
     - gcnii
     - chebyshev
     - pyg_gcn
@@ -27,6 +27,8 @@ node_classification:
     - dropedge_gcn
     - gunet
     - gcnbg
+    - unet
+    - pprgo
     dataset:
     - cora
     - citeseer

@@ -741,5 +741,5 @@ if __name__ == "__main__":
     test_unet_cora()
     test_pprgo_cora()
     test_dropedge_gcn_cora()
-    test_dropedge_gcn_citeseer(
+    test_dropedge_gcn_citeseer()
     test_dropedge_gcn_pubmed()

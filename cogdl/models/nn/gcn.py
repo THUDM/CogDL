@@ -125,6 +125,7 @@ class TKipfGCN(BaseModel):
 
         self.gc1 = GraphConvolution(in_feats, hidden_size)
         self.gc2 = GraphConvolution(hidden_size, out_feats)
+        self.bn = nn.BatchNorm1d(hidden_size)
         self.dropout = dropout
         # self.nonlinear = nn.SELU()
 
@@ -137,7 +138,7 @@ class TKipfGCN(BaseModel):
         adj_values = deg_sqrt[adj[1]] * adj_values * deg_sqrt[adj[0]]
 
         x = F.dropout(x, self.dropout, training=self.training)
-        x = F.relu(self.gc1(x, adj, adj_values))
+        x = F.relu(self.bn(self.gc1(x, adj, adj_values)))
         x = F.dropout(x, self.dropout, training=self.training)
         x = self.gc2(x, adj, adj_values)
         return x

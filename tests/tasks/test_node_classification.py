@@ -668,6 +668,38 @@ def test_pprgo_cora():
         ret = task.train()
         assert 0 <= ret["Acc"] <= 1
 
+def test_dropedge_gcn_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "dropedge_gcn"
+    args.dropedge = 0.5
+    args.normalization = "AugNorm"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+    
+ def test_dropedge_gcn_citeseer():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "citeseer"
+    args.model = "dropedge_gcn"
+    args.dropedge = 0.5
+    args.normalization = "AugNorm"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+    
+  def test_dropedge_gcn_pubmed():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "pubmed"
+    args.model = "dropedge_gcn"
+    args.dropedge = 0.5
+    args.normalization = "AugNorm"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
 
 if __name__ == "__main__":
     test_gdc_gcn_cora()
@@ -708,3 +740,6 @@ if __name__ == "__main__":
     test_dropedge_densegcn_cora()
     test_unet_cora()
     test_pprgo_cora()
+    test_dropedge_gcn_cora()
+    test_dropedge_gcn_citeseer(
+    test_dropedge_gcn_pubmed()

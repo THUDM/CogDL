@@ -22,6 +22,7 @@ def get_default_args():
         "missing_rate": -1,
         "task": "node_classification",
         "dataset": "cora",
+        "dropedge": 0.0,
     }
     return build_args_from_dict(default_dict)
 
@@ -646,6 +647,16 @@ def test_dropedge_inceptiongcn_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+def test_dropedge_gcnbg_citeseer():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "citeseer"
+    args.model = "gcnbg"
+    args.dropedge = 0.05
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
 
 def test_pprgo_cora():
     args = get_default_args()
@@ -707,4 +718,5 @@ if __name__ == "__main__":
     test_dropedge_inceptiongcn_cora()
     test_dropedge_densegcn_cora()
     test_unet_cora()
+    test_dropedge_gcnbg_citeseer()
     test_pprgo_cora()

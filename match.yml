@@ -25,6 +25,8 @@ node_classification:
     - sgcpn
     - sgc
     - dropedge_gcn
+    - gunet
+    - gcnbg
     - unet
     - pprgo
     dataset:

@@ -24,6 +24,7 @@ def get_parser():
                         help='which GPU to use')
     parser.add_argument('--save-dir', default='.', type=str)
     parser.add_argument('--enhance', type=str, default=None, help='use prone or prone++ to enhance embedding')
+    parser.add_argument('--dropedge', default=0.0, help='the drop edge probability')
 
     # fmt: on
     return parser

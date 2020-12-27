@@ -27,6 +27,7 @@ node_classification:
     - dropedge_gcn
     - unet
     - pprgo
+    - jknet
     dataset:
     - cora
     - citeseer

@@ -668,6 +668,15 @@ def test_pprgo_cora():
         ret = task.train()
         assert 0 <= ret["Acc"] <= 1
 
+def test_jknet_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.model = "jknet"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
 
 if __name__ == "__main__":
     test_gdc_gcn_cora()
@@ -708,3 +717,4 @@ if __name__ == "__main__":
     test_dropedge_densegcn_cora()
     test_unet_cora()
     test_pprgo_cora()
+    test_jknet_cora()

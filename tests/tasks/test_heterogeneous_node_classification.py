@@ -32,6 +32,17 @@ def test_gtn_gtn_imdb():
     ret = task.train()
     assert ret["f1"] >= 0 and ret["f1"] <= 1
 
+def test_unpyg_gtn_gtn_imdb():
+    args = get_default_args()
+    args.task = "heterogeneous_node_classification"
+    args.dataset = "gtn-imdb"
+    args.model = "unpyg-gtn"
+    args.num_channels = 2
+    args.num_layers = 2
+    task = build_task(args)
+    ret = task.train()
+    assert ret["f1"] >= 0 and ret["f1"] <= 1
+
 
 def test_han_gtn_acm():
     args = get_default_args()
@@ -91,6 +102,7 @@ def test_han_han_dblp():
 
 if __name__ == "__main__":
     test_gtn_gtn_imdb()
+    test_unpyg_gtn_gtn_imdb()
     test_han_gtn_acm()
     test_han_gtn_dblp()
     test_han_han_imdb()

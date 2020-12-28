@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 from cogdl.tasks import build_task
@@ -75,6 +76,23 @@ def test_hope_ppi():
     task = build_task(args)
     ret = task.train()
     assert ret["Micro-F1 0.9"] > 0
+
+
+def test_prone_module():
+    from cogdl.layers.prone_module import propagate
+    import scipy.sparse as sp
+
+    data = np.ones(400)
+    edge_index = np.random.randint(0, 100, (2, 200))
+    row = np.concatenate((edge_index[0], edge_index[1]))
+    col = np.concatenate((edge_index[1], edge_index[0]))
+
+    print(row.shape, col.shape)
+    matrix = sp.csr_matrix((data, (row, col)), shape=(100, 100))
+    emb = np.random.randn(100, 20)
+    for module in ["heat", "ppr", "gaussian", "prone", "sc"]:
+        res = propagate(matrix, emb, module)
+        assert res.shape == emb.shape
 
 
 def test_grarep_ppi():
@@ -323,3 +341,4 @@ if __name__ == "__main__":
     test_spectral_ppi()
     test_gcc_usa_airport()
     test_grace()
+    test_prone_module()

@@ -14,12 +14,7 @@ from torch_sparse import spspmm
 
 class Pool(nn.Module):
     def __init__(
-            self,
-            in_feats: int,
-            pooling_rate: float,
-            aug_adj: bool = False,
-            dropout: float = 0.5,
-            activation: str = "tanh"
+        self, in_feats: int, pooling_rate: float, aug_adj: bool = False, dropout: float = 0.5, activation: str = "tanh"
     ):
         super(Pool, self).__init__()
         self.aug_adj = aug_adj
@@ -34,12 +29,7 @@ class Pool(nn.Module):
         scores = self.act(h)
         return self.top_k(x, edge_index, scores)
 
-    def top_k(
-            self,
-            x: torch.Tensor,
-            edge_index: torch.Tensor,
-            scores: torch.Tensor
-    ) -> Tuple[Data, torch.Tensor]:
+    def top_k(self, x: torch.Tensor, edge_index: torch.Tensor, scores: torch.Tensor) -> Tuple[Data, torch.Tensor]:
         org_n_nodes = x.shape[0]
         num = int(self.pooling_rate * x.shape[0])
         values, indices = torch.topk(scores, max(2, num))
@@ -47,7 +37,7 @@ class Pool(nn.Module):
         if self.aug_adj:
             edge_attr = torch.ones(edge_index.shape[1])
             edge_index = edge_index.cpu()
-            edge_index, _ = spspmm(edge_index, edge_attr,  edge_index, edge_attr, org_n_nodes, org_n_nodes, org_n_nodes)
+            edge_index, _ = spspmm(edge_index, edge_attr, edge_index, edge_attr, org_n_nodes, org_n_nodes, org_n_nodes)
             edge_index = edge_index.to(x.device)
 
         batch = Data(x=x, edge_index=edge_index)
@@ -61,12 +51,7 @@ class UnPool(nn.Module):
     def __init__(self):
         super(UnPool, self).__init__()
 
-    def forward(
-            self,
-            num_nodes: int,
-            h: torch.Tensor,
-            indices: torch.Tensor
-    ) -> torch.Tensor:
+    def forward(self, num_nodes: int, h: torch.Tensor, indices: torch.Tensor) -> torch.Tensor:
         new_h = torch.zeros(num_nodes, h.shape[1]).to(h.device)
         new_h[indices] = h
         return new_h
@@ -74,13 +59,13 @@ class UnPool(nn.Module):
 
 class GraphUnetLayer(nn.Module):
     def __init__(
-            self,
-            hidden_size: int,
-            pooling_layer: int,
-            pooling_rates: List[float],
-            activation: str = "elu",
-            dropout: float = 0.5,
-            aug_adj: bool = False
+        self,
+        hidden_size: int,
+        pooling_layer: int,
+        pooling_rates: List[float],
+        activation: str = "elu",
+        dropout: float = 0.5,
+        aug_adj: bool = False,
     ):
         super(GraphUnetLayer, self).__init__()
         self.dropout = dropout
@@ -91,14 +76,13 @@ class GraphUnetLayer(nn.Module):
 
         self.down_gnns = nn.ModuleList([GraphConvolution(hidden_size, hidden_size) for _ in range(pooling_layer)])
         self.up_gnns = nn.ModuleList([GraphConvolution(hidden_size, hidden_size) for _ in range(pooling_layer)])
-        self.poolings = nn.ModuleList([Pool(hidden_size, pooling_rates[i], aug_adj, dropout) for i in range(pooling_layer)])
+        self.poolings = nn.ModuleList(
+            [Pool(hidden_size, pooling_rates[i], aug_adj, dropout) for i in range(pooling_layer)]
+        )
         self.unpoolings = nn.ModuleList([UnPool() for _ in range(pooling_layer)])
 
     def forward(
-            self,
-            x: torch.Tensor,
-            edge_index: torch.Tensor,
-            edge_attr: Optional[torch.Tensor]
+        self, x: torch.Tensor, edge_index: torch.Tensor, edge_attr: Optional[torch.Tensor]
     ) -> List[torch.Tensor]:
         adjs = []
         adj_attr = []
@@ -174,21 +158,21 @@ class GraphUnet(BaseModel):
             adj_dropout=args.adj_dropout,
             activation=args.activation,
             improved=args.improved,
-            aug_adj=args.aug_adj
+            aug_adj=args.aug_adj,
         )
 
     def __init__(
-            self,
-            in_feats: int,
-            hidden_size: int,
-            out_feats: int,
-            pooling_layer: int,
-            pooling_rates: List[float],
-            n_dropout: float = 0.5,
-            adj_dropout: float = 0.3,
-            activation: str = "elu",
-            improved: bool = False,
-            aug_adj: bool = False
+        self,
+        in_feats: int,
+        hidden_size: int,
+        out_feats: int,
+        pooling_layer: int,
+        pooling_rates: List[float],
+        n_dropout: float = 0.5,
+        adj_dropout: float = 0.3,
+        activation: str = "elu",
+        improved: bool = False,
+        aug_adj: bool = False,
     ):
         super(GraphUnet, self).__init__()
         self.improved = improved
@@ -207,22 +191,21 @@ class GraphUnet(BaseModel):
         self.cache_edge_attr = None
 
     def forward(
-            self,
-            x: torch.Tensor,
-            edge_index: torch.Tensor,
-            edge_attr: Optional[torch.Tensor] = None
+        self, x: torch.Tensor, edge_index: torch.Tensor, edge_attr: Optional[torch.Tensor] = None
     ) -> torch.Tensor:
         if self.cache_edge_attr is None:
             edge_index, _ = add_remaining_self_loops(edge_index)
             if self.improved:
-                self_loop = torch.stack([torch.arange(0, x.shape[0])]*2, dim=0).to(x.device)
+                self_loop = torch.stack([torch.arange(0, x.shape[0])] * 2, dim=0).to(x.device)
                 edge_index = torch.cat([edge_index, self_loop], dim=1)
+
             edge_attr = row_normalization(x.shape[0], edge_index)
             self.cache_edge_attr = edge_attr
             self.cache_edge_index = edge_index
         else:
             edge_index = self.cache_edge_index
             edge_attr = self.cache_edge_attr
+
         if self.training and self.adj_dropout > 0:
             edge_index, edge_attr = dropout_adj(edge_index, edge_attr, self.adj_dropout)
 

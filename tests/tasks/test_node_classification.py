@@ -21,11 +21,7 @@ def get_default_args():
         "weight_decay": 5e-4,
         "missing_rate": -1,
         "task": "node_classification",
-<<<<<<< HEAD
-        "dataset": "cora"
-=======
         "dataset": "cora",
->>>>>>> upstream/master
     }
     return build_args_from_dict(default_dict)
 
@@ -674,7 +670,6 @@ def test_pprgo_cora():
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     test_gdc_gcn_cora()
     test_gcn_cora()
     test_gat_cora()
@@ -712,43 +707,4 @@ if __name__ == "__main__":
     test_dropedge_inceptiongcn_cora()
     test_dropedge_densegcn_cora()
     test_unet_cora()
-=======
-    # test_gdc_gcn_cora()
-    # test_gcn_cora()
-    # test_gat_cora()
-    # test_pairnorm_cora_deepgcn()
-    # test_pairnorm_cora_deepgat()
-    # test_pairnorm_cora_gcn()
-    # test_pairnorm_cora_sgc()
-    # test_sgcpn_cora()
-    # test_sgc_cora()
-    # test_mlp_pubmed()
-    # test_mixhop_citeseer()
-    # test_graphsage_cora()
-    # test_pyg_cheb_cora()
-    # test_pyg_gcn_cora()
-    # test_pyg_gat_cora()
-    # test_pyg_infomax_cora()
-    # test_pyg_unet_cora()
-    # test_pyg_drgcn_cora()
-    # test_pyg_drgat_cora()
-    # test_disengcn_cora()
-    # test_graph_mix()
-    # test_srgcn_cora()
-    # test_gcnii_cora()
-    # test_deepergcn_cora()
-    # test_grand_cora()
-    # test_pyg_gcn_cora_sampler()
-    # test_gpt_gnn_cora()
-    # test_sign_cora()
-    # test_jknet_jknet_cora()
-    # test_sgcpn_cora()
-    # test_ppnp_cora()
-    # test_appnp_cora()
-    # test_dropedge_gcn_cora()
-    # test_dropedge_resgcn_cora()
-    # test_dropedge_inceptiongcn_cora()
-    # test_dropedge_densegcn_cora()
-    # test_unet_cora()
     test_pprgo_cora()
->>>>>>> upstream/master

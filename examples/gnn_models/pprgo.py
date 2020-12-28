@@ -14,25 +14,28 @@ DATASET_REGISTRY = {}
 def build_default_args_for_node_classification(dataset):
     cpu = not torch.cuda.is_available()
     args = {
-        "lr": 0.01,
-        "weight_decay": 0.0005,
-        "max_epoch": 1000,
+        "lr": 0.001,
+        "weight_decay": 5e-4,
+        "max_epoch": 500,
         "patience": 100,
         "cpu": cpu,
         "device_id": [0],
-        "seed": [1],
-        "n_dropout": 0.90,
-        "adj_dropout": 0.05,
-        "hidden_size": 128,
-        "aug_adj": False,
-        "improved": False,
-        "n_pool": 4,
-        "pool_rate": [0.7, 0.5, 0.5, 0.4],
+        "seed": [0, 1, 2],
+        "dropout": 0.1,
+        "hidden_size": 64,
+        "alpha": 0.5,
+        "num_layers": 2,
         "activation": "relu",
+        "nprop_inference": 2,
+        "norm": "sym",
+        "eps": 1e-4,
+        "k": 32,
+        "eval_step": 5,
+        "batch_size": 1024,
+        "test_batch_size": 10240,
         "task": "node_classification",
-        "model": "unet",
+        "model": "pprgo",
         "dataset": dataset,
-        "missing_rate": -1,
     }
     return build_args_from_dict(args)
 
@@ -45,18 +48,18 @@ def register_func(name):
     return register_func_name
 
 
-@register_func("cora")
-def cora_config(args):
-    return args
-
-
-@register_func("citeseer")
-def citeseer_config(args):
-    return args
-
-
 @register_func("pubmed")
 def pubmed_config(args):
+    return args
+
+
+@register_func("reddit")
+def reddit_config(args):
+    return args
+
+
+@register_func("ogbn-product")
+def products_config(args):
     return args
 
 
@@ -74,8 +77,8 @@ def run(dataset_name):
 
 
 if __name__ == "__main__":
-    datasets = ["cora", "citeseer", "pubmed"]
+    datasets = ["pubmed", "reddit"]
     results = []
     for x in datasets:
         results += run(x)
-    print_result(results, datasets, "unet")
+    print_result(results, datasets, "pprgo")

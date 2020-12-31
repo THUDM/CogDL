@@ -16,6 +16,7 @@ def get_default_args():
         "max_epoch": 1,
         "cpu": True,
         "checkpoint": False,
+        "save_dir": ".",
     }
     return build_args_from_dict(default_dict)
 
@@ -182,6 +183,8 @@ def get_kg_default_args():
         "weight_decay": 0,
         "negative_ratio": 3,
         "cpu": True,
+        "checkpoint": False,
+        "save_dir": ".",
     }
     return build_args_from_dict(default_dict)
 
@@ -249,6 +252,8 @@ def get_kge_default_args():
         "regularization": 0.0,
         "cuda": False,
         "cpu": True,
+        "checkpoint": False,
+        "save_dir": ".",
     }
     return build_args_from_dict(default_dict)
 
@@ -307,6 +312,8 @@ def get_gnn_link_prediction_args():
         "cpu": True,
         "device_id": [0],
         "dropout": 0.5,
+        "checkpoint": False,
+        "save_dir": ".",
     }
     return build_args_from_dict(args)
 

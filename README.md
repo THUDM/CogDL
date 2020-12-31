@@ -40,7 +40,7 @@ CogDL features:
 ### Requirements and Installation
 
 - Python version >= 3.6
-- PyTorch version >= 1.0.0
+- PyTorch version >= 1.6
 - PyTorch Geometric (recommended)
 - Deep Graph Library (optional)
 
@@ -89,23 +89,16 @@ git clone https://github.com/THUDM/cogdl /cogdl
 
 ### API Usage
 
-You can run all kinds of experiments through CogDL APIs, including: `build_dataset`, `build_model`, and `build_task`. You can also use your own datasets and models for experiments. Some examples are provided in the [examples/](https://github.com/THUDM/cogdl/tree/master/examples/), including [gcn.py](https://github.com/THUDM/cogdl/tree/master/examples/gcn.py). 
+You can run all kinds of experiments through CogDL APIs, especially `build_task`. You can also use your own datasets and models for experiments. Some examples are provided in the [examples/](https://github.com/THUDM/cogdl/tree/master/examples/), including [gcn.py](https://github.com/THUDM/cogdl/tree/master/examples/gcn.py). 
 
 ```python
-# Set hyper-parameters for experiments
-args = get_default_args()
-args.task = 'node_classification'
-args.dataset = 'cora'
-args.model = 'gcn'
-# Set datasets
-dataset = build_dataset(args)
-args.num_features = dataset.num_features
-args.num_classes = dataset.num_classes
-args.num_layers = 2
-# Build models
-model = build_model(args)
-# Train and evaluate models
-task = build_task(args, dataset=dataset, model=model)
+from cogdl.tasks import build_task
+from cogdl.options import get_default_args
+
+# Get default hyper-parameters for experiments
+args = get_default_args(task="node_classification", dataset="cora", model="gcn")
+# Build and run
+task = build_task(args)
 ret = task.train()
 ```
 

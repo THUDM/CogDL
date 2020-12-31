@@ -19,17 +19,16 @@ CogDL provides these features:
    - Node classification
    - Link prediction
    - Graph classification
-   - Community detection (testing)
-   - Social influence prediction (testing)
-   - Graph reasoning (todo)
-   - Graph pre-training (todo)
-   - Combinatorial optimization on graphs (todo)
+   - Graph pre-training
+   - Graph clustering
+   - Graph similarity search
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    install
+   quickstart
    tutorial
    task/index
    license

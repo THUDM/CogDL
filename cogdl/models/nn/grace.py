@@ -139,8 +139,8 @@ class GRACE(BaseModel):
         return sum(losses) / len(losses)
 
     def node_classification_loss(self, data):
-        z1 = self.prop(data.x, data.edge_index, data.edge_weight, self.drop_feature_rates[0], self.drop_edge_rates[0])
-        z2 = self.prop(data.x, data.edge_index, data.edge_weight, self.drop_feature_rates[1], self.drop_edge_rates[1])
+        z1 = self.prop(data.x, data.edge_index, data.edge_attr, self.drop_feature_rates[0], self.drop_edge_rates[0])
+        z2 = self.prop(data.x, data.edge_index, data.edge_attr, self.drop_feature_rates[1], self.drop_edge_rates[1])
 
         z1 = self.project_head(z1)
         z2 = self.project_head(z2)
@@ -151,7 +151,7 @@ class GRACE(BaseModel):
             return 0.5 * (self.contrastive_loss(z1, z2) + self.contrastive_loss(z2, z1))
 
     def embed(self, data):
-        pred = self.forward(data.x, data.edge_index, data.edge_weight)
+        pred = self.forward(data.x, data.edge_index, data.edge_attr)
         return pred
 
     def drop_adj(self, edge_index: torch.Tensor, edge_weight: Optional[torch.Tensor] = None, drop_rate: float = 0.5):

@@ -21,6 +21,15 @@ def build_args_from_dict(dic):
     return args
 
 
+def get_extra_args(args):
+    redundancy = {
+        "checkpoint": False,
+        "load_emb_path": None,
+    }
+    args = {**args, **redundancy}
+    return args
+
+
 def add_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):
     device = edge_index.device
     if edge_weight is None:
@@ -159,10 +168,7 @@ def filter_adj(row, col, edge_attr, mask):
 
 
 def dropout_adj(
-        edge_index: torch.Tensor,
-        edge_weight: Optional[torch.Tensor] = None,
-        drop_rate: float = 0.5,
-        renorm: bool = True
+    edge_index: torch.Tensor, edge_weight: Optional[torch.Tensor] = None, drop_rate: float = 0.5, renorm: bool = True
 ):
     if drop_rate < 0.0 or drop_rate > 1.0:
         raise ValueError("Dropout probability has to be between 0 and 1, " "but got {}".format(drop_rate))

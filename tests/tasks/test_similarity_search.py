@@ -11,6 +11,7 @@ def get_default_args():
         "max_epoch": 1,
         "load_path": "./saved/gcc_pretrained.pth",
         "cpu": not cuda_available,
+        "checkpoint": False,
     }
     return build_args_from_dict(default_dict)
 

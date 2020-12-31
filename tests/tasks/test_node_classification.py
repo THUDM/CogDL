@@ -22,6 +22,7 @@ def get_default_args():
         "missing_rate": -1,
         "task": "node_classification",
         "dataset": "cora",
+        "checkpoint": False,
     }
     return build_args_from_dict(default_dict)
 

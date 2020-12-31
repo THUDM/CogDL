@@ -52,3 +52,12 @@ def get_dataset(args):
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
     return dataset, args
+
+
+def get_extra_args(args):
+    redundancy = {
+        "checkpoint": False,
+        "load_emb_path": None,
+    }
+    args = {**args, **redundancy}
+    return args

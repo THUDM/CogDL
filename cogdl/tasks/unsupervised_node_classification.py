@@ -37,7 +37,7 @@ class UnsupervisedNodeClassification(BaseTask):
         parser.add_argument("--hidden-size", type=int, default=128)
         parser.add_argument("--num-shuffle", type=int, default=5)
         parser.add_argument("--save-dir", type=str, default="./embedding")
-        parser.add_argument("--load-file", type=str, default=None)
+        parser.add_argument("--load-emb-path", type=str, default=None)
         # fmt: on
 
     def __init__(self, args, dataset=None, model=None):
@@ -64,7 +64,7 @@ class UnsupervisedNodeClassification(BaseTask):
         self.hidden_size = args.hidden_size
         self.num_shuffle = args.num_shuffle
         self.save_dir = args.save_dir
-        self.load_file = args.load_file
+        self.load_emb_path = args.load_emb_path
         self.enhance = args.enhance
         self.args = args
         self.is_weighted = self.data.edge_attr is not None
@@ -107,7 +107,7 @@ class UnsupervisedNodeClassification(BaseTask):
     def train(self):
         if self.trainer is not None:
             return self.trainer.fit(self.model, self.data)
-        if self.load_file is None:
+        if self.load_emb_path is None:
             if "gcc" in self.model_name:
                 features_matrix = self.model.train(self.data)
             else:
@@ -130,7 +130,7 @@ class UnsupervisedNodeClassification(BaseTask):
 
             self.save_emb(features_matrix)
         else:
-            features_matrix = np.load(self.load_file)
+            features_matrix = np.load(self.load_emb_path)
         # label nor multi-label
         label_matrix = sp.csr_matrix(self.label_matrix)
 

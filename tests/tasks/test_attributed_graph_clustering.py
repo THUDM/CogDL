@@ -18,6 +18,7 @@ def get_default_args():
         "momentum": 0,
         "enhance": None,
         "cpu": not cuda_available,
+        "checkpoint": False,
     }
     return build_args_from_dict(default_dict)
 

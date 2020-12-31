@@ -16,7 +16,7 @@ class SelfSupervisedTrainer(BaseTrainer):
         self.dataset_name = args.dataset
         self.model_name = args.model
         self.save_dir = args.save_dir
-        self.load_file = args.load_file
+        self.load_emb_path = args.load_emb_path
 
     @classmethod
     def build_trainer_from_args(cls, args):
@@ -27,8 +27,8 @@ class SelfSupervisedTrainer(BaseTrainer):
         self.data.edge_attr = torch.ones(data.edge_index.shape[1]).to(self.device)
         self.data.apply(lambda x: x.to(self.device))
 
-        if self.load_file is not None:
-            embeds = np.load(self.load_file)
+        if self.load_emb_path is not None:
+            embeds = np.load(self.load_emb_path)
             embeds = torch.from_numpy(embeds).to(self.device)
             return self.evaluate(embeds)
 

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, symmetric_normalization
+from cogdl.utils import add_remaining_self_loops, symmetric_normalization, get_activation
 from cogdl.trainers.self_supervised_trainer import SelfSupervisedTrainer
 
 
@@ -12,7 +12,7 @@ class GCN(nn.Module):
     def __init__(self, in_ft, out_ft, act, bias=True):
         super(GCN, self).__init__()
         self.fc = nn.Linear(in_ft, out_ft, bias=False)
-        self.act = nn.PReLU() if act == "prelu" else act
+        self.act = nn.PReLU() if act == "prelu" else get_activation(act)
 
         if bias:
             self.bias = nn.Parameter(torch.FloatTensor(out_ft))

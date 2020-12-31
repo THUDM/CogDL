@@ -3,7 +3,6 @@ import torch
 
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
-from cogdl.models import build_model
 from cogdl.utils import build_args_from_dict
 
 
@@ -13,8 +12,10 @@ def get_default_args():
         "num_shuffle": 1,
         "cpu": True,
         "enhance": None,
-        "save_dir": ".",
+        "save_dir": "./embedding",
         "task": "unsupervised_node_classification",
+        "checkpoint": False,
+        "load_emb_path": None,
     }
     return build_args_from_dict(default_dict)
 
@@ -232,12 +233,14 @@ def get_unsupervised_nn_args():
         "cpu": not torch.cuda.is_available(),
         "weight_decay": 5e-4,
         "num_shuffle": 2,
-        "save_dir": ",",
+        "save_dir": "./embedding",
         "enhance": None,
         "device_id": [
             0,
         ],
         "task": "unsupervised_node_classification",
+        "checkpoint": False,
+        "load_emb_path": None,
     }
     return build_args_from_dict(default_dict)
 
@@ -269,7 +272,7 @@ def test_unsupervised_graphsage():
     ret = task.train()
     assert ret["Acc"] > 0
 
-    args.load_file = "./embedding/unsup_graph_sage_cora.npy"
+    args.load_emb_path = args.save_dir + "/" + args.model + "_" + args.dataset + ".npy"
     task = build_task(args)
     ret = task.train()
     assert ret["Acc"] > 0
@@ -279,6 +282,8 @@ def test_dgi():
     args = get_unsupervised_nn_args()
     args.task = "unsupervised_node_classification"
     args.dataset = "cora"
+    args.activation = "relu"
+    args.sparse = True
     args.max_epochs = 2
     args.model = "dgi"
     dataset = build_dataset(args)
@@ -295,6 +300,9 @@ def test_mvgrl():
     args.dataset = "cora"
     args.max_epochs = 2
     args.model = "mvgrl"
+    args.sparse = False
+    args.sample_size = 2000
+    args.batch_size = 4
     args, dataset = build_nn_dataset(args)
     task = build_task(args)
     ret = task.train()

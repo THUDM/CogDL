@@ -9,7 +9,14 @@ from cogdl.utils import build_args_from_dict
 
 
 def get_default_args():
-    default_dict = {"hidden_size": 16, "negative_ratio": 3, "patience": 1, "max_epoch": 1, "cpu": True}
+    default_dict = {
+        "hidden_size": 16,
+        "negative_ratio": 3,
+        "patience": 1,
+        "max_epoch": 1,
+        "cpu": True,
+        "checkpoint": False,
+    }
     return build_args_from_dict(default_dict)
 
 

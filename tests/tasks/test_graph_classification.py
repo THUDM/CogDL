@@ -25,6 +25,7 @@ def get_default_args():
         "device_id": [0 if cuda_available else "cpu"],
         "sampler": "none",
         "degree_feature": False,
+        "checkpoint": False,
     }
     return build_args_from_dict(default_dict)
 

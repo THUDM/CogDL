@@ -3,6 +3,7 @@ from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.utils import build_args_from_dict
+from utils import get_extra_args
 
 
 def get_default_args():
@@ -18,6 +19,7 @@ def get_default_args():
         "weight_decay": 5e-4,
         "missing_rate": -1,
     }
+    default_dict = get_extra_args(default_dict)
     return build_args_from_dict(default_dict)
 
 

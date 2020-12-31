@@ -8,7 +8,7 @@ from cogdl.utils import build_args_from_dict
 
 def get_default_args():
     cuda_available = torch.cuda.is_available()
-    default_dict = {"hidden_size": 16, "eval_type": "all", "cpu": not cuda_available}
+    default_dict = {"hidden_size": 16, "eval_type": "all", "cpu": not cuda_available, "checkpoint": False}
     return build_args_from_dict(default_dict)
 
 

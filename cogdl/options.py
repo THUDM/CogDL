@@ -24,6 +24,7 @@ def get_parser():
                         help='which GPU to use')
     parser.add_argument('--save-dir', default='.', type=str)
     parser.add_argument('--enhance', type=str, default=None, help='use prone or prone++ to enhance embedding')
+    parser.add_argument('--checkpoint', action="store_true", help='load pre-trained model')
 
     # fmt: on
     return parser

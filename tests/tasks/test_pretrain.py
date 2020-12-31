@@ -28,6 +28,7 @@ def get_strategies_for_pretrain_args():
         "output_model_file": "./saved",
         "l1": 1,
         "l2": 2,
+        "checkpoint": False,
     }
     return build_args_from_dict(args)
 

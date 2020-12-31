@@ -659,3 +659,9 @@ class LinkPrediction(BaseTask):
 
     def train(self):
         return self.task.train()
+
+    def load_from_pretrained(self):
+        pass
+
+    def save_checkpoint(self):
+        pass

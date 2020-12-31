@@ -264,6 +264,16 @@ def test_unsupervised_graphsage():
     ret = task.train()
     assert ret["Acc"] > 0
 
+    args.checkpoint = True
+    task = build_task(args)
+    ret = task.train()
+    assert ret["Acc"] > 0
+
+    args.load_file = "./embedding/unsup_graph_sage_cora.npy"
+    task = build_task(args)
+    ret = task.train()
+    assert ret["Acc"] > 0
+
 
 def test_dgi():
     args = get_unsupervised_nn_args()

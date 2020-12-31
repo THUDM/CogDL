@@ -105,12 +105,15 @@ class UnsupervisedNodeClassification(BaseTask):
             return self.trainer.fit(self.model, self.data)
         if "gcc" in self.model_name:
             features_matrix = self.model.train(self.data)
-        elif "dgi" in self.model_name or "graphsage" in self.model_name:
-            acc = self.model.train(self.data)
-            return dict(Acc=acc)
-        elif "mvgrl" in self.model_name:
-            acc = self.model.train(self.data, self.dataset_name)
-            return dict(Acc=acc)
+        # elif "dgi" in self.model_name or "graphsage" in self.model_name:
+        #     acc = self.model.train(self.data)
+        #     return dict(Acc=acc)
+        # elif "mvgrl" in self.model_name:
+        #     acc = self.model.train(self.data, self.dataset_name)
+        #     return dict(Acc=acc)
+        elif self.trainer is not None:
+            result = self.trainer.fit(self.model, self.data)
+            return result
         else:
             G = nx.Graph()
             if self.is_weighted:

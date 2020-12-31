@@ -21,19 +21,17 @@ class SelfSupervisedTrainer(BaseTrainer):
         best = 1e9
         cnt_wait = 0
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0)
+        data.edge_attr = torch.ones(data.edge_index.shape[1]).to(self.device)
+        data.apply(lambda x: x.to(self.device))
 
         epoch_iter = tqdm(range(self.epochs))
-
-        features = data.x
-        edge_index = data.edge_index
-        # edge_weight = data.edge_index if hasattr(data, "edge_attr") else None
-        edge_weight = None
+        model = model.to(self.device)
 
         model.train()
         for epoch in epoch_iter:
             optimizer.zero_grad()
 
-            loss = model.node_classification_loss(features, edge_index, edge_weight)
+            loss = model.node_classification_loss(data)
             epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss.item(): .4f}")
 
             if loss < best:
@@ -50,7 +48,7 @@ class SelfSupervisedTrainer(BaseTrainer):
             optimizer.step()
 
         with torch.no_grad():
-            embeds = model.embed(features, edge_index, edge_weight)
+            embeds = model.embed(data)
 
         nclass = int(torch.max(data.y) + 1)
         opt = {

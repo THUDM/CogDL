@@ -69,9 +69,9 @@ class PPRGoTrainer(object):
 
         epoch_iter = tqdm(range(self.max_epoch))
         for epoch in epoch_iter:
-            train_loss = self.train_step(train_loader, True)
+            train_loss = self._train_step(train_loader, True)
             if (epoch + 1) % self.eval_step == 0:
-                val_acc, val_loss = self.train_step(val_loader, False)
+                val_acc, val_loss = self._train_step(val_loader, False)
                 if val_loss < best_loss:
                     best_acc = val_acc
                     best_loss = val_loss
@@ -80,10 +80,10 @@ class PPRGoTrainer(object):
                 f"Epoch: {epoch}, TrainLoss: {train_loss: .4f}, ValLoss: {best_loss: .4f}, ValAcc: {best_acc: .4f}"
             )
         self.model = best_model
-        test_acc = self.test_step(dataset[0])
+        test_acc = self._test_step(dataset[0])
         return dict(Acc=test_acc)
 
-    def train_step(self, loader, is_train=True):
+    def _train_step(self, loader, is_train=True):
         if is_train:
             self.model.train()
         else:
@@ -115,7 +115,7 @@ class PPRGoTrainer(object):
             acc = preds.sum().item() / preds.shape[0]
             return acc, sum(loss_items) / len(loss_items)
 
-    def test_step(self, data):
+    def _test_step(self, data):
         self.model.eval()
 
         if self.normalization == "sym":

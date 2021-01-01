@@ -2,6 +2,22 @@ Unsupervised Graph Classification
 ==================================
 In this section, we will introduce the implementation "Unsupervised graph classification task".
 
+** Unsupervised Graph Classificaton Methods **
+
++-----------+-----------+--------+-----------------+
+| Method    | Node      | Kernel | Reproducibility |
+|           | Feature   |        |                 |
++============+===========+========+=================+
+| InfoGraph |   `√`     |        |  `√`            |
++-----------+-----------+--------+-----------------+
+| DGK       |           |  `√`   |  `√`            |
++-----------+-----------+--------+-----------------+
+| Graph2Vec |           |  `√`   |  `√`            |
++-----------+-----------+--------+-----------------+
+| HGP_SL    |   `√`     |        |  `√`            |
++-----------+-----------+--------+-----------------+
+
+
 **Task Design**
 
 1. Set up "UnsupervisedGraphClassification" class, which has two specific parameters.

@@ -31,6 +31,7 @@ CogDL provides these features:
    quickstart
    tutorial
    task/index
+   trainer
    license
    citing
 

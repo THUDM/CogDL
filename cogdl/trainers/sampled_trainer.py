@@ -9,16 +9,13 @@ from tqdm import tqdm
 
 from cogdl.data import Dataset, Data
 from cogdl.data.sampler import NodeSampler, EdgeSampler, RWSampler, MRWSampler, LayerSampler, NeighborSampler
-from cogdl.models.supervised_model import (
-    SupervisedHeterogeneousNodeClassificationModel,
-    SupervisedHomogeneousNodeClassificationModel,
-)
-from cogdl.trainers.supervised_trainer import SupervisedHeterogeneousNodeClassificationTrainer
+from cogdl.models.supervised_model import SupervisedModel
+from cogdl.trainers.supervised_trainer import SupervisedTrainer
 
 
-class SampledTrainer(SupervisedHeterogeneousNodeClassificationTrainer):
+class SampledTrainer(SupervisedTrainer):
     @abstractmethod
-    def fit(self, model: SupervisedHeterogeneousNodeClassificationModel, dataset: Dataset):
+    def fit(self, model: SupervisedModel, dataset: Dataset):
         raise NotImplementedError
 
     @abstractmethod
@@ -90,7 +87,7 @@ class SAINTTrainer(SampledTrainer):
         }
         return args_sampler
 
-    def fit(self, model: SupervisedHeterogeneousNodeClassificationModel, dataset: Dataset):
+    def fit(self, model: SupervisedModel, dataset: Dataset):
         self.data = dataset.data
         self.data.apply(lambda x: x.to(self.device))
         self.model = model

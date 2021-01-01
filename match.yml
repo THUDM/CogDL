@@ -71,6 +71,7 @@ graph_classification:
     - patchy_san
     - hgpsl
     - sagpool
+    - pyg_pna
     dataset:
     - mutag
     - imdb-b

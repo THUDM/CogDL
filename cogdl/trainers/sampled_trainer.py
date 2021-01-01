@@ -27,7 +27,7 @@ class SampledTrainer(SupervisedTrainer):
         pass
 
     def __init__(self, args):
-        self.device = args.device_id[0] if not args.cpu else "cpu"
+        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
         self.patience = args.patience
         self.max_epoch = args.max_epoch
         self.lr = args.lr
@@ -146,6 +146,7 @@ class NeighborSamplingTrainer(SampledTrainer):
         self.num_workers = 4 if not hasattr(args, "num_workers") else args.num_workers
         self.eval_per_epoch = 5
         self.patience = self.patience // self.eval_per_epoch
+        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
 
     def fit(self, model, dataset):
         self.data = Data.from_pyg_data(dataset[0])

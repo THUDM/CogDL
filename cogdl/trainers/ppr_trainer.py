@@ -23,7 +23,7 @@ class PPRGoTrainer(object):
         self.lr = args.lr
         self.eval_step = args.eval_step
         self.weight_decay = args.weight_decay
-        self.device = args.device_id[0] if not args.cpu else "cpu"
+        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
         self.ppr_norm = args.ppr_norm if hasattr(args, "ppr_norm") else "sym"
 
     def preprocess_data(self, dataset):

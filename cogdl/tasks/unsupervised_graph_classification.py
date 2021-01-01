@@ -34,7 +34,7 @@ class UnsupervisedGraphClassification(BaseTask):
 
     def __init__(self, args, dataset=None, model=None):
         super(UnsupervisedGraphClassification, self).__init__(args)
-        self.device = args.device_id[0] if not args.cpu else "cpu"
+        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
 
         dataset = build_dataset(args) if dataset is None else dataset
         if "gcc" in args.model:

@@ -10,7 +10,7 @@ from .base_trainer import BaseTrainer
 class SelfSupervisedTrainer(BaseTrainer):
     def __init__(self, args):
         super(SelfSupervisedTrainer, self).__init__()
-        self.device = args.device_id[0] if not args.cpu else "cpu"
+        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
         self.epochs = args.max_epoch
         self.patience = args.patience
         self.dataset_name = args.dataset

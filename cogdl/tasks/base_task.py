@@ -1,5 +1,6 @@
 from abc import ABC, ABCMeta
 import argparse
+import atexit
 import os
 import torch
 
@@ -20,11 +21,9 @@ class BaseTask(ABC, metaclass=LoadFrom):
     def __init__(self, args):
         super(BaseTask, self).__init__()
         os.makedirs("./checkpoints", exist_ok=True)
-        self.load_from_checkpoint = args.checkpoint
+        self.load_from_checkpoint = hasattr(args, "checkpoint") and args.checkpoint
         self._checkpoint = os.path.join("checkpoints", f"{args.model}_{args.dataset}.pt")
-
-    def __del__(self):
-        self.save_checkpoint()
+        atexit.register(self.save_checkpoint)
 
     def train(self):
         raise NotImplementedError

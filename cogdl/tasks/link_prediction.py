@@ -236,7 +236,7 @@ class TripleLinkPrediction(nn.Module):
         args.nrelation = self.dataset.num_relations
         self.model = build_model(args) if model is None else model
         self.args = args
-        self.device = "cpu" if args.cpu else args.device_id[0]
+        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
         self.model = self.model.to(self.device)
         set_logger(args)
         logging.info("Model: %s" % args.model)
@@ -370,7 +370,7 @@ class TripleLinkPrediction(nn.Module):
 class KGLinkPrediction(nn.Module):
     def __init__(self, args, dataset=None, model=None):
         super(KGLinkPrediction, self).__init__()
-        self.device = torch.device("cpu" if args.cpu else args.device_id[0])
+        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
         self.evaluate_interval = args.evaluate_interval
         dataset = build_dataset(args) if dataset is None else dataset
         self.data = dataset[0]
@@ -441,7 +441,7 @@ class KGLinkPrediction(nn.Module):
 class GNNHomoLinkPrediction(nn.Module):
     def __init__(self, args, dataset=None, model=None):
         super(GNNHomoLinkPrediction, self).__init__()
-        self.device = torch.device("cpu" if args.cpu else args.device_id[0])
+        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
         self.evaluate_interval = args.evaluate_interval
         dataset = build_dataset(args) if dataset is None else dataset
         self.data = dataset[0]

@@ -38,5 +38,5 @@ class BaseTask(ABC, metaclass=LoadFrom):
         return self.model
 
     def save_checkpoint(self):
-        if self._checkpoint is not None and issubclass(self.model.__class__, torch.nn.Module):
+        if self._checkpoint is not None and hasattr(self.model, "_parameters"):
             torch.save(self.model.state_dict(), self._checkpoint)

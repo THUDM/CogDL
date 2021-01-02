@@ -67,7 +67,7 @@ def test_stpgnn_supervised():
     args = get_strategies_for_pretrain_args()
     args.pretrain_task = "supervised"
     args.pooling = "mean"
-    args.checkpoint = None
+    args.load_path = None
     task = build_task(args)
     ret = task.train()
     assert 0 < ret["Acc"] <= 1
@@ -78,7 +78,7 @@ def test_stpgnn_finetune():
     args.pretrain_task = "infomax"
     args.pooling = "mean"
     args.finetune = True
-    args.checkpoint = "./saved/context.pth"
+    args.load_path = "./saved/context.pth"
     task = build_task(args)
     ret = task.train()
     assert 0 < ret["Acc"] <= 1
@@ -122,7 +122,7 @@ def test_chem_supervised():
     args.dataset = "test_chem"
     args.pretrain_task = "supervised"
     args.pooling = "mean"
-    args.checkpoint = None
+    args.load_path = None
     task = build_task(args)
     ret = task.train()
     assert 0 < ret["Acc"] <= 1
@@ -134,7 +134,7 @@ def test_bbbp():
     args.pretrain_task = "infomax"
     args.pooling = "mean"
     args.finetune = True
-    args.checkpoint = "./saved/context.pth"
+    args.load_path = "./saved/context.pth"
     task = build_task(args)
     ret = task.train()
     assert 0 < ret["Acc"] <= 1
@@ -146,7 +146,7 @@ def test_bace():
     args.pretrain_task = "infomax"
     args.pooling = "mean"
     args.finetune = True
-    args.checkpoint = "./saved/context.pth"
+    args.load_path = "./saved/context.pth"
     task = build_task(args)
     ret = task.train()
     assert 0 < ret["Acc"] <= 1

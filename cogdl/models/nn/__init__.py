@@ -32,3 +32,4 @@ from .pyg_srgcn import SRGCN
 from .pyg_stpgnn import stpgnn
 from .rgcn import RGCNLayer, LinkPredictRGCN, RGCN
 from .sgc import SimpleGraphConvolution
+from .capsgnn import CapsGNN

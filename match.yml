@@ -21,6 +21,7 @@ node_classification:
     - gpt_gnn
     - sign
     - jknet
+    - jkn
     - ppnp
     - sgcpn
     - sgc

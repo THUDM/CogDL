@@ -30,7 +30,7 @@ class GATNE(BaseModel):
         att_dim (int) : Number of attention dimensions.
         negative_samples (int) : Negative samples for optimization.
         neighbor_samples (int) : Neighbor samples for aggregation
-        schema (str) : The metapath schema used in model. Metapaths are splited with ",", 
+        schema (str) : The metapath schema used in model. Metapaths are splited with ",",
         while each node type are connected with "-" in each metapath. For example:"0-1-0,0-1-2-1-0"
     """
 
@@ -151,21 +151,15 @@ class GATNE(BaseModel):
                         )
                     )
                 elif len(neighbors[i][r]) > neighbor_samples:
-                    neighbors[i][r] = list(
-                        np.random.choice(neighbors[i][r], size=neighbor_samples)
-                    )
+                    neighbors[i][r] = list(np.random.choice(neighbors[i][r], size=neighbor_samples))
 
-        model = GATNEModel(
-            num_nodes, embedding_size, embedding_u_size, edge_type_count, dim_att
-        )
+        model = GATNEModel(num_nodes, embedding_size, embedding_u_size, edge_type_count, dim_att)
         nsloss = NSLoss(num_nodes, num_sampled, embedding_size)
 
         model.to(self.device)
         nsloss.to(self.device)
 
-        optimizer = torch.optim.Adam(
-            [{"params": model.parameters()}, {"params": nsloss.parameters()}], lr=1e-4
-        )
+        optimizer = torch.optim.Adam([{"params": model.parameters()}, {"params": nsloss.parameters()}], lr=1e-4)
 
         for epoch in range(epochs):
             random.shuffle(train_pairs)
@@ -203,25 +197,17 @@ class GATNE(BaseModel):
 
         final_model = dict(zip(edge_types, [dict() for _ in range(edge_type_count)]))
         for i in range(num_nodes):
-            train_inputs = torch.tensor([i for _ in range(edge_type_count)]).to(
-                self.device
-            )
+            train_inputs = torch.tensor([i for _ in range(edge_type_count)]).to(self.device)
             train_types = torch.tensor(list(range(edge_type_count))).to(self.device)
-            node_neigh = torch.tensor(
-                [neighbors[i] for _ in range(edge_type_count)]
-            ).to(self.device)
+            node_neigh = torch.tensor([neighbors[i] for _ in range(edge_type_count)]).to(self.device)
             node_emb = model(train_inputs, train_types, node_neigh)
             for j in range(edge_type_count):
-                final_model[edge_types[j]][index2word[i]] = (
-                    node_emb[j].cpu().detach().numpy()
-                )
+                final_model[edge_types[j]][index2word[i]] = node_emb[j].cpu().detach().numpy()
         return final_model
 
 
 class GATNEModel(nn.Module):
-    def __init__(
-        self, num_nodes, embedding_size, embedding_u_size, edge_type_count, dim_a
-    ):
+    def __init__(self, num_nodes, embedding_size, embedding_u_size, edge_type_count, dim_a):
         super(GATNEModel, self).__init__()
         self.num_nodes = num_nodes
         self.embedding_size = embedding_size
@@ -230,15 +216,9 @@ class GATNEModel(nn.Module):
         self.dim_a = dim_a
 
         self.node_embeddings = Parameter(torch.FloatTensor(num_nodes, embedding_size))
-        self.node_type_embeddings = Parameter(
-            torch.FloatTensor(num_nodes, edge_type_count, embedding_u_size)
-        )
-        self.trans_weights = Parameter(
-            torch.FloatTensor(edge_type_count, embedding_u_size, embedding_size)
-        )
-        self.trans_weights_s1 = Parameter(
-            torch.FloatTensor(edge_type_count, embedding_u_size, dim_a)
-        )
+        self.node_type_embeddings = Parameter(torch.FloatTensor(num_nodes, edge_type_count, embedding_u_size))
+        self.trans_weights = Parameter(torch.FloatTensor(edge_type_count, embedding_u_size, embedding_size))
+        self.trans_weights_s1 = Parameter(torch.FloatTensor(edge_type_count, embedding_u_size, dim_a))
         self.trans_weights_s2 = Parameter(torch.FloatTensor(edge_type_count, dim_a, 1))
 
         self.reset_parameters()
@@ -254,10 +234,7 @@ class GATNEModel(nn.Module):
         node_embed = self.node_embeddings[train_inputs]
         node_embed_neighbors = self.node_type_embeddings[node_neigh]
         node_embed_tmp = torch.cat(
-            [
-                node_embed_neighbors[:, i, :, i, :].unsqueeze(1)
-                for i in range(self.edge_type_count)
-            ],
+            [node_embed_neighbors[:, i, :, i, :].unsqueeze(1) for i in range(self.edge_type_count)],
             dim=1,
         )
         node_type_embed = torch.sum(node_embed_tmp, dim=2)
@@ -267,9 +244,7 @@ class GATNEModel(nn.Module):
         trans_w_s2 = self.trans_weights_s2[train_types]
 
         attention = F.softmax(
-            torch.matmul(
-                F.tanh(torch.matmul(node_type_embed, trans_w_s1)), trans_w_s2
-            ).squeeze()
+            torch.matmul(F.tanh(torch.matmul(node_type_embed, trans_w_s1)), trans_w_s2).squeeze()
         ).unsqueeze(1)
         node_type_embed = torch.matmul(attention, node_type_embed)
         node_embed = node_embed + torch.matmul(node_type_embed, trans_w).squeeze()
@@ -287,12 +262,7 @@ class NSLoss(nn.Module):
         self.embedding_size = embedding_size
         self.weights = Parameter(torch.FloatTensor(num_nodes, embedding_size))
         self.sample_weights = F.normalize(
-            torch.Tensor(
-                [
-                    (math.log(k + 2) - math.log(k + 1)) / math.log(num_nodes + 1)
-                    for k in range(num_nodes)
-                ]
-            ),
+            torch.Tensor([(math.log(k + 2) - math.log(k + 1)) / math.log(num_nodes + 1) for k in range(num_nodes)]),
             dim=0,
         )
 
@@ -303,16 +273,10 @@ class NSLoss(nn.Module):
 
     def forward(self, input, embs, label):
         n = input.shape[0]
-        log_target = torch.log(
-            torch.sigmoid(torch.sum(torch.mul(embs, self.weights[label]), 1))
-        )
-        negs = torch.multinomial(
-            self.sample_weights, self.num_sampled * n, replacement=True
-        ).view(n, self.num_sampled)
+        log_target = torch.log(torch.sigmoid(torch.sum(torch.mul(embs, self.weights[label]), 1)))
+        negs = torch.multinomial(self.sample_weights, self.num_sampled * n, replacement=True).view(n, self.num_sampled)
         noise = torch.neg(self.weights[negs])
-        sum_log_sampled = torch.sum(
-            torch.log(torch.sigmoid(torch.bmm(noise, embs.unsqueeze(2)))), 1
-        ).squeeze()
+        sum_log_sampled = torch.sum(torch.log(torch.sigmoid(torch.bmm(noise, embs.unsqueeze(2)))), 1).squeeze()
 
         loss = log_target + sum_log_sampled
         return -loss.sum() / n
@@ -338,11 +302,7 @@ class RWGraph:
             cur = walk[-1]
             candidates = []
             for node in G[cur].keys():
-                if (
-                    schema == None
-                    or self.node_type[node]
-                    == schema_items[len(walk) % (len(schema_items) - 1)]
-                ):
+                if schema is None or self.node_type[node] == schema_items[len(walk) % (len(schema_items) - 1)]:
                     candidates.append(node)
             if candidates:
                 walk.append(rand.choice(candidates))
@@ -402,13 +362,9 @@ def generate_pairs(all_walks, vocab, window_size=5):
             for i in range(len(walk)):
                 for j in range(1, skip_window + 1):
                     if i - j >= 0:
-                        pairs.append(
-                            (vocab[walk[i]].index, vocab[walk[i - j]].index, layer_id)
-                        )
+                        pairs.append((vocab[walk[i]].index, vocab[walk[i - j]].index, layer_id))
                     if i + j < len(walk):
-                        pairs.append(
-                            (vocab[walk[i]].index, vocab[walk[i + j]].index, layer_id)
-                        )
+                        pairs.append((vocab[walk[i]].index, vocab[walk[i + j]].index, layer_id))
     return pairs
 
 
@@ -451,11 +407,10 @@ def get_batches(pairs, neighbors, batch_size):
 
 
 def generate_walks(network_data, num_walks, walk_length, schema=None):
-    if schema is not None:
-        # TODO: node_type = load_node_type(file_name + '/node_type.txt')
-        pass
-    else:
-        node_type = None
+    # if schema is not None:
+    #     pass
+    # else:
+    #     node_type = None
 
     all_walks = []
     for layer_id in network_data:

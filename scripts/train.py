@@ -66,9 +66,7 @@ if __name__ == "__main__":
     args = options.parse_args_and_arch(parser, args)
     print(args)
     assert len(args.device_id) == 1
-    variants = list(
-        gen_variants(dataset=args.dataset, model=args.model, seed=args.seed)
-    )
+    variants = list(gen_variants(dataset=args.dataset, model=args.model, seed=args.seed))
     variants = check_task_dataset_model_match(args.task, variants)
     # Collect results
     results_dict = defaultdict(list)

@@ -3,7 +3,7 @@ import numpy as np
 
 import torch
 
-from utils import print_result, set_random_seed, get_dataset
+from utils import print_result, set_random_seed, get_dataset, get_extra_args
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
 from cogdl.utils import build_args_from_dict
@@ -21,7 +21,6 @@ def build_default_args_for_graph_classification(dataset):
         "cpu": cpu,
         "device_id": [0],
         "seed": [0],
-
         "hidden_size": 64,
         "degree_feature": False,
         "gamma": 0.5,
@@ -35,11 +34,11 @@ def build_default_args_for_graph_classification(dataset):
         "kernel_size": 5,
         "k": 30,
         "out_channels": 32,
-
         "task": "graph_classification",
         "model": "sortpool",
-        "dataset": dataset
+        "dataset": dataset,
     }
+    args = get_extra_args(args)
     return build_args_from_dict(args)
 
 
@@ -47,6 +46,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

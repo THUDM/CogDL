@@ -26,9 +26,8 @@ CogDL features:
   - Link prediction
   - Graph classification
   - Graph pre-training
-  - Graph similarity search (todo)
-  - Graph clustering (todo)
-  - Combinatorial optimization on graphs (todo)
+  - Graph clustering
+  - Graph similarity search
 
 ## ❗ News
 
@@ -41,7 +40,7 @@ CogDL features:
 ### Requirements and Installation
 
 - Python version >= 3.6
-- PyTorch version >= 1.0.0
+- PyTorch version >= 1.6
 - PyTorch Geometric (recommended)
 - Deep Graph Library (optional)
 
@@ -90,23 +89,16 @@ git clone https://github.com/THUDM/cogdl /cogdl
 
 ### API Usage
 
-You can run all kinds of experiments through CogDL APIs, including: `build_dataset`, `build_model`, and `build_task`. You can also use your own datasets and models for experiments. Some examples are provided in the [examples/](https://github.com/THUDM/cogdl/tree/master/examples/), including [gcn.py](https://github.com/THUDM/cogdl/tree/master/examples/gcn.py). 
+You can run all kinds of experiments through CogDL APIs, especially `build_task`. You can also use your own datasets and models for experiments. Some examples are provided in the [examples/](https://github.com/THUDM/cogdl/tree/master/examples/), including [gcn.py](https://github.com/THUDM/cogdl/tree/master/examples/gcn.py). 
 
 ```python
-# Set hyper-parameters for experiments
-args = get_default_args()
-args.task = 'node_classification'
-args.dataset = 'cora'
-args.model = 'gcn'
-# Set datasets
-dataset = build_dataset(args)
-args.num_features = dataset.num_features
-args.num_classes = dataset.num_classes
-args.num_layers = 2
-# Build models
-model = build_model(args)
-# Train and evaluate models
-task = build_task(args, dataset=dataset, model=model)
+from cogdl.tasks import build_task
+from cogdl.options import get_default_args
+
+# Get default hyper-parameters for experiments
+args = get_default_args(task="node_classification", dataset="cora", model="gcn")
+# Build and run
+task = build_task(args)
 ret = task.train()
 ```
 
@@ -147,76 +139,21 @@ Expected output:
 | ('cora', 'gat') | 0.8262±0.0032 |
 
 
-## Model Characteristics
+### Creating a model
 
-We summarize the characteristics of all methods for different tasks in the following, where reproducibility means whether the model is reproduced in our experimental setting currently. 
+You can use the following command to create the necessary files for your model via our CLI.
 
-### Unsupervised Graph Embedding Methods
+```bash
+$ python scripts/model_maker.py
+```
 
-| Algorithm |      Directed      |       Weight       |  Shallow network   | Matrix factorization |      Sampling      |  Reproducibility   |    GPU support     |
-| --------- | :----------------: | :----------------: | :----------------: | :------------------: | :----------------: | :----------------: | :----------------: |
-| DeepWalk  |                    |                    | :heavy_check_mark: |                      |                    | :heavy_check_mark: |                    |
-| LINE      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      | :heavy_check_mark: | :heavy_check_mark: |                    |
-| Node2vec  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      | :heavy_check_mark: | :heavy_check_mark: |                    |
-| SDNE      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      |                    | :heavy_check_mark: | :heavy_check_mark: |
-| DNGR      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      |                    |                    | :heavy_check_mark: |
-| HOPE      | :heavy_check_mark: | :heavy_check_mark: |                    |  :heavy_check_mark:  |                    | :heavy_check_mark: |                    |
-| GraRep    | :heavy_check_mark: | :heavy_check_mark: |                    |  :heavy_check_mark:  |                    |                    |                    |
-| NetMF     | :heavy_check_mark: | :heavy_check_mark: |                    |  :heavy_check_mark:  |                    | :heavy_check_mark: |                    |
-| NetSMF    |                    | :heavy_check_mark: |                    |  :heavy_check_mark:  | :heavy_check_mark: | :heavy_check_mark: |                    |
-| ProNE     | :heavy_check_mark: | :heavy_check_mark: |                    |  :heavy_check_mark:  |                    | :heavy_check_mark: |                    |
-
-
-### Graph Neural Networks
-
-| Algorithm   |       Weight       |      Sampling      |     Attention      |     Inductive      |  Reproducibility   |    GPU support     |
-| ----------- | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: |
-| Graph U-Net | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| MixHop      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| Dr-GAT      |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| GAT         |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| DGI         | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| GCN         | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| GraphSAGE   | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Chebyshev   | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| GRAND       | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| GCNII       | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| DeeperGCN   | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| MVGRL       | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| GraphMix    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| DisenGCN    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| PPNP/APPNP  | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-
-### Heterogeneous Graph Embedding Methods
-
-| Algorithm    |     Multi-Node     |     Multi-Edge     |     Attribute      |     Supervised     |      MetaPath      |  Reproducibility   |    GPU support     |
-| ------------ | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: |
-| GATNE        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Metapath2vec | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |                    |
-| PTE          | :heavy_check_mark: |                    |                    |                    |                    | :heavy_check_mark: |                    |
-| Hin2vec      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| GTN          | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| HAN          | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-
-### Methods for Graph Classification
-
-| Algorithm  |    Node feature    |    Unsupervised    |    Graph kernel    |  Shallow network   |  Reproducibility   |    GPU support     |
-| ---------- | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: |
-| Infograph  | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| Diffpool   | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| Graph2Vec  |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    |
-| Sortpool   | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| GIN        | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| PATCHY_SAN | :heavy_check_mark: |                    | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: |
-| DGCNN      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| DGK        |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    |                    |
-| HGP-SL     | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| SAGPool    | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
 
 
 ## Leaderboard
 
 CogDL provides several downstream tasks including node classification (with or without node attributes), link prediction (with or without attributes, heterogeneous or not). These leaderboards maintain state-of-the-art results and benchmarks on these tasks.
+
+All models have been implemented in [models](https://github.com/THUDM/cogdl/tree/master/cogdl/models) and the hyperparameters to reproduce the following results have been put in [examples](https://github.com/THUDM/cogdl/tree/master/examples). 
 
 ### Node Classification
 
@@ -324,19 +261,17 @@ This leaderboard reports the performance of graph classification methods. we run
 
 If you have ANY difficulties to get things working in the above steps, feel free to open an issue. You can expect a reply within 24 hours.
 
-## Customization
-
-### Submit Your State-of-the-art
-
-If you have a well-performed algorithm and are willing to publish it, you can submit your implementation via [opening an issue](https://github.com/THUDM/cogdl/issues) or [join our slack group](https://join.slack.com/t/cogdl/shared_invite/enQtODgyMjY5MTY0NTY3LWQ5YTMwMWQzN2U2YTY0YWM2ZjhkNWUyZmE5ZmQyMTEyMGVkMzI0MjdlMGZlYmYzOWIwMTkyZGZmYTRjNGYxOGM). After evaluating its originality, creativity and efficiency, we will add your method's performance into our leaderboard.
+## Contributing
 
 ### Add Your Own Dataset
 
-If you have a unique and interesting dataset and are willing to publish it, you can submit your dataset via opening an issue in our repository or commenting on slack group, we will run all suitable methods on your dataset and update our leaderboard. 
+If you have a unique and interesting dataset and are willing to publish it, you can submit your dataset via opening an issue in our repository, we will run all suitable methods on your dataset and update our leaderboard. 
 
 ### Implement Your Own Model
 
-If you have a well-performed algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request,  detailed information can be found [here](https://help.github.com/en/articles/creating-a-pull-request). 
+If you have a well-performed algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request, detailed information can be found [here](https://help.github.com/en/articles/creating-a-pull-request). 
+
+Before committing your modification, please first run `pre-commit install` to setup the git hook for checking code format and style using `black` and `flake8`. Then the `pre-commit` will run automatically on `git commit`! Detailed information of `pre-commit` can be found [here](https://pre-commit.com/).
 
 #### A brief guide to having a successful pull request (unit test)
 
@@ -344,6 +279,10 @@ To have a successful pull request, you need to have at least (1) your model scri
 
 You might be confused why your pull request was rejected because of 'Coverage decreased ...' issue even though your model is working fine locally. This is because you have not included a unit test, which essentially runs through the extra lines of code you added. The Travis CI service used by Github conducts all unit tests on the code you committed and checks how many lines of the code have been checked by the unit tests, and if a significant portion of your code has not been checked (insufficient coverage), the pull request is rejected.
 
-So how do you do a unit test? Let's say you implement a GNN model in a script models/nn/abcgnn.py that does the task of node classification. Then, you need to add a unit test inside the script tests/tasks/test_node_classification.py (or whatever relevant task your model does). To add the unit test, you simply add a function test_abcgnn_cora() (just follow the format of the other unit tests already in the script), fill it with required arguments and the last line in the function 'assert 0 <= ret["Acc"] <= 1' is the very basic sanity check conducted by the unit test. Then, in the main section, remember to call your test_abcgnn_cora() function. After modifying tests/tasks/test_node_classification.py, commit it together with your models/nn/abcgnn.py and your pull request should pass.
+So how do you do a unit test? 
+
+* Let's say you implement a GNN model in a script `models/nn/abcgnn.py` that does the task of node classification. Then, you need to add a unit test inside the script `tests/tasks/test_node_classification.py` (or whatever relevant task your model does). 
+* To add the unit test, you simply add a function *test_abcgnn_cora()* (just follow the format of the other unit tests already in the script), fill it with required arguments and the last line in the function *'assert 0 <= ret["Acc"] <= 1'* is the very basic sanity check conducted by the unit test. 
+* Then, in the main section, remember to call your test_abcgnn_cora() function. After modifying `tests/tasks/test_node_classification.py`, commit it together with your `models/nn/abcgnn.py` and your pull request should pass.
 
 It is also a good idea to include an example script examples/gnn_models/abcgnn.py to show how your model can be run with appropriate arguments.

@@ -26,6 +26,7 @@ class DGCNN(BaseModel):
     k : int
         Number of neareast neighbors.
     """
+
     @staticmethod
     def add_args(parser):
         parser.add_argument("--hidden-size", type=int, default=64)
@@ -65,11 +66,17 @@ class DGCNN(BaseModel):
 
     def __init__(self, in_feats, hidden_dim, out_feats, k=20, dropout=0.5):
         super(DGCNN, self).__init__()
-        mlp1 = nn.Sequential(GINMLP(2*in_feats, hidden_dim, hidden_dim, num_layers=3), nn.ReLU(), nn.BatchNorm1d(hidden_dim))
-        mlp2 = nn.Sequential(GINMLP(2*hidden_dim, 2*hidden_dim, 2*hidden_dim, num_layers=1), nn.ReLU(), nn.BatchNorm1d(2*hidden_dim))
+        mlp1 = nn.Sequential(
+            GINMLP(2 * in_feats, hidden_dim, hidden_dim, num_layers=3), nn.ReLU(), nn.BatchNorm1d(hidden_dim)
+        )
+        mlp2 = nn.Sequential(
+            GINMLP(2 * hidden_dim, 2 * hidden_dim, 2 * hidden_dim, num_layers=1),
+            nn.ReLU(),
+            nn.BatchNorm1d(2 * hidden_dim),
+        )
         self.conv1 = DynamicEdgeConv(mlp1, k, "max")
         self.conv2 = DynamicEdgeConv(mlp2, k, "max")
-        self.linear = nn.Linear(hidden_dim + 2*hidden_dim, 1024)
+        self.linear = nn.Linear(hidden_dim + 2 * hidden_dim, 1024)
         self.final_mlp = nn.Sequential(
             nn.Linear(1024, 512),
             nn.BatchNorm1d(512),
@@ -77,7 +84,7 @@ class DGCNN(BaseModel):
             nn.Linear(512, 256),
             nn.BatchNorm1d(256),
             nn.Dropout(dropout),
-            nn.Linear(256, out_feats)
+            nn.Linear(256, out_feats),
         )
 
     def forward(self, batch):
@@ -92,4 +99,3 @@ class DGCNN(BaseModel):
             loss = F.nll_loss(out, batch.y)
             return out, loss
         return out, None
-

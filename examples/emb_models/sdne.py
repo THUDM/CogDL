@@ -1,6 +1,6 @@
 from cogdl.datasets import build_dataset
 from cogdl.tasks import build_task
-from cogdl.utils import build_args_from_dict, print_result, set_random_seed
+from cogdl.utils import build_args_from_dict, print_result, set_random_seed, get_extra_args
 
 DATASET_REGISTRY = {}
 
@@ -15,7 +15,6 @@ def build_default_args_for_unsupervised_node_classification(dataset):
         "seed": [0, 1, 2],
         "lr": 0.001,
         "max_epoch": 500,
-
         "hidden_size1": 1000,
         "hidden_size2": 128,
         "droput": 0.5,
@@ -23,11 +22,11 @@ def build_default_args_for_unsupervised_node_classification(dataset):
         "beta": 5,
         "nu1": 1e-4,
         "nu2": 1e-3,
-
         "task": "unsupervised_node_classification",
         "model": "sdne",
-        "dataset": dataset
+        "dataset": dataset,
     }
+    args = get_extra_args(args)
     return build_args_from_dict(args)
 
 
@@ -35,6 +34,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

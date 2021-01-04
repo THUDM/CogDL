@@ -1,6 +1,6 @@
 from cogdl.datasets import build_dataset
 from cogdl.tasks import build_task
-from cogdl.utils import build_args_from_dict, print_result, set_random_seed
+from cogdl.utils import build_args_from_dict, print_result, set_random_seed, get_extra_args
 
 DATASET_REGISTRY = {}
 
@@ -13,17 +13,16 @@ def build_default_args_for_unsupervised_node_classification(dataset):
         "enhance": None,
         "save_dir": ".",
         "seed": [0, 1, 2],
-
         "walk_length": 80,
         "walk_num": 40,
         "window_size": 5,
         "worker": 10,
         "iteration": 10,
-
         "task": "unsupervised_node_classification",
         "model": "deepwalk",
-        "dataset": dataset
+        "dataset": dataset,
     }
+    args = get_extra_args(args)
     return build_args_from_dict(args)
 
 
@@ -31,6 +30,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

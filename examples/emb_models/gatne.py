@@ -1,7 +1,7 @@
 import torch
 from cogdl.datasets import build_dataset
 from cogdl.tasks import build_task
-from cogdl.utils import build_args_from_dict, print_result, set_random_seed
+from cogdl.utils import build_args_from_dict, print_result, set_random_seed, get_extra_args
 
 DATASET_REGISTRY = {}
 
@@ -13,7 +13,6 @@ def build_default_args_for_multiplex_link_prediction(dataset):
         "cpu": cpu,
         "eval_type": "all",
         "seed": [0, 1, 2],
-
         "walk_length": 10,
         "walk_num": 10,
         "window_size": 5,
@@ -25,11 +24,11 @@ def build_default_args_for_multiplex_link_prediction(dataset):
         "negative_samples": 5,
         "neighbor_samples": 10,
         "schema": None,
-
         "task": "multiplex_link_prediction",
         "model": "gatne",
-        "dataset": dataset
+        "dataset": dataset,
     }
+    args = get_extra_args(args)
     return build_args_from_dict(args)
 
 
@@ -37,6 +36,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

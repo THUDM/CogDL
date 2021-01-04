@@ -17,6 +17,7 @@ def get_default_args():
         "cpu": not cuda_available,
         "lr": 0.01,
         "weight_decay": 5e-4,
+        "checkpoint": False,
     }
     return build_args_from_dict(default_dict)
 
@@ -26,14 +27,8 @@ def test_gtn_gtn_imdb():
     args.task = "heterogeneous_node_classification"
     args.dataset = "gtn-imdb"
     args.model = "gtn"
-    dataset = build_dataset(args)
-    args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
-    args.num_edge = dataset.num_edge
-    args.num_nodes = dataset.num_nodes
     args.num_channels = 2
     args.num_layers = 2
-    model = build_model(args)
     task = build_task(args)
     ret = task.train()
     assert ret["f1"] >= 0 and ret["f1"] <= 1
@@ -44,13 +39,7 @@ def test_han_gtn_acm():
     args.task = "heterogeneous_node_classification"
     args.dataset = "gtn-acm"
     args.model = "han"
-    dataset = build_dataset(args)
-    args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
-    args.num_edge = dataset.num_edge
-    args.num_nodes = dataset.num_nodes
     args.num_layers = 2
-    model = build_model(args)
     task = build_task(args)
     ret = task.train()
     assert ret["f1"] >= 0 and ret["f1"] <= 1
@@ -61,13 +50,7 @@ def test_han_gtn_dblp():
     args.task = "heterogeneous_node_classification"
     args.dataset = "gtn-dblp"
     args.model = "han"
-    dataset = build_dataset(args)
-    args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
-    args.num_edge = dataset.num_edge
-    args.num_nodes = dataset.num_nodes
     args.num_layers = 2
-    model = build_model(args)
     task = build_task(args)
     ret = task.train()
     assert ret["f1"] >= 0 and ret["f1"] <= 1
@@ -78,13 +61,7 @@ def test_han_han_imdb():
     args.task = "heterogeneous_node_classification"
     args.dataset = "han-imdb"
     args.model = "han"
-    dataset = build_dataset(args)
-    args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
-    args.num_edge = dataset.num_edge
-    args.num_nodes = dataset.num_nodes
     args.num_layers = 2
-    model = build_model(args)
     task = build_task(args)
     ret = task.train()
     assert ret["f1"] >= 0 and ret["f1"] <= 1
@@ -95,13 +72,7 @@ def test_han_han_acm():
     args.task = "heterogeneous_node_classification"
     args.dataset = "han-acm"
     args.model = "han"
-    dataset = build_dataset(args)
-    args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
-    args.num_edge = dataset.num_edge
-    args.num_nodes = dataset.num_nodes
     args.num_layers = 2
-    model = build_model(args)
     task = build_task(args)
     ret = task.train()
     assert ret["f1"] >= 0 and ret["f1"] <= 1
@@ -113,13 +84,7 @@ def test_han_han_dblp():
     args.dataset = "han-dblp"
     args.model = "han"
     args.cpu = True
-    dataset = build_dataset(args)
-    args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
-    args.num_edge = dataset.num_edge
-    args.num_nodes = dataset.num_nodes
     args.num_layers = 2
-    model = build_model(args)
     task = build_task(args)
     ret = task.train()
     assert ret["f1"] >= 0 and ret["f1"] <= 1

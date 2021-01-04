@@ -35,7 +35,7 @@ def print_result(results, datasets, model_name):
     num_datasets = len(datasets)
     num_seed = len(results) // num_datasets
     for i, res in enumerate(results):
-        results_dict[(model_name, datasets[i//num_seed])].append(res)
+        results_dict[(model_name, datasets[i // num_seed])].append(res)
     tab_data = tabulate_results(results_dict)
     print(tabulate(tab_data, headers=table_header, tablefmt="github"))
 
@@ -52,3 +52,12 @@ def get_dataset(args):
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
     return dataset, args
+
+
+def get_extra_args(args):
+    redundancy = {
+        "checkpoint": False,
+        "load_emb_path": None,
+    }
+    args = {**args, **redundancy}
+    return args

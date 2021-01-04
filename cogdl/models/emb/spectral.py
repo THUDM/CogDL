@@ -9,15 +9,15 @@ from .. import BaseModel, register_model
 class Spectral(BaseModel):
     r"""The Spectral clustering model from the `"Leveraging social media networks for classiﬁcation"
     <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.481.5392&rep=rep1&type=pdf>`_ paper
-    
+
     Args:
         hidden_size (int) : The dimension of node representation.
-    """    
-    
+    """
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
-        pass 
+        pass
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -34,4 +34,3 @@ class Spectral(BaseModel):
         emb_matrix = ut * np.sqrt(s)
         emb_matrix = preprocessing.normalize(emb_matrix, "l2")
         return emb_matrix
-

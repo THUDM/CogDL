@@ -33,7 +33,7 @@ class Data(object):
         self.y = y
         self.pos = pos
         for key, item in kwargs.items():
-            if key == 'num_nodes':
+            if key == "num_nodes":
                 self.__num_nodes__ = item
             else:
                 self[key] = item
@@ -59,9 +59,9 @@ class Data(object):
     def keys(self):
         r"""Returns all names of graph attributes."""
         keys = [key for key in self.__dict__.keys() if self[key] is not None]
-        keys = [key for key in keys if key[:2] != '__' and key[-2:] != '__']
+        keys = [key for key in keys if key[:2] != "__" and key[-2:] != "__"]
         return keys
-    
+
     def __len__(self):
         r"""Returns the number of all present attributes."""
         return len(self.keys)
@@ -99,9 +99,9 @@ class Data(object):
         # `*index*` and `*face*` should be concatenated in the last dimension,
         # everything else in the first dimension.
         return -1 if bool(re.search("(index|face)", key)) else 0
-    
+
     def __inc__(self, key, value):
-        r""""Returns the incremental count to cumulatively increase the value
+        r""" "Returns the incremental count to cumulatively increase the value
         of the next attribute of :obj:`key` when creating batches.
 
         .. note::
@@ -112,7 +112,7 @@ class Data(object):
         """
         # Only `*index*` and `*face*` should be cumulatively summed up when
         # creating batches.
-        return self.num_nodes if bool(re.search('(index|face)', key)) else 0
+        return self.num_nodes if bool(re.search("(index|face)", key)) else 0
 
     @property
     def num_edges(self):
@@ -130,7 +130,7 @@ class Data(object):
     def num_nodes(self):
         if self.x is not None:
             return self.x.shape[0]
-        return torch.max(self.edge_index)+1
+        return torch.max(self.edge_index) + 1
 
     @num_nodes.setter
     def num_nodes(self, num_nodes):
@@ -179,8 +179,7 @@ class Data(object):
         num_nodes = self.x.shape[0]
         edge_attr_np = np.ones(num_edges)
         self.__adj = sparse.csr_matrix(
-            (edge_attr_np, (edge_index_np[0], edge_index_np[1])),
-            shape=(num_nodes, num_nodes)
+            (edge_attr_np, (edge_index_np[0], edge_index_np[1])), shape=(num_nodes, num_nodes)
         )
 
     def subgraph(self, node_idx):
@@ -195,7 +194,7 @@ class Data(object):
         adj_coo = sparse.coo_matrix(adj)
         row, col = adj_coo.row, adj_coo.col
         edge_attr = torch.from_numpy(adj_coo.data).to(self.x.device)
-        edge_index = torch.from_numpy(np.concatenate([row, col], axis=0)).to(self.x.device)
+        edge_index = torch.from_numpy(np.stack([row, col], axis=0)).to(self.x.device).long()
         keys = self.keys
         attrs = {key: self[key][node_idx] for key in keys if "edge" not in key}
         attrs["edge_attr"] = edge_attr
@@ -209,7 +208,10 @@ class Data(object):
         edge_index = self.edge_index.T[edge_idx].cpu().numpy()
         node_idx = np.unique(edge_index)
         idx_dict = {val: key for key, val in enumerate(node_idx)}
-        func = lambda x: [idx_dict[x[0]], idx_dict[x[1]]]
+
+        def func(x):
+            return [idx_dict[x[0]], idx_dict[x[1]]]
+
         edge_index = np.array([func(x) for x in edge_index]).transpose()
         edge_index = torch.from_numpy(edge_index).to(self.x.device)
         edge_attr = self.edge_attr[edge_idx]

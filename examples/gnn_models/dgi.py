@@ -3,7 +3,7 @@ import numpy as np
 
 import torch
 
-from utils import print_result, set_random_seed, get_dataset
+from utils import print_result, set_random_seed, get_dataset, get_extra_args
 from cogdl.tasks import build_task
 from cogdl.utils import build_args_from_dict
 
@@ -22,19 +22,18 @@ def build_default_args_for_node_classification(dataset):
         "device_id": [0],
         "seed": [0],
         "num_shuffle": 5,
-
         "dropout": 0.0,
         "hidden_size": 512,
+        "activation": "prelu",
         "num_layers": 2,
         "sampler": "none",
-
         "task": "unsupervised_node_classification",
         "model": "dgi",
         "dataset": dataset,
-
         "save_dir": "./saved",
         "enhance": None,
     }
+    args = get_extra_args(args)
     return build_args_from_dict(args)
 
 
@@ -42,6 +41,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

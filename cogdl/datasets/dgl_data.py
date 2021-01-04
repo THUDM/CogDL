@@ -11,6 +11,7 @@ class MUTAGDataset(TUDataset):
         self.num_features = 0
         self.num_classes = self.num_labels[0]
 
+
 @register_dataset("dgl-collab")
 class CollabDataset(TUDataset):
     def __init__(self, args=None):
@@ -18,6 +19,7 @@ class CollabDataset(TUDataset):
         super(CollabDataset, self).__init__(name=dataset)
         self.num_features = 0
         self.num_classes = self.num_labels[0]
+
 
 @register_dataset("dgl-imdb-b")
 class ImdbBinaryDataset(TUDataset):
@@ -27,6 +29,7 @@ class ImdbBinaryDataset(TUDataset):
         self.num_features = 0
         self.num_classes = self.num_labels[0]
 
+
 @register_dataset("dgl-imdb-m")
 class ImdbMultiDataset(TUDataset):
     def __init__(self, args=None):
@@ -34,6 +37,7 @@ class ImdbMultiDataset(TUDataset):
         super(ImdbMultiDataset, self).__init__(name=dataset)
         self.num_features = 0
         self.num_classes = self.num_labels[0]
+
 
 @register_dataset("dgl-proteins")
 class ProtainsDataset(TUDataset):

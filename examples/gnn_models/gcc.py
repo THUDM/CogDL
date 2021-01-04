@@ -2,6 +2,7 @@ import torch
 from cogdl.datasets import build_dataset
 from cogdl.tasks import build_task
 from cogdl.utils import build_args_from_dict, print_result, set_random_seed
+from utils import get_extra_args
 
 DATASET_REGISTRY = {}
 
@@ -15,14 +16,13 @@ def build_default_args_for_multiplex_node_classification(dataset):
         "enhance": None,
         "save_dir": ".",
         "seed": [0, 1, 2],
-
         "epoch": 0,
         "load_path": "./saved/gcc_pretrained.pth",
-
         "task": "multiplex_node_classification",
         "model": "gcc",
-        "dataset": dataset
+        "dataset": dataset,
     }
+    args = get_extra_args(args)
     return build_args_from_dict(args)
 
 
@@ -30,6 +30,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

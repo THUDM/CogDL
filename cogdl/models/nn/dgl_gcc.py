@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from cogdl.data import download_url
-from cogdl.layers.gcc_module import *
+from cogdl.layers.gcc_module import GraphEncoder
 from scipy.sparse import linalg
 
 from .. import BaseModel, register_model
@@ -80,9 +80,7 @@ def _add_undirected_graph_positional_embedding(g, hidden_size, retry=10):
     # See section 2.4 of http://www.cs.yale.edu/homes/spielman/561/2009/lect02-09.pdf
     n = g.number_of_nodes()
     adj = g.adjacency_matrix_scipy(transpose=False, return_edge_ids=False).astype(float)
-    norm = sparse.diags(
-        dgl.backend.asnumpy(g.in_degrees()).clip(1) ** -0.5, dtype=float
-    )
+    norm = sparse.diags(dgl.backend.asnumpy(g.in_degrees()).clip(1) ** -0.5, dtype=float)
     laplacian = norm * adj * norm
     k = min(n - 2, hidden_size)
     x = eigen_decomposision(n, k, laplacian, hidden_size, retry)
@@ -90,9 +88,7 @@ def _add_undirected_graph_positional_embedding(g, hidden_size, retry=10):
     return g
 
 
-def _rwr_trace_to_dgl_graph(
-    g, seed, trace, positional_embedding_size, entire_graph=False
-):
+def _rwr_trace_to_dgl_graph(g, seed, trace, positional_embedding_size, entire_graph=False):
     subv = torch.unique(torch.cat(trace)).tolist()
     try:
         subv.remove(seed)
@@ -173,15 +169,7 @@ class NodeClassificationDataset(object):
 
         max_nodes_per_seed = max(
             self.rw_hops,
-            int(
-                (
-                    self.graphs[graph_idx].out_degree(node_idx)
-                    * math.e
-                    / (math.e - 1)
-                    / self.restart_prob
-                )
-                + 0.5
-            ),
+            int((self.graphs[graph_idx].out_degree(node_idx) * math.e / (math.e - 1) / self.restart_prob) + 0.5),
         )
         traces = dgl.contrib.sampling.random_walk_with_restart(
             self.graphs[graph_idx],
@@ -217,6 +205,7 @@ class GraphClassificationDataset(NodeClassificationDataset):
         positional_embedding_size=32,
         step_dist=[1.0, 0.0, 0.0],
     ):
+        super(GraphClassificationDataset, self).__init__()
         self.rw_hops = rw_hops
         self.subgraph_size = subgraph_size
         self.restart_prob = restart_prob
@@ -259,17 +248,13 @@ class GCC(BaseModel):
         if not os.path.isfile(self.load_path):
             print("=> no checkpoint found at '{}'".format(self.load_path))
             url = "https://github.com/cenyk1230/gcc-data/raw/master/saved/gcc_pretrained.pth"
-            path = '/'.join(self.load_path.split('/')[:-1])
-            name = self.load_path.split('/')[-1]
+            path = "/".join(self.load_path.split("/")[:-1])
+            name = self.load_path.split("/")[-1]
             download_url(url, path, name=name)
 
         print("=> loading checkpoint '{}'".format(self.load_path))
         checkpoint = torch.load(self.load_path, map_location="cpu")
-        print(
-            "=> loaded successfully '{}' (epoch {})".format(
-                self.load_path, checkpoint["epoch"]
-            )
-        )
+        print("=> loaded successfully '{}' (epoch {})".format(self.load_path, checkpoint["epoch"]))
         args = checkpoint["opt"]
 
         args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

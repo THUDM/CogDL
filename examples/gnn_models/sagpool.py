@@ -3,12 +3,13 @@ import numpy as np
 
 import torch
 
-from utils import print_result, set_random_seed, get_dataset
+from utils import print_result, set_random_seed, get_dataset, get_extra_args
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
 from cogdl.utils import build_args_from_dict
 
 DATASET_REGISTRY = {}
+
 
 def build_default_args_for_graph_classification(dataset):
     cpu = not torch.cuda.is_available()
@@ -20,11 +21,9 @@ def build_default_args_for_graph_classification(dataset):
         "cpu": cpu,
         "device_id": [0],
         "seed": [0],
-
         "train_ratio": 0.7,
         "test_ratio": 0.1,
         "batch_size": 128,
-
         "kfold": False,
         "degree_feature": False,
         "uniform_feature": False,
@@ -33,11 +32,11 @@ def build_default_args_for_graph_classification(dataset):
         "hidden_size": 128,
         "pooling_ratio": 0.5,
         "pooling_layer_type": "gcnconv",
-
         "task": "graph_classification",
         "model": "sagpool",
-        "dataset": dataset
+        "dataset": dataset,
     }
+    args = get_extra_args(args)
     return build_args_from_dict(args)
 
 
@@ -45,6 +44,7 @@ def register_func(name):
     def register_func_name(func):
         DATASET_REGISTRY[name] = func
         return func
+
     return register_func_name
 
 

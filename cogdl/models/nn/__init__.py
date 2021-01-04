@@ -31,4 +31,41 @@ from .pyg_sortpool import SortPool
 from .pyg_srgcn import SRGCN
 from .pyg_stpgnn import stpgnn
 from .rgcn import RGCNLayer, LinkPredictRGCN, RGCN
-from .sgc import SimpleGraphConvolution
+from .sgc import SimpleGraphConvolution, sgc
+
+__all__ = [
+    "CompGCN",
+    "DGIModel",
+    "DisenGCN",
+    "PetarVSpGAT",
+    "TKipfGCN",
+    "GCNII",
+    "GDC_GCN",
+    "GRACE",
+    "Graphsage",
+    "HGPSL",
+    "MVGRL",
+    "PairNorm",
+    "PatchySAN",
+    "PPNP",
+    "Chebyshev",
+    "DeeperGCN",
+    "DGCNN",
+    "DiffPool",
+    "DrGAT",
+    "DrGCN",
+    "GCNMix",
+    "GINMLP",
+    "Grand",
+    "GPT_GNN",
+    "GTN",
+    "HAN",
+    "Infomax",
+    "InfoGraph",
+    "SAGPoolNetwork",
+    "SortPool",
+    "SRGCN",
+    "stpgnn",
+    "RGCN",
+    "sgc",
+]

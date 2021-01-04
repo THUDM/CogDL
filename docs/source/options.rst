@@ -1,5 +1,5 @@
-options module
-==============
+options
+=======
 
 .. automodule:: options
     :members:

@@ -36,6 +36,8 @@ class UnsupervisedNodeClassification(BaseTask):
         # fmt: off
         parser.add_argument("--hidden-size", type=int, default=128)
         parser.add_argument("--num-shuffle", type=int, default=5)
+        parser.add_argument("--save-dir", type=str, default="./embedding")
+        parser.add_argument("--load-emb-path", type=str, default=None)
         # fmt: on
 
     def __init__(self, args, dataset=None, model=None):
@@ -62,6 +64,7 @@ class UnsupervisedNodeClassification(BaseTask):
         self.hidden_size = args.hidden_size
         self.num_shuffle = args.num_shuffle
         self.save_dir = args.save_dir
+        self.load_emb_path = args.load_emb_path
         self.enhance = args.enhance
         self.args = args
         self.is_weighted = self.data.edge_attr is not None
@@ -97,40 +100,37 @@ class UnsupervisedNodeClassification(BaseTask):
         return embs
 
     def save_emb(self, embs):
-        name = os.path.join(self.save_dir, self.model_name + "_emb.npy")
+        os.makedirs(self.save_dir, exist_ok=True)
+        name = os.path.join(self.save_dir, self.model_name + "_" + self.dataset_name + "_emb.npy")
         np.save(name, embs)
 
     def train(self):
         if self.trainer is not None:
             return self.trainer.fit(self.model, self.data)
-        if "gcc" in self.model_name:
-            features_matrix = self.model.train(self.data)
-        elif "dgi" in self.model_name or "graphsage" in self.model_name:
-            acc = self.model.train(self.data)
-            return dict(Acc=acc)
-        elif "mvgrl" in self.model_name:
-            acc = self.model.train(self.data, self.dataset_name)
-            return dict(Acc=acc)
-        else:
-            G = nx.Graph()
-            if self.is_weighted:
-                edges, weight = (
-                    self.data.edge_index.t().tolist(),
-                    self.data.edge_attr.tolist(),
-                )
-                G.add_weighted_edges_from([(edges[i][0], edges[i][1], weight[0][i]) for i in range(len(edges))])
+        if self.load_emb_path is None:
+            if "gcc" in self.model_name:
+                features_matrix = self.model.train(self.data)
             else:
-                G.add_edges_from(self.data.edge_index.t().tolist())
-            embeddings = self.model.train(G)
-            if self.enhance is not None:
-                embeddings = self.enhance_emb(G, embeddings)
-            # Map node2id
-            features_matrix = np.zeros((self.num_nodes, self.hidden_size))
-            for vid, node in enumerate(G.nodes()):
-                features_matrix[node] = embeddings[vid]
+                G = nx.Graph()
+                if self.is_weighted:
+                    edges, weight = (
+                        self.data.edge_index.t().tolist(),
+                        self.data.edge_attr.tolist(),
+                    )
+                    G.add_weighted_edges_from([(edges[i][0], edges[i][1], weight[0][i]) for i in range(len(edges))])
+                else:
+                    G.add_edges_from(self.data.edge_index.t().tolist())
+                embeddings = self.model.train(G)
+                if self.enhance is not None:
+                    embeddings = self.enhance_emb(G, embeddings)
+                # Map node2id
+                features_matrix = np.zeros((self.num_nodes, self.hidden_size))
+                for vid, node in enumerate(G.nodes()):
+                    features_matrix[node] = embeddings[vid]
 
-        self.save_emb(features_matrix)
-
+            self.save_emb(features_matrix)
+        else:
+            features_matrix = np.load(self.load_emb_path)
         # label nor multi-label
         label_matrix = sp.csr_matrix(self.label_matrix)
 

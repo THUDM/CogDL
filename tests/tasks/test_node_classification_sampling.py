@@ -17,6 +17,7 @@ def get_default_args():
         "cpu": not cuda_available,
         "lr": 0.01,
         "weight_decay": 5e-4,
+        "checkpoint": False,
     }
     return build_args_from_dict(default_dict)
 

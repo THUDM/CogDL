@@ -1,5 +1,5 @@
 from .compgcn import CompGCN, CompGCNLayer
-from .dgi import DGI, DGIModel
+from .dgi import DGIModel
 from .disengcn import DisenGCN, DisenGCNLayer
 from .gat import PetarVSpGAT, SpGraphAttentionLayer
 from .gcn import GraphConvolution, TKipfGCN

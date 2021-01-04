@@ -205,6 +205,7 @@ class GraphClassificationDataset(NodeClassificationDataset):
         positional_embedding_size=32,
         step_dist=[1.0, 0.0, 0.0],
     ):
+        super(GraphClassificationDataset, self).__init__()
         self.rw_hops = rw_hops
         self.subgraph_size = subgraph_size
         self.restart_prob = restart_prob

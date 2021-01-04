@@ -6,12 +6,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_cluster import random_walk
 
-from .dgi import LogRegTrainer
 from .. import register_model, BaseModel
 from cogdl.models.nn.graphsage import sage_sampler, GraphSAGELayer
+from cogdl.trainers.self_supervised_trainer import SelfSupervisedTrainer
 
 
-class SAGE(nn.Module):
+@register_model("unsup_graphsage")
+class SAGE(BaseModel):
     """
     Implementation of unsupervised GraphSAGE in paper `"Inductive Representation Learning on Large Graphs"` <https://cs.stanford.edu/people/jure/pubs/graphsage-nips17.pdf>
 
@@ -30,6 +31,34 @@ class SAGE(nn.Module):
     negative_samples : int
     """
 
+    @staticmethod
+    def add_args(parser):
+        """Add model-specific arguments to the parser."""
+        # fmt: off
+        parser.add_argument("--num-features", type=int)
+        parser.add_argument("--hidden-size", type=int, default=128)
+        parser.add_argument("--num-layers", type=int, default=2)
+        parser.add_argument("--sample-size", type=int, nargs='+', default=[10, 10])
+        parser.add_argument("--dropout", type=float, default=0.5)
+        parser.add_argument("--walk-length", type=int, default=10)
+        parser.add_argument("--negative-samples", type=int, default=30)
+        parser.add_argument("--lr", type=float, default=0.001)
+
+        parser.add_argument("--max-epochs", type=int, default=3000)
+        # fmt: on
+
+    @classmethod
+    def build_model_from_args(cls, args):
+        return cls(
+            num_features=args.num_features,
+            hidden_size=args.hidden_size,
+            num_layers=args.num_layers,
+            sample_size=args.sample_size,
+            dropout=args.dropout,
+            walk_length=args.walk_length,
+            negative_samples=args.negative_samples,
+        )
+
     def __init__(self, num_features, hidden_size, num_layers, sample_size, dropout, walk_length, negative_samples):
         super(SAGE, self).__init__()
         self.adjlist = {}
@@ -42,7 +71,7 @@ class SAGE(nn.Module):
         self.num_negative_samples = negative_samples
         self.walk_res = None
         self.num_nodes = None
-        self.negative_samples = None
+        self.negative_samples = 1
 
         shapes = [num_features] + [hidden_size] * num_layers
 
@@ -56,6 +85,9 @@ class SAGE(nn.Module):
                 x = F.relu(x)
                 x = F.dropout(x, p=self.dropout, training=self.training)
         return x
+
+    def node_classification_loss(self, data):
+        return self.loss(data)
 
     def loss(self, data):
         x = self.forward(data.x, data.edge_index)
@@ -93,99 +125,6 @@ class SAGE(nn.Module):
     def sampling(self, edge_index, num_sample):
         return sage_sampler(self.adjlist, edge_index, num_sample)
 
-
-@register_model("unsup_graphsage")
-class Graphsage(BaseModel):
     @staticmethod
-    def add_args(parser):
-        """Add model-specific arguments to the parser."""
-        # fmt: off
-        parser.add_argument("--num-features", type=int)
-        parser.add_argument("--hidden-size", type=int, default=128)
-        parser.add_argument("--num-layers", type=int, default=2)
-        parser.add_argument("--sample-size", type=int, nargs='+', default=[10, 10])
-        parser.add_argument("--dropout", type=float, default=0.5)
-        parser.add_argument("--walk-length", type=int, default=10)
-        parser.add_argument("--negative-samples", type=int, default=30)
-        parser.add_argument("--lr", type=float, default=0.001)
-
-        parser.add_argument("--max-epochs", type=int, default=3000)
-        # fmt: on
-
-    @classmethod
-    def build_model_from_args(cls, args):
-        return cls(
-            args.num_features,
-            args.hidden_size,
-            args.num_classes,
-            args.num_layers,
-            args.sample_size,
-            args.dropout,
-            args.walk_length,
-            args.negative_samples,
-            args.lr,
-            args.max_epochs,
-            args.patience,
-        )
-
-    def __init__(
-        self,
-        num_features,
-        hidden_size,
-        num_classes,
-        num_layers,
-        sample_size,
-        dropout,
-        walk_length,
-        negative_samples,
-        lr,
-        epochs,
-        patience,
-    ):
-        super(Graphsage, self).__init__()
-        self.model = SAGE(num_features, hidden_size, num_layers, sample_size, dropout, walk_length, negative_samples)
-        self.epochs = epochs
-        self.patience = patience
-        self.lr = lr
-        self.nhid = hidden_size
-        self.nclass = num_classes
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    def train(self, data):
-        data.apply(lambda x: x.to(self.device))
-        self.model.to(self.device)
-        best = 1e9
-        cnt_wait = 0
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=0.0)
-
-        epoch_iter = tqdm.tqdm(range(self.epochs))
-        for epoch in epoch_iter:
-            self.model.train()
-            optimizer.zero_grad()
-
-            loss = self.model.loss(data)
-            epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss.item():.4f}")
-
-            if loss < best:
-                best = loss
-                cnt_wait = 0
-            else:
-                cnt_wait += 1
-
-            if cnt_wait == self.patience:
-                print("Early stopping!")
-                break
-
-            loss.backward()
-            optimizer.step()
-        self.model.eval()
-        embeds = self.model.embed(data).detach()
-
-        opt = {
-            "idx_train": data.train_mask,
-            "idx_val": data.val_mask,
-            "idx_test": data.test_mask,
-            "num_classes": self.nclass,
-        }
-        result = LogRegTrainer().train(embeds, data.y, opt)
-        return result
+    def get_trainer(taskType, args):
+        return SelfSupervisedTrainer

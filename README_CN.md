@@ -19,6 +19,97 @@ CogDL的特性包括：
 - 多类任务： CogDL支持同构/异构网络中的节点分类和链接预测任务以及图分类任务。
 - 可扩展性：用户可以基于CogDL已有的框架来实现和提交新的数据集、模型和任务。
 
+## ❗ 最新
+
+- 最新的 **v0.1.2版本** 包括了预训练任务、各种使用样例、OGB数据集、知识图谱表示学习算法和一些图神经网络模型。CogDL的测试覆盖率增加至80%。正在开发和测试一些新的API，比如`Trainer`和`Sampler`。
+
+- 最新的 **v0.1.1版本** 包括了知识图谱链接预测任务、很多前沿的模型，支持使用`optuna`进行超参搜索。我们同时发布了一篇[推送](https://mp.weixin.qq.com/s/IUh-ctQwtSXGvdTij5eDDg)来介绍CogDL。
+
+## 安装说明
+
+### 系统配置要求
+
+- Python 版本 >= 3.6
+- PyTorch 版本 >= 1.6
+- PyTorch Geometric (推荐)
+- Deep Graph Library (可选)
+
+CogDL安装请按照这里的说明来安装PyTorch和其他依赖项:
+
+- https://github.com/pytorch/pytorch#installation
+- https://github.com/rusty1s/pytorch_geometric/#installation
+- pip install -e .
+
+安装cogdl和其他依赖
+```bash
+pip install cogdl
+```
+
+如果您想尝试尚未发布的最新CogDL功能，可以通过以下方式安装CogDL：
+
+```bash
+git clone git@github.com:THUDM/cogdl.git
+cd cogdl
+pip install -e .
+```
+
+### Docker
+
+您也可以选择使用Docker。要构建Docker镜像，只需运行以下命令。
+
+```bash
+docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VERSION --tag cogdl .
+```
+请根据您的CUDA版本（或CPU）更换 `YOUR_CUDA_VERSION` 以及 更换 `YOUR_TORCH_VERSION` 为您使用的PyTorch版本。
+
+
+例如，使用 CUDA 10.1 和 PyTorch 1.7.0 一起运行
+
+```bash
+docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.0 --tag cogdl .
+```
+
+启动容器
+
+```bash
+docker run -it -v cogdl:/cogdl cogdl /bin/bash
+```
+
+将此存储库克隆到cogdl文件夹中：
+
+```bash
+git clone https://github.com/THUDM/cogdl /cogdl
+```
+
+注意：如果安装的Torch版本不同于1.7.0，则torchvision和torchaudio库可能存在一些问题。您可能需要手动重新安装。
+
+## 使用说明
+
+### API
+
+您可以通过CogDL API进行各种实验，包括：`build_dataset`，`build_model`，和`build_task`。您也可以使用自己的数据集和模型进行实验。examples/ 文件夹里提供了一些例子。
+
+```python
+from cogdl.tasks import build_task
+from cogdl.options import get_default_args
+
+# Get default hyper-parameters for experiments
+args = get_default_args(task="node_classification", dataset="cora", model="gcn")
+# Build and run
+task = build_task(args)
+ret = task.train()
+```
+
+### 命令行
+基本用法可以使用 `python train.py --task example_task --dataset example_dataset --model example_method` 来在 `example_data` 上运行 `example_method` 并使用 `example_task` 来评测结果。
+
+- --task, 运行的任务名称，像node_classification, unsupervised_node_classification, link_prediction这样来评测表示质量的下游任务。
+- --dataset, 运行的数据集名称，可以是以空格分隔开的数据集名称的列表,现在支持的数据集包括 cora, citeseer, pumbed, PPI, wikipedia, blogcatalog, dblp, flickr等。
+- --model, 运行的模型名称,可以是个列表，支持的模型包括 gcn, gat,deepwalk, node2vec, hope, grarep, netmf, netsmf, prone等。
+
+如果你想在Cora数据集上运行GCN模型,并用node classification评测,可以使用如下指令:
+`python train.py --task node_classification --dataset cora --model gcn`
+
 
 ## CogDL的整体框架
 
@@ -221,24 +312,6 @@ CogDL统一对有监督和无监督的图分类算法在相同的若干个真实
 | 6    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578)  | 26.17 | 25.48  | 28.15  |
 | 7    | KMeans  | 33.47 | 14.55  | 27.11  |
 | 8    | Spectral  | 24.14 | 14.39  | 25.53  |
-
-
-## 使用说明：
-
-CogDL安装请按照这里的说明来安装PyTorch和其他依赖项:
-
-- https://github.com/pytorch/pytorch#installation
-- https://github.com/rusty1s/pytorch_geometric/#installation
-- pip install -e .
-
-基本用法可以使用 `python train.py --task example_task --dataset example_dataset --model example_method` 来在 `example_data` 上运行 `example_method` 并使用 `example_task` 来评测结果。
-
-- --task, 运行的任务名称，像node_classification, unsupervised_node_classification, link_prediction这样来评测表示质量的下游任务。
-- --dataset, 运行的数据集名称，可以是以空格分隔开的数据集名称的列表,现在支持的数据集包括 cora, citeseer, pumbed, PPI, wikipedia, blogcatalog, dblp, flickr等。
-- --model, 运行的模型名称,可以是个列表，支持的模型包括 gcn, gat,deepwalk, node2vec, hope, grarep, netmf, netsmf, prone等。
-
-如果你想在Cora数据集上运行GCN模型,并用node classification评测,可以使用如下指令:
-`python train.py --task node_classification --dataset cora --model gcn`
 
 
 ## 自定义数据集或模型

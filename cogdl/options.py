@@ -1,3 +1,4 @@
+import sys
 import argparse
 
 from cogdl.datasets import DATASET_REGISTRY
@@ -24,6 +25,7 @@ def get_parser():
                         help='which GPU to use')
     parser.add_argument('--save-dir', default='.', type=str)
     parser.add_argument('--enhance', type=str, default=None, help='use prone or prone++ to enhance embedding')
+    parser.add_argument('--checkpoint', action="store_true", help='load pre-trained model')
 
     # fmt: on
     return parser
@@ -80,6 +82,18 @@ def get_download_data_parser():
     add_dataset_args(parser)
 
     return parser
+
+
+def get_default_args(task: str, dataset: str, model: str):
+    sys.argv = [sys.argv[0], "-t", task, "-m", model, "-dt", dataset]
+    parser = get_training_parser()
+    args, _ = parser.parse_known_args()
+    args = parse_args_and_arch(parser, args)
+    args.dataset = dataset
+    args.model = model
+    args.seed = args.seed[0]
+    print(args)
+    return args
 
 
 def parse_args_and_arch(parser, args):

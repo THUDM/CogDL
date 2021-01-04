@@ -3,6 +3,26 @@ Supervised Graph Classification
 
 In this section, we will introduce the implementation "Graph classification task".
 
+** Supervised Graph Classification Methods **
+
++-----------+-----------+--------+-----------------+
+| Method    | Node      | Kernel | Reproducibility |
+|           | Feature   |        |                 |
++===========+===========+========+=================+
+| GIN       |   `√`     |        |  `√`            |
++-----------+-----------+--------+-----------------+
+| DiffPool  |   `√`     |        |  `√`            |
++-----------+-----------+--------+-----------------+
+| SortPool  |   `√`     |        |  `√`            |
++-----------+-----------+--------+-----------------+
+| PATCH_SAN |   `√`     | `√`    |  `√`            |
++-----------+-----------+--------+-----------------+
+| DGCNN     |   `√`     |        |  `√`            |
++-----------+-----------+--------+-----------------+
+| SAGPool   |   `√`     |        |  `√`            |
++-----------+-----------+--------+-----------------+
+
+
 **Task Design**
 
 1. Set up "SupervisedGraphClassification" class, which has two specific parameters.

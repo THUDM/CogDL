@@ -33,7 +33,18 @@ def test_download_options():
     assert args.dataset[0] == "cora"
 
 
+def test_get_default_args():
+    args = options.get_default_args(task="node_classification", dataset="cora", model="gcn")
+
+    assert args.task == "node_classification"
+    assert args.model == "gcn"
+    assert args.dataset == "cora"
+    assert args.hidden_size > 0
+    assert args.lr > 0
+
+
 if __name__ == "__main__":
     test_training_options()
     test_display_options()
     test_download_options()
+    test_get_default_args()

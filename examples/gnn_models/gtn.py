@@ -2,6 +2,7 @@ import torch
 from cogdl.datasets import build_dataset
 from cogdl.tasks import build_task
 from cogdl.utils import build_args_from_dict, print_result, set_random_seed
+from utils import get_extra_args
 
 DATASET_REGISTRY = {}
 
@@ -23,6 +24,7 @@ def build_default_args_for_heterogeneous_node_classification(dataset):
         "model": "gtn",
         "dataset": dataset,
     }
+    args = get_extra_args(args)
     return build_args_from_dict(args)
 
 

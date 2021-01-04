@@ -20,7 +20,8 @@ def get_default_args():
         "cpu": not cuda_available,
         "step": 5,
         "theta" : 0.5,
-        "mu" : 0.2
+        "mu" : 0.2,
+        "checkpoint": False,
     }
     return build_args_from_dict(default_dict)
 

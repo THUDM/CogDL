@@ -1,5 +1,6 @@
 node_classification:
   - model:
+    - ap_gcn
     - gdc_gcn
     - gcn
     - gat

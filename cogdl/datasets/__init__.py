@@ -37,8 +37,8 @@ def register_dataset(name):
     """
 
     def register_dataset_cls(cls):
-        if name in DATASET_REGISTRY:
-            raise ValueError("Cannot register duplicate dataset ({})".format(name))
+        # if name in DATASET_REGISTRY:
+        #     raise ValueError("Cannot register duplicate dataset ({})".format(name))
         if (
             not issubclass(cls, Dataset)
             and (pyg and not issubclass(cls, torch_geometric.data.Dataset))

@@ -1,34 +1,55 @@
-datasets package
-================
+datasets
+========
 
-Submodules
-----------
-
-datasets.edgelist\_label module
+DGL dataset
 -------------------------------
 
-.. automodule:: datasets.edgelist_label
+.. automodule:: datasets.dgl_data
     :members:
     :undoc-members:
     :show-inheritance:
 
-datasets.edgelist\_label\_type module
--------------------------------------
-
-.. automodule:: datasets.edgelist_label_type
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-datasets.gatne module
----------------------
+GATNE dataset
+-------------------------------
 
 .. automodule:: datasets.gatne
     :members:
     :undoc-members:
     :show-inheritance:
 
-datasets.matlab\_matrix module
+GCC dataset
+-------------------------------
+
+.. automodule:: datasets.gcc_data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+GTN dataset
+-------------------------------
+
+.. automodule:: datasets.gtn_data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+HAN dataset
+-------------------------------
+
+.. automodule:: datasets.han_data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+KG dataset
+-------------------------------
+
+.. automodule:: datasets.kg_data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Matlab matrix dataset
 ------------------------------
 
 .. automodule:: datasets.matlab_matrix
@@ -36,8 +57,24 @@ datasets.matlab\_matrix module
     :undoc-members:
     :show-inheritance:
 
-datasets.pyg module
--------------------
+PyG OGB dataset
+-------------------------------
+
+.. automodule:: datasets.pyg_ogb
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+PyG strategies dataset
+-------------------------------
+
+.. automodule:: datasets.pyg_strategies_data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+PyG dataset
+-------------------------------
 
 .. automodule:: datasets.pyg
     :members:
@@ -46,7 +83,7 @@ datasets.pyg module
 
 
 Module contents
----------------
+-------------------------------
 
 .. automodule:: datasets
     :members:

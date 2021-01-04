@@ -1,28 +1,47 @@
-models package
-==============
+models
+======
 
-Subpackages
------------
+.. .. toctree::
+..     :maxdepth: 2
 
-.. toctree::
+..     models.emb
+..     models.nn
 
-    models.emb
-    models.nn
-
-Submodules
-----------
-
-models.base\_model module
--------------------------
+BaseModel
+---------
 
 .. automodule:: models.base_model
     :members:
     :undoc-members:
     :show-inheritance:
 
+Supervised Model
+----------------
 
-Module contents
+.. automodule:: models.supervised_model
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Embedding Model
 ---------------
+
+.. automodule:: models.emb
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+GNN Model
+---------
+
+.. automodule:: models.nn
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Model Module
+------------
 
 .. automodule:: models
     :members:

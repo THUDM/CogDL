@@ -27,7 +27,7 @@ class HeterogeneousNodeClassification(BaseTask):
     def __init__(self, args, dataset=None, model=None):
         super(HeterogeneousNodeClassification, self).__init__(args)
 
-        self.device = args.device_id[0] if not args.cpu else "cpu"
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         dataset = build_dataset(args) if dataset is None else dataset
 
         if not args.cpu:

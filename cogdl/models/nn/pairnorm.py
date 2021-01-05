@@ -296,21 +296,17 @@ class PairNorm(BaseModel):
         self.edge_attr = None
 
         if pn_model == "GCN":
-            self.pn_model = GCN(num_features, hidden_layers, num_classes, dropout, norm_mode, norm_scale).to(
-                self.device
-            )
+            self.pn_model = GCN(num_features, hidden_layers, num_classes, dropout, norm_mode, norm_scale)
         elif pn_model == "SGC":
-            self.pn_model = SGC(num_features, hidden_layers, num_classes, dropout, nlayer, norm_mode, norm_scale).to(
-                self.device
-            )
+            self.pn_model = SGC(num_features, hidden_layers, num_classes, dropout, nlayer, norm_mode, norm_scale)
         elif pn_model == "DeepGCN":
             self.pn_model = DeepGCN(
                 num_features, hidden_layers, num_classes, dropout, nlayer, residual, norm_mode, norm_scale
-            ).to(self.device)
+            )
         else:
             self.pn_model = DeepGAT(
                 num_features, hidden_layers, num_classes, dropout, nlayer, residual, nhead, norm_mode, norm_scale
-            ).to(self.device)
+            )
 
     def forward(self, x, edge_index):
         if self.edge_attr is None:

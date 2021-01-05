@@ -14,7 +14,7 @@ def get_default_args():
         "patience": 1,
         "max_epoch": 1,
         "device_id": [0],
-        "cpu": not cuda_available,
+        "cpu": True,
         "lr": 0.01,
         "weight_decay": 5e-4,
         "checkpoint": False,

@@ -5,7 +5,14 @@ from cogdl.utils import build_args_from_dict
 
 
 def get_default_args():
-    default_dict = {"hidden_size": 16, "cpu": True, "enhance": False, "save_dir": "./embedding", "checkpoint": False}
+    default_dict = {
+        "hidden_size": 16,
+        "cpu": True,
+        "enhance": False,
+        "save_dir": "./embedding",
+        "checkpoint": False,
+        "device_id": [0],
+    }
     return build_args_from_dict(default_dict)
 
 

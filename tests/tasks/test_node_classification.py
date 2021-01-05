@@ -16,7 +16,7 @@ def get_default_args():
         "device_id": [0],
         "max_epoch": 3,
         "sampler": "none",
-        "cpu": not cuda_available,
+        "cpu": True,
         "lr": 0.01,
         "weight_decay": 5e-4,
         "missing_rate": -1,

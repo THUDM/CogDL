@@ -110,8 +110,6 @@ class GATNE(BaseModel):
 
         self.multiplicity = True
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
     def train(self, network_data):
         all_walks = generate_walks(network_data, self.walk_num, self.walk_length, schema=self.schema)
         vocab, index2word = generate_vocab(all_walks)

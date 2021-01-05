@@ -1,5 +1,6 @@
 import argparse
 import os
+import torch
 import warnings
 from collections import defaultdict
 
@@ -68,6 +69,7 @@ class UnsupervisedNodeClassification(BaseTask):
         self.enhance = args.enhance
         self.args = args
         self.is_weighted = self.data.edge_attr is not None
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
 
         self.trainer = (
             self.model.get_trainer(UnsupervisedNodeClassification, args)(args)

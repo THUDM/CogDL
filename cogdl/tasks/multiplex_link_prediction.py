@@ -1,10 +1,7 @@
 import argparse
-import random
-from collections import defaultdict
-
+import torch
 import networkx as nx
 import numpy as np
-from six import iteritems
 from sklearn.metrics import auc, f1_score, precision_recall_curve, roc_auc_score
 
 from cogdl.datasets import build_dataset
@@ -58,6 +55,7 @@ class MultiplexLinkPrediction(BaseTask):
     def __init__(self, args, dataset=None, model=None):
         super(MultiplexLinkPrediction, self).__init__(args)
 
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         dataset = build_dataset(args) if dataset is None else dataset
         data = dataset[0]
         self.data = data

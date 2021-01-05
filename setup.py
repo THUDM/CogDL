@@ -2,13 +2,36 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
+
+def read(filename):
+    """
+    Read a file relative to setup.py location.
+    """
+    here = path.dirname(path.abspath(__file__))
+    with open(path.join(here, filename)) as fd:
+        return fd.read()
+
+
+def find_version(filename):
+    """
+    Find package version in file.
+    """
+    import re
+
+    content = read(filename)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", content, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
+
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.md"), encoding="utf8") as f:
     readme = f.read()
 
 setup(
     name="cogdl",
-    version="0.1.2",
+    version=find_version("cogdl/__init__.py"),
     description="An Extensive Research Toolkit for Deep Learning on Graphs",
     long_description=readme,
     long_description_content_type="text/markdown",

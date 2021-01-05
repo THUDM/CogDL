@@ -14,6 +14,9 @@
 #
 import os
 import sys
+from datetime import date
+
+from cogdl import __version__
 
 # print('current path', os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath("../../cogdl"))
@@ -22,13 +25,18 @@ sys.path.insert(0, os.path.abspath("../../cogdl"))
 # -- Project information -----------------------------------------------------
 
 project = "CogDL"
-copyright = "2020, KEG"
-author = "KEG"
+years = "2019-{}".format(date.today().year)
+author = "CogDL Team, KEG"
+copyright = "{}, {}".format(years, author)
 
-# The short X.Y version
-version = ""
-# The full version, including alpha/beta/rc tags
-release = ""
+# The version info for the project you're documenting, acts as replacement for
+# |version| and |release|, also used in various other places throughout the
+# built documents.
+#
+# The short X.Y version.
+version = __version__
+# The full version, including alpha/beta/rc tags.
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -52,11 +60,11 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "recommonmark",
-    "autoapi.extension",
+    # "autoapi.extension",
     "sphinx_markdown_tables",
 ]
 
-autoapi_dirs = ["../../cogdl"]
+# autoapi_dirs = ["../../cogdl"]
 
 
 # generate autosummary pages

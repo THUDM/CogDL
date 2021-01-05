@@ -25,15 +25,30 @@ CogDL provides these features:
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Get Started
 
    install
    quickstart
-   tutorial
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Advanced Guides
+
    task/index
    trainer
-   license
-   citing
+   custom_usage
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Documentation
+
+   data
+   layers
+   datasets
+   models
+   options
+   tasks
+   utils
 
 
 Indices and tables

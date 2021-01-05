@@ -1,10 +1,31 @@
-layers package
-==============
+layers
+======
 
-Submodules
-----------
+GCC module
+-------------------------
 
-layers.maggregator module
+.. automodule:: layers.gcc_module
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+GPT-GNN module
+-------------------------
+
+.. automodule:: layers.gpt_gnn_module
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Link Prediction module
+-------------------------
+
+.. automodule:: layers.link_prediction_module
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Mean Aggregator module
 -------------------------
 
 .. automodule:: layers.maggregator
@@ -12,7 +33,7 @@ layers.maggregator module
     :undoc-members:
     :show-inheritance:
 
-layers.mixhop\_layer module
+MixHop module
 ---------------------------
 
 .. automodule:: layers.mixhop_layer
@@ -20,7 +41,23 @@ layers.mixhop\_layer module
     :undoc-members:
     :show-inheritance:
 
-layers.se\_layer module
+PPRGo module
+-------------------------
+
+.. automodule:: layers.pprgo_modules
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ProNE module
+-------------------------
+
+.. automodule:: layers.prone_module
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+SELayer module
 -----------------------
 
 .. automodule:: layers.se_layer
@@ -28,11 +65,18 @@ layers.se\_layer module
     :undoc-members:
     :show-inheritance:
 
+SRGCN module
+-------------------------
 
-Module contents
----------------
+.. automodule:: layers.srgcn_module
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
-.. automodule:: layers
+Strategies module
+-------------------------
+
+.. automodule:: layers.strategies_layers
     :members:
     :undoc-members:
     :show-inheritance:

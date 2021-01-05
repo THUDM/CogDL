@@ -71,9 +71,7 @@ class NodeClassification(BaseTask):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
-        # fmt: off
-        parser.add_argument("--missing-rate", type=int, default=-1)
-        # fmt: on
+        pass
 
     def __init__(
         self,
@@ -85,15 +83,16 @@ class NodeClassification(BaseTask):
 
         self.args = args
         self.model_name = args.model
-        self.device = args.device_id[0] if not args.cpu else "cpu"
+
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         dataset = build_dataset(args) if dataset is None else dataset
-        if args.missing_rate >= 0:
-            if args.model == "sgcpn":
-                assert args.dataset in ["cora", "citeseer", "pubmed"]
-                dataset.data = preprocess_data_sgcpn(dataset.data, normalize_feature=True, missing_rate=0)
-                adj_slice = torch.tensor(dataset.data.adj.size())
-                adj_slice[0] = 0
-                dataset.slices["adj"] = adj_slice
+
+        if args.model == "sgcpn" and args.missing_rate > 0:
+            assert args.dataset in ["cora", "citeseer", "pubmed"]
+            dataset.data = preprocess_data_sgcpn(dataset.data, normalize_feature=True, missing_rate=0)
+            adj_slice = torch.tensor(dataset.data.adj.size())
+            adj_slice[0] = 0
+            dataset.slices["adj"] = adj_slice
 
         self.dataset = dataset
         self.data = dataset[0]

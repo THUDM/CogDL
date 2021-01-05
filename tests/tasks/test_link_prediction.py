@@ -17,6 +17,7 @@ def get_default_args():
         "cpu": True,
         "checkpoint": False,
         "save_dir": ".",
+        "device_id": [0],
     }
     return build_args_from_dict(default_dict)
 
@@ -185,6 +186,7 @@ def get_kg_default_args():
         "cpu": True,
         "checkpoint": False,
         "save_dir": ".",
+        "device_id": [0],
     }
     return build_args_from_dict(default_dict)
 
@@ -254,6 +256,7 @@ def get_kge_default_args():
         "cpu": True,
         "checkpoint": False,
         "save_dir": ".",
+        "device_id": [0],
     }
     return build_args_from_dict(default_dict)
 
@@ -335,8 +338,8 @@ if __name__ == "__main__":
     # test_netmf_ppi()
     # test_netsmf_ppi()
     # test_prone_flickr()
-    # test_sdne_ppi()
-    # test_dngr_ppi()
+    test_sdne_ppi()
+    test_dngr_ppi()
     #
     # test_rgcn_wn18()
     # test_compgcn_wn18rr()
@@ -345,4 +348,4 @@ if __name__ == "__main__":
     # test_rotate_fb13s()
     # test_transe_fb13s()
     # test_complex_fb13s()
-    test_gcn_cora()
+    # test_gcn_cora()

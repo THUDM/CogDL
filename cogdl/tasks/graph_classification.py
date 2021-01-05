@@ -77,7 +77,9 @@ class GraphClassification(BaseTask):
         self.args = args
         self.kfold = args.kfold
         self.folds = 10
-        self.device = args.device_id[0] if not args.cpu else "cpu"
+
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
+
         if args.dataset.startswith("ogbg"):
             self.data = dataset.data
             self.train_loader, self.val_loader, self.test_loader = dataset.get_loader(args)

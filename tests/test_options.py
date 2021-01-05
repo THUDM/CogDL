@@ -34,13 +34,16 @@ def test_download_options():
 
 
 def test_get_default_args():
-    args = options.get_default_args(task="node_classification", dataset="cora", model="gcn")
+    args = options.get_default_args(
+        task="node_classification", dataset=["cora", "citeseer"], model=["gcn", "gat"], hidden_size=128
+    )
 
     assert args.task == "node_classification"
-    assert args.model == "gcn"
-    assert args.dataset == "cora"
-    assert args.hidden_size > 0
-    assert args.lr > 0
+    assert args.model[0] == "gcn"
+    assert args.model[1] == "gat"
+    assert args.dataset[0] == "cora"
+    assert args.dataset[1] == "citeseer"
+    assert args.hidden_size == 128
 
 
 if __name__ == "__main__":

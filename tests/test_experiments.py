@@ -30,7 +30,9 @@ def test_check_task_dataset_model_match():
 
 
 def test_experiment():
-    results = experiment(task="node_classification", dataset="cora", model="gcn", hidden_size=32, max_epoch=200)
+    results = experiment(
+        task="node_classification", dataset="cora", model="gcn", hidden_size=32, max_epoch=200, cpu=True
+    )
 
     assert ("cora", "gcn") in results
     assert results[("cora", "gcn")][0]["Acc"] > 0

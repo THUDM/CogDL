@@ -94,7 +94,8 @@ class GPT_GNNHomogeneousTrainer(SupervisedHomogeneousNodeClassificationTrainer):
 
     def fit(self, model: SupervisedHeterogeneousNodeClassificationModel, dataset: Dataset) -> None:
         args = self.args
-        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
+
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
 
         self.data = preprocess_dataset(dataset)
 

@@ -209,6 +209,8 @@ class HomoLinkPrediction(nn.Module):
         self.train_data, self.test_data = divide_data(edge_list, [0.90, 0.10])
 
         self.test_data = gen_node_pairs(self.train_data, self.test_data, args.negative_ratio)
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
+        self.model.set_device(self.device)
 
     def train(self):
         G = nx.Graph()
@@ -236,7 +238,8 @@ class TripleLinkPrediction(nn.Module):
         args.nrelation = self.dataset.num_relations
         self.model = build_model(args) if model is None else model
         self.args = args
-        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
+
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         self.model = self.model.to(self.device)
         set_logger(args)
         logging.info("Model: %s" % args.model)
@@ -370,7 +373,8 @@ class TripleLinkPrediction(nn.Module):
 class KGLinkPrediction(nn.Module):
     def __init__(self, args, dataset=None, model=None):
         super(KGLinkPrediction, self).__init__()
-        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
+
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         self.evaluate_interval = args.evaluate_interval
         dataset = build_dataset(args) if dataset is None else dataset
         self.data = dataset[0]
@@ -380,6 +384,7 @@ class KGLinkPrediction(nn.Module):
         model = build_model(args) if model is None else model
 
         self.model = model.to(self.device)
+        self.model.set_device(self.device)
         self.max_epoch = args.max_epoch
         self.patience = min(args.patience, 20)
         self.grad_norm = 1.0
@@ -441,7 +446,7 @@ class KGLinkPrediction(nn.Module):
 class GNNHomoLinkPrediction(nn.Module):
     def __init__(self, args, dataset=None, model=None):
         super(GNNHomoLinkPrediction, self).__init__()
-        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         self.evaluate_interval = args.evaluate_interval
         dataset = build_dataset(args) if dataset is None else dataset
         self.data = dataset[0]

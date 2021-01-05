@@ -40,7 +40,8 @@ def generate_subgraphs(edge_index, parts, cluster_number=10):
 class DeeperGCNTrainer(BaseTrainer):
     def __init__(self, args):
         super(DeeperGCNTrainer, self).__init__()
-        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
+
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         self.patience = args.patience // 5
         self.max_epoch = args.max_epoch
         self.lr = args.lr

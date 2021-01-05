@@ -38,7 +38,7 @@ class NodeClassificationSampling(BaseTask):
     def __init__(self, args, dataset=None, model=None):
         super(NodeClassificationSampling, self).__init__(args)
 
-        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         dataset = build_dataset(args) if dataset is None else dataset
         self.data = dataset.data
         self.data.apply(lambda x: x.to(self.device))

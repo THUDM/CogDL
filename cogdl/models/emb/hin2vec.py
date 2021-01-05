@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 
 class Hin2vec_layer(nn.Module):
-    def __init__(self, num_node, num_relation, hidden_size, cpu):
+    def __init__(self, num_node, num_relation, hidden_size, device):
         super(Hin2vec_layer, self).__init__()
 
         self.num_node = num_node
@@ -20,7 +20,7 @@ class Hin2vec_layer(nn.Module):
         self.Wx = Parameter(torch.randn(num_node, hidden_size))
         self.Wr = Parameter(torch.randn(num_relation, hidden_size))
 
-        self.device = torch.device("cpu" if cpu else "cuda")
+        self.device = device
 
         self.X = F.one_hot(torch.arange(num_node), num_node).float().to(self.device)
         self.R = F.one_hot(torch.arange(num_relation), num_relation).float().to(self.device)
@@ -172,8 +172,6 @@ class Hin2vec(BaseModel):
         self.negative = negative
         self.epochs = epochs
         self.lr = lr
-        self.cpu = cpu
-        self.device = torch.device("cpu" if self.cpu else "cuda")
 
     def train(self, G, node_type):
         self.num_node = G.number_of_nodes()
@@ -182,7 +180,7 @@ class Hin2vec(BaseModel):
         pairs, relation = rw.data_preparation(walks, self.hop, self.negative)
 
         self.num_relation = len(relation)
-        model = Hin2vec_layer(self.num_node, self.num_relation, self.hidden_dim, self.cpu)
+        model = Hin2vec_layer(self.num_node, self.num_relation, self.hidden_dim, self.device)
         self.model = model.to(self.device)
 
         num_batch = int(len(pairs) / self.batch_size)

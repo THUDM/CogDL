@@ -16,7 +16,8 @@ class PretrainTask(BaseTask):
 
     def __init__(self, args):
         super(PretrainTask, self).__init__(args)
-        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
+
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         self.model = build_model(args)
         self.model = self.model.to(self.device)
 

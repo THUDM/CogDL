@@ -83,7 +83,8 @@ class NodeClassification(BaseTask):
 
         self.args = args
         self.model_name = args.model
-        self.device = args.device_id[0] if not args.cpu and torch.cuda.is_available() else "cpu"
+
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         dataset = build_dataset(args) if dataset is None else dataset
 
         if args.model == "sgcpn" and args.missing_rate > 0:

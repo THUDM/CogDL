@@ -19,7 +19,7 @@ class BaseModel(nn.Module):
 
     def __init__(self):
         super(BaseModel, self).__init__()
-        self.device = "cpu"
+        self.device = ""
 
     def _forward_unimplemented(self, *input: Any) -> None:  # abc warning
         pass

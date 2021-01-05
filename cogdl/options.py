@@ -84,14 +84,18 @@ def get_download_data_parser():
     return parser
 
 
-def get_default_args(task: str, dataset: str, model: str):
-    sys.argv = [sys.argv[0], "-t", task, "-m", model, "-dt", dataset]
+def get_default_args(task: str, dataset, model, **kwargs):
+    if not isinstance(dataset, list):
+        dataset = [dataset]
+    if not isinstance(model, list):
+        model = [model]
+    sys.argv = [sys.argv[0], "-t", task, "-m"] + model + ["-dt"] + dataset
     parser = get_training_parser()
     args, _ = parser.parse_known_args()
     args = parse_args_and_arch(parser, args)
-    args.dataset = dataset
-    args.model = model
-    args.seed = args.seed[0]
+    for key, value in kwargs.items():
+        if hasattr(args, key):
+            args.__setattr__(key, value)
     print(args)
     return args
 

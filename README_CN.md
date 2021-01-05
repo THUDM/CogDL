@@ -87,28 +87,53 @@ git clone https://github.com/THUDM/cogdl /cogdl
 
 ### API
 
-您可以通过CogDL API进行各种实验，包括：`build_dataset`，`build_model`，和`build_task`。您也可以使用自己的数据集和模型进行实验。examples/ 文件夹里提供了一些例子。
+您可以通过CogDL API进行各种实验，尤其是`experiment()`。[quick_start.py](https://github.com/THUDM/cogdl/tree/master/examples/quick_start.py)这是一个快速入门的代码。您也可以使用自己的数据集和模型进行实验。[examples/](https://github.com/THUDM/cogdl/tree/master/examples/) 文件夹里提供了一些例子。
 
 ```python
-from cogdl.tasks import build_task
-from cogdl.options import get_default_args
+from cogdl import experiment
 
-# Get default hyper-parameters for experiments
-args = get_default_args(task="node_classification", dataset="cora", model="gcn")
-# Build and run
-task = build_task(args)
-ret = task.train()
+# basic usage
+experiment(task="node_classification", dataset="cora", model="gcn")
+
+# set other hyper-parameters
+experiment(task="node_classification", dataset="cora", model="gcn", hidden_size=32, max_epoch=200)
+
+# run over multiple models on different seeds
+experiment(task="node_classification", dataset="cora", model=["gcn", "gat"], seed=[1, 2])
 ```
 
 ### 命令行
-基本用法可以使用 `python train.py --task example_task --dataset example_dataset --model example_method` 来在 `example_data` 上运行 `example_method` 并使用 `example_task` 来评测结果。
+基本用法可以使用 `python train.py --task example_task --dataset example_dataset --model example_model` 来在 `example_data` 上运行 `example_model` 并使用 `example_task` 来评测结果。
 
-- --task, 运行的任务名称，像node_classification, unsupervised_node_classification, link_prediction这样来评测表示质量的下游任务。
-- --dataset, 运行的数据集名称，可以是以空格分隔开的数据集名称的列表,现在支持的数据集包括 cora, citeseer, pumbed, PPI, wikipedia, blogcatalog, dblp, flickr等。
-- --model, 运行的模型名称,可以是个列表，支持的模型包括 gcn, gat,deepwalk, node2vec, hope, grarep, netmf, netsmf, prone等。
+- --task, 运行的任务名称，像`node_classification`, `unsupervised_node_classification`, `graph_classification`这样来评测模型性能的下游任务。
+- --dataset, 运行的数据集名称，可以是以空格分隔开的数据集名称的列表,现在支持的数据集包括 cora, citeseer, pumbed, ppi, wikipedia, blogcatalog, dblp, flickr等。
+- --model, 运行的模型名称,可以是个列表，支持的模型包括 gcn, gat, deepwalk, node2vec, hope, grarep, netmf, netsmf, prone等。
 
-如果你想在Cora数据集上运行GCN模型,并用node classification评测,可以使用如下指令:
-`python train.py --task node_classification --dataset cora --model gcn`
+如果你想在 Wikipedia 数据集上运行 LINE 和 NetMF 模型并且设置5个不同的随机种子，你可以使用如下的命令
+
+```bash
+$ python scripts/train.py --task unsupervised_node_classification --dataset wikipedia --model line netmf --seed 0 1 2 3 4
+```
+
+预计得到的结果如下：
+
+| Variant                | Micro-F1 0.1   | Micro-F1 0.3   | Micro-F1 0.5   | Micro-F1 0.7   | Micro-F1 0.9   |
+|------------------------|----------------|----------------|----------------|----------------|----------------|
+| ('wikipedia', 'line')  | 0.4069±0.0011  | 0.4071±0.0010  | 0.4055±0.0013  | 0.4054±0.0020  | 0.4080±0.0042  |
+| ('wikipedia', 'netmf') | 0.4551±0.0024  | 0.4932±0.0022  | 0.5046±0.0017  | 0.5084±0.0057  | 0.5125±0.0035  |
+
+如果你想使用多个 GPU 同时在 Cora 数据集上运行 GCN 和 GAT 模型，可以使用如下指令:
+
+```bash
+$ python scripts/parallel_train.py --task node_classification --dataset cora --model gcn gat --device-id 0 1 --seed 0 1 2 3 4
+```
+
+预计得到的结果如下:
+
+| Variant         | Acc           |
+| --------------- | ------------- |
+| ('cora', 'gcn') | 0.8236±0.0033 |
+| ('cora', 'gat') | 0.8262±0.0032 |
 
 
 ## CogDL的整体框架

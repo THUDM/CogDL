@@ -1,6 +1,10 @@
-from cogdl.tasks import build_task
-from cogdl.options import get_default_args
+from cogdl import experiment
 
-args = get_default_args(task="node_classification", dataset="cora", model="gcn")
-task = build_task(args)
-ret = task.train()
+# basic usage
+experiment(task="node_classification", dataset="cora", model="gcn")
+
+# set other hyper-parameters
+experiment(task="node_classification", dataset="cora", model="gcn", hidden_size=32, max_epoch=200)
+
+# run over multiple models on different seeds
+experiment(task="node_classification", dataset="cora", model=["gcn", "gat"], seed=[1, 2])

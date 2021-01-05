@@ -1,5 +1,5 @@
-Tutorial
-========
+Custom Usage
+============
 
 .. currentmodule:: CogDL
 

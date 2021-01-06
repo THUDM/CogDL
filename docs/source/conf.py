@@ -12,11 +12,14 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import importlib
 import os
 import sys
 from datetime import date
 
-from cogdl import __version__
+sys.path.insert(0, os.path.abspath("../../"))
+__version__ = importlib.import_module("cogdl").__version__
+print(__version__)
 
 # print('current path', os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath("../../cogdl"))

@@ -11,7 +11,9 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
+
+import json
+import os
 import sys
 from datetime import date
 from os import path
@@ -35,6 +37,17 @@ def find_version(filename):
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
+
+def set_default_dgl_backend(backend_name):
+    default_dir = path.join(path.expanduser("~"), ".dgl")
+    if not path.exists(default_dir):
+        os.makedirs(default_dir)
+    config_path = path.join(default_dir, "config.json")
+    with open(config_path, "w") as config_file:
+        json.dump({"backend": backend_name.lower()}, config_file)
+
+
+set_default_dgl_backend("pytorch")
 
 # print('current path', path.abspath('.'))
 sys.path.insert(0, path.abspath("../../cogdl"))

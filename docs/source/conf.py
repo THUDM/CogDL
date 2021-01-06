@@ -80,11 +80,8 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "recommonmark",
-    # "autoapi.extension",
     "sphinx_markdown_tables",
 ]
-
-# autoapi_dirs = ["../../cogdl"]
 
 
 # generate autosummary pages

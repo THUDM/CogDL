@@ -5,10 +5,10 @@ python:
 
 install:
   - pip install https://download.pytorch.org/whl/cpu/torch-1.6.0%2Bcpu-cp36-cp36m-linux_x86_64.whl
-  - pip install https://pytorch-geometric.com/whl/torch-1.6.0/torch_scatter-2.0.5+cpu-cp36-cp36m-linux_x86_64.whl
-  - pip install https://pytorch-geometric.com/whl/torch-1.6.0/torch_sparse-0.6.8+cpu-cp36-cp36m-linux_x86_64.whl
-  - pip install https://pytorch-geometric.com/whl/torch-1.6.0/torch_cluster-1.5.8+cpu-cp36-cp36m-linux_x86_64.whl
-  - pip install https://pytorch-geometric.com/whl/torch-1.6.0/torch_spline_conv-1.2.0+cpu-cp36-cp36m-linux_x86_64.whl
+  - pip install https://pytorch-geometric.com/whl/torch-1.6.0+cpu/torch_scatter-2.0.5-cp36-cp36m-linux_x86_64.whl
+  - pip install https://pytorch-geometric.com/whl/torch-1.6.0+cpu/torch_sparse-0.6.8-cp36-cp36m-linux_x86_64.whl
+  - pip install https://pytorch-geometric.com/whl/torch-1.6.0+cpu/torch_cluster-1.5.8-cp36-cp36m-linux_x86_64.whl
+  - pip install https://pytorch-geometric.com/whl/torch-1.6.0+cpu/torch_spline_conv-1.2.0-cp36-cp36m-linux_x86_64.whl
   - pip install torch-geometric
   - pip install dgl==0.4.3
   - pip install -r docs/requirements.txt

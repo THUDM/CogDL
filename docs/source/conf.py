@@ -12,17 +12,32 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import importlib
-import os
 import sys
 from datetime import date
+from os import path
 
-sys.path.insert(0, os.path.abspath("../../"))
-__version__ = importlib.import_module("cogdl").__version__
-print(__version__)
 
-# print('current path', os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath("../../cogdl"))
+def read(filename):
+    here = path.dirname(path.abspath(__file__))
+    with open(path.join(here, filename)) as fd:
+        return fd.read()
+
+
+def find_version(filename):
+    """
+    Find package version in file.
+    """
+    import re
+
+    content = read(filename)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", content, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
+
+# print('current path', path.abspath('.'))
+sys.path.insert(0, path.abspath("../../cogdl"))
 # print(sys.path)
 
 # -- Project information -----------------------------------------------------
@@ -35,7 +50,9 @@ copyright = "{}, {}".format(years, author)
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-#
+
+__version__ = find_version("../../cogdl/__init__.py")
+
 # The short X.Y version.
 version = __version__
 # The full version, including alpha/beta/rc tags.

@@ -11,15 +11,46 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
+
+import json
 import os
 import sys
 from datetime import date
+from os import path
 
-from cogdl import __version__
 
-# print('current path', os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath("../../cogdl"))
+def read(filename):
+    here = path.dirname(path.abspath(__file__))
+    with open(path.join(here, filename)) as fd:
+        return fd.read()
+
+
+def find_version(filename):
+    """
+    Find package version in file.
+    """
+    import re
+
+    content = read(filename)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", content, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
+
+def set_default_dgl_backend(backend_name):
+    default_dir = path.join(path.expanduser("~"), ".dgl")
+    if not path.exists(default_dir):
+        os.makedirs(default_dir)
+    config_path = path.join(default_dir, "config.json")
+    with open(config_path, "w") as config_file:
+        json.dump({"backend": backend_name.lower()}, config_file)
+
+
+set_default_dgl_backend("pytorch")
+
+# print('current path', path.abspath('.'))
+sys.path.insert(0, path.abspath("../.."))
 # print(sys.path)
 
 # -- Project information -----------------------------------------------------
@@ -32,7 +63,9 @@ copyright = "{}, {}".format(years, author)
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-#
+
+__version__ = find_version("../../cogdl/__init__.py")
+
 # The short X.Y version.
 version = __version__
 # The full version, including alpha/beta/rc tags.
@@ -60,11 +93,8 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "recommonmark",
-    # "autoapi.extension",
     "sphinx_markdown_tables",
 ]
-
-# autoapi_dirs = ["../../cogdl"]
 
 
 # generate autosummary pages

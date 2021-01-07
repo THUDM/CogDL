@@ -40,7 +40,7 @@ CogDL features:
 ### Requirements and Installation
 
 - Python version >= 3.6
-- PyTorch version >= 1.6
+- PyTorch version >= 1.6.0
 - PyTorch Geometric (recommended)
 - Deep Graph Library (optional)
 
@@ -59,31 +59,6 @@ git clone git@github.com:THUDM/cogdl.git
 cd cogdl
 pip install -e .
 ```
-
-### Docker container
-
-You might also opt to use a Docker container. There is an image available in this repo that you can build with the Torch and CUDA versions available in your system. To build the docker image just run:
-
-```
-docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VERSION --tag cogdl .
-```
-
-Where `YOUR_CUDA_VERSION` should be cuxxx representing your cuda version (or just cpu) and `YOUR_TORCH_VERSION` should be the version of PyTorch you want to use. For example, to run with CUDA 10.1 and PyTorch 1.7.0 you can run:
-```
-docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.0 --tag cogdl .
-```
-
-Then you can start the container by running:
-```
-docker run -it -v cogdl:/cogdl cogdl /bin/bash
-```
-
-And then clone your fork or this repository into the cogdl folder:
-```
-git clone https://github.com/THUDM/cogdl /cogdl
-```
-
-**Note:** if you install a version of torch different from 1.7.0, there might be some problems with the libraries torchvision and torchaudio. You might have to reinstall them by hand.
 
 ## Usage
 
@@ -142,15 +117,28 @@ Expected output:
 | ('cora', 'gat') | 0.8262±0.0032 |
 
 
-### Creating a model
+## Docker container
 
-You can use the following command to create the necessary files for your model via our CLI.
+You might also opt to use a Docker container. There is an image available in this repo that you can build with the Torch and CUDA versions available in your system. To build the docker image just run:
 
-```bash
-$ python scripts/model_maker.py
+```
+docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VERSION --tag cogdl .
 ```
 
+Where `YOUR_CUDA_VERSION` should be cuxxx representing your cuda version (or just cpu) and `YOUR_TORCH_VERSION` should be the version of PyTorch you want to use. For example, to run with CUDA 10.1 and PyTorch 1.7.0 you can run:
+```
+docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.0 --tag cogdl .
+```
 
+Then you can start the container by running:
+```
+docker run -it -v cogdl:/cogdl cogdl /bin/bash
+```
+
+And then clone your fork or this repository into the cogdl folder:
+```
+git clone https://github.com/THUDM/cogdl /cogdl
+```
 
 ## Leaderboard
 
@@ -273,6 +261,12 @@ If you have a unique and interesting dataset and are willing to publish it, you 
 ### Implement Your Own Model
 
 If you have a well-performed algorithm and are willing to implement it in our toolkit to help more people, you can create a pull request, detailed information can be found [here](https://help.github.com/en/articles/creating-a-pull-request). 
+
+You can use the following command to create the necessary files for your model via our CLI.
+
+```bash
+$ python scripts/model_maker.py
+```
 
 Before committing your modification, please first run `pre-commit install` to setup the git hook for checking code format and style using `black` and `flake8`. Then the `pre-commit` will run automatically on `git commit`! Detailed information of `pre-commit` can be found [here](https://pre-commit.com/).
 

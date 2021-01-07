@@ -4,7 +4,7 @@ layers
 GCC module
 -------------------------
 
-.. automodule:: layers.gcc_module
+.. automodule:: cogdl.layers.gcc_module
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ GCC module
 GPT-GNN module
 -------------------------
 
-.. automodule:: layers.gpt_gnn_module
+.. automodule:: cogdl.layers.gpt_gnn_module
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ GPT-GNN module
 Link Prediction module
 -------------------------
 
-.. automodule:: layers.link_prediction_module
+.. automodule:: cogdl.layers.link_prediction_module
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ Link Prediction module
 Mean Aggregator module
 -------------------------
 
-.. automodule:: layers.maggregator
+.. automodule:: cogdl.layers.maggregator
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ Mean Aggregator module
 MixHop module
 ---------------------------
 
-.. automodule:: layers.mixhop_layer
+.. automodule:: cogdl.layers.mixhop_layer
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,7 +44,7 @@ MixHop module
 PPRGo module
 -------------------------
 
-.. automodule:: layers.pprgo_modules
+.. automodule:: cogdl.layers.pprgo_modules
     :members:
     :undoc-members:
     :show-inheritance:
@@ -52,7 +52,7 @@ PPRGo module
 ProNE module
 -------------------------
 
-.. automodule:: layers.prone_module
+.. automodule:: cogdl.layers.prone_module
     :members:
     :undoc-members:
     :show-inheritance:
@@ -60,7 +60,7 @@ ProNE module
 SELayer module
 -----------------------
 
-.. automodule:: layers.se_layer
+.. automodule:: cogdl.layers.se_layer
     :members:
     :undoc-members:
     :show-inheritance:
@@ -68,7 +68,7 @@ SELayer module
 SRGCN module
 -------------------------
 
-.. automodule:: layers.srgcn_module
+.. automodule:: cogdl.layers.srgcn_module
     :members:
     :undoc-members:
     :show-inheritance:
@@ -76,7 +76,7 @@ SRGCN module
 Strategies module
 -------------------------
 
-.. automodule:: layers.strategies_layers
+.. automodule:: cogdl.layers.strategies_layers
     :members:
     :undoc-members:
     :show-inheritance:

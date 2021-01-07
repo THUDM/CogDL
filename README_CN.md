@@ -13,7 +13,6 @@ CogDL是由清华大学计算机系知识工程实验室（KEG）开发的基于
 
 CogDL的特性包括：
 
-
 - 任务导向： CogDL以图上的任务为主，提供了相关的模型、数据集以及我们得到的排行榜。
 - 一键运行： CogDL支持用户使用多个GPU同时运行同一个任务下多个模型在多个数据集上的多组实验。
 - 多类任务： CogDL支持同构/异构网络中的节点分类和链接预测任务以及图分类任务。
@@ -30,7 +29,7 @@ CogDL的特性包括：
 ### 系统配置要求
 
 - Python 版本 >= 3.6
-- PyTorch 版本 >= 1.6
+- PyTorch 版本 >= 1.6.0
 - PyTorch Geometric (推荐)
 - Deep Graph Library (可选)
 
@@ -52,36 +51,6 @@ git clone git@github.com:THUDM/cogdl.git
 cd cogdl
 pip install -e .
 ```
-
-### Docker
-
-您也可以选择使用Docker。要构建Docker镜像，只需运行以下命令。
-
-```bash
-docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VERSION --tag cogdl .
-```
-请根据您的CUDA版本（或CPU）更换 `YOUR_CUDA_VERSION` 以及 更换 `YOUR_TORCH_VERSION` 为您使用的PyTorch版本。
-
-
-例如，使用 CUDA 10.1 和 PyTorch 1.7.0 一起运行
-
-```bash
-docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.0 --tag cogdl .
-```
-
-启动容器
-
-```bash
-docker run -it -v cogdl:/cogdl cogdl /bin/bash
-```
-
-将此存储库克隆到cogdl文件夹中：
-
-```bash
-git clone https://github.com/THUDM/cogdl /cogdl
-```
-
-注意：如果安装的Torch版本不同于1.7.0，则torchvision和torchaudio库可能存在一些问题。您可能需要手动重新安装。
 
 ## 使用说明
 
@@ -136,6 +105,34 @@ $ python scripts/parallel_train.py --task node_classification --dataset cora --m
 | ('cora', 'gat') | 0.8262±0.0032 |
 
 
+## Docker
+
+您也可以选择使用Docker来配置cogdl所需的环境。要构建Docker镜像，只需运行以下命令。
+
+```bash
+docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VERSION --tag cogdl .
+```
+请根据您的CUDA版本（或CPU）更换 `YOUR_CUDA_VERSION` 以及 更换 `YOUR_TORCH_VERSION` 为您使用的PyTorch版本。
+
+
+例如，使用 CUDA 10.1 和 PyTorch 1.7.0 一起运行
+
+```bash
+docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.0 --tag cogdl .
+```
+
+启动容器
+
+```bash
+docker run -it -v cogdl:/cogdl cogdl /bin/bash
+```
+
+将cogdl克隆到cogdl目录下：
+
+```bash
+git clone https://github.com/THUDM/cogdl /cogdl
+```
+
 ## CogDL的整体框架
 
 
@@ -157,73 +154,11 @@ CogDL的整体框架如上图所示，针对不同的任务，CogDL支持以下�
     
 *   有监督图分类: GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km), DiffPool [(Ying et al, NeuIPS'18)](https://arxiv.org/abs/1806.08804), SortPool [(Zhang et al, AAAI'18)](https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf), PATCH\_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf), DGCNN [(Wang et al, ACM Transactions on Graphics'17)](https://arxiv.org/abs/1801.07829).
 
-## 模型
-
-CogDL实现了一系列不同类型的模型，下面列出了这些算法的特性。
-
-### 无监督结点表示学习的算法
-
-| Algorithm |      Directed      |       Weight       |  Shallow network   | Matrix factorization |      Sampling      |  Reproducibility   |    GPU support     |
-| --------- | :----------------: | :----------------: | :----------------: | :------------------: | :----------------: | :----------------: | :----------------: |
-| DeepWalk  |                    |                    | :heavy_check_mark: |                      |                    | :heavy_check_mark: |                    |
-| LINE      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      | :heavy_check_mark: | :heavy_check_mark: |                    |
-| Node2vec  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      | :heavy_check_mark: | :heavy_check_mark: |                    |
-| SDNE      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      |                    | :heavy_check_mark: | :heavy_check_mark: |
-| DNGR      | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                      |                    |                    | :heavy_check_mark: |
-| HOPE      | :heavy_check_mark: | :heavy_check_mark: |                    |  :heavy_check_mark:  |                    | :heavy_check_mark: |                    |
-| GraRep    | :heavy_check_mark: | :heavy_check_mark: |                    |  :heavy_check_mark:  |                    |                    |                    |
-| NetMF     | :heavy_check_mark: | :heavy_check_mark: |                    |  :heavy_check_mark:  |                    | :heavy_check_mark: |                    |
-| NetSMF    |                    | :heavy_check_mark: |                    |  :heavy_check_mark:  | :heavy_check_mark: | :heavy_check_mark: |                    |
-| ProNE     | :heavy_check_mark: | :heavy_check_mark: |                    |  :heavy_check_mark:  |                    | :heavy_check_mark: |                    |
-
-
-其中，在Reproducibility项为空的算法，表示setting不一致或暂时没有完全复现。
-
-### 半监督结点表示学习的算法
-
-| Algorithm   |       Weight       |      Sampling      |     Attention      |     Inductive      |  Reproducibility   |    GPU support     |
-| ----------- | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: |
-| Graph U-Net | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| MixHop      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| Dr-GAT      |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| GAT         |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| DGI         | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| GCN         | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| GraphSAGE   | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Chebyshev   | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-
-
-### 异构结点表示学习的算法
-
-| Algorithm    |     Multi-Node     |     Multi-Edge     |     Attribute      |     Supervised     |      MetaPath      |  Reproducibility   |    GPU support     |
-| ------------ | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: |
-| GATNE        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Metapath2vec | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |                    |
-| PTE          | :heavy_check_mark: |                    |                    |                    |                    | :heavy_check_mark: |                    |
-| Hin2vec      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| GTN          | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| HAN          | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-
-### 图表示学习的算法
-
-| Algorithm  |    Node feature    |    Unsupervised    |    Graph kernel    |  Shallow network   |  Reproducibility   |    GPU support     |
-| ---------- | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: |
-| Infograph  | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| Diffpool   | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| Graph2Vec  |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    |
-| Sortpool   | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| GIN        | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| PATCHY_SAN | :heavy_check_mark: |                    | :heavy_check_mark: |                    | :heavy_check_mark: | :heavy_check_mark: |
-| DGCNN      | :heavy_check_mark: |                    |                    |                    | :heavy_check_mark: | :heavy_check_mark: |
-| DGK        |                    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    |                    |
-
 ## 排行榜
 
 CogDL提供了一些下游任务，包括结点分类（具有或不具有结点属性），链接预测（具有或不具有属性，异构或非异构）和图分类（有监督或无监督）任务。 我们建立了几个排行榜，这些排行榜列出了各类算法在这些任务上的最新结果。
 
 ### 结点分类
-
-
 
 #### 无监督多标签结点分类
 

@@ -50,7 +50,7 @@ def set_default_dgl_backend(backend_name):
 set_default_dgl_backend("pytorch")
 
 # print('current path', path.abspath('.'))
-sys.path.insert(0, path.abspath("../../cogdl"))
+sys.path.insert(0, path.abspath("../.."))
 # print(sys.path)
 
 # -- Project information -----------------------------------------------------

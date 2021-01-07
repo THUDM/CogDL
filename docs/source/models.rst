@@ -4,13 +4,13 @@ models
 .. .. toctree::
 ..     :maxdepth: 2
 
-..     models.emb
-..     models.nn
+..     cogdl.models.emb
+..     cogdl.models.nn
 
 BaseModel
 ---------
 
-.. automodule:: models.base_model
+.. automodule:: cogdl.models.base_model
     :members:
     :undoc-members:
     :show-inheritance:
@@ -18,7 +18,7 @@ BaseModel
 Supervised Model
 ----------------
 
-.. automodule:: models.supervised_model
+.. automodule:: cogdl.models.supervised_model
     :members:
     :undoc-members:
     :show-inheritance:
@@ -26,7 +26,7 @@ Supervised Model
 Embedding Model
 ---------------
 
-.. automodule:: models.emb
+.. automodule:: cogdl.models.emb
     :members:
     :undoc-members:
     :show-inheritance:
@@ -34,7 +34,7 @@ Embedding Model
 GNN Model
 ---------
 
-.. automodule:: models.nn
+.. automodule:: cogdl.models.nn
     :members:
     :undoc-members:
     :show-inheritance:
@@ -43,7 +43,7 @@ GNN Model
 Model Module
 ------------
 
-.. automodule:: models
+.. automodule:: cogdl.models
     :members:
     :undoc-members:
     :show-inheritance:

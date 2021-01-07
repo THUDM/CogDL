@@ -4,7 +4,7 @@ datasets
 DGL dataset
 -------------------------------
 
-.. automodule:: datasets.dgl_data
+.. automodule:: cogdl.datasets.dgl_data
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ DGL dataset
 GATNE dataset
 -------------------------------
 
-.. automodule:: datasets.gatne
+.. automodule:: cogdl.datasets.gatne
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ GATNE dataset
 GCC dataset
 -------------------------------
 
-.. automodule:: datasets.gcc_data
+.. automodule:: cogdl.datasets.gcc_data
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ GCC dataset
 GTN dataset
 -------------------------------
 
-.. automodule:: datasets.gtn_data
+.. automodule:: cogdl.datasets.gtn_data
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ GTN dataset
 HAN dataset
 -------------------------------
 
-.. automodule:: datasets.han_data
+.. automodule:: cogdl.datasets.han_data
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,7 +44,7 @@ HAN dataset
 KG dataset
 -------------------------------
 
-.. automodule:: datasets.kg_data
+.. automodule:: cogdl.datasets.kg_data
     :members:
     :undoc-members:
     :show-inheritance:
@@ -52,7 +52,7 @@ KG dataset
 Matlab matrix dataset
 ------------------------------
 
-.. automodule:: datasets.matlab_matrix
+.. automodule:: cogdl.datasets.matlab_matrix
     :members:
     :undoc-members:
     :show-inheritance:
@@ -60,7 +60,7 @@ Matlab matrix dataset
 PyG OGB dataset
 -------------------------------
 
-.. automodule:: datasets.pyg_ogb
+.. automodule:: cogdl.datasets.pyg_ogb
     :members:
     :undoc-members:
     :show-inheritance:
@@ -68,7 +68,7 @@ PyG OGB dataset
 PyG strategies dataset
 -------------------------------
 
-.. automodule:: datasets.pyg_strategies_data
+.. automodule:: cogdl.datasets.pyg_strategies_data
     :members:
     :undoc-members:
     :show-inheritance:
@@ -76,7 +76,7 @@ PyG strategies dataset
 PyG dataset
 -------------------------------
 
-.. automodule:: datasets.pyg
+.. automodule:: cogdl.datasets.pyg
     :members:
     :undoc-members:
     :show-inheritance:
@@ -85,7 +85,7 @@ PyG dataset
 Module contents
 -------------------------------
 
-.. automodule:: datasets
+.. automodule:: cogdl.datasets
     :members:
     :undoc-members:
     :show-inheritance:

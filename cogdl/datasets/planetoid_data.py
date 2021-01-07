@@ -18,7 +18,7 @@ def parse_index_file(filename):
 
 
 def index_to_mask(index, size):
-    mask = torch.full((size,), False)
+    mask = torch.full((size,), False, dtype=torch.bool)
     mask[index] = True
     return mask
 

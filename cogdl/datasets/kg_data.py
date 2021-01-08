@@ -1,9 +1,9 @@
 import os.path as osp
-from itertools import product
 
 import numpy as np
 import torch
-from cogdl.data import Data, Dataset, download_url
+from cogdl.data import Data, Dataset
+from cogdl.utils import download_url
 from cogdl.datasets import register_dataset
 
 

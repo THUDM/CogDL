@@ -325,6 +325,7 @@ def test_graph_mix():
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "gcnmix"
+    args.max_epoch = 10
     args.rampup_starts = 1
     args.rampup_ends = 100
     args.mixup_consistency = 5.0

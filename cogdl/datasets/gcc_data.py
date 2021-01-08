@@ -121,6 +121,10 @@ class Edgelist(Dataset):
     def processed_file_names(self):
         return ["data.pt"]
 
+    @property
+    def num_classes(self):
+        return self.data.y.shape[1]
+
     def download(self):
         for name in self.raw_file_names:
             download_url("{}/{}/{}".format(self.url, self.name.lower(), name), self.raw_dir)

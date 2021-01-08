@@ -197,8 +197,9 @@ class Data(object):
         edge_index = torch.from_numpy(np.stack([row, col], axis=0)).to(self.x.device).long()
         keys = self.keys
         attrs = {key: self[key][node_idx] for key in keys if "edge" not in key}
-        attrs["edge_attr"] = edge_attr
         attrs["edge_index"] = edge_index
+        if edge_attr is not None:
+            attrs["edge_attr"] = edge_attr
         return Data(**attrs)
 
     def edge_subgraph(self, edge_idx):
@@ -214,12 +215,13 @@ class Data(object):
 
         edge_index = np.array([func(x) for x in edge_index]).transpose()
         edge_index = torch.from_numpy(edge_index).to(self.x.device)
-        edge_attr = self.edge_attr[edge_idx]
+        edge_attr = self.edge_attr[edge_idx] if self.edge_attr else None
 
         keys = self.keys
         attrs = {key: self[key][node_idx] for key in keys if "edge" not in key}
-        attrs["edge_attr"] = edge_attr
         attrs["edge_index"] = edge_index
+        if edge_attr is not None:
+            attrs["edge_attr"] = edge_attr
         return Data(**attrs)
 
     def sample_adj(self, batch, size=-1, replace=True):

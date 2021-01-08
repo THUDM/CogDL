@@ -90,9 +90,9 @@ class NodeClassification(BaseTask):
         if args.model == "sgcpn" and args.missing_rate > 0:
             assert args.dataset in ["cora", "citeseer", "pubmed"]
             dataset.data = preprocess_data_sgcpn(dataset.data, normalize_feature=True, missing_rate=0)
-            adj_slice = torch.tensor(dataset.data.adj.size())
-            adj_slice[0] = 0
-            dataset.slices["adj"] = adj_slice
+            # adj_slice = torch.tensor(dataset.data.adj.size())
+            # adj_slice[0] = 0
+            # dataset.slices["adj"] = adj_slice
 
         self.dataset = dataset
         self.data = dataset[0]

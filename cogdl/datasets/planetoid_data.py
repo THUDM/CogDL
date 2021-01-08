@@ -10,6 +10,22 @@ from cogdl.utils import remove_self_loops
 from . import register_dataset
 
 
+def coalesce(row, col, value=None):
+    num = col.shape[0] + 1
+    print("Num edges:", num)
+    idx = torch.full((num,), -1, dtype=torch.float)
+    idx[1:] = row * num + col
+    mask = idx[1:] > idx[:-1]
+
+    if mask.all():
+        return row, col.value
+    row = row[mask]
+    col = col[mask]
+    if value is not None:
+        pass
+    return row, col, value
+
+
 def parse_index_file(filename):
     index = []
     for line in open(filename):
@@ -26,18 +42,30 @@ def index_to_mask(index, size):
 def edge_index_from_dict(graph_dict, num_nodes=None):
     row, col = [], []
     for key, value in graph_dict.items():
-        try:
-            row.append(np.repeat(key, len(value)))
-        except Exception as e:
-            print(e)
-            exit(0)
+        row.append(np.repeat(key, len(value)))
         col.append(value)
-    row = np.concatenate(np.array(row))
-    col = np.concatenate(np.array(col))
-    edge_index = torch.stack([torch.tensor(row), torch.tensor(col)], dim=0)
+    _row = np.concatenate(np.array(row))
+    _col = np.concatenate(np.array(col))
+    edge_index = np.stack([_row, _col], axis=0)
+
+    row_dom = edge_index[:, _row > _col]
+    col_dom = edge_index[:, _col > _row][[1, 0]]
+    edge_index = np.concatenate([row_dom, col_dom], axis=1)
+    _row, _col = edge_index
+
+    row = np.concatenate([_row, _col])
+    col = np.concatenate([_col, _row])
+    edge_index = np.stack([row, col], axis=0)
+
+    order = np.lexsort((col, row))
+    edge_index = edge_index[:, order]
+
+    edge_index = torch.tensor(edge_index, dtype=torch.long)
     # There may be duplicated edges and self loops in the datasets.
+    row, col, _ = coalesce(edge_index[0], edge_index[1])
+    edge_index = torch.stack([row, col], dim=0)
     edge_index, _ = remove_self_loops(edge_index)
-    # edge_index, _ = coalesce(edge_index, None, num_nodes, num_nodes)
+    print(edge_index.t()[:20])
     return edge_index
 
 
@@ -75,7 +103,6 @@ def read_planetoid_data(folder, prefix):
 
         tx, ty = tx_ext, ty_ext
 
-    y = y.long()
     x = torch.cat([allx, tx], dim=0).float()
     y = torch.cat([ally, ty], dim=0).max(dim=1)[1].long()
 

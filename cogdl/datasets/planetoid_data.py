@@ -53,11 +53,9 @@ def edge_index_from_dict(graph_dict, num_nodes=None):
     edge_index = np.concatenate([row_dom, col_dom], axis=1)
     _row, _col = edge_index
 
-    row = np.concatenate([_row, _col])
-    col = np.concatenate([_col, _row])
-    edge_index = np.stack([row, col], axis=0)
+    edge_index = np.stack([_row, _col], axis=0)
 
-    order = np.lexsort((col, row))
+    order = np.lexsort((_col, _row))
     edge_index = edge_index[:, order]
 
     edge_index = torch.tensor(edge_index, dtype=torch.long)
@@ -65,7 +63,10 @@ def edge_index_from_dict(graph_dict, num_nodes=None):
     row, col, _ = coalesce(edge_index[0], edge_index[1])
     edge_index = torch.stack([row, col], dim=0)
     edge_index, _ = remove_self_loops(edge_index)
-    print(edge_index.t()[:20])
+    row = torch.cat([edge_index[0], edge_index[1]])
+    col = torch.cat([edge_index[1], edge_index[0]])
+    edge_index = torch.stack([row, col])
+    print(edge_index.shape)
     return edge_index
 
 

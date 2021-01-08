@@ -1,9 +1,7 @@
-import math
 import random
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from cogdl.data import DataLoader
 from .. import BaseModel, register_model
 

@@ -2,8 +2,7 @@ import collections
 import os.path as osp
 
 import torch.utils.data
-
-from .makedirs import makedirs
+from cogdl.utils import makedirs
 
 
 def to_list(x):

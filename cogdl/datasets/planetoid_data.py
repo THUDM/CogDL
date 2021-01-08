@@ -1,12 +1,12 @@
 import os.path as osp
 import pickle as pkl
 import sys
-import numpy as np
 
+import numpy as np
 import torch
-from cogdl.data import download_url
-from cogdl.data import Dataset, Data
-from cogdl.utils import remove_self_loops
+from cogdl.data import Data, Dataset
+from cogdl.utils import download_url, remove_self_loops
+
 from . import register_dataset
 
 

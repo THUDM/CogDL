@@ -1,8 +1,5 @@
 import torch
 import torch.nn as nn
-from torch_sparse import spmm
-from torch_scatter import scatter_max, scatter_add
-import numpy as np
 from .. import BaseModel, register_model
 
 

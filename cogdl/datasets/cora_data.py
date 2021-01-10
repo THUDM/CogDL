@@ -1,12 +1,13 @@
-import os.path as osp
-import torch
-import numpy as np
 import os
+import os.path as osp
 import pickle
-from torch_geometric.data import download_url
+
+import numpy as np
+import torch
+from cogdl.data import Data, Dataset
+from cogdl.utils import download_url
 
 from . import register_dataset
-from cogdl.data import Data, Dataset
 
 
 @register_dataset("jknet_cora")

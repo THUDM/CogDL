@@ -1,15 +1,10 @@
 import os.path as osp
-from tqdm import tqdm
 
 import torch
-import torch_geometric.transforms as T
 from torch_geometric.data import DataLoader
 from torch_sparse import coalesce
-import numpy as np
 
-from cogdl.data import Data, Dataset
 from ogb.nodeproppred import PygNodePropPredDataset
-from ogb.linkproppred import PygLinkPropPredDataset
 from ogb.graphproppred import PygGraphPropPredDataset
 
 from . import register_dataset

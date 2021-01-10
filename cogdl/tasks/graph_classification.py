@@ -1,10 +1,8 @@
 import argparse
 import copy
-import random
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 

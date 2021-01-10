@@ -3,7 +3,8 @@ import sys
 
 import torch
 
-from cogdl.data import Data, Dataset, download_url
+from cogdl.data import Data, Dataset
+from cogdl.utils import download_url
 
 from . import register_dataset
 

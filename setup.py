@@ -86,6 +86,8 @@ setup(
         "pyinquirer",
         "pre-commit",
         "flake8",
+        "numba",
+        "transformers",
     ],
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,

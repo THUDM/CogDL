@@ -6,7 +6,7 @@ def test_oagbert():
 
     sequence = "CogDL is developed by KEG, Tsinghua."
     tokens = tokenizer(sequence, return_tensors="pt")
-    outputs = bert_model(**tokens)
+    outputs = bert_model(**tokens, checkpoint_activations=True)
 
     assert len(outputs) == 2
     assert tuple(outputs[0].shape) == (1, 14, 32)

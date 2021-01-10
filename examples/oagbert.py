@@ -1,4 +1,4 @@
-from cogdl.oag import oagbert
+from cogdl import oagbert
 
 tokenizer, bert_model = oagbert()
 

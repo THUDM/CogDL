@@ -22,3 +22,4 @@ https://pytorch-geometric.com/whl/torch-1.6.0+cpu/torch_cluster-1.5.8-cp36-cp36m
 https://pytorch-geometric.com/whl/torch-1.6.0+cpu/torch_spline_conv-1.2.0-cp36-cp36m-linux_x86_64.whl
 torch-geometric
 dgl==0.4.3
+numba

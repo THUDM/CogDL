@@ -1,14 +1,9 @@
-import math
-
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.parameter import Parameter
+from torch_geometric.utils import dropout_adj, to_undirected
 from torch_sparse import SparseTensor
 
 from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, spmm, spmm_adj
-from torch_geometric.utils import to_undirected, dropout_adj
 
 
 def get_adj(row, col, N, asymm_norm=False, set_diag=True, remove_diag=False):

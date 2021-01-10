@@ -1,13 +1,11 @@
-import math
 import numpy as np
-from scipy.linalg import expm
-
 import torch
 import torch.nn.functional as F
-from torch_geometric.data import Data
+from cogdl.data import Data
+from cogdl.utils import add_remaining_self_loops, symmetric_normalization
+from scipy.linalg import expm
 
 from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, spmm, symmetric_normalization
 from .gcn import GraphConvolution
 
 

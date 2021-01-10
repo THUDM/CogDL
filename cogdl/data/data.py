@@ -3,7 +3,6 @@ import re
 import torch
 import numpy as np
 import scipy.sparse as sparse
-from torch_geometric.data import Data as pyg_data
 
 
 class Data(object):
@@ -273,7 +272,7 @@ class Data(object):
         return node_idx, (row, edge_cols)
 
     @staticmethod
-    def from_pyg_data(data: pyg_data):
+    def from_pyg_data(data):
         val = {k: v for k, v in data}
         return Data(**val)
 

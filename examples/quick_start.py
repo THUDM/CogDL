@@ -1,4 +1,4 @@
-from cogdl import experiment
+from cogdl.exp import experiment
 
 # basic usage
 experiment(task="node_classification", dataset="cora", model="gcn")

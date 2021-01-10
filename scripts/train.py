@@ -1,4 +1,5 @@
-from cogdl import options, experiment
+from cogdl import options
+from cogdl.exp import experiment
 
 
 if __name__ == "__main__":

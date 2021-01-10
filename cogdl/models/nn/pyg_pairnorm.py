@@ -1,13 +1,10 @@
 import torch as torch
-import torch.nn.functional as F
 import torch.nn as nn
-import numpy as np
-from torch_scatter import scatter_max, scatter_add
+from cogdl.utils import row_normalization, spmm
+from torch_scatter import scatter_add, scatter_max
 
 from .. import BaseModel, register_model
-from .gat import SpGraphAttentionLayer
 from .gcn import GraphConvolution
-from cogdl.utils import row_normalization, spmm
 
 
 def softmax(src, index, num_nodes=None):

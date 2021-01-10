@@ -7,9 +7,7 @@ from .gcnii import GCNIILayer, GCNII
 from .gdc_gcn import GDC_GCN
 from .grace import GRACE, GraceEncoder
 from .graphsage import Graphsage, GraphSAGELayer
-from .hgpsl import HGPSL, HGPSLPool
 from .mvgrl import MVGRL
-from .pairnorm import PairNorm
 from .patchy_san import PatchySAN
 from .ppnp import PPNP
 from .pyg_cheb import Chebyshev
@@ -24,8 +22,10 @@ from .pyg_grand import Grand
 from .pyg_gpt_gnn import GPT_GNN
 from .pyg_gtn import GTConv, GTLayer, GTN
 from .pyg_han import HAN, HANLayer
+from .pyg_hgpsl import HGPSL, HGPSLPool
 from .pyg_infomax import Infomax
 from .pyg_infograph import InfoGraph
+from .pyg_pairnorm import PairNorm
 from .pyg_sagpool import SAGPoolLayers, SAGPoolNetwork
 from .pyg_sortpool import SortPool
 from .pyg_srgcn import SRGCN

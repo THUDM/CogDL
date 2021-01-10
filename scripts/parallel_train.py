@@ -6,7 +6,7 @@ import torch
 import torch.multiprocessing as mp
 from cogdl import options
 from cogdl.datasets import build_dataset
-from cogdl.exp import gen_variants
+from cogdl.experiments import gen_variants
 from cogdl.tasks import build_task
 from cogdl.utils import set_random_seed, tabulate_results
 from tabulate import tabulate

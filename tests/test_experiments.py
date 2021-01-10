@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from cogdl.exp import check_task_dataset_model_match, experiment, gen_variants, train
+from cogdl.experiments import check_task_dataset_model_match, experiment, gen_variants, train
 from cogdl.options import get_default_args
 
 

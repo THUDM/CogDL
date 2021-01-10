@@ -10,7 +10,7 @@ You can run all kinds of experiments through CogDL APIs, especially ``experiment
 
 .. code-block:: python
 
-    from cogdl.exp import experiment
+    from cogdl import experiment
 
     # basic usage
     experiment(task="node_classification", dataset="cora", model="gcn")

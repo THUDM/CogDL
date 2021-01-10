@@ -68,7 +68,7 @@ You can run all kinds of experiments through CogDL APIs, especially `experiment(
 A quickstart example can be found in the [quick_start.py](https://github.com/THUDM/cogdl/tree/master/examples/quick_start.py). More examples are provided in the [examples/](https://github.com/THUDM/cogdl/tree/master/examples/).
 
 ```python
-from cogdl.exp import experiment
+from cogdl import experiment
 
 # basic usage
 experiment(task="node_classification", dataset="cora", model="gcn")

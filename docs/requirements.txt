@@ -23,3 +23,4 @@ https://pytorch-geometric.com/whl/torch-1.6.0+cpu/torch_spline_conv-1.2.0-cp36-c
 torch-geometric
 dgl==0.4.3
 numba
+transformers

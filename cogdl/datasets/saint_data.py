@@ -3,9 +3,10 @@ import torch
 import numpy as np
 import os.path as osp
 import scipy.sparse as sp
+from sklearn.preprocessing import StandardScaler
 
 from cogdl.data import Data, Dataset
-from cogdl.data import download_url
+from cogdl.utils import download_url
 from cogdl.utils import multilabel_evaluator
 from .planetoid_data import index_to_mask, normalize_feature
 from . import register_dataset
@@ -102,6 +103,13 @@ class SAINTDataset(Dataset):
         return self.data.x.shape[0]
 
 
+def scale_feats(data):
+    scaler = StandardScaler()
+    scaler.fit(data.x.numpy())
+    data.x = torch.from_numpy(scaler.transform(data.x)).float()
+    return data
+
+
 @register_dataset("yelp")
 class YelpDataset(SAINTDataset):
     def __init__(self, args=None):
@@ -110,7 +118,7 @@ class YelpDataset(SAINTDataset):
         if not osp.exists(path):
             SAINTDataset(path, dataset)
         super(YelpDataset, self).__init__(path, dataset)
-        self.data = normalize_feature(self.data)
+        self.data = scale_feats(self.data)
 
 
 @register_dataset("amazon-s")
@@ -121,4 +129,4 @@ class AmazonDataset(SAINTDataset):
         if not osp.exists(path):
             SAINTDataset(path, dataset)
         super(AmazonDataset, self).__init__(path, dataset)
-        self.data = normalize_feature(self.data)
+        self.data = scale_feats(self.data)

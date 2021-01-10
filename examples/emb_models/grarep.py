@@ -1,11 +1,10 @@
-from cogdl.datasets import build_dataset
-from cogdl.tasks import build_task
+from cogdl import experiment
 from cogdl.utils import build_args_from_dict, print_result, set_random_seed, get_extra_args
 
 DATASET_REGISTRY = {}
 
 
-def build_default_args_for_unsupervised_node_classification(dataset):
+def default_parameter(dataset):
     args = {
         "hidden_size": 128,
         "num_shuffle": 5,
@@ -14,9 +13,6 @@ def build_default_args_for_unsupervised_node_classification(dataset):
         "save_dir": ".",
         "seed": [0, 1, 2],
         "step": 5,
-        "task": "unsupervised_node_classification",
-        "model": "grarep",
-        "dataset": dataset,
     }
     args = get_extra_args(args)
     return build_args_from_dict(args)
@@ -46,21 +42,13 @@ def wiki_config(args):
 
 
 def run(dataset_name):
-    args = build_default_args_for_unsupervised_node_classification(dataset_name)
-    args = DATASET_REGISTRY[dataset_name](args)
-    dataset = build_dataset(args)
-    results = []
-    for seed in args.seed:
-        set_random_seed(seed)
-        task = build_task(args, dataset=dataset)
-        result = task.train()
-        results.append(result)
+    args = default_parameter()
+    args = DATASET_REGISTRY[dataset_name](args).__dict__
+    results = experiment(task="unsupervised_node_classification", dataset=dataset_name, model="grarep", **args)
     return results
 
 
 if __name__ == "__main__":
     datasets = ["ppi", "blogcatalog", "wikipedia"]
-    results = []
     for x in datasets:
-        results += run(x)
-    print_result(results, datasets, "grarep")
+        run(x)

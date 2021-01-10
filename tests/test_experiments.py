@@ -5,7 +5,7 @@ from cogdl.options import get_default_args
 
 
 def test_train():
-    args = get_default_args(task="node_classification", dataset="cora", model="gcn", cpu=True)
+    args = get_default_args(task="node_classification", dataset="cora", model="gcn", max_epoch=10, cpu=True)
     args.dataset = args.dataset[0]
     args.model = args.model[0]
     args.seed = args.seed[0]
@@ -31,7 +31,30 @@ def test_check_task_dataset_model_match():
 
 def test_experiment():
     results = experiment(
-        task="node_classification", dataset="cora", model="gcn", hidden_size=32, max_epoch=200, cpu=True
+        task="node_classification", dataset="cora", model="gcn", hidden_size=32, max_epoch=10, cpu=True
+    )
+
+    assert ("cora", "gcn") in results
+    assert results[("cora", "gcn")][0]["Acc"] > 0
+
+
+def test_auto_experiment():
+    def func_search_example(trial):
+        return {
+            "lr": trial.suggest_categorical("lr", [1e-3, 5e-3, 1e-2]),
+            "hidden_size": trial.suggest_categorical("hidden_size", [16, 32, 64, 128]),
+            "dropout": trial.suggest_uniform("dropout", 0.5, 0.9),
+        }
+
+    results = experiment(
+        task="node_classification",
+        dataset="cora",
+        model="gcn",
+        seed=[1, 2],
+        n_trials=2,
+        max_epoch=10,
+        func_search=func_search_example,
+        cpu=True,
     )
 
     assert ("cora", "gcn") in results
@@ -43,3 +66,4 @@ if __name__ == "__main__":
     test_gen_variants()
     test_check_task_dataset_model_match()
     test_experiment()
+    test_auto_experiment()

@@ -31,8 +31,8 @@ def accuracy(y_true, y_pred):
     return correct / len(y_true)
 
 
-def multilabel_evaluator():
-    loss_func = torch.nn.functional.binary_cross_entropy_with_logits
+def multilabel_evaluator(reduction="sum"):
+    loss_func = torch.nn.BCEWithLogitsLoss(reduction=reduction)
     metric = multilabel_f1
     return loss_func, metric
 

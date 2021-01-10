@@ -667,6 +667,9 @@ def test_pprgo_cora():
         task = build_task(args)
         ret = task.train()
         assert 0 <= ret["Acc"] <= 1
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
 
 
 if __name__ == "__main__":

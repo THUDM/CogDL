@@ -58,7 +58,7 @@ class OGBProductsDataset(OGBNDataset):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
             PygNodePropPredDataset(dataset, path)
-        super(OGBArxivDataset, self).__init__(path, dataset)
+        super(OGBProductsDataset, self).__init__(path, dataset)
 
 
 @register_dataset("ogbn-proteins")
@@ -68,7 +68,7 @@ class OGBProteinsDataset(OGBNDataset):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
             PygNodePropPredDataset(dataset, path)
-        super(OGBArxivDataset, self).__init__(path, dataset)
+        super(OGBProteinsDataset, self).__init__(path, dataset)
 
 
 @register_dataset("ogbn-mag")
@@ -78,7 +78,7 @@ class OGBMAGDataset(OGBNDataset):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
             PygNodePropPredDataset(dataset, path)
-        super(OGBArxivDataset, self).__init__(path, dataset)
+        super(OGBMAGDataset, self).__init__(path, dataset)
 
 
 @register_dataset("ogbn-papers100M")
@@ -88,7 +88,7 @@ class OGBPapers100MDataset(OGBNDataset):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
             PygNodePropPredDataset(dataset, path)
-        super(OGBArxivDataset, self).__init__(path, dataset)
+        super(OGBPapers100MDataset, self).__init__(path, dataset)
 
 
 class OGBGDataset(PygGraphPropPredDataset):

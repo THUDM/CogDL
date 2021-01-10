@@ -13,7 +13,7 @@ class PPRGoMLP(nn.Module):
         self.dropout = dropout
         self.nlayers = num_layers
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
-        self.layers = nn.ModuleList([nn.Linear(shapes[i], shapes[i + 1]) for i in range(num_layers)])
+        self.layers = nn.ModuleList([nn.Linear(shapes[i], shapes[i + 1], bias=False) for i in range(num_layers)])
         self.activation = get_activation(activation)
 
     def forward(self, x):
@@ -68,7 +68,7 @@ class PPRGo(BaseModel):
         h = self.fc(x)
         h = ppr_scores.unsqueeze(1) * h
         batch_size = targets[-1] + 1
-        out = torch.zeros(batch_size, x.shape[1]).to(x.device).to(x.dtype)
+        out = torch.zeros(batch_size, h.shape[1]).to(x.device).to(x.dtype)
         out = out.scatter_add_(dim=0, index=targets[:, None].repeat(1, h.shape[1]), src=h)
         return out
 

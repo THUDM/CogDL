@@ -65,7 +65,7 @@ pip install -e .
 ### API Usage
 
 You can run all kinds of experiments through CogDL APIs, especially `experiment()`. You can also use your own datasets and models for experiments. 
-A quickstart example can be found in the [quick_start.py](https://github.com/THUDM/cogdl/tree/master/examples/quick_start.py). Some examples are provided in the [examples/](https://github.com/THUDM/cogdl/tree/master/examples/), including [gcn.py](https://github.com/THUDM/cogdl/tree/master/examples/gcn.py). 
+A quickstart example can be found in the [quick_start.py](https://github.com/THUDM/cogdl/tree/master/examples/quick_start.py). More examples are provided in the [examples/](https://github.com/THUDM/cogdl/tree/master/examples/).
 
 ```python
 from cogdl import experiment
@@ -78,6 +78,16 @@ experiment(task="node_classification", dataset="cora", model="gcn", hidden_size=
 
 # run over multiple models on different seeds
 experiment(task="node_classification", dataset="cora", model=["gcn", "gat"], seed=[1, 2])
+
+# automl usage
+def func_search(trial):
+    return {
+        "lr": trial.suggest_categorical("lr", [1e-3, 5e-3, 1e-2]),
+        "hidden_size": trial.suggest_categorical("hidden_size", [32, 64, 128]),
+        "dropout": trial.suggest_uniform("dropout", 0.5, 0.8),
+    }
+
+experiment(task="node_classification", dataset="cora", model="gcn", seed=[1, 2], func_search=func_search)
 ```
 
 ### Command-Line Usage

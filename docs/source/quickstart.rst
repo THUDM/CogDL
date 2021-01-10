@@ -5,21 +5,31 @@ Quick Start
 API Usage
 ---------
 
-You can run all kinds of experiments through CogDL APIs, especially ``experiment()``. You can also use your own datasets and models for experiments. A quickstart example can be found in the `quick_start.py <https://github.com/THUDM/cogdl/tree/master/examples/quick_start.py>`_. Some examples are provided in the `examples/ <https://github.com/THUDM/cogdl/tree/master/examples/>`_, including `gcn.py <https://github.com/THUDM/cogdl/tree/master/examples/gcn.py>`_. 
+You can run all kinds of experiments through CogDL APIs, especially ``experiment()``. You can also use your own datasets and models for experiments. A quickstart example can be found in the `quick_start.py <https://github.com/THUDM/cogdl/tree/master/examples/quick_start.py>`_. More examples are provided in the `examples/ <https://github.com/THUDM/cogdl/tree/master/examples/>`_. 
 
 
 .. code-block:: python
 
-    >>> from cogdl import experiment
+    from cogdl import experiment
 
-    >>> # basic usage
-    >>> experiment(task="node_classification", dataset="cora", model="gcn")
+    # basic usage
+    experiment(task="node_classification", dataset="cora", model="gcn")
 
-    >>> # set other hyper-parameters
-    >>> experiment(task="node_classification", dataset="cora", model="gcn", hidden_size=32, max_epoch=200)
+    # set other hyper-parameters
+    experiment(task="node_classification", dataset="cora", model="gcn", hidden_size=32, max_epoch=200)
 
-    >>> # run over multiple models on different seeds
-    >>> experiment(task="node_classification", dataset="cora", model=["gcn", "gat"], seed=[1, 2])
+    # run over multiple models on different seeds
+    experiment(task="node_classification", dataset="cora", model=["gcn", "gat"], seed=[1, 2])
+
+    # automl usage
+    def func_search(trial):
+        return {
+            "lr": trial.suggest_categorical("lr", [1e-3, 5e-3, 1e-2]),
+            "hidden_size": trial.suggest_categorical("hidden_size", [32, 64, 128]),
+            "dropout": trial.suggest_uniform("dropout", 0.5, 0.8),
+        }
+
+    experiment(task="node_classification", dataset="cora", model="gcn", seed=[1, 2], func_search=func_search)
 
 Command-Line Usage
 ------------------
@@ -34,7 +44,7 @@ For example, if you want to run LINE, NetMF on Wikipedia with unsupervised node 
 
 .. code-block:: bash
 
-    >>> python scripts/train.py --task unsupervised_node_classification --dataset wikipedia --model line netmf --seed 0 1 2 3 4
+    python scripts/train.py --task unsupervised_node_classification --dataset wikipedia --model line netmf --seed 0 1 2 3 4
 
 
 Expected output:
@@ -51,7 +61,7 @@ If you want to run parallel experiments on your server with multiple GPUs on mul
 
 .. code-block:: bash
 
-    >>> python scripts/parallel_train.py --task node_classification --dataset cora --model gcn gat --device-id 0 1 --seed 0 1 2 3 4
+    python scripts/parallel_train.py --task node_classification --dataset cora --model gcn gat --device-id 0 1 --seed 0 1 2 3 4
 
 
 Expected output:

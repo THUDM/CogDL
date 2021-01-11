@@ -58,7 +58,7 @@ pip install -e .
 
 ### API
 
-您可以通过CogDL API进行各种实验，尤其是`experiment()`。[quick_start.py](https://github.com/THUDM/cogdl/tree/master/examples/quick_start.py)这是一个快速入门的代码。您也可以使用自己的数据集和模型进行实验。[examples/](https://github.com/THUDM/cogdl/tree/master/examples/) 文件夹里提供了一些例子。
+您可以通过CogDL API进行各种实验，尤其是`experiment`。[quick_start.py](https://github.com/THUDM/cogdl/tree/master/examples/quick_start.py)这是一个快速入门的代码。您也可以使用自己的数据集和模型进行实验。[examples/](https://github.com/THUDM/cogdl/tree/master/examples/) 文件夹里提供了一些例子。
 
 ```python
 from cogdl import experiment
@@ -82,6 +82,25 @@ def func_search(trial):
 
 experiment(task="node_classification", dataset="cora", model="gcn", seed=[1, 2], func_search=func_search)
 ```
+
+您也可以通过`pipeline`接口来跑一些有趣的应用。下面这个例子能够在[pipeline.py](https://github.com/THUDM/cogdl/tree/master/examples/pipeline.py)文件中找到。
+
+```python
+from cogdl import pipeline
+
+# print the statistics of datasets
+stats = pipeline("dataset-stats")
+stats(["cora", "citeseer"])
+
+# visualize k-hop neighbors of seed in the dataset
+visual = pipeline("dataset-visual")
+visual("cora", seed=0, depth=3)
+
+# load OAGBert model and perform inference
+oagbert = pipeline("oagbert")
+outputs = oagbert("CogDL is developed by KEG, Tsinghua.")
+```
+
 
 ### 命令行
 基本用法可以使用 `python train.py --task example_task --dataset example_dataset --model example_model` 来在 `example_data` 上运行 `example_model` 并使用 `example_task` 来评测结果。

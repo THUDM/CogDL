@@ -13,8 +13,6 @@ import torch
 import torch.nn.functional as F
 from tabulate import tabulate
 
-from cogdl.options import get_task_model_args
-
 
 class ArgClass(object):
     def __init__(self):
@@ -338,10 +336,6 @@ def set_random_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
-
-
-def get_example_args(task, model=None):
-    return get_task_model_args(task, model)
 
 
 if __name__ == "__main__":

@@ -8,7 +8,6 @@ from cogdl.options import get_task_model_args
 
 """Define your data"""
 
-
 class MyData(Data):
     def __init__(self):
         super(MyData, self).__init__()
@@ -30,7 +29,6 @@ class MyData(Data):
 
 
 """Define your dataset"""
-
 
 class MyNodeClassificationDataset(object):
     def __init__(self):

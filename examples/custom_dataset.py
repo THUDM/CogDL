@@ -3,7 +3,7 @@ import torch
 
 from cogdl.tasks import build_task
 from cogdl.models import build_model
-from cogdl.utils import get_task_model_args
+from cogdl.options import get_task_model_args
 
 
 """Define your data"""

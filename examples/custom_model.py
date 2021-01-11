@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 from cogdl.datasets import build_dataset
 from cogdl.tasks import build_task
-from cogdl.utils import get_example_args
+from cogdl.options import get_task_model_args
 from cogdl.models import BaseModel
 from cogdl.models.nn.gcn import GraphConvolution
 
@@ -40,7 +40,7 @@ def set_args(args):
 
 def main_model():
     # Set the task
-    args = get_example_args(task="node_classification")
+    args = get_task_model_args(task="node_classification")
     args = set_args(args)
     # use dataset in cogdl
     dataset = build_dataset(args)

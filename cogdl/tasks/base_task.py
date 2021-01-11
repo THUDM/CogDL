@@ -1,5 +1,6 @@
 from abc import ABC, ABCMeta
 import argparse
+import atexit
 import os
 import torch
 
@@ -8,6 +9,8 @@ class LoadFrom(ABCMeta):
     def __call__(cls, *args, **kwargs):
         obj = type.__call__(cls, *args, **kwargs)
         obj.load_from_pretrained()
+        if hasattr(obj, "model") and hasattr(obj, "device"):
+            obj.model.set_device(obj.device)
         return obj
 
 
@@ -20,11 +23,13 @@ class BaseTask(ABC, metaclass=LoadFrom):
     def __init__(self, args):
         super(BaseTask, self).__init__()
         os.makedirs("./checkpoints", exist_ok=True)
-        self.load_from_checkpoint = args.checkpoint
-        self._checkpoint = os.path.join("checkpoints", f"{args.model}_{args.dataset}.pt")
 
-    def __del__(self):
-        self.save_checkpoint()
+        self.load_from_checkpoint = hasattr(args, "checkpoint") and args.checkpoint
+        if self.load_from_checkpoint:
+            self._checkpoint = os.path.join("checkpoints", f"{args.model}_{args.dataset}.pt")
+            atexit.register(self.save_checkpoint)
+        else:
+            self._checkpoint = None
 
     def train(self):
         raise NotImplementedError
@@ -39,5 +44,5 @@ class BaseTask(ABC, metaclass=LoadFrom):
         return self.model
 
     def save_checkpoint(self):
-        if self._checkpoint is not None and issubclass(self.model.__class__, torch.nn.Module):
+        if self._checkpoint and hasattr(self.model, "_parameters()"):
             torch.save(self.model.state_dict(), self._checkpoint)

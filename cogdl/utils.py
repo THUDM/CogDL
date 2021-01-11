@@ -1,8 +1,12 @@
+import errno
 import itertools
+import os
+import os.path as osp
 import random
-import sys
+import shutil
 from collections import defaultdict
 from typing import Optional
+from urllib import request
 
 import numpy as np
 import torch
@@ -29,6 +33,54 @@ def get_extra_args(args):
     }
     args = {**args, **redundancy}
     return args
+
+
+def untar(path, fname, deleteTar=True):
+    """
+    Unpacks the given archive file to the same directory, then (by default)
+    deletes the archive file.
+    """
+    print("unpacking " + fname)
+    fullpath = os.path.join(path, fname)
+    shutil.unpack_archive(fullpath, path)
+    if deleteTar:
+        os.remove(fullpath)
+
+
+def makedirs(path):
+    try:
+        os.makedirs(osp.expanduser(osp.normpath(path)))
+    except OSError as e:
+        if e.errno != errno.EEXIST and osp.isdir(path):
+            raise e
+
+
+def download_url(url, folder, name=None, log=True):
+    r"""Downloads the content of an URL to a specific folder.
+
+    Args:
+        url (string): The url.
+        folder (string): The folder.
+        name (string): saved filename.
+        log (bool, optional): If :obj:`False`, will not print anything to the
+            console. (default: :obj:`True`)
+    """
+    if log:
+        print("Downloading", url)
+
+    makedirs(folder)
+
+    data = request.urlopen(url)
+    if name is None:
+        filename = url.rpartition("/")[2]
+    else:
+        filename = name
+    path = osp.join(folder, filename)
+
+    with open(path, "wb") as f:
+        f.write(data.read())
+
+    return path
 
 
 def add_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):

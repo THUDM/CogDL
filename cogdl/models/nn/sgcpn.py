@@ -1,8 +1,5 @@
 import torch
 import torch.nn as nn
-from torch_sparse import spmm
-from torch_scatter import scatter_max, scatter_add
-import numpy as np
 from .. import BaseModel, register_model
 
 
@@ -55,10 +52,13 @@ class SGC(BaseModel):
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
+        # fmt: off
         parser.add_argument("--dropout", type=float, default=0.6, help="Dropout rate.")
         parser.add_argument("--num-layers", type=int, default=40, help="Number of layers.")
         parser.add_argument("--norm-mode", type=str, default="PN", help="Mode for PairNorm, {None, PN, PN-SI, PN-SCS}.")
         parser.add_argument("--norm-scale", type=float, default=10, help="Row-normalization scale.")
+        parser.add_argument("--missing-rate", type=int, default=-1)
+        # fmt: on
 
     @classmethod
     def build_model_from_args(cls, args):

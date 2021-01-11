@@ -41,11 +41,12 @@ class SAINTSampler(Sampler):
 
     def __init__(self, data, args_params):
         super().__init__(data, args_params)
+        edge_index = self.data.edge_index.cpu().numpy()
         self.adj = sp.coo_matrix(
-            (np.ones(self.num_edges), (self.data.edge_index[0], self.data.edge_index[1])),
+            (np.ones(self.num_edges), (edge_index[0], edge_index[1])),
             shape=(self.num_nodes, self.num_nodes),
         ).tocsr()
-        self.node_train = np.arange(1, self.num_nodes + 1) * self.data.train_mask.numpy()
+        self.node_train = np.arange(1, self.num_nodes + 1) * self.data.train_mask.cpu().numpy()
         self.node_train = self.node_train[self.node_train != 0] - 1
 
         self.sample_coverage = args_params["sample_coverage"]
@@ -112,7 +113,7 @@ class SAINTSampler(Sampler):
 
     def extract_subgraph(self, edge_idx, directed=True):
         edge_idx = np.unique(edge_idx)
-        subg_edge = self.data.edge_index.t()[edge_idx].numpy()
+        subg_edge = self.data.edge_index.t()[edge_idx].cpu().numpy()
         if not directed:
             subg_edge = np.concatenate((subg_edge, subg_edge[:, [1, 0]]))
         subg_edge = np.unique(subg_edge, axis=0)

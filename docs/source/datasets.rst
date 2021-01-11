@@ -1,54 +1,91 @@
-datasets package
-================
+datasets
+========
 
-Submodules
-----------
-
-datasets.edgelist\_label module
+DGL dataset
 -------------------------------
 
-.. automodule:: datasets.edgelist_label
+.. automodule:: cogdl.datasets.dgl_data
     :members:
     :undoc-members:
     :show-inheritance:
 
-datasets.edgelist\_label\_type module
--------------------------------------
+GATNE dataset
+-------------------------------
 
-.. automodule:: datasets.edgelist_label_type
+.. automodule:: cogdl.datasets.gatne
     :members:
     :undoc-members:
     :show-inheritance:
 
-datasets.gatne module
----------------------
+GCC dataset
+-------------------------------
 
-.. automodule:: datasets.gatne
+.. automodule:: cogdl.datasets.gcc_data
     :members:
     :undoc-members:
     :show-inheritance:
 
-datasets.matlab\_matrix module
+GTN dataset
+-------------------------------
+
+.. automodule:: cogdl.datasets.gtn_data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+HAN dataset
+-------------------------------
+
+.. automodule:: cogdl.datasets.han_data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+KG dataset
+-------------------------------
+
+.. automodule:: cogdl.datasets.kg_data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Matlab matrix dataset
 ------------------------------
 
-.. automodule:: datasets.matlab_matrix
+.. automodule:: cogdl.datasets.matlab_matrix
     :members:
     :undoc-members:
     :show-inheritance:
 
-datasets.pyg module
--------------------
+PyG OGB dataset
+-------------------------------
 
-.. automodule:: datasets.pyg
+.. automodule:: cogdl.datasets.pyg_ogb
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+PyG strategies dataset
+-------------------------------
+
+.. automodule:: cogdl.datasets.pyg_strategies_data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+PyG dataset
+-------------------------------
+
+.. automodule:: cogdl.datasets.pyg
     :members:
     :undoc-members:
     :show-inheritance:
 
 
 Module contents
----------------
+-------------------------------
 
-.. automodule:: datasets
+.. automodule:: cogdl.datasets
     :members:
     :undoc-members:
     :show-inheritance:

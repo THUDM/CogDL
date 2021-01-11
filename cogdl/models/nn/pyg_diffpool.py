@@ -7,7 +7,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from torch_geometric.nn import SAGEConv
-from torch_geometric.utils import add_remaining_self_loops
 
 from .. import BaseModel, register_model
 from cogdl.data import DataLoader

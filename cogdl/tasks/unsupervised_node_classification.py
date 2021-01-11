@@ -1,5 +1,6 @@
 import argparse
 import os
+import torch
 import warnings
 from collections import defaultdict
 
@@ -45,15 +46,14 @@ class UnsupervisedNodeClassification(BaseTask):
         dataset = build_dataset(args) if dataset is None else dataset
 
         self.data = dataset[0]
-        if pyg and issubclass(dataset.__class__.__bases__[0], InMemoryDataset):
-            self.num_nodes = self.data.y.shape[0]
-            self.num_classes = dataset.num_classes
+
+        self.num_nodes = self.data.y.shape[0]
+        self.num_classes = dataset.num_classes
+        if len(self.data.y.shape) > 1:
+            self.label_matrix = self.data.y
+        else:
             self.label_matrix = np.zeros((self.num_nodes, self.num_classes), dtype=int)
             self.label_matrix[range(self.num_nodes), self.data.y] = 1
-            self.data.edge_attr = self.data.edge_attr.t()
-        else:
-            self.label_matrix = self.data.y
-            self.num_nodes, self.num_classes = self.data.y.shape
 
         args.num_classes = dataset.num_classes if hasattr(dataset, "num_classes") else 0
         args.num_features = dataset.num_features if hasattr(dataset, "num_features") else 0
@@ -68,6 +68,7 @@ class UnsupervisedNodeClassification(BaseTask):
         self.enhance = args.enhance
         self.args = args
         self.is_weighted = self.data.edge_attr is not None
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
 
         self.trainer = (
             self.model.get_trainer(UnsupervisedNodeClassification, args)(args)

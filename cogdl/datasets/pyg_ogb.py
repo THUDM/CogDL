@@ -1,15 +1,10 @@
 import os.path as osp
-from tqdm import tqdm
 
 import torch
-import torch_geometric.transforms as T
 from torch_geometric.data import DataLoader
 from torch_sparse import coalesce
-import numpy as np
 
-from cogdl.data import Data, Dataset
 from ogb.nodeproppred import PygNodePropPredDataset
-from ogb.linkproppred import PygLinkPropPredDataset
 from ogb.graphproppred import PygGraphPropPredDataset
 
 from . import register_dataset
@@ -58,7 +53,7 @@ class OGBProductsDataset(OGBNDataset):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
             PygNodePropPredDataset(dataset, path)
-        super(OGBArxivDataset, self).__init__(path, dataset)
+        super(OGBProductsDataset, self).__init__(path, dataset)
 
 
 @register_dataset("ogbn-proteins")
@@ -68,7 +63,7 @@ class OGBProteinsDataset(OGBNDataset):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
             PygNodePropPredDataset(dataset, path)
-        super(OGBArxivDataset, self).__init__(path, dataset)
+        super(OGBProteinsDataset, self).__init__(path, dataset)
 
 
 @register_dataset("ogbn-mag")
@@ -78,7 +73,7 @@ class OGBMAGDataset(OGBNDataset):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
             PygNodePropPredDataset(dataset, path)
-        super(OGBArxivDataset, self).__init__(path, dataset)
+        super(OGBMAGDataset, self).__init__(path, dataset)
 
 
 @register_dataset("ogbn-papers100M")
@@ -88,7 +83,7 @@ class OGBPapers100MDataset(OGBNDataset):
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
             PygNodePropPredDataset(dataset, path)
-        super(OGBArxivDataset, self).__init__(path, dataset)
+        super(OGBPapers100MDataset, self).__init__(path, dataset)
 
 
 class OGBGDataset(PygGraphPropPredDataset):

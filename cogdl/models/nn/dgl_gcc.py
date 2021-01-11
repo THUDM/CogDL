@@ -1,16 +1,14 @@
 import math
 import os
-import os.path as osp
 
 import dgl
 import numpy as np
 import scipy.sparse as sparse
 import sklearn.preprocessing as preprocessing
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from cogdl.data import download_url
 from cogdl.layers.gcc_module import GraphEncoder
+from cogdl.utils import download_url
 from scipy.sparse import linalg
 
 from .. import BaseModel, register_model

@@ -84,14 +84,18 @@ def get_download_data_parser():
     return parser
 
 
-def get_default_args(task: str, dataset: str, model: str):
-    sys.argv = [sys.argv[0], "-t", task, "-m", model, "-dt", dataset]
+def get_default_args(task: str, dataset, model, **kwargs):
+    if not isinstance(dataset, list):
+        dataset = [dataset]
+    if not isinstance(model, list):
+        model = [model]
+    sys.argv = [sys.argv[0], "-t", task, "-m"] + model + ["-dt"] + dataset
     parser = get_training_parser()
     args, _ = parser.parse_known_args()
     args = parse_args_and_arch(parser, args)
-    args.dataset = dataset
-    args.model = model
-    args.seed = args.seed[0]
+    for key, value in kwargs.items():
+        if hasattr(args, key):
+            args.__setattr__(key, value)
     print(args)
     return args
 
@@ -110,4 +114,17 @@ def parse_args_and_arch(parser, args):
     # Parse a second time.
     args = parser.parse_args()
 
+    return args
+
+
+def get_task_model_args(task, model=None):
+    sys.argv = [sys.argv[0], "-t", task, "-m"] + ["gcn"] + ["-dt"] + ["cora"]
+    parser = get_training_parser()
+    TASK_REGISTRY[task].add_args(parser)
+    if model is not None:
+        MODEL_REGISTRY[model].add_args(parser)
+    args = parser.parse_args()
+    args.task = task
+    if model is not None:
+        args.model = model
     return args

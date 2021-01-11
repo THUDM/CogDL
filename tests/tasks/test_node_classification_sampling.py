@@ -18,6 +18,7 @@ def get_default_args():
         "lr": 0.01,
         "weight_decay": 5e-4,
         "checkpoint": False,
+        "device_id": [0],
     }
     return build_args_from_dict(default_dict)
 

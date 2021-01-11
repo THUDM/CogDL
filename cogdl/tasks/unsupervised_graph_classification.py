@@ -2,19 +2,18 @@ import argparse
 import copy
 import os
 from collections import defaultdict
-import numpy as np
-from sklearn.utils import shuffle as skshuffle
-from sklearn.svm import SVC
-from sklearn.metrics import f1_score, accuracy_score
-from sklearn.model_selection import GridSearchCV
-from tqdm import tqdm
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
+import numpy as np
+import torch
 from cogdl.data import Data, DataLoader
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
+from sklearn.metrics import f1_score
+from sklearn.model_selection import GridSearchCV
+from sklearn.svm import SVC
+from sklearn.utils import shuffle as skshuffle
+from tqdm import tqdm
+
 from . import BaseTask, register_task
 from .graph_classification import node_degree_as_feature
 
@@ -34,7 +33,8 @@ class UnsupervisedGraphClassification(BaseTask):
 
     def __init__(self, args, dataset=None, model=None):
         super(UnsupervisedGraphClassification, self).__init__(args)
-        self.device = args.device_id[0] if not args.cpu else "cpu"
+
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
 
         dataset = build_dataset(args) if dataset is None else dataset
         if "gcc" in args.model:

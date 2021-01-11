@@ -1,21 +1,15 @@
 import copy
-import itertools
-import os
-import random
 import time
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 
-import numpy as np
 import torch
 import torch.multiprocessing as mp
-import torch.nn.functional as F
-from tabulate import tabulate
-from tqdm import tqdm
-
 from cogdl import options
 from cogdl.datasets import build_dataset
+from cogdl.experiments import gen_variants
 from cogdl.tasks import build_task
 from cogdl.utils import set_random_seed, tabulate_results
+from tabulate import tabulate
 
 
 def main(args):
@@ -28,11 +22,6 @@ def main(args):
     task = build_task(args)
     result = task.train()
     return result
-
-
-def gen_variants(**items):
-    Variant = namedtuple("Variant", items.keys())
-    return itertools.starmap(Variant, itertools.product(*items.values()))
 
 
 def getpid(_):
@@ -86,6 +75,6 @@ if __name__ == "__main__":
             results_dict[variant[:-1]].append(result)
 
     # Average for different seeds
-    col_names = ["Variant"] + list(results_dict[variant[:-1]][-1].keys())
+    col_names = ["Variant"] + list(results_dict[variants[0][:-1]][-1].keys())
     tab_data = tabulate_results(results_dict)
     print(tabulate(tab_data, headers=col_names, tablefmt="github"))

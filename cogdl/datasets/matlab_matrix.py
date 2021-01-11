@@ -1,13 +1,11 @@
-import json
-import os
 import os.path as osp
 from itertools import product
 
-import numpy as np
 import scipy.io
 import torch
 
-from cogdl.data import Data, Dataset, download_url
+from cogdl.data import Data, Dataset
+from cogdl.utils import download_url
 
 from . import register_dataset
 
@@ -35,6 +33,14 @@ class MatlabMatrix(Dataset):
     @property
     def processed_file_names(self):
         return ["data.pt"]
+
+    @property
+    def num_classes(self):
+        return self.data.y.shape[1]
+
+    @property
+    def num_nodes(self):
+        return self.data.y.shape[0]
 
     def download(self):
         for name in self.raw_file_names:

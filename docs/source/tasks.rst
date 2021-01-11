@@ -1,102 +1,115 @@
-tasks package
+tasks
 =============
 
-Submodules
-----------
 
-tasks.base\_task module
+Base Task
 -----------------------
 
-.. automodule:: tasks.base_task
+.. automodule:: cogdl.tasks.base_task
     :members:
     :undoc-members:
     :show-inheritance:
 
-tasks.community\_detection module
+Node Classification
 ---------------------------------
 
-.. automodule:: tasks.community_detection
+.. automodule:: cogdl.tasks.node_classification
     :members:
     :undoc-members:
     :show-inheritance:
 
-tasks.graph\_classification module
-----------------------------------
-
-.. automodule:: tasks.graph_classification
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tasks.influence\_maximization module
-------------------------------------
-
-.. automodule:: tasks.influence_maximization
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tasks.link\_prediction module
------------------------------
-
-.. automodule:: tasks.link_prediction
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tasks.multiplex\_link\_prediction module
-----------------------------------------
-
-.. automodule:: tasks.multiplex_link_prediction
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tasks.multiplex\_node\_classification module
---------------------------------------------
-
-.. automodule:: tasks.multiplex_node_classification
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tasks.node\_classification module
----------------------------------
-
-.. automodule:: tasks.node_classification
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tasks.node\_classification\_sampling module
--------------------------------------------
-
-.. automodule:: tasks.node_classification_sampling
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tasks.unsupervised\_graph\_classification module
-------------------------------------------------
-
-.. automodule:: tasks.unsupervised_graph_classification
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-tasks.unsupervised\_node\_classification module
+Unsupervised Node Classification
 -----------------------------------------------
 
-.. automodule:: tasks.unsupervised_node_classification
+.. automodule:: cogdl.tasks.unsupervised_node_classification
     :members:
     :undoc-members:
     :show-inheritance:
 
+Node Classification (with sampling)
+-------------------------------------------
 
-Module contents
----------------
+.. automodule:: cogdl.tasks.node_classification_sampling
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
-.. automodule:: tasks
+Heterogeneous Node Classification
+--------------------------------------------
+
+.. automodule:: cogdl.tasks.heterogeneous_node_classification
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Multiplex Node Classification
+--------------------------------------------
+
+.. automodule:: cogdl.tasks.multiplex_node_classification
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Link Prediction
+-----------------------------
+
+.. automodule:: cogdl.tasks.link_prediction
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Multiplex Link Prediction
+----------------------------------------
+
+.. automodule:: cogdl.tasks.multiplex_link_prediction
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Graph Classification
+----------------------------------
+
+.. automodule:: cogdl.tasks.graph_classification
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Unsupervised Graph Classification
+------------------------------------------------
+
+.. automodule:: cogdl.tasks.unsupervised_graph_classification
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Attributed Graph Clustering
+---------------------------------
+
+.. automodule:: cogdl.tasks.attributed_graph_clustering
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Similarity Search
+---------------------------------
+
+.. automodule:: cogdl.tasks.similarity_search
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Pretrain
+---------------------------------
+
+.. automodule:: cogdl.tasks.pretrain
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Task Module
+-----------
+
+.. automodule:: cogdl.tasks
     :members:
     :undoc-members:
     :show-inheritance:

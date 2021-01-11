@@ -107,7 +107,6 @@ class SDNE(BaseModel):
         self.max_epoch = max_epoch
         self.lr = lr
         self.cpu = cpu
-        self.device = torch.device("cpu" if self.cpu else "cuda")
 
     def train(self, G):
         num_node = G.number_of_nodes()

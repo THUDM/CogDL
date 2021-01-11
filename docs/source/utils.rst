@@ -1,7 +1,7 @@
-utils module
-============
+utils
+=====
 
-.. automodule:: utils
+.. automodule:: cogdl.utils
     :members:
     :undoc-members:
     :show-inheritance:

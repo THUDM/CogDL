@@ -1,12 +1,8 @@
-import math
-
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.parameter import Parameter
 
 from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, spmm, spmm_adj
+from cogdl.utils import add_remaining_self_loops, spmm
 
 from .gcn import TKipfGCN
 
@@ -55,14 +51,14 @@ class PPNP(BaseModel):
 
         self.vals = None  # speedup for ppnp
 
-    def _calculate_A_hat(self, x, adj):
+    def _calculate_A_hat(self, x, edge_index):
         device = x.device
-        adj_values = torch.ones(adj.shape[1]).to(device)
-        adj, adj_values = add_remaining_self_loops(adj, adj_values, 1, x.shape[0])
-        deg = spmm(adj, adj_values, torch.ones(x.shape[0], 1).to(device)).squeeze()
+        edge_attr = torch.ones(edge_index.shape[1]).to(device)
+        edge_index, edge_attr = add_remaining_self_loops(edge_index, edge_attr, 1, x.shape[0])
+        deg = spmm(edge_index, edge_attr, torch.ones(x.shape[0], 1).to(device)).squeeze()
         deg_sqrt = deg.pow(-1 / 2)
-        adj_values = deg_sqrt[adj[1]] * adj_values * deg_sqrt[adj[0]]
-        return adj, adj_values
+        edge_attr = deg_sqrt[edge_index[1]] * edge_attr * deg_sqrt[edge_index[0]]
+        return edge_index, edge_attr
 
     def forward(self, x, adj):
         def get_ready_format(input, edge_index, edge_attr=None):
@@ -78,19 +74,19 @@ class PPNP(BaseModel):
         # get prediction
         local_preds = self.nn.forward(x, adj)
 
-        adj, A_hat = self._calculate_A_hat(x, adj)
+        edge_index, edge_attr = self._calculate_A_hat(x, adj)
         # apply personalized pagerank
         if self.propagation == "ppnp":
             if self.vals is None:
                 self.vals = self.alpha * torch.inverse(
-                    torch.eye(x.shape[0]).to(x.device) - (1 - self.alpha) * get_ready_format(x, adj, A_hat)
+                    torch.eye(x.shape[0]).to(x.device) - (1 - self.alpha) * get_ready_format(x, edge_index, edge_attr)
                 )
             final_preds = F.dropout(self.vals) @ local_preds
         else:  # appnp
             preds = local_preds
             for i in range(1, self.niter + 1):
-                A_dropped = get_ready_format(x, adj, F.dropout(A_hat, self.dropout, training=self.training))
-                preds = torch.spmm((1 - self.alpha) * A_dropped, preds) + self.alpha * local_preds
+                new_features = spmm(edge_index, edge_attr, preds)
+                preds = (1 - self.alpha) * new_features + self.alpha * local_preds
             final_preds = preds
         return final_preds
 

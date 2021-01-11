@@ -1,30 +1,12 @@
-import sys
-import time
-import os
 import os.path as osp
-import requests
-import shutil
-import tqdm
 import pickle
+
 import numpy as np
-
 import torch
-
-from cogdl.data import Data, Dataset, download_url
+from cogdl.data import Data, Dataset
+from cogdl.utils import download_url, untar
 
 from . import register_dataset
-
-
-def untar(path, fname, deleteTar=True):
-    """
-    Unpacks the given archive file to the same directory, then (by default)
-    deletes the archive file.
-    """
-    print("unpacking " + fname)
-    fullpath = os.path.join(path, fname)
-    shutil.unpack_archive(fullpath, path)
-    if deleteTar:
-        os.remove(fullpath)
 
 
 class GTNDataset(Dataset):

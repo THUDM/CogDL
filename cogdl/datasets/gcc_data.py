@@ -1,31 +1,14 @@
-import sys
-import time
 import os
 import os.path as osp
-import requests
-import shutil
-import tqdm
-import pickle
 import numpy as np
 from collections import defaultdict
 
 import torch
 
-from cogdl.data import Data, Dataset, download_url
+from cogdl.data import Data, Dataset
+from cogdl.utils import download_url
 
 from . import register_dataset
-
-
-def untar(path, fname, deleteTar=True):
-    """
-    Unpacks the given archive file to the same directory, then (by default)
-    deletes the archive file.
-    """
-    print("unpacking " + fname)
-    fullpath = os.path.join(path, fname)
-    shutil.unpack_archive(fullpath, path)
-    if deleteTar:
-        os.remove(fullpath)
 
 
 class GCCDataset(Dataset):
@@ -120,6 +103,10 @@ class Edgelist(Dataset):
     @property
     def processed_file_names(self):
         return ["data.pt"]
+
+    @property
+    def num_classes(self):
+        return self.data.y.shape[1]
 
     def download(self):
         for name in self.raw_file_names:

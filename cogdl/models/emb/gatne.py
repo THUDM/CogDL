@@ -2,7 +2,6 @@ import numpy as np
 import networkx as nx
 from collections import defaultdict
 from gensim.models.keyedvectors import Vocab
-from six import iteritems
 import random
 import math
 import tqdm
@@ -109,8 +108,6 @@ class GATNE(BaseModel):
         self.schema = schema
 
         self.multiplicity = True
-
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def train(self, network_data):
         all_walks = generate_walks(network_data, self.walk_num, self.walk_length, schema=self.schema)
@@ -378,7 +375,7 @@ def generate_vocab(all_walks):
                 raw_vocab[word] += 1
 
     vocab = {}
-    for word, v in iteritems(raw_vocab):
+    for word, v in raw_vocab.items():
         vocab[word] = Vocab(count=v, index=len(index2word))
         index2word.append(word)
 

@@ -1,20 +1,23 @@
-import math
 import random
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.parameter import Parameter
-from torch.autograd import Function
-from torch_geometric.data import Data
-from torch_geometric.nn.conv import MessagePassing
-from torch_geometric.nn import global_mean_pool as gap, global_max_pool as gmp, GCNConv
-from torch_geometric.nn.pool.topk_pool import topk, filter_adj
-from torch_geometric.utils import softmax, dense_to_sparse, add_remaining_self_loops
-from torch_scatter import scatter_add, scatter_max
-from torch_sparse import spspmm, coalesce
-from numpy.core.records import array
-from .. import BaseModel, register_model
 from cogdl.data import DataLoader
+from numpy.core.records import array
+from torch.autograd import Function
+from torch.nn.parameter import Parameter
+from torch_geometric.data import Data
+from torch_geometric.nn import GCNConv
+from torch_geometric.nn import global_max_pool as gmp
+from torch_geometric.nn import global_mean_pool as gap
+from torch_geometric.nn.conv import MessagePassing
+from torch_geometric.nn.pool.topk_pool import filter_adj, topk
+from torch_geometric.utils import add_remaining_self_loops, dense_to_sparse, softmax
+from torch_scatter import scatter_add, scatter_max
+from torch_sparse import coalesce, spspmm
+
+from .. import BaseModel, register_model
 
 
 def scatter_sort(x, batch, fill_value=-1e16):

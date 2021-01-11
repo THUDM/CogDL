@@ -1,27 +1,20 @@
-from cogdl.datasets import build_dataset
-from cogdl.tasks import build_task
+from cogdl import experiment
 from cogdl.utils import build_args_from_dict, print_result, set_random_seed, get_extra_args
 
 DATASET_REGISTRY = {}
 
 
-def build_default_args_for_multiplex_node_classification(dataset):
+def default_parameter():
     args = {
         "hidden_size": 128,
         "cpu": True,
-        "enhance": None,
-        "save_dir": ".",
         "seed": [0, 1, 2],
         "walk_length": 80,
         "walk_num": 40,
         "negative": 5,
         "batch_size": 1000,
         "alpha": 0.025,
-        "task": "multiplex_node_classification",
-        "model": "pte",
-        "dataset": dataset,
     }
-    args = get_extra_args(args)
     return build_args_from_dict(args)
 
 
@@ -49,21 +42,13 @@ def imdb_config(args):
 
 
 def run(dataset_name):
-    args = build_default_args_for_multiplex_node_classification(dataset_name)
-    args = DATASET_REGISTRY[dataset_name](args)
-    dataset = build_dataset(args)
-    results = []
-    for seed in args.seed:
-        set_random_seed(seed)
-        task = build_task(args, dataset=dataset)
-        result = task.train()
-        results.append(result)
+    args = default_parameter()
+    args = DATASET_REGISTRY[dataset_name](args).__dict__
+    results = experiment(task="multiplex_node_classification", dataset=dataset_name, model="pte", **args)
     return results
 
 
 if __name__ == "__main__":
     datasets = ["gtn-dblp", "gtn-acm", "gtn-imdb"]
-    results = []
     for x in datasets:
-        results += run(x)
-    print_result(results, datasets, "pte")
+        run(x)

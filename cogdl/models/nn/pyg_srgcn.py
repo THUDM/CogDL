@@ -71,7 +71,7 @@ class SrgcnHead(nn.Module):
         self.dropout = dropout
         self.node_dropout = node_dropout
 
-    def forward(self, x, edge_index, edge_attr):
+    def forward(self, x, edge_index, edge_attr=None):
         N, dim = x.shape
         # x = self.dropout(x)
 

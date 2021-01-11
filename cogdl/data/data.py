@@ -3,7 +3,6 @@ import re
 import torch
 import numpy as np
 import scipy.sparse as sparse
-from torch_geometric.data import Data as pyg_data
 
 
 class Data(object):
@@ -132,6 +131,11 @@ class Data(object):
             return self.x.shape[0]
         return torch.max(self.edge_index) + 1
 
+    @property
+    def num_classes(self):
+        if self.y is not None:
+            return int(torch.max(self.y) + 1) if self.y.dim() == 1 else self.y.shape[-1]
+
     @num_nodes.setter
     def num_nodes(self, num_nodes):
         self.__num_nodes__ = num_nodes
@@ -197,8 +201,9 @@ class Data(object):
         edge_index = torch.from_numpy(np.stack([row, col], axis=0)).to(self.x.device).long()
         keys = self.keys
         attrs = {key: self[key][node_idx] for key in keys if "edge" not in key}
-        attrs["edge_attr"] = edge_attr
         attrs["edge_index"] = edge_index
+        if edge_attr is not None:
+            attrs["edge_attr"] = edge_attr
         return Data(**attrs)
 
     def edge_subgraph(self, edge_idx):
@@ -214,12 +219,13 @@ class Data(object):
 
         edge_index = np.array([func(x) for x in edge_index]).transpose()
         edge_index = torch.from_numpy(edge_index).to(self.x.device)
-        edge_attr = self.edge_attr[edge_idx]
+        edge_attr = self.edge_attr[edge_idx] if self.edge_attr else None
 
         keys = self.keys
         attrs = {key: self[key][node_idx] for key in keys if "edge" not in key}
-        attrs["edge_attr"] = edge_attr
         attrs["edge_index"] = edge_index
+        if edge_attr is not None:
+            attrs["edge_attr"] = edge_attr
         return Data(**attrs)
 
     def sample_adj(self, batch, size=-1, replace=True):
@@ -271,7 +277,7 @@ class Data(object):
         return node_idx, (row, edge_cols)
 
     @staticmethod
-    def from_pyg_data(data: pyg_data):
+    def from_pyg_data(data):
         val = {k: v for k, v in data}
         return Data(**val)
 

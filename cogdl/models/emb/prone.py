@@ -49,22 +49,16 @@ class ProNE(BaseModel):
 
         self.matrix0 = sp.csr_matrix(nx.adjacency_matrix(G))
 
-        t_1 = time.time()
         features_matrix = self._pre_factorization(self.matrix0, self.matrix0)
-        t_2 = time.time()
 
         embeddings_matrix = self._chebyshev_gaussian(self.matrix0, features_matrix, self.step, self.mu, self.theta)
-        t_3 = time.time()
 
-        print("sparse NE time", t_2 - t_1)
-        print("spectral Pro time", t_3 - t_2)
         self.embeddings = embeddings_matrix
 
         return self.embeddings
 
     def _get_embedding_rand(self, matrix):
         # Sparse randomized tSVD for fast embedding
-        # l = matrix.shape[0]
         smat = sp.csc_matrix(matrix)  # convert to sparse CSC format
         U, Sigma, VT = randomized_svd(smat, n_components=self.dimension, n_iter=5, random_state=None)
         U = U * np.sqrt(Sigma)
@@ -73,7 +67,6 @@ class ProNE(BaseModel):
 
     def _get_embedding_dense(self, matrix, dimension):
         # get dense embedding via SVD
-        t1 = time.time()
         U, s, Vh = linalg.svd(matrix, full_matrices=False, check_finite=False, overwrite_a=True)
         U = np.array(U)
         U = U[:, :dimension]
@@ -81,7 +74,6 @@ class ProNE(BaseModel):
         s = np.sqrt(s)
         U = U * s
         U = preprocessing.normalize(U, "l2")
-        print("densesvd time", time.time() - t1)
         return U
 
     def _pre_factorization(self, tran, mask):
@@ -108,7 +100,6 @@ class ProNE(BaseModel):
 
     def _chebyshev_gaussian(self, A, a, order=5, mu=0.5, s=0.2, plus=False, nn=False):
         # NE Enhancement via Spectral Propagation
-        print("Chebyshev Series...")
         num_node = a.shape[0]
 
         if order == 1:

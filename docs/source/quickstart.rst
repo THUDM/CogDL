@@ -5,34 +5,46 @@ Quick Start
 API Usage
 ---------
 
-You can run all kinds of experiments through CogDL APIs, especially `build_task`. You can also use your own datasets and models for experiments. Some examples are provided in the `examples/ <https://github.com/THUDM/cogdl/tree/master/examples/>`_, including `gcn.py <https://github.com/THUDM/cogdl/tree/master/examples/gcn.py>`_. 
+You can run all kinds of experiments through CogDL APIs, especially ``experiment()``. You can also use your own datasets and models for experiments. A quickstart example can be found in the `quick_start.py <https://github.com/THUDM/cogdl/tree/master/examples/quick_start.py>`_. More examples are provided in the `examples/ <https://github.com/THUDM/cogdl/tree/master/examples/>`_. 
+
 
 .. code-block:: python
 
-    >>> from cogdl.tasks import build_task
-    >>> from cogdl.options import get_default_args
+    from cogdl import experiment
 
-    >>> # Get default hyper-parameters for experiments
-    >>> args = get_default_args(task="node_classification", dataset="cora", model="gcn")
-    >>> # Build and run
-    >>> task = build_task(args)
-    >>> ret = task.train()
+    # basic usage
+    experiment(task="node_classification", dataset="cora", model="gcn")
+
+    # set other hyper-parameters
+    experiment(task="node_classification", dataset="cora", model="gcn", hidden_size=32, max_epoch=200)
+
+    # run over multiple models on different seeds
+    experiment(task="node_classification", dataset="cora", model=["gcn", "gat"], seed=[1, 2])
+
+    # automl usage
+    def func_search(trial):
+        return {
+            "lr": trial.suggest_categorical("lr", [1e-3, 5e-3, 1e-2]),
+            "hidden_size": trial.suggest_categorical("hidden_size", [32, 64, 128]),
+            "dropout": trial.suggest_uniform("dropout", 0.5, 0.8),
+        }
+
+    experiment(task="node_classification", dataset="cora", model="gcn", seed=[1, 2], func_search=func_search)
 
 Command-Line Usage
 ------------------
 
-You can use ``python scripts/train.py --task example_task --dataset example_dataset --model example_method`` to run example_method on example_data and evaluate it via example_task.
+You can also use ``python scripts/train.py --task example_task --dataset example_dataset --model example_model`` to run example_model on example_data and evaluate it via example_task.
 
-- ``--task``, downstream tasks to evaluate representation like node_classification, unsupervised_node_classification, link_prediction. More tasks can be found in the `cogdl/tasks <https://github.com/THUDM/cogdl/tree/master/cogdl/tasks>`_.
-- ``--dataset``, dataset name to run, can be a list of datasets with space like ``cora citeseer ppi``. Supported datasets include 'cora', 'citeseer', 'pumbed', 'PPI', 'wikipedia', 'blogcatalog', 'flickr'. More datasets can be found in the `cogdl/datasets <https://github.com/THUDM/cogdl/tree/master/cogdl/datasets>`_.
+- ``--task``, downstream tasks to evaluate representation like ``node_classification``, ``unsupervised_node_classification``, ``graph_classification``. More tasks can be found in the `cogdl/tasks <https://github.com/THUDM/cogdl/tree/master/cogdl/tasks>`_.
+- ``--dataset``, dataset name to run, can be a list of datasets with space like ``cora citeseer ppi``. Supported datasets include 'cora', 'citeseer', 'pumbed', 'ppi', 'wikipedia', 'blogcatalog', 'flickr'. More datasets can be found in the `cogdl/datasets <https://github.com/THUDM/cogdl/tree/master/cogdl/datasets>`_.
 - ``--model``, model name to run, can be a list of models like ``deepwalk line prone``. Supported models include 'gcn', 'gat', 'graphsage', 'deepwalk', 'node2vec', 'hope', 'grarep', 'netmf', 'netsmf', 'prone'. More models can be found in the `cogdl/models <https://github.com/THUDM/cogdl/tree/master/cogdl/models>`_.
 
-For example, if you want to run Deepwalk, Line, Netmf on Wikipedia with node classification task, with 5 different seeds:
-
+For example, if you want to run LINE, NetMF on Wikipedia with unsupervised node classification task, with 5 different seeds:
 
 .. code-block:: bash
 
-    >>> python scripts/train.py --task unsupervised_node_classification --dataset wikipedia --model line netmf --seed 0 1 2 3 4
+    python scripts/train.py --task unsupervised_node_classification --dataset wikipedia --model line netmf --seed 0 1 2 3 4
 
 
 Expected output:
@@ -45,11 +57,11 @@ Variant                    Micro-F1 0.1    Micro-F1 0.3    Micro-F1 0.5    Micro
 =========================  ==============  ==============  ==============  ==============  ============== 
 
 
-If you want to run parallel experiments on your server with multiple GPUs on multiple models gcn, gat on multiple datasets Cora, Citeseer with node classification task:
+If you want to run parallel experiments on your server with multiple GPUs on multiple models, GCN and GAT, on the Cora dataset with node classification task:
 
 .. code-block:: bash
 
-    >>> python scripts/parallel_train.py --task node_classification --dataset cora --model gcn gat --device-id 0 1 --seed 0 1 2 3 4
+    python scripts/parallel_train.py --task node_classification --dataset cora --model gcn gat --device-id 0 1 --seed 0 1 2 3 4
 
 
 Expected output:

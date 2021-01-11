@@ -1,8 +1,5 @@
 import os.path as osp
-import os
 import torch
-import numpy as np
-import scipy.sparse as sp
 
 import torch_geometric.transforms as T
 from torch_geometric.datasets import Planetoid, Reddit, TUDataset, QM9
@@ -17,39 +14,6 @@ def normalize_feature(data):
     x_rev[torch.isinf(x_rev)] = 0.0
     data.x = data.x * x_rev.unsqueeze(-1).expand_as(data.x)
     return data
-
-
-@register_dataset("cora")
-class CoraDataset(Planetoid):
-    def __init__(self, args=None):
-        dataset = "Cora"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
-        if not osp.exists(path):
-            Planetoid(path, dataset, transform=T.TargetIndegree())
-        super(CoraDataset, self).__init__(path, dataset, transform=T.TargetIndegree())
-        self.data = normalize_feature(self.data)
-
-
-@register_dataset("citeseer")
-class CiteSeerDataset(Planetoid):
-    def __init__(self, args=None):
-        dataset = "CiteSeer"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
-        if not osp.exists(path):
-            Planetoid(path, dataset, transform=T.TargetIndegree())
-        super(CiteSeerDataset, self).__init__(path, dataset, transform=T.TargetIndegree())
-        self.data = normalize_feature(self.data)
-
-
-@register_dataset("pubmed")
-class PubMedDataset(Planetoid):
-    def __init__(self, args=None):
-        dataset = "PubMed"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
-        if not osp.exists(path):
-            Planetoid(path, dataset, transform=T.TargetIndegree())
-        super(PubMedDataset, self).__init__(path, dataset, transform=T.TargetIndegree())
-        self.data = normalize_feature(self.data)
 
 
 @register_dataset("reddit")

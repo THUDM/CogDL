@@ -11,7 +11,7 @@ try:
     import torch_geometric
 except ImportError:
     pyg = False
-    print("Failed to import PyTorch Geometric (PyG)")
+    print("Failed to import PyTorch Geometric (pyg-related models/datasets are disabled)")
 else:
     pyg = True
 
@@ -19,7 +19,7 @@ try:
     import dgl
 except ImportError:
     dgl_import = False
-    print("Failed to import Deep Graph Library (DGL)")
+    print("Failed to import Deep Graph Library (dgl-related models/datasets are disabled)")
 else:
     dgl_import = True
 

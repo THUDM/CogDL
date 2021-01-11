@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
 from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, spmm, spmm_adj
+from cogdl.utils import add_remaining_self_loops, spmm, symmetric_normalization
 
 
 class GraphConvolution(nn.Module):
@@ -68,35 +68,34 @@ class TKipfGCN(BaseModel):
         # fmt: off
         parser.add_argument("--num-features", type=int)
         parser.add_argument("--num-classes", type=int)
+        parser.add_argument("--num-layers", type=int, default=2)
         parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--dropout", type=float, default=0.5)
         # fmt: on
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.num_features, args.hidden_size, args.num_classes, args.dropout)
+        return cls(args.num_features, args.hidden_size, args.num_classes, args.num_layers, args.dropout)
 
-    def __init__(self, in_feats, hidden_size, out_feats, dropout):
+    def __init__(self, in_feats, hidden_size, out_feats, num_layers, dropout):
         super(TKipfGCN, self).__init__()
-
-        self.gc1 = GraphConvolution(in_feats, hidden_size)
-        self.gc2 = GraphConvolution(hidden_size, out_feats)
+        shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
+        self.layers = nn.ModuleList([GraphConvolution(shapes[i], shapes[i + 1]) for i in range(num_layers)])
+        self.num_layers = num_layers
         self.dropout = dropout
-        # self.nonlinear = nn.SELU()
 
-    def forward(self, x, adj):
-        device = x.device
-        adj_values = torch.ones(adj.shape[1]).to(device)
-        adj, adj_values = add_remaining_self_loops(adj, adj_values, 1, x.shape[0])
-        deg = spmm(adj, adj_values, torch.ones(x.shape[0], 1).to(device)).squeeze()
-        deg_sqrt = deg.pow(-1 / 2)
-        adj_values = deg_sqrt[adj[1]] * adj_values * deg_sqrt[adj[0]]
+    def forward(self, x, edge_index):
 
-        x = F.dropout(x, self.dropout, training=self.training)
-        x = F.relu(self.gc1(x, adj, adj_values))
-        x = F.dropout(x, self.dropout, training=self.training)
-        x = self.gc2(x, adj, adj_values)
-        return x
+        edge_index, edge_attr = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])
+        edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
+
+        h = x
+        for i in range(self.num_layers):
+            h = F.dropout(h, self.dropout, training=self.training)
+            h = self.layers[i](h, edge_index, edge_attr)
+            if i != self.num_layers - 1:
+                h = F.relu(h)
+        return h
 
     def predict(self, data):
         return self.forward(data.x, data.edge_index)

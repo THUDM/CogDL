@@ -4,9 +4,9 @@ import sys
 
 import numpy as np
 import torch
-from cogdl.data import Data, Dataset
-from cogdl.utils import download_url, remove_self_loops
 
+from cogdl.data import Dataset, Data
+from cogdl.utils import remove_self_loops, accuracy_evaluator, download_url
 from . import register_dataset
 
 
@@ -66,7 +66,6 @@ def edge_index_from_dict(graph_dict, num_nodes=None):
     row = torch.cat([edge_index[0], edge_index[1]])
     col = torch.cat([edge_index[1], edge_index[0]])
     edge_index = torch.stack([row, col])
-    print(edge_index.shape)
     return edge_index
 
 
@@ -174,6 +173,9 @@ class Planetoid(Dataset):
 
     def get(self, idx):
         return self.data
+
+    def get_evaluator(self):
+        return accuracy_evaluator()
 
     def __repr__(self):
         return "{}()".format(self.name)

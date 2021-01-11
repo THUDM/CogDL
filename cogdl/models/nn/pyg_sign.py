@@ -38,13 +38,13 @@ class MLP(BaseModel):
         parser.add_argument('--hidden-size', type=int, default=512)
         parser.add_argument('--num-layers', type=int, default=3)
         parser.add_argument('--dropout', type=float, default=0.3)
-        parser.add_argument('--dropedge_rate', type=float, default=0.2)
+        parser.add_argument('--dropedge-rate', type=float, default=0.2)
 
         parser.add_argument('--directed', action='store_true')
         parser.add_argument('--num-propagations', type=int, default=1)
-        parser.add_argument('--asymm_norm', action='store_true')
-        parser.add_argument('--set_diag', action='store_true')
-        parser.add_argument('--remove_diag', action='store_true')
+        parser.add_argument('--asymm-norm', action='store_true')
+        parser.add_argument('--set-diag', action='store_true')
+        parser.add_argument('--remove-diag', action='store_true')
 
         # fmt: on
 

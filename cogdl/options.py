@@ -118,9 +118,13 @@ def parse_args_and_arch(parser, args):
 
 
 def get_task_model_args(task, model=None):
-    parser = get_parser()
+    sys.argv = [sys.argv[0], "-t", task, "-m"] + ["gcn"] + ["-dt"] + ["cora"]
+    parser = get_training_parser()
     TASK_REGISTRY[task].add_args(parser)
     if model is not None:
         MODEL_REGISTRY[model].add_args(parser)
     args = parser.parse_args()
+    args.task = task
+    if model is not None:
+        args.model = model
     return args

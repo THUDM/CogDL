@@ -51,6 +51,7 @@ def test_gdc_gcn_cora():
 def test_gcn_cora():
     args = get_default_args()
     args.task = "node_classification"
+    args.num_layers = 2
     args.dataset = "cora"
     args.model = "gcn"
     task = build_task(args)
@@ -510,6 +511,7 @@ def test_ppnp_cora():
     args.task = "node_classification"
     args.model = "ppnp"
     args.dataset = "cora"
+    args.num_layers = 2
     args.propagation_type = "ppnp"
     args.alpha = 0.1
     args.num_iterations = 10
@@ -523,6 +525,7 @@ def test_appnp_cora():
     args.task = "node_classification"
     args.model = "ppnp"
     args.dataset = "cora"
+    args.num_layers = 2
     args.propagation_type = "appnp"
     args.alpha = 0.1
     args.num_iterations = 10
@@ -668,6 +671,9 @@ def test_pprgo_cora():
         task = build_task(args)
         ret = task.train()
         assert 0 <= ret["Acc"] <= 1
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
 
 
 if __name__ == "__main__":

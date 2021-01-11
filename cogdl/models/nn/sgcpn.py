@@ -57,7 +57,6 @@ class SGC(BaseModel):
         parser.add_argument("--num-layers", type=int, default=40, help="Number of layers.")
         parser.add_argument("--norm-mode", type=str, default="PN", help="Mode for PairNorm, {None, PN, PN-SI, PN-SCS}.")
         parser.add_argument("--norm-scale", type=float, default=10, help="Row-normalization scale.")
-        parser.add_argument("--missing-rate", type=int, default=-1)
         # fmt: on
 
     @classmethod

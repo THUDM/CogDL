@@ -43,7 +43,7 @@ def row_l1_normalize(X):
     return X / norm
 
 
-def preprocess_data_sgcpn(data, normalize_feature=True, missing_rate=0):
+def preprocess_data(data, normalize_feature=True, missing_rate=0):
     data.train_mask = data.train_mask.type(torch.bool)
     data.val_mask = data.val_mask.type(torch.bool)
     # expand test_mask to all rest nodes
@@ -71,7 +71,9 @@ class NodeClassification(BaseTask):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
-        pass
+        # fmt: off
+        parser.add_argument("--missing-rate", type=int, default=0, help="missing rate, from 0 to 100")
+        # fmt: on
 
     def __init__(
         self,
@@ -87,12 +89,8 @@ class NodeClassification(BaseTask):
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         dataset = build_dataset(args) if dataset is None else dataset
 
-        if args.model == "sgcpn" and args.missing_rate > 0:
-            assert args.dataset in ["cora", "citeseer", "pubmed"]
-            dataset.data = preprocess_data_sgcpn(dataset.data, normalize_feature=True, missing_rate=0)
-            # adj_slice = torch.tensor(dataset.data.adj.size())
-            # adj_slice[0] = 0
-            # dataset.slices["adj"] = adj_slice
+        if args.missing_rate > 0:
+            dataset.data = preprocess_data(dataset.data, normalize_feature=True, missing_rate=args.missing_rate)
 
         self.dataset = dataset
         self.data = dataset[0]

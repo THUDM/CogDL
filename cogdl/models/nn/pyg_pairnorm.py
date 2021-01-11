@@ -253,9 +253,6 @@ class PairNorm(BaseModel):
         )
         parser.add_argument("--norm_scale", type=float, default=1.0, help="Row-normalization scale")
         parser.add_argument("--no_fea_norm", action="store_false", default=True, help="not normalize feature")
-        parser.add_argument("--missing_rate", type=int, default=0, help="missing rate, from 0 to 100")
-        parser.add_argument("--weight_decay", type=float, default=5e-4, help="Weight decay (L2 loss on parameters).")
-        parser.add_argument("--lr", type=float, default=0.005, help="Initial learning rate.")
 
     @classmethod
     def build_model_from_args(cls, args):

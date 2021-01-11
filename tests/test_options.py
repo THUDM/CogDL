@@ -46,6 +46,13 @@ def test_get_default_args():
     assert args.hidden_size == 128
 
 
+def test_get_task_model_args():
+    args = options.get_task_model_args(task="node_classification", model="gcn")
+    assert args.lr == 0.01
+    assert args.weight_decay == 5e-4
+    assert args.dropout == 0.5
+
+
 if __name__ == "__main__":
     test_training_options()
     test_display_options()

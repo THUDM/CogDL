@@ -1,9 +1,6 @@
-import random
-import numpy as np
-
 import torch
 
-from utils import print_result, set_random_seed, get_dataset, get_extra_args
+from cogdl.utils import print_result, set_random_seed, get_extra_args
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
 from cogdl.utils import build_args_from_dict
@@ -60,7 +57,9 @@ def pubmed_config(args):
 def run(dataset_name, missing_rate=0, num_layers=40):
     args = build_default_args_for_node_classification(dataset_name, missing_rate=missing_rate, num_layers=num_layers)
     args = DATASET_REGISTRY[dataset_name](args)
-    dataset, args = get_dataset(args)
+    dataset, args = build_dataset(args)
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
     results = []
     for seed in args.seed:
         set_random_seed(seed)

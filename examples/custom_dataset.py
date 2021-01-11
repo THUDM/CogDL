@@ -3,15 +3,13 @@ import torch
 
 from cogdl.tasks import build_task
 from cogdl.models import build_model
-from cogdl.utils import build_args_from_dict
-from cogdl.data import Dataset
+from cogdl.options import get_task_model_args
 
 
 """Define your data"""
-
-
-class MyData(object):
+class MyData(Data):
     def __init__(self):
+        super(MyData, self).__init__()
         num_nodes = 100
         num_edges = 300
         feat_dim = 30
@@ -28,56 +26,30 @@ class MyData(object):
         self.test_mask = torch.zeros(num_nodes).bool()
         self.test_mask[int(0.7 * num_nodes) :] = True
 
-    def apply(self, func):
-        for name, value in vars(self).items():
-            setattr(self, name, func(value))
-
-    @property
-    def num_features(self):
-        return self.x.shape[1]
-
-    @property
-    def num_classes(self):
-        return int(torch.max(self.y)) + 1
-
 
 """Define your dataset"""
-
-
-class MyDataset(object):
-    def __init__(self, datalist):
-        self.datalist = datalist
-        self.data = self.datalist[0]
-        self.num_features = self.datalist[0].num_features
-        self.num_classes = self.datalist[0].num_classes
+class MyNodeClassificationDataset(object):
+    def __init__(self):
+        self.data = MyData()
+        self.num_classes = self.data.num_classes
+        self.num_features = self.data.num_features
 
     def __getitem__(self, index):
         assert index == 0
-        return self.datalist[index]
+        return self.data
 
 
-def get_default_args():
+def set_args(args):
+    """Change default setttings"""
     cuda_available = torch.cuda.is_available()
-    default_dict = {
-        "hidden_size": 16,
-        "dropout": 0.5,
-        "patience": 100,
-        "max_epoch": 500,
-        "cpu": not cuda_available,
-        "lr": 0.01,
-        "device_id": [0],
-        "weight_decay": 5e-4,
-    }
-    return build_args_from_dict(default_dict)
+    args.cpu = not cuda_available
+    return args
 
 
 def main_dataset():
-    args = get_default_args()
-    args.task = "node_classification"
-    args.model = "gcn"
+    args = get_task_model_args(task="node_classification", model="gcn")
     # use customized dataset
-    mydata = MyData()
-    dataset = MyDataset([mydata])
+    dataset = MyNodeClassificationDataset()
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
     # use model in cogdl

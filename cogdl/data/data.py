@@ -131,6 +131,11 @@ class Data(object):
             return self.x.shape[0]
         return torch.max(self.edge_index) + 1
 
+    @property
+    def num_classes(self):
+        if self.y is not None:
+            return int(torch.max(self.y) + 1) if self.y.dim() == 1 else self.y.shape[-1]
+
     @num_nodes.setter
     def num_nodes(self, num_nodes):
         self.__num_nodes__ = num_nodes

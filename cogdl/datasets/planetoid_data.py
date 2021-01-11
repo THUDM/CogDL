@@ -130,7 +130,7 @@ class Planetoid(Dataset):
     <https://arxiv.org/abs/1603.08861>`_ paper.
     """
 
-    url = "https://github.com/kimiyoung/planetoid/raw/master/data"
+    url = "https://cloud.tsinghua.edu.cn/d/9b799d61c8544befbb41/files/?p=%2F"
 
     def __init__(self, root, name, split="public", num_train_per_class=20, num_val=500, num_test=1000):
         self.name = name
@@ -166,7 +166,7 @@ class Planetoid(Dataset):
 
     def download(self):
         for name in self.raw_file_names:
-            download_url("{}/{}".format(self.url, name), self.raw_dir)
+            download_url("{}{}&dl=1".format(self.url, name), self.raw_dir, name=name)
 
     def process(self):
         data = read_planetoid_data(self.raw_dir, self.name)

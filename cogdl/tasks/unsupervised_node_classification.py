@@ -17,13 +17,6 @@ from cogdl.models import build_model
 
 from . import BaseTask, register_task
 
-try:
-    from torch_geometric.data import InMemoryDataset
-except ImportError:
-    pyg = False
-else:
-    pyg = True
-
 warnings.filterwarnings("ignore")
 
 

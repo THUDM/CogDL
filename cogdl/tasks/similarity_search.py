@@ -1,6 +1,7 @@
 import argparse
 import networkx as nx
 import numpy as np
+import torch
 from collections import defaultdict
 
 from cogdl.datasets import build_dataset
@@ -26,6 +27,7 @@ class SimilaritySearch(BaseTask):
         model = build_model(args) if model is None else model
         self.model = model
         self.hidden_size = args.hidden_size
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
 
     def _evaluate(self, emb_1, emb_2, dict_1, dict_2):
         shared_keys = set(dict_1.keys()) & set(dict_2.keys())

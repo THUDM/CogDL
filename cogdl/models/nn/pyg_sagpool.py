@@ -1,20 +1,14 @@
-import math
 import random
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.parameter import Parameter
 from torch_geometric.nn import GCNConv
-from torch_geometric.nn import GraphConv, TopKPooling
 from torch_geometric.nn.pool.topk_pool import topk, filter_adj
 from torch_geometric.nn import global_mean_pool as gap, global_max_pool as gmp
 
 from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, spmm, spmm_adj
 from cogdl.data import DataLoader
-
-from .gcn import TKipfGCN
 
 
 class SAGPoolLayers(nn.Module):

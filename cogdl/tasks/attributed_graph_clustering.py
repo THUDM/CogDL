@@ -36,7 +36,7 @@ class AttributedGraphClustering(BaseTask):
 
         self.args = args
         self.model_name = args.model
-        self.device = args.device_id[0] if not args.cpu else "cpu"
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         if dataset is None:
             dataset = build_dataset(args)
         self.dataset = dataset

@@ -35,7 +35,8 @@ class MultiplexNodeClassification(BaseTask):
         self.hidden_size = args.hidden_size
         self.model = build_model(args) if model is None else model
         self.args = args
-        self.device = torch.device("cpu" if args.cpu else "cuda")
+
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         self.model = self.model.to(self.device)
 
     def train(self):

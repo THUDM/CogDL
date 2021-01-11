@@ -681,7 +681,7 @@ class SupervisedTrainer(Pretrainer):
     @staticmethod
     def add_args(parser):
         parser.add_argument("--pooling", type=str, default="mean")
-        parser.add_argument("--checkpoint", type=str, default=None)
+        parser.add_argument("--load-path", type=str, default=None)
 
     def __init__(self, args):
         args.data_type = "supervised"
@@ -705,8 +705,8 @@ class SupervisedTrainer(Pretrainer):
             num_chirality_tag=self.opt.get("num_chirality_tag", None),
             concat=self.opt["concat"],
         )
-        if args.checkpoint is not None:
-            self.model.load_from_pretrained(args.checkpoint)
+        if args.load_path:
+            self.model.load_from_pretrained(args.load_path)
         self.loss_fn = nn.BCEWithLogitsLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
@@ -774,13 +774,13 @@ class SupervisedTrainer(Pretrainer):
 class Finetuner(Pretrainer):
     @staticmethod
     def add_args(parser):
-        parser.add_argument("--checkpoint", type=str, default="./saved")
+        parser.add_argument("--load-path", type=str, default="./saved")
         parser.add_argument("--pooling", type=str, default="mean")
 
     def __init__(self, args):
         args.data_type = "supervised"
         super(Finetuner, self).__init__(args)
-        self.model_file = args.checkpoint
+        self.model_file = args.load_path
         self.patience = args.patience
         self.train_ratio = 0.8
         self.valid_ratio = 0.1
@@ -815,7 +815,7 @@ class Finetuner(Pretrainer):
             num_chirality_tag=self.opt.get("num_chirality_tag", None),
             concat=self.opt["concat"],
         )
-        model.load_from_pretrained(args.checkpoint)
+        model.load_from_pretrained(args.load_path)
         return model
 
     def split_data(self):

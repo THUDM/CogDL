@@ -8,10 +8,10 @@ import networkx as nx
 import numpy as np
 
 import torch
-from torch_geometric.data import InMemoryDataset, Data, Batch
-from cogdl.data import download_url
+from torch_geometric.data import InMemoryDataset, Data
+from cogdl.utils import download_url
 import os.path as osp
-from itertools import repeat, product, chain
+from itertools import repeat
 
 # ================
 # Dataset utils

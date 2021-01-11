@@ -1,31 +1,49 @@
-models package
-==============
+models
+======
 
-Subpackages
------------
+.. .. toctree::
+..     :maxdepth: 2
 
-.. toctree::
+..     cogdl.models.emb
+..     cogdl.models.nn
 
-    models.emb
-    models.nn
-    models.agc
+BaseModel
+---------
 
-Submodules
-----------
+.. automodule:: cogdl.models.base_model
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
-models.base\_model module
--------------------------
+Supervised Model
+----------------
 
-.. automodule:: models.base_model
+.. automodule:: cogdl.models.supervised_model
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Embedding Model
+---------------
+
+.. automodule:: cogdl.models.emb
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+GNN Model
+---------
+
+.. automodule:: cogdl.models.nn
     :members:
     :undoc-members:
     :show-inheritance:
 
 
-Module contents
----------------
+Model Module
+------------
 
-.. automodule:: models
+.. automodule:: cogdl.models
     :members:
     :undoc-members:
     :show-inheritance:

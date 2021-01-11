@@ -86,41 +86,6 @@ class Batch(Data):
         """
         return bool(re.search("(index|face)", key))
 
-    def to_data_list(self):
-        r"""Reconstructs the list of :class:`torch_geometric.data.Data` objects
-        from the batch object.
-        The batch object must have been created via :meth:`from_data_list` in
-        order to be able reconstruct the initial objects."""
-
-        if self.__slices__ is None:
-            raise RuntimeError(
-                (
-                    "Cannot reconstruct data list from batch because the batch "
-                    "object was not created using Batch.from_data_list()"
-                )
-            )
-
-        keys = [key for key in self.keys if key[-5:] != "batch"]
-        cumsum = {key: 0 for key in keys}
-        data_list = []
-        for i in range(len(self.__slices__[keys[0]]) - 1):
-            data = self.__data_class__()
-            for key in keys:
-                if torch.is_tensor(self[key]):
-                    data[key] = self[key].narrow(
-                        data.cat_dim(key, self[key]),
-                        self.__slices__[key][i],
-                        self.__slices__[key][i + 1] - self.__slices__[key][i],
-                    )
-                    if self[key].dtype != torch.bool:
-                        data[key] = data[key] - cumsum[key]
-                else:
-                    data[key] = self[key][self.__slices__[key][i] : self.__slices__[key][i + 1]]
-                cumsum[key] = cumsum[key] + data.__inc__(key, data[key])
-            data_list.append(data)
-
-        return data_list
-
     @property
     def num_graphs(self):
         """Returns the number of graphs in the batch."""

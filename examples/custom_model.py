@@ -1,11 +1,9 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from cogdl.data import Data
 from cogdl.datasets import build_dataset
 from cogdl.tasks import build_task
-from cogdl.utils import build_args_from_dict
+from cogdl.utils import get_example_args
 from cogdl.models import BaseModel
 from cogdl.models.nn.gcn import GraphConvolution
 
@@ -23,7 +21,7 @@ class MyModel(BaseModel):
         h = self.layer(x, edge_index)
         return F.log_softmax(self.fc(h))
 
-    def loss(self, data):
+    def node_classification_loss(self, data):
         out = self.forward(data.x, data.edge_index)[data.train_mask]
         loss_n = F.nll_loss(out, data.y[data.train_mask])
         return loss_n
@@ -32,27 +30,18 @@ class MyModel(BaseModel):
         return self.forward(data.x, data.edge_index)
 
 
-def get_default_args():
-    cuda_available = torch.cuda.is_available()
-    default_dict = {
-        "hidden_size": 16,
-        "dropout": 0.5,
-        "patience": 100,
-        "max_epoch": 500,
-        "cpu": not cuda_available,
-        "lr": 0.01,
-        "device_id": [0],
-        "weight_decay": 5e-4,
-    }
-    return build_args_from_dict(default_dict)
+def set_args(args):
+    """Set parameters for your model and task"""
+    args.model = "my_model"
+    args.dataset = "cora"
+    args.hidden_size = 32
+    return args
 
 
 def main_model():
-    args = get_default_args()
     # Set the task
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "my_model"
+    args = get_example_args(task="node_classification")
+    args = set_args(args)
     # use dataset in cogdl
     dataset = build_dataset(args)
     hidden_size = args.hidden_size

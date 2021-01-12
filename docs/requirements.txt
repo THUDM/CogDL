@@ -3,10 +3,12 @@ sphinx_rtd_theme
 sphinx-markdown-tables
 recommonmark
 networkx
+matplotlib
 tqdm
 numpy
 scipy
 gensim
+grave
 scikit_learn
 tabulate
 optuna

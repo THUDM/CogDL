@@ -68,17 +68,6 @@ def test_distance_to_clusters():
     assert 0 <= ret["Acc"] <= 1
 
 
-def test_pairwise_attr_sim():
-    args = get_default_args()
-    args.auxiliary_task = "pairwise-attr-sim"
-    args.alpha = 100
-    dataset = build_dataset(args)
-    model = build_model(args)
-    task = build_task(args, dataset=dataset, model=model)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-
 def test_distance_to_clustersPP():
     args = get_default_args()
     args.auxiliary_task = "distance2clusters++"
@@ -94,5 +83,4 @@ if __name__ == "__main__":
     test_edgemask()
     test_pairwise_distance()
     test_distance_to_clusters()
-    # test_pairwise_attr_sim()
     test_distance_to_clustersPP()

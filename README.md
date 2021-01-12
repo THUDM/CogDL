@@ -12,9 +12,6 @@
 
 CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or custom models for node classification, link prediction and other tasks on graphs. It provides implementations of many popular models, including: non-GNN Baselines like Deepwalk, LINE, NetMF, GNN Baselines like GCN, GAT, GraphSAGE.
 
-Note that CogDL is **still actively under development**, so feedback and contributions are welcome.
-Feel free to submit your contributions as a pull request.
-
 CogDL features:
 
 - Task-Oriented: CogDL focuses on tasks on graphs and provides corresponding models, datasets, and leaderboards.
@@ -24,6 +21,8 @@ CogDL features:
 
 
 ## ❗ News
+
+- The new **v0.2.0 release** includes easy-to-use `experiment` and `pipeline` APIs for all experiments and applications. The `experiment` API supports automl features of searching hyper-parameters. This release also provides `OAGBert` API for model inference (`OAGBert` is trained on large-scale academic corpus by our lab). Some features and models are added by the open source community (thanks to all the contributors 🎉).
 
 - The new **v0.1.2 release** includes a pre-training task, many examples, OGB datasets, some knowledge graph embedding methods, and some graph neural network models. The coverage of CogDL is increased to 80%. Some new APIs, such as `Trainer` and `Sampler`, are developed and being tested. 
 

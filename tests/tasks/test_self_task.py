@@ -94,5 +94,5 @@ if __name__ == "__main__":
     test_edgemask()
     test_pairwise_distance()
     test_distance_to_clusters()
-    test_pairwise_attr_sim()
+    # test_pairwise_attr_sim()
     test_distance_to_clustersPP()

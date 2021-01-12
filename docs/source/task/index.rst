@@ -11,3 +11,4 @@ Tasks
    unsupervised_graph_classification
    link_prediction
    others
+   create_new_tasks

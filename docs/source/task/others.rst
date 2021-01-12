@@ -1,4 +1,4 @@
-Other Models and Tasks
+Other Tasks
 =============================
 
 **Heterogeneous Graph Embedding Methods**

@@ -15,6 +15,7 @@ from cogdl.models.supervised_model import (
 from cogdl.trainers.supervised_trainer import SupervisedHomogeneousNodeClassificationTrainer
 from cogdl.trainers.self_task import EdgeMask, PairwiseDistance, Distance2Clusters, PairwiseAttrSim, Distance2ClustersPP
 
+
 class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
     def __init__(self, args):
         self.device = args.device_id[0] if not args.cpu else "cpu"
@@ -32,7 +33,7 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         pass
 
     def resplit_data(self, data):
-        trained = torch.where(data.train_mask==True)[0]
+        trained = torch.where(data.train_mask is True)[0]
         perm = np.random.permutation(trained.shape[0])
         preserve_nnz = int(len(perm) * (1 - self.label_mask))
         preserved = trained[perm[:preserve_nnz]]
@@ -56,18 +57,21 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         elif self.auxiliary_task == "pairwise-attr-sim":
             self.agent = PairwiseAttrSim(self.data.edge_index, self.data.x, self.hidden_size, 5, self.device)
         elif self.auxiliary_task == "distance2clusters++":
-            self.agent = Distance2ClustersPP(self.data.edge_index, self.data.x, self.data.y, self.hidden_size, 5, 1, self.device)
+            self.agent = Distance2ClustersPP(
+                self.data.edge_index, self.data.x, self.data.y, self.hidden_size, 5, 1, self.device
+            )
         else:
-            raise Exception("auxiliary task must be edgemask, pairwise-distance, distance2clusters, distance2clusters++ or pairwise-attr-sim")
+            raise Exception(
+                "auxiliary task must be edgemask, pairwise-distance, distance2clusters, distance2clusters++ or pairwise-attr-sim"
+            )
         self.model = model
-        
+
         self.optimizer = torch.optim.Adam(
             list(model.parameters()) + list(self.agent.linear.parameters()), lr=self.lr, weight_decay=self.weight_decay
         )
         self.model.to(self.device)
         epoch_iter = tqdm(range(self.max_epoch))
 
-        patience = 0
         best_score = 0
         best_loss = np.inf
         max_score = 0
@@ -92,7 +96,6 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
                     best_model = copy.deepcopy(self.model)
                 min_loss = np.min((min_loss, val_loss))
                 max_score = np.max((max_score, val_acc))
-                patience = 0
         print(f"Valid accurracy = {best_score}")
 
         return best_model

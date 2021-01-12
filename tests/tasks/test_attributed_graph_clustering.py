@@ -9,7 +9,7 @@ graph_clustering_task_name = "attributed_graph_clustering"
 def get_default_args():
     cuda_available = torch.cuda.is_available()
     default_dict = {
-        "task" : graph_clustering_task_name,
+        "task": graph_clustering_task_name,
         "device_id": [0],
         "num_clusters": 7,
         "cluster_method": "kmeans",
@@ -18,24 +18,23 @@ def get_default_args():
         "enhance": None,
         "cpu": not cuda_available,
         "step": 5,
-        "theta" : 0.5,
-        "mu" : 0.2,
+        "theta": 0.5,
+        "mu": 0.2,
         "checkpoint": False,
         "walk_length": 80,
         "walk_num": 40,
         "window_size": 5,
         "worker": 10,
-        "iteration": 10,
+        "iteration": 3,
         "rank": 256,
         "negative": 1,
         "is_large": False,
         "max_iter": 5,
-        "hidden_size": 256,
         "embedding_size": 16,
         "weight_decay": 0.01,
         "num_heads": 1,
         "dropout": 0,
-        "max_epoch": 10,
+        "max_epoch": 3,
         "lr": 0.001,
         "T": 5,
         "gamma": 10,
@@ -53,6 +52,7 @@ def create_simple_task():
     args.mu = 0.2
     return AttributedGraphClustering(args)
 
+
 def test_kmeans_cora():
     args = get_default_args()
     args.model_type = "content"
@@ -62,6 +62,7 @@ def test_kmeans_cora():
     task = build_task(args)
     ret = task.train()
     assert ret["Accuracy"] > 0
+
 
 def test_kmeans_citeseer():
     args = get_default_args()
@@ -74,6 +75,7 @@ def test_kmeans_citeseer():
     ret = task.train()
     assert ret["Accuracy"] > 0
 
+
 def test_spectral_cora():
     args = get_default_args()
     args.model_type = "content"
@@ -83,6 +85,7 @@ def test_spectral_cora():
     task = build_task(args)
     ret = task.train()
     assert ret["Accuracy"] > 0
+
 
 def test_spectral_citeseer():
     args = get_default_args()
@@ -95,6 +98,7 @@ def test_spectral_citeseer():
     ret = task.train()
     assert ret["Accuracy"] > 0
 
+
 def test_prone_cora():
     args = get_default_args()
     args.model = "prone"
@@ -104,6 +108,7 @@ def test_prone_cora():
     task = build_task(args)
     ret = task.train()
     assert ret["Accuracy"] > 0
+
 
 def test_deepwalk_cora():
     args = get_default_args()
@@ -115,6 +120,7 @@ def test_deepwalk_cora():
     ret = task.train()
     assert ret["Accuracy"] > 0
 
+
 def test_netmf_cora():
     args = get_default_args()
     args.model = "netmf"
@@ -124,6 +130,7 @@ def test_netmf_cora():
     task = build_task(args)
     ret = task.train()
     assert ret["Accuracy"] > 0
+
 
 def test_agc_cora():
     args = get_default_args()
@@ -136,6 +143,7 @@ def test_agc_cora():
     ret = task.train()
     assert ret["Accuracy"] > 0
 
+
 def test_daegc_cora():
     args = get_default_args()
     args.model = "daegc"
@@ -146,11 +154,12 @@ def test_daegc_cora():
     ret = task.train()
     assert ret["Accuracy"] > 0
 
+
 if __name__ == "__main__":
     test_kmeans_cora()
-    #test_kmeans_citeseer()
+    # test_kmeans_citeseer()
     test_spectral_cora()
-    #test_spectral_citeseer()
+    # test_spectral_citeseer()
 
     test_agc_cora()
     test_daegc_cora()

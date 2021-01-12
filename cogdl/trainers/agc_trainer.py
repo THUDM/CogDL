@@ -9,6 +9,7 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 from cogdl.utils import add_remaining_self_loops, spmm
 from .base_trainer import BaseTrainer
 
+
 class AGCTrainer(BaseTrainer):
     def __init__(self, args):
         self.num_clusters = args.num_clusters
@@ -27,7 +28,7 @@ class AGCTrainer(BaseTrainer):
         adj = data.edge_index
         adj_values = torch.ones(adj.shape[1]).to(self.device)
         deg = spmm(adj, adj_values, torch.ones(data.x.shape[0], 1).to(self.device)).squeeze()
-        deg_sqrt = deg.pow(-1/2)
+        deg_sqrt = deg.pow(-1 / 2)
         adj_values = deg_sqrt[adj[1]] * adj_values * deg_sqrt[adj[0]]
         adj, adj_values = add_remaining_self_loops(adj, adj_values, 1, data.x.shape[0])
         adj_values = 0.5 * adj_values
@@ -41,11 +42,13 @@ class AGCTrainer(BaseTrainer):
                 x = torch.spmm(adj, x)
             k = torch.mm(x, x.t())
             w = (torch.abs(k) + torch.abs(k.t())) / 2
-            clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="discretize", random_state=0).fit(w.detach().cpu())
-            clusters = clustering.labels_ 
+            clustering = SpectralClustering(
+                n_clusters=self.num_clusters, assign_labels="discretize", random_state=0
+            ).fit(w.detach().cpu())
+            clusters = clustering.labels_
             intra = self.compute_intra(x.cpu().numpy(), clusters)
             print("iter #%d, intra = %.4lf" % (t, intra))
-            #self.evaluate(clusters, data.y.cpu().numpy())
+            # self.evaluate(clusters, data.y.cpu().numpy())
             if intra > pre_intra:
                 model.features_matrix = pre_feat
                 model.k = t - 1
@@ -67,7 +70,7 @@ class AGCTrainer(BaseTrainer):
                     num_per_cluster[clusters[i]] += 1
         intra = np.array(list(filter(lambda x: x > 0, intra)))
         num_per_cluster = np.array(list(filter(lambda x: x > 0, num_per_cluster)))
-        #print(intra / num_per_cluster)
+        # print(intra / num_per_cluster)
         return np.mean(intra / num_per_cluster)
 
     def evaluate(self, clusters, truth):
@@ -86,10 +89,10 @@ class AGCTrainer(BaseTrainer):
                     FN += 1
                 if clusters[i] != clusters[j] and truth[i] != truth[j]:
                     TN += 1
-        acc = (TP + TN) / (TP + FP + TN + FN)
         precision = TP / (TP + FP)
         recall = TP / (TP + FN)
         print("TP", TP, "FP", FP, "TN", TN, "FN", FN)
         micro_f1 = 2 * (precision * recall) / (precision + recall)
-        print("Accuracy = ", precision, "NMI = ", normalized_mutual_info_score(clusters, truth), "Micro_F1 = ", micro_f1)
-        
+        print(
+            "Accuracy = ", precision, "NMI = ", normalized_mutual_info_score(clusters, truth), "Micro_F1 = ", micro_f1
+        )

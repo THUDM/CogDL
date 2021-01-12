@@ -6,6 +6,7 @@ import scipy.sparse as sp
 import numpy as np
 import networkx as nx
 
+
 class SSLTask:
     def __init__(self, edge_index, features, device):
         self.edge_index = edge_index
@@ -16,10 +17,11 @@ class SSLTask:
         self.cached_edges = None
 
     def transform_data(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     def make_loss(self, embeddings):
-        raise NotImplemented
+        raise NotImplementedError
+
 
 class EdgeMask(SSLTask):
     def __init__(self, edge_index, features, hidden_size, device):
@@ -31,8 +33,8 @@ class EdgeMask(SSLTask):
             edges = self.edge_index.t()
             perm = np.random.permutation(self.num_edges)
             preserve_nnz = int(self.num_edges * (1 - mask_ratio))
-            masked = perm[preserve_nnz :]
-            preserved = perm[: preserve_nnz]
+            masked = perm[preserve_nnz:]
+            preserved = perm[:preserve_nnz]
             self.masked_edges = edges[masked].t()
             self.cached_edges = edges[preserved].t()
             mask_num = len(masked)
@@ -62,6 +64,7 @@ class EdgeMask(SSLTask):
                 exclude.add((t[1], t[0]))
                 yield t
 
+
 class PairwiseDistance(SSLTask):
     def __init__(self, edge_index, features, hidden_size, num_class, device):
         super().__init__(edge_index, features, device)
@@ -74,7 +77,7 @@ class PairwiseDistance(SSLTask):
         G.add_edges_from(self.edge_index.cpu().t().numpy())
 
         path_length = dict(nx.all_pairs_shortest_path_length(G, cutoff=self.nclass - 1))
-        distance = - np.ones((self.num_nodes, self.num_nodes)).astype(int)
+        distance = -np.ones((self.num_nodes, self.num_nodes)).astype(int)
         for u, p in path_length.items():
             for v, d in p.items():
                 distance[u][v] = d - 1
@@ -83,7 +86,7 @@ class PairwiseDistance(SSLTask):
 
         self.dis_node_pairs = []
         for i in range(self.nclass):
-            tmp = np.array(np.where(distance==i)).transpose()
+            tmp = np.array(np.where(distance == i)).transpose()
             self.dis_node_pairs.append(tmp)
 
     def transform_data(self):
@@ -91,7 +94,7 @@ class PairwiseDistance(SSLTask):
 
     def make_loss(self, embeddings, k=4000):
         node_pairs, pseudo_labels = self.sample(k)
-        #print(node_pairs, pseudo_labels)
+        # print(node_pairs, pseudo_labels)
         embeddings = self.linear(torch.abs(embeddings[node_pairs[0]] - embeddings[node_pairs[1]]))
         output = F.log_softmax(embeddings, dim=1)
         return F.nll_loss(output, pseudo_labels)
@@ -105,6 +108,7 @@ class PairwiseDistance(SSLTask):
             sampled = torch.cat([sampled, torch.tensor(tmp[indices]).t()], 1)
             pseudo_labels = torch.cat([pseudo_labels, torch.ones(k).long() * i])
         return sampled.to(self.device), pseudo_labels.to(self.device)
+
 
 class Distance2Clusters(SSLTask):
     def __init__(self, edge_index, features, hidden_size, num_clusters, device):
@@ -121,10 +125,14 @@ class Distance2Clusters(SSLTask):
         G.add_edges_from(self.edge_index.cpu().t().numpy())
         if use_metis:
             import metis
+
             _, parts = metis.part_graph(G, self.num_clusters)
         else:
             from sklearn.cluster import SpectralClustering
-            clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="discretize", random_state=0).fit(self.features.cpu())
+
+            clustering = SpectralClustering(
+                n_clusters=self.num_clusters, assign_labels="discretize", random_state=0
+            ).fit(self.features.cpu())
             parts = clustering.labels_
 
         node_clusters = [[] for i in range(self.num_clusters)]
@@ -135,7 +143,7 @@ class Distance2Clusters(SSLTask):
         for i in range(self.num_clusters):
             subgraph = G.subgraph(node_clusters[i])
             center = None
-            #print(subgraph.nodes)
+            # print(subgraph.nodes)
             for node in subgraph.nodes:
                 if center is None or subgraph.degree[node] > subgraph.degree[center]:
                     center = node
@@ -144,10 +152,11 @@ class Distance2Clusters(SSLTask):
             for node in distance:
                 self.distance_vec[node][i] = distance[node]
         self.distance_vec = torch.tensor(self.distance_vec).float().to(self.device)
-    
+
     def make_loss(self, embeddings):
         output = self.linear(embeddings)
         return F.mse_loss(output, self.distance_vec, reduction="mean")
+
 
 class PairwiseAttrSim(SSLTask):
     def __init__(self, edge_index, features, hidden_size, k, device):
@@ -174,7 +183,7 @@ class PairwiseAttrSim(SSLTask):
                 avg_min += sum / num / self.num_nodes.item()
             sum = 0
             num = 0
-            for node in idx_sorted[i, -k-1:]:
+            for node in idx_sorted[i, -k - 1 :]:
                 if node in distance:
                     sum += distance[node]
                     num += 1
@@ -192,19 +201,20 @@ class PairwiseAttrSim(SSLTask):
 
     def get_attr_sim(self):
         from sklearn.metrics.pairwise import cosine_similarity
+
         sims = cosine_similarity(self.features.detach().cpu().numpy())
         idx_sorted = sims.argsort(1)
         self.node_pairs = None
         self.pseudo_labels = None
         sampled = np.random.choice(np.arange(self.k, self.num_nodes - self.k), self.k, replace=False)
         for i in range(self.num_nodes):
-            for node in np.hstack((idx_sorted[i, :self.k], idx_sorted[i, -self.k - 1:], idx_sorted[i, sampled])):
+            for node in np.hstack((idx_sorted[i, : self.k], idx_sorted[i, -self.k - 1 :], idx_sorted[i, sampled])):
                 pair = torch.tensor([[i, node]])
                 sim = torch.tensor([sims[i][node]])
                 self.node_pairs = pair if self.node_pairs is None else torch.cat([self.node_pairs, pair], 0)
                 self.pseudo_labels = sim if self.pseudo_labels is None else torch.cat([self.pseudo_labels, sim])
-        #print("max k avg distance: {%.4f}, min k avg distance: {%.4f}, sampled k avg distance: {%.4f}" % (self.get_avg_distance(idx_sorted, self.k, sampled)))
-        #print(self.node_pairs, self.pseudo_labels)
+        # print("max k avg distance: {%.4f}, min k avg distance: {%.4f}, sampled k avg distance: {%.4f}" % (self.get_avg_distance(idx_sorted, self.k, sampled)))
+        # print(self.node_pairs, self.pseudo_labels)
         self.node_pairs = self.node_pairs.long().to(self.device)
         self.pseudo_labels = self.pseudo_labels.float().to(self.device)
 
@@ -219,7 +229,8 @@ class PairwiseAttrSim(SSLTask):
         """
         node_pairs = self.node_pairs
         output = self.linear(torch.abs(embeddings[node_pairs[0]] - embeddings[node_pairs[1]]))
-        return F.mse_loss(output, self.pseudo_labels, reduction='mean')
+        return F.mse_loss(output, self.pseudo_labels, reduction="mean")
+
 
 class Distance2ClustersPP(SSLTask):
     def __init__(self, edge_index, features, labels, hidden_size, num_clusters, k, device):
@@ -240,25 +251,28 @@ class Distance2ClustersPP(SSLTask):
         self.G = nx.Graph()
         for i in range(edges.shape[1]):
             self.G.add_edge(edges[0][i], edges[1][i], weight=edge_attr[i])
-    
+
     def update_cluster(self):
         if self.clusters is None:
             from sklearn.cluster import SpectralClustering
-            clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="discretize", random_state=0).fit(self.features.cpu())
+
+            clustering = SpectralClustering(
+                n_clusters=self.num_clusters, assign_labels="discretize", random_state=0
+            ).fit(self.features.cpu())
             self.clusters = clustering.labels_
 
         self.build_graph()
         self.node_pairs = None
         self.pseudo_labels = None
         for i in range(self.num_clusters):
-            cluster_idx = np.where(self.clusters==i)[0]
+            cluster_idx = np.where(self.clusters == i)[0]
             if len(cluster_idx) < self.k:
                 continue
             sampled = np.random.choice(cluster_idx, self.k, replace=False)
             for node in sampled:
                 distance = dict(nx.shortest_path_length(self.G, source=node))
                 for j in range(self.num_nodes):
-                    if j == node or not j in distance:
+                    if j == node or j not in distance:
                         continue
                     pair = torch.tensor([[j, node]])
                     sim = torch.tensor([distance[j]])
@@ -272,5 +286,5 @@ class Distance2ClustersPP(SSLTask):
 
     def make_loss(self, embeddings):
         embeddings = self.linear(embeddings)
-        #print(embeddings.shape, self.pseudo_labels.shape, F.mse_loss(embeddings, self.pseudo_labels, reduction="mean"))
+        # print(embeddings.shape, self.pseudo_labels.shape, F.mse_loss(embeddings, self.pseudo_labels, reduction="mean"))
         return F.mse_loss(embeddings, self.pseudo_labels, reduction="mean")

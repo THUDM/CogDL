@@ -491,7 +491,7 @@ def test_sign_cora():
 def test_jknet_jknet_cora():
     args = get_default_args()
     args.task = "node_classification"
-    args.dataset = "jknet_cora"
+    args.dataset = "cora"
     args.model = "jknet"
     args.lr = 0.005
     args.layer_aggregation = "maxpool"
@@ -501,9 +501,12 @@ def test_jknet_jknet_cora():
     args.in_features = 1433
     args.out_features = 7
     args.max_epoch = 2
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+
+    for aggr in ["maxpool", "concat"]:
+        args.layer_aggregation = aggr
+        task = build_task(args)
+        ret = task.train()
+        assert 0 <= ret["Acc"] <= 1
 
 
 def test_ppnp_cora():

@@ -29,7 +29,6 @@ import math
 
 import torch
 from torch import nn
-from torch.nn import CrossEntropyLoss
 from torch.utils import checkpoint
 
 from torch.nn import Module

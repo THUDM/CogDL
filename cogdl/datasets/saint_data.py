@@ -11,7 +11,6 @@ from .planetoid_data import index_to_mask
 from . import register_dataset
 
 
-
 def read_saint_data(folder):
     names = ["adj_full.npz", "adj_train.npz", "class_map.json", "feats.npy", "role.json"]
     names = [osp.join(folder, name) for name in names]

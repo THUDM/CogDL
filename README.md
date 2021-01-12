@@ -64,7 +64,7 @@ pip install -e .
 
 ### API Usage
 
-You can run all kinds of experiments through CogDL APIs, especially `experiment()`. You can also use your own datasets and models for experiments. 
+You can run all kinds of experiments through CogDL APIs, especially `experiment`. You can also use your own datasets and models for experiments. 
 A quickstart example can be found in the [quick_start.py](https://github.com/THUDM/cogdl/tree/master/examples/quick_start.py). More examples are provided in the [examples/](https://github.com/THUDM/cogdl/tree/master/examples/).
 
 ```python
@@ -88,6 +88,24 @@ def func_search(trial):
     }
 
 experiment(task="node_classification", dataset="cora", model="gcn", seed=[1, 2], func_search=func_search)
+```
+
+Some interesting applications can be used through `pipeline` API. An example can be found in the [pipeline.py](https://github.com/THUDM/cogdl/tree/master/examples/pipeline.py). 
+
+```python
+from cogdl import pipeline
+
+# print the statistics of datasets
+stats = pipeline("dataset-stats")
+stats(["cora", "citeseer"])
+
+# visualize k-hop neighbors of seed in the dataset
+visual = pipeline("dataset-visual")
+visual("cora", seed=0, depth=3)
+
+# load OAGBert model and perform inference
+oagbert = pipeline("oagbert")
+outputs = oagbert("CogDL is developed by KEG, Tsinghua.")
 ```
 
 ### Command-Line Usage

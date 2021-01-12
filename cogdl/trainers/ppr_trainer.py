@@ -132,6 +132,7 @@ class PPRGoTrainer(object):
                 loss = self.loss_func(pred, y)
                 if len(loss.shape) > 1:
                     loss = torch.sum(torch.mean(loss, dim=0))
+
                 self.optimizer.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), 5)
@@ -143,6 +144,7 @@ class PPRGoTrainer(object):
                     loss = self.loss_func(pred, y)
                     if len(loss.shape) > 1:
                         loss = torch.sum(torch.mean(loss, dim=0))
+
                     preds.append(pred)
                     labels.append(y)
             loss_items.append(loss.item())

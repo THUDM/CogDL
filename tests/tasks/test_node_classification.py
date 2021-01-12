@@ -185,10 +185,9 @@ def test_graphsage_cora():
     args.hidden_size = [32, 32]
     args.sample_size = [3, 5]
     args.num_workers = 1
-    for dataset in ["cora", "pubmed"]:
-        args.dataset = dataset
-        task = build_task(args)
-        ret = task.train()
+    args.dataset = "cora"
+    task = build_task(args)
+    ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
 

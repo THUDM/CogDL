@@ -28,6 +28,7 @@ class PPRGoTrainer(object):
         self.dataset_name = args.dataset
         self.loss_func = None
         self.evaluator = None
+        self.post_process = torch.nn.Identity()
 
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         self.ppr_norm = args.ppr_norm if hasattr(args, "ppr_norm") else "sym"
@@ -39,6 +40,8 @@ class PPRGoTrainer(object):
         self.train_idx = nodes[data.train_mask]
         self.test_idx = nodes[data.test_mask]
         self.val_idx = nodes[data.val_mask]
+        if len(data.y.shape) == 1:
+            self.post_process = torch.nn.LogSoftmax()
 
         if hasattr(data, "edge_index_train"):
             edge_index = data.edge_index_train
@@ -110,6 +113,7 @@ class PPRGoTrainer(object):
             )
         self.model = best_model
         test_acc = self._test_step(dataset[0])
+        print(f"TestAcc: {test_acc: .4f}")
         return dict(Acc=test_acc)
 
     def _train_step(self, loader, is_train=True):
@@ -124,7 +128,11 @@ class PPRGoTrainer(object):
             x, targets, ppr_scores, y = [item.to(self.device) for item in batch]
             if is_train:
                 pred = self.model(x, targets, ppr_scores)
+                pred = self.post_process(pred)
                 loss = self.loss_func(pred, y)
+                if len(loss.shape) > 1:
+                    loss = torch.sum(torch.mean(loss, dim=0))
+
                 self.optimizer.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), 5)
@@ -132,7 +140,11 @@ class PPRGoTrainer(object):
             else:
                 with torch.no_grad():
                     pred = self.model(x, targets, ppr_scores)
+                    pred = self.post_process(pred)
                     loss = self.loss_func(pred, y)
+                    if len(loss.shape) > 1:
+                        loss = torch.sum(torch.mean(loss, dim=0))
+
                     preds.append(pred)
                     labels.append(y)
             loss_items.append(loss.item())

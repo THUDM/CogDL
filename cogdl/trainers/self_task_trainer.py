@@ -13,7 +13,7 @@ from cogdl.models.supervised_model import (
     SupervisedHomogeneousNodeClassificationModel,
 )
 from cogdl.trainers.supervised_trainer import SupervisedHomogeneousNodeClassificationTrainer
-from cogdl.trainers.self_task import EdgeMask, PairwiseDistance, Distance2Clusters, PairwiseAttrSim, Distance2ClustersPP, ScalableDistancePred
+from cogdl.trainers.self_task import EdgeMask, PairwiseDistance, Distance2Clusters, PairwiseAttrSim, Distance2ClustersPP
 
 class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
     def __init__(self, args):
@@ -57,20 +57,13 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
             self.agent = PairwiseAttrSim(self.data.edge_index, self.data.x, self.hidden_size, 5, self.device)
         elif self.auxiliary_task == "distance2clusters++":
             self.agent = Distance2ClustersPP(self.data.edge_index, self.data.x, self.data.y, self.hidden_size, 5, 1, self.device)
-        elif self.auxiliary_task == "scalable-distance-pred":
-            self.agent = ScalableDistancePred(self.data.edge_index, self.data.x, self.data.y, self.hidden_size, 10, 1, self.device)
         else:
-            raise Exception("auxiliary task must be edgemask, pairwise-distance, scalable-distance-pred, distance2clusters, distance2clusters++ or pairwise-attr-sim")
+            raise Exception("auxiliary task must be edgemask, pairwise-distance, distance2clusters, distance2clusters++ or pairwise-attr-sim")
         self.model = model
-
-        if self.auxiliary_task != "scalable-distance-pred":
-            self.optimizer = torch.optim.Adam(
-                list(model.parameters()) + list(self.agent.linear.parameters()), lr=self.lr, weight_decay=self.weight_decay
-            )
-        else:
-            self.optimizer = torch.optim.Adam(
-                list(model.parameters()) + list(self.agent.linear1.parameters()), lr=self.lr, weight_decay=self.weight_decay
-            )
+        
+        self.optimizer = torch.optim.Adam(
+            list(model.parameters()) + list(self.agent.linear.parameters()), lr=self.lr, weight_decay=self.weight_decay
+        )
         self.model.to(self.device)
         epoch_iter = tqdm(range(self.max_epoch))
 

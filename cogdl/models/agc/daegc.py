@@ -54,7 +54,7 @@ class DAEGC(BaseModel):
         self.num_clusters = num_clusters
         self.conv1 = GATConv(num_features, hidden_size, heads=num_heads, dropout=dropout)
         self.conv2 = GATConv(hidden_size * num_heads, embedding_size, dropout=dropout)
-        self.cluster_center = nn.Parameter(torch.zeros(num_clusters, embedding_size))
+        self.cluster_center = None
 
     def get_trainer(self, task, args):
         return DAEGCTrainer

@@ -9,7 +9,7 @@ import networkx as nx
 class SSLTask:
     def __init__(self, edge_index, features, device):
         self.edge_index = edge_index
-        self.num_nodes = torch.max(edge_index) + 1
+        self.num_nodes = torch.max(edge_index).cpu() + 1
         self.num_edges = edge_index.shape[1]
         self.features = features
         self.device = device
@@ -116,12 +116,17 @@ class Distance2Clusters(SSLTask):
     def transform_data(self):
         return self.edge_index, self.features
 
-    def gen_cluster_info(self):
-        import metis
+    def gen_cluster_info(self, use_metis=False):
         G = nx.Graph()
         G.add_edges_from(self.edge_index.cpu().t().numpy())
+        if use_metis:
+            import metis
+            _, parts = metis.part_graph(G, self.num_clusters)
+        else:
+            from sklearn.cluster import SpectralClustering
+            clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="discretize", random_state=0).fit(self.features.cpu())
+            parts = clustering.labels_
 
-        _, parts = metis.part_graph(G, self.num_clusters)
         node_clusters = [[] for i in range(self.num_clusters)]
         for i, p in enumerate(parts):
             node_clusters[p].append(i)
@@ -148,7 +153,7 @@ class PairwiseAttrSim(SSLTask):
     def __init__(self, edge_index, features, hidden_size, k, device):
         super().__init__(edge_index, features, device)
         self.k = k
-        self.linear = nn.Linear(hidden_size, 1)
+        self.linear = nn.Linear(hidden_size, 1).to(self.device)
         self.get_attr_sim()
 
     def get_avg_distance(self, idx_sorted, k, sampled):
@@ -219,7 +224,7 @@ class PairwiseAttrSim(SSLTask):
 class Distance2ClustersPP(SSLTask):
     def __init__(self, edge_index, features, labels, hidden_size, num_clusters, k, device):
         super().__init__(edge_index, features, device)
-        self.labels = labels.numpy()
+        self.labels = labels.cpu().numpy()
         self.k = k
         self.num_clusters = num_clusters
         self.clusters = None
@@ -239,7 +244,7 @@ class Distance2ClustersPP(SSLTask):
     def update_cluster(self):
         if self.clusters is None:
             from sklearn.cluster import SpectralClustering
-            clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="discretize", random_state=0).fit(self.features)
+            clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="discretize", random_state=0).fit(self.features.cpu())
             self.clusters = clustering.labels_
 
         self.build_graph()
@@ -269,114 +274,3 @@ class Distance2ClustersPP(SSLTask):
         embeddings = self.linear(embeddings)
         #print(embeddings.shape, self.pseudo_labels.shape, F.mse_loss(embeddings, self.pseudo_labels, reduction="mean"))
         return F.mse_loss(embeddings, self.pseudo_labels, reduction="mean")
-
-class ScalableDistancePred(SSLTask):
-    def __init__(self, edge_index, features, labels, hidden_size, num_clusters, k, device):
-        super().__init__(edge_index, features, device)
-        self.labels = labels.numpy()
-        self.k = k
-        self.num_clusters = num_clusters
-        self.num_class1 = 10
-        self.num_class2 = 3
-        self.linear1 = nn.Linear(hidden_size, self.num_class1).to(self.device)
-        self.linear2 = nn.Linear(hidden_size, self.num_class2).to(self.device)
-        self.get_clusters()
-        self.G = nx.Graph()
-        self.G.add_edges_from(self.edge_index.cpu().t().numpy())
-
-    def get_clusters(self):
-        from sklearn.cluster import SpectralClustering
-        clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="discretize", random_state=0).fit(self.features)
-        self.clusters = clustering.labels_
-
-    def get_class(self, dis):
-        if dis <= 1:
-            return dis
-        else:
-            return 2
-
-    def adv_hop(self, u, v):
-        return self.labels[u] != self.labels[v] and self.clusters[u] != self.clusters[v]
-
-    def update(self):
-        class_node_pairs = [[] for _ in range(self.num_class1)]
-        class_adv_distance = [[] for _ in range(self.num_class1)]
-        # 1, 2 hop neighbor
-        for i in range(self.num_nodes):
-            layers = dict(nx.bfs_successors(self.G, source=i, depth_limit=2))
-            for succ in layers:
-                for node in layers[succ]:
-                    if node < i:
-                        continue
-                    if succ == i:
-                        class_node_pairs[0].append([i, node])
-                        class_adv_distance[0].append(self.get_class(self.adv_hop(i, node)))
-                    else:
-                        class_node_pairs[1].append([i, node])
-                        class_adv_distance[1].append(self.get_class(self.adv_hop(i, succ) + self.adv_hop(succ, node)))
-
-        # 3+ hop neighbor
-        for i in range(self.num_clusters):
-            cluster_idx = np.where(self.clusters==i)[0]
-            if len(cluster_idx) < self.k:
-                continue
-            sampled = np.random.choice(cluster_idx, self.k, replace=False)
-            for node in sampled:
-                l = 0
-                r = 0
-                q = [node]
-                dis = np.zeros(self.num_nodes)
-                adv_dis = np.zeros(self.num_nodes)
-                while l <= r:
-                    u = q[l]
-                    l += 1
-                    for e in self.G.edges(u):
-                        v = e[1]
-                        if dis[v] == 0 and v != node:
-                            dis[v] = dis[u] + 1
-                            adv_dis[v] = adv_dis[u] + self.adv_hop(u, v)
-                            q.append(v)
-                            r += 1
-                        elif dis[v] == dis[u] + 1 and adv_dis[v] > adv_dis[u] + self.adv_hop(u, v):
-                            adv_dis[v] = adv_dis[u] + self.adv_hop(u, v)
-                for i in range(self.num_nodes):
-                    if dis[i] > 2 and dis[i] < self.num_class1:
-                        class_node_pairs[int(dis[i] - 1)].append([node, i])
-                        class_adv_distance[int(dis[i] - 1)].append(self.get_class(adv_dis[i]))
-                    elif dis[i] >= self.num_class1:
-                        class_node_pairs[self.num_class1 - 1].append([node, i])
-                        class_adv_distance[self.num_class1 - 1].append(self.get_class(adv_dis[i]))
-
-        print([len(i) for i in class_adv_distance])
-        """
-        path_length = dict(nx.all_pairs_shortest_path_length(self.G, cutoff=self.num_class1 - 1))
-        distance = - np.ones((len(self.G), len(self.G))).astype(int)
-        for u, p in path_length.items():
-            for v, d in p.items():
-                distance[u][v] = d - 1
-        distance[distance == -1] = self.num_class1 - 1
-        for i in range(self.num_class1):
-            for fuck in class_node_pairs[i]:
-                assert distance[fuck[0]][fuck[1]] == i
-        """
-        num_per_class = np.min(np.array([len(i) for i in class_adv_distance]))
-        self.node_pairs = torch.tensor([]).long()
-        self.pseudo_labels1 = torch.tensor([]).long()
-        self.pseudo_labels2 = torch.tensor([]).long()
-        for i in range(0, self.num_class1):
-            indices = np.random.choice(np.arange(len(class_adv_distance[i])), num_per_class, replace=False)
-            self.node_pairs = torch.cat([self.node_pairs, torch.tensor(np.array(class_node_pairs[i])[indices]).long().t()], 1)
-            self.pseudo_labels1 = torch.cat([self.pseudo_labels1, torch.ones(num_per_class).long() * i])
-            self.pseudo_labels2 = torch.cat([self.pseudo_labels2, torch.tensor(np.array(class_adv_distance[i])[indices]).long()])
-        print(self.node_pairs, self.pseudo_labels1)
-
-    def transform_data(self):
-        return self.edge_index, self.features
-
-    def make_loss(self, embeddings):
-        diff = torch.abs(embeddings[self.node_pairs[0]] - embeddings[self.node_pairs[1]])
-        embeddings1 = self.linear1(diff)
-        embeddings2 = self.linear2(diff)
-        output1 = F.log_softmax(embeddings1, dim=1)
-        output2 = F.log_softmax(embeddings2, dim=1)
-        return F.nll_loss(output1, self.pseudo_labels1) #+ F.nll_loss(output2, self.pseudo_labels2)

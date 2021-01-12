@@ -26,7 +26,6 @@ class DAEGCTrainer(BaseTrainer):
 
     def fit(self, model, data):
         #edge_index_2hop = model.get_2hop(data.edge_index)
-        edge_index_2hop = data.edge_index
         data.adj = torch.sparse_coo_tensor(
             data.edge_index,
             torch.ones(data.edge_index.shape[1]),
@@ -34,6 +33,7 @@ class DAEGCTrainer(BaseTrainer):
         ).to_dense()
         data.adj += torch.eye(data.x.shape[0])
         data.apply(lambda x: x.to(self.device))
+        edge_index_2hop = data.edge_index
         model = model.to(self.device)
         self.num_nodes = data.x.shape[0]
 
@@ -54,7 +54,7 @@ class DAEGCTrainer(BaseTrainer):
             )
         print("Getting cluster centers...")
         kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(model(data.x, data.edge_index).detach().cpu().numpy())
-        model.cluster_center = torch.nn.Parameter(torch.tensor(kmeans.cluster_centers_))
+        model.cluster_center = torch.nn.Parameter(torch.tensor(kmeans.cluster_centers_, device=self.device))
 
         print("Self-optimizing...")
         epoch_iter = tqdm(range(self.max_epoch))
@@ -76,7 +76,7 @@ class DAEGCTrainer(BaseTrainer):
             epoch_iter.set_description(
                 f"Epoch: {epoch:03d}, Loss: {loss:.4f}"
             )
-        return model.cpu()
+        return model
 
     def getQ(self, z):
         Q = None
@@ -94,7 +94,7 @@ class DAEGCTrainer(BaseTrainer):
     def getP(self, Q):
         P = torch.sum(Q, dim=0).repeat(Q.shape[0], 1)
         P = Q ** 2 / P
-        P = P / (torch.ones(1, self.num_clusters) * torch.sum(P, dim=1).unsqueeze(-1))
+        P = P / (torch.ones(1, self.num_clusters, device=self.device) * torch.sum(P, dim=1).unsqueeze(-1))
         #print("P=", P)
         return P
 

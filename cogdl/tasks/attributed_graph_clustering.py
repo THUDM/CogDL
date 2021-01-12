@@ -88,7 +88,7 @@ class AttributedGraphClustering(BaseTask):
             self.model = trainer.fit(self.model, self.data)
             features_matrix = self.model.get_features(self.data)
             
-        features_matrix = features_matrix.numpy()
+        features_matrix = features_matrix.cpu().numpy()
         print("Clustering...")
         if self.cluster_method == "kmeans":
             kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(features_matrix)
@@ -108,7 +108,7 @@ class AttributedGraphClustering(BaseTask):
         FP = 0
         TN = 0
         FN = 0
-        truth = self.data.y.numpy()
+        truth = self.data.y.cpu().numpy()
         for i in range(self.num_nodes):
             for j in range(i + 1, self.num_nodes):
                 if clusters[i] == clusters[j] and truth[i] == truth[j]:

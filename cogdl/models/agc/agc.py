@@ -34,5 +34,5 @@ class AGC(BaseModel):
         return AGCTrainer
 
     def get_features(self, data):
-        return self.features_matrix
+        return self.features_matrix.detach().cpu()
     

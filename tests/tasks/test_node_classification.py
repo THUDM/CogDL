@@ -208,6 +208,7 @@ def test_pyg_gcn_cora():
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "pyg_gcn"
+    args.auxiliary_task = "none"
     args.num_layers = 2
     task = build_task(args)
     ret = task.train()

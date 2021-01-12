@@ -33,7 +33,7 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         pass
 
     def resplit_data(self, data):
-        trained = torch.where(data.train_mask is True)[0]
+        trained = torch.where(data.train_mask)[0]
         perm = np.random.permutation(trained.shape[0])
         preserve_nnz = int(len(perm) * (1 - self.label_mask))
         preserved = trained[perm[:preserve_nnz]]
@@ -43,7 +43,7 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         data.test_mask[masked] = True
 
     def fit(self, model: SupervisedHeterogeneousNodeClassificationModel, dataset: Dataset):
-        self.resplit_data(dataset.data)
+        # self.resplit_data(dataset.data)
         self.data = dataset.data
         self.original_data = dataset.data
         self.data.apply(lambda x: x.to(self.device))

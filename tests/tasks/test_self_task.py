@@ -19,7 +19,7 @@ def get_default_args():
         "device_id": [0],
         "max_epoch": 3,
         "sampler": "none",
-        "cpu": cuda_available,
+        "cpu": not cuda_available,
         "lr": 0.01,
         "weight_decay": 5e-4,
         "missing_rate": -1,
@@ -34,6 +34,7 @@ def get_default_args():
     args.num_classes = dataset.num_classes
     return args
 
+
 def test_edgemask():
     args = get_default_args()
     args.auxiliary_task = "edgemask"
@@ -43,6 +44,7 @@ def test_edgemask():
     task = build_task(args, dataset=dataset, model=model)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
+
 
 def test_pairwise_distance():
     args = get_default_args()
@@ -54,6 +56,7 @@ def test_pairwise_distance():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+
 def test_distance_to_clusters():
     args = get_default_args()
     args.auxiliary_task = "distance2clusters"
@@ -63,6 +66,7 @@ def test_distance_to_clusters():
     task = build_task(args, dataset=dataset, model=model)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
+
 
 def test_pairwise_attr_sim():
     args = get_default_args()
@@ -74,6 +78,7 @@ def test_pairwise_attr_sim():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+
 def test_distance_to_clustersPP():
     args = get_default_args()
     args.auxiliary_task = "distance2clusters++"
@@ -83,6 +88,7 @@ def test_distance_to_clustersPP():
     task = build_task(args, dataset=dataset, model=model)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
+
 
 if __name__ == "__main__":
     test_edgemask()

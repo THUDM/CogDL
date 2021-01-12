@@ -311,6 +311,7 @@ def get_gnn_link_prediction_args():
         "weight_decay": 5e-4,
         "max_epoch": 60,
         "patience": 2,
+        "num_layers": 2,
         "evaluate_interval": 1,
         "cpu": True,
         "device_id": [0],

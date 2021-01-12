@@ -1,3 +1,5 @@
+import math
+
 from typing import Any
 import torch
 import torch.nn as nn
@@ -7,13 +9,39 @@ from cogdl.utils import get_activation, spmm
 from cogdl.trainers.ppr_trainer import PPRGoTrainer
 
 
+class LinearLayer(nn.Module):
+    def __init__(self, in_features, out_features, bias=True):
+        super(LinearLayer, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.weight = nn.Parameter(torch.Tensor(out_features, in_features))
+        if bias:
+            self.bias = nn.Parameter(torch.Tensor(out_features))
+        else:
+            self.register_parameter("bias", None)
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        nn.init.kaiming_uniform_(self.weight, mode="fan_out", a=math.sqrt(5))
+        if self.bias is not None:
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight)
+            bound = 1 / nn.math.sqrt(fan_in)
+            nn.init.uniform_(self.bias, -bound, bound)
+
+    def forward(self, input):
+        return torch.nn.functional.linear(input, self.weight, self.bias)
+
+
 class PPRGoMLP(nn.Module):
     def __init__(self, in_feats, hidden_size, out_feats, num_layers, dropout, activation="relu"):
         super(PPRGoMLP, self).__init__()
         self.dropout = dropout
         self.nlayers = num_layers
-        shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
-        self.layers = nn.ModuleList([nn.Linear(shapes[i], shapes[i + 1]) for i in range(num_layers)])
+        shapes = [hidden_size] * (num_layers - 1) + [out_feats]
+        self.layers = nn.ModuleList()
+        self.layers.append(LinearLayer(in_feats, hidden_size, bias=False))
+        for i in range(num_layers - 1):
+            self.layers.append(nn.Linear(shapes[i], shapes[i + 1], bias=False))
         self.activation = get_activation(activation)
 
     def forward(self, x):
@@ -68,7 +96,7 @@ class PPRGo(BaseModel):
         h = self.fc(x)
         h = ppr_scores.unsqueeze(1) * h
         batch_size = targets[-1] + 1
-        out = torch.zeros(batch_size, x.shape[1]).to(x.device).to(x.dtype)
+        out = torch.zeros(batch_size, h.shape[1]).to(x.device).to(x.dtype)
         out = out.scatter_add_(dim=0, index=targets[:, None].repeat(1, h.shape[1]), src=h)
         return out
 

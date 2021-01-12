@@ -11,6 +11,7 @@ from .planetoid_data import index_to_mask
 from . import register_dataset
 
 
+
 def read_saint_data(folder):
     names = ["adj_full.npz", "adj_train.npz", "class_map.json", "feats.npy", "role.json"]
     names = [osp.join(folder, name) for name in names]
@@ -80,7 +81,7 @@ class SAINTDataset(Dataset):
 
     def download(self):
         for name in self.raw_file_names:
-            download_url(self.url.format(name), self.raw_dir)
+            download_url(self.url.format(name), self.raw_dir, name=name)
 
     def process(self):
         data = read_saint_data(self.raw_dir)
@@ -122,7 +123,7 @@ class YelpDataset(SAINTDataset):
 class AmazonDataset(SAINTDataset):
     def __init__(self, args=None):
         dataset = "AmazonSaint"
-        url = "https://cloud.tsinghua.edu.cn/d/6610594aa6f64098be19/files/?p=%2Famazon%2F{}&dl=1"
+        url = "https://cloud.tsinghua.edu.cn/d/ae4b2c4f59bd41be9b0b/files/?p=%2F{}&dl=1"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         if not osp.exists(path):
             SAINTDataset(path, dataset, url)

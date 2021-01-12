@@ -44,12 +44,14 @@ CogDL provides these features:
    :caption: Documentation
 
    api/data
-   api/layers
    api/datasets
-   api/models
-   api/options
    api/tasks
+   api/models
+   api/layers
+   api/options
    api/utils
+   api/experiments
+   api/pipelines
 
 
 Indices and tables

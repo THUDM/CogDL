@@ -121,7 +121,7 @@ class OAGBertInferencePipepline(Pipeline):
         self.tokenizer, self.bert_model = oagbert(model, load_weights=load_weights)
 
     def __call__(self, sequence, **kwargs):
-        tokens = self.tokenizer(sequence, return_tensors="pt")
+        tokens = self.tokenizer(sequence, return_tensors="pt", padding=True)
         outputs = self.bert_model(**tokens)
 
         return outputs

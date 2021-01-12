@@ -104,7 +104,7 @@ visual("cora", seed=0, depth=3)
 
 # load OAGBert model and perform inference
 oagbert = pipeline("oagbert")
-outputs = oagbert("CogDL is developed by KEG, Tsinghua.")
+outputs = oagbert(["CogDL is developed by KEG, Tsinghua.", "OAGBert is developed by KEG, Tsinghua."])
 ```
 
 ### Command-Line Usage

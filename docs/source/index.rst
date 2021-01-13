@@ -36,19 +36,22 @@ CogDL provides these features:
 
    task/index
    trainer
-   custom_usage
+   model
+   dataset
 
 .. toctree::
    :maxdepth: 2
    :caption: Documentation
 
-   data
-   layers
-   datasets
-   models
-   options
-   tasks
-   utils
+   api/data
+   api/datasets
+   api/tasks
+   api/models
+   api/layers
+   api/options
+   api/utils
+   api/experiments
+   api/pipelines
 
 
 Indices and tables

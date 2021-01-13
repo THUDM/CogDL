@@ -51,6 +51,7 @@ def test_gdc_gcn_cora():
 def test_gcn_cora():
     args = get_default_args()
     args.task = "node_classification"
+    args.num_layers = 2
     args.dataset = "cora"
     args.model = "gcn"
     task = build_task(args)
@@ -184,10 +185,9 @@ def test_graphsage_cora():
     args.hidden_size = [32, 32]
     args.sample_size = [3, 5]
     args.num_workers = 1
-    for dataset in ["cora", "pubmed"]:
-        args.dataset = dataset
-        task = build_task(args)
-        ret = task.train()
+    args.dataset = "cora"
+    task = build_task(args)
+    ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
 
@@ -491,7 +491,7 @@ def test_sign_cora():
 def test_jknet_jknet_cora():
     args = get_default_args()
     args.task = "node_classification"
-    args.dataset = "jknet_cora"
+    args.dataset = "cora"
     args.model = "jknet"
     args.lr = 0.005
     args.layer_aggregation = "maxpool"
@@ -501,9 +501,12 @@ def test_jknet_jknet_cora():
     args.in_features = 1433
     args.out_features = 7
     args.max_epoch = 2
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+
+    for aggr in ["maxpool", "concat"]:
+        args.layer_aggregation = aggr
+        task = build_task(args)
+        ret = task.train()
+        assert 0 <= ret["Acc"] <= 1
 
 
 def test_ppnp_cora():
@@ -511,6 +514,7 @@ def test_ppnp_cora():
     args.task = "node_classification"
     args.model = "ppnp"
     args.dataset = "cora"
+    args.num_layers = 2
     args.propagation_type = "ppnp"
     args.alpha = 0.1
     args.num_iterations = 10
@@ -524,6 +528,7 @@ def test_appnp_cora():
     args.task = "node_classification"
     args.model = "ppnp"
     args.dataset = "cora"
+    args.num_layers = 2
     args.propagation_type = "appnp"
     args.alpha = 0.1
     args.num_iterations = 10
@@ -669,6 +674,9 @@ def test_pprgo_cora():
         task = build_task(args)
         ret = task.train()
         assert 0 <= ret["Acc"] <= 1
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
 
 
 if __name__ == "__main__":

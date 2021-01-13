@@ -1,18 +1,14 @@
-import argparse
-import random
-import numpy as np
 import os.path as osp
-import matplotlib.pyplot as plt
+import random
+
 import matplotlib.cm as cm
+import matplotlib.pyplot as plt
 import networkx as nx
-
+import numpy as np
 from cogdl import options
-from cogdl.datasets import build_dataset, build_dataset_from_name
-
+from cogdl.datasets import build_dataset_from_name
 from grave import plot_network, use_attributes
-
 from tabulate import tabulate
-from torch_geometric.datasets import Planetoid
 
 
 def plot_graph(args):

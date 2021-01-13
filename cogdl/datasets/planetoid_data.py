@@ -4,9 +4,9 @@ import sys
 
 import numpy as np
 import torch
-from cogdl.data import Data, Dataset
-from cogdl.utils import download_url, remove_self_loops
 
+from cogdl.data import Dataset, Data
+from cogdl.utils import remove_self_loops, accuracy_evaluator, download_url
 from . import register_dataset
 
 
@@ -66,7 +66,6 @@ def edge_index_from_dict(graph_dict, num_nodes=None):
     row = torch.cat([edge_index[0], edge_index[1]])
     col = torch.cat([edge_index[1], edge_index[0]])
     edge_index = torch.stack([row, col])
-    print(edge_index.shape)
     return edge_index
 
 
@@ -130,7 +129,7 @@ class Planetoid(Dataset):
     <https://arxiv.org/abs/1603.08861>`_ paper.
     """
 
-    url = "https://github.com/kimiyoung/planetoid/raw/master/data"
+    url = "https://cloud.tsinghua.edu.cn/d/9b799d61c8544befbb41/files/?p=%2F"
 
     def __init__(self, root, name, split="public", num_train_per_class=20, num_val=500, num_test=1000):
         self.name = name
@@ -166,7 +165,7 @@ class Planetoid(Dataset):
 
     def download(self):
         for name in self.raw_file_names:
-            download_url("{}/{}".format(self.url, name), self.raw_dir)
+            download_url("{}{}&dl=1".format(self.url, name), self.raw_dir, name=name)
 
     def process(self):
         data = read_planetoid_data(self.raw_dir, self.name)
@@ -174,6 +173,9 @@ class Planetoid(Dataset):
 
     def get(self, idx):
         return self.data
+
+    def get_evaluator(self):
+        return accuracy_evaluator()
 
     def __repr__(self):
         return "{}()".format(self.name)

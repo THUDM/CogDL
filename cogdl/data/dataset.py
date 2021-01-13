@@ -2,7 +2,9 @@ import collections
 import os.path as osp
 
 import torch.utils.data
+
 from cogdl.utils import makedirs
+from cogdl.utils import accuracy_evaluator
 
 
 def to_list(x):
@@ -117,6 +119,9 @@ class Dataset(torch.utils.data.Dataset):
         self.process()
 
         print("Done!")
+
+    def get_evaluator(self):
+        return accuracy_evaluator()
 
     def __getitem__(self, idx):  # pragma: no cover
         r"""Gets the data object at index :obj:`idx` and transforms it (in case

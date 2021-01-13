@@ -19,6 +19,7 @@ class PPNP(BaseModel):
         parser.add_argument("--dropout", type=float, default=0.5)
         parser.add_argument("--propagation-type", type=str, default="appnp")
         parser.add_argument("--alpha", type=float, default=0.1)
+        parser.add_argument("--num-layers", type=int, default=2)
         parser.add_argument("--num-iterations", type=int, default=10)  # only for appnp
         # fmt: on
 
@@ -28,18 +29,17 @@ class PPNP(BaseModel):
             args.num_features,
             args.hidden_size,
             args.num_classes,
+            args.num_layers,
             args.dropout,
             args.propagation_type,
             args.alpha,
             args.num_iterations,
         )
 
-    def __init__(self, nfeat, nhid, nclass, dropout, propagation, alpha, niter):
+    def __init__(self, nfeat, nhid, nclass, num_layers, dropout, propagation, alpha, niter):
         super(PPNP, self).__init__()
-
         # GCN as a prediction and then apply the personalized page rank on the results
-        self.nn = TKipfGCN(nfeat, nhid, nclass, dropout)
-
+        self.nn = TKipfGCN(nfeat, nhid, nclass, num_layers, dropout)
         if propagation not in ("appnp", "ppnp"):
             print("Invalid propagation type, using default appnp")
             propagation = "appnp"
@@ -48,7 +48,6 @@ class PPNP(BaseModel):
         self.alpha = alpha
         self.niter = niter
         self.dropout = dropout
-
         self.vals = None  # speedup for ppnp
 
     def _calculate_A_hat(self, x, edge_index):

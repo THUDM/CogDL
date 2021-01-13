@@ -8,6 +8,7 @@ from ogb.nodeproppred import PygNodePropPredDataset
 from ogb.graphproppred import PygGraphPropPredDataset
 
 from . import register_dataset
+from cogdl.utils import accuracy_evaluator
 
 
 class OGBNDataset(PygNodePropPredDataset):
@@ -84,6 +85,9 @@ class OGBPapers100MDataset(OGBNDataset):
         if not osp.exists(path):
             PygNodePropPredDataset(dataset, path)
         super(OGBPapers100MDataset, self).__init__(path, dataset)
+
+    def get_evaluator(self):
+        return accuracy_evaluator()
 
 
 class OGBGDataset(PygGraphPropPredDataset):

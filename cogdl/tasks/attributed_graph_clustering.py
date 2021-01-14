@@ -6,12 +6,10 @@ from sklearn.cluster import KMeans, SpectralClustering
 from sklearn.metrics.cluster import normalized_mutual_info_score
 import torch
 import torch.nn.functional as F
-
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 
 from . import BaseTask, register_task
-
 
 @register_task("attributed_graph_clustering")
 class AttributedGraphClustering(BaseTask):
@@ -25,8 +23,7 @@ class AttributedGraphClustering(BaseTask):
         parser.add_argument("--num-clusters", type=int, default=7)
         parser.add_argument("--cluster-method", type=str, default="kmeans")
         parser.add_argument("--hidden-size", type=int, default=128)
-        parser.add_argument("--model-type", type=str, default="emb")
-        parser.add_argument("--momentum", type=float, default=0)
+        parser.add_argument("--model-type", type=str, default="content")
         # fmt: on
 
     def __init__(
@@ -46,22 +43,27 @@ class AttributedGraphClustering(BaseTask):
         self.data = dataset[0]
         self.num_nodes = self.data.y.shape[0]
 
-        self.hidden_size = args.hidden_size = dataset.num_features
+        if args.model == "prone":
+            self.hidden_size = args.hidden_size = args.num_features = 13
+        else:
+            self.hidden_size = args.hidden_size = args.hidden_size
+            args.num_features = dataset.num_features
         self.model = build_model(args)
-
-        self.momentum = args.momentum
+        
         self.num_clusters = args.num_clusters
         if args.cluster_method not in ["kmeans", "spectral"]:
             raise Exception("cluster method must be kmeans or spectral")
-        if args.model_type not in ["emb", "nn"]:
-            raise Exception("model type must be emb or nn")
+        if args.model_type not in ["content", "spectral", "both"]:
+            raise Exception("model type must be content, spectral or both")
         self.cluster_method = args.cluster_method
         self.model_type = args.model_type
         self.is_weighted = self.data.edge_attr is not None
         self.enhance = args.enhance
 
     def train(self) -> Dict[str, float]:
-        if self.model_type == "emb":
+        if self.model_type == "content":
+            features_matrix = self.data.x
+        elif self.model_type == "spectral":
             G = nx.Graph()
             if self.is_weighted:
                 edges, weight = (
@@ -80,11 +82,13 @@ class AttributedGraphClustering(BaseTask):
                 features_matrix[node] = embeddings[vid]
             features_matrix = torch.tensor(features_matrix)
             features_matrix = F.normalize(features_matrix, p=2, dim=1)
-            node_attr = F.normalize(self.data.x, p=2, dim=1)
-            features_matrix = self.momentum * node_attr + (1 - self.momentum) * features_matrix
-        # TODO: add gnn training methods
-
-        features_matrix = features_matrix.numpy()
+            #features_matrix = self.momentum * node_attr + (1 - self.momentum) * features_matrix
+        else:
+            trainer = self.model.get_trainer(AttributedGraphClustering, self.args)(self.args)
+            self.model = trainer.fit(self.model, self.data)
+            features_matrix = self.model.get_features(self.data)
+            
+        features_matrix = features_matrix.cpu().numpy()
         print("Clustering...")
         if self.cluster_method == "kmeans":
             kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(features_matrix)
@@ -92,7 +96,7 @@ class AttributedGraphClustering(BaseTask):
         else:
             # features_matrix = np.dot(features_matrix, features_matrix.transpose())
             # features_matrix = 0.5 * (np.abs(features_matrix) + np.abs(features_matrix.transpose()))
-            clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="kmeans", random_state=0).fit(
+            clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="discretize", random_state=0).fit(
                 features_matrix
             )
             clusters = clustering.labels_
@@ -104,7 +108,7 @@ class AttributedGraphClustering(BaseTask):
         FP = 0
         TN = 0
         FN = 0
-        truth = self.data.y.numpy()
+        truth = self.data.y.cpu().numpy()
         for i in range(self.num_nodes):
             for j in range(i + 1, self.num_nodes):
                 if clusters[i] == clusters[j] and truth[i] == truth[j]:

@@ -6,7 +6,7 @@ import scipy.sparse as sp
 from sklearn.preprocessing import StandardScaler
 
 from cogdl.data import Data, Dataset
-from cogdl.utils import multilabel_evaluator, download_url
+from cogdl.utils import multilabel_evaluator, download_url, multiclass_evaluator
 from .planetoid_data import index_to_mask
 from . import register_dataset
 
@@ -26,10 +26,16 @@ def read_saint_data(folder):
 
     feats = torch.from_numpy(feats).float()
     item = class_map["0"]
-    label_matrix = np.zeros((feats.shape[0], len(item)), dtype=float)
-    for key, val in class_map.items():
-        label_matrix[int(key)] = np.array(val)
-    label_matrix = torch.from_numpy(label_matrix)
+    if isinstance(item, list):
+        labels = np.zeros((feats.shape[0], len(item)), dtype=float)
+        for key, val in class_map.items():
+            labels[int(key)] = np.array(val)
+    else:
+        labels = np.zeros(feats.shape[0], dtype=np.long)
+        for key, val in class_map.items():
+            labels[int(key)] = val
+
+    labels = torch.from_numpy(labels)
 
     def get_adj(adj):
         row, col = adj.nonzero()
@@ -45,7 +51,7 @@ def read_saint_data(folder):
 
     data = Data(
         x=feats,
-        y=label_matrix,
+        y=labels,
         edge_index=edge_index_full,
         edge_attr=edge_attr_full,
         edge_index_train=edge_index_train,
@@ -76,6 +82,8 @@ class SAINTDataset(Dataset):
     @property
     def num_classes(self):
         assert hasattr(self.data, "y")
+        if len(self.data.y.shape) == 1:
+            return int(torch.max(self.data.y) + 1)
         return self.data.y.shape[1]
 
     def download(self):
@@ -103,6 +111,7 @@ def scale_feats(data):
     scaler = StandardScaler()
     scaler.fit(data.x.numpy())
     data.x = torch.from_numpy(scaler.transform(data.x)).float()
+    print(data.x.shape)
     return data
 
 
@@ -128,3 +137,18 @@ class AmazonDataset(SAINTDataset):
             SAINTDataset(path, dataset, url)
         super(AmazonDataset, self).__init__(path, dataset, url)
         self.data = scale_feats(self.data)
+
+
+@register_dataset("flickr")
+class FlickrDatset(SAINTDataset):
+    def __init__(self, args=None):
+        dataset = "Flickr"
+        url = "https://cloud.tsinghua.edu.cn/d/d3ebcb5fa2da463b8213/files/?p=%2F{}&dl=1"
+        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        if not osp.exists(path):
+            SAINTDataset(path, dataset, url)
+        super(FlickrDatset, self).__init__(path, dataset, url)
+        self.data = scale_feats(self.data)
+
+    def get_evaluator(self):
+        return multiclass_evaluator()

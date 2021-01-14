@@ -32,9 +32,12 @@ node_classification:
     - citeseer
     - pubmed
     - ogbn-arxiv
+    - ogbn-products
+    - ogbn-papers100M
+    - flickr
+    - amazon
+    - yelp
     - reddit
-    - jknet_cora
-    - test_small
 unsupervised_node_classification:
   - model:
     - prone

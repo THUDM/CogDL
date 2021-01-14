@@ -28,51 +28,43 @@ class PPRGoTrainer(object):
         self.dataset_name = args.dataset
         self.loss_func = None
         self.evaluator = None
-        self.post_process = torch.nn.Identity()
+        self.nprop_inference = args.nprop_inference
 
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         self.ppr_norm = args.ppr_norm if hasattr(args, "ppr_norm") else "sym"
 
-    def preprocess_data(self, dataset):
+    def ppr_run(self, dataset, mode="train"):
         data = dataset[0]
         num_nodes = data.x.shape[0]
         nodes = torch.arange(num_nodes)
-        self.train_idx = nodes[data.train_mask]
-        self.test_idx = nodes[data.test_mask]
-        self.val_idx = nodes[data.val_mask]
-        if len(data.y.shape) == 1:
-            self.post_process = torch.nn.LogSoftmax()
+        if mode == "train":
+            mask = data.train_mask
+        elif mode == "val":
+            mask = data.val_mask
+        else:
+            mask = data.test_mask
+        index = nodes[mask].numpy()
 
-        if hasattr(data, "edge_index_train"):
+        if mode == "train" and hasattr(data, "edge_index_train"):
             edge_index = data.edge_index_train
         else:
             edge_index = data.edge_index
 
         if not os.path.exists("./saved"):
             os.mkdir("saved")
-        train_path = f"./saved/{self.dataset_name}_{self.topk}_{self.alpha}_{self.normalization}.train.npz"
-        val_path = f"./saved/{self.dataset_name}_{self.topk}_{self.alpha}_{self.normalization}.val.npz"
+        path = f"./saved/{self.dataset_name}_{self.topk}_{self.alpha}_{self.normalization}.{mode}.npz"
 
-        if os.path.exists(train_path):
-            print("Load Train from cached")
-            train_topk_matrix = sp.load_npz(train_path)
+        if os.path.exists(path):
+            print(f"Load {mode} from cached")
+            train_topk_matrix = sp.load_npz(path)
         else:
+            print(f"Fail to load {mode}")
             train_topk_matrix = build_topk_ppr_matrix_from_data(
-                edge_index, self.alpha, self.epsilon, self.train_idx.numpy(), self.topk, self.normalization
+                edge_index, self.alpha, self.epsilon, index, self.topk, self.normalization
             )
-            sp.save_npz(train_path, train_topk_matrix)
-        train_dataset = PPRGoDataset(data.x, train_topk_matrix, self.train_idx, data.y)
-
-        if os.path.exists(val_path):
-            print("Load Val from cached")
-            val_topk_matrix = sp.load_npz(val_path)
-        else:
-            val_topk_matrix = build_topk_ppr_matrix_from_data(
-                data.edge_index, self.alpha, self.epsilon, self.val_idx.numpy(), self.topk, self.normalization
-            )
-            sp.save_npz(val_path, val_topk_matrix)
-        val_dataset = PPRGoDataset(data.x, val_topk_matrix, self.val_idx, data.y)
-        return train_dataset, val_dataset
+            sp.save_npz(path, train_topk_matrix)
+        result = PPRGoDataset(data.x, train_topk_matrix, index, data.y)
+        return result
 
     def get_dataloader(self, dataset):
         data_loader = torch.utils.data.DataLoader(
@@ -87,12 +79,12 @@ class PPRGoTrainer(object):
         return data_loader
 
     def fit(self, model, dataset):
-        train_dataset, val_dataset = self.preprocess_data(dataset)
         self.loss_func, self.evaluator = dataset.get_evaluator()
         self.model = model.to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        train_loader = self.get_dataloader(train_dataset)
-        val_loader = self.get_dataloader(val_dataset)
+
+        train_loader = self.get_dataloader(self.ppr_run(dataset, "train"))
+        val_loader = self.get_dataloader(self.ppr_run(dataset, "val"))
 
         best_loss = 1000
         val_loss = 1000
@@ -111,8 +103,17 @@ class PPRGoTrainer(object):
             epoch_iter.set_description(
                 f"Epoch: {epoch}, TrainLoss: {train_loss: .4f}, ValLoss: {val_loss: .4f}, ValAcc: {best_acc: .4f}"
             )
+            print()
         self.model = best_model
-        test_acc = self._test_step(dataset[0])
+
+        del train_loader
+        del val_loader
+        if self.nprop_inference <= 0 or self.dataset_name == "ogbn-papers100M":
+            test_loader = self.get_dataloader(self.ppr_run(dataset, "test"))
+            test_acc, test_loss = self._train_step(test_loader, False)
+        else:
+            test_acc = self._test_step(dataset[0])
+
         print(f"TestAcc: {test_acc: .4f}")
         return dict(Acc=test_acc)
 
@@ -128,7 +129,9 @@ class PPRGoTrainer(object):
             x, targets, ppr_scores, y = [item.to(self.device) for item in batch]
             if is_train:
                 pred = self.model(x, targets, ppr_scores)
-                pred = self.post_process(pred)
+                if len(y.shape) == 1:
+                    y = y.long()
+                    pred = torch.nn.functional.log_softmax(pred, dim=-1)
                 loss = self.loss_func(pred, y)
                 if len(loss.shape) > 1:
                     loss = torch.sum(torch.mean(loss, dim=0))
@@ -140,7 +143,9 @@ class PPRGoTrainer(object):
             else:
                 with torch.no_grad():
                     pred = self.model(x, targets, ppr_scores)
-                    pred = self.post_process(pred)
+                    if len(y.shape) == 1:
+                        y = y.long()
+                        pred = torch.nn.functional.log_softmax(pred, dim=-1)
                     loss = self.loss_func(pred, y)
                     if len(loss.shape) > 1:
                         loss = torch.sum(torch.mean(loss, dim=0))

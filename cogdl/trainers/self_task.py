@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import scipy.sparse as sp
 import numpy as np
 import networkx as nx
+import random
 
 
 class SSLTask:
@@ -206,17 +207,26 @@ class PairwiseAttrSim(SSLTask):
         idx_sorted = sims.argsort(1)
         self.node_pairs = None
         self.pseudo_labels = None
-        sampled = np.random.choice(np.arange(self.k, self.num_nodes - self.k), self.k, replace=False)
+        sampled = self.sample(self.k, self.num_nodes)
         for i in range(self.num_nodes):
             for node in np.hstack((idx_sorted[i, : self.k], idx_sorted[i, -self.k - 1 :], idx_sorted[i, sampled])):
                 pair = torch.tensor([[i, node]])
                 sim = torch.tensor([sims[i][node]])
                 self.node_pairs = pair if self.node_pairs is None else torch.cat([self.node_pairs, pair], 0)
                 self.pseudo_labels = sim if self.pseudo_labels is None else torch.cat([self.pseudo_labels, sim])
-        # print("max k avg distance: {%.4f}, min k avg distance: {%.4f}, sampled k avg distance: {%.4f}" % (self.get_avg_distance(idx_sorted, self.k, sampled)))
+        print(
+            "max k avg distance: {%.4f}, min k avg distance: {%.4f}, sampled k avg distance: {%.4f}"
+            % (self.get_avg_distance(idx_sorted, self.k, sampled))
+        )
         # print(self.node_pairs, self.pseudo_labels)
         self.node_pairs = self.node_pairs.long().to(self.device)
         self.pseudo_labels = self.pseudo_labels.float().to(self.device)
+
+    def sample(self, k, num_nodes):
+        sampled = []
+        for i in range(k):
+            sampled.append(int(random.random() * (self.num_nodes - self.k * 2)) + self.k)
+        return np.array(sampled)
 
     def transform_data(self):
         return self.edge_index, self.features

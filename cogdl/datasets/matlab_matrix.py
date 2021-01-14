@@ -75,6 +75,7 @@ class BlogcatalogDataset(MatlabMatrix):
         super(BlogcatalogDataset, self).__init__(path, filename, url)
 
 
+"""
 @register_dataset("flickr")
 class FlickrDataset(MatlabMatrix):
     def __init__(self, args=None):
@@ -82,6 +83,7 @@ class FlickrDataset(MatlabMatrix):
         url = "http://leitang.net/code/social-dimension/data/"
         path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
         super(FlickrDataset, self).__init__(path, filename, url)
+"""
 
 
 @register_dataset("wikipedia")

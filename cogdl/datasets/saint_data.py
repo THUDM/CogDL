@@ -36,6 +36,7 @@ def read_saint_data(folder):
             labels[int(key)] = val
 
     labels = torch.from_numpy(labels)
+
     def get_adj(adj):
         row, col = adj.nonzero()
         data = adj.data
@@ -146,6 +147,21 @@ class FlickrDatset(SAINTDataset):
         if not osp.exists(path):
             SAINTDataset(path, dataset, url)
         super(FlickrDatset, self).__init__(path, dataset, url)
+        self.data = scale_feats(self.data)
+
+    def get_evaluator(self):
+        return multiclass_evaluator()
+
+
+@register_dataset("reddit")
+class RedditDataset(SAINTDataset):
+    def __init__(self, args=None):
+        dataset = "Reddit"
+        url = "https://cloud.tsinghua.edu.cn/d/d087e7e766e747ce8073/files/?p=%2F{}&dl=1"
+        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        if not osp.exists(path):
+            SAINTDataset(path, dataset, url)
+        super(RedditDataset, self).__init__(path, dataset, url)
         self.data = scale_feats(self.data)
 
     def get_evaluator(self):

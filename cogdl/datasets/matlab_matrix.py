@@ -75,7 +75,7 @@ class BlogcatalogDataset(MatlabMatrix):
         super(BlogcatalogDataset, self).__init__(path, filename, url)
 
 
-@register_dataset("flickr")
+@register_dataset("flickr-ne")
 class FlickrDataset(MatlabMatrix):
     def __init__(self, args=None):
         dataset, filename = "flickr", "flickr"

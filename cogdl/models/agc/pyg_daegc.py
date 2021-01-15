@@ -8,6 +8,7 @@ from torch_geometric.nn.conv import GATConv
 from .. import BaseModel, register_model
 from cogdl.trainers.daegc_trainer import DAEGCTrainer
 
+
 @register_model("daegc")
 class DAEGC(BaseModel):
     r"""The DAEGC model from the `"Attributed Graph Clustering: A Deep Attentional Embedding Approach"
@@ -18,6 +19,7 @@ class DAEGC(BaseModel):
         T (int) : Number of iterations to recalculate P and Q
         gamma (float) : Hyperparameter that controls two parts of the loss.
     """
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -36,12 +38,7 @@ class DAEGC(BaseModel):
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            args.num_features,
-            args.hidden_size, 
-            args.embedding_size,
-            args.num_heads,
-            args.dropout,
-            args.num_clusters
+            args.num_features, args.hidden_size, args.embedding_size, args.num_heads, args.dropout, args.num_clusters
         )
 
     def __init__(self, num_features, hidden_size, embedding_size, num_heads, dropout, num_clusters):
@@ -82,9 +79,5 @@ class DAEGC(BaseModel):
         return self.forward(data.x, data.edge_index).detach()
 
     def recon_loss(self, z, adj):
-        #print(torch.mm(z, z.t()), adj)
-        return F.binary_cross_entropy(
-            F.softmax(torch.mm(z, z.t())), 
-            adj,
-            reduction='sum'
-        )
+        # print(torch.mm(z, z.t()), adj)
+        return F.binary_cross_entropy(F.softmax(torch.mm(z, z.t())), adj, reduction="sum")

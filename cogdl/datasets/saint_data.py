@@ -111,6 +111,7 @@ def scale_feats(data):
     scaler = StandardScaler()
     scaler.fit(data.x.numpy())
     data.x = torch.from_numpy(scaler.transform(data.x)).float()
+    print(data.x.shape)
     return data
 
 

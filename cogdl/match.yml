@@ -189,7 +189,10 @@ attributed_graph_clustering:
     - prone
     - netmf
     - line
+    - agc
+    - daegc
     dataset:
     - cora
     - citeseer
     - pubmed
+    - test_small

@@ -19,7 +19,11 @@ class Sampler:
     def __init__(self, data, args_params):
         self.data = data.clone()
         self.num_nodes = self.data.x.size()[0]
-        self.num_edges = self.data.edge_index.size()[1]
+        self.num_edges = (
+            self.data.edge_index_train.size()[1]
+            if hasattr(self.data, "edge_index_train")
+            else self.data.edge_index.size()[1]
+        )
 
     def sample(self):
         pass
@@ -41,7 +45,11 @@ class SAINTSampler(Sampler):
 
     def __init__(self, data, args_params):
         super().__init__(data, args_params)
-        edge_index = self.data.edge_index.cpu().numpy()
+        edge_index = (
+            self.data.edge_index_train.cpu().numpy()
+            if hasattr(self.data, "edge_index_train")
+            else self.data.edge_index.cpu().numpy()
+        )
         self.adj = sp.coo_matrix(
             (np.ones(self.num_edges), (edge_index[0], edge_index[1])),
             shape=(self.num_nodes, self.num_nodes),
@@ -113,7 +121,11 @@ class SAINTSampler(Sampler):
 
     def extract_subgraph(self, edge_idx, directed=True):
         edge_idx = np.unique(edge_idx)
-        subg_edge = self.data.edge_index.t()[edge_idx].cpu().numpy()
+        subg_edge = (
+            self.data.edge_index_train.t()[edge_idx].cpu().numpy()
+            if hasattr(self.data, "edge_index_train")
+            else self.data.edge_index.t()[edge_idx].cpu().numpy()
+        )
         if not directed:
             subg_edge = np.concatenate((subg_edge, subg_edge[:, [1, 0]]))
         subg_edge = np.unique(subg_edge, axis=0)
@@ -168,7 +180,7 @@ class SAINTSampler(Sampler):
             node_subgraph = np.arange(self.data.num_nodes)
             data = self.data.clone()
             if require_norm:
-                data.norm_aggr = torch.ones(self.num_edges)
+                data.norm_aggr = torch.ones(self.data.edge_index.size()[1])
                 data.norm_loss = self.norm_loss_test
         else:
             if len(self.subgraphs_nodes) == 0:

@@ -1,0 +1,83 @@
+import networkx as nx
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch_geometric.nn.conv import GATConv
+
+from .. import BaseModel, register_model
+from cogdl.trainers.daegc_trainer import DAEGCTrainer
+
+
+@register_model("daegc")
+class DAEGC(BaseModel):
+    r"""The DAEGC model from the `"Attributed Graph Clustering: A Deep Attentional Embedding Approach"
+    <https://arxiv.org/abs/1906.06532>`_ paper
+
+    Args:
+        num_clusters (int) : Number of clusters.
+        T (int) : Number of iterations to recalculate P and Q
+        gamma (float) : Hyperparameter that controls two parts of the loss.
+    """
+
+    @staticmethod
+    def add_args(parser):
+        """Add model-specific arguments to the parser."""
+        # fmt: off
+        parser.add_argument("--num-features", type=int)
+        parser.add_argument("--hidden-size", type=int, default=256)
+        parser.add_argument("--embedding-size", type=int, default=16)
+        parser.add_argument("--num-heads", type=int, default=1)
+        parser.add_argument("--dropout", type=float, default=0)
+        parser.add_argument("--max-epoch", type=int, default=100)
+        parser.add_argument("--lr", type=float, default=0.001)
+        parser.add_argument("--T", type=int, default=5)
+        parser.add_argument("--gamma", type=float, default=10)
+        # fmt: on
+
+    @classmethod
+    def build_model_from_args(cls, args):
+        return cls(
+            args.num_features, args.hidden_size, args.embedding_size, args.num_heads, args.dropout, args.num_clusters
+        )
+
+    def __init__(self, num_features, hidden_size, embedding_size, num_heads, dropout, num_clusters):
+        super(DAEGC, self).__init__()
+
+        self.hidden_size = hidden_size
+        self.num_heads = num_heads
+        self.embedding_size = embedding_size
+        self.dropout = dropout
+        self.num_clusters = num_clusters
+        self.conv1 = GATConv(num_features, hidden_size, heads=num_heads, dropout=dropout)
+        self.conv2 = GATConv(hidden_size * num_heads, embedding_size, dropout=dropout)
+        self.cluster_center = None
+
+    def get_trainer(self, task, args):
+        return DAEGCTrainer
+
+    def forward(self, x, edge_index):
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = F.relu(self.conv1(x, edge_index))
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = F.elu(self.conv2(x, edge_index))
+        return F.normalize(x, p=2, dim=1)
+
+    def get_2hop(self, edge_index):
+        r"""add 2-hop neighbors as new edges"""
+        G = nx.Graph()
+        G.add_edges_from(edge_index.t().tolist())
+        H = nx.Graph()
+        for i in range(G.number_of_nodes()):
+            layers = dict(nx.bfs_successors(G, source=i, depth_limit=2))
+            for succ in layers:
+                for idx in layers[succ]:
+                    H.add_edge(i, idx)
+        return torch.tensor(list(H.edges())).t()
+
+    def get_features(self, data):
+        return self.forward(data.x, data.edge_index).detach()
+
+    def recon_loss(self, z, adj):
+        # print(torch.mm(z, z.t()), adj)
+        return F.binary_cross_entropy(F.softmax(torch.mm(z, z.t())), adj, reduction="sum")

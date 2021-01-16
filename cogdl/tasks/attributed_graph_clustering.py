@@ -51,7 +51,6 @@ class AttributedGraphClustering(BaseTask):
             self.hidden_size = args.hidden_size = args.hidden_size
             args.num_features = dataset.num_features
         self.model = build_model(args)
-
         self.num_clusters = args.num_clusters
         if args.cluster_method not in ["kmeans", "spectral"]:
             raise Exception("cluster method must be kmeans or spectral")

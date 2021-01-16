@@ -1,11 +1,8 @@
 import os.path as osp
 import torch
 
-import torch_geometric.transforms as T
 from torch_geometric.datasets import Planetoid, Reddit, TUDataset, QM9
-from torch_geometric.utils import remove_self_loops
 from . import register_dataset
-from cogdl.utils import accuracy_evaluator
 
 
 def normalize_feature(data):
@@ -15,20 +12,6 @@ def normalize_feature(data):
     x_rev[torch.isinf(x_rev)] = 0.0
     data.x = data.x * x_rev.unsqueeze(-1).expand_as(data.x)
     return data
-
-
-@register_dataset("reddit")
-class RedditDataset(Reddit):
-    def __init__(self, args=None):
-        self.url = "https://data.dgl.ai/dataset/reddit.zip"
-        dataset = "Reddit"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
-        if not osp.exists(path):
-            Reddit(path)
-        super(RedditDataset, self).__init__(path, transform=T.TargetIndegree())
-
-    def get_evaluator(self):
-        return accuracy_evaluator()
 
 
 @register_dataset("mutag")

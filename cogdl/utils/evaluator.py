@@ -31,19 +31,33 @@ def accuracy(y_true, y_pred):
     return correct / len(y_true)
 
 
-def multilabel_evaluator(reduction="none"):
-    loss_func = torch.nn.BCEWithLogitsLoss(reduction=reduction)
+def nll_loss(y_pred, y_true):
+    y_true = y_true.long()
+    y_pred = torch.nn.functional.log_softmax(y_pred, dim=-1)
+    return torch.nn.functional.nll_loss(y_pred, y_true)
+
+
+def bce_with_logits_loss(y_pred, y_true, reduction="none"):
+    y_true = y_true.float()
+    loss = torch.nn.BCEWithLogitsLoss(reduction=reduction)(y_pred, y_true)
+    if reduction == "none":
+        loss = torch.sum(torch.mean(loss, dim=0))
+    return loss
+
+
+def multilabel_evaluator():
+    loss_func = bce_with_logits_loss
     metric = multilabel_f1
     return loss_func, metric
 
 
 def accuracy_evaluator():
-    loss_func = torch.nn.functional.nll_loss
+    loss_func = nll_loss
     metric = accuracy
     return loss_func, metric
 
 
 def multiclass_evaluator():
-    loss_func = torch.nn.functional.nll_loss
+    loss_func = nll_loss
     metric = multiclass_f1
     return loss_func, metric

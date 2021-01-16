@@ -56,14 +56,14 @@ class PPRGoTrainer(object):
 
         if os.path.exists(path):
             print(f"Load {mode} from cached")
-            train_topk_matrix = sp.load_npz(path)
+            topk_matrix = sp.load_npz(path)
         else:
             print(f"Fail to load {mode}")
-            train_topk_matrix = build_topk_ppr_matrix_from_data(
+            topk_matrix = build_topk_ppr_matrix_from_data(
                 edge_index, self.alpha, self.epsilon, index, self.topk, self.normalization
             )
-            sp.save_npz(path, train_topk_matrix)
-        result = PPRGoDataset(data.x, train_topk_matrix, index, data.y)
+            sp.save_npz(path, topk_matrix)
+        result = PPRGoDataset(data.x, topk_matrix, index, data.y)
         return result
 
     def get_dataloader(self, dataset):
@@ -129,13 +129,7 @@ class PPRGoTrainer(object):
             x, targets, ppr_scores, y = [item.to(self.device) for item in batch]
             if is_train:
                 pred = self.model(x, targets, ppr_scores)
-                if len(y.shape) == 1:
-                    y = y.long()
-                    pred = torch.nn.functional.log_softmax(pred, dim=-1)
                 loss = self.loss_func(pred, y)
-                if len(loss.shape) > 1:
-                    loss = torch.sum(torch.mean(loss, dim=0))
-
                 self.optimizer.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), 5)
@@ -143,12 +137,7 @@ class PPRGoTrainer(object):
             else:
                 with torch.no_grad():
                     pred = self.model(x, targets, ppr_scores)
-                    if len(y.shape) == 1:
-                        y = y.long()
-                        pred = torch.nn.functional.log_softmax(pred, dim=-1)
                     loss = self.loss_func(pred, y)
-                    if len(loss.shape) > 1:
-                        loss = torch.sum(torch.mean(loss, dim=0))
 
                     preds.append(pred)
                     labels.append(y)

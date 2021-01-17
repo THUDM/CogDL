@@ -13,6 +13,7 @@ def get_default_args():
         "device_id": [0],
         "num_clusters": 7,
         "cluster_method": "kmeans",
+        "evaluate": "NMI",
         "hidden_size": 16,
         "model_type": "spectral",
         "enhance": None,
@@ -21,12 +22,12 @@ def get_default_args():
         "theta": 0.5,
         "mu": 0.2,
         "checkpoint": False,
-        "walk_length": 80,
-        "walk_num": 40,
+        "walk_length": 10,
+        "walk_num": 4,
         "window_size": 5,
-        "worker": 10,
+        "worker": 2,
         "iteration": 3,
-        "rank": 256,
+        "rank": 64,
         "negative": 1,
         "is_large": False,
         "max_iter": 5,
@@ -61,7 +62,7 @@ def test_kmeans_cora():
     args.cluster_method = "kmeans"
     task = build_task(args)
     ret = task.train()
-    assert ret["Accuracy"] > 0
+    assert ret["NMI"] > 0
 
 
 def test_kmeans_citeseer():
@@ -73,7 +74,7 @@ def test_kmeans_citeseer():
     args.num_clusters = 6
     task = build_task(args)
     ret = task.train()
-    assert ret["Accuracy"] > 0
+    assert ret["NMI"] > 0
 
 
 def test_spectral_cora():
@@ -84,7 +85,7 @@ def test_spectral_cora():
     args.cluster_method = "spectral"
     task = build_task(args)
     ret = task.train()
-    assert ret["Accuracy"] > 0
+    assert ret["NMI"] > 0
 
 
 def test_spectral_citeseer():
@@ -96,7 +97,7 @@ def test_spectral_citeseer():
     args.num_clusters = 6
     task = build_task(args)
     ret = task.train()
-    assert ret["Accuracy"] > 0
+    assert ret["NMI"] > 0
 
 
 def test_prone_cora():
@@ -107,7 +108,7 @@ def test_prone_cora():
     args.cluster_method = "kmeans"
     task = build_task(args)
     ret = task.train()
-    assert ret["Accuracy"] > 0
+    assert ret["NMI"] > 0
 
 
 def test_deepwalk_cora():
@@ -118,7 +119,7 @@ def test_deepwalk_cora():
     args.cluster_method = "kmeans"
     task = build_task(args)
     ret = task.train()
-    assert ret["Accuracy"] > 0
+    assert ret["NMI"] > 0
 
 
 def test_netmf_cora():
@@ -129,7 +130,7 @@ def test_netmf_cora():
     args.cluster_method = "kmeans"
     task = build_task(args)
     ret = task.train()
-    assert ret["Accuracy"] > 0
+    assert ret["NMI"] > 0
 
 
 def test_agc_cora():
@@ -138,10 +139,10 @@ def test_agc_cora():
     args.model_type = "both"
     args.dataset = "cora"
     args.cluster_method = "spectral"
-    args.max_iter = 10
+    args.max_iter = 2
     task = build_task(args)
     ret = task.train()
-    assert ret["Accuracy"] > 0
+    assert ret["NMI"] > 0
 
 
 def test_daegc_cora():
@@ -152,7 +153,7 @@ def test_daegc_cora():
     args.cluster_method = "kmeans"
     task = build_task(args)
     ret = task.train()
-    assert ret["Accuracy"] > 0
+    assert ret["NMI"] > 0
 
 
 if __name__ == "__main__":

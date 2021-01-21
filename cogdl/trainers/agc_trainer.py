@@ -73,6 +73,8 @@ class AGCTrainer(BaseTrainer):
         # print(intra / num_per_cluster)
         return np.mean(intra / num_per_cluster)
 
+
+"""
     def evaluate(self, clusters, truth):
         print("Evaluating...")
         TP = 0
@@ -96,3 +98,4 @@ class AGCTrainer(BaseTrainer):
         print(
             "Accuracy = ", precision, "NMI = ", normalized_mutual_info_score(clusters, truth), "Micro_F1 = ", micro_f1
         )
+"""

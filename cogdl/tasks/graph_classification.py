@@ -223,8 +223,8 @@ class GraphClassification(BaseTask):
             return {"train": train_set, "test": test_set}
         else:
             datalist = []
-            if isinstance(dataset[0], Data):
-                return dataset
+            # if isinstance(dataset[0], Data):
+            #     return dataset
             for idata in dataset:
                 data = Data()
                 for key in idata.keys:

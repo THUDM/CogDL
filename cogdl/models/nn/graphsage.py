@@ -55,7 +55,7 @@ class GraphSAGELayer(nn.Module):
         ).to(x.device)
         out = self.aggr(x, adj_sp)
         if self.normalize:
-            out = F.normalize(out, p=2., dim=-1)
+            out = F.normalize(out, p=2.0, dim=-1)
         return out
 
 

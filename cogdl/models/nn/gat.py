@@ -33,6 +33,7 @@ class GATLayer(nn.Module):
         def reset(tensor):
             stdv = math.sqrt(6.0 / (tensor.size(-2) + tensor.size(-1)))
             tensor.data.uniform_(-stdv, stdv)
+
         reset(self.a_l)
         reset(self.a_r)
         reset(self.W)

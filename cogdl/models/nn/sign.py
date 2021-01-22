@@ -125,7 +125,7 @@ class MLP(BaseModel):
 
         # adj matrix
         edge_index, edge_attr = get_adj(
-            row, col,  asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag
+            row, col, asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag
         )
 
         nx = x
@@ -135,7 +135,7 @@ class MLP(BaseModel):
 
         # transpose adj matrix
         edge_index, edge_attr = get_adj(
-            col, row,  asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag
+            col, row, asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag
         )
 
         nx = x

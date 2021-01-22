@@ -5,7 +5,7 @@ from cogdl.data import Dataset
 from cogdl.models.supervised_model import (
     SupervisedModel,
     SupervisedHomogeneousNodeClassificationModel,
-    SupervisedHeterogeneousNodeClassificationModel
+    SupervisedHeterogeneousNodeClassificationModel,
 )
 
 

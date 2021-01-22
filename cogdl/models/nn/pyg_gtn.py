@@ -42,9 +42,7 @@ class GTConv(nn.Module):
                     total_edge_index = torch.cat((total_edge_index, edge_index), dim=1)
                     total_edge_value = torch.cat((total_edge_value, edge_value * filter[i][j]))
             row, col = total_edge_index.detach()
-            row, col, value = coalesce(
-                row, col, total_edge_value
-            )
+            row, col, value = coalesce(row, col, total_edge_value)
             index = torch.stack([row, col])
             results.append((index, value))
         return results
@@ -78,9 +76,7 @@ class GTLayer(nn.Module):
             a_edge, a_value = result_A[i][0].cpu(), result_A[i][1].cpu()
             b_edge, b_value = result_B[i][0].cpu(), result_B[i][1].cpu()
 
-            edges, values = spspmm(
-                a_edge, a_value, b_edge, b_value, self.num_nodes, self.num_nodes, self.num_nodes
-            )
+            edges, values = spspmm(a_edge, a_value, b_edge, b_value, self.num_nodes, self.num_nodes, self.num_nodes)
             H.append((edges.to(device), values.to(device)))
         return H, W
 
@@ -150,8 +146,7 @@ class GTN(BaseModel):
             edge_weight = edge_weight.view(-1)
             assert edge_weight.size(0) == edge_index.size(1)
             row, col = edge_index
-            # deg = scatter_add(edge_weight, col, dim=0, dim_size=num_nodes)
-            deg = torch.zeros((num_nodes, )).to(edge_index.device)
+            deg = torch.zeros((num_nodes,)).to(edge_index.device)
             deg = deg.scatter_add_(dim=0, src=edge_weight, index=row).squeeze()
             deg_inv_sqrt = deg.pow(-1)
             deg_inv_sqrt[deg_inv_sqrt == float("inf")] = 0
@@ -174,9 +169,7 @@ class GTN(BaseModel):
                 X_ = F.relu(X_)
             else:
                 edge_index, edge_weight = H[i][0], H[i][1]
-                X_ = torch.cat(
-                    (X_, F.relu(self.gcn(X, edge_index.detach(), edge_weight))), dim=1
-                )
+                X_ = torch.cat((X_, F.relu(self.gcn(X, edge_index.detach(), edge_weight))), dim=1)
         X_ = self.linear1(X_)
         X_ = F.relu(X_)
         # X_ = F.dropout(X_, p=0.5)

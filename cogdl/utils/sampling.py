@@ -29,8 +29,8 @@ def _random_walk(node, length, indptr, indices):
     i = numba.int32(1)
     while i < length:
         start = indptr[node]
-        end = indptr[node+1]
-        sample = random.randint(start, end-1)
+        end = indptr[node + 1]
+        sample = random.randint(start, end - 1)
         node = indices[sample]
         result[i] = node
         i += 1

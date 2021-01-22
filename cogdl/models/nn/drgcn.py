@@ -42,9 +42,7 @@ class DrGCN(BaseModel):
         self.num_layers = num_layers
         self.dropout = dropout
         shapes = [num_features] + [hidden_size] * (num_layers - 1) + [num_classes]
-        self.convs = nn.ModuleList(
-            [GraphConvolution(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)]
-        )
+        self.convs = nn.ModuleList([GraphConvolution(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
         self.ses = nn.ModuleList(
             [SELayer(shapes[layer], se_channels=int(np.sqrt(shapes[layer]))) for layer in range(num_layers)]
         )

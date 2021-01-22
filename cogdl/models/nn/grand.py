@@ -150,15 +150,10 @@ class Grand(BaseModel):
 
     def rand_prop(self, x, edge_index, edge_weight):
         edge_weight = symmetric_normalization(x.shape[0], edge_index, edge_weight)
-        row, col = edge_index[0], edge_index[1]
         x = self.dropNode(x)
 
         y = x
         for i in range(self.order):
-            # x_source = x[col]
-            # x = scatter(
-            #     x_source * edge_weight[:, None], row[:, None], dim=0, dim_size=x.shape[0], reduce="sum"
-            # ).detach_()
             x = spmm(edge_index, edge_weight, x).detach_()
             y.add_(x)
         return y.div_(self.order + 1.0).detach_()

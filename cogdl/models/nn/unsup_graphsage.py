@@ -96,8 +96,7 @@ class SAGE(BaseModel):
 
         self.random_walker.build_up(data.edge_index, data.x.shape[0])
         walk_res = self.random_walker.walk(
-            start=torch.arange(0, x.shape[0]).to(device),
-            walk_length=self.walk_length + 1
+            start=torch.arange(0, x.shape[0]).to(device), walk_length=self.walk_length + 1
         )
         self.walk_res = torch.as_tensor(walk_res)[:, 1:]
 

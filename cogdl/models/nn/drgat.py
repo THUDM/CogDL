@@ -6,6 +6,7 @@ from cogdl.layers import SELayer
 from .. import BaseModel, register_model
 from .gat import GATLayer
 
+
 @register_model("drgat")
 class DrGAT(BaseModel):
     @staticmethod

@@ -194,7 +194,6 @@ def spmm_adj(indices, values, shape, b):
 # def _naive_spspmm(indptr_row, indices_row, indptr_col, indices_col):
 
 
-
 def get_degrees(indices, num_nodes=None):
     device = indices.device
     values = torch.ones(indices.shape[1]).to(device)
@@ -285,7 +284,7 @@ def coalesce(row, col, value=None):
     col = col[mask]
     if value is not None:
         _value = torch.zeros(row.shape[0], dtype=torch.float).to(row.device)
-        value =_value.scatter_add_(dim=0, src=value, index=col)
+        value = _value.scatter_add_(dim=0, src=value, index=col)
     return row, col, value
 
 

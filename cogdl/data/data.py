@@ -123,6 +123,8 @@ class Data(object):
     @property
     def num_features(self):
         r"""Returns the number of features per node in the graph."""
+        if self.x is None:
+            return 0
         return 1 if self.x.dim() == 1 else self.x.size(1)
 
     @property

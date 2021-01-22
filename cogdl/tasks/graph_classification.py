@@ -218,8 +218,8 @@ class GraphClassification(BaseTask):
 
     def generate_data(self, dataset, args):
         datalist = []
-        if isinstance(dataset[0], Data):
-            return dataset
+        # if isinstance(dataset[0], Data):
+        #     return dataset
         for idata in dataset:
             data = Data()
             for key in idata.keys:

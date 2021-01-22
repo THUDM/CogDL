@@ -1,107 +1,92 @@
-import math
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import math
 
 from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops
+from cogdl.utils import add_remaining_self_loops, mul_edge_softmax, spmm
 
 
-class SpecialSpmmFunction(torch.autograd.Function):
-    """Special function for only sparse region backpropataion layer."""
-
-    @staticmethod
-    def forward(ctx, indices, values, shape, b):
-        assert indices.requires_grad is False
-        a = torch.sparse_coo_tensor(indices, values, shape)
-        ctx.save_for_backward(a, b)
-        ctx.N = shape[0]
-        return torch.matmul(a, b)
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        a, b = ctx.saved_tensors
-        grad_values = grad_b = None
-        if ctx.needs_input_grad[1]:
-            grad_a_dense = grad_output.matmul(b.t())
-            edge_idx = a._indices()[0, :] * ctx.N + a._indices()[1, :]
-            grad_values = grad_a_dense.view(-1)[edge_idx]
-        if ctx.needs_input_grad[3]:
-            grad_b = a.t().matmul(grad_output)
-        return None, grad_values, None, grad_b
-
-
-class SpecialSpmm(nn.Module):
-    def forward(self, indices, values, shape, b):
-        return SpecialSpmmFunction.apply(indices, values, shape, b)
-
-
-class SpGraphAttentionLayer(nn.Module):
+class GATLayer(nn.Module):
     """
     Sparse version GAT layer, similar to https://arxiv.org/abs/1710.10903
     """
 
-    def __init__(self, in_features, out_features, dropout, alpha, concat=True):
-        super(SpGraphAttentionLayer, self).__init__()
+    def __init__(self, in_features, out_features, nhead=1, alpha=0.2, dropout=0.6, concat=True):
+        super(GATLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.alpha = alpha
         self.concat = concat
+        self.nhead = nhead
 
-        self.W = nn.Parameter(torch.zeros(size=(in_features, out_features)))
-        nn.init.xavier_normal_(self.W.data, gain=1.414)
+        self.W = nn.Parameter(torch.FloatTensor(in_features, out_features * nhead))
 
-        self.a = nn.Parameter(torch.zeros(size=(1, 2 * out_features)))
-        nn.init.xavier_normal_(self.a.data, gain=1.414)
+        self.a_l = nn.Parameter(torch.zeros(size=(1, nhead, out_features)))
+        self.a_r = nn.Parameter(torch.zeros(size=(1, nhead, out_features)))
 
         self.dropout = nn.Dropout(dropout)
         self.leakyrelu = nn.LeakyReLU(self.alpha)
-        self.special_spmm = SpecialSpmm()
+        self.reset_parameteres()
 
-    def forward(self, input, edge):
-        N = input.size()[0]
+    def reset_parameteres(self):
+        def reset(tensor):
+            stdv = math.sqrt(6.0 / (tensor.size(-2) + tensor.size(-1)))
+            tensor.data.uniform_(-stdv, stdv)
+        reset(self.a_l)
+        reset(self.a_r)
+        reset(self.W)
 
-        h = torch.mm(input, self.W)
-        # h: N x out
-        assert not torch.isnan(h).any()
+    def forward(self, x, edge):
+        N = x.size()[0]
+        # h = self.W(x).view(-1, self.nhead, self.out_features)
+        h = torch.matmul(x, self.W).view(-1, self.nhead, self.out_features)
+        # h: N * H * d
+        if torch.isnan(h).any():
+            print("NaN in Graph Attention")
+            h[torch.isnan(h)] = 0
 
         # Self-attention on the nodes - Shared attention mechanism
-        edge_h = torch.cat((h[edge[0, :], :], h[edge[1, :], :]), dim=1).t()
-        # edge: 2*D x E
+        h_l = (self.a_l * h).sum(dim=-1)[edge[0, :]]
+        h_r = (self.a_r * h).sum(dim=-1)[edge[1, :]]
+        edge_attention = self.leakyrelu(h_l + h_r)
+        # edge_e: E * H
+        edge_attention = mul_edge_softmax(edge, edge_attention, shape=(N, N))
 
-        edge_e = torch.exp(-self.leakyrelu(self.a.mm(edge_h).squeeze()))
-        assert not torch.isnan(edge_e).any()
-        # edge_e: E
+        edge_attention = edge_attention.view(-1)
+        edge_attention = self.dropout(edge_attention)
 
-        e_rowsum = self.special_spmm(edge, edge_e, torch.Size([N, N]), torch.ones(size=(N, 1)).to(input.device))
-        # e_rowsum: N x 1
+        num_edges = edge.shape[1]
+        num_nodes = x.shape[0]
+        edge_index = edge.view(-1)
+        edge_index = edge_index.unsqueeze(0).repeat(self.nhead, 1)
+        add_num = torch.arange(0, self.nhead * num_nodes, num_nodes).view(-1, 1).to(edge_index.device)
+        edge_index = edge_index + add_num
+        edge_index = edge_index.split((num_edges, num_edges), dim=1)
 
-        edge_e = self.dropout(edge_e)
-        # edge_e: E
+        row, col = edge_index
+        row = row.reshape(-1)
+        col = col.reshape(-1)
+        edge_index = torch.stack([row, col])
 
-        h_prime = self.special_spmm(edge, edge_e, torch.Size([N, N]), h)
+        h_prime = spmm(edge_index, edge_attention, h.permute(1, 0, 2).reshape(num_nodes * self.nhead, -1))
         assert not torch.isnan(h_prime).any()
-        # h_prime: N x out
-
-        h_prime = h_prime.div(e_rowsum + 1e-8)
-        # h_prime: N x out
-        assert not torch.isnan(h_prime).any()
+        h_prime = h_prime.split([num_nodes] * self.nhead)
 
         if self.concat:
             # if this layer is not last layer,
-            return F.elu(h_prime)
+            out = torch.cat(h_prime, dim=1)
         else:
             # if this layer is last layer,
-            return h_prime
+            out = sum(h_prime) / self.nhead
+        return out
 
     def __repr__(self):
         return self.__class__.__name__ + " (" + str(self.in_features) + " -> " + str(self.out_features) + ")"
 
 
 @register_model("gat")
-class PetarVSpGAT(BaseModel):
+class GAT(BaseModel):
     r"""The GAT model from the `"Graph Attention Networks"
     <https://arxiv.org/abs/1710.10903>`_ paper
 
@@ -139,25 +124,19 @@ class PetarVSpGAT(BaseModel):
 
     def __init__(self, in_feats, hidden_size, out_features, dropout, alpha, nheads):
         """Sparse version of GAT."""
-        super(PetarVSpGAT, self).__init__()
+        super(GAT, self).__init__()
         self.dropout = dropout
 
-        self.attentions = [
-            SpGraphAttentionLayer(in_feats, hidden_size, dropout=dropout, alpha=alpha, concat=True)
-            for _ in range(nheads)
-        ]
-        for i, attention in enumerate(self.attentions):
-            self.add_module("attention_{}".format(i), attention)
+        self.attention = GATLayer(in_feats, hidden_size, dropout=dropout, alpha=alpha, nhead=nheads, concat=True)
 
-        self.out_att = SpGraphAttentionLayer(
-            hidden_size * nheads, out_features, dropout=dropout, alpha=alpha, concat=False
-        )
+        self.out_att = GATLayer(hidden_size * nheads, out_features, dropout=dropout, alpha=alpha, nhead=1, concat=False)
 
     def forward(self, x, edge_index):
         edge_index, _ = add_remaining_self_loops(edge_index)
-        x = F.dropout(x, self.dropout, training=self.training)
-        x = torch.cat([att(x, edge_index) for att in self.attentions], dim=1)
-        x = F.dropout(x, self.dropout, training=self.training)
+
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = F.elu(self.attention(x, edge_index))
+        x = F.dropout(x, p=self.dropout, training=self.training)
         x = F.elu(self.out_att(x, edge_index))
         return x
 

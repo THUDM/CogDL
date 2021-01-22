@@ -20,7 +20,7 @@ from cogdl.layers.gpt_gnn_module import (
     preprocess_dataset,
 )
 from cogdl.models.supervised_model import SupervisedHeterogeneousNodeClassificationModel
-from cogdl.trainers.supervised_trainer import (
+from cogdl.trainers.supervised_model_trainer import (
     SupervisedHomogeneousNodeClassificationTrainer,
     SupervisedHeterogeneousNodeClassificationTrainer,
 )

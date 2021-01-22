@@ -217,21 +217,16 @@ class GraphClassification(BaseTask):
         return dict(Acc=sum(acc) / len(acc))
 
     def generate_data(self, dataset, args):
-        if "ModelNet" in str(type(dataset).__name__):
-            train_set, test_set = dataset.get_all()
-            args.num_features = 3
-            return {"train": train_set, "test": test_set}
-        else:
-            datalist = []
-            if isinstance(dataset[0], Data):
-                return dataset
-            for idata in dataset:
-                data = Data()
-                for key in idata.keys:
-                    data[key] = idata[key]
-                datalist.append(data)
+        datalist = []
+        if isinstance(dataset[0], Data):
+            return dataset
+        for idata in dataset:
+            data = Data()
+            for key in idata.keys:
+                data[key] = idata[key]
+            datalist.append(data)
 
-            if args.degree_feature:
-                datalist = node_degree_as_feature(datalist)
-                args.num_features = datalist[0].num_features
-            return datalist
+        if args.degree_feature:
+            datalist = node_degree_as_feature(datalist)
+            args.num_features = datalist[0].num_features
+        return datalist

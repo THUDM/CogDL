@@ -3,9 +3,9 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.parameter import Parameter
-from torch_scatter import scatter_add, scatter
+
 from .. import BaseModel, register_model
+from cogdl.utils import symmetric_normalization, spmm
 
 
 class MLPLayer(nn.Module):
@@ -13,9 +13,9 @@ class MLPLayer(nn.Module):
         super(MLPLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.weight = Parameter(torch.FloatTensor(in_features, out_features))
+        self.weight = nn.Parameter(torch.FloatTensor(in_features, out_features))
         if bias:
-            self.bias = Parameter(torch.FloatTensor(out_features))
+            self.bias = nn.Parameter(torch.FloatTensor(out_features))
         else:
             self.register_parameter("bias", None)
         self.reset_parameters()
@@ -148,28 +148,18 @@ class Grand(BaseModel):
             x = x * (1.0 - self.dropnode_rate)
         return x
 
-    def normalize_adj(self, edge_index, edge_weight, num_nodes):
-        row, col = edge_index[0], edge_index[1]
-        deg = scatter_add(edge_weight, row, dim=0, dim_size=num_nodes)
-
-        deg_inv_sqrt = deg.pow_(-0.5)
-        deg_inv_sqrt.masked_fill_(deg_inv_sqrt == float("inf"), 0)
-        edge_weight = deg_inv_sqrt[row] * edge_weight * deg_inv_sqrt[col]
-        # print(edge_weight)
-        return edge_weight
-
     def rand_prop(self, x, edge_index, edge_weight):
-        edge_weight = self.normalize_adj(edge_index, edge_weight, x.shape[0])
+        edge_weight = symmetric_normalization(x.shape[0], edge_index, edge_weight)
         row, col = edge_index[0], edge_index[1]
         x = self.dropNode(x)
 
         y = x
         for i in range(self.order):
-            x_source = x[col]
-            x = scatter(
-                x_source * edge_weight[:, None], row[:, None], dim=0, dim_size=x.shape[0], reduce="sum"
-            ).detach_()
-            # x = torch.spmm(adj, x).detach_()
+            # x_source = x[col]
+            # x = scatter(
+            #     x_source * edge_weight[:, None], row[:, None], dim=0, dim_size=x.shape[0], reduce="sum"
+            # ).detach_()
+            x = spmm(edge_index, edge_weight, x).detach_()
             y.add_(x)
         return y.div_(self.order + 1.0).detach_()
 

@@ -3,9 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from cogdl.layers.srgcn_module import act_attention, act_map, act_normalization
 from cogdl.utils import add_remaining_self_loops
-from torch_sparse import spmm, spspmm
+from torch_sparse import spspmm
 
 from .. import BaseModel, register_model
+from cogdl.utils import spmm
 
 
 class NodeAdaptiveEncoder(nn.Module):
@@ -19,9 +20,6 @@ class NodeAdaptiveEncoder(nn.Module):
         self.dropout = torch.nn.Dropout(dropout)
 
     def forward(self, x):
-        # h = self.fc(x)
-        # h = torch.sigmoid(h)
-        # h = self.dropout(h)
         h = torch.mm(x, self.fc) + self.bf
         h = torch.sigmoid(h)
         h = self.dropout(h)
@@ -98,7 +96,7 @@ class SrgcnHead(nn.Module):
             val_h = h
 
             for _ in range(i + 1):
-                val_h = spmm(adj_mat_ind, adj_mat_val, N, N, val_h)
+                val_h = spmm(adj_mat_ind, adj_mat_val, val_h)
                 # val_h = spmm(adj_mat_ind, F.dropout(adj_mat_val, p=self.node_dropout, training=self.training), N, N, val_h)
 
             # val_h = val_h / norm
@@ -165,7 +163,7 @@ class SrgcnSoftmaxHead(nn.Module):
 
         # MATRIX_MUL
         # val_h = spmm(adj_mat_ind, F.dropout(adj_mat_val, p=self.node_dropout, training=self.training), N, N, val_h)
-        val_h = spmm(adj_mat_ind, adj_mat_val, N, N, val_h)
+        val_h = spmm(adj_mat_ind, adj_mat_val, val_h)
 
         val_h[val_h != val_h] = 0
         val_h = val_h + self.bias

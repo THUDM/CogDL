@@ -1,13 +1,10 @@
 import numpy as np
-import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn.conv import GATConv
 
 from cogdl.layers import SELayer
 
 from .. import BaseModel, register_model
-
+from .gat import GATLayer
 
 @register_model("drgat")
 class DrGAT(BaseModel):
@@ -39,8 +36,8 @@ class DrGAT(BaseModel):
         self.hidden_size = hidden_size
         self.num_heads = num_heads
         self.dropout = dropout
-        self.conv1 = GATConv(num_features, hidden_size, heads=num_heads, dropout=dropout)
-        self.conv2 = GATConv(hidden_size * num_heads, num_classes, dropout=dropout)
+        self.conv1 = GATLayer(num_features, hidden_size, nhead=num_heads, dropout=dropout)
+        self.conv2 = GATLayer(hidden_size * num_heads, num_classes, nhead=1, dropout=dropout)
         self.se1 = SELayer(num_features, se_channels=int(np.sqrt(num_features)))
         self.se2 = SELayer(hidden_size * num_heads, se_channels=int(np.sqrt(hidden_size * num_heads)))
 

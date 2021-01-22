@@ -1,12 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod, ABC
+from .base_trainer import BaseTrainer
 
 from cogdl.data import Dataset
 from cogdl.models.supervised_model import (
     SupervisedModel,
-    SupervisedHeterogeneousNodeClassificationModel,
     SupervisedHomogeneousNodeClassificationModel,
+    SupervisedHeterogeneousNodeClassificationModel
 )
-from cogdl.trainers.base_trainer import BaseTrainer
 
 
 class SupervisedTrainer(BaseTrainer, ABC):
@@ -25,7 +25,3 @@ class SupervisedHomogeneousNodeClassificationTrainer(BaseTrainer, ABC):
     @abstractmethod
     def fit(self, model: SupervisedHomogeneousNodeClassificationModel, dataset: Dataset) -> None:
         raise NotImplementedError
-
-    # @abstractmethod
-    # def predictAll(self) -> Any:
-    #     raise NotImplementedError

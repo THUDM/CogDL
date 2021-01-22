@@ -5,16 +5,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from cogdl.layers import MeanAggregator
+from cogdl.layers import MeanAggregator, SumAggregator
 from cogdl.trainers.sampled_trainer import NeighborSamplingTrainer
 
 from .. import BaseModel, register_model
 
 
-# edge index based sampler
 # @profile
 def sage_sampler(adjlist, edge_index, num_sample):
-    # print(edge_index)
     if adjlist == {}:
         edge_index = edge_index.t().cpu().tolist()
         for i in edge_index:
@@ -30,25 +28,35 @@ def sage_sampler(adjlist, edge_index, num_sample):
             list = random.sample(list, num_sample)
         sample_list.extend(list)
 
-    edge_idx = torch.LongTensor(sample_list).t()
+    edge_idx = torch.as_tensor(sample_list, dtype=torch.long).t()
     return edge_idx
 
 
 class GraphSAGELayer(nn.Module):
-    def __init__(self, in_feats, out_feats):
+    def __init__(self, in_feats, out_feats, normalize=False, aggr="mean"):
         super(GraphSAGELayer, self).__init__()
         self.in_feats = in_feats
         self.out_feats = out_feats
-        self.aggr = MeanAggregator(in_feats, out_feats, cached=True)
+        self.normalize = normalize
+        if aggr == "mean":
+            self.aggr = MeanAggregator(in_feats, out_feats)
+        elif aggr == "sum":
+            self.aggr = SumAggregator(in_feats, out_feats)
+        else:
+            raise NotImplementedError
 
-    def forward(self, x, edge_index):
+    def forward(self, x, edge_index, edge_weight=None):
+        if edge_weight is None:
+            edge_weight = torch.ones(edge_index.shape[1]).float().to(x.device)
         adj_sp = torch.sparse_coo_tensor(
-            edge_index,
-            torch.ones(edge_index.shape[1]).float().to(x.device),
-            (x.shape[0], x.shape[0]),
+            indices=edge_index,
+            values=edge_weight,
+            size=(x.shape[0], x.shape[0]),
         ).to(x.device)
-        x = self.aggr(x, adj_sp)
-        return x
+        out = self.aggr(x, adj_sp)
+        if self.normalize:
+            out = F.normalize(out, p=2., dim=-1)
+        return out
 
 
 @register_model("graphsage")
@@ -148,7 +156,7 @@ class Graphsage(BaseModel):
         return F.log_softmax(x_all, dim=-1)
 
     @staticmethod
-    def get_trainer(taskType: Any, args: Any):
+    def get_trainer(task: Any, args: Any):
         if args.dataset not in ["cora", "citeseer"]:
             return NeighborSamplingTrainer
 

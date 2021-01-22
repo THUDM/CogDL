@@ -73,8 +73,11 @@ class GTLayer(nn.Module):
         H = []
         device = result_A[0][0].device
         for i in range(len(result_A)):
-            a_edge, a_value = result_A[i][0].cpu(), result_A[i][1].cpu()
-            b_edge, b_value = result_B[i][0].cpu(), result_B[i][1].cpu()
+            # a_edge, a_value = result_A[i][0].cpu(), result_A[i][1].cpu()
+            # b_edge, b_value = result_B[i][0].cpu(), result_B[i][1].cpu()
+
+            a_edge, a_value = result_A[i][0], result_A[i][1]
+            b_edge, b_value = result_B[i][0], result_B[i][1]
 
             edges, values = spspmm(a_edge, a_value, b_edge, b_value, self.num_nodes, self.num_nodes, self.num_nodes)
             H.append((edges.to(device), values.to(device)))

@@ -271,7 +271,8 @@ def coalesce(row, col, value=None):
     if not bigger:
         edge_index = torch.stack([row, col]).T
         sort_value, sort_index = torch.sort(edge_index, dim=0)
-        edge_index = edge_index[sort_index].T
+        sort_index = sort_index[:, 0]
+        edge_index = edge_index[sort_index].t()
         row, col = edge_index
     num = col.shape[0] + 1
     idx = torch.full((num,), -1, dtype=torch.float)

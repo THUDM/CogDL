@@ -71,13 +71,11 @@ class Model_Maker:
     def create_model(self):
         """
         1. Make a model file in cogdl/models/nn/
-        2. Make an example file in examples
-        3. Add to tests/tasks/ file
-        4. Add to match.yml
-        5. Remind the user to add their model to README.md
+        2. Add to tests/tasks/ file
+        3. Add to match.yml
+        4. Remind the user to add their model to README.md
         """
         self.create_model_file()
-        self.create_model_example()
         self.create_model_unit_test()
         self.add_model_to_list()
         self.readme_reminder()
@@ -100,26 +98,11 @@ class Model_Maker:
         print("Created model file --- cogdl/models/nn/%s.py" % self.model_name)
         template_file.close()
 
-    def create_model_example(self):
+    def create_model_unit_test(self):
         self.model_type = "gnn" if self.inputs["model_type"] == "GNN method" else "emb"
         self.model_task = self.inputs["model_task"].replace(" ", "_").lower()
-        template_file = open("templates/base_example.py", "r")
-        model_file = open("examples/%s_models/%s.py" % (self.model_type, self.model_name), "w")
-        for line in template_file.readlines():
-            if '"task"' in line:
-                line = line.replace("model_task", self.model_task)
-            elif '"model"' in line:
-                line = line.replace("model_name", self.inputs["model_name"])
-            elif "print_result" in line:
-                line = line.replace("model_name", self.inputs["model_name"])
-            model_file.write(line)
-        model_file.close()
-
-        print("Created example file --- examples/%s_models/%s.py" % (self.model_type, self.model_name))
-        template_file.close()
-
-    def create_model_unit_test(self):
         created_args = False
+        print(self.model_task)
         test_file = open("tests/tasks/test_%s.py" % self.model_task, "r")
         lines = test_file.readlines()
         test_file.close()
@@ -141,10 +124,10 @@ class Model_Maker:
 
     def add_model_to_list(self):
         found_task = False
-        match_file = open("match.yml", "r")
+        match_file = open("cogdl/match.yml", "r")
         lines = match_file.readlines()
         match_file.close()
-        match_file = open("match.yml", "w")
+        match_file = open("cogdl/match.yml", "w")
 
         for line in lines:
             if self.model_task + ":\n" == line:

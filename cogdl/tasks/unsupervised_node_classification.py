@@ -32,6 +32,7 @@ class UnsupervisedNodeClassification(BaseTask):
         parser.add_argument("--num-shuffle", type=int, default=5)
         parser.add_argument("--save-dir", type=str, default="./embedding")
         parser.add_argument("--load-emb-path", type=str, default=None)
+        parser.add_argument('--enhance', type=str, default=None, help='use prone or prone++ to enhance embedding')
         # fmt: on
 
     def __init__(self, args, dataset=None, model=None):

@@ -24,7 +24,6 @@ def get_parser():
     parser.add_argument('--device-id', default=[0], type=int, nargs='+',
                         help='which GPU to use')
     parser.add_argument('--save-dir', default='.', type=str)
-    parser.add_argument('--enhance', type=str, default=None, help='use prone or prone++ to enhance embedding')
     parser.add_argument('--checkpoint', action="store_true", help='load pre-trained model')
 
     # fmt: on
@@ -94,9 +93,7 @@ def get_default_args(task: str, dataset, model, **kwargs):
     args, _ = parser.parse_known_args()
     args = parse_args_and_arch(parser, args)
     for key, value in kwargs.items():
-        if hasattr(args, key):
-            args.__setattr__(key, value)
-    print(args)
+        args.__setattr__(key, value)
     return args
 
 

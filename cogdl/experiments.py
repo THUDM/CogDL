@@ -11,6 +11,7 @@ from tabulate import tabulate
 from cogdl.options import get_default_args
 from cogdl.tasks import build_task
 from cogdl.utils import set_random_seed, tabulate_results
+from cogdl.configs import BEST_CONFIGS
 
 
 class AutoML(object):
@@ -59,12 +60,30 @@ class AutoML(object):
         return self.best_results
 
 
+def set_best_config(args):
+    configs = BEST_CONFIGS[args.task]
+    if args.model not in configs:
+        return args
+    configs = configs[args.model]
+    for key, value in configs["general"].items():
+        args.__setattr__(key, value)
+    if args.dataset not in configs:
+        return args
+    for key, value in configs[args.dataset].items():
+        args.__setattr__(key, value)
+    return args
+
+
 def train(args):
     if torch.cuda.is_available() and not args.cpu:
         torch.cuda.set_device(args.device_id[0])
 
     set_random_seed(args.seed)
 
+    if getattr(args, "use_best_config", False):
+        args = set_best_config(args)
+
+    print(args)
     task = build_task(args)
     result = task.train()
 

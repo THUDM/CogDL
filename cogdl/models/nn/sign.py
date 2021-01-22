@@ -1,30 +1,32 @@
 import torch
 import torch.nn.functional as F
-from torch_geometric.utils import dropout_adj, to_undirected
-from torch_sparse import SparseTensor
 
 from .. import BaseModel, register_model
+from cogdl.utils import (
+    add_remaining_self_loops,
+    remove_self_loops,
+    row_normalization,
+    symmetric_normalization,
+    to_undirected,
+    spmm,
+    dropout_adj,
+)
 
 
-def get_adj(row, col, N, asymm_norm=False, set_diag=True, remove_diag=False):
-    adj = SparseTensor(row=row, col=col, sparse_sizes=(N, N))
+def get_adj(row, col, asymm_norm=False, set_diag=True, remove_diag=False):
+    edge_index = torch.stack([row, col])
+    edge_attr = torch.ones(edge_index.shape[1]).to(edge_index.device)
     if set_diag:
-        adj = adj.set_diag()
+        edge_index, edge_attr = add_remaining_self_loops(edge_index, edge_attr)
     elif remove_diag:
-        adj = adj.remove_diag()
+        edge_index, _ = remove_self_loops(edge_index)
 
+    num_nodes = int(torch.max(edge_index)) + 1
     if not asymm_norm:
-        deg = adj.sum(dim=1).to(torch.float)
-        deg_inv_sqrt = deg.pow(-0.5)
-        deg_inv_sqrt[deg_inv_sqrt == float("inf")] = 0
-        adj = deg_inv_sqrt.view(-1, 1) * adj * deg_inv_sqrt.view(1, -1)
+        edge_attr = row_normalization(num_nodes, edge_index, edge_attr)
     else:
-        deg = adj.sum(dim=1).to(torch.float)
-        deg_inv = deg.pow(-1.0)
-        deg_inv[deg_inv == float("inf")] = 0
-        adj = deg_inv.view(-1, 1) * adj
-
-    return adj
+        edge_attr = symmetric_normalization(num_nodes, edge_index, edge_attr)
+    return edge_index, edge_attr
 
 
 @register_model("sign")
@@ -99,6 +101,8 @@ class MLP(BaseModel):
             self.bns.append(torch.nn.BatchNorm1d(hidden_size))
         self.lins.append(torch.nn.Linear(hidden_size, num_classes))
 
+        self.cache_x = None
+
     def reset_parameters(self):
         for lin in self.lins:
             lin.reset_parameters()
@@ -112,7 +116,7 @@ class MLP(BaseModel):
         op_embedding.append(x)
 
         # Convert to numpy arrays on cpu
-        edge_index, _ = dropout_adj(edge_index, p=self.dropedge_rate, num_nodes=num_nodes)
+        edge_index, _ = dropout_adj(edge_index, drop_rate=self.dropedge_rate)
         row, col = edge_index
 
         if self.undirected:
@@ -120,29 +124,31 @@ class MLP(BaseModel):
             row, col = edge_index
 
         # adj matrix
-        adj = get_adj(
-            row, col, num_nodes, asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag
+        edge_index, edge_attr = get_adj(
+            row, col, asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag
         )
 
         nx = x
         for _ in range(self.num_propagations):
-            nx = adj @ nx
+            nx = spmm(edge_index, edge_attr, nx)
             op_embedding.append(nx)
 
         # transpose adj matrix
-        adj = get_adj(
-            col, row, num_nodes, asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag
+        edge_index, edge_attr = get_adj(
+            col, row, asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag
         )
 
         nx = x
         for _ in range(self.num_propagations):
-            nx = adj @ nx
+            nx = spmm(edge_index, edge_attr, nx)
             op_embedding.append(nx)
 
         return torch.cat(op_embedding, dim=1)
 
     def forward(self, x, edge_index):
-        x = self._preprocessing(x, edge_index)
+        if self.cache_x is None:
+            self.cache_x = self._preprocessing(x, edge_index)
+        x = self.cache_x
         for i, lin in enumerate(self.lins[:-1]):
             x = lin(x)
             x = self.bns[i](x)

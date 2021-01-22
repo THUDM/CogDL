@@ -10,8 +10,6 @@ import torch.nn.functional as F
 from .base_trainer import BaseTrainer
 from cogdl.utils import add_remaining_self_loops
 
-from torch_geometric.data import NeighborSampler
-
 
 def random_partition_graph(num_nodes, cluster_number=10):
     return np.random.randint(cluster_number, size=num_nodes)

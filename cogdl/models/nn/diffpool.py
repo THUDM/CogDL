@@ -6,10 +6,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from torch_geometric.nn import SAGEConv
-
 from .. import BaseModel, register_model
 from cogdl.data import DataLoader
+from .graphsage import GraphSAGELayer
 
 
 class EntropyLoss(nn.Module):
@@ -55,17 +54,18 @@ class GraphSAGE(nn.Module):
         self.num_layers = num_layers
         self.dropout = dropout
         self.use_bn = use_bn
+        aggr = "concat" if concat else "mean"
         if num_layers == 1:
-            self.convlist.append(SAGEConv(in_feats, out_feats, normalize, concat))
+            self.convlist.append(GraphSAGELayer(in_feats, out_feats, normalize, aggr))
         else:
-            self.convlist.append(SAGEConv(in_feats, hidden_dim, normalize, concat))
+            self.convlist.append(GraphSAGELayer(in_feats, hidden_dim, normalize, aggr))
             if use_bn:
                 self.bn_list.append(nn.BatchNorm1d(hidden_dim))
             for _ in range(num_layers - 2):
-                self.convlist.append(SAGEConv(hidden_dim, hidden_dim, normalize, concat))
+                self.convlist.append(GraphSAGELayer(hidden_dim, hidden_dim, normalize, aggr))
                 if use_bn:
                     self.bn_list.append(nn.BatchNorm1d(hidden_dim))
-            self.convlist.append(SAGEConv(hidden_dim, out_feats, normalize, concat))
+            self.convlist.append(GraphSAGELayer(hidden_dim, out_feats, normalize, aggr))
 
     def forward(self, x, edge_index, edge_weight=None):
         h = x
@@ -145,8 +145,8 @@ class BatchedDiffPoolLayer(nn.Module):
         self.dropout = dropout
         self.use_link_pred = link_pred_loss
         self.batch_size = batch_size
-        self.embd_gnn = SAGEConv(in_feats, out_feats, normalize=False)
-        self.pool_gnn = SAGEConv(in_feats, assign_dim, normalize=False)
+        self.embd_gnn = GraphSAGELayer(in_feats, out_feats, normalize=False)
+        self.pool_gnn = GraphSAGELayer(in_feats, assign_dim, normalize=False)
 
         self.loss_dict = dict()
 

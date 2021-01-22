@@ -3,11 +3,10 @@ import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.utils import remove_self_loops
-from torch_scatter import scatter_add
 
 from .. import BaseModel, register_model
 from cogdl.data import DataLoader
+from cogdl.utils import remove_self_loops
 
 
 class GINLayer(nn.Module):
@@ -198,6 +197,9 @@ class GIN(BaseModel):
 
     def forward(self, batch):
         h = batch.x
+        device = h.device
+        batchsize = int(torch.max(batch.batch)) + 1
+
         layer_rep = [h]
         for i in range(self.num_layers - 1):
             h = self.gin_layers[i](h, batch.edge_index)
@@ -206,9 +208,13 @@ class GIN(BaseModel):
             layer_rep.append(h)
 
         final_score = 0
+
         for i in range(self.num_layers):
             # pooled = self.pooling(layer_rep[i], batch, dim=0)
-            pooled = scatter_add(layer_rep[i], batch.batch, dim=0)
+            # pooled = scatter_add(layer_rep[i], batch.batch, dim=0)
+            hsize = layer_rep[i].shape[1]
+            output = torch.zeros(batchsize, layer_rep[i].shape[1]).to(device)
+            pooled = output.scatter_add_(dim=0, index=batch.batch.view(-1, 1).repeat(1, hsize), src=layer_rep[i])
             final_score += self.dropout(self.linear_prediction[i](pooled))
         final_score = F.softmax(final_score, dim=-1)
         if batch.y is not None:

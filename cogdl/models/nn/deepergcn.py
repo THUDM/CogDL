@@ -1,13 +1,9 @@
-import numpy as np
-import scipy.sparse as sparse
 from typing import Any
 from torch.utils.checkpoint import checkpoint
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from torch_scatter import scatter_max
 
 from .. import register_model, BaseModel
 from cogdl.utils import mul_edge_softmax, spmm, get_activation
@@ -87,8 +83,6 @@ class GENConv(nn.Module):
                 b=torch.ones(num_nodes).unsqueeze(-1).to(device),
             ).view(-1)
             h = edge_msg.pow(self.t) / deg[edge_index[0]].unsqueeze(-1)
-        elif self.aggr == "max":
-            h, _ = scatter_max(edge_msg, edge_index[0].view(-1, 1).repeat(1, edge_msg.size(1)), dim=0)
         else:
             raise NotImplementedError
 

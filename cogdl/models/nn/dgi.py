@@ -181,5 +181,5 @@ class DGIModel(BaseModel):
         return h_1.detach()  # , c.detach()
 
     @staticmethod
-    def get_trainer(taskType, args):
+    def get_trainer(task, args):
         return SelfSupervisedTrainer

@@ -1,5 +1,3 @@
-from abc import ABC, abstractmethod
-from typing import Any
 import copy
 
 import numpy as np
@@ -9,10 +7,9 @@ from tqdm import tqdm
 
 from cogdl.data import Dataset
 from cogdl.models.supervised_model import (
-    SupervisedHeterogeneousNodeClassificationModel,
     SupervisedHomogeneousNodeClassificationModel,
 )
-from cogdl.trainers.supervised_trainer import SupervisedHomogeneousNodeClassificationTrainer
+from cogdl.trainers.supervised_model_trainer import SupervisedHomogeneousNodeClassificationTrainer
 from cogdl.trainers.self_task import EdgeMask, PairwiseDistance, Distance2Clusters, PairwiseAttrSim, Distance2ClustersPP
 
 
@@ -28,9 +25,9 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         self.alpha = args.alpha
         self.label_mask = args.label_mask
 
-    @staticmethod
-    def build_trainer_from_args(args):
-        pass
+    @classmethod
+    def build_trainer_from_args(cls, args):
+        return cls(args)
 
     def resplit_data(self, data):
         trained = torch.where(data.train_mask)[0]
@@ -38,11 +35,11 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         preserve_nnz = int(len(perm) * (1 - self.label_mask))
         preserved = trained[perm[:preserve_nnz]]
         masked = trained[perm[preserve_nnz:]]
-        data.train_mask = torch.zeros(data.train_mask.shape[0], dtype=bool)
+        data.train_mask = torch.full((data.train_mask.shape[0],), False, dtype=torch.bool)
         data.train_mask[preserved] = True
         data.test_mask[masked] = True
 
-    def fit(self, model: SupervisedHeterogeneousNodeClassificationModel, dataset: Dataset):
+    def fit(self, model: SupervisedHomogeneousNodeClassificationModel, dataset: Dataset):
         # self.resplit_data(dataset.data)
         self.data = dataset.data
         self.original_data = dataset.data

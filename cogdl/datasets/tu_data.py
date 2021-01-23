@@ -277,7 +277,7 @@ class TUDataset(Dataset):
 class MUTAGDataset(TUDataset):
     def __init__(self, args=None):
         dataset = "MUTAG"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
         super(MUTAGDataset, self).__init__(path, name=dataset)
@@ -287,7 +287,7 @@ class MUTAGDataset(TUDataset):
 class ImdbBinaryDataset(TUDataset):
     def __init__(self, args=None):
         dataset = "IMDB-BINARY"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
         super(ImdbBinaryDataset, self).__init__(path, name=dataset)
@@ -297,7 +297,7 @@ class ImdbBinaryDataset(TUDataset):
 class ImdbMultiDataset(TUDataset):
     def __init__(self, args=None):
         dataset = "IMDB-MULTI"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
         super(ImdbMultiDataset, self).__init__(path, name=dataset)
@@ -307,7 +307,7 @@ class ImdbMultiDataset(TUDataset):
 class CollabDataset(TUDataset):
     def __init__(self, args=None):
         dataset = "COLLAB"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
         super(CollabDataset, self).__init__(path, name=dataset)
@@ -317,7 +317,7 @@ class CollabDataset(TUDataset):
 class ProtainsDataset(TUDataset):
     def __init__(self, args=None):
         dataset = "PROTEINS"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
         super(ProtainsDataset, self).__init__(path, name=dataset)
@@ -327,7 +327,7 @@ class ProtainsDataset(TUDataset):
 class RedditBinary(TUDataset):
     def __init__(self, args=None):
         dataset = "REDDIT-BINARY"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
         super(RedditBinary, self).__init__(path, name=dataset)
@@ -337,7 +337,7 @@ class RedditBinary(TUDataset):
 class RedditMulti5K(TUDataset):
     def __init__(self, args=None):
         dataset = "REDDIT-MULTI-5K"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
         super(RedditMulti5K, self).__init__(path, name=dataset)
@@ -347,7 +347,7 @@ class RedditMulti5K(TUDataset):
 class RedditMulti12K(TUDataset):
     def __init__(self, args=None):
         dataset = "REDDIT-MULTI-12K"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
         super(RedditMulti12K, self).__init__(path, name=dataset)
@@ -357,7 +357,7 @@ class RedditMulti12K(TUDataset):
 class PTCMRDataset(TUDataset):
     def __init__(self, args=None):
         dataset = "PTC_MR"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
         super(PTCMRDataset, self).__init__(path, name=dataset)
@@ -367,7 +367,7 @@ class PTCMRDataset(TUDataset):
 class NCT1Dataset(TUDataset):
     def __init__(self, args=None):
         dataset = "NCI1"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
         super(NCT1Dataset, self).__init__(path, name=dataset)
@@ -377,7 +377,7 @@ class NCT1Dataset(TUDataset):
 class NCT109Dataset(TUDataset):
     def __init__(self, args=None):
         dataset = "NCI109"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
         super(NCT109Dataset, self).__init__(path, name=dataset)
@@ -387,7 +387,7 @@ class NCT109Dataset(TUDataset):
 class ENZYMES(TUDataset):
     def __init__(self, args=None):
         dataset = "ENZYMES"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
         super(ENZYMES, self).__init__(path, name=dataset)

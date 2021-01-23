@@ -960,7 +960,7 @@ class BioDataset(InMemoryDataset):
     ):
         self.data_type = data_type
         self.url = "https://cloud.tsinghua.edu.cn/f/c865b1d61348489e86ac/?dl=1"
-        self.root = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", "BIO")
+        self.root = osp.join("data", "BIO")
         super(BioDataset, self).__init__(self.root, transform, pre_transform, pre_filter)
         if not empty:
             if data_type == "unsupervised":
@@ -993,7 +993,7 @@ class MoleculeDataset(InMemoryDataset):
     ):
         self.data_type = data_type
         self.url = "https://cloud.tsinghua.edu.cn/f/2cac04ee904e4b54b4b2/?dl=1"
-        self.root = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", "CHEM")
+        self.root = osp.join("data", "CHEM")
 
         super(MoleculeDataset, self).__init__(self.root, transform, pre_transform, pre_filter)
         self.transform, self.pre_transform, self.pre_filter = transform, pre_transform, pre_filter
@@ -1040,7 +1040,7 @@ class MoleculeDataset(InMemoryDataset):
 class BACEDataset(InMemoryDataset):
     def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False, args=None):
         self.url = "https://cloud.tsinghua.edu.cn/f/253270b278f4465380f1/?dl=1"
-        self.root = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", "BACE")
+        self.root = osp.join("data", "BACE")
 
         super(BACEDataset, self).__init__(self.root, transform, pre_transform, pre_filter)
         self.transform, self.pre_transform, self.pre_filter = transform, pre_transform, pre_filter
@@ -1079,7 +1079,7 @@ class BACEDataset(InMemoryDataset):
 class BBBPDataset(InMemoryDataset):
     def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False, args=None):
         self.url = "https://cloud.tsinghua.edu.cn/f/ab8ff4d0a68c40a38956/?dl=1"
-        self.root = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", "BBBP")
+        self.root = osp.join("data", "BBBP")
 
         super(BBBPDataset, self).__init__(self.root, transform, pre_transform, pre_filter)
         self.transform, self.pre_transform, self.pre_filter = transform, pre_transform, pre_filter

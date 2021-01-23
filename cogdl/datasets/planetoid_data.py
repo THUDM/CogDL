@@ -194,7 +194,7 @@ def normalize_feature(data):
 class CoraDataset(Planetoid):
     def __init__(self, args=None):
         dataset = "Cora"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             Planetoid(path, dataset)
         super(CoraDataset, self).__init__(path, dataset)
@@ -205,7 +205,7 @@ class CoraDataset(Planetoid):
 class CiteSeerDataset(Planetoid):
     def __init__(self, args=None):
         dataset = "CiteSeer"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             Planetoid(path, dataset)
         super(CiteSeerDataset, self).__init__(path, dataset)
@@ -216,7 +216,7 @@ class CiteSeerDataset(Planetoid):
 class PubMedDataset(Planetoid):
     def __init__(self, args=None):
         dataset = "PubMed"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             Planetoid(path, dataset)
         super(PubMedDataset, self).__init__(path, dataset)

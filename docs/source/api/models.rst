@@ -191,11 +191,6 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_gat.GAT
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: cogdl.models.nn.pyg_graph_unet.GraphUnet
     :members:
     :undoc-members:

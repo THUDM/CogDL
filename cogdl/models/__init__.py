@@ -82,6 +82,7 @@ SUPPORTED_MODELS = {
     "gcnii": "cogdl.models.nn.gcnii",
     "gdc_gcn": "cogdl.models.nn.gdc_gcn",
     "grace": "cogdl.models.nn.grace",
+    "jknet": "cogdl.models.nn.dgl_jknet",
     "graphsage": "cogdl.models.nn.graphsage",
     "mvgrl": "cogdl.models.nn.mvgrl",
     "patchy_san": "cogdl.models.nn.patchy_san",
@@ -119,6 +120,7 @@ SUPPORTED_MODELS = {
     "srgcn": "cogdl.models.nn.pyg_srgcn",
     "diffpool": "cogdl.models.nn.pyg_diffpool",
     "asgcn": "cogdl.models.nn.asgcn",
+    "gcc": "cogdl.models.nn.dgl_gcc",
     "han": "cogdl.models.nn.pyg_han",
     "sagpool": "cogdl.models.nn.pyg_sagpool",
 }

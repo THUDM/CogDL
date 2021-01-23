@@ -163,7 +163,7 @@ class Edgelist(Dataset):
 class KDD_ICDM_GCCDataset(GCCDataset):
     def __init__(self, args=None):
         dataset = "kdd_icdm"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         super(KDD_ICDM_GCCDataset, self).__init__(path, dataset)
 
 
@@ -171,7 +171,7 @@ class KDD_ICDM_GCCDataset(GCCDataset):
 class SIGIR_CIKM_GCCDataset(GCCDataset):
     def __init__(self, args=None):
         dataset = "sigir_cikm"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         super(SIGIR_CIKM_GCCDataset, self).__init__(path, dataset)
 
 
@@ -179,7 +179,7 @@ class SIGIR_CIKM_GCCDataset(GCCDataset):
 class SIGMOD_ICDE_GCCDataset(GCCDataset):
     def __init__(self, args=None):
         dataset = "sigmod_icde"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         super(SIGMOD_ICDE_GCCDataset, self).__init__(path, dataset)
 
 
@@ -187,5 +187,5 @@ class SIGMOD_ICDE_GCCDataset(GCCDataset):
 class USAAirportDataset(Edgelist):
     def __init__(self, args=None):
         dataset = "usa-airport"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         super(USAAirportDataset, self).__init__(path, dataset)

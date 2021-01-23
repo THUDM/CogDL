@@ -1,8 +1,8 @@
 import sys
 import argparse
 
-from cogdl.datasets import DATASET_REGISTRY
-from cogdl.models import MODEL_REGISTRY
+from cogdl.datasets import DATASET_REGISTRY, try_import_dataset
+from cogdl.models import MODEL_REGISTRY, try_import_model
 from cogdl.tasks import TASK_REGISTRY
 
 
@@ -44,7 +44,6 @@ def add_dataset_args(parser):
     group = parser.add_argument_group("Dataset and data loading")
     # fmt: off
     group.add_argument('--dataset', '-dt', metavar='DATASET', nargs='+', required=True,
-                       choices=DATASET_REGISTRY.keys(),
                        help='Dataset')
     # fmt: on
     return group
@@ -54,7 +53,6 @@ def add_model_args(parser):
     group = parser.add_argument_group("Model configuration")
     # fmt: off
     group.add_argument('--model', '-m', metavar='MODEL', nargs='+', required=True,
-                       choices=MODEL_REGISTRY.keys(),
                        help='Model Architecture')
     # fmt: on
     return group
@@ -104,10 +102,12 @@ def parse_args_and_arch(parser, args):
     # Add *-specific args to parser.
     TASK_REGISTRY[args.task].add_args(parser)
     for model in args.model:
-        MODEL_REGISTRY[model].add_args(parser)
+        if try_import_model(model):
+            MODEL_REGISTRY[model].add_args(parser)
     for dataset in args.dataset:
-        if hasattr(DATASET_REGISTRY[dataset], "add_args"):
-            DATASET_REGISTRY[dataset].add_args(parser)
+        if try_import_dataset(dataset):
+            if hasattr(DATASET_REGISTRY[dataset], "add_args"):
+                DATASET_REGISTRY[dataset].add_args(parser)
     # Parse a second time.
     args = parser.parse_args()
 
@@ -119,7 +119,8 @@ def get_task_model_args(task, model=None):
     parser = get_training_parser()
     TASK_REGISTRY[task].add_args(parser)
     if model is not None:
-        MODEL_REGISTRY[model].add_args(parser)
+        if try_import_model(model):
+            MODEL_REGISTRY[model].add_args(parser)
     args = parser.parse_args()
     args.task = task
     if model is not None:

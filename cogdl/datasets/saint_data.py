@@ -120,7 +120,7 @@ class YelpDataset(SAINTDataset):
     def __init__(self, args=None):
         dataset = "Yelp"
         url = "https://cloud.tsinghua.edu.cn/d/7218cc013c9a40159306/files/?p=%2F{}&dl=1"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             SAINTDataset(path, dataset, url)
         super(YelpDataset, self).__init__(path, dataset, url)
@@ -132,7 +132,7 @@ class AmazonDataset(SAINTDataset):
     def __init__(self, args=None):
         dataset = "AmazonSaint"
         url = "https://cloud.tsinghua.edu.cn/d/ae4b2c4f59bd41be9b0b/files/?p=%2F{}&dl=1"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             SAINTDataset(path, dataset, url)
         super(AmazonDataset, self).__init__(path, dataset, url)
@@ -144,7 +144,7 @@ class FlickrDatset(SAINTDataset):
     def __init__(self, args=None):
         dataset = "Flickr"
         url = "https://cloud.tsinghua.edu.cn/d/d3ebcb5fa2da463b8213/files/?p=%2F{}&dl=1"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             SAINTDataset(path, dataset, url)
         super(FlickrDatset, self).__init__(path, dataset, url)
@@ -159,7 +159,7 @@ class RedditDataset(SAINTDataset):
     def __init__(self, args=None):
         dataset = "Reddit"
         url = "https://cloud.tsinghua.edu.cn/d/d087e7e766e747ce8073/files/?p=%2F{}&dl=1"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         if not osp.exists(path):
             SAINTDataset(path, dataset, url)
         super(RedditDataset, self).__init__(path, dataset, url)

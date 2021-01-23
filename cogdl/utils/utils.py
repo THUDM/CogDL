@@ -72,7 +72,14 @@ def download_url(url, folder, name=None, log=True):
 
     makedirs(folder)
 
-    data = request.urlopen(url)
+    try:
+        data = request.urlopen(url)
+    except Exception as e:
+        print(e)
+        print("Failed to download the dataset.")
+        print(f"Please download the dataset manually and put it under {folder}.")
+        exit(1)
+
     if name is None:
         filename = url.rpartition("/")[2]
     else:
@@ -83,6 +90,52 @@ def download_url(url, folder, name=None, log=True):
         f.write(data.read())
 
     return path
+
+
+def alias_setup(probs):
+    """
+    Compute utility lists for non-uniform sampling from discrete distributions.
+    Refer to https://hips.seas.harvard.edu/blog/2013/03/03/the-alias-method-efficient-sampling-with-many-discrete-outcomes/
+    for details
+    """
+    K = len(probs)
+    q = np.zeros(K)
+    J = np.zeros(K, dtype=np.int)
+
+    smaller = []
+    larger = []
+    for kk, prob in enumerate(probs):
+        q[kk] = K * prob
+        if q[kk] < 1.0:
+            smaller.append(kk)
+        else:
+            larger.append(kk)
+
+    while len(smaller) > 0 and len(larger) > 0:
+        small = smaller.pop()
+        large = larger.pop()
+
+        J[small] = large
+        q[large] = q[large] + q[small] - 1.0
+        if q[large] < 1.0:
+            smaller.append(large)
+        else:
+            larger.append(large)
+
+    return J, q
+
+
+def alias_draw(J, q):
+    """
+    Draw sample from a non-uniform discrete distribution using alias sampling.
+    """
+    K = len(J)
+
+    kk = int(np.floor(np.random.rand() * K))
+    if np.random.rand() < q[kk]:
+        return kk
+    else:
+        return J[kk]
 
 
 def add_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):

@@ -43,7 +43,7 @@ class GCN(BaseModel):
     def get_trainer(self, task, args):
         if args.sampler != "none":
             return SAINTTrainer
-        elif args.auxiliary_task != 'none':
+        elif args.auxiliary_task != "none":
             return SelfTaskTrainer
         else:
             return None
@@ -68,7 +68,7 @@ class GCN(BaseModel):
         x = self.convs[-1](x, edge_index, weight)
         return F.log_softmax(x, dim=1)
 
-    def get_embeddings(self, x, edge_index, weight = None):
+    def get_embeddings(self, x, edge_index, weight=None):
         for conv in self.convs[:-1]:
             x = F.relu(conv(x, edge_index, weight))
             x = F.dropout(x, p=self.dropout, training=self.training)

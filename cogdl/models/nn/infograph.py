@@ -4,45 +4,11 @@ import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import NNConv, Set2Set
 
-from .pyg_gin import GINLayer, GINMLP
+from .gin import GINLayer, GINMLP
 from cogdl.data import DataLoader
 from cogdl.utils import batch_mean_pooling, batch_sum_pooling
 from .. import BaseModel, register_model
-
-
-class SUPEncoder(torch.nn.Module):
-    r"""Encoder used in supervised model with Set2set in paper `"Order Matters: Sequence to sequence for sets"
-    <https://arxiv.org/abs/1511.06391>` and NNConv in paper `"Dynamic Edge-Conditioned Filters in Convolutional Neural Networks on
-    Graphs" <https://arxiv.org/abs/1704.02901>`
-    """
-
-    def __init__(self, num_features, dim, num_layers=1):
-        super(SUPEncoder, self).__init__()
-        self.lin0 = torch.nn.Linear(num_features, dim)
-
-        nnu = nn.Sequential(nn.Linear(5, 128), nn.ReLU(), nn.Linear(128, dim * dim))
-        self.conv = NNConv(dim, dim, nnu, aggr="mean", root_weight=False)
-        self.gru = nn.GRU(dim, dim)
-
-        self.set2set = Set2Set(dim, processing_steps=3)
-        # self.lin1 = torch.nn.Linear(2 * dim, dim)
-        # self.lin2 = torch.nn.Linear(dim, 1)
-
-    def forward(self, x, edge_index, batch, edge_attr):
-        out = F.relu(self.lin0(x))
-        h = out.unsqueeze(0)
-
-        feat_map = []
-        for i in range(3):
-            m = F.relu(self.conv(out, edge_index, edge_attr))
-            out, h = self.gru(m.unsqueeze(0), h)
-            out = out.squeeze(0)
-            feat_map.append(out)
-
-        out = self.set2set(out, batch)
-        return out, feat_map[-1]
 
 
 class Encoder(nn.Module):

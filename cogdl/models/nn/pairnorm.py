@@ -1,21 +1,9 @@
 import torch as torch
 import torch.nn as nn
-from cogdl.utils import row_normalization, spmm
-from torch_scatter import scatter_add, scatter_max
 
 from .. import BaseModel, register_model
 from .gcn import GraphConvolution
-
-
-def softmax(src, index, num_nodes=None):
-    """
-    sparse softmax
-    """
-    num_nodes = index.max().item() + 1 if num_nodes is None else num_nodes
-    out = src - scatter_max(src, index, dim=0, dim_size=num_nodes)[0][index]
-    out = out.exp()
-    out = out / (scatter_add(out, index, dim=0, dim_size=num_nodes)[index] + 1e-16)
-    return out
+from cogdl.utils import row_normalization, spmm, edge_softmax
 
 
 class GraphAttConv(nn.Module):
@@ -65,7 +53,7 @@ class GraphAttConvOneHead(nn.Module):
         # do softmax for each row, this need index of each row, and for each row do softmax over it
         alpha = self.leakyrelu(self.a.mm(edge_h).squeeze())  # E
         n = len(input)
-        alpha = softmax(alpha, edge_index[0], n)
+        alpha = edge_softmax(edge_index, alpha, shape=(n, n))
         output = spmm(edge_index, self.dropout(alpha), h)  # h_prime: N x out
         # output = spmm(edge, self.dropout(alpha), n, n, self.dropout(h)) # h_prime: N x out
         return output
@@ -252,7 +240,6 @@ class PairNorm(BaseModel):
             "--norm_mode", type=str, default="None", help="Mode for PairNorm, {None, PN, PN-SI, PN-SCS}"
         )
         parser.add_argument("--norm_scale", type=float, default=1.0, help="Row-normalization scale")
-        parser.add_argument("--no_fea_norm", action="store_false", default=True, help="not normalize feature")
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -265,8 +252,6 @@ class PairNorm(BaseModel):
             args.residual,
             args.norm_mode,
             args.norm_scale,
-            args.no_fea_norm,
-            args.missing_rate,
             args.num_features,
             args.num_classes,
         )
@@ -281,8 +266,6 @@ class PairNorm(BaseModel):
         residual,
         norm_mode,
         norm_scale,
-        no_fea_norm,
-        missing_rate,
         num_features,
         num_classes,
     ):

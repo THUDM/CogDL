@@ -1,7 +1,7 @@
 from .compgcn import CompGCN, CompGCNLayer
 from .dgi import DGIModel
 from .disengcn import DisenGCN, DisenGCNLayer
-from .gat import PetarVSpGAT, SpGraphAttentionLayer
+from .gat import GATLayer
 from .gcn import GraphConvolution, TKipfGCN
 from .gcnii import GCNIILayer, GCNII
 from .gdc_gcn import GDC_GCN
@@ -17,7 +17,7 @@ __all__ = [
     "CompGCN",
     "DGIModel",
     "DisenGCN",
-    "PetarVSpGAT",
+    "GATLayer",
     "TKipfGCN",
     "GCNII",
     "GDC_GCN",

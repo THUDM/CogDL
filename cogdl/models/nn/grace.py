@@ -174,5 +174,5 @@ class GRACE(BaseModel):
         return x
 
     @staticmethod
-    def get_trainer(tasktype: Any, args):
+    def get_trainer(task, args):
         return SelfSupervisedTrainer

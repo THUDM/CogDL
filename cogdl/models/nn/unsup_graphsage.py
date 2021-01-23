@@ -4,11 +4,11 @@ import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_cluster import random_walk
 
 from .. import register_model, BaseModel
 from cogdl.models.nn.graphsage import sage_sampler, GraphSAGELayer
 from cogdl.trainers.self_supervised_trainer import SelfSupervisedTrainer
+from cogdl.utils import RandomWalker
 
 
 @register_model("unsup_graphsage")
@@ -76,6 +76,7 @@ class SAGE(BaseModel):
         shapes = [num_features] + [hidden_size] * num_layers
 
         self.convs = nn.ModuleList([GraphSAGELayer(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
+        self.random_walker = RandomWalker()
 
     def forward(self, x, edge_index):
         for i in range(self.num_layers):
@@ -92,13 +93,12 @@ class SAGE(BaseModel):
     def loss(self, data):
         x = self.forward(data.x, data.edge_index)
         device = x.device
-        # if self.walk_res is None:
-        self.walk_res = random_walk(
-            data.edge_index[0],
-            data.edge_index[1],
-            start=torch.arange(0, x.shape[0]).to(device),
-            walk_length=self.walk_length,
-        )[:, 1:]
+
+        self.random_walker.build_up(data.edge_index, data.x.shape[0])
+        walk_res = self.random_walker.walk(
+            start=torch.arange(0, x.shape[0]).to(device), walk_length=self.walk_length + 1
+        )
+        self.walk_res = torch.as_tensor(walk_res)[:, 1:]
 
         if not self.num_nodes:
             self.num_nodes = int(torch.max(data.edge_index)) + 1

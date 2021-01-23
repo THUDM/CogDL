@@ -2,11 +2,11 @@ from abc import ABC, abstractmethod
 from typing import Any, Optional, Type
 from typing import TYPE_CHECKING
 
-from cogdl.models import BaseModel
+from cogdl.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     # trick for resolve circular import
-    from cogdl.trainers.supervised_trainer import (
+    from cogdl.trainers.supervised_model_trainer import (
         SupervisedHomogeneousNodeClassificationTrainer,
         SupervisedHeterogeneousNodeClassificationTrainer,
     )

@@ -1,18 +1,10 @@
-import math
-import numpy as np
-
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
-from torch_scatter import scatter_add
-import torch_sparse
-from torch_geometric.utils.num_nodes import maybe_num_nodes
-from torch_geometric.utils import dense_to_sparse, f1_score
-from torch_geometric.utils import remove_self_loops, add_self_loops
-from torch_geometric.nn import GCNConv, GATConv
+from cogdl.utils import multiclass_f1
 
 from .. import BaseModel, register_model
+from .gat import GATLayer
 
 
 class AttentionLayer(nn.Module):
@@ -30,7 +22,7 @@ class HANLayer(nn.Module):
         super(HANLayer, self).__init__()
         self.gat_layer = nn.ModuleList()
         for _ in range(num_edge):
-            self.gat_layer.append(GATConv(w_in, w_out // 8, 8))
+            self.gat_layer.append(GATLayer(w_in, w_out // 8, 8))
         self.att_layer = AttentionLayer(w_out)
 
     def forward(self, x, adj):
@@ -100,5 +92,5 @@ class HAN(BaseModel):
 
     def evaluate(self, data, nodes, targets):
         loss, y = self.forward(data.adj, data.x, nodes, targets)
-        f1 = torch.mean(f1_score(torch.argmax(y, dim=1), targets, num_classes=3))
-        return loss.item(), f1.item()
+        f1 = multiclass_f1(targets, y)
+        return loss.item(), f1

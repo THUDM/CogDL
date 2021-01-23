@@ -31,14 +31,14 @@ def parse_txt_array(src, sep=None, start=0, end=None, dtype=None, device=None):
 
 
 def read_txt_array(path, sep=None, start=0, end=None, dtype=None, device=None):
-    with open(path, 'r') as f:
-        src = f.read().split('\n')[:-1]
+    with open(path, "r") as f:
+        src = f.read().split("\n")[:-1]
     return parse_txt_array(src, sep, start, end, dtype, device)
 
 
 def read_file(folder, prefix, name, dtype=None):
-    path = osp.join(folder, '{}_{}.txt'.format(prefix, name))
-    return read_txt_array(path, sep=',', dtype=dtype)
+    path = osp.join(folder, "{}_{}.txt".format(prefix, name))
+    return read_txt_array(path, sep=",", dtype=dtype)
 
 
 def cat(seq):
@@ -59,16 +59,16 @@ def split(data, batch):
     data.edge_index -= node_slice[batch[row]].unsqueeze(0)
     data.__num_nodes__ = torch.bincount(batch).tolist()
 
-    slices = {'edge_index': edge_slice}
+    slices = {"edge_index": edge_slice}
     if data.x is not None:
-        slices['x'] = node_slice
+        slices["x"] = node_slice
     if data.edge_attr is not None:
-        slices['edge_attr'] = edge_slice
+        slices["edge_attr"] = edge_slice
     if data.y is not None:
         if data.y.size(0) == batch.size(0):
-            slices['y'] = node_slice
+            slices["y"] = node_slice
         else:
-            slices['y'] = torch.arange(0, batch[-1] + 2, dtype=torch.long)
+            slices["y"] = torch.arange(0, batch[-1] + 2, dtype=torch.long)
 
     return data, slices
 
@@ -120,17 +120,17 @@ def coalesce(index, value, m, n):
 
 
 def read_tu_data(folder, prefix):
-    files = glob.glob(osp.join(folder, '{}_*.txt'.format(prefix)))
-    names = [f.split(os.sep)[-1][len(prefix) + 1:-4] for f in files]
+    files = glob.glob(osp.join(folder, "{}_*.txt".format(prefix)))
+    names = [f.split(os.sep)[-1][len(prefix) + 1 : -4] for f in files]
 
-    edge_index = read_file(folder, prefix, 'A', torch.long).t() - 1
-    batch = read_file(folder, prefix, 'graph_indicator', torch.long) - 1
+    edge_index = read_file(folder, prefix, "A", torch.long).t() - 1
+    batch = read_file(folder, prefix, "graph_indicator", torch.long) - 1
 
     node_attributes = node_labels = None
-    if 'node_attributes' in names:
-        node_attributes = read_file(folder, prefix, 'node_attributes')
-    if 'node_labels' in names:
-        node_labels = read_file(folder, prefix, 'node_labels', torch.long)
+    if "node_attributes" in names:
+        node_attributes = read_file(folder, prefix, "node_attributes")
+    if "node_labels" in names:
+        node_labels = read_file(folder, prefix, "node_labels", torch.long)
         if node_labels.dim() == 1:
             node_labels = node_labels.unsqueeze(-1)
         node_labels = node_labels - node_labels.min(dim=0)[0]
@@ -140,10 +140,10 @@ def read_tu_data(folder, prefix):
     x = cat([node_attributes, node_labels])
 
     edge_attributes, edge_labels = None, None
-    if 'edge_attributes' in names:
-        edge_attributes = read_file(folder, prefix, 'edge_attributes')
-    if 'edge_labels' in names:
-        edge_labels = read_file(folder, prefix, 'edge_labels', torch.long)
+    if "edge_attributes" in names:
+        edge_attributes = read_file(folder, prefix, "edge_attributes")
+    if "edge_labels" in names:
+        edge_labels = read_file(folder, prefix, "edge_labels", torch.long)
         if edge_labels.dim() == 1:
             edge_labels = edge_labels.unsqueeze(-1)
         edge_labels = edge_labels - edge_labels.min(dim=0)[0]
@@ -153,10 +153,10 @@ def read_tu_data(folder, prefix):
     edge_attr = cat([edge_attributes, edge_labels])
 
     y = None
-    if 'graph_attributes' in names:  # Regression problem.
-        y = read_file(folder, prefix, 'graph_attributes')
-    elif 'graph_labels' in names:  # Classification problem.
-        y = read_file(folder, prefix, 'graph_labels', torch.long)
+    if "graph_attributes" in names:  # Regression problem.
+        y = read_file(folder, prefix, "graph_attributes")
+    elif "graph_labels" in names:  # Classification problem.
+        y = read_file(folder, prefix, "graph_labels", torch.long)
         _, y = y.unique(sorted=True, return_inverse=True)
 
     num_nodes = edge_index.max().item() + 1 if x is None else x.size(0)
@@ -175,7 +175,7 @@ def read_tu_data(folder, prefix):
 
 
 class TUDataset(Dataset):
-    url = 'https://www.chrsmrrs.com/graphkerneldatasets'
+    url = "https://www.chrsmrrs.com/graphkerneldatasets"
 
     def __init__(self, root, name):
         self.name = name
@@ -190,18 +190,18 @@ class TUDataset(Dataset):
 
     @property
     def raw_file_names(self):
-        names = ['A', 'graph_indicator']
-        return ['{}_{}.txt'.format(self.name, name) for name in names]
+        names = ["A", "graph_indicator"]
+        return ["{}_{}.txt".format(self.name, name) for name in names]
 
     @property
     def processed_file_names(self):
-        return 'data.pt'
+        return "data.pt"
 
     def download(self):
         url = self.url
         folder = osp.join(self.root)
-        path = download_url('{}/{}.zip'.format(url, self.name), folder)
-        with zipfile.ZipFile(path, 'r') as f:
+        path = download_url("{}/{}.zip".format(url, self.name), folder)
+        with zipfile.ZipFile(path, "r") as f:
             f.extractall(folder)
         os.unlink(path)
         shutil.rmtree(self.raw_dir)
@@ -255,7 +255,7 @@ class TUDataset(Dataset):
 
     def get(self, idx):
         data = self.data.__class__()
-        if hasattr(self.data, '__num_nodes__'):
+        if hasattr(self.data, "__num_nodes__"):
             data.num_nodes = self.data.__num_nodes__[idx]
 
         for key in self.data.keys:

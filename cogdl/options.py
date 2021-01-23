@@ -1,9 +1,8 @@
 import sys
 import argparse
-import importlib
 
-from cogdl.datasets import DATASET_REGISTRY
-from cogdl.models import MODEL_REGISTRY, SUPPORTED_MODELS
+from cogdl.datasets import DATASET_REGISTRY, try_import_dataset
+from cogdl.models import MODEL_REGISTRY, try_import_model
 from cogdl.tasks import TASK_REGISTRY
 
 
@@ -45,7 +44,6 @@ def add_dataset_args(parser):
     group = parser.add_argument_group("Dataset and data loading")
     # fmt: off
     group.add_argument('--dataset', '-dt', metavar='DATASET', nargs='+', required=True,
-                       choices=DATASET_REGISTRY.keys(),
                        help='Dataset')
     # fmt: on
     return group
@@ -97,16 +95,6 @@ def get_default_args(task: str, dataset, model, **kwargs):
     return args
 
 
-def try_import_model(model):
-    if model not in MODEL_REGISTRY:
-        if model in SUPPORTED_MODELS:
-            importlib.import_module(SUPPORTED_MODELS[model])
-        else:
-            print(f"{model} is not supported.")
-            return False
-    return True
-
-
 def parse_args_and_arch(parser, args):
     """The parser doesn't know about model-specific args, so we parse twice."""
     # args, _ = parser.parse_known_args()
@@ -117,8 +105,9 @@ def parse_args_and_arch(parser, args):
         if try_import_model(model):
             MODEL_REGISTRY[model].add_args(parser)
     for dataset in args.dataset:
-        if hasattr(DATASET_REGISTRY[dataset], "add_args"):
-            DATASET_REGISTRY[dataset].add_args(parser)
+        if try_import_dataset(dataset):
+            if hasattr(DATASET_REGISTRY[dataset], "add_args"):
+                DATASET_REGISTRY[dataset].add_args(parser)
     # Parse a second time.
     args = parser.parse_args()
 

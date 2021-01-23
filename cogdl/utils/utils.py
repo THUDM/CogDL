@@ -70,7 +70,14 @@ def download_url(url, folder, name=None, log=True):
 
     makedirs(folder)
 
-    data = request.urlopen(url)
+    try:
+        data = request.urlopen(url)
+    except Exception as e:
+        print(e)
+        print("Failed to download the dataset.")
+        print(f"Please download the dataset manually and put it under {folder}.")
+        exit(1)
+
     if name is None:
         filename = url.rpartition("/")[2]
     else:

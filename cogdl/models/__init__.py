@@ -1,3 +1,5 @@
+import importlib
+
 from .base_model import BaseModel
 
 
@@ -31,7 +33,19 @@ def register_model(name):
     return register_model_cls
 
 
+def try_import_model(model):
+    if model not in MODEL_REGISTRY:
+        if model in SUPPORTED_MODELS:
+            importlib.import_module(SUPPORTED_MODELS[model])
+        else:
+            print(f"Failed to import {model} model.")
+            return False
+    return True
+
+
 def build_model(args):
+    if not try_import_model(args.model):
+        exit(1)
     return MODEL_REGISTRY[args.model].build_model_from_args(args)
 
 

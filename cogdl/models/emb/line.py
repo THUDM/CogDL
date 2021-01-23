@@ -1,9 +1,12 @@
-import numpy as np
-import networkx as nx
-from sklearn import preprocessing
 import time
+
+import networkx as nx
+import numpy as np
+from sklearn import preprocessing
 from tqdm import tqdm
-from .. import BaseModel, register_model, alias_draw, alias_setup
+
+from cogdl.utils import alias_draw, alias_setup
+from .. import BaseModel, register_model
 
 
 @register_model("line")

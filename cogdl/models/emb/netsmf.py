@@ -6,7 +6,8 @@ from sklearn.utils.extmath import randomized_svd
 from multiprocessing import Pool
 import time
 
-from .. import BaseModel, register_model, alias_draw, alias_setup
+from cogdl.utils import alias_draw, alias_setup
+from .. import BaseModel, register_model
 
 
 @register_model("netsmf")

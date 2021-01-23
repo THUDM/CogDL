@@ -1,8 +1,9 @@
 import sys
 import argparse
+import importlib
 
 from cogdl.datasets import DATASET_REGISTRY
-from cogdl.models import MODEL_REGISTRY
+from cogdl.models import MODEL_REGISTRY, SUPPORTED_MODELS
 from cogdl.tasks import TASK_REGISTRY
 
 
@@ -54,7 +55,6 @@ def add_model_args(parser):
     group = parser.add_argument_group("Model configuration")
     # fmt: off
     group.add_argument('--model', '-m', metavar='MODEL', nargs='+', required=True,
-                       choices=MODEL_REGISTRY.keys(),
                        help='Model Architecture')
     # fmt: on
     return group
@@ -97,6 +97,16 @@ def get_default_args(task: str, dataset, model, **kwargs):
     return args
 
 
+def try_import_model(model):
+    if model not in MODEL_REGISTRY:
+        if model in SUPPORTED_MODELS:
+            importlib.import_module(SUPPORTED_MODELS[model])
+        else:
+            print(f"{model} is not supported.")
+            return False
+    return True
+
+
 def parse_args_and_arch(parser, args):
     """The parser doesn't know about model-specific args, so we parse twice."""
     # args, _ = parser.parse_known_args()
@@ -104,7 +114,8 @@ def parse_args_and_arch(parser, args):
     # Add *-specific args to parser.
     TASK_REGISTRY[args.task].add_args(parser)
     for model in args.model:
-        MODEL_REGISTRY[model].add_args(parser)
+        if try_import_model(model):
+            MODEL_REGISTRY[model].add_args(parser)
     for dataset in args.dataset:
         if hasattr(DATASET_REGISTRY[dataset], "add_args"):
             DATASET_REGISTRY[dataset].add_args(parser)
@@ -119,7 +130,8 @@ def get_task_model_args(task, model=None):
     parser = get_training_parser()
     TASK_REGISTRY[task].add_args(parser)
     if model is not None:
-        MODEL_REGISTRY[model].add_args(parser)
+        if try_import_model(model):
+            MODEL_REGISTRY[model].add_args(parser)
     args = parser.parse_args()
     args.task = task
     if model is not None:

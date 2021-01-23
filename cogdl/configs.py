@@ -128,7 +128,7 @@ BEST_CONFIGS = {
         "deepwalk": {
             "general": {},
         },
-        "dgnr": {
+        "dngr": {
             "general": {
                 "hidden_size": 128,
                 "lr": 0.001,

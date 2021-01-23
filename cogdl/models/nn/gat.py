@@ -12,13 +12,14 @@ class GATLayer(nn.Module):
     Sparse version GAT layer, similar to https://arxiv.org/abs/1710.10903
     """
 
-    def __init__(self, in_features, out_features, nhead=1, alpha=0.2, dropout=0.6, concat=True):
+    def __init__(self, in_features, out_features, nhead=1, alpha=0.2, dropout=0.6, concat=True, fast_mode=False):
         super(GATLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.alpha = alpha
         self.concat = concat
         self.nhead = nhead
+        self.fast_mode = fast_mode
 
         self.W = nn.Parameter(torch.FloatTensor(in_features, out_features * nhead))
 
@@ -54,25 +55,36 @@ class GATLayer(nn.Module):
         # edge_e: E * H
         edge_attention = mul_edge_softmax(edge, edge_attention, shape=(N, N))
 
-        edge_attention = edge_attention.view(-1)
-        edge_attention = self.dropout(edge_attention)
+
 
         num_edges = edge.shape[1]
         num_nodes = x.shape[0]
-        edge_index = edge.view(-1)
-        edge_index = edge_index.unsqueeze(0).repeat(self.nhead, 1)
-        add_num = torch.arange(0, self.nhead * num_nodes, num_nodes).view(-1, 1).to(edge_index.device)
-        edge_index = edge_index + add_num
-        edge_index = edge_index.split((num_edges, num_edges), dim=1)
 
-        row, col = edge_index
-        row = row.reshape(-1)
-        col = col.reshape(-1)
-        edge_index = torch.stack([row, col])
+        if self.fast_mode:
+            edge_attention = edge_attention.view(-1)
+            edge_attention = self.dropout(edge_attention)
 
-        h_prime = spmm(edge_index, edge_attention, h.permute(1, 0, 2).reshape(num_nodes * self.nhead, -1))
-        assert not torch.isnan(h_prime).any()
-        h_prime = h_prime.split([num_nodes] * self.nhead)
+            edge_index = edge.view(-1)
+            edge_index = edge_index.unsqueeze(0).repeat(self.nhead, 1)
+            add_num = torch.arange(0, self.nhead * num_nodes, num_nodes).view(-1, 1).to(edge_index.device)
+            edge_index = edge_index + add_num
+            edge_index = edge_index.split((num_edges, num_edges), dim=1)
+
+            row, col = edge_index
+            row = row.reshape(-1)
+            col = col.reshape(-1)
+            edge_index = torch.stack([row, col])
+
+            h_prime = spmm(edge_index, edge_attention, h.permute(1, 0, 2).reshape(num_nodes * self.nhead, -1))
+            assert not torch.isnan(h_prime).any()
+            h_prime = h_prime.split([num_nodes] * self.nhead)
+        else:
+            h_prime = []
+            h = h.permute(1, 0, 2)
+            for i in range(self.nhead):
+                edge_weight = edge_attention[:, i]
+                hidden = h[i]
+                h_prime.append(spmm(edge, edge_weight, hidden))
 
         if self.concat:
             # if this layer is not last layer,
@@ -110,6 +122,7 @@ class GAT(BaseModel):
         parser.add_argument("--dropout", type=float, default=0.6)
         parser.add_argument("--alpha", type=float, default=0.2)
         parser.add_argument("--nheads", type=int, default=8)
+        parser.add_argument("--fast-mode", action="store_true", default=False)
         # fmt: on
 
     @classmethod
@@ -121,16 +134,16 @@ class GAT(BaseModel):
             args.dropout,
             args.alpha,
             args.nheads,
+            args.fast_mode,
         )
 
-    def __init__(self, in_feats, hidden_size, out_features, dropout, alpha, nheads):
+    def __init__(self, in_feats, hidden_size, out_features, dropout, alpha, nheads, fast_mode=False):
         """Sparse version of GAT."""
         super(GAT, self).__init__()
         self.dropout = dropout
 
-        self.attention = GATLayer(in_feats, hidden_size, dropout=dropout, alpha=alpha, nhead=nheads, concat=True)
-
-        self.out_att = GATLayer(hidden_size * nheads, out_features, dropout=dropout, alpha=alpha, nhead=1, concat=False)
+        self.attention = GATLayer(in_feats, hidden_size, dropout=dropout, alpha=alpha, nhead=nheads, concat=True, fast_mode=fast_mode)
+        self.out_att = GATLayer(hidden_size * nheads, out_features, dropout=dropout, alpha=alpha, nhead=1, concat=False, fast_mode=fast_mode)
 
     def forward(self, x, edge_index):
         edge_index, _ = add_remaining_self_loops(edge_index)

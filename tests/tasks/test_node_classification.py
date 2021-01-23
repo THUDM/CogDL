@@ -64,9 +64,11 @@ def test_gat_cora():
     args.model = "gat"
     args.alpha = 0.2
     args.nheads = 8
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    for i in [True, False]:
+        args.fast_mode = i
+        task = build_task(args)
+        ret = task.train()
+        assert 0 <= ret["Acc"] <= 1
 
 
 def test_mlp_pubmed():

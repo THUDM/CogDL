@@ -36,7 +36,7 @@ class BaseModel(nn.Module):
         )
 
     @staticmethod
-    def get_trainer(taskType: Any, args: Any) -> Optional[Type[BaseTrainer]]:
+    def get_trainer(task: Any, args: Any) -> Optional[Type[BaseTrainer]]:
         return None
 
     def set_device(self, device):

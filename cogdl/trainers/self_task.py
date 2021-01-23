@@ -11,7 +11,7 @@ import random
 class SSLTask:
     def __init__(self, edge_index, features, device):
         self.edge_index = edge_index
-        self.num_nodes = torch.max(edge_index).cpu() + 1
+        self.num_nodes = int(torch.max(edge_index).cpu()) + 1
         self.num_edges = edge_index.shape[1]
         self.features = features
         self.device = device
@@ -78,7 +78,7 @@ class PairwiseDistance(SSLTask):
         G.add_edges_from(self.edge_index.cpu().t().numpy())
 
         path_length = dict(nx.all_pairs_shortest_path_length(G, cutoff=self.nclass - 1))
-        distance = -np.ones((self.num_nodes, self.num_nodes)).astype(int)
+        distance = -np.ones((self.num_nodes, self.num_nodes), dtype=np.int)
         for u, p in path_length.items():
             for v, d in p.items():
                 distance[u][v] = d - 1
@@ -181,7 +181,7 @@ class PairwiseAttrSim(SSLTask):
                     sum += distance[node]
                     num += 1
             if num:
-                avg_min += sum / num / self.num_nodes.item()
+                avg_min += sum / num / self.num_nodes
             sum = 0
             num = 0
             for node in idx_sorted[i, -k - 1 :]:
@@ -189,7 +189,7 @@ class PairwiseAttrSim(SSLTask):
                     sum += distance[node]
                     num += 1
             if num:
-                avg_max += sum / num / self.num_nodes.item()
+                avg_max += sum / num / self.num_nodes
             sum = 0
             num = 0
             for node in idx_sorted[i, sampled]:
@@ -197,7 +197,7 @@ class PairwiseAttrSim(SSLTask):
                     sum += distance[node]
                     num += 1
             if num:
-                avg_sampled += sum / num / self.num_nodes.item()
+                avg_sampled += sum / num / self.num_nodes
         return avg_min, avg_max, avg_sampled
 
     def get_attr_sim(self):

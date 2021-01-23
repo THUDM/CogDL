@@ -136,11 +136,6 @@ Embedding Model
 GNN Model
 ---------
 
-.. autoclass:: cogdl.models.nn.pyg_drgat.DrGAT
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: cogdl.models.nn.dgi.DGIModel
     :members:
     :undoc-members:
@@ -151,22 +146,7 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_gin.GIN
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.nn.pyg_infograph.InfoGraph
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: cogdl.models.nn.patchy_san.PatchySAN
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.nn.pyg_grand.Grand
     :members:
     :undoc-members:
     :show-inheritance:
@@ -186,17 +166,12 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.graphsage.Graphsage
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.nn.pyg_unsup_graphsage.SAGE
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: cogdl.models.nn.pyg_hgpsl.HGPSL
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: cogdl.models.nn.graphsage.Graphsage
     :members:
     :undoc-members:
     :show-inheritance:
@@ -206,12 +181,12 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_gpt_gnn.GPT_GNN
+.. autoclass:: cogdl.models.nn.drgcn.DrGCN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_deepergcn.DeeperGCN
+.. autoclass:: cogdl.models.nn.pyg_gpt_gnn.GPT_GNN
     :members:
     :undoc-members:
     :show-inheritance:
@@ -226,12 +201,22 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_sortpool.SortPool
+.. autoclass:: cogdl.models.nn.gcnmix.GCNMix
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: cogdl.models.nn.diffpool.DiffPool
     :members:
     :undoc-members:
     :show-inheritance:
 
 .. autoclass:: cogdl.models.nn.gcnii.GCNII
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: cogdl.models.nn.sign.MLP
     :members:
     :undoc-members:
     :show-inheritance:
@@ -242,6 +227,16 @@ GNN Model
     :show-inheritance:
 
 .. autoclass:: cogdl.models.nn.mixhop.MixHop
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: cogdl.models.nn.gat.GAT
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: cogdl.models.nn.han.HAN
     :members:
     :undoc-members:
     :show-inheritance:
@@ -266,12 +261,17 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
+.. autoclass:: cogdl.models.nn.gin.GIN
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 .. autoclass:: cogdl.models.nn.pyg_dgcnn.DGCNN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_infomax.Infomax
+.. autoclass:: cogdl.models.nn.grand.Grand
     :members:
     :undoc-members:
     :show-inheritance:
@@ -286,12 +286,17 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_sign.MLP
+.. autoclass:: cogdl.models.nn.deepergcn.DeeperGCN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_pairnorm.PairNorm
+.. autoclass:: cogdl.models.nn.drgat.DrGAT
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: cogdl.models.nn.infograph.InfoGraph
     :members:
     :undoc-members:
     :show-inheritance:
@@ -311,22 +316,7 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_drgcn.DrGCN
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.nn.pyg_gcnmix.GCNMix
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: cogdl.models.nn.mlp.MLP
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.nn.sgcpn.SGC
     :members:
     :undoc-members:
     :show-inheritance:
@@ -341,22 +331,12 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_unet.UNet
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.nn.gat.PetarVSpGAT
+.. autoclass:: cogdl.models.nn.sortpool.SortPool
     :members:
     :undoc-members:
     :show-inheritance:
 
 .. autoclass:: cogdl.models.nn.pyg_srgcn.SRGCN
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.nn.pyg_diffpool.DiffPool
     :members:
     :undoc-members:
     :show-inheritance:
@@ -371,7 +351,12 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_han.HAN
+.. autoclass:: cogdl.models.nn.pairnorm.PairNorm
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: cogdl.models.nn.unsup_graphsage.SAGE
     :members:
     :undoc-members:
     :show-inheritance:

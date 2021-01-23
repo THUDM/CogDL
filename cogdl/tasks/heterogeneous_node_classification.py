@@ -1,6 +1,5 @@
 import argparse
 import copy
-from typing import Optional
 
 import numpy as np
 import torch
@@ -9,7 +8,6 @@ from tqdm import tqdm
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.models.supervised_model import SupervisedHeterogeneousNodeClassificationModel
-from cogdl.trainers.supervised_trainer import SupervisedHeterogeneousNodeClassificationTrainer
 from . import BaseTask, register_task
 
 
@@ -43,7 +41,7 @@ class HeterogeneousNodeClassification(BaseTask):
         model = build_model(args) if model is None else model
         self.model: SupervisedHeterogeneousNodeClassificationModel = model.to(self.device)
 
-        self.trainer: Optional[SupervisedHeterogeneousNodeClassificationTrainer] = (
+        self.trainer = (
             self.model.get_trainer(HeterogeneousNodeClassification, args)(self.args)
             if self.model.get_trainer(HeterogeneousNodeClassification, args)
             else None
@@ -91,6 +89,7 @@ class HeterogeneousNodeClassification(BaseTask):
         self.model.train()
         self.optimizer.zero_grad()
         self.model.loss(self.data).backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 3)
         self.optimizer.step()
 
     def _test_step(self, split="val"):

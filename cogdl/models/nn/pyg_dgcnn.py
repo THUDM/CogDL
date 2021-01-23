@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import DynamicEdgeConv, global_max_pool
 
 from .. import BaseModel, register_model
-from .pyg_gin import GINMLP
+from .gin import GINMLP
 from cogdl.data import DataLoader, Data
 
 

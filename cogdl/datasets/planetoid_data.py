@@ -12,7 +12,6 @@ from . import register_dataset
 
 def coalesce(row, col, value=None):
     num = col.shape[0] + 1
-    print("Num edges:", num)
     idx = torch.full((num,), -1, dtype=torch.float)
     idx[1:] = row * num + col
     mask = idx[1:] > idx[:-1]

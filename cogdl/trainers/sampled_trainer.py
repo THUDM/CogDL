@@ -10,10 +10,10 @@ from tqdm import tqdm
 from cogdl.data import Dataset, Data
 from cogdl.data.sampler import NodeSampler, EdgeSampler, RWSampler, MRWSampler, LayerSampler, NeighborSampler
 from cogdl.models.supervised_model import SupervisedModel
-from cogdl.trainers.supervised_trainer import SupervisedTrainer
+from cogdl.trainers.base_trainer import BaseTrainer
 
 
-class SampledTrainer(SupervisedTrainer):
+class SampledTrainer(BaseTrainer):
     @abstractmethod
     def fit(self, model: SupervisedModel, dataset: Dataset):
         raise NotImplementedError

@@ -3,10 +3,10 @@ import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import SAGEConv
 
 from .. import BaseModel, register_model
 from cogdl.data import DataLoader
+from .graphsage import GraphSAGELayer
 
 
 def scatter_sum(src, index, dim, dim_size):
@@ -107,9 +107,9 @@ class SortPool(BaseModel):
         self.dropout = dropout
         self.num_layers = num_layers
         self.gnn_convs = nn.ModuleList()
-        self.gnn_convs.append(SAGEConv(in_feats, hidden_dim))
+        self.gnn_convs.append(GraphSAGELayer(in_feats, hidden_dim))
         for _ in range(self.num_layers - 1):
-            self.gnn_convs.append(SAGEConv(hidden_dim, hidden_dim))
+            self.gnn_convs.append(GraphSAGELayer(hidden_dim, hidden_dim))
         self.conv1d = nn.Conv1d(hidden_dim, out_channel, kernel_size)
         self.fc1 = nn.Linear(out_channel * (self.k - kernel_size + 1), hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, num_classes)

@@ -1,7 +1,8 @@
 import torch.nn.functional as F
 from torch_geometric.nn.conv import GATConv
 
-from .. import BaseModel, register_model
+from cogdl import experiment
+from cogdl.models import BaseModel, register_model
 
 
 @register_model("pyg_gat")
@@ -47,3 +48,7 @@ class GAT(BaseModel):
 
     def predict(self, data):
         return self.forward(data.x, data.edge_index)
+
+
+if __name__ == "__main__":
+    ret = experiment(task="node_classification", dataset="cora", model="pyg_gat")

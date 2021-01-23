@@ -236,17 +236,6 @@ def test_pyg_gcn_cora_sampler():
         assert 0 <= ret["Acc"] <= 1
 
 
-def test_pyg_gat_cora():
-    args = get_default_args()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "pyg_gat"
-    args.num_heads = 8
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-
 def test_unet_cora():
     args = get_default_args()
     args.cpu = True
@@ -657,7 +646,6 @@ if __name__ == "__main__":
     test_graphsage_cora()
     test_pyg_cheb_cora()
     test_pyg_gcn_cora()
-    test_pyg_gat_cora()
     test_disengcn_cora()
     test_graph_mix()
     test_srgcn_cora()

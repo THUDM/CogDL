@@ -12,6 +12,7 @@ from cogdl.options import get_default_args
 from cogdl.tasks import build_task
 from cogdl.utils import set_random_seed, tabulate_results
 from cogdl.configs import BEST_CONFIGS
+from cogdl.models import SUPPORTED_MODELS
 
 
 class AutoML(object):
@@ -115,7 +116,7 @@ def check_task_dataset_model_match(task, variants):
 
     clean_variants = []
     for item in variants:
-        if (item.model, item.dataset) not in pairs:
+        if item.model in SUPPORTED_MODELS and (item.model, item.dataset) not in pairs:
             print(f"({item.model}, {item.dataset}) is not implemented in task '{task}''.")
             continue
         clean_variants.append(item)

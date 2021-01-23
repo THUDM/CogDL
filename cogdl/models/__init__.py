@@ -85,7 +85,6 @@ SUPPORTED_MODELS = {
     "compgcn": "cogdl.models.nn.compgcn",
     "drgcn": "cogdl.models.nn.drgcn",
     "gpt_gnn": "cogdl.models.nn.pyg_gpt_gnn",
-    "pyg_gat": "cogdl.models.nn.pyg_gat",
     "unet": "cogdl.models.nn.pyg_graph_unet",
     "gcnmix": "cogdl.models.nn.gcnmix",
     "diffpool": "cogdl.models.nn.diffpool",

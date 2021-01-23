@@ -14,7 +14,6 @@ node_classification:
     - pairnorm
     - gcnii
     - chebyshev
-    - pyg_gat
     - deepergcn
     - gcnii
     - gpt_gnn

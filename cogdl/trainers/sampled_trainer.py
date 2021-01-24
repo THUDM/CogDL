@@ -7,10 +7,11 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from cogdl.data import Dataset, Data
+from cogdl.data import Dataset
 from cogdl.data.sampler import NodeSampler, EdgeSampler, RWSampler, MRWSampler, LayerSampler, NeighborSampler
 from cogdl.models.supervised_model import SupervisedModel
 from cogdl.trainers.base_trainer import BaseTrainer
+from cogdl.utils import add_remaining_self_loops
 
 
 class SampledTrainer(BaseTrainer):
@@ -152,7 +153,10 @@ class NeighborSamplingTrainer(SampledTrainer):
         self.loss_fn, self.evaluator = None, None
 
     def fit(self, model, dataset):
-        self.data = Data.from_pyg_data(dataset[0])
+        self.data = dataset[0]
+        self.data.edge_index, _ = add_remaining_self_loops(self.data.edge_index)
+        if hasattr(self.data, "edge_index_train"):
+            self.data.edge_index_train, _ = add_remaining_self_loops(self.data.edge_index_train)
         self.loss_fn, self.evaluator = dataset.get_evaluator()
         self.train_loader = NeighborSampler(
             data=self.data,

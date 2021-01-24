@@ -197,8 +197,9 @@ class Data(object):
             return
         num_edges = self.edge_index.shape[1]
 
-        self.row, self.col = self.edge_index.cpu()
-        self.col = self.col.numpy()
+        self.edge_row, col = self.edge_index.cpu()
+        self.edge_col = col.numpy()
+
         self.node_idx = torch.unique(self.edge_index).cpu().numpy()
 
         edge_index_np = self.edge_index.cpu().numpy()
@@ -222,7 +223,9 @@ class Data(object):
         edge_attr = torch.from_numpy(adj_coo.data).to(self.x.device)
         edge_index = torch.from_numpy(np.stack([row, col], axis=0)).to(self.x.device).long()
         keys = self.keys
-        attrs = {key: self[key][node_idx] for key in keys if "edge" not in key}
+
+        print(keys)
+        attrs = {key: self[key][node_idx] for key in keys if "edge" not in key and "node_idx" not in key}
         attrs["edge_index"] = edge_index
         if edge_attr is not None:
             attrs["edge_attr"] = edge_attr
@@ -260,7 +263,7 @@ class Data(object):
         adj = self.__adj[batch].tocsr()
         batch_size = len(batch)
         if size == -1:
-            row, col = self.row, self.col
+            row, col = self.edge_row, self.edge_col
             _node_idx = self.node_idx
         else:
             indices = torch.from_numpy(adj.indices)
@@ -270,11 +273,8 @@ class Data(object):
             _node_idx = node_idx.numpy()
 
         # Reindexing: target nodes are always put at the front
-        # _node_idx = list(batch) + list(set(_node_idx).difference(set(batch)))
         _node_idx = np.concatenate((batch, np.setdiff1d(_node_idx, batch)))
 
-        # node_dict = {val: key for key, val in enumerate(_node_idx)}
-        # new_col = torch.LongTensor([node_dict[i] for i in col])
         new_col = torch.as_tensor(reindex(_node_idx, col), dtype=torch.long)
         edge_index = torch.stack([row.long(), new_col])
 
@@ -283,17 +283,12 @@ class Data(object):
         return node_idx, edge_index
 
     def _sample_adj(self, batch_size, indices, indptr, size):
-        indptr = indptr
-        row_counts = torch.as_tensor([indptr[i] - indptr[i - 1] for i in range(1, len(indptr))])
-        # row_counts = torch.cumsum(indptr, dim=0)[1:]
+        row_counts = torch.as_tensor([indptr[i] - indptr[i - 1] for i in range(1, len(indptr))]).long()
 
-        # if not replace:
-        #     edge_cols = [col[indptr[i]: indptr[i+1]] for i in range(len(indptr)-1)]
-        #     edge_cols = [np.random.choice(x, min(size, len(x)), replace=False) for x in edge_cols]
-        # else:
         rand = torch.rand(batch_size, size)
         rand = rand * row_counts.view(-1, 1)
         rand = rand.long()
+
         rand = rand + indptr[:-1].view(-1, 1)
         edge_cols = indices[rand].view(-1)
         row = torch.arange(0, batch_size).view(-1, 1).repeat(1, size).view(-1)

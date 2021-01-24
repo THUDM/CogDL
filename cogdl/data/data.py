@@ -113,6 +113,9 @@ class Data(object):
         # creating batches.
         return self.num_nodes if bool(re.search("(index|face)", key)) else 0
 
+    def __cat_dim__(self, key, value):
+        return self.cat_dim(key, value)
+
     @property
     def num_edges(self):
         r"""Returns the number of edges in the graph."""

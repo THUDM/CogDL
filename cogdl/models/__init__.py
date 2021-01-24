@@ -111,7 +111,7 @@ SUPPORTED_MODELS = {
     "fastgcn": "cogdl.models.nn.fastgcn",
     "mlp": "cogdl.models.nn.mlp",
     "sgc": "cogdl.models.nn.sgc",
-    "stpgnn": "cogdl.models.nn.pyg_stpgnn",
+    "stpgnn": "cogdl.models.nn.stpgnn",
     "sortpool": "cogdl.models.nn.sortpool",
     "srgcn": "cogdl.models.nn.pyg_srgcn",
     "asgcn": "cogdl.models.nn.asgcn",

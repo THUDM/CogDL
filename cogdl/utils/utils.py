@@ -335,10 +335,10 @@ def coalesce(row, col, value=None):
     if mask.all():
         return row, col.value
     row = row[mask]
-    col = col[mask]
     if value is not None:
         _value = torch.zeros(row.shape[0], dtype=torch.float).to(row.device)
         value = _value.scatter_add_(dim=0, src=value, index=col)
+    col = col[mask]
     return row, col, value
 
 

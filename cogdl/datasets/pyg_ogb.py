@@ -34,7 +34,7 @@ class OGBNDataset(PygNodePropPredDataset):
 
 @register_dataset("ogbn-arxiv")
 class OGBArxivDataset(OGBNDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "ogbn-arxiv"
         path = osp.join("data", dataset)
         if not osp.exists(path):
@@ -49,7 +49,7 @@ class OGBArxivDataset(OGBNDataset):
 
 @register_dataset("ogbn-products")
 class OGBProductsDataset(OGBNDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "ogbn-products"
         path = osp.join("data", dataset)
         if not osp.exists(path):
@@ -59,7 +59,7 @@ class OGBProductsDataset(OGBNDataset):
 
 @register_dataset("ogbn-proteins")
 class OGBProteinsDataset(OGBNDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "ogbn-proteins"
         path = osp.join("data", dataset)
         if not osp.exists(path):
@@ -69,7 +69,7 @@ class OGBProteinsDataset(OGBNDataset):
 
 @register_dataset("ogbn-mag")
 class OGBMAGDataset(OGBNDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "ogbn-mag"
         path = osp.join("data", dataset)
         if not osp.exists(path):
@@ -79,7 +79,7 @@ class OGBMAGDataset(OGBNDataset):
 
 @register_dataset("ogbn-papers100M")
 class OGBPapers100MDataset(OGBNDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "ogbn-papers100M"
         path = osp.join("data", dataset)
         if not osp.exists(path):
@@ -109,7 +109,7 @@ class OGBGDataset(PygGraphPropPredDataset):
 
 @register_dataset("ogbg-molbace")
 class OGBMolbaceDataset(OGBGDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "ogbg-molbace"
         path = osp.join("data", dataset)
         if not osp.exists(path):
@@ -119,7 +119,7 @@ class OGBMolbaceDataset(OGBGDataset):
 
 @register_dataset("ogbg-molhiv")
 class OGBMolhivDataset(OGBGDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "ogbg-molhiv"
         path = osp.join("data", dataset)
         if not osp.exists(path):
@@ -129,7 +129,7 @@ class OGBMolhivDataset(OGBGDataset):
 
 @register_dataset("ogbg-molpcba")
 class OGBMolpcbaDataset(OGBGDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "ogbg-molpcba"
         path = osp.join("data", dataset)
         if not osp.exists(path):
@@ -139,7 +139,7 @@ class OGBMolpcbaDataset(OGBGDataset):
 
 @register_dataset("ogbg-ppa")
 class OGBPpaDataset(OGBGDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "ogbg-ppa"
         path = osp.join("data", dataset)
         if not osp.exists(path):
@@ -149,7 +149,7 @@ class OGBPpaDataset(OGBGDataset):
 
 @register_dataset("ogbg-code")
 class OGBCodeDataset(OGBGDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "ogbg-code"
         path = osp.join("data", dataset)
         if not osp.exists(path):

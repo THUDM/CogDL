@@ -32,7 +32,6 @@ class HANDataset(Dataset):
         self.url = f"https://github.com/cenyk1230/han-data/blob/master/{name}.zip?raw=true"
         super(HANDataset, self).__init__(root)
         self.data = torch.load(self.processed_paths[0])
-        self.num_classes = torch.max(self.data.train_target).item() + 1
         self.num_edge = len(self.data.adj)
         self.num_nodes = self.data.x.shape[0]
 
@@ -44,6 +43,10 @@ class HANDataset(Dataset):
     @property
     def processed_file_names(self):
         return ["data.pt"]
+
+    @property
+    def num_classes(self):
+        return torch.max(self.data.train_target).item() + 1
 
     def read_gtn_data(self, folder):
         data = sio.loadmat(osp.join(folder, "data.mat"))

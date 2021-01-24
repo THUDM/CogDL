@@ -68,7 +68,7 @@ class MatlabMatrix(Dataset):
 
 @register_dataset("blogcatalog")
 class BlogcatalogDataset(MatlabMatrix):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset, filename = "blogcatalog", "blogcatalog"
         url = "http://leitang.net/code/social-dimension/data/"
         path = osp.join("data", dataset)
@@ -77,7 +77,7 @@ class BlogcatalogDataset(MatlabMatrix):
 
 @register_dataset("flickr-ne")
 class FlickrDataset(MatlabMatrix):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset, filename = "flickr", "flickr"
         url = "http://leitang.net/code/social-dimension/data/"
         path = osp.join("data", dataset)
@@ -86,7 +86,7 @@ class FlickrDataset(MatlabMatrix):
 
 @register_dataset("wikipedia")
 class WikipediaDataset(MatlabMatrix):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset, filename = "wikipedia", "POS"
         url = "http://snap.stanford.edu/node2vec/"
         path = osp.join("data", dataset)
@@ -95,7 +95,7 @@ class WikipediaDataset(MatlabMatrix):
 
 @register_dataset("ppi")
 class PPIDataset(MatlabMatrix):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset, filename = "ppi", "Homo_sapiens"
         url = "http://snap.stanford.edu/node2vec/"
         path = osp.join("data", dataset)

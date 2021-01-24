@@ -1,6 +1,7 @@
 import importlib
 
 from cogdl.data.dataset import Dataset
+from .customizezd_data import CustomizedGraphClassificationDataset, CustomizedNodeClassificationDataset, BaseDataset
 
 try:
     import torch_geometric
@@ -51,14 +52,27 @@ def try_import_dataset(dataset):
 
 def build_dataset(args):
     if not try_import_dataset(args.dataset):
+        assert hasattr(args, "task")
+        dataset = build_dataset_from_path(args.dataset, args.task)
+        if dataset is not None:
+            return dataset
         exit(1)
-    return DATASET_REGISTRY[args.dataset](args=args)
+    return DATASET_REGISTRY[args.dataset]()
 
 
 def build_dataset_from_name(dataset):
     if not try_import_dataset(dataset):
         exit(1)
     return DATASET_REGISTRY[dataset]()
+
+
+def build_dataset_from_path(data_path, task):
+    if "node_classification" in task:
+        return CustomizedNodeClassificationDataset(data_path)
+    elif "graph_classification" in task:
+        return CustomizedGraphClassificationDataset(data_path)
+    else:
+        return None
 
 
 SUPPORTED_DATASETS = {
@@ -117,8 +131,8 @@ SUPPORTED_DATASETS = {
     "reddit": "cogdl.datasets.saint_data",
     "test_bio": "cogdl.datasets.pyg_strategies_data",
     "test_chem": "cogdl.datasets.pyg_strategies_data",
-    "bio": "cogdl.datasets.pyg_strategies_data",
-    "chem": "cogdl.datasets.pyg_strategies_data",
-    "bace": "cogdl.datasets.pyg_strategies_data",
-    "bbbp": "cogdl.datasets.pyg_strategies_data",
+    "bio": "cogdl.datasets.strategies_data",
+    "chem": "cogdl.datasets.strategies_data",
+    "bace": "cogdl.datasets.strategies_data",
+    "bbbp": "cogdl.datasets.strategies_data",
 }

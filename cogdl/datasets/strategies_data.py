@@ -8,10 +8,11 @@ import networkx as nx
 import numpy as np
 
 import torch
-from torch_geometric.data import InMemoryDataset, Data
 from cogdl.utils import download_url
 import os.path as osp
 from itertools import repeat
+
+from cogdl.data import Data, MultiGraphDataset
 
 # ================
 # Dataset utils
@@ -557,7 +558,7 @@ class ChemExtractSubstructureContextPair:
 
 class BatchFinetune(Data):
     def __init__(self, batch=None, **kwargs):
-        super(BatchMasking, self).__init__(**kwargs)
+        super(BatchFinetune, self).__init__(**kwargs)
         self.batch = batch
 
     @staticmethod
@@ -841,10 +842,8 @@ class DataLoaderSubstructContext(torch.utils.data.DataLoader):
 
 
 @register_dataset("test_bio")
-class TestBioDataset(InMemoryDataset):
-    def __init__(
-        self, data_type="unsupervised", root=None, transform=None, pre_transform=None, pre_filter=None, args=None
-    ):
+class TestBioDataset(MultiGraphDataset):
+    def __init__(self, data_type="unsupervised", root="testbio", transform=None, pre_transform=None, pre_filter=None):
         super(TestBioDataset, self).__init__(root, transform, pre_transform, pre_filter)
         num_nodes = 20
         num_edges = 20
@@ -891,12 +890,16 @@ class TestBioDataset(InMemoryDataset):
             self.slices["go_target_pretrain"] = torch.arange(0, (num_graphs + 1) * pretrain_tasks)
             self.slices["go_target_downstream"] = torch.arange(0, (num_graphs + 1) * downstream_tasks)
 
+    def _download(self):
+        pass
+
+    def _process(self):
+        pass
+
 
 @register_dataset("test_chem")
-class TestChemDataset(InMemoryDataset):
-    def __init__(
-        self, data_type="unsupervised", root=None, transform=None, pre_transform=None, pre_filter=None, args=None
-    ):
+class TestChemDataset(MultiGraphDataset):
+    def __init__(self, data_type="unsupervised", root="testchem", transform=None, pre_transform=None, pre_filter=None):
         super(TestChemDataset, self).__init__(root, transform, pre_transform, pre_filter)
         num_nodes = 10
         num_edges = 10
@@ -943,21 +946,16 @@ class TestChemDataset(InMemoryDataset):
             self.data.y = go_target_pretrain
             self.slices["y"] = torch.arange(0, (num_graphs + 1) * pretrain_tasks, pretrain_tasks)
 
-    def get(self, idx):
-        data = Data()
-        for key in self.data.keys:
-            item, slices = self.data[key], self.slices[key]
-            s = list(repeat(slice(None), item.dim()))
-            s[data.__cat_dim__(key, item)] = slice(slices[idx], slices[idx + 1])
-            data[key] = item[s]
-        return data
+    def _download(self):
+        pass
+
+    def _process(self):
+        pass
 
 
 @register_dataset("bio")
-class BioDataset(InMemoryDataset):
-    def __init__(
-        self, data_type="unsupervised", empty=False, transform=None, pre_transform=None, pre_filter=None, args=None
-    ):
+class BioDataset(MultiGraphDataset):
+    def __init__(self, data_type="unsupervised", empty=False, transform=None, pre_transform=None, pre_filter=None):
         self.data_type = data_type
         self.url = "https://cloud.tsinghua.edu.cn/f/c865b1d61348489e86ac/?dl=1"
         self.root = osp.join("data", "BIO")
@@ -987,10 +985,8 @@ class BioDataset(InMemoryDataset):
 
 
 @register_dataset("chem")
-class MoleculeDataset(InMemoryDataset):
-    def __init__(
-        self, data_type="unsupervised", transform=None, pre_transform=None, pre_filter=None, empty=False, args=None
-    ):
+class MoleculeDataset(MultiGraphDataset):
+    def __init__(self, data_type="unsupervised", transform=None, pre_transform=None, pre_filter=None, empty=False):
         self.data_type = data_type
         self.url = "https://cloud.tsinghua.edu.cn/f/2cac04ee904e4b54b4b2/?dl=1"
         self.root = osp.join("data", "CHEM")
@@ -1003,15 +999,6 @@ class MoleculeDataset(InMemoryDataset):
                 self.data, self.slices = torch.load(self.processed_paths[1])
             else:
                 self.data, self.slices = torch.load(self.processed_paths[0])
-
-    def get(self, idx):
-        data = Data()
-        for key in self.data.keys:
-            item, slices = self.data[key], self.slices[key]
-            s = list(repeat(slice(None), item.dim()))
-            s[data.__cat_dim__(key, item)] = slice(slices[idx], slices[idx + 1])
-            data[key] = item[s]
-        return data
 
     @property
     def raw_file_names(self):
@@ -1037,8 +1024,8 @@ class MoleculeDataset(InMemoryDataset):
 
 
 @register_dataset("bace")
-class BACEDataset(InMemoryDataset):
-    def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False, args=None):
+class BACEDataset(MultiGraphDataset):
+    def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False):
         self.url = "https://cloud.tsinghua.edu.cn/f/253270b278f4465380f1/?dl=1"
         self.root = osp.join("data", "BACE")
 
@@ -1047,15 +1034,6 @@ class BACEDataset(InMemoryDataset):
 
         if not empty:
             self.data, self.slices = torch.load(self.processed_paths[0])
-
-    def get(self, idx):
-        data = Data()
-        for key in self.data.keys:
-            item, slices = self.data[key], self.slices[key]
-            s = list(repeat(slice(None), item.dim()))
-            s[data.__cat_dim__(key, item)] = slice(slices[idx], slices[idx + 1])
-            data[key] = item[s]
-        return data
 
     @property
     def raw_file_names(self):
@@ -1076,8 +1054,8 @@ class BACEDataset(InMemoryDataset):
 
 
 @register_dataset("bbbp")
-class BBBPDataset(InMemoryDataset):
-    def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False, args=None):
+class BBBPDataset(MultiGraphDataset):
+    def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False):
         self.url = "https://cloud.tsinghua.edu.cn/f/ab8ff4d0a68c40a38956/?dl=1"
         self.root = osp.join("data", "BBBP")
 
@@ -1086,15 +1064,6 @@ class BBBPDataset(InMemoryDataset):
 
         if not empty:
             self.data, self.slices = torch.load(self.processed_paths[0])
-
-    def get(self, idx):
-        data = Data()
-        for key in self.data.keys:
-            item, slices = self.data[key], self.slices[key]
-            s = list(repeat(slice(None), item.dim()))
-            s[data.__cat_dim__(key, item)] = slice(slices[idx], slices[idx + 1])
-            data[key] = item[s]
-        return data
 
     @property
     def raw_file_names(self):

@@ -12,6 +12,7 @@ from cogdl.options import get_default_args
 from cogdl.tasks import build_task
 from cogdl.utils import set_random_seed, tabulate_results
 from cogdl.configs import BEST_CONFIGS
+from cogdl.datasets import SUPPORTED_DATASETS
 from cogdl.models import SUPPORTED_MODELS
 
 
@@ -116,10 +117,13 @@ def check_task_dataset_model_match(task, variants):
 
     clean_variants = []
     for item in variants:
-        if item.model in SUPPORTED_MODELS and (item.model, item.dataset) not in pairs:
+        if (
+            (item.dataset in SUPPORTED_DATASETS)
+            and (item.model in SUPPORTED_MODELS)
+            and (item.model, item.dataset) not in pairs
+        ):
             print(f"({item.model}, {item.dataset}) is not implemented in task '{task}''.")
             continue
-        clean_variants.append(item)
     if not clean_variants:
         exit(0)
     return clean_variants

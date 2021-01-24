@@ -117,7 +117,7 @@ def scale_feats(data):
 
 @register_dataset("yelp")
 class YelpDataset(SAINTDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "Yelp"
         url = "https://cloud.tsinghua.edu.cn/d/7218cc013c9a40159306/files/?p=%2F{}&dl=1"
         path = osp.join("data", dataset)
@@ -129,7 +129,7 @@ class YelpDataset(SAINTDataset):
 
 @register_dataset("amazon-s")
 class AmazonDataset(SAINTDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "AmazonSaint"
         url = "https://cloud.tsinghua.edu.cn/d/ae4b2c4f59bd41be9b0b/files/?p=%2F{}&dl=1"
         path = osp.join("data", dataset)
@@ -141,7 +141,7 @@ class AmazonDataset(SAINTDataset):
 
 @register_dataset("flickr")
 class FlickrDatset(SAINTDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "Flickr"
         url = "https://cloud.tsinghua.edu.cn/d/d3ebcb5fa2da463b8213/files/?p=%2F{}&dl=1"
         path = osp.join("data", dataset)
@@ -156,7 +156,7 @@ class FlickrDatset(SAINTDataset):
 
 @register_dataset("reddit")
 class RedditDataset(SAINTDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "Reddit"
         url = "https://cloud.tsinghua.edu.cn/d/d087e7e766e747ce8073/files/?p=%2F{}&dl=1"
         path = osp.join("data", dataset)

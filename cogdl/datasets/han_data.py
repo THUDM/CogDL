@@ -136,7 +136,7 @@ class HANDataset(Dataset):
 
 @register_dataset("han-acm")
 class ACM_HANDataset(HANDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "han-acm"
         path = osp.join("data", dataset)
         super(ACM_HANDataset, self).__init__(path, dataset)
@@ -144,7 +144,7 @@ class ACM_HANDataset(HANDataset):
 
 @register_dataset("han-dblp")
 class DBLP_HANDataset(HANDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "han-dblp"
         path = osp.join("data", dataset)
         super(DBLP_HANDataset, self).__init__(path, dataset)
@@ -152,7 +152,7 @@ class DBLP_HANDataset(HANDataset):
 
 @register_dataset("han-imdb")
 class IMDB_HANDataset(HANDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "han-imdb"
         path = osp.join("data", dataset)
         super(IMDB_HANDataset, self).__init__(path, dataset)

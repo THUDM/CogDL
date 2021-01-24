@@ -1,8 +1,7 @@
 import torch
-
-from cogdl import experiment
 from cogdl.data import Data
-from cogdl.datasets import BaseDataset, register_dataset
+from cogdl.datasets import BaseDataset, register_dataset, build_dataset, build_dataset_from_name
+from cogdl.utils import build_args_from_dict
 
 
 @register_dataset("mydataset")
@@ -33,8 +32,17 @@ class MyNodeClassificationDataset(BaseDataset):
         return data
 
 
+def test_customized_dataset():
+    dataset = build_dataset_from_name("mydataset")
+    assert isinstance(dataset[0], Data)
+    assert dataset[0].x.shape[0] == 100
+
+
+def test_build_dataset_from_path():
+    args = build_args_from_dict({"dataset": "mydata.pt", "task": "node_classification"})
+    dataset = build_dataset(args)
+    assert dataset[0].x.shape[0] == 100
+
+
 if __name__ == "__main__":
-    # Run with self-loaded dataset
-    experiment(task="node_classification", dataset="mydataset", model="gcn")
-    # Run with given datapaath
-    experiment(task="node_classification", dataset="./mydata.pt", model="gcn")
+    test_customized_dataset()

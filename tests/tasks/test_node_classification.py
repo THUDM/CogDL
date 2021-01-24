@@ -631,6 +631,11 @@ def test_pprgo_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+    args.dataset = "ppi"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
 
 if __name__ == "__main__":
     test_gdc_gcn_cora()

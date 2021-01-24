@@ -167,3 +167,33 @@ class RedditDataset(SAINTDataset):
 
     def get_evaluator(self):
         return multiclass_evaluator()
+
+
+@register_dataset("ppi")
+class PPIDataset(SAINTDataset):
+    def __init__(self):
+        dataset = "PPI"
+        url = "https://cloud.tsinghua.edu.cn/d/2c6e94ec9dad4972b58e/files/?p=%2F{}&dl=1"
+        path = osp.join("data", dataset)
+        if not osp.exists(path):
+            SAINTDataset(path, dataset, url)
+        super(PPIDataset, self).__init__(path, dataset, url)
+        self.data = scale_feats(self.data)
+
+    def get_evaluator(self):
+        return multilabel_evaluator()
+
+
+@register_dataset("ppi-large")
+class PPILargeDataset(SAINTDataset):
+    def __init__(self):
+        dataset = "PPI_Large"
+        url = "https://cloud.tsinghua.edu.cn/d/469ef38a520640bba267/files/?p=%2F{}&dl=1"
+        path = osp.join("data", dataset)
+        if not osp.exists(path):
+            SAINTDataset(path, dataset, url)
+        super(PPILargeDataset, self).__init__(path, dataset, url)
+        self.data = scale_feats(self.data)
+
+    def get_evaluator(self):
+        return multilabel_evaluator()

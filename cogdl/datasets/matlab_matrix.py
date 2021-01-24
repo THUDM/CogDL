@@ -93,7 +93,7 @@ class WikipediaDataset(MatlabMatrix):
         super(WikipediaDataset, self).__init__(path, filename, url)
 
 
-@register_dataset("ppi")
+@register_dataset("ppi-ne")
 class PPIDataset(MatlabMatrix):
     def __init__(self):
         dataset, filename = "ppi", "Homo_sapiens"

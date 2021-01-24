@@ -149,9 +149,11 @@ class NeighborSamplingTrainer(SampledTrainer):
         self.patience = self.patience // self.eval_per_epoch
 
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
+        self.loss_fn, self.evaluator = None, None
 
     def fit(self, model, dataset):
         self.data = Data.from_pyg_data(dataset[0])
+        self.loss_fn, self.evaluator = dataset.get_evaluator()
         self.train_loader = NeighborSampler(
             data=self.data,
             mask=self.data.train_mask,

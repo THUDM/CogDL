@@ -50,7 +50,7 @@ class PPRGoTrainer(object):
         else:
             edge_index = data.edge_index
 
-        if not os.path.exists("./saved"):
+        if not os.path.exists("./pprgo_saved"):
             os.mkdir("pprgo_saved")
         path = f"./pprgo_saved/{self.dataset_name}_{self.topk}_{self.alpha}_{self.normalization}.{mode}.npz"
 

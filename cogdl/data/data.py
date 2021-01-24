@@ -1,8 +1,20 @@
 import re
+import numba
 
 import torch
 import numpy as np
 import scipy.sparse as sparse
+
+
+@numba.njit
+def reindex(node_idx, col):
+    node_dict = dict()
+    cnt = 0
+    for i in node_idx:
+        node_dict[i] = cnt
+        cnt += 1
+    new_col = [node_dict[i] for i in col]
+    return np.array(new_col)
 
 
 class Data(object):
@@ -184,6 +196,11 @@ class Data(object):
         if self.__adj is not None:
             return
         num_edges = self.edge_index.shape[1]
+
+        self.row, self.col = self.edge_index.cpu()
+        self.col = self.col.numpy()
+        self.node_idx = torch.unique(self.edge_index).cpu().numpy()
+
         edge_index_np = self.edge_index.cpu().numpy()
         num_nodes = self.x.shape[0]
         edge_attr_np = np.ones(num_edges)
@@ -243,29 +260,32 @@ class Data(object):
         adj = self.__adj[batch].tocsr()
         batch_size = len(batch)
         if size == -1:
-            adj = adj.tocoo()
-            row, col = torch.from_numpy(adj.row), torch.from_numpy(adj.col)
-            node_idx = torch.unique(col)
+            row, col = self.row, self.col
+            _node_idx = self.node_idx
         else:
             indices = torch.from_numpy(adj.indices)
             indptr = torch.from_numpy(adj.indptr)
             node_idx, (row, col) = self._sample_adj(batch_size, indices, indptr, size)
-        col = col.numpy()
-        _node_idx = node_idx.numpy()
+            col = col.numpy()
+            _node_idx = node_idx.numpy()
 
         # Reindexing: target nodes are always put at the front
-        _node_idx = list(batch) + list(set(_node_idx).difference(set(batch)))
-        node_dict = {val: key for key, val in enumerate(_node_idx)}
-        new_col = torch.LongTensor([node_dict[i] for i in col])
+        # _node_idx = list(batch) + list(set(_node_idx).difference(set(batch)))
+        _node_idx = np.concatenate((batch, np.setdiff1d(_node_idx, batch)))
+
+        # node_dict = {val: key for key, val in enumerate(_node_idx)}
+        # new_col = torch.LongTensor([node_dict[i] for i in col])
+        new_col = torch.as_tensor(reindex(_node_idx, col), dtype=torch.long)
         edge_index = torch.stack([row.long(), new_col])
 
-        node_idx = torch.Tensor(_node_idx).long().to(self.x.device)
+        node_idx = torch.as_tensor(_node_idx, dtype=torch.long).to(self.x.device)
         edge_index = edge_index.long().to(self.x.device)
         return node_idx, edge_index
 
     def _sample_adj(self, batch_size, indices, indptr, size):
         indptr = indptr
-        row_counts = torch.Tensor([indptr[i] - indptr[i - 1] for i in range(1, len(indptr))])
+        row_counts = torch.as_tensor([indptr[i] - indptr[i - 1] for i in range(1, len(indptr))])
+        # row_counts = torch.cumsum(indptr, dim=0)[1:]
 
         # if not replace:
         #     edge_cols = [col[indptr[i]: indptr[i+1]] for i in range(len(indptr)-1)]

@@ -190,6 +190,11 @@ def test_graphsage_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+    args.use_trainer = True
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
 
 def test_pyg_cheb_cora():
     args = get_default_args()

@@ -159,6 +159,8 @@ class Graphsage(BaseModel):
     def get_trainer(task: Any, args: Any):
         if args.dataset not in ["cora", "citeseer"]:
             return NeighborSamplingTrainer
+        if hasattr(args, "use_trainer"):
+            return NeighborSamplingTrainer
 
     def set_data_device(self, device):
         self.device = device

@@ -190,6 +190,11 @@ def test_graphsage_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+    args.use_trainer = True
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
 
 def test_pyg_cheb_cora():
     args = get_default_args()
@@ -236,10 +241,11 @@ def test_pyg_gcn_cora_sampler():
         assert 0 <= ret["Acc"] <= 1
 
 
-def test_unet_cora():
+def test_unet_citeseer():
     args = get_default_args()
     args.cpu = True
     args.model = "unet"
+    args.dataset = "citeseer"
     args.pool_rate = [0.5, 0.5]
     args.n_pool = 2
     args.adj_dropout = 0.3
@@ -248,6 +254,7 @@ def test_unet_cora():
     args.improved = True
     args.aug_adj = True
     args.activation = "elu"
+    # print(args)
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
@@ -662,5 +669,3 @@ if __name__ == "__main__":
     test_dropedge_resgcn_cora()
     test_dropedge_inceptiongcn_cora()
     test_dropedge_densegcn_cora()
-    test_unet_cora()
-    test_pprgo_cora()

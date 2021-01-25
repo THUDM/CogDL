@@ -33,8 +33,9 @@ node_classification:
     - ogbn-products
     - ogbn-papers100M
     - flickr
-    - amazon
+    - amazon-s
     - yelp
+    - ppi
     - reddit
 unsupervised_node_classification:
   - model:
@@ -51,7 +52,7 @@ unsupervised_node_classification:
     - spectral
     - gcc
     dataset:
-    - ppi
+    - ppi-ne
     - blogcatalog
     - wikipedia
     - usa-airport

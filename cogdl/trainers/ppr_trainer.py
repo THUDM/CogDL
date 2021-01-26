@@ -79,7 +79,8 @@ class PPRGoTrainer(object):
         return data_loader
 
     def fit(self, model, dataset):
-        self.loss_func, self.evaluator = dataset.get_evaluator()
+        self.evaluator = dataset.get_evaluator()
+        self.loss_func = dataset.get_loss_fn()
         self.model = model.to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
@@ -147,7 +148,7 @@ class PPRGoTrainer(object):
         else:
             preds = torch.cat(preds, dim=0)
             labels = torch.cat(labels, dim=0)
-            score = self.evaluator(labels, preds)
+            score = self.evaluator(preds, labels)
             return score, sum(loss_items) / len(loss_items)
 
     def _test_step(self, data):
@@ -166,5 +167,5 @@ class PPRGoTrainer(object):
         labels = data.y[data.test_mask]
         preds = predictions[data.test_mask]
 
-        score = self.evaluator(labels, preds)
+        score = self.evaluator(preds, labels)
         return score

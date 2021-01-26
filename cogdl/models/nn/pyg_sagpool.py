@@ -122,8 +122,4 @@ class SAGPoolNetwork(BaseModel):
         out = F.relu(self.lin_layer_1(out))
         out = F.dropout(out, p=self.dropout, training=self.training)
         out = F.relu(self.lin_layer_2(out))
-        out = F.log_softmax(self.lin_layer_3(out), dim=-1)
-        if batch.y is not None:
-            loss = F.nll_loss(out, batch.y)
-            return out, loss
-        return out, None
+        return out

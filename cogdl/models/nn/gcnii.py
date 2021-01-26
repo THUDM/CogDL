@@ -99,12 +99,14 @@ class GCNII(BaseModel):
 
         self.fc_parameters = list(self.fc_layers.parameters())
         self.conv_parameters = list(self.layers.parameters())
-        self.edge_attr = None
+        self.cache = dict()
 
     def forward(self, x, edge_index, edge_attr=None):
-        if self.edge_attr is None:
+        num_edges = edge_index.shape[1]
+        _attr = f"edge_attr_{num_edges}"
+        if _attr not in self.cache:
             if edge_attr is not None:
-                self.edge_attr = edge_attr
+                self.cache[_attr] = edge_attr
             else:
                 edge_index, edge_weight = add_remaining_self_loops(
                     edge_index=edge_index,
@@ -112,7 +114,7 @@ class GCNII(BaseModel):
                     fill_value=1,
                     num_nodes=x.shape[0],
                 )
-                self.edge_attr = symmetric_normalization(
+                self.cache[_attr] = symmetric_normalization(
                     num_nodes=x.shape[0],
                     edge_index=edge_index,
                     edge_weight=edge_weight,
@@ -124,6 +126,7 @@ class GCNII(BaseModel):
                 fill_value=1,
                 num_nodes=x.shape[0],
             )
+        edge_attr = self.cache[_attr]
 
         init_h = F.dropout(x, p=self.dropout, training=self.training)
         init_h = F.relu(self.fc_layers[0](init_h))
@@ -132,7 +135,7 @@ class GCNII(BaseModel):
 
         for layer in self.layers:
             h = F.dropout(h, p=self.dropout, training=self.training)
-            h = layer(h, edge_index, self.edge_attr, init_h)
+            h = layer(h, edge_index, edge_attr, init_h)
             h = self.activation(h)
         h = F.dropout(h, p=self.dropout, training=self.training)
         out = self.fc_layers[1](h)

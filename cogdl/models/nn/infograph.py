@@ -178,42 +178,51 @@ class InfoGraph(BaseModel):
         else:
             return self.unsup_forward(batch.x, batch.edge_index, batch.batch)
 
+    def graph_classification_loss(self, batch):
+        if self.sup:
+            pred = self.sup_forward(batch.x, batch.edge_index, batch.batch, batch.y, batch.edge_attr)
+            loss = self.sup_loss(pred, batch)
+        else:
+            graph_feat, node_feat = self.unsup_forward(batch.x, batch.edge_index, batch.batch)
+            loss = self.unsup_loss(graph_feat, node_feat, batch.batch)
+        return loss
+
     def sup_forward(self, x, edge_index=None, batch=None, label=None, edge_attr=None):
         node_feat, graph_feat = self.sem_encoder(x, edge_index, batch, edge_attr)
         node_feat = F.relu(self.sem_fc1(node_feat))
         node_feat = self.sem_fc2(node_feat)
-        prediction = F.softmax(node_feat, dim=1)
-        if label is not None:
-            loss = self.sup_loss(prediction, label)
-            loss += self.unsup_loss(x, edge_index, batch)[1]
-            loss += self.unsup_sup_loss(x, edge_index, batch)
-            return prediction, loss
-        return prediction, None
+        return node_feat
 
     def unsup_forward(self, x, edge_index=None, batch=None):
-        return self.unsup_loss(x, edge_index, batch)
-
-    def sup_loss(self, prediction, label=None):
-        sup_loss = self.criterion(prediction, label)
-        return sup_loss
-
-    def unsup_loss(self, x, edge_index=None, batch=None):
+        # return self.unsup_loss(x, edge_index, batch)
         graph_feat, node_feat = self.unsup_encoder(x, edge_index, batch)
+        if self.training:
+            return graph_feat, node_feat
+        else:
+            return graph_feat
 
+    def sup_loss(self, pred, batch):
+        pred = F.softmax(pred, dim=1)
+        loss = self.criterion(pred, batch)
+        loss += self.unsup_loss(batch.x, batch.edge_index, batch.batch)[1]
+        loss += self.unsup_sup_loss(batch.x, batch.edge_index, batch.batch)
+        return loss
+
+    def unsup_loss(self, graph_feat, node_feat, batch):
         local_encode = self.local_dis(node_feat)
         global_encode = self.global_dis(graph_feat)
 
         num_graphs = graph_feat.shape[0]
         num_nodes = node_feat.shape[0]
 
-        pos_mask = torch.zeros((num_nodes, num_graphs)).to(x.device)
-        neg_mask = torch.ones((num_nodes, num_graphs)).to(x.device)
+        pos_mask = torch.zeros((num_nodes, num_graphs)).to(batch.device)
+        neg_mask = torch.ones((num_nodes, num_graphs)).to(batch.device)
         for nid, gid in enumerate(batch):
             pos_mask[nid][gid] = 1
             neg_mask[nid][gid] = 0
         glob_local_mi = torch.mm(local_encode, global_encode.t())
         loss = InfoGraph.mi_loss(pos_mask, neg_mask, glob_local_mi, num_nodes, num_nodes * (num_graphs - 1))
-        return graph_feat, loss
+        return loss
 
     def unsup_sup_loss(self, x, edge_index, batch):
         sem_g_feat, _ = self.sem_encoder(x, edge_index, batch)

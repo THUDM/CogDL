@@ -1,22 +1,31 @@
 import torch
 
 from cogdl.data import Dataset, MultiGraphDataset, Batch
-from cogdl.utils import accuracy_evaluator, download_url, multiclass_evaluator, multilabel_evaluator
+from cogdl.utils import download_url, accuracy, multilabel_f1, multiclass_f1, bce_with_logits_loss, cross_entropy_loss
 
 
 def _get_evaluator(metric):
     if metric == "accuracy":
-        return accuracy_evaluator()
+        return accuracy
     elif metric == "multilabel_f1":
-        return multilabel_evaluator()
+        return multilabel_f1
     elif metric == "multiclass_f1":
-        return multiclass_evaluator()
+        return multiclass_f1
+    else:
+        raise NotImplementedError
+
+
+def _get_loss_fn(metric):
+    if metric in ("accuracy", "multiclass_f1"):
+        return cross_entropy_loss
+    elif metric == "multilabel_f1":
+        return bce_with_logits_loss
     else:
         raise NotImplementedError
 
 
 class BaseDataset(Dataset):
-    def __init__(self):
+    def __init__(self, root=None):
         super(BaseDataset, self).__init__("custom")
 
     def process(self):
@@ -31,8 +40,16 @@ class BaseDataset(Dataset):
     def get(self, idx):
         return self.data
 
+    def __len__(self):
+        if hasattr(self, "y"):
+            return len(self.y)
+        elif hasattr(self, "x"):
+            return self.x.shape[0]
+        else:
+            raise NotImplementedError
 
-class CustomizedNodeClassificationDataset(Dataset):
+
+class CustomizedNodeClassificationDataset(BaseDataset):
     """
     data_path : path to load dataset. The dataset must be processed to specific format
     metric: Accuracy, multi-label f1 or multi-class f1. Default: `accuracy`
@@ -46,6 +63,9 @@ class CustomizedNodeClassificationDataset(Dataset):
             print(e)
             exit(1)
         self.metric = metric
+        if hasattr(self.data, "y"):
+            if len(self.data.y.shape) > 1:
+                self.metric = "multilabel_f1"
 
     def download(self):
         for name in self.raw_file_names:
@@ -61,18 +81,15 @@ class CustomizedNodeClassificationDataset(Dataset):
     def get_evaluator(self):
         return _get_evaluator(self.metric)
 
+    def get_loss_fn(self):
+        return _get_loss_fn(self.metric)
+
     def __repr__(self):
         return "{}()".format(self.name)
 
-    def _download(self):
-        pass
 
-    def _process(self):
-        pass
-
-
-class CustomizedGraphClassificationDataset(MultiGraphDataset):
-    def __init__(self, data_path):
+class CustomizedGraphClassificationDataset(BaseDataset):
+    def __init__(self, data_path, metric="accuracy"):
         super(CustomizedGraphClassificationDataset, self).__init__(root=data_path)
         try:
             data = torch.load(data_path)
@@ -89,14 +106,16 @@ class CustomizedGraphClassificationDataset(MultiGraphDataset):
             print(e)
             exit(1)
 
+        self.metric = metric
+        if hasattr(self.data, "y"):
+            if len(self.data.y.shape) > 1:
+                self.metric = "multilabel_f1"
+
     def get_evaluator(self):
         return _get_evaluator(self.metric)
 
+    def get_loss_fn(self):
+        return _get_loss_fn(self.metric)
+
     def __repr__(self):
         return "{}()".format(self.name)
-
-    def _download(self):
-        pass
-
-    def _process(self):
-        pass

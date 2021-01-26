@@ -1,6 +1,7 @@
 import os.path as osp
 from itertools import product
 
+import numpy as np
 import scipy.io
 import torch
 
@@ -98,5 +99,86 @@ class PPIDataset(MatlabMatrix):
     def __init__(self):
         dataset, filename = "ppi", "Homo_sapiens"
         url = "http://snap.stanford.edu/node2vec/"
-        path = osp.join("data", dataset)
+        path = osp.join("data", dataset + "-ne")
         super(PPIDataset, self).__init__(path, filename, url)
+
+
+class NetworkEmbeddingCMTYDataset(Dataset):
+    def __init__(self, root, name, url):
+        self.url = url
+        self.name = name
+        super(NetworkEmbeddingCMTYDataset, self).__init__(root)
+        self.data = torch.load(self.processed_paths[0])
+
+    @property
+    def raw_file_names(self):
+        return [f"{self.name}.{x}" for x in ["ungraph", "cmty"]]
+
+    @property
+    def num_classes(self):
+        return self.y.shape[1]
+
+    @property
+    def num_nodes(self):
+        return self.y.shape[0]
+
+    @property
+    def processed_file_names(self):
+        return ["data.pt"]
+
+    def get(self, idx):
+        assert idx == 0
+        return self.data
+
+    def download(self):
+        for name in self.raw_file_names:
+            download_url(self.url.format(name), self.raw_dir, name=name)
+
+    def process(self):
+        with open(f"{self.name}.ungraph", "r") as f:
+            edge_index = f.read().strip().split("\n")
+        edge_index = [[int(i) for i in x.split("\t")] for x in edge_index]
+        edge_index = np.array(edge_index, dtype=np.int64).transpose()
+        edge_index = torch.from_numpy(edge_index)
+        rev_edge_index = torch.stack([edge_index[1], edge_index[0]])
+        edge_index = torch.cat((edge_index, rev_edge_index), dim=1)
+        self_loop_mask = edge_index[0] == edge_index[1]
+        edge_index = edge_index[:, self_loop_mask]
+
+        with open(f"{self.name}.cmty", "r") as f:
+            cmty = f.read().strip().split("\n")
+        cmty = [[int(i) for i in x.split("\t")] for x in cmty]
+
+        num_classes = len(cmty)
+        num_nodes = np.max(edge_index) + 1
+        labels = np.zeros((num_nodes, num_classes), dtype=np.float)
+        for i, cls in enumerate(cmty):
+            labels[cls, i] = 1.0
+
+        labels = torch.from_numpy(labels)
+        data = Data(x=None, y=labels, edge_index=edge_index)
+        torch.save(data, self.processed_paths[0])
+
+    def __repr__(self):
+        return "{}()".format(self.name)
+
+    def __len__(self):
+        return self.data.y.shape[0]
+
+
+@register_dataset("dblp-ne")
+class DblpNEDataset(NetworkEmbeddingCMTYDataset):
+    def __init__(self):
+        dataset = "dblp"
+        path = osp.join("data", dataset + "-ne")
+        url = None
+        super(DblpNEDataset, self).__init__(path, dataset, url)
+
+
+@register_dataset("youtube-ne")
+class YoutubeNEDataset(NetworkEmbeddingCMTYDataset):
+    def __init__(self):
+        dataset = "youtube"
+        path = osp.join("data", dataset + "-ne")
+        url = None
+        super(YoutubeNEDataset, self).__init__(path, dataset, url)

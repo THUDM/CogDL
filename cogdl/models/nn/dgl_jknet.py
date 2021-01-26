@@ -5,10 +5,8 @@ import dgl.function as fn
 import numpy as np
 from tqdm import tqdm
 
-from cogdl.trainers.supervised_trainer import (
-    SupervisedHomogeneousNodeClassificationTrainer,
-)
 from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificationModel
+from cogdl.trainers.supervised_model_trainer import SupervisedHomogeneousNodeClassificationTrainer
 from .. import register_model
 
 

@@ -1,7 +1,6 @@
 import argparse
 import copy
 from typing import Optional
-import scipy.sparse as sp
 
 import numpy as np
 import torch
@@ -11,58 +10,10 @@ from tqdm import tqdm
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificationModel
-from cogdl.trainers.supervised_trainer import (
-    SupervisedHomogeneousNodeClassificationTrainer,
-)
 from cogdl.trainers.sampled_trainer import SAINTTrainer
 from cogdl.trainers.self_task_trainer import SelfTaskTrainer
 
 from . import BaseTask, register_task
-
-
-def normalize_adj_row(adj):
-    """Row-normalize sparse matrix"""
-    rowsum = np.array(adj.sum(1))
-    r_inv = np.power(rowsum, -1).flatten()
-    r_inv[np.isinf(r_inv)] = 0.0
-    r_mat_inv = sp.diags(r_inv)
-    mx = r_mat_inv.dot(adj)
-    return mx
-
-
-def to_torch_sparse(sparse_mx):
-    """Convert a scipy sparse matrix to a torch sparse tensor."""
-    sparse_mx = sparse_mx.tocoo().astype(np.float32)
-    indices = torch.from_numpy(np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64))
-    values = torch.from_numpy(sparse_mx.data)
-    shape = torch.Size(sparse_mx.shape)
-    return torch.sparse.FloatTensor(indices, values, shape)
-
-
-def row_l1_normalize(X):
-    norm = 1e-6 + X.sum(dim=1, keepdim=True)
-    return X / norm
-
-
-def preprocess_data(data, normalize_feature=True, missing_rate=0):
-    data.train_mask = data.train_mask.type(torch.bool)
-    data.val_mask = data.val_mask.type(torch.bool)
-    # expand test_mask to all rest nodes
-    data.test_mask = ~(data.train_mask + data.val_mask)
-    # get adjacency matrix
-    n = len(data.x)
-    adj = sp.csr_matrix((np.ones(data.edge_index.shape[1]), data.edge_index), shape=(n, n))
-    adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj) + sp.eye(adj.shape[0])
-    adj = normalize_adj_row(adj)
-    data.adj = to_torch_sparse(adj).to_dense()
-    if normalize_feature:
-        data.x = row_l1_normalize(data.x)
-    erasing_pool = torch.arange(n)[~data.train_mask]
-    size = int(len(erasing_pool) * (missing_rate / 100))
-    idx_erased = np.random.choice(erasing_pool, size=size, replace=False)
-    if missing_rate > 0:
-        data.x[idx_erased] = 0
-    return data
 
 
 @register_task("node_classification")
@@ -99,9 +50,6 @@ class NodeClassification(BaseTask):
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         dataset = build_dataset(args) if dataset is None else dataset
 
-        if args.missing_rate > 0:
-            dataset.data = preprocess_data(dataset.data, normalize_feature=True, missing_rate=args.missing_rate)
-
         self.dataset = dataset
         self.data = dataset[0]
         args.num_features = dataset.num_features
@@ -111,7 +59,7 @@ class NodeClassification(BaseTask):
         self.model: SupervisedHomogeneousNodeClassificationModel = build_model(args) if model is None else model
         self.model.set_device(self.device)
 
-        self.trainer: Optional[SupervisedHomogeneousNodeClassificationTrainer] = (
+        self.trainer = (
             self.model.get_trainer(NodeClassification, self.args)(self.args)
             if self.model.get_trainer(NodeClassification, self.args)
             else None

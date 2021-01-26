@@ -2,12 +2,9 @@ from tqdm import tqdm
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.sparse
 from sklearn.cluster import KMeans
-from sklearn.metrics.cluster import normalized_mutual_info_score
 
-from cogdl.utils import add_remaining_self_loops, spmm
 from .base_trainer import BaseTrainer
 
 

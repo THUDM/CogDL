@@ -4,6 +4,7 @@ node_classification:
     - gcn
     - gat
     - drgat
+    - drgcn
     - grand
     - gcnmix
     - disengcn
@@ -11,11 +12,8 @@ node_classification:
     - mixhop
     - graphsage
     - pairnorm
-    - pyg_unet
     - gcnii
     - chebyshev
-    - pyg_gcn
-    - pyg_gat
     - deepergcn
     - gcnii
     - gpt_gnn
@@ -35,8 +33,9 @@ node_classification:
     - ogbn-products
     - ogbn-papers100M
     - flickr
-    - amazon
+    - amazon-s
     - yelp
+    - ppi
     - reddit
 unsupervised_node_classification:
   - model:
@@ -53,7 +52,7 @@ unsupervised_node_classification:
     - spectral
     - gcc
     dataset:
-    - ppi
+    - ppi-ne
     - blogcatalog
     - wikipedia
     - usa-airport
@@ -161,11 +160,16 @@ multiplex_node_classification:
 heterogeneous_node_classification:
   - model:
     - gtn
-    - han
     dataset:
     - gtn-dblp
     - gtn-acm
     - gtn-imdb
+  - model:
+    - han
+    dataset:
+    - han-dblp
+    - han-acm
+    - han-imdb
 pretrain:
   - model:
     - stpgnn

@@ -2,7 +2,6 @@ import hashlib
 from joblib import Parallel, delayed
 import networkx as nx
 import numpy as np
-from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from gensim.models.word2vec import Word2Vec
 from .. import BaseModel, register_model
 

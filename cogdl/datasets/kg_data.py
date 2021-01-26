@@ -308,41 +308,41 @@ class KnowledgeGraphDataset(Dataset):
 
 @register_dataset("fb13")
 class FB13Datset(KnowledgeGraphDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "FB13"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         super(FB13Datset, self).__init__(path, dataset)
 
 
 @register_dataset("fb15k")
 class FB15kDatset(KnowledgeGraphDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "FB15K"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         super(FB15kDatset, self).__init__(path, dataset)
 
 
 @register_dataset("fb15k237")
 class FB15k237Datset(KnowledgeGraphDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "FB15K237"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         super(FB15k237Datset, self).__init__(path, dataset)
 
 
 @register_dataset("wn18")
 class WN18Datset(KnowledgeGraphDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "WN18"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         super(WN18Datset, self).__init__(path, dataset)
 
 
 @register_dataset("wn18rr")
 class WN18RRDataset(KnowledgeGraphDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "WN18RR"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         super(WN18RRDataset, self).__init__(path, dataset)
 
 
@@ -350,7 +350,7 @@ class WN18RRDataset(KnowledgeGraphDataset):
 class FB13SDatset(KnowledgeGraphDataset):
     url = "https://raw.githubusercontent.com/cenyk1230/test-data/main"
 
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "FB13-S"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         super(FB13SDatset, self).__init__(path, dataset)

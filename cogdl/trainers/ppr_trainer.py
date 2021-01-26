@@ -50,9 +50,9 @@ class PPRGoTrainer(object):
         else:
             edge_index = data.edge_index
 
-        if not os.path.exists("./saved"):
-            os.mkdir("saved")
-        path = f"./saved/{self.dataset_name}_{self.topk}_{self.alpha}_{self.normalization}.{mode}.npz"
+        if not os.path.exists("./pprgo_saved"):
+            os.mkdir("pprgo_saved")
+        path = f"./pprgo_saved/{self.dataset_name}_{self.topk}_{self.alpha}_{self.normalization}.{mode}.npz"
 
         if os.path.exists(path):
             print(f"Load {mode} from cached")
@@ -103,7 +103,6 @@ class PPRGoTrainer(object):
             epoch_iter.set_description(
                 f"Epoch: {epoch}, TrainLoss: {train_loss: .4f}, ValLoss: {val_loss: .4f}, ValAcc: {best_acc: .4f}"
             )
-            print()
         self.model = best_model
 
         del train_loader

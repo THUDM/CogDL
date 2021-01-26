@@ -153,14 +153,14 @@ def test_bace():
 
 
 if __name__ == "__main__":
-    test_stpgnn_infomax()
-    test_stpgnn_contextpred()
-    test_stpgnn_mask()
-    test_stpgnn_supervised()
-    test_stpgnn_finetune()
-    test_chem_contextpred()
-    test_chem_infomax()
-    test_chem_mask()
+    # test_stpgnn_infomax()
+    # test_stpgnn_contextpred()
+    # test_stpgnn_mask()
+    # test_stpgnn_supervised()
+    # test_stpgnn_finetune()
+    # test_chem_contextpred()
+    # test_chem_infomax()
+    # test_chem_mask()
     test_chem_supervised()
     test_bace()
     test_bbbp()

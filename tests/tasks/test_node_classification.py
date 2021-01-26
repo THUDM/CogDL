@@ -1,6 +1,4 @@
-import torch
 import torch.nn.functional as F
-from cogdl import options
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
@@ -66,9 +64,11 @@ def test_gat_cora():
     args.model = "gat"
     args.alpha = 0.2
     args.nheads = 8
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    for i in [True, False]:
+        args.fast_mode = i
+        task = build_task(args)
+        ret = task.train()
+        assert 0 <= ret["Acc"] <= 1
 
 
 def test_mlp_pubmed():
@@ -190,6 +190,11 @@ def test_graphsage_cora():
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
+    args.use_trainer = True
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
+
 
 def test_pyg_cheb_cora():
     args = get_default_args()
@@ -236,42 +241,11 @@ def test_pyg_gcn_cora_sampler():
         assert 0 <= ret["Acc"] <= 1
 
 
-def test_pyg_gat_cora():
-    args = get_default_args()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "pyg_gat"
-    args.num_heads = 8
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-
-def test_pyg_infomax_cora():
-    args = get_default_args()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "infomax"
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-
-def test_pyg_unet_cora():
-    args = get_default_args()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "pyg_unet"
-    args.num_layers = 2
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-
-def test_unet_cora():
+def test_unet_citeseer():
     args = get_default_args()
     args.cpu = True
     args.model = "unet"
+    args.dataset = "citeseer"
     args.pool_rate = [0.5, 0.5]
     args.n_pool = 2
     args.adj_dropout = 0.3
@@ -280,12 +254,13 @@ def test_unet_cora():
     args.improved = True
     args.aug_adj = True
     args.activation = "elu"
+    # print(args)
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
 
 
-def test_pyg_drgcn_cora():
+def test_drgcn_cora():
     args = get_default_args()
     args.task = "node_classification"
     args.dataset = "cora"
@@ -296,7 +271,7 @@ def test_pyg_drgcn_cora():
     assert 0 <= ret["Acc"] <= 1
 
 
-def test_pyg_drgat_cora():
+def test_drgat_cora():
     args = get_default_args()
     args.task = "node_classification"
     args.dataset = "cora"
@@ -537,21 +512,6 @@ def test_appnp_cora():
     assert 0 < ret["Acc"] < 1
 
 
-def test_sgcpn_cora():
-    args = get_default_args()
-    args.dataset = "cora"
-    args.task = "node_classification"
-    args.model = "sgcpn"
-    args.dropout = 0.6
-    args.num_layers = 10
-    args.norm_mode = "PN"
-    args.norm_scale = 10
-    args.missing_rate = 20
-    task = build_task(args)
-    ret = task.train()
-    assert 0 < ret["Acc"] < 1
-
-
 def test_sgc_cora():
     args = get_default_args()
     args.task = "node_classification"
@@ -687,18 +647,12 @@ if __name__ == "__main__":
     test_pairnorm_cora_deepgat()
     test_pairnorm_cora_gcn()
     test_pairnorm_cora_sgc()
-    test_sgcpn_cora()
     test_sgc_cora()
     test_mlp_pubmed()
     test_mixhop_citeseer()
     test_graphsage_cora()
     test_pyg_cheb_cora()
     test_pyg_gcn_cora()
-    test_pyg_gat_cora()
-    test_pyg_infomax_cora()
-    test_pyg_unet_cora()
-    test_pyg_drgcn_cora()
-    test_pyg_drgat_cora()
     test_disengcn_cora()
     test_graph_mix()
     test_srgcn_cora()
@@ -709,12 +663,9 @@ if __name__ == "__main__":
     test_gpt_gnn_cora()
     test_sign_cora()
     test_jknet_jknet_cora()
-    test_sgcpn_cora()
     test_ppnp_cora()
     test_appnp_cora()
     test_dropedge_gcn_cora()
     test_dropedge_resgcn_cora()
     test_dropedge_inceptiongcn_cora()
     test_dropedge_densegcn_cora()
-    test_unet_cora()
-    test_pprgo_cora()

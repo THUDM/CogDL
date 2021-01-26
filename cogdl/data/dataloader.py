@@ -1,7 +1,7 @@
 import torch.utils.data
 from torch.utils.data.dataloader import default_collate
 
-from cogdl.data import Batch
+from cogdl.data import Batch, Data
 
 
 class DataLoader(torch.utils.data.DataLoader):
@@ -18,5 +18,22 @@ class DataLoader(torch.utils.data.DataLoader):
 
     def __init__(self, dataset, batch_size=1, shuffle=True, **kwargs):
         super(DataLoader, self).__init__(
-            dataset, batch_size, shuffle, collate_fn=lambda data_list: Batch.from_data_list(data_list), **kwargs
+            # dataset, batch_size, shuffle, collate_fn=lambda data_list: Batch.from_data_list(data_list), **kwargs
+            dataset,
+            batch_size,
+            shuffle,
+            collate_fn=self.collate_fn,
+            **kwargs,
         )
+
+    @staticmethod
+    def collate_fn(batch):
+        item = batch[0]
+        if isinstance(item, Data):
+            return Batch.from_data_list(batch)
+        elif isinstance(item, torch.Tensor):
+            return default_collate(batch)
+        elif isinstance(item, float):
+            return torch.tensor(batch, dtype=torch.float)
+
+        raise TypeError("DataLoader found invalid type: {}".format(type(item)))

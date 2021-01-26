@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from cogdl.datasets import build_dataset_from_name
-from cogdl.datasets.pyg_strategies_data import (
+from cogdl.datasets.strategies_data import (
     BioDataset,
     ChemExtractSubstructureContextPair,
     DataLoaderFinetune,
@@ -22,7 +22,9 @@ from cogdl.datasets.pyg_strategies_data import (
 )
 from cogdl.utils import add_self_loops, batch_mean_pooling, batch_sum_pooling, cycle_index
 from sklearn.metrics import roc_auc_score
-from torch_geometric.data import DataLoader
+
+# from torch_geometric.data import DataLoader
+from cogdl.data import DataLoader
 
 
 class GINConv(nn.Module):

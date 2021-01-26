@@ -3,6 +3,7 @@ import json
 import numpy as np
 import scipy.sparse as sp
 from cogdl.datasets.saint_data import SAINTDataset
+from cogdl.datasets import build_dataset_from_name
 
 
 def build_test_data():

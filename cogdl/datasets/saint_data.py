@@ -6,7 +6,7 @@ import scipy.sparse as sp
 from sklearn.preprocessing import StandardScaler
 
 from cogdl.data import Data, Dataset
-from cogdl.utils import multilabel_evaluator, download_url, multiclass_evaluator
+from cogdl.utils import download_url, accuracy, multilabel_f1, bce_with_logits_loss, cross_entropy_loss
 from .planetoid_data import index_to_mask
 from . import register_dataset
 
@@ -98,7 +98,10 @@ class SAINTDataset(Dataset):
         return self.data
 
     def get_evaluator(self):
-        return multilabel_evaluator()
+        return multilabel_f1
+
+    def get_loss_fn(self):
+        return bce_with_logits_loss
 
     def __repr__(self):
         return "{}()".format(self.name)
@@ -111,7 +114,6 @@ def scale_feats(data):
     scaler = StandardScaler()
     scaler.fit(data.x.numpy())
     data.x = torch.from_numpy(scaler.transform(data.x)).float()
-    print(data.x.shape)
     return data
 
 
@@ -126,6 +128,12 @@ class YelpDataset(SAINTDataset):
         super(YelpDataset, self).__init__(path, dataset, url)
         self.data = scale_feats(self.data)
 
+    def get_evaluator(self):
+        return multilabel_f1
+
+    def get_loss_fn(self):
+        return bce_with_logits_loss
+
 
 @register_dataset("amazon-s")
 class AmazonDataset(SAINTDataset):
@@ -137,6 +145,12 @@ class AmazonDataset(SAINTDataset):
             SAINTDataset(path, dataset, url)
         super(AmazonDataset, self).__init__(path, dataset, url)
         self.data = scale_feats(self.data)
+
+    def get_evaluator(self):
+        return multilabel_f1
+
+    def get_loss_fn(self):
+        return bce_with_logits_loss
 
 
 @register_dataset("flickr")
@@ -151,7 +165,10 @@ class FlickrDatset(SAINTDataset):
         self.data = scale_feats(self.data)
 
     def get_evaluator(self):
-        return multiclass_evaluator()
+        return accuracy
+
+    def get_loss_fn(self):
+        return cross_entropy_loss
 
 
 @register_dataset("reddit")
@@ -166,7 +183,10 @@ class RedditDataset(SAINTDataset):
         self.data = scale_feats(self.data)
 
     def get_evaluator(self):
-        return multiclass_evaluator()
+        return accuracy
+
+    def get_loss_fn(self):
+        return cross_entropy_loss
 
 
 @register_dataset("ppi")
@@ -181,7 +201,10 @@ class PPIDataset(SAINTDataset):
         self.data = scale_feats(self.data)
 
     def get_evaluator(self):
-        return multilabel_evaluator()
+        return multilabel_f1
+
+    def get_loss_fn(self):
+        return bce_with_logits_loss
 
 
 @register_dataset("ppi-large")
@@ -196,4 +219,7 @@ class PPILargeDataset(SAINTDataset):
         self.data = scale_feats(self.data)
 
     def get_evaluator(self):
-        return multilabel_evaluator()
+        return multilabel_f1
+
+    def get_loss_fn(self):
+        return bce_with_logits_loss

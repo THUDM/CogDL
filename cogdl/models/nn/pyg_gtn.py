@@ -8,7 +8,7 @@ from torch_sparse import spspmm
 
 from .. import BaseModel, register_model
 from .gcn import GraphConvolution
-from cogdl.utils import remove_self_loops, coalesce, multiclass_f1
+from cogdl.utils import remove_self_loops, coalesce, accuracy
 
 
 class GTConv(nn.Module):
@@ -186,5 +186,5 @@ class GTN(BaseModel):
 
     def evaluate(self, data, nodes, targets):
         loss, y, _ = self.forward(data.adj, data.x, nodes, targets)
-        f1 = multiclass_f1(targets, y)
+        f1 = accuracy(y, targets)
         return loss.item(), f1

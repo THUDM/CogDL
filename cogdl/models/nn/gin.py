@@ -216,11 +216,4 @@ class GIN(BaseModel):
             output = torch.zeros(batchsize, layer_rep[i].shape[1]).to(device)
             pooled = output.scatter_add_(dim=0, index=batch.batch.view(-1, 1).repeat(1, hsize), src=layer_rep[i])
             final_score += self.dropout(self.linear_prediction[i](pooled))
-        final_score = F.softmax(final_score, dim=-1)
-        if batch.y is not None:
-            loss = self.loss(final_score, batch.y)
-            return final_score, loss
-        return final_score, None
-
-    def loss(self, output, label=None):
-        return self.criterion(output, label)
+        return final_score

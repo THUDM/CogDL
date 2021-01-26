@@ -93,15 +93,18 @@ class GDC_GCN(BaseModel):
     def node_classification_loss(self, data):
         if self.data is None:
             self.reset_data(data)
-        pred = self.forward(self.data.x, self.data.edge_index)
-        pred = F.log_softmax(pred, dim=-1)
-        return F.nll_loss(
-            pred[self.data.train_mask],
-            self.data.y[self.data.train_mask],
+        mask = data.train_mask
+        edge_index = (
+            self.data.edge_index_train
+            if hasattr(self.data, "edge_index_train") and self.training
+            else self.data.edge_index
         )
+        pred = self.forward(self.data.x, edge_index)
+
+        return self.loss_fn(pred[mask], self.data.y[mask])
 
     def predict(self, data=None):
-        return self.forward(data.x, data.edge_index)
+        return self.forward(self.data.x, self.data.edge_index)
 
     def reset_data(self, data):
         if self.data is None:
@@ -111,50 +114,69 @@ class GDC_GCN(BaseModel):
 
     def preprocessing(self, data, gdc_type="ppr"):
         # generate adjacency matrix from sparse representation
-        adj_matrix = self._get_adj_matrix(data.x, data.edge_index)
 
-        if gdc_type == "none":
-            print("No GDC filters chosen")
-            processed_matrix = adj_matrix
-        elif gdc_type == "ppr":
-            print("PPR filters chosen")
-            processed_matrix = self._get_ppr_matrix(adj_matrix, alpha=self.alpha)
-        elif gdc_type == "heat":
-            print("Heat filters chosen")
-            processed_matrix = self._get_heat_matrix(adj_matrix, t=self.t)
-        else:
-            raise ValueError
+        def get_diffusion(x, edges):
+            adj_matrix = self._get_adj_matrix(x, edges)
 
-        if gdc_type == "ppr" or gdc_type == "heat":
-            if self.k:
-                print(f"Selecting top {self.k} edges per node.")
-                processed_matrix = self._get_top_k_matrix(processed_matrix, k=self.k)
-            elif self.eps:
-                print(f"Selecting edges with weight greater than {self.eps}.")
-                processed_matrix = self._get_clipped_matrix(processed_matrix, eps=self.eps)
+            if gdc_type == "none":
+                print("No GDC filters chosen")
+                processed_matrix = adj_matrix
+            elif gdc_type == "ppr":
+                print("PPR filters chosen")
+                processed_matrix = self._get_ppr_matrix(adj_matrix, alpha=self.alpha)
+            elif gdc_type == "heat":
+                print("Heat filters chosen")
+                processed_matrix = self._get_heat_matrix(adj_matrix, t=self.t)
             else:
                 raise ValueError
 
-        # create PyG Data object
-        edges_i = []
-        edges_j = []
-        edge_attr = []
-        for i, row in enumerate(processed_matrix):
-            for j in np.where(row > 0)[0]:
-                edges_i.append(i)
-                edges_j.append(j)
-                edge_attr.append(processed_matrix[i, j])
-        edge_index = [edges_i, edges_j]
+            if gdc_type == "ppr" or gdc_type == "heat":
+                if self.k:
+                    print(f"Selecting top {self.k} edges per node.")
+                    processed_matrix = self._get_top_k_matrix(processed_matrix, k=self.k)
+                elif self.eps:
+                    print(f"Selecting edges with weight greater than {self.eps}.")
+                    processed_matrix = self._get_clipped_matrix(processed_matrix, eps=self.eps)
+                else:
+                    raise ValueError
 
-        data = Data(
-            x=data.x,
-            edge_index=torch.LongTensor(edge_index),
-            edge_attr=torch.FloatTensor(edge_attr),
-            y=data.y,
-            train_mask=data.train_mask,
-            test_mask=data.test_mask,
-            val_mask=data.val_mask,
-        )
+            # create PyG Data object
+            edges_i = []
+            edges_j = []
+            edge_attr = []
+            for i, row in enumerate(processed_matrix):
+                for j in np.where(row > 0)[0]:
+                    edges_i.append(i)
+                    edges_j.append(j)
+                    edge_attr.append(processed_matrix[i, j])
+            edge_index = [edges_i, edges_j]
+            return torch.as_tensor(edge_index, dtype=torch.long), torch.as_tensor(edge_attr, dtype=torch.float)
+
+        edge_index, edge_attr = get_diffusion(data.x, data.edge_index)
+
+        if hasattr(data, "edge_index_train"):
+            edge_index_train, edge_attr_train = get_diffusion(data.x, data.edge_index_train)
+            data = Data(
+                x=data.x,
+                edge_index=edge_index,
+                edge_attr=edge_attr,
+                edge_index_train=edge_index_train,
+                edge_attr_train=edge_attr_train,
+                y=data.y,
+                train_mask=data.train_mask,
+                test_mask=data.test_mask,
+                val_mask=data.val_mask,
+            )
+        else:
+            data = Data(
+                x=data.x,
+                edge_index=edge_index,
+                edge_attr=edge_attr,
+                y=data.y,
+                train_mask=data.train_mask,
+                test_mask=data.test_mask,
+                val_mask=data.val_mask,
+            )
         data.apply(lambda x: x.to(self.device))
 
         return data

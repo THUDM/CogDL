@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from cogdl.data import Dataset, Data
-from cogdl.utils import remove_self_loops, accuracy_evaluator, download_url
+from cogdl.utils import remove_self_loops, download_url
 from . import register_dataset
 
 
@@ -172,9 +172,6 @@ class Planetoid(Dataset):
 
     def get(self, idx):
         return self.data
-
-    def get_evaluator(self):
-        return accuracy_evaluator()
 
     def __repr__(self):
         return "{}()".format(self.name)

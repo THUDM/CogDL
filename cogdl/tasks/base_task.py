@@ -23,6 +23,8 @@ class BaseTask(ABC, metaclass=LoadFrom):
     def __init__(self, args):
         super(BaseTask, self).__init__()
         os.makedirs("./checkpoints", exist_ok=True)
+        self.loss_fn = None
+        self.evaluator = None
 
         self.load_from_checkpoint = hasattr(args, "checkpoint") and args.checkpoint
         if self.load_from_checkpoint:
@@ -46,3 +48,10 @@ class BaseTask(ABC, metaclass=LoadFrom):
     def save_checkpoint(self):
         if self._checkpoint and hasattr(self.model, "_parameters()"):
             torch.save(self.model.state_dict(), self._checkpoint)
+
+    def set_loss_fn(self, dataset):
+        self.loss_fn = dataset.get_loss_fn()
+        self.model.set_loss_fn(self.loss_fn)
+
+    def set_evaluator(self, dataset):
+        self.evaluator = dataset.get_evaluator()

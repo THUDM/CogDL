@@ -4,7 +4,6 @@ from typing import Optional
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 from tqdm import tqdm
 
 from cogdl.datasets import build_dataset
@@ -47,6 +46,9 @@ class NodeClassification(BaseTask):
 
         self.model: SupervisedHomogeneousNodeClassificationModel = build_model(args) if model is None else model
         self.model.set_device(self.device)
+
+        self.set_loss_fn(dataset)
+        self.set_evaluator(dataset)
 
         self.trainer = (
             self.model.get_trainer(NodeClassification, self.args)(self.args)
@@ -102,11 +104,11 @@ class NodeClassification(BaseTask):
                     if patience == self.patience:
                         epoch_iter.close()
                         break
-            print(f"Valid accurracy = {best_score}")
+            print(f"Valid accurracy = {best_score: .4f}")
             self.model = best_model
         test_acc, _ = self._test_step(split="test")
         val_acc, _ = self._test_step(split="val")
-        print(f"Test accuracy = {test_acc}")
+        print(f"Test accuracy = {test_acc:.4f}")
         return dict(Acc=test_acc, ValAcc=val_acc)
 
     def _train_step(self):
@@ -117,16 +119,14 @@ class NodeClassification(BaseTask):
 
     def _test_step(self, split="val", logits=None):
         self.model.eval()
-        logits = logits if logits else self.model.predict(self.data)
-        logits = F.log_softmax(logits, dim=-1)
+        with torch.no_grad():
+            logits = logits if logits else self.model.predict(self.data)
         if split == "train":
             mask = self.data.train_mask
         elif split == "val":
             mask = self.data.val_mask
         else:
             mask = self.data.test_mask
-        loss = F.nll_loss(logits[mask], self.data.y[mask]).item()
-
-        pred = logits[mask].max(1)[1]
-        acc = pred.eq(self.data.y[mask]).sum().item() / mask.sum().item()
-        return acc, loss
+        loss = self.loss_fn(logits[mask], self.data.y[mask])
+        metric = self.evaluator(logits[mask], self.data.y[mask])
+        return metric, loss

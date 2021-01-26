@@ -83,6 +83,9 @@ class GatneDataset(Dataset):
     def __repr__(self):
         return "{}()".format(self.name)
 
+    def __len__(self):
+        return self.data.y.shape[0]
+
 
 @register_dataset("amazon")
 class AmazonDataset(GatneDataset):

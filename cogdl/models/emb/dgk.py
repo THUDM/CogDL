@@ -106,7 +106,7 @@ class DeepGraphKernel(BaseModel):
                     norm_prob[i, node2id[gl]] += 1
             # norm_prob[i] /= sum(norm_prob[i])
         embedding = norm_prob.dot(S)
-        return embedding, None
+        return embedding
 
     def save_embedding(self, output_path):
         self.model.wv.save("model.wv")

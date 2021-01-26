@@ -17,6 +17,7 @@ class SelfSupervisedTrainer(BaseTrainer):
         self.model_name = args.model
         self.save_dir = args.save_dir
         self.load_emb_path = args.load_emb_path
+        self.lr = args.lr
 
     @classmethod
     def build_trainer_from_args(cls, args):
@@ -34,7 +35,7 @@ class SelfSupervisedTrainer(BaseTrainer):
 
         best = 1e9
         cnt_wait = 0
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0)
+        optimizer = torch.optim.Adam(model.parameters(), lr=self.lr, weight_decay=0.0)
 
         epoch_iter = tqdm(range(self.epochs))
         model = model.to(self.device)

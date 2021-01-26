@@ -181,13 +181,6 @@ class Grand(BaseModel):
         return x
 
     def forward(self, x, edge_index):
-        """
-        adj = torch.sparse_coo_tensor(
-            edge_index,
-            torch.ones(edge_index.shape[1]).float(),
-            (x.shape[0], x.shape[0]),
-        ).to(x.device)
-        """
         x = self.normalize_x(x)
         edge_weight = torch.ones(edge_index.shape[1], dtype=torch.float32).to(x.device)
         x = self.rand_prop(x, edge_index, edge_weight)
@@ -204,11 +197,16 @@ class Grand(BaseModel):
     def node_classification_loss(self, data):
         output_list = []
         for i in range(self.sample):
-            output_list.append(F.log_softmax(self.forward(data.x, data.edge_index), dim=-1))
+            output_list.append(self.forward(data.x, data.edge_index))
         loss_train = 0.0
         for output in output_list:
-            loss_train += F.nll_loss(output[data.train_mask], data.y[data.train_mask])
+            loss_train += self.loss_fn(output[data.train_mask], data.y[data.train_mask])
         loss_train = loss_train / self.sample
+
+        if len(data.y.shape) > 1:
+            output_list = [torch.sigmoid(x) for x in output_list]
+        else:
+            output_list = [F.log_softmax(x, dim=-1) for x in output_list]
         loss_consis = self.consis_loss(output_list, data.train_mask)
 
         return loss_train + loss_consis

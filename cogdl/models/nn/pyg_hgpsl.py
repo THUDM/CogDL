@@ -508,10 +508,6 @@ class HGPSL(BaseModel):
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = F.relu(self.lin2(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
-        x = self.lin3(x)
-        pred = F.log_softmax(x, dim=-1)
+        pred = self.lin3(x)
 
-        if data.y is not None:
-            loss = F.nll_loss(pred, data.y)
-            return pred, loss
-        return pred, None
+        return pred

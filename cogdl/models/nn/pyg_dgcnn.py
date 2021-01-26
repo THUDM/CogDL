@@ -94,8 +94,4 @@ class DGCNN(BaseModel):
         h = self.linear(torch.cat([h1, h2], dim=1))
         h = global_max_pool(h, batch.batch)
         out = self.final_mlp(h)
-        out = F.log_softmax(out, dim=-1)
-        if batch.y is not None:
-            loss = F.nll_loss(out, batch.y)
-            return out, loss
-        return out, None
+        return out

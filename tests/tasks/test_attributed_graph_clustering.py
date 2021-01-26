@@ -1,6 +1,6 @@
-from cogdl.tasks.attributed_graph_clustering import AttributedGraphClustering
 import torch
 from cogdl.tasks import build_task
+from cogdl.tasks.attributed_graph_clustering import AttributedGraphClustering
 from cogdl.utils import build_args_from_dict
 
 graph_clustering_task_name = "attributed_graph_clustering"
@@ -65,18 +65,6 @@ def test_kmeans_cora():
     assert ret["NMI"] > 0
 
 
-def test_kmeans_citeseer():
-    args = get_default_args()
-    args.model_type = "content"
-    args.model = "prone"
-    args.dataset = "citeseer"
-    args.cluster_method = "kmeans"
-    args.num_clusters = 6
-    task = build_task(args)
-    ret = task.train()
-    assert ret["NMI"] > 0
-
-
 def test_spectral_cora():
     args = get_default_args()
     args.model_type = "content"
@@ -88,43 +76,9 @@ def test_spectral_cora():
     assert ret["NMI"] > 0
 
 
-def test_spectral_citeseer():
-    args = get_default_args()
-    args.model_type = "content"
-    args.model = "prone"
-    args.dataset = "citeseer"
-    args.cluster_method = "spectral"
-    args.num_clusters = 6
-    task = build_task(args)
-    ret = task.train()
-    assert ret["NMI"] > 0
-
-
 def test_prone_cora():
     args = get_default_args()
     args.model = "prone"
-    args.model_type = "spectral"
-    args.dataset = "cora"
-    args.cluster_method = "kmeans"
-    task = build_task(args)
-    ret = task.train()
-    assert ret["NMI"] > 0
-
-
-def test_deepwalk_cora():
-    args = get_default_args()
-    args.model = "deepwalk"
-    args.model_type = "spectral"
-    args.dataset = "cora"
-    args.cluster_method = "kmeans"
-    task = build_task(args)
-    ret = task.train()
-    assert ret["NMI"] > 0
-
-
-def test_netmf_cora():
-    args = get_default_args()
-    args.model = "netmf"
     args.model_type = "spectral"
     args.dataset = "cora"
     args.cluster_method = "kmeans"
@@ -158,13 +112,9 @@ def test_daegc_cora():
 
 if __name__ == "__main__":
     test_kmeans_cora()
-    # test_kmeans_citeseer()
     test_spectral_cora()
-    # test_spectral_citeseer()
 
     test_agc_cora()
     test_daegc_cora()
 
     test_prone_cora()
-    test_deepwalk_cora()
-    test_netmf_cora()

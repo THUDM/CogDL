@@ -1,7 +1,18 @@
 from collections import namedtuple
 
-from cogdl.experiments import check_task_dataset_model_match, experiment, gen_variants, train
+from cogdl.experiments import check_task_dataset_model_match, experiment, gen_variants, train, set_best_config
 from cogdl.options import get_default_args
+
+
+def test_set_best_config():
+    args = get_default_args(task="node_classification", dataset="citeseer", model="gat")
+    args.model = args.model[0]
+    args.dataset = args.dataset[0]
+    args = set_best_config(args)
+
+    assert args.lr == 0.005
+    assert args.max_epoch == 1000
+    assert args.weight_decay == 0.001
 
 
 def test_train():
@@ -62,6 +73,7 @@ def test_auto_experiment():
 
 
 if __name__ == "__main__":
+    test_set_best_config()
     test_train()
     test_gen_variants()
     test_check_task_dataset_model_match()

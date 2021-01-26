@@ -1,9 +1,12 @@
-import numpy as np
-import networkx as nx
-from gensim.models import Word2Vec, KeyedVectors
 import random
 import time
-from .. import BaseModel, register_model, alias_draw, alias_setup
+
+import networkx as nx
+import numpy as np
+from gensim.models import Word2Vec
+
+from cogdl.utils import alias_draw, alias_setup
+from .. import BaseModel, register_model
 
 
 @register_model("node2vec")

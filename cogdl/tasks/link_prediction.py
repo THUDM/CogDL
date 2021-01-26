@@ -11,7 +11,6 @@ import torch.nn as nn
 from cogdl.datasets import build_dataset
 from cogdl.datasets.kg_data import BidirectionalOneShotIterator, TrainDataset
 from cogdl.models import build_model
-from cogdl.models.emb import DNGR, HOPE, LINE, SDNE, DeepWalk, GraRep, NetMF, NetSMF, Node2vec, ProNE
 from cogdl.utils import negative_edge_sampling
 from sklearn.metrics import auc, f1_score, precision_recall_curve, roc_auc_score
 from torch.utils.data import DataLoader
@@ -151,39 +150,29 @@ def evaluate(embs, true_edges, false_edges):
 
 def select_task(model_name=None, model=None):
     assert model_name is not None or model is not None
-    if model_name is not None:
-        if model_name in ["rgcn", "compgcn"]:
-            return "KGLinkPrediction"
-        elif model_name in ["distmult", "transe", "rotate", "complex"]:
-            return "TripleLinkPrediction"
-        elif model_name in [
-            "prone",
-            "netmf",
-            "deepwalk",
-            "line",
-            "hope",
-            "node2vec",
-            "netmf",
-            "netsmf",
-            "sdne",
-            "grarep",
-            "dngr",
-        ]:
-            return "HomoLinkPrediction"
-        else:
-            return "GNNLinkPrediction"
-    else:
-        from cogdl.models.emb import complex, distmult, rotate, transe
-        from cogdl.models.nn import compgcn, rgcn
+    if model_name is None:
+        model_name = model.model_name
 
-        if type(model) in [rgcn.LinkPredictRGCN, compgcn.LinkPredictCompGCN]:
-            return "KGLinkPrediction"
-        elif type(model) in [distmult.DistMult, rotate.RotatE, transe.TransE, complex.ComplEx]:
-            return "TripleLinkPrediction"
-        elif type(model) in [HOPE, ProNE, LINE, DeepWalk, Node2vec, NetSMF, NetMF, SDNE, GraRep, DNGR]:
-            return "HomoLinkPrediction"
-        else:
-            return "GNNLinkPrediction"
+    if model_name in ["rgcn", "compgcn"]:
+        return "KGLinkPrediction"
+    elif model_name in ["distmult", "transe", "rotate", "complex"]:
+        return "TripleLinkPrediction"
+    elif model_name in [
+        "prone",
+        "netmf",
+        "deepwalk",
+        "line",
+        "hope",
+        "node2vec",
+        "netmf",
+        "netsmf",
+        "sdne",
+        "grarep",
+        "dngr",
+    ]:
+        return "HomoLinkPrediction"
+    else:
+        return "GNNLinkPrediction"
 
 
 class HomoLinkPrediction(nn.Module):

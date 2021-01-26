@@ -1,7 +1,7 @@
 import importlib
-import os
 
 from cogdl.data.dataset import Dataset
+from .customizezd_data import CustomizedGraphClassificationDataset, CustomizedNodeClassificationDataset, BaseDataset
 
 try:
     import torch_geometric
@@ -10,13 +10,6 @@ except ImportError:
 else:
     pyg = True
 
-try:
-    import dgl
-    from dgl.data.tu import TUDataset
-except ImportError:
-    dgl_import = False
-else:
-    dgl_import = True
 
 DATASET_REGISTRY = {}
 
@@ -39,11 +32,7 @@ def register_dataset(name):
     def register_dataset_cls(cls):
         # if name in DATASET_REGISTRY:
         #     raise ValueError("Cannot register duplicate dataset ({})".format(name))
-        if (
-            not issubclass(cls, Dataset)
-            and (pyg and not issubclass(cls, torch_geometric.data.Dataset))
-            and (dgl_import and not issubclass(cls, TUDataset))
-        ):
+        if not issubclass(cls, Dataset) and (pyg and not issubclass(cls, torch_geometric.data.Dataset)):
             raise ValueError("Dataset ({}: {}) must extend cogdl.data.Dataset".format(name, cls.__name__))
         DATASET_REGISTRY[name] = cls
         return cls
@@ -51,20 +40,101 @@ def register_dataset(name):
     return register_dataset_cls
 
 
-# automatically import any Python files in the datasets/ directory
-for file in os.listdir(os.path.dirname(__file__)):
-    if file.endswith(".py") and not file.startswith("_"):
-        dataset_name = file[: file.find(".py")]
-        if not pyg and dataset_name.startswith("pyg"):
-            continue
-        if not dgl_import and dataset_name.startswith("dgl"):
-            continue
-        module = importlib.import_module("cogdl.datasets." + dataset_name)
+def try_import_dataset(dataset):
+    if dataset not in DATASET_REGISTRY:
+        if dataset in SUPPORTED_DATASETS:
+            importlib.import_module(SUPPORTED_DATASETS[dataset])
+        else:
+            print(f"Failed to import {dataset} dataset.")
+            return False
+    return True
 
 
 def build_dataset(args):
-    return DATASET_REGISTRY[args.dataset](args=args)
+    if not try_import_dataset(args.dataset):
+        assert hasattr(args, "task")
+        dataset = build_dataset_from_path(args.dataset, args.task)
+        if dataset is not None:
+            return dataset
+        exit(1)
+    return DATASET_REGISTRY[args.dataset]()
 
 
 def build_dataset_from_name(dataset):
+    if not try_import_dataset(dataset):
+        exit(1)
     return DATASET_REGISTRY[dataset]()
+
+
+def build_dataset_from_path(data_path, task):
+    if "node_classification" in task:
+        return CustomizedNodeClassificationDataset(data_path)
+    elif "graph_classification" in task:
+        return CustomizedGraphClassificationDataset(data_path)
+    else:
+        return None
+
+
+SUPPORTED_DATASETS = {
+    "kdd_icdm": "cogdl.datasets.gcc_data",
+    "sigir_cikm": "cogdl.datasets.gcc_data",
+    "sigmod_icde": "cogdl.datasets.gcc_data",
+    "usa-airport": "cogdl.datasets.gcc_data",
+    "test_small": "cogdl.datasets.test_data",
+    "ogbn-arxiv": "cogdl.datasets.pyg_ogb",
+    "ogbn-products": "cogdl.datasets.pyg_ogb",
+    "ogbn-proteins": "cogdl.datasets.pyg_ogb",
+    "ogbn-mag": "cogdl.datasets.pyg_ogb",
+    "ogbn-papers100M": "cogdl.datasets.pyg_ogb",
+    "ogbg-molbace": "cogdl.datasets.pyg_ogb",
+    "ogbg-molhiv": "cogdl.datasets.pyg_ogb",
+    "ogbg-molpcba": "cogdl.datasets.pyg_ogb",
+    "ogbg-ppa": "cogdl.datasets.pyg_ogb",
+    "ogbg-code": "cogdl.datasets.pyg_ogb",
+    "amazon": "cogdl.datasets.gatne",
+    "twitter": "cogdl.datasets.gatne",
+    "youtube": "cogdl.datasets.gatne",
+    "gtn-acm": "cogdl.datasets.gtn_data",
+    "gtn-dblp": "cogdl.datasets.gtn_data",
+    "gtn-imdb": "cogdl.datasets.gtn_data",
+    "fb13": "cogdl.datasets.kg_data",
+    "fb15k": "cogdl.datasets.kg_data",
+    "fb15k237": "cogdl.datasets.kg_data",
+    "wn18": "cogdl.datasets.kg_data",
+    "wn18rr": "cogdl.datasets.kg_data",
+    "fb13s": "cogdl.datasets.kg_data",
+    "cora": "cogdl.datasets.planetoid_data",
+    "citeseer": "cogdl.datasets.planetoid_data",
+    "pubmed": "cogdl.datasets.planetoid_data",
+    "blogcatalog": "cogdl.datasets.matlab_matrix",
+    "flickr-ne": "cogdl.datasets.matlab_matrix",
+    "wikipedia": "cogdl.datasets.matlab_matrix",
+    "ppi-ne": "cogdl.datasets.matlab_matrix",
+    "han-acm": "cogdl.datasets.han_data",
+    "han-dblp": "cogdl.datasets.han_data",
+    "han-imdb": "cogdl.datasets.han_data",
+    "mutag": "cogdl.datasets.tu_data",
+    "imdb-b": "cogdl.datasets.tu_data",
+    "imdb-m": "cogdl.datasets.tu_data",
+    "collab": "cogdl.datasets.tu_data",
+    "proteins": "cogdl.datasets.tu_data",
+    "reddit-b": "cogdl.datasets.tu_data",
+    "reddit-multi-5k": "cogdl.datasets.tu_data",
+    "reddit-multi-12k": "cogdl.datasets.tu_data",
+    "ptc-mr": "cogdl.datasets.tu_data",
+    "nci1": "cogdl.datasets.tu_data",
+    "nci109": "cogdl.datasets.tu_data",
+    "enzymes": "cogdl.datasets.tu_data",
+    "yelp": "cogdl.datasets.saint_data",
+    "amazon-s": "cogdl.datasets.saint_data",
+    "flickr": "cogdl.datasets.saint_data",
+    "reddit": "cogdl.datasets.saint_data",
+    "ppi": "cogdl.datasets.saint_data",
+    "ppi-large": "cogdl.datasets.saint_data",
+    "test_bio": "cogdl.datasets.pyg_strategies_data",
+    "test_chem": "cogdl.datasets.pyg_strategies_data",
+    "bio": "cogdl.datasets.strategies_data",
+    "chem": "cogdl.datasets.strategies_data",
+    "bace": "cogdl.datasets.strategies_data",
+    "bbbp": "cogdl.datasets.strategies_data",
+}

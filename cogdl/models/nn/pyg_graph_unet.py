@@ -182,6 +182,7 @@ class GraphUnet(BaseModel):
         self.act = get_activation(activation)
         assert pooling_layer <= len(pooling_rates)
         pooling_rates = pooling_rates[:pooling_layer]
+        pooling_rates = [float(x) for x in pooling_rates]
         self.unet = GraphUnetLayer(hidden_size, pooling_layer, pooling_rates, activation, n_dropout, aug_adj)
 
         self.in_gcn = GraphConvolution(in_feats, hidden_size)

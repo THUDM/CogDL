@@ -108,6 +108,8 @@ SUPPORTED_DATASETS = {
     "pubmed": "cogdl.datasets.planetoid_data",
     "blogcatalog": "cogdl.datasets.matlab_matrix",
     "flickr-ne": "cogdl.datasets.matlab_matrix",
+    "dblp-ne": "cogdl.datasets.matlab_matrix",
+    "youtube-ne": "cogdl.datasets.matlab_matrix",
     "wikipedia": "cogdl.datasets.matlab_matrix",
     "ppi-ne": "cogdl.datasets.matlab_matrix",
     "han-acm": "cogdl.datasets.han_data",

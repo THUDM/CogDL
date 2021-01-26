@@ -46,7 +46,7 @@ class DeeperGCNTrainer(BaseTrainer):
         self.weight_decay = args.weight_decay
         self.cluster_number = args.cluster_number
         self.batch_size = args.batch_size
-        self.data,  self.optimizer, self.evaluator, self.loss_fn = None, None, None, None
+        self.data, self.optimizer, self.evaluator, self.loss_fn = None, None, None, None
         self.edge_index, self.train_index = None, None
 
     def fit(self, model, dataset):

@@ -11,7 +11,7 @@ from cogdl.trainers.sampled_trainer import NeighborSamplingTrainer
 from .. import BaseModel, register_model
 from cogdl.data import Data
 
-# @profile
+
 def sage_sampler(adjlist, edge_index, num_sample):
     if adjlist == {}:
         edge_index = edge_index.t().cpu().tolist()

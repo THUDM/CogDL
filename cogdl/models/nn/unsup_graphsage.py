@@ -70,7 +70,7 @@ class SAGE(BaseModel):
         self.walk_length = walk_length
         self.num_negative_samples = negative_samples
         self.walk_res = None
-        self.num_nodes = None
+        self.num_nodes = 0
         self.negative_samples = 1
 
         shapes = [num_features] + [hidden_size] * num_layers
@@ -101,7 +101,7 @@ class SAGE(BaseModel):
         self.walk_res = torch.as_tensor(walk_res)[:, 1:]
 
         if not self.num_nodes:
-            self.num_nodes = int(torch.max(data.edge_index)) + 1
+            self.num_nodes = torch.max(data.edge_index).item() + 1
 
         # if self.negative_samples is None:
         self.negative_samples = torch.from_numpy(

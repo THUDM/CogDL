@@ -92,6 +92,10 @@ class GraphClassification(BaseTask):
             ) = model.split_dataset(self.data, args)
 
         self.model = model.to(self.device)
+
+        self.set_loss_fn(dataset)
+        self.set_evaluator(dataset)
+
         self.patience = args.patience
         self.max_epoch = args.max_epoch
 
@@ -144,10 +148,8 @@ class GraphClassification(BaseTask):
         loss_n = 0
         for batch in self.train_loader:
             batch = batch.to(self.device)
-            # batch.x = batch.x.to(dtype=torch.float32)
-            # batch.y = torch.flatten(batch.y)
             self.optimizer.zero_grad()
-            output, loss = self.model(batch)
+            loss = self.model.graph_classification_loss(batch)
             loss_n += loss.item()
             loss.backward()
             self.optimizer.step()
@@ -168,18 +170,16 @@ class GraphClassification(BaseTask):
         with torch.no_grad():
             for batch in loader:
                 batch = batch.to(self.device)
-                # batch.x = batch.x.to(dtype=torch.float32)
-                # batch.y = torch.flatten(batch.y)
-                predict, loss = self.model(batch)
+                prediction = self.model(batch)
+                loss = self.loss_fn(prediction, batch.y)
                 loss_n.append(loss.item())
                 y.append(batch.y)
-                pred.extend(predict)
+                pred.extend(prediction)
         y = torch.cat(y).to(self.device)
 
         pred = torch.stack(pred, dim=0)
-        pred = pred.max(1)[1]
-        acc = pred.eq(y).sum().item() / len(y)
-        return acc, sum(loss_n) / len(loss_n)
+        metric = self.evaluator(pred, y)
+        return metric, sum(loss_n) / len(loss_n)
 
     def _kfold_train(self):
         y = [x.y for x in self.data]
@@ -188,6 +188,7 @@ class GraphClassification(BaseTask):
         for train_index, test_index in kf.split(self.data, y=y):
             model = build_model(self.args)
             self.model = model.to(self.device)
+            self.model.set_loss_fn(self.loss_fn)
 
             droplast = self.args.model == "diffpool"
             self.train_loader = DataLoader(

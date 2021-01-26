@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from cogdl.utils import multiclass_f1
+from cogdl.utils import accuracy
 
 from .. import BaseModel, register_model
 from .gat import GATLayer
@@ -92,5 +92,5 @@ class HAN(BaseModel):
 
     def evaluate(self, data, nodes, targets):
         loss, y = self.forward(data.adj, data.x, nodes, targets)
-        f1 = multiclass_f1(targets, y)
+        f1 = accuracy(y, targets)
         return loss.item(), f1

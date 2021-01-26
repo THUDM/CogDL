@@ -83,7 +83,7 @@ class UnsupervisedGraphClassification(BaseTask):
                 loss_n = []
                 for batch in self.data_loader:
                     batch = batch.to(self.device)
-                    predict, loss = self.model(batch)
+                    loss = self.model.graph_classification_loss(batch)
                     self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
@@ -100,7 +100,7 @@ class UnsupervisedGraphClassification(BaseTask):
                 label = []
                 for batch in self.data_loader:
                     batch = batch.to(self.device)
-                    predict, _ = self.model(batch)
+                    predict = self.model(batch)
                     prediction.extend(predict.cpu().numpy())
                     label.extend(batch.y.cpu().numpy())
                 prediction = np.array(prediction).reshape(len(label), -1)
@@ -136,8 +136,6 @@ class UnsupervisedGraphClassification(BaseTask):
 
                 X_test = X[training_size:, :]
                 y_test = y[training_size:]
-                # clf = SVC()
-                # clf.fit(X_train, y_train)
 
                 params = {"C": [1e-3, 1e-2, 1e-1, 1, 10]}
                 svc = SVC()

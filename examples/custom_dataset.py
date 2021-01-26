@@ -9,7 +9,8 @@ from cogdl.datasets import BaseDataset, register_dataset
 class MyNodeClassificationDataset(BaseDataset):
     def __init__(self):
         super(MyNodeClassificationDataset, self).__init__()
-        self.data = self.process()
+        self.process()
+        self.data = torch.load("mydata.pt")
 
     def process(self):
         num_nodes = 100

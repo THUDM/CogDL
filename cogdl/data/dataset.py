@@ -6,7 +6,7 @@ from itertools import repeat, product
 import torch.utils.data
 
 from cogdl.utils import makedirs
-from cogdl.utils import accuracy_evaluator
+from cogdl.utils import accuracy, cross_entropy_loss
 
 
 def to_list(x):
@@ -123,7 +123,10 @@ class Dataset(torch.utils.data.Dataset):
         print("Done!")
 
     def get_evaluator(self):
-        return accuracy_evaluator()
+        return accuracy
+
+    def get_loss_fn(self):
+        return cross_entropy_loss
 
     def __getitem__(self, idx):  # pragma: no cover
         r"""Gets the data object at index :obj:`idx` and transforms it (in case

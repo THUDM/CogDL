@@ -32,6 +32,7 @@ class UnsupervisedNodeClassification(BaseTask):
         parser.add_argument("--num-shuffle", type=int, default=5)
         parser.add_argument("--save-dir", type=str, default="./embedding")
         parser.add_argument("--load-emb-path", type=str, default=None)
+        parser.add_argument('--training-percents', default=[0.9], type=float, nargs='+')
         parser.add_argument('--enhance', type=str, default=None, help='use prone or prone++ to enhance embedding')
         # fmt: on
 
@@ -60,6 +61,7 @@ class UnsupervisedNodeClassification(BaseTask):
         self.save_dir = args.save_dir
         self.load_emb_path = args.load_emb_path
         self.enhance = args.enhance
+        self.training_percents = args.training_percents
         self.args = args
         self.is_weighted = self.data.edge_attr is not None
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
@@ -132,9 +134,6 @@ class UnsupervisedNodeClassification(BaseTask):
         return self._evaluate(features_matrix, label_matrix, self.num_shuffle)
 
     def _evaluate(self, features_matrix, label_matrix, num_shuffle):
-        # features_matrix, node2id = utils.load_embeddings(args.emb)
-        # label_matrix = utils.load_labels(args.label, node2id, divi_str=" ")
-
         # shuffle, to create train/test groups
         shuffles = []
         for _ in range(num_shuffle):
@@ -142,10 +141,8 @@ class UnsupervisedNodeClassification(BaseTask):
 
         # score each train/test group
         all_results = defaultdict(list)
-        # training_percents = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-        training_percents = [0.1, 0.3, 0.5, 0.7, 0.9]
 
-        for train_percent in training_percents:
+        for train_percent in self.training_percents:
             for shuf in shuffles:
                 X, y = shuf
 
@@ -165,13 +162,9 @@ class UnsupervisedNodeClassification(BaseTask):
                 preds = clf.predict(X_test, top_k_list)
                 result = f1_score(y_test, preds, average="micro")
                 all_results[train_percent].append(result)
-            # print("micro", result)
 
         return dict(
-            (
-                f"Micro-F1 {train_percent}",
-                sum(all_results[train_percent]) / len(all_results[train_percent]),
-            )
+            (f"Micro-F1 {train_percent}", np.mean(all_results[train_percent]))
             for train_percent in sorted(all_results.keys())
         )
 

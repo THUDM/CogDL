@@ -3,9 +3,9 @@ import networkx as nx
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn.conv import GATConv
-
 from .. import BaseModel, register_model
+from cogdl.models.nn import SpGraphAttentionLayer
+from cogdl.utils import add_remaining_self_loops
 from cogdl.trainers.daegc_trainer import DAEGCTrainer
 
 
@@ -49,18 +49,27 @@ class DAEGC(BaseModel):
         self.embedding_size = embedding_size
         self.dropout = dropout
         self.num_clusters = num_clusters
-        self.conv1 = GATConv(num_features, hidden_size, heads=num_heads, dropout=dropout)
-        self.conv2 = GATConv(hidden_size * num_heads, embedding_size, dropout=dropout)
+        self.att1 = [
+            SpGraphAttentionLayer(num_features, hidden_size, dropout=dropout, alpha=0.2, concat=True)
+            for _ in range(num_heads)
+        ]
+        for i, attention in enumerate(self.att1):
+            self.add_module("attention_{}".format(i), attention)
+        self.att2 = SpGraphAttentionLayer(
+            hidden_size * num_heads, embedding_size, dropout=dropout, alpha=0.2, concat=False
+        )
         self.cluster_center = None
 
     def get_trainer(self, task, args):
         return DAEGCTrainer
 
     def forward(self, x, edge_index):
+        edge_index, _ = add_remaining_self_loops(edge_index)
         x = F.dropout(x, p=self.dropout, training=self.training)
-        x = F.relu(self.conv1(x, edge_index))
+        x = torch.cat([att(x, edge_index) for att in self.att1], dim=1)
+        x = F.elu(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
-        x = F.elu(self.conv2(x, edge_index))
+        x = F.elu(self.att2(x, edge_index))
         return F.normalize(x, p=2, dim=1)
 
     def get_2hop(self, edge_index):

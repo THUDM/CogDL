@@ -15,6 +15,7 @@ from cogdl.trainers.supervised_trainer import (
     SupervisedHomogeneousNodeClassificationTrainer,
 )
 from cogdl.trainers.sampled_trainer import SAINTTrainer
+from cogdl.trainers.self_task_trainer import SelfTaskTrainer
 
 from . import BaseTask, register_task
 
@@ -73,6 +74,15 @@ class NodeClassification(BaseTask):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--missing-rate", type=int, default=0, help="missing rate, from 0 to 100")
+        parser.add_argument('--sampler', default='none', type=str, help='graph samplers')
+        parser.add_argument('--sample-coverage', default=20, type=float, help='sample coverage ratio')
+        parser.add_argument('--size-subgraph', default=1200, type=int, help='subgraph size')
+        parser.add_argument('--num-walks', default=50, type=int, help='number of random walks')
+        parser.add_argument('--walk-length', default=20, type=int, help='random walk length')
+        parser.add_argument('--size-frontier', default=20, type=int, help='frontier size in multidimensional random walks')
+        parser.add_argument('--auxiliary-task', default="none", type=str)
+        parser.add_argument('--alpha', default=10, type=float)
+        parser.add_argument('--label-mask', default=0, type=float)
         # fmt: on
 
     def __init__(
@@ -108,15 +118,20 @@ class NodeClassification(BaseTask):
         )
 
         if not self.trainer:
-            self.optimizer = (
-                torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-                if not hasattr(self.model, "get_optimizer")
-                else self.model.get_optimizer(args)
-            )
-            self.data.apply(lambda x: x.to(self.device))
-            self.model: SupervisedHomogeneousNodeClassificationModel = self.model.to(self.device)
-            self.patience = args.patience
-            self.max_epoch = args.max_epoch
+            if self.args.sampler != "none":
+                self.trainer = SAINTTrainer(self.args)
+            elif self.args.auxiliary_task != "none":
+                self.trainer = SelfTaskTrainer(self.args)
+            else:
+                self.optimizer = (
+                    torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+                    if not hasattr(self.model, "get_optimizer")
+                    else self.model.get_optimizer(args)
+                )
+                self.data.apply(lambda x: x.to(self.device))
+                self.model: SupervisedHomogeneousNodeClassificationModel = self.model.to(self.device)
+                self.patience = args.patience
+                self.max_epoch = args.max_epoch
 
     def train(self):
         if self.trainer:

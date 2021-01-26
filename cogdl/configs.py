@@ -160,7 +160,9 @@ BEST_CONFIGS = {
             "general": {},
         },
         "prone": {
-            "general": {},
+            "general": {"step": 10},
+            "ppi": {"mu": 0.0},
+            "wikipedia": {"mu": -4.0},
         },
         "sdne": {
             "general": {},

@@ -154,7 +154,7 @@ class UnsupervisedNodeClassification(BaseTask):
                 X_test = X[training_size:, :]
                 y_test = y[training_size:, :]
 
-                clf = TopKRanker(LogisticRegression())
+                clf = TopKRanker(LogisticRegression(solver="liblinear"))
                 clf.fit(X_train, y_train)
 
                 # find out how many labels should be predicted

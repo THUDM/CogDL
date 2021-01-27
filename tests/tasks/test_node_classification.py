@@ -20,6 +20,8 @@ def get_default_args():
         "task": "node_classification",
         "dataset": "cora",
         "checkpoint": False,
+        "sampler": "none",
+        "auxiliary-task": "none",
     }
     return build_args_from_dict(default_dict)
 

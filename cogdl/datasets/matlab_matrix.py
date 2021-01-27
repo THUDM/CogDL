@@ -116,11 +116,11 @@ class NetworkEmbeddingCMTYDataset(Dataset):
 
     @property
     def num_classes(self):
-        return self.y.shape[1]
+        return self.data.y.shape[1]
 
     @property
     def num_nodes(self):
-        return self.y.shape[0]
+        return self.data.y.shape[0]
 
     @property
     def processed_file_names(self):
@@ -135,22 +135,25 @@ class NetworkEmbeddingCMTYDataset(Dataset):
             download_url(self.url.format(name), self.raw_dir, name=name)
 
     def process(self):
-        with open(f"{self.name}.ungraph", "r") as f:
+        filenames = self.raw_paths
+        with open(f"{filenames[0]}", "r") as f:
             edge_index = f.read().strip().split("\n")
         edge_index = [[int(i) for i in x.split("\t")] for x in edge_index]
         edge_index = np.array(edge_index, dtype=np.int64).transpose()
         edge_index = torch.from_numpy(edge_index)
         rev_edge_index = torch.stack([edge_index[1], edge_index[0]])
         edge_index = torch.cat((edge_index, rev_edge_index), dim=1)
-        self_loop_mask = edge_index[0] == edge_index[1]
+
+        self_loop_mask = edge_index[0] != edge_index[1]
         edge_index = edge_index[:, self_loop_mask]
 
-        with open(f"{self.name}.cmty", "r") as f:
+        with open(f"{filenames[1]}", "r") as f:
             cmty = f.read().strip().split("\n")
         cmty = [[int(i) for i in x.split("\t")] for x in cmty]
 
         num_classes = len(cmty)
-        num_nodes = np.max(edge_index) + 1
+        num_nodes = torch.max(edge_index).item() + 1
+
         labels = np.zeros((num_nodes, num_classes), dtype=np.float)
         for i, cls in enumerate(cmty):
             labels[cls, i] = 1.0
@@ -171,7 +174,7 @@ class DblpNEDataset(NetworkEmbeddingCMTYDataset):
     def __init__(self):
         dataset = "dblp"
         path = osp.join("data", dataset + "-ne")
-        url = None
+        url = "https://cloud.tsinghua.edu.cn/d/1da2ec50b08749f48033/files/?p=%2F{}&dl=1"
         super(DblpNEDataset, self).__init__(path, dataset, url)
 
 
@@ -180,5 +183,5 @@ class YoutubeNEDataset(NetworkEmbeddingCMTYDataset):
     def __init__(self):
         dataset = "youtube"
         path = osp.join("data", dataset + "-ne")
-        url = None
+        url = "https://cloud.tsinghua.edu.cn/d/e338d719659b44e5ac9d/files/?p=%2F{}&dl=1"
         super(YoutubeNEDataset, self).__init__(path, dataset, url)

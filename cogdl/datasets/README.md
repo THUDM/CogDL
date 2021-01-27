@@ -10,7 +10,7 @@ CogDL now supports the following datasets for different tasks:
 - graph classification: MUTAG, IMDB-B, IMDB-M, PROTEINS, COLLAB, NCI, NCI109, Reddit-BINARY
 
 
-<h5>Node classification</h5>
+<h3>Node classification</h3>
 
 <table>
     <tr>
@@ -124,8 +124,8 @@ CogDL now supports the following datasets for different tasks:
 </table>
 
 
+<h3>Network Embedding(Unsupervsed Node classification)</h3>
 
-<h5>Network Embedding(Unsupervsed Node classification)</h5>
 <table>
     <tr>
     	<th>Dataset</th>
@@ -186,7 +186,7 @@ CogDL now supports the following datasets for different tasks:
 </table>
 
 
-<h5>Heterogenous Graph</h5>
+<h3>Heterogenous Graph</h3>
 
 <table>
     <tr>
@@ -269,8 +269,7 @@ CogDL now supports the following datasets for different tasks:
 </table>
 
 
-
-<h5>Knowledge Graph Link Prediction</h5>
+<h3>Knowledge Graph Link Prediction</h3>
 
 <table>
     <tr>
@@ -330,7 +329,8 @@ CogDL now supports the following datasets for different tasks:
 </table>
 
 
-<h5>Graph Classification</h5>
+<h3>Graph Classification</h3>
+
 [TUdataset](https://cloud.tsinghua.edu.cn/d/878208c0acf74919959a/) from https://www.chrsmrrs.com/graphkerneldatasets
 
 <table>

@@ -215,7 +215,7 @@ class GraphClassification(BaseTask):
 
             res = self._train()
             acc.append(res["Acc"])
-        return dict(Acc=sum(acc) / len(acc))
+        return dict(Acc=np.mean(acc), Std=np.std(acc))
 
     def generate_data(self, dataset, args):
         datalist = []

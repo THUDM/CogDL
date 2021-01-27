@@ -29,10 +29,14 @@ class BaseModel(nn.Module):
     def forward(self, *args):
         raise NotImplementedError
 
+    def predict(self, data):
+        return self.forward(data.x, data.edge_index)
+
     def node_classification_loss(self, data, mask=None):
         if mask is None:
             mask = data.train_mask
-        pred = self.forward(data.x, data.edge_index)
+        edge_index = data.edge_index_train if hasattr(data, "edge_index_train") and self.training else data.edge_index
+        pred = self.forward(data.x, edge_index)
         return self.loss_fn(pred[mask], data.y[mask])
 
     def graph_classification_loss(self, batch):

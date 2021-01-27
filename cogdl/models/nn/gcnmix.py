@@ -145,7 +145,7 @@ class BaseGNNMix(BaseModel):
 
     def predict_noise(self, data, tau=1):
         out = self.forward(data.x, data.edge_index) / tau
-        return F.softmax(out, dim=-1).detach()
+        return out
 
 
 @register_model("gcnmix")
@@ -230,5 +230,4 @@ class GCNMix(BaseModel):
 
     def predict(self, data):
         prediction = self.forward_ema(data.x, data.edge_index)
-        prediction = F.log_softmax(prediction, dim=-1)
         return prediction

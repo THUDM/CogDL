@@ -78,10 +78,10 @@ class Grand(BaseModel):
         parser.add_argument("--num-features", type=int)
         parser.add_argument("--num-classes", type=int)
         parser.add_argument("--hidden-size", type=int, default=32)
-        parser.add_argument("--hidden_dropout", type=float, default=0.5)
-        parser.add_argument("--input_dropout", type=float, default=0.5)
+        parser.add_argument("--hidden-dropout", type=float, default=0.5)
+        parser.add_argument("--input-dropout", type=float, default=0.5)
         parser.add_argument("--bn", type=bool, default=False)
-        parser.add_argument("--dropnode_rate", type=float, default=0.5)
+        parser.add_argument("--dropnode-rate", type=float, default=0.5)
         parser.add_argument('--order', type=int, default=5)
         parser.add_argument('--tem', type=float, default=0.5)
         parser.add_argument('--lam', type=float, default=0.5)
@@ -196,8 +196,9 @@ class Grand(BaseModel):
 
     def node_classification_loss(self, data):
         output_list = []
+        edge_index = data.edge_index_train if hasattr(data, "edge_index_train") and self.training else data.edge_index
         for i in range(self.sample):
-            output_list.append(self.forward(data.x, data.edge_index))
+            output_list.append(self.forward(data.x, edge_index))
         loss_train = 0.0
         for output in output_list:
             loss_train += self.loss_fn(output[data.train_mask], data.y[data.train_mask])

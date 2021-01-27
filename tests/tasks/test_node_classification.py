@@ -13,6 +13,7 @@ def get_default_args():
         "device_id": [0],
         "max_epoch": 3,
         "sampler": "none",
+        "num_layers": 2,
         "cpu": True,
         "lr": 0.01,
         "weight_decay": 5e-4,
@@ -638,6 +639,15 @@ def test_pprgo_cora():
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
+
+
+def test_gcn_ppi():
+    args = get_default_args()
+    args.dataset = "ppi"
+    args.model = "gcn"
+    args.cpu = True
+    task = build_task(args)
+    assert 0 <= task.train()["Acc"] <= 1
 
 
 if __name__ == "__main__":

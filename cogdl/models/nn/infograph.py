@@ -178,7 +178,7 @@ class InfoGraph(BaseModel):
         else:
             return self.unsup_forward(batch.x, batch.edge_index, batch.batch)
 
-    def graph_classificatoin_loss(self, batch):
+    def graph_classification_loss(self, batch):
         if self.sup:
             pred = self.sup_forward(batch.x, batch.edge_index, batch.batch, batch.y, batch.edge_attr)
             loss = self.sup_loss(pred, batch)
@@ -222,7 +222,7 @@ class InfoGraph(BaseModel):
             neg_mask[nid][gid] = 0
         glob_local_mi = torch.mm(local_encode, global_encode.t())
         loss = InfoGraph.mi_loss(pos_mask, neg_mask, glob_local_mi, num_nodes, num_nodes * (num_graphs - 1))
-        return graph_feat, loss
+        return loss
 
     def unsup_sup_loss(self, x, edge_index, batch):
         sem_g_feat, _ = self.sem_encoder(x, edge_index, batch)

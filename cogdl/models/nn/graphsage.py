@@ -106,11 +106,11 @@ class Graphsage(BaseModel):
             if i != self.num_layers - 1:
                 x = F.relu(x)
                 x = F.dropout(x, p=self.dropout, training=self.training)
-        return F.log_softmax(x, dim=1)
+        return x
 
     def mini_loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
+        return self.loss_fn(
+            self.mini_forward(data.x, data.edge_index)[data.train_mask],
             data.y[data.train_mask],
         )
 

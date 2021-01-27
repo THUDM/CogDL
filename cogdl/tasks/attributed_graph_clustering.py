@@ -11,6 +11,7 @@ from cogdl.models import build_model
 
 from . import BaseTask, register_task
 
+
 @register_task("attributed_graph_clustering")
 class AttributedGraphClustering(BaseTask):
     """Attributed graph clustring task."""
@@ -24,6 +25,8 @@ class AttributedGraphClustering(BaseTask):
         parser.add_argument("--cluster-method", type=str, default="kmeans")
         parser.add_argument("--hidden-size", type=int, default=128)
         parser.add_argument("--model-type", type=str, default="content")
+        parser.add_argument("--evaluate", type=str, default="full")
+        parser.add_argument('--enhance', type=str, default=None, help='use prone or prone++ to enhance embedding')
         # fmt: on
 
     def __init__(
@@ -49,14 +52,16 @@ class AttributedGraphClustering(BaseTask):
             self.hidden_size = args.hidden_size = args.hidden_size
             args.num_features = dataset.num_features
         self.model = build_model(args)
-        
         self.num_clusters = args.num_clusters
         if args.cluster_method not in ["kmeans", "spectral"]:
             raise Exception("cluster method must be kmeans or spectral")
         if args.model_type not in ["content", "spectral", "both"]:
             raise Exception("model type must be content, spectral or both")
         self.cluster_method = args.cluster_method
+        if args.evaluate not in ["full", "NMI"]:
+            raise Exception("evaluation must be full or NMI")
         self.model_type = args.model_type
+        self.evaluate = args.evaluate
         self.is_weighted = self.data.edge_attr is not None
         self.enhance = args.enhance
 
@@ -82,46 +87,49 @@ class AttributedGraphClustering(BaseTask):
                 features_matrix[node] = embeddings[vid]
             features_matrix = torch.tensor(features_matrix)
             features_matrix = F.normalize(features_matrix, p=2, dim=1)
-            #features_matrix = self.momentum * node_attr + (1 - self.momentum) * features_matrix
         else:
             trainer = self.model.get_trainer(AttributedGraphClustering, self.args)(self.args)
             self.model = trainer.fit(self.model, self.data)
             features_matrix = self.model.get_features(self.data)
-            
+
         features_matrix = features_matrix.cpu().numpy()
         print("Clustering...")
         if self.cluster_method == "kmeans":
             kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(features_matrix)
             clusters = kmeans.labels_
         else:
-            # features_matrix = np.dot(features_matrix, features_matrix.transpose())
-            # features_matrix = 0.5 * (np.abs(features_matrix) + np.abs(features_matrix.transpose()))
-            clustering = SpectralClustering(n_clusters=self.num_clusters, assign_labels="discretize", random_state=0).fit(
-                features_matrix
-            )
+            clustering = SpectralClustering(
+                n_clusters=self.num_clusters, assign_labels="discretize", random_state=0
+            ).fit(features_matrix)
             clusters = clustering.labels_
-        return self.__evaluate(clusters)
+        if self.evaluate == "full":
+            return self.__evaluate(clusters, True)
+        else:
+            return self.__evaluate(clusters, False)
 
-    def __evaluate(self, clusters) -> Dict[str, float]:
+    def __evaluate(self, clusters, full=True) -> Dict[str, float]:
         print("Evaluating...")
-        TP = 0
-        FP = 0
-        TN = 0
-        FN = 0
         truth = self.data.y.cpu().numpy()
-        for i in range(self.num_nodes):
-            for j in range(i + 1, self.num_nodes):
-                if clusters[i] == clusters[j] and truth[i] == truth[j]:
-                    TP += 1
-                if clusters[i] != clusters[j] and truth[i] == truth[j]:
-                    FP += 1
-                if clusters[i] == clusters[j] and truth[i] != truth[j]:
-                    FN += 1
-                if clusters[i] != clusters[j] and truth[i] != truth[j]:
-                    TN += 1
-        _ = (TP + TN) / (TP + FP + TN + FN)
-        precision = TP / (TP + FP)
-        recall = TP / (TP + FN)
-        print("TP", TP, "FP", FP, "TN", TN, "FN", FN)
-        micro_f1 = 2 * (precision * recall) / (precision + recall)
-        return dict(Accuracy=precision, NMI=normalized_mutual_info_score(clusters, truth), Micro_F1=micro_f1)
+        if full:
+            TP = 0
+            FP = 0
+            TN = 0
+            FN = 0
+            for i in range(self.num_nodes):
+                for j in range(i + 1, self.num_nodes):
+                    if clusters[i] == clusters[j] and truth[i] == truth[j]:
+                        TP += 1
+                    if clusters[i] != clusters[j] and truth[i] == truth[j]:
+                        FP += 1
+                    if clusters[i] == clusters[j] and truth[i] != truth[j]:
+                        FN += 1
+                    if clusters[i] != clusters[j] and truth[i] != truth[j]:
+                        TN += 1
+            _ = (TP + TN) / (TP + FP + TN + FN)
+            precision = TP / (TP + FP)
+            recall = TP / (TP + FN)
+            print("TP", TP, "FP", FP, "TN", TN, "FN", FN)
+            micro_f1 = 2 * (precision * recall) / (precision + recall)
+            return dict(Accuracy=precision, NMI=normalized_mutual_info_score(clusters, truth), Micro_F1=micro_f1)
+        else:
+            return dict(NMI=normalized_mutual_info_score(clusters, truth))

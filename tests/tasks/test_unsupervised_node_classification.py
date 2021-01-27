@@ -38,7 +38,7 @@ def test_deepwalk_wikipedia():
 def test_line_ppi():
     args = get_default_args()
     args.task = "unsupervised_node_classification"
-    args.dataset = "ppi"
+    args.dataset = "ppi-ne"
     args.model = "line"
     args.walk_length = 1
     args.walk_num = 1
@@ -54,7 +54,7 @@ def test_line_ppi():
 def test_node2vec_ppi():
     args = get_default_args()
     args.task = "unsupervised_node_classification"
-    args.dataset = "ppi"
+    args.dataset = "ppi-ne"
     args.model = "node2vec"
     args.walk_length = 5
     args.walk_num = 1
@@ -71,7 +71,7 @@ def test_node2vec_ppi():
 def test_hope_ppi():
     args = get_default_args()
     args.task = "unsupervised_node_classification"
-    args.dataset = "ppi"
+    args.dataset = "ppi-ne"
     args.model = "hope"
     args.beta = 0.001
     task = build_task(args)
@@ -99,7 +99,7 @@ def test_prone_module():
 def test_grarep_ppi():
     args = get_default_args()
     args.task = "unsupervised_node_classification"
-    args.dataset = "ppi"
+    args.dataset = "ppi-ne"
     args.model = "grarep"
     args.step = 1
     task = build_task(args)
@@ -110,7 +110,7 @@ def test_grarep_ppi():
 def test_netmf_ppi():
     args = get_default_args()
     args.task = "unsupervised_node_classification"
-    args.dataset = "ppi"
+    args.dataset = "ppi-ne"
     args.model = "netmf"
     args.window_size = 2
     args.rank = 32
@@ -124,7 +124,7 @@ def test_netmf_ppi():
 def test_netsmf_ppi():
     args = get_default_args()
     args.task = "unsupervised_node_classification"
-    args.dataset = "ppi"
+    args.dataset = "ppi-ne"
     args.model = "netsmf"
     args.window_size = 3
     args.negative = 1
@@ -151,7 +151,7 @@ def test_prone_blogcatalog():
 def test_prone_ppi():
     args = get_default_args()
     args.task = "unsupervised_node_classification"
-    args.dataset = "ppi"
+    args.dataset = "ppi-ne"
     args.model = "prone"
     args.enhance = "prone++"
     args.max_evals = 3
@@ -179,7 +179,7 @@ def test_prone_usa_airport():
 def test_spectral_ppi():
     args = get_default_args()
     args.task = "unsupervised_node_classification"
-    args.dataset = "ppi"
+    args.dataset = "ppi-ne"
     args.model = "spectral"
     task = build_task(args)
     ret = task.train()
@@ -189,7 +189,7 @@ def test_spectral_ppi():
 def test_sdne_ppi():
     args = get_default_args()
     args.task = "unsupervised_node_classification"
-    args.dataset = "ppi"
+    args.dataset = "ppi-ne"
     args.model = "sdne"
     args.hidden_size1 = 100
     args.hidden_size2 = 16
@@ -208,7 +208,7 @@ def test_sdne_ppi():
 def test_dngr_ppi():
     args = get_default_args()
     args.task = "unsupervised_node_classification"
-    args.dataset = "ppi"
+    args.dataset = "ppi-ne"
     args.model = "dngr"
     args.hidden_size1 = 100
     args.hidden_size2 = 16

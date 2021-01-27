@@ -3,10 +3,11 @@ import networkx as nx
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn.conv import GATConv
-
 from .. import BaseModel, register_model
+from cogdl.models.nn import GATLayer
+from cogdl.utils import add_remaining_self_loops
 from cogdl.trainers.daegc_trainer import DAEGCTrainer
+
 
 @register_model("daegc")
 class DAEGC(BaseModel):
@@ -18,6 +19,7 @@ class DAEGC(BaseModel):
         T (int) : Number of iterations to recalculate P and Q
         gamma (float) : Hyperparameter that controls two parts of the loss.
     """
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -36,12 +38,7 @@ class DAEGC(BaseModel):
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            args.num_features,
-            args.hidden_size, 
-            args.embedding_size,
-            args.num_heads,
-            args.dropout,
-            args.num_clusters
+            args.num_features, args.hidden_size, args.embedding_size, args.num_heads, args.dropout, args.num_clusters
         )
 
     def __init__(self, num_features, hidden_size, embedding_size, num_heads, dropout, num_clusters):
@@ -52,18 +49,24 @@ class DAEGC(BaseModel):
         self.embedding_size = embedding_size
         self.dropout = dropout
         self.num_clusters = num_clusters
-        self.conv1 = GATConv(num_features, hidden_size, heads=num_heads, dropout=dropout)
-        self.conv2 = GATConv(hidden_size * num_heads, embedding_size, dropout=dropout)
+        self.att1 = GATLayer(
+            num_features, hidden_size, dropout=dropout, alpha=0.2, nhead=num_heads, concat=True, fast_mode=False
+        )
+        self.att2 = GATLayer(
+            hidden_size * num_heads, embedding_size, dropout=dropout, alpha=0.2, nhead=1, concat=False, fast_mode=False
+        )
         self.cluster_center = None
 
     def get_trainer(self, task, args):
         return DAEGCTrainer
 
     def forward(self, x, edge_index):
+        edge_index, _ = add_remaining_self_loops(edge_index)
+
         x = F.dropout(x, p=self.dropout, training=self.training)
-        x = F.relu(self.conv1(x, edge_index))
+        x = F.elu(self.att1(x, edge_index))
         x = F.dropout(x, p=self.dropout, training=self.training)
-        x = F.elu(self.conv2(x, edge_index))
+        x = F.elu(self.att2(x, edge_index))
         return F.normalize(x, p=2, dim=1)
 
     def get_2hop(self, edge_index):
@@ -82,9 +85,5 @@ class DAEGC(BaseModel):
         return self.forward(data.x, data.edge_index).detach()
 
     def recon_loss(self, z, adj):
-        #print(torch.mm(z, z.t()), adj)
-        return F.binary_cross_entropy(
-            F.softmax(torch.mm(z, z.t())), 
-            adj,
-            reduction='sum'
-        )
+        # print(torch.mm(z, z.t()), adj)
+        return F.binary_cross_entropy(F.softmax(torch.mm(z, z.t())), adj, reduction="sum")

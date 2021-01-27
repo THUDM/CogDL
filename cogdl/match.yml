@@ -4,6 +4,7 @@ node_classification:
     - gcn
     - gat
     - drgat
+    - drgcn
     - grand
     - gcnmix
     - disengcn
@@ -11,11 +12,8 @@ node_classification:
     - mixhop
     - graphsage
     - pairnorm
-    - pyg_unet
     - gcnii
     - chebyshev
-    - pyg_gcn
-    - pyg_gat
     - deepergcn
     - gcnii
     - gpt_gnn
@@ -35,8 +33,10 @@ node_classification:
     - ogbn-products
     - ogbn-papers100M
     - flickr
-    - amazon
+    - amazon-s
     - yelp
+    - ppi
+    - ppi-large
     - reddit
 unsupervised_node_classification:
   - model:
@@ -53,10 +53,13 @@ unsupervised_node_classification:
     - spectral
     - gcc
     dataset:
-    - ppi
+    - ppi-ne
     - blogcatalog
     - wikipedia
     - usa-airport
+    - youtube-ne
+    - dblp-ne
+    - flickr-ne
   - model:
     - unsup_graphsage
     - dgi
@@ -66,6 +69,12 @@ unsupervised_node_classification:
     - cora
     - citeseer
     - pubmed
+    - reddit
+    - ppi
+    - ppi-large
+    - flickr
+    - yelp
+    - amazon-s
 graph_classification:
   - model:
     - gin
@@ -81,6 +90,12 @@ graph_classification:
     - imdb-m
     - proteins
     - collab
+    - nci1
+    - nci109
+    - ptc-mr
+    - reddit-b
+    - reddit-multi-5k
+    - reddit-multi-12k
 unsupervised_graph_classification:
   - model:
     - infograph
@@ -92,6 +107,12 @@ unsupervised_graph_classification:
     - imdb-m
     - proteins
     - collab
+    - nci1
+    - nci109
+    - ptc-mr
+    - reddit-b
+    - reddit-multi-5k
+    - reddit-multi-12k
 link_prediction:
   - model:
     - prone
@@ -161,11 +182,16 @@ multiplex_node_classification:
 heterogeneous_node_classification:
   - model:
     - gtn
-    - han
     dataset:
     - gtn-dblp
     - gtn-acm
     - gtn-imdb
+  - model:
+    - han
+    dataset:
+    - han-dblp
+    - han-acm
+    - han-imdb
 pretrain:
   - model:
     - stpgnn

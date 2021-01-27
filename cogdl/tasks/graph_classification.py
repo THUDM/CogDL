@@ -92,6 +92,10 @@ class GraphClassification(BaseTask):
             ) = model.split_dataset(self.data, args)
 
         self.model = model.to(self.device)
+
+        self.set_loss_fn(dataset)
+        self.set_evaluator(dataset)
+
         self.patience = args.patience
         self.max_epoch = args.max_epoch
 
@@ -144,10 +148,8 @@ class GraphClassification(BaseTask):
         loss_n = 0
         for batch in self.train_loader:
             batch = batch.to(self.device)
-            # batch.x = batch.x.to(dtype=torch.float32)
-            # batch.y = torch.flatten(batch.y)
             self.optimizer.zero_grad()
-            output, loss = self.model(batch)
+            loss = self.model.graph_classification_loss(batch)
             loss_n += loss.item()
             loss.backward()
             self.optimizer.step()
@@ -168,18 +170,16 @@ class GraphClassification(BaseTask):
         with torch.no_grad():
             for batch in loader:
                 batch = batch.to(self.device)
-                # batch.x = batch.x.to(dtype=torch.float32)
-                # batch.y = torch.flatten(batch.y)
-                predict, loss = self.model(batch)
+                prediction = self.model(batch)
+                loss = self.loss_fn(prediction, batch.y)
                 loss_n.append(loss.item())
                 y.append(batch.y)
-                pred.extend(predict)
+                pred.extend(prediction)
         y = torch.cat(y).to(self.device)
 
         pred = torch.stack(pred, dim=0)
-        pred = pred.max(1)[1]
-        acc = pred.eq(y).sum().item() / len(y)
-        return acc, sum(loss_n) / len(loss_n)
+        metric = self.evaluator(pred, y)
+        return metric, sum(loss_n) / len(loss_n)
 
     def _kfold_train(self):
         y = [x.y for x in self.data]
@@ -188,6 +188,7 @@ class GraphClassification(BaseTask):
         for train_index, test_index in kf.split(self.data, y=y):
             model = build_model(self.args)
             self.model = model.to(self.device)
+            self.model.set_loss_fn(self.loss_fn)
 
             droplast = self.args.model == "diffpool"
             self.train_loader = DataLoader(
@@ -214,24 +215,19 @@ class GraphClassification(BaseTask):
 
             res = self._train()
             acc.append(res["Acc"])
-        return dict(Acc=sum(acc) / len(acc))
+        return dict(Acc=np.mean(acc), Std=np.std(acc))
 
     def generate_data(self, dataset, args):
-        if "ModelNet" in str(type(dataset).__name__):
-            train_set, test_set = dataset.get_all()
-            args.num_features = 3
-            return {"train": train_set, "test": test_set}
-        else:
-            datalist = []
-            if isinstance(dataset[0], Data):
-                return dataset
-            for idata in dataset:
-                data = Data()
-                for key in idata.keys:
-                    data[key] = idata[key]
-                datalist.append(data)
+        datalist = []
+        # if isinstance(dataset[0], Data):
+        #     return dataset
+        for idata in dataset:
+            data = Data()
+            for key in idata.keys:
+                data[key] = idata[key]
+            datalist.append(data)
 
-            if args.degree_feature:
-                datalist = node_degree_as_feature(datalist)
-                args.num_features = datalist[0].num_features
-            return datalist
+        if args.degree_feature:
+            datalist = node_degree_as_feature(datalist)
+            args.num_features = datalist[0].num_features
+        return datalist

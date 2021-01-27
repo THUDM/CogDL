@@ -102,8 +102,7 @@ class PPRGo(BaseModel):
 
     def node_classification_loss(self, x, targets, ppr_scores, y):
         pred = self.forward(x, targets, ppr_scores)
-        pred = nn.functional.log_softmax(pred, dim=-1)
-        loss = nn.functional.nll_loss(pred, y)
+        loss = self.loss_fn(pred, y)
         return loss
 
     def predict(self, x, edge_index, batch_size, norm_func):

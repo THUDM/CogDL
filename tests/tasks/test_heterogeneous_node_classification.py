@@ -10,7 +10,7 @@ def get_default_args():
         "max_epoch": 1,
         "device_id": [0],
         "cpu": True,
-        "lr": 0.01,
+        "lr": 0.001,
         "weight_decay": 5e-4,
         "checkpoint": False,
     }

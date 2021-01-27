@@ -50,20 +50,20 @@ class PPRGoTrainer(object):
         else:
             edge_index = data.edge_index
 
-        if not os.path.exists("./saved"):
-            os.mkdir("saved")
-        path = f"./saved/{self.dataset_name}_{self.topk}_{self.alpha}_{self.normalization}.{mode}.npz"
+        if not os.path.exists("./pprgo_saved"):
+            os.mkdir("pprgo_saved")
+        path = f"./pprgo_saved/{self.dataset_name}_{self.topk}_{self.alpha}_{self.normalization}.{mode}.npz"
 
         if os.path.exists(path):
             print(f"Load {mode} from cached")
-            train_topk_matrix = sp.load_npz(path)
+            topk_matrix = sp.load_npz(path)
         else:
             print(f"Fail to load {mode}")
-            train_topk_matrix = build_topk_ppr_matrix_from_data(
+            topk_matrix = build_topk_ppr_matrix_from_data(
                 edge_index, self.alpha, self.epsilon, index, self.topk, self.normalization
             )
-            sp.save_npz(path, train_topk_matrix)
-        result = PPRGoDataset(data.x, train_topk_matrix, index, data.y)
+            sp.save_npz(path, topk_matrix)
+        result = PPRGoDataset(data.x, topk_matrix, index, data.y)
         return result
 
     def get_dataloader(self, dataset):
@@ -79,7 +79,8 @@ class PPRGoTrainer(object):
         return data_loader
 
     def fit(self, model, dataset):
-        self.loss_func, self.evaluator = dataset.get_evaluator()
+        self.evaluator = dataset.get_evaluator()
+        self.loss_func = dataset.get_loss_fn()
         self.model = model.to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
@@ -103,7 +104,6 @@ class PPRGoTrainer(object):
             epoch_iter.set_description(
                 f"Epoch: {epoch}, TrainLoss: {train_loss: .4f}, ValLoss: {val_loss: .4f}, ValAcc: {best_acc: .4f}"
             )
-            print()
         self.model = best_model
 
         del train_loader
@@ -129,13 +129,7 @@ class PPRGoTrainer(object):
             x, targets, ppr_scores, y = [item.to(self.device) for item in batch]
             if is_train:
                 pred = self.model(x, targets, ppr_scores)
-                if len(y.shape) == 1:
-                    y = y.long()
-                    pred = torch.nn.functional.log_softmax(pred, dim=-1)
                 loss = self.loss_func(pred, y)
-                if len(loss.shape) > 1:
-                    loss = torch.sum(torch.mean(loss, dim=0))
-
                 self.optimizer.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), 5)
@@ -143,12 +137,7 @@ class PPRGoTrainer(object):
             else:
                 with torch.no_grad():
                     pred = self.model(x, targets, ppr_scores)
-                    if len(y.shape) == 1:
-                        y = y.long()
-                        pred = torch.nn.functional.log_softmax(pred, dim=-1)
                     loss = self.loss_func(pred, y)
-                    if len(loss.shape) > 1:
-                        loss = torch.sum(torch.mean(loss, dim=0))
 
                     preds.append(pred)
                     labels.append(y)
@@ -159,7 +148,7 @@ class PPRGoTrainer(object):
         else:
             preds = torch.cat(preds, dim=0)
             labels = torch.cat(labels, dim=0)
-            score = self.evaluator(labels, preds)
+            score = self.evaluator(preds, labels)
             return score, sum(loss_items) / len(loss_items)
 
     def _test_step(self, data):
@@ -178,5 +167,5 @@ class PPRGoTrainer(object):
         labels = data.y[data.test_mask]
         preds = predictions[data.test_mask]
 
-        score = self.evaluator(labels, preds)
+        score = self.evaluator(preds, labels)
         return score

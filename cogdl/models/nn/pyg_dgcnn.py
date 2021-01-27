@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import DynamicEdgeConv, global_max_pool
 
 from .. import BaseModel, register_model
-from .pyg_gin import GINMLP
+from .gin import GINMLP
 from cogdl.data import DataLoader, Data
 
 
@@ -94,8 +94,4 @@ class DGCNN(BaseModel):
         h = self.linear(torch.cat([h1, h2], dim=1))
         h = global_max_pool(h, batch.batch)
         out = self.final_mlp(h)
-        out = F.log_softmax(out, dim=-1)
-        if batch.y is not None:
-            loss = F.nll_loss(out, batch.y)
-            return out, loss
-        return out, None
+        return out

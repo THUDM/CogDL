@@ -1,10 +1,12 @@
 import collections
+import copy
 import os.path as osp
+from itertools import repeat, product
 
 import torch.utils.data
 
 from cogdl.utils import makedirs
-from cogdl.utils import accuracy_evaluator
+from cogdl.utils import accuracy, cross_entropy_loss
 
 
 def to_list(x):
@@ -121,7 +123,10 @@ class Dataset(torch.utils.data.Dataset):
         print("Done!")
 
     def get_evaluator(self):
-        return accuracy_evaluator()
+        return accuracy
+
+    def get_loss_fn(self):
+        return cross_entropy_loss
 
     def __getitem__(self, idx):  # pragma: no cover
         r"""Gets the data object at index :obj:`idx` and transforms it (in case
@@ -130,5 +135,98 @@ class Dataset(torch.utils.data.Dataset):
         data = data if self.transform is None else self.transform(data)
         return data
 
+    @property
+    def num_classes(self):
+        r"""The number of classes in the dataset."""
+        y = self.data.y
+        return y.max().item() + 1 if y.dim() == 1 else y.size(1)
+
     def __repr__(self):  # pragma: no cover
         return "{}({})".format(self.__class__.__name__, len(self))
+
+
+class MultiGraphDataset(Dataset):
+    def __init__(self, root=None, transform=None, pre_transform=None, pre_filter=None):
+        super(MultiGraphDataset, self).__init__(root, transform, pre_transform, pre_filter)
+        self.data, self.slices = None, None
+
+    @property
+    def num_classes(self):
+        r"""The number of classes in the dataset."""
+        y = self.data.y
+        return y.max().item() + 1 if y.dim() == 1 else y.size(1)
+
+    def len(self):
+        for item in self.slices.values():
+            return len(item) - 1
+        return 0
+
+    def _get(self, idx):
+        data = self.data.__class__()
+
+        if hasattr(self.data, "__num_nodes__"):
+            data.num_nodes = self.data.__num_nodes__[idx]
+
+        for key in self.data.keys:
+            item, slices = self.data[key], self.slices[key]
+            start, end = slices[idx].item(), slices[idx + 1].item()
+            if torch.is_tensor(item):
+                s = list(repeat(slice(None), item.dim()))
+                s[self.data.__cat_dim__(key, item)] = slice(start, end)
+            elif start + 1 == end:
+                s = slices[start]
+            else:
+                s = slice(start, end)
+            data[key] = item[s]
+        return data
+
+    def get(self, idx):
+        if isinstance(idx, int) or (len(idx) == 0):
+            return self._get(idx)
+        elif len(idx) > 1:
+            data_list = [self._get(i) for i in idx]
+            data, slices = self.from_data_list(data_list)
+            dataset = copy.copy(self)
+            dataset.data = data
+            dataset.slices = slices
+            return dataset
+
+    @staticmethod
+    def from_data_list(data_list):
+        r""" Borrowed from PyG"""
+
+        keys = data_list[0].keys
+        data = data_list[0].__class__()
+
+        for key in keys:
+            data[key] = []
+        slices = {key: [0] for key in keys}
+
+        for item, key in product(data_list, keys):
+            data[key].append(item[key])
+            if torch.is_tensor(item[key]):
+                s = slices[key][-1] + item[key].size(item.__cat_dim__(key, item[key]))
+            else:
+                s = slices[key][-1] + 1
+            slices[key].append(s)
+
+        if hasattr(data_list[0], "__num_nodes__"):
+            data.__num_nodes__ = []
+            for item in data_list:
+                data.__num_nodes__.append(item.num_nodes)
+
+        for key in keys:
+            item = data_list[0][key]
+            if torch.is_tensor(item):
+                data[key] = torch.cat(data[key], dim=data.__cat_dim__(key, item))
+            elif isinstance(item, int) or isinstance(item, float):
+                data[key] = torch.tensor(data[key])
+
+            slices[key] = torch.tensor(slices[key], dtype=torch.long)
+
+        return data, slices
+
+    def __len__(self):
+        for item in self.slices.values():
+            return len(item) - 1
+        return 0

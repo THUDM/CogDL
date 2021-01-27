@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-**[Homepage](http://keg.cs.tsinghua.edu.cn/cogdl)** | **[BAAI link](http://open.baai.ac.cn/cogdl-toolkit)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Leaderboards](./cogdl/tasks/README.md)** | **[中文](./README_CN.md)**
+**[Homepage](http://keg.cs.tsinghua.edu.cn/cogdl)** | **[BAAI link](http://open.baai.ac.cn/cogdl-toolkit)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Leaderboards](./cogdl/tasks/README.md)** | **[Datasets](./cogdl/datasets/README.md)** | **[中文](./README_CN.md)**
 
 CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or custom models for node classification, link prediction and other tasks on graphs. It provides implementations of many popular models, including: non-GNN Baselines like Deepwalk, LINE, NetMF, GNN Baselines like GCN, GAT, GraphSAGE.
 
@@ -167,23 +167,6 @@ And then clone your fork or this repository into the cogdl folder:
 ```
 git clone https://github.com/THUDM/cogdl /cogdl
 ```
-
-
-### Attributed graph clustering
-
-For attributed graph clustering, we adopt accuracy, normalized mutual information(NMI) and Micro F1 score. We only evaluate these measures on Cora dataset because we are still working on experiments with Citeseer and Pubmed dataset.
-
-| Rank | Method                                                       |   Accuracy   |   NMI   |   Micro F1   |
-| :--- | :----------------------------------------------------------- | :-------: | :--------: | :--------: |
-| 1 | DAEGC [(Wang et al, IJCAI'19)](https://arxiv.org/pdf/1906.06532.pdf) | 43.59 | **45.96** | **47.70** |
-| 2   | AGC [(Zhang et al, IJCAI'20)](https://arxiv.org/pdf/1906.01210.pdf) | **47.71** | 42.15  | 45.93  |
-| 3    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971) | 45.48 | 40.92 | 40.20 |
-| 4    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652) | 38.34 | 38.90 | 39.07 |
-| 5    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf)  | 31.12 | 30.76  | 33.02  |
-| 6    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578)  | 26.17 | 25.48  | 28.15  |
-| 7    | KMeans  | 33.47 | 14.55  | 27.11  |
-| 8    | Spectral  | 24.14 | 14.39  | 25.53  |
-
 
 ## Contributing
 

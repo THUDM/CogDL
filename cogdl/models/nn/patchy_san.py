@@ -2,6 +2,7 @@ import random
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from cogdl.data import DataLoader
 from .. import BaseModel, register_model
 
@@ -102,14 +103,9 @@ class PatchySAN(BaseModel):
             nn.Softmax(),
         )
 
-        self.criterion = nn.CrossEntropyLoss()
-        # self.criterion = nn.NLLLoss()
-
     def forward(self, batch):
         logits = self.nn(batch.tx)
-        if batch.y is not None:
-            return logits, self.criterion(logits, batch.y)
-        return logits, None
+        return logits
 
 
 def assemble_neighbor(G, node, num_neighbor, sorted_nodes):

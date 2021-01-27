@@ -4,8 +4,6 @@ import torch.nn.functional as F
 from torch_geometric.nn.conv import GCNConv
 
 from .. import BaseModel, register_model
-from cogdl.trainers.sampled_trainer import SAINTTrainer
-from cogdl.trainers.self_task_trainer import SelfTaskTrainer
 
 
 @register_model("pyg_gcn")
@@ -19,15 +17,6 @@ class GCN(BaseModel):
         parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--num-layers", type=int, default=2)
         parser.add_argument("--dropout", type=float, default=0.5)
-        parser.add_argument('--sampler', default='none', type=str, help='graph samplers')
-        parser.add_argument('--sample-coverage', default=20, type=float, help='sample coverage ratio')
-        parser.add_argument('--size-subgraph', default=1200, type=int, help='subgraph size')
-        parser.add_argument('--num-walks', default=50, type=int, help='number of random walks')
-        parser.add_argument('--walk-length', default=20, type=int, help='random walk length')
-        parser.add_argument('--size-frontier', default=20, type=int, help='frontier size in multidimensional random walks')
-        parser.add_argument('--auxiliary-task', default="none", type=str)
-        parser.add_argument('--alpha', default=10, type=float)
-        parser.add_argument('--label-mask', default=0, type=float)
         # fmt: on
 
     @classmethod
@@ -41,12 +30,7 @@ class GCN(BaseModel):
         )
 
     def get_trainer(self, task, args):
-        if args.sampler != "none":
-            return SAINTTrainer
-        elif args.auxiliary_task != 'none':
-            return SelfTaskTrainer
-        else:
-            return None
+        return None
 
     def __init__(self, num_features, num_classes, hidden_size, num_layers, dropout):
         super(GCN, self).__init__()
@@ -68,7 +52,7 @@ class GCN(BaseModel):
         x = self.convs[-1](x, edge_index, weight)
         return F.log_softmax(x, dim=1)
 
-    def get_embeddings(self, x, edge_index, weight = None):
+    def get_embeddings(self, x, edge_index, weight=None):
         for conv in self.convs[:-1]:
             x = F.relu(conv(x, edge_index, weight))
             x = F.dropout(x, p=self.dropout, training=self.training)

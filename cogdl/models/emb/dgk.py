@@ -2,7 +2,6 @@ import hashlib
 from joblib import Parallel, delayed
 import networkx as nx
 import numpy as np
-from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from gensim.models.word2vec import Word2Vec
 from .. import BaseModel, register_model
 
@@ -107,7 +106,7 @@ class DeepGraphKernel(BaseModel):
                     norm_prob[i, node2id[gl]] += 1
             # norm_prob[i] /= sum(norm_prob[i])
         embedding = norm_prob.dot(S)
-        return embedding, None
+        return embedding
 
     def save_embedding(self, output_path):
         self.model.wv.save("model.wv")

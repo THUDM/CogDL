@@ -1,13 +1,12 @@
 import numpy as np
 
-from cogdl.data import Data
 from cogdl.datasets import build_dataset_from_name
 
 
 class Test_Data(object):
     def setup_class(self):
         self.dataset = build_dataset_from_name("cora")
-        self.data = Data.from_pyg_data(self.dataset[0])
+        self.data = self.dataset[0]
         self.num_nodes = self.data.num_nodes
         self.num_edges = self.data.num_edges
         self.num_features = self.data.num_features
@@ -33,4 +32,3 @@ class Test_Data(object):
             node_idx, sampled_edge_index = self.data.sample_adj(sampled_nodes, size)
             node_idx = node_idx.cpu().numpy()
             assert (set(node_idx) & set(sampled_nodes)) == set(sampled_nodes)
-            assert len(set(sampled_edge_index.cpu().numpy()[0])) == len(set(sampled_nodes))

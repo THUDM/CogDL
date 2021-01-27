@@ -32,7 +32,6 @@ class HANDataset(Dataset):
         self.url = f"https://github.com/cenyk1230/han-data/blob/master/{name}.zip?raw=true"
         super(HANDataset, self).__init__(root)
         self.data = torch.load(self.processed_paths[0])
-        self.num_classes = torch.max(self.data.train_target).item() + 1
         self.num_edge = len(self.data.adj)
         self.num_nodes = self.data.x.shape[0]
 
@@ -44,6 +43,10 @@ class HANDataset(Dataset):
     @property
     def processed_file_names(self):
         return ["data.pt"]
+
+    @property
+    def num_classes(self):
+        return torch.max(self.data.train_target).item() + 1
 
     def read_gtn_data(self, folder):
         data = sio.loadmat(osp.join(folder, "data.mat"))
@@ -136,23 +139,23 @@ class HANDataset(Dataset):
 
 @register_dataset("han-acm")
 class ACM_HANDataset(HANDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "han-acm"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         super(ACM_HANDataset, self).__init__(path, dataset)
 
 
 @register_dataset("han-dblp")
 class DBLP_HANDataset(HANDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "han-dblp"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         super(DBLP_HANDataset, self).__init__(path, dataset)
 
 
 @register_dataset("han-imdb")
 class IMDB_HANDataset(HANDataset):
-    def __init__(self, args=None):
+    def __init__(self):
         dataset = "han-imdb"
-        path = osp.join(osp.dirname(osp.realpath(__file__)), "../..", "data", dataset)
+        path = osp.join("data", dataset)
         super(IMDB_HANDataset, self).__init__(path, dataset)

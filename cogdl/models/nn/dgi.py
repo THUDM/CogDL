@@ -113,9 +113,7 @@ class DGIModel(BaseModel):
         super(DGIModel, self).__init__()
         self.gcn = GCN(in_feats, hidden_size, activation)
         self.read = AvgReadout()
-
         self.sigm = nn.Sigmoid()
-
         self.disc = Discriminator(hidden_size)
 
         self.loss_f = nn.BCEWithLogitsLoss()
@@ -181,5 +179,5 @@ class DGIModel(BaseModel):
         return h_1.detach()  # , c.detach()
 
     @staticmethod
-    def get_trainer(taskType, args):
+    def get_trainer(task, args):
         return SelfSupervisedTrainer

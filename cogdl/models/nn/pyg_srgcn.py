@@ -3,9 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from cogdl.layers.srgcn_module import act_attention, act_map, act_normalization
 from cogdl.utils import add_remaining_self_loops
-from torch_sparse import spmm, spspmm
+from torch_sparse import spspmm
 
 from .. import BaseModel, register_model
+from cogdl.utils import spmm
 
 
 class NodeAdaptiveEncoder(nn.Module):
@@ -19,9 +20,6 @@ class NodeAdaptiveEncoder(nn.Module):
         self.dropout = torch.nn.Dropout(dropout)
 
     def forward(self, x):
-        # h = self.fc(x)
-        # h = torch.sigmoid(h)
-        # h = self.dropout(h)
         h = torch.mm(x, self.fc) + self.bf
         h = torch.sigmoid(h)
         h = self.dropout(h)
@@ -71,9 +69,8 @@ class SrgcnHead(nn.Module):
         self.dropout = dropout
         self.node_dropout = node_dropout
 
-    def forward(self, x, edge_index, edge_attr=None):
+    def forward(self, x, edge_index):
         N, dim = x.shape
-        # x = self.dropout(x)
 
         # nl_adj_mat_ind, nl_adj_mat_val = add_self_loops(edge_index, num_nodes=N)[0], edge_attr.squeeze()
         nl_adj_mat_ind = add_remaining_self_loops(edge_index, num_nodes=N)[0]
@@ -98,7 +95,7 @@ class SrgcnHead(nn.Module):
             val_h = h
 
             for _ in range(i + 1):
-                val_h = spmm(adj_mat_ind, adj_mat_val, N, N, val_h)
+                val_h = spmm(adj_mat_ind, adj_mat_val, val_h)
                 # val_h = spmm(adj_mat_ind, F.dropout(adj_mat_val, p=self.node_dropout, training=self.training), N, N, val_h)
 
             # val_h = val_h / norm
@@ -141,7 +138,7 @@ class SrgcnSoftmaxHead(nn.Module):
         self.dropout = dropout
         self.node_dropout = node_dropout
 
-    def forward(self, x, edge_index, edge_attr):
+    def forward(self, x, edge_index):
         N, dim = x.shape
         # x = self.dropout(x)
 
@@ -165,7 +162,7 @@ class SrgcnSoftmaxHead(nn.Module):
 
         # MATRIX_MUL
         # val_h = spmm(adj_mat_ind, F.dropout(adj_mat_val, p=self.node_dropout, training=self.training), N, N, val_h)
-        val_h = spmm(adj_mat_ind, adj_mat_val, N, N, val_h)
+        val_h = spmm(adj_mat_ind, adj_mat_val, val_h)
 
         val_h[val_h != val_h] = 0
         val_h = val_h + self.bias
@@ -256,17 +253,11 @@ class SRGCN(BaseModel):
             node_dropout=node_dropout,
         )
 
-    def forward(self, batch):
-        x = torch.cat([att(batch.x, batch.edge_index, batch.edge_attr) for att in self.attentions], dim=1)
+    def forward(self, x, edge_index):
+        x = torch.cat([att(x, edge_index) for att in self.attentions], dim=1)
         x = F.elu(x)
-        x = self.out_att(x, batch.edge_index, batch.edge_attr)
+        x = self.out_att(x, edge_index)
         return x
 
-    def node_classification_loss(self, data):
-        return F.nll_loss(
-            self.forward(data)[data.train_mask],
-            data.y[data.train_mask],
-        )
-
     def predict(self, data):
-        return self.forward(data)
+        return self.forward(data.x, data.edge_index)

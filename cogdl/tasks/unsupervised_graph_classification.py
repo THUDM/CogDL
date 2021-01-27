@@ -9,7 +9,7 @@ from cogdl.data import Data, DataLoader
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from sklearn.metrics import f1_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.svm import SVC
 from sklearn.utils import shuffle as skshuffle
 from tqdm import tqdm
@@ -83,7 +83,7 @@ class UnsupervisedGraphClassification(BaseTask):
                 loss_n = []
                 for batch in self.data_loader:
                     batch = batch.to(self.device)
-                    predict, loss = self.model(batch)
+                    loss = self.model.graph_classification_loss(batch)
                     self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
@@ -100,7 +100,7 @@ class UnsupervisedGraphClassification(BaseTask):
                 label = []
                 for batch in self.data_loader:
                     batch = batch.to(self.device)
-                    predict, _ = self.model(batch)
+                    predict = self.model(batch)
                     prediction.extend(predict.cpu().numpy())
                     label.extend(batch.y.cpu().numpy())
                 prediction = np.array(prediction).reshape(len(label), -1)
@@ -109,7 +109,7 @@ class UnsupervisedGraphClassification(BaseTask):
             prediction = self.model.train(self.data)
             label = self.label
         else:
-            prediction, loss = self.model(self.data)
+            prediction = self.model(self.data)
             label = self.label
 
         if prediction is not None:
@@ -121,39 +121,24 @@ class UnsupervisedGraphClassification(BaseTask):
         np.save(name, embs)
 
     def _evaluate(self, embeddings, labels):
-        shuffles = []
-        for _ in range(self.num_shuffle):
-            shuffles.append(skshuffle(embeddings, labels))
-        all_results = defaultdict(list)
-        training_percents = [0.1, 0.3, 0.5, 0.7, 0.9]
+        result = []
+        kf = KFold(n_splits=10)
+        kf.get_n_splits(X=embeddings, y=labels)
+        for train_index, test_index in kf.split(embeddings):
+            x_train = embeddings[train_index]
+            x_test = embeddings[test_index]
+            y_train = labels[train_index]
+            y_test = labels[test_index]
+            params = {"C": [1e-2, 1e-1, 1]}
+            svc = SVC()
+            clf = GridSearchCV(svc, params)
+            clf.fit(x_train, y_train)
 
-        for training_percent in training_percents:
-            for shuf in shuffles:
-                training_size = int(training_percent * self.num_graphs)
-                X, y = shuf
-                X_train = X[:training_size, :]
-                y_train = y[:training_size]
+            preds = clf.predict(x_test)
+            f1 = f1_score(y_test, preds, average="micro")
+            result.append(f1)
+        test_f1 = np.mean(result)
+        test_std = np.std(result)
 
-                X_test = X[training_size:, :]
-                y_test = y[training_size:]
-                # clf = SVC()
-                # clf.fit(X_train, y_train)
-
-                params = {"C": [1e-3, 1e-2, 1e-1, 1, 10]}
-                svc = SVC()
-                clf = GridSearchCV(svc, params)
-                clf.fit(X_train, y_train)
-
-                preds = clf.predict(X_test)
-                accuracy = f1_score(y_test, preds, average="micro")
-                all_results[training_percent].append(accuracy)
-
-        result = dict(
-            (
-                f"Accuracy {train_percent}",
-                sum(all_results[train_percent]) / len(all_results[train_percent]),
-            )
-            for train_percent in sorted(all_results.keys())
-        )
-        print("Test Acc: ", list(result.values())[-1])
-        return result
+        print("Test Acc: ", test_f1)
+        return dict(Acc=test_f1, Std=test_std)

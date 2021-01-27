@@ -19,7 +19,11 @@ class Sampler:
     def __init__(self, data, args_params):
         self.data = data.clone()
         self.num_nodes = self.data.x.size()[0]
-        self.num_edges = self.data.edge_index.size()[1]
+        self.num_edges = (
+            self.data.edge_index_train.size()[1]
+            if hasattr(self.data, "edge_index_train")
+            else self.data.edge_index.size()[1]
+        )
 
     def sample(self):
         pass
@@ -41,12 +45,17 @@ class SAINTSampler(Sampler):
 
     def __init__(self, data, args_params):
         super().__init__(data, args_params)
-        edge_index = self.data.edge_index.cpu().numpy()
+        edge_index = (
+            self.data.edge_index_train.cpu().numpy()
+            if hasattr(self.data, "edge_index_train")
+            else self.data.edge_index.cpu().numpy()
+        )
         self.adj = sp.coo_matrix(
             (np.ones(self.num_edges), (edge_index[0], edge_index[1])),
             shape=(self.num_nodes, self.num_nodes),
         ).tocsr()
-        self.node_train = np.arange(1, self.num_nodes + 1) * self.data.train_mask.cpu().numpy()
+        self.train_mask = self.data.train_mask.cpu().numpy()
+        self.node_train = np.arange(1, self.num_nodes + 1) * self.train_mask
         self.node_train = self.node_train[self.node_train != 0] - 1
 
         self.sample_coverage = args_params["sample_coverage"]
@@ -113,7 +122,11 @@ class SAINTSampler(Sampler):
 
     def extract_subgraph(self, edge_idx, directed=True):
         edge_idx = np.unique(edge_idx)
-        subg_edge = self.data.edge_index.t()[edge_idx].cpu().numpy()
+        subg_edge = (
+            self.data.edge_index_train.t()[edge_idx].cpu().numpy()
+            if hasattr(self.data, "edge_index_train")
+            else self.data.edge_index.t()[edge_idx].cpu().numpy()
+        )
         if not directed:
             subg_edge = np.concatenate((subg_edge, subg_edge[:, [1, 0]]))
         subg_edge = np.unique(subg_edge, axis=0)
@@ -168,14 +181,22 @@ class SAINTSampler(Sampler):
             node_subgraph = np.arange(self.data.num_nodes)
             data = self.data.clone()
             if require_norm:
-                data.norm_aggr = torch.ones(self.num_edges)
+                data.norm_aggr = torch.ones(self.data.edge_index.size()[1])
                 data.norm_loss = self.norm_loss_test
         else:
-            if len(self.subgraphs_nodes) == 0:
-                self.gen_subgraph()
+            while True:
+                if len(self.subgraphs_nodes) == 0:
+                    self.gen_subgraph()
 
-            node_subgraph = self.subgraphs_nodes.pop()
-            edge_subgraph = self.subgraphs_edge_index.pop()
+                node_subgraph = self.subgraphs_nodes.pop()
+                edge_subgraph = self.subgraphs_edge_index.pop()
+                flag = False
+                for idx in node_subgraph:
+                    if self.train_mask[idx]:
+                        flag = True
+                        break
+                if flag:
+                    break
             num_nodes_subgraph = node_subgraph.size
             adj = sp.csr_matrix(
                 (self.subgraphs_data.pop(), self.subgraphs_indices.pop(), self.subgraphs_indptr.pop()),
@@ -283,6 +304,8 @@ class RWSampler(SAINTSampler):
             for step in range(self.walk_length):
                 idx_s = self.adj.indptr[u]
                 idx_e = self.adj.indptr[u + 1]
+                if idx_s >= idx_e:
+                    break
                 e = np.random.randint(idx_s, idx_e)
                 edge_idx.append(e)
                 u = self.adj.indices[e]

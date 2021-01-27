@@ -1,5 +1,3 @@
-import numpy as np
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -239,8 +237,6 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
         self.num_rels = num_rels
         self.sampling_rate = sampling_rate
         self.edge_set = None
-
-        self.cahce_index = None
 
         self.model = RGCN(
             in_feats=hidden_size,

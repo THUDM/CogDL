@@ -1,14 +1,6 @@
 datasets
 ========
 
-DGL dataset
--------------------------------
-
-.. automodule:: cogdl.datasets.dgl_data
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 GATNE dataset
 -------------------------------
 
@@ -73,10 +65,10 @@ PyG strategies dataset
     :undoc-members:
     :show-inheritance:
 
-PyG dataset
+TU dataset
 -------------------------------
 
-.. automodule:: cogdl.datasets.pyg
+.. automodule:: cogdl.datasets.tu_data
     :members:
     :undoc-members:
     :show-inheritance:

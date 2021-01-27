@@ -1,65 +1,41 @@
-from cogdl.data.data import Data
 import torch
 
-from cogdl.tasks import build_task
-from cogdl.models import build_model
-from cogdl.options import get_task_model_args
+from cogdl import experiment
+from cogdl.data import Data
+from cogdl.datasets import BaseDataset, register_dataset
 
 
-"""Define your data"""
-
-class MyData(Data):
+@register_dataset("mydataset")
+class MyNodeClassificationDataset(BaseDataset):
     def __init__(self):
-        super(MyData, self).__init__()
+        super(MyNodeClassificationDataset, self).__init__()
+        self.process()
+        self.data = torch.load("mydata.pt")
+
+    def process(self):
         num_nodes = 100
         num_edges = 300
         feat_dim = 30
-        # load or generate data
-        self.edge_index = torch.randint(0, num_nodes, (2, num_edges))
-        self.x = torch.randn(num_nodes, feat_dim)
-        self.y = torch.randint(0, 2, (num_nodes,))
+
+        # load or generate your dataset
+        edge_index = torch.randint(0, num_nodes, (2, num_edges))
+        x = torch.randn(num_nodes, feat_dim)
+        y = torch.randint(0, 2, (num_nodes,))
 
         # set train/val/test mask in node_classification task
-        self.train_mask = torch.zeros(num_nodes).bool()
-        self.train_mask[0 : int(0.3 * num_nodes)] = True
-        self.val_mask = torch.zeros(num_nodes).bool()
-        self.val_mask[int(0.3 * num_nodes) : int(0.7 * num_nodes)] = True
-        self.test_mask = torch.zeros(num_nodes).bool()
-        self.test_mask[int(0.7 * num_nodes) :] = True
-
-
-"""Define your dataset"""
-
-class MyNodeClassificationDataset(object):
-    def __init__(self):
-        self.data = MyData()
-        self.num_classes = self.data.num_classes
-        self.num_features = self.data.num_features
-
-    def __getitem__(self, index):
-        assert index == 0
-        return self.data
-
-
-def set_args(args):
-    """Change default setttings"""
-    cuda_available = torch.cuda.is_available()
-    args.cpu = not cuda_available
-    return args
-
-
-def main_dataset():
-    args = get_task_model_args(task="node_classification", model="gcn")
-    # use customized dataset
-    dataset = MyNodeClassificationDataset()
-    args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
-    # use model in cogdl
-    model = build_model(args)
-    task = build_task(args, dataset, model)
-    result = task.train()
-    print(result)
+        train_mask = torch.zeros(num_nodes).bool()
+        train_mask[0 : int(0.3 * num_nodes)] = True
+        val_mask = torch.zeros(num_nodes).bool()
+        val_mask[int(0.3 * num_nodes) : int(0.7 * num_nodes)] = True
+        test_mask = torch.zeros(num_nodes).bool()
+        test_mask[int(0.7 * num_nodes) :] = True
+        data = Data(x=x, edge_index=edge_index, y=y, train_mask=train_mask, val_mask=val_mask, test_mask=test_mask)
+        torch.save(data, "mydata.pt")
+        return data
 
 
 if __name__ == "__main__":
-    main_dataset()
+    # Run with self-loaded dataset
+    experiment(task="node_classification", dataset="mydataset", model="gcn")
+    # Run with given datapaath
+    experiment(task="node_classification", dataset="./mydata.pt", model="gcn")

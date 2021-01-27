@@ -3,12 +3,14 @@ import itertools
 import os
 import os.path as osp
 import random
+import numba
 import shutil
 from collections import defaultdict
 from typing import Optional
 from urllib import request
 
 import numpy as np
+import scipy.sparse as sp
 import torch
 import torch.nn.functional as F
 from tabulate import tabulate
@@ -70,7 +72,14 @@ def download_url(url, folder, name=None, log=True):
 
     makedirs(folder)
 
-    data = request.urlopen(url)
+    try:
+        data = request.urlopen(url)
+    except Exception as e:
+        print(e)
+        print("Failed to download the dataset.")
+        print(f"Please download the dataset manually and put it under {folder}.")
+        exit(1)
+
     if name is None:
         filename = url.rpartition("/")[2]
     else:
@@ -81,6 +90,52 @@ def download_url(url, folder, name=None, log=True):
         f.write(data.read())
 
     return path
+
+
+def alias_setup(probs):
+    """
+    Compute utility lists for non-uniform sampling from discrete distributions.
+    Refer to https://hips.seas.harvard.edu/blog/2013/03/03/the-alias-method-efficient-sampling-with-many-discrete-outcomes/
+    for details
+    """
+    K = len(probs)
+    q = np.zeros(K)
+    J = np.zeros(K, dtype=np.int)
+
+    smaller = []
+    larger = []
+    for kk, prob in enumerate(probs):
+        q[kk] = K * prob
+        if q[kk] < 1.0:
+            smaller.append(kk)
+        else:
+            larger.append(kk)
+
+    while len(smaller) > 0 and len(larger) > 0:
+        small = smaller.pop()
+        large = larger.pop()
+
+        J[small] = large
+        q[large] = q[large] + q[small] - 1.0
+        if q[large] < 1.0:
+            smaller.append(large)
+        else:
+            larger.append(large)
+
+    return J, q
+
+
+def alias_draw(J, q):
+    """
+    Draw sample from a non-uniform discrete distribution using alias sampling.
+    """
+    K = len(J)
+
+    kk = int(np.floor(np.random.rand() * K))
+    if np.random.rand() < q[kk]:
+        return kk
+    else:
+        return J[kk]
 
 
 def add_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):
@@ -166,6 +221,32 @@ def spmm_adj(indices, values, shape, b):
     return torch.spmm(adj, b)
 
 
+# def naive_spspmm(edge_index1, value1, edge_index2, value2, shape):
+#     if isinstance(edge_index1, torch.Tensor):
+#         row1, col1 = edge_index1.cpu().numpy()
+#         value1 = value1.cpu().numpy()
+#     else:
+#         row1, col1 = edge_index1
+#     if isinstance(edge_index2, torch.Tensor):
+#         row2, col2 = edge_index2.cpu().numpy()
+#         value2 = value2.cpu().numpy()
+#     else:
+#         row2, col2 = edge_index2
+#     adj1 = sp.csr_matrix((value1, (row1, col1)), shape=shape)
+#     adj2 = sp.csc_matrix((value2, (row2, col2)), shape=shape)
+#     indptr1 = adj1.indptr
+#     indices1 = adj1.indices
+#
+#     indptr2 = adj2.indptr
+#     indices2 = adj2.indices
+#
+#     result = _naive_spspmm(indptr1, indices1, indptr2, indices2)
+#
+#
+# @numba.njit
+# def _naive_spspmm(indptr_row, indices_row, indptr_col, indices_col):
+
+
 def get_degrees(indices, num_nodes=None):
     device = indices.device
     values = torch.ones(indices.shape[1]).to(device)
@@ -206,14 +287,17 @@ def mul_edge_softmax(indices, values, shape):
     values = torch.exp(values)
     output = torch.zeros(shape[0], values.shape[1]).to(device)
     output = output.scatter_add_(0, indices[0].unsqueeze(-1).expand_as(values), values)
-    softmax_values = values / output[indices[0]]
+    softmax_values = values / (output[indices[0]] + 1e-8)
+    softmax_values[torch.isnan(softmax_values)] = 0
     return softmax_values
 
 
-def remove_self_loops(indices):
+def remove_self_loops(indices, values=None):
     mask = indices[0] != indices[1]
     indices = indices[:, mask]
-    return indices, mask
+    if values is not None:
+        values = values[mask]
+    return indices, values
 
 
 def filter_adj(row, col, edge_attr, mask):
@@ -233,6 +317,52 @@ def dropout_adj(
     if renorm:
         edge_weight = symmetric_normalization(num_nodes, edge_index)
     return edge_index, edge_weight
+
+
+def coalesce(row, col, value=None):
+    bigger = ((row[1:] - row[:-1]) >= 0).all()
+    if not bigger:
+        edge_index = torch.stack([row, col]).T
+        sort_value, sort_index = torch.sort(edge_index, dim=0)
+        sort_index = sort_index[:, 0]
+        edge_index = edge_index[sort_index].t()
+        row, col = edge_index
+    num = col.shape[0] + 1
+    idx = torch.full((num,), -1, dtype=torch.float)
+    idx[1:] = row * num + col
+    mask = idx[1:] > idx[:-1]
+
+    if mask.all():
+        return row, col.value
+    row = row[mask]
+    if value is not None:
+        _value = torch.zeros(row.shape[0], dtype=torch.float).to(row.device)
+        value = _value.scatter_add_(dim=0, src=value, index=col)
+    col = col[mask]
+    return row, col, value
+
+
+def to_undirected(edge_index, num_nodes=None):
+    r"""Converts the graph given by :attr:`edge_index` to an undirected graph,
+    so that :math:`(j,i) \in \mathcal{E}` for every edge :math:`(i,j) \in
+    \mathcal{E}`.
+
+    Args:
+        edge_index (LongTensor): The edge indices.
+        num_nodes (int, optional): The number of nodes, *i.e.*
+            :obj:`max_val + 1` of :attr:`edge_index`. (default: :obj:`None`)
+
+    :rtype: :class:`LongTensor`
+    """
+    if num_nodes is None:
+        num_nodes = int(torch.max(edge_index)) + 1
+
+    row, col = edge_index
+    row, col = torch.cat([row, col], dim=0), torch.cat([col, row], dim=0)
+    edge_index = torch.stack([row, col], dim=0)
+    row, col, _ = coalesce(edge_index[0], edge_index[1], None)
+    edge_index = torch.stack([row, col])
+    return edge_index
 
 
 def get_activation(act: str):

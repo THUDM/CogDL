@@ -9,7 +9,8 @@ def download_datasets(args):
         args.dataset = [args.dataset]
 
     for name in args.dataset:
-        build_dataset_from_name(name)
+        dataset = build_dataset_from_name(name)
+        print(dataset[0])
 
 
 if __name__ == "__main__":

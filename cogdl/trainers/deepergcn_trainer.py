@@ -10,8 +10,6 @@ import torch.nn.functional as F
 from .base_trainer import BaseTrainer
 from cogdl.utils import add_remaining_self_loops
 
-from torch_geometric.data import NeighborSampler
-
 
 def random_partition_graph(num_nodes, cluster_number=10):
     return np.random.randint(cluster_number, size=num_nodes)
@@ -33,7 +31,7 @@ def generate_subgraphs(edge_index, parts, cluster_number=10):
         row, col = part_adj_coo.row, part_adj_coo.col
 
         sg_nodes.append(node_cluster)
-        sg_edges.append(torch.Tensor([row, col]).long())
+        sg_edges.append(torch.as_tensor([row, col]).long())
     return sg_nodes, sg_edges
 
 
@@ -48,15 +46,17 @@ class DeeperGCNTrainer(BaseTrainer):
         self.weight_decay = args.weight_decay
         self.cluster_number = args.cluster_number
         self.batch_size = args.batch_size
-        self.data = None
-        self.optimizer = None
+        self.data, self.optimizer, self.evaluator, self.loss_fn = None, None, None, None
         self.edge_index, self.train_index = None, None
 
-    def fit(self, model, data):
-        data = data[0]
+    def fit(self, model, dataset):
+        data = dataset[0]
         self.model = model.to(self.device)
         self.data = data
         self.test_gpu_volume()
+
+        self.loss_fn = dataset.get_loss_fn()
+        self.evaluator = dataset.get_evaluator()
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         self.edge_index, _ = add_remaining_self_loops(
@@ -69,6 +69,7 @@ class DeeperGCNTrainer(BaseTrainer):
         best_score = 0
         max_score = 0
         min_loss = np.inf
+        best_model = None
         for epoch in epoch_iter:
             self._train_step()
             if epoch % 5 == 0:
@@ -139,21 +140,21 @@ class DeeperGCNTrainer(BaseTrainer):
         if self.data_device == "cpu":
             self.model.to("cpu")
 
-        logits = self.model.predict(self.data.x, self.data.edge_index)
+        with torch.no_grad():
+            logits = self.model.predict(self.data.x, self.data.edge_index)
         if split == "train":
             mask = self.data.train_mask
         elif split == "val":
             mask = self.data.val_mask
         else:
             mask = self.data.test_mask
-        loss = F.nll_loss(logits[mask], self.data.y[mask]).item()
 
-        pred = logits[mask].max(1)[1]
-        acc = pred.eq(self.data.y[mask]).sum().item() / mask.sum().item()
+        loss = self.loss_fn(logits[mask], self.data.y[mask])
+        metric = self.evaluator(logits[mask], self.data.y[mask])
 
         self.data.apply(lambda x: x.to(self.data_device))
         self.model.to(self.device)
-        return acc, loss
+        return metric, loss
 
     def loss(self, data):
         return F.nll_loss(self.model(data.x, data.edge_index)[data.train_mask], data.y[data.train_mask])

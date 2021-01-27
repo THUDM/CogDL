@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import argparse
 import copy
 import time
 
@@ -7,13 +8,15 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from cogdl.data import Dataset, Data
+from cogdl.data import Dataset
 from cogdl.data.sampler import NodeSampler, EdgeSampler, RWSampler, MRWSampler, LayerSampler, NeighborSampler
 from cogdl.models.supervised_model import SupervisedModel
-from cogdl.trainers.supervised_trainer import SupervisedTrainer
+from cogdl.trainers.base_trainer import BaseTrainer
+from cogdl.utils import add_remaining_self_loops
+from . import register_universal_trainer
 
 
-class SampledTrainer(SupervisedTrainer):
+class SampledTrainer(BaseTrainer):
     @abstractmethod
     def fit(self, model: SupervisedModel, dataset: Dataset):
         raise NotImplementedError
@@ -68,14 +71,27 @@ class SampledTrainer(SupervisedTrainer):
         return best_model
 
 
+@register_universal_trainer("saint")
 class SAINTTrainer(SampledTrainer):
-    def __init__(self, args):
-        super(SAINTTrainer, self).__init__(args)
-        self.args_sampler = self.sampler_from_args(args)
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        """Add trainer-specific arguments to the parser."""
+        # fmt: off
+        parser.add_argument('--sampler', default='none', type=str, help='graph samplers')
+        parser.add_argument('--sample-coverage', default=20, type=float, help='sample coverage ratio')
+        parser.add_argument('--size-subgraph', default=1200, type=int, help='subgraph size')
+        parser.add_argument('--num-walks', default=50, type=int, help='number of random walks')
+        parser.add_argument('--walk-length', default=20, type=int, help='random walk length')
+        parser.add_argument('--size-frontier', default=20, type=int, help='frontier size in multidimensional random walks')
+        # fmt: on
 
     @classmethod
     def build_trainer_from_args(cls, args):
         return cls(args)
+
+    def __init__(self, args):
+        super(SAINTTrainer, self).__init__(args)
+        self.args_sampler = self.sampler_from_args(args)
 
     def sampler_from_args(self, args):
         args_sampler = {
@@ -149,9 +165,16 @@ class NeighborSamplingTrainer(SampledTrainer):
         self.patience = self.patience // self.eval_per_epoch
 
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
+        self.loss_fn, self.evaluator = None, None
 
     def fit(self, model, dataset):
-        self.data = Data.from_pyg_data(dataset[0])
+        self.data = dataset[0]
+        self.data.edge_index, _ = add_remaining_self_loops(self.data.edge_index)
+        if hasattr(self.data, "edge_index_train"):
+            self.data.edge_index_train, _ = add_remaining_self_loops(self.data.edge_index_train)
+        self.evaluator = dataset.get_evaluator()
+        self.loss_fn = dataset.get_loss_fn()
+
         self.train_loader = NeighborSampler(
             data=self.data,
             mask=self.data.train_mask,
@@ -215,9 +238,9 @@ class NeighborSamplingTrainer(SampledTrainer):
         with torch.no_grad():
             logits = self.model.inference(self.data.x, self.test_loader)
 
-        loss = {key: F.nll_loss(logits[val], self.data.y[val]) for key, val in masks.items()}
-        pred = {key: logits[val].max(1)[1] for key, val in masks.items()}
-        acc = {key: pred[key].eq(self.data.y[val]).sum().item() / val.sum().item() for key, val in masks.items()}
+        loss = {key: self.loss_fn(logits[val], self.data.y[val]) for key, val in masks.items()}
+        acc = {key: self.evaluator(logits[val], self.data.y[val]) for key, val in masks.items()}
+
         return acc, loss
 
     @classmethod

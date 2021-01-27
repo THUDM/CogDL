@@ -138,15 +138,15 @@ class Hin2vec(BaseModel):
 
     @staticmethod
     def add_args(parser):
+        # fmt: off
         parser.add_argument("--hidden-size", type=int, default=128)
         parser.add_argument("--walk-length", type=int, default=80, help="Length of walk per source. Default is 80.")
         parser.add_argument("--walk-num", type=int, default=40, help="Number of walks per source. Default is 40.")
-        parser.add_argument(
-            "--batch-size", type=int, default=1000, help="Batch size in SGD training process. Default is 1000."
-        )
+        parser.add_argument("--batch-size", type=int, default=1000, help="Batch size in SGD training process. Default is 1000.")
         parser.add_argument("--hop", type=int, default=2)
         parser.add_argument("--negative", type=int, default=5)
         parser.add_argument("--epochs", type=int, default=1)
+        # fmt: on
 
     @classmethod
     def build_model_from_args(cls, args):

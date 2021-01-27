@@ -2,12 +2,9 @@ from tqdm import tqdm
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.sparse
 from sklearn.cluster import KMeans
-from sklearn.metrics.cluster import normalized_mutual_info_score
 
-from cogdl.utils import add_remaining_self_loops, spmm
 from .base_trainer import BaseTrainer
 
 
@@ -98,27 +95,3 @@ class DAEGCTrainer(BaseTrainer):
     def cluster_loss(self, P, Q):
         # return nn.MSELoss(reduce=True, size_average=False)(P, Q)
         return nn.KLDivLoss(reduce=True, size_average=False)(P.log(), Q)
-
-    def evaluate(self, clusters, truth):
-        print("Evaluating...")
-        TP = 0
-        FP = 0
-        TN = 0
-        FN = 0
-        for i in range(self.num_nodes):
-            for j in range(i + 1, self.num_nodes):
-                if clusters[i] == clusters[j] and truth[i] == truth[j]:
-                    TP += 1
-                if clusters[i] != clusters[j] and truth[i] == truth[j]:
-                    FP += 1
-                if clusters[i] == clusters[j] and truth[i] != truth[j]:
-                    FN += 1
-                if clusters[i] != clusters[j] and truth[i] != truth[j]:
-                    TN += 1
-        precision = TP / (TP + FP)
-        recall = TP / (TP + FN)
-        print("TP", TP, "FP", FP, "TN", TN, "FN", FN)
-        micro_f1 = 2 * (precision * recall) / (precision + recall)
-        print(
-            "Accuracy = ", precision, "NMI = ", normalized_mutual_info_score(clusters, truth), "Micro_F1 = ", micro_f1
-        )

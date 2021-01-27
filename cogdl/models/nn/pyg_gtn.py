@@ -1,18 +1,14 @@
 import math
-import numpy as np
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from torch_scatter import scatter_add
-import torch_sparse
-from torch_geometric.utils.num_nodes import maybe_num_nodes
-from torch_geometric.utils import dense_to_sparse, f1_score
-from torch_geometric.utils import remove_self_loops, add_self_loops
-from torch_geometric.nn import GCNConv
+from torch_sparse import spspmm
 
 from .. import BaseModel, register_model
+from .gcn import GraphConvolution
+from cogdl.utils import remove_self_loops, coalesce, accuracy
 
 
 class GTConv(nn.Module):
@@ -45,9 +41,9 @@ class GTConv(nn.Module):
                 else:
                     total_edge_index = torch.cat((total_edge_index, edge_index), dim=1)
                     total_edge_value = torch.cat((total_edge_value, edge_value * filter[i][j]))
-            index, value = torch_sparse.coalesce(
-                total_edge_index.detach(), total_edge_value, m=self.num_nodes, n=self.num_nodes
-            )
+            row, col = total_edge_index.detach()
+            row, col, value = coalesce(row, col, total_edge_value)
+            index = torch.stack([row, col])
             results.append((index, value))
         return results
 
@@ -75,14 +71,16 @@ class GTLayer(nn.Module):
             result_B = self.conv1(A)
             W = [(F.softmax(self.conv1.weight, dim=1)).detach()]
         H = []
+        device = result_A[0][0].device
         for i in range(len(result_A)):
-            a_edge, a_value = result_A[i]
-            b_edge, b_value = result_B[i]
+            # a_edge, a_value = result_A[i][0].cpu(), result_A[i][1].cpu()
+            # b_edge, b_value = result_B[i][0].cpu(), result_B[i][1].cpu()
 
-            edges, values = torch_sparse.spspmm(
-                a_edge, a_value, b_edge, b_value, self.num_nodes, self.num_nodes, self.num_nodes
-            )
-            H.append((edges, values))
+            a_edge, a_value = result_A[i][0], result_A[i][1]
+            b_edge, b_value = result_B[i][0], result_B[i][1]
+
+            edges, values = spspmm(a_edge, a_value, b_edge, b_value, self.num_nodes, self.num_nodes, self.num_nodes)
+            H.append((edges.to(device), values.to(device)))
         return H, W
 
 
@@ -130,7 +128,7 @@ class GTN(BaseModel):
                 layers.append(GTLayer(num_edge, num_channels, num_nodes, first=False))
         self.layers = nn.ModuleList(layers)
         self.cross_entropy_loss = nn.CrossEntropyLoss()
-        self.gcn = GCNConv(in_channels=self.w_in, out_channels=w_out)
+        self.gcn = GraphConvolution(in_features=self.w_in, out_features=w_out)
         self.linear1 = nn.Linear(self.w_out * self.num_channels, self.w_out)
         self.linear2 = nn.Linear(self.w_out, self.num_class)
 
@@ -151,7 +149,8 @@ class GTN(BaseModel):
             edge_weight = edge_weight.view(-1)
             assert edge_weight.size(0) == edge_index.size(1)
             row, col = edge_index
-            deg = scatter_add(edge_weight, col, dim=0, dim_size=num_nodes)
+            deg = torch.zeros((num_nodes,)).to(edge_index.device)
+            deg = deg.scatter_add_(dim=0, src=edge_weight, index=row).squeeze()
             deg_inv_sqrt = deg.pow(-1)
             deg_inv_sqrt[deg_inv_sqrt == float("inf")] = 0
 
@@ -169,13 +168,11 @@ class GTN(BaseModel):
         for i in range(self.num_channels):
             if i == 0:
                 edge_index, edge_weight = H[i][0], H[i][1]
-                X_ = self.gcn(X, edge_index=edge_index.detach(), edge_weight=edge_weight)
+                X_ = self.gcn(X, edge_index.detach(), edge_weight)
                 X_ = F.relu(X_)
             else:
                 edge_index, edge_weight = H[i][0], H[i][1]
-                X_ = torch.cat(
-                    (X_, F.relu(self.gcn(X, edge_index=edge_index.detach(), edge_weight=edge_weight))), dim=1
-                )
+                X_ = torch.cat((X_, F.relu(self.gcn(X, edge_index.detach(), edge_weight))), dim=1)
         X_ = self.linear1(X_)
         X_ = F.relu(X_)
         # X_ = F.dropout(X_, p=0.5)
@@ -189,5 +186,5 @@ class GTN(BaseModel):
 
     def evaluate(self, data, nodes, targets):
         loss, y, _ = self.forward(data.adj, data.x, nodes, targets)
-        f1 = torch.mean(f1_score(torch.argmax(y, dim=1), targets, num_classes=3))
-        return loss.item(), f1.item()
+        f1 = accuracy(y, targets)
+        return loss.item(), f1

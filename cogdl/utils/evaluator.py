@@ -2,7 +2,7 @@ import torch
 from sklearn.metrics import f1_score
 
 
-def multilabel_f1(y_true, y_pred, sigmoid=False):
+def multilabel_f1(y_pred, y_true, sigmoid=False):
     if sigmoid:
         y_pred[y_pred > 0.5] = 1
         y_pred[y_pred <= 0.5] = 0
@@ -14,7 +14,7 @@ def multilabel_f1(y_true, y_pred, sigmoid=False):
     return f1_score(labels, preds, average="micro")
 
 
-def multiclass_f1(y_true, y_pred):
+def multiclass_f1(y_pred, y_true):
     y_true = y_true.squeeze().long()
     preds = y_pred.max(1)[1]
     preds = preds.cpu().detach().numpy()
@@ -23,27 +23,23 @@ def multiclass_f1(y_true, y_pred):
     return micro
 
 
-def accuracy(y_true, y_pred):
+def accuracy(y_pred, y_true):
     y_true = y_true.squeeze().long()
     preds = y_pred.max(1)[1].type_as(y_true)
     correct = preds.eq(y_true).double()
-    correct = correct.sum()
+    correct = correct.sum().item()
     return correct / len(y_true)
 
 
-def multilabel_evaluator(reduction="none"):
-    loss_func = torch.nn.BCEWithLogitsLoss(reduction=reduction)
-    metric = multilabel_f1
-    return loss_func, metric
+def cross_entropy_loss(y_pred, y_true):
+    y_true = y_true.long()
+    y_pred = torch.nn.functional.log_softmax(y_pred, dim=-1)
+    return torch.nn.functional.nll_loss(y_pred, y_true)
 
 
-def accuracy_evaluator():
-    loss_func = torch.nn.functional.nll_loss
-    metric = accuracy
-    return loss_func, metric
-
-
-def multiclass_evaluator():
-    loss_func = torch.nn.functional.nll_loss
-    metric = multiclass_f1
-    return loss_func, metric
+def bce_with_logits_loss(y_pred, y_true, reduction="mean"):
+    y_true = y_true.float()
+    loss = torch.nn.BCEWithLogitsLoss(reduction=reduction)(y_pred, y_true)
+    if reduction == "none":
+        loss = torch.sum(torch.mean(loss, dim=0))
+    return loss

@@ -9,7 +9,6 @@ CogDL now supports the following datasets for different tasks:
 - Multiplex link prediction: Amazon, YouTube, Twitter
 - graph classification: MUTAG, IMDB-B, IMDB-M, PROTEINS, COLLAB, NCI, NCI109, Reddit-BINARY
 
-
 <h3>Node classification</h3>
 
 <table>
@@ -125,7 +124,10 @@ CogDL now supports the following datasets for different tasks:
 
 
 <h3>Network Embedding(Unsupervsed Node classification)</h3>
+<<<<<<< HEAD
 
+=======
+>>>>>>> fc2341d (Add dataset description and support multi-label classification (#176))
 <table>
     <tr>
     	<th>Dataset</th>

@@ -36,6 +36,7 @@ node_classification:
     - amazon-s
     - yelp
     - ppi
+    - ppi-large
     - reddit
 unsupervised_node_classification:
   - model:
@@ -57,6 +58,9 @@ unsupervised_node_classification:
     - wikipedia
     - flickr-ne
     - usa-airport
+    - youtube-ne
+    - dblp-ne
+    - flickr-ne
   - model:
     - unsup_graphsage
     - dgi
@@ -66,6 +70,12 @@ unsupervised_node_classification:
     - cora
     - citeseer
     - pubmed
+    - reddit
+    - ppi
+    - ppi-large
+    - flickr
+    - yelp
+    - amazon-s
 graph_classification:
   - model:
     - gin
@@ -81,6 +91,12 @@ graph_classification:
     - imdb-m
     - proteins
     - collab
+    - nci1
+    - nci109
+    - ptc-mr
+    - reddit-b
+    - reddit-multi-5k
+    - reddit-multi-12k
 unsupervised_graph_classification:
   - model:
     - infograph
@@ -92,6 +108,12 @@ unsupervised_graph_classification:
     - imdb-m
     - proteins
     - collab
+    - nci1
+    - nci109
+    - ptc-mr
+    - reddit-b
+    - reddit-multi-5k
+    - reddit-multi-12k
 link_prediction:
   - model:
     - prone

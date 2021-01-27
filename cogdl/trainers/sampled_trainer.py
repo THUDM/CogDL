@@ -157,7 +157,9 @@ class NeighborSamplingTrainer(SampledTrainer):
         self.data.edge_index, _ = add_remaining_self_loops(self.data.edge_index)
         if hasattr(self.data, "edge_index_train"):
             self.data.edge_index_train, _ = add_remaining_self_loops(self.data.edge_index_train)
-        self.loss_fn, self.evaluator = dataset.get_evaluator()
+        self.evaluator = dataset.get_evaluator()
+        self.loss_fn = dataset.get_loss_fn()
+
         self.train_loader = NeighborSampler(
             data=self.data,
             mask=self.data.train_mask,
@@ -221,9 +223,9 @@ class NeighborSamplingTrainer(SampledTrainer):
         with torch.no_grad():
             logits = self.model.inference(self.data.x, self.test_loader)
 
-        loss = {key: F.nll_loss(logits[val], self.data.y[val]) for key, val in masks.items()}
-        pred = {key: logits[val].max(1)[1] for key, val in masks.items()}
-        acc = {key: pred[key].eq(self.data.y[val]).sum().item() / val.sum().item() for key, val in masks.items()}
+        loss = {key: self.loss_fn(logits[val], self.data.y[val]) for key, val in masks.items()}
+        acc = {key: self.evaluator(logits[val], self.data.y[val]) for key, val in masks.items()}
+
         return acc, loss
 
     @classmethod

@@ -145,8 +145,4 @@ class SortPool(BaseModel):
         h = F.relu(self.fc1(h))
         h = F.dropout(h, p=self.dropout, training=self.training)
         h = self.fc2(h)
-        if batch.y is not None:
-            pred = F.log_softmax(h, dim=-1)
-            loss = F.nll_loss(pred, batch.y)
-            return h, loss
-        return h, None
+        return h

@@ -108,7 +108,7 @@ class Graph2Vec(BaseModel):
             alpha=self.lr,
         )
         vectors = np.array([self.model["g_" + str(i)] for i in range(len(graphs))])
-        return vectors, None
+        return vectors
 
     def save_embedding(self, output_path):
         self.model.wv.save(os.path.join(output_path, "model.wv"))

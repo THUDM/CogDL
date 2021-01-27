@@ -9,9 +9,9 @@ from cogdl.layers import MeanAggregator, SumAggregator
 from cogdl.trainers.sampled_trainer import NeighborSamplingTrainer
 
 from .. import BaseModel, register_model
+from cogdl.data import Data
 
 
-# @profile
 def sage_sampler(adjlist, edge_index, num_sample):
     if adjlist == {}:
         edge_index = edge_index.t().cpu().tolist()
@@ -106,11 +106,11 @@ class Graphsage(BaseModel):
             if i != self.num_layers - 1:
                 x = F.relu(x)
                 x = F.dropout(x, p=self.dropout, training=self.training)
-        return F.log_softmax(x, dim=1)
+        return x
 
     def mini_loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index)[data.train_mask],
+        return self.loss_fn(
+            self.mini_forward(data.x, data.edge_index)[data.train_mask],
             data.y[data.train_mask],
         )
 
@@ -130,16 +130,15 @@ class Graphsage(BaseModel):
                 if i != self.num_layers - 1:
                     x = F.relu(x)
                     x = F.dropout(x, p=self.dropout, training=self.training)
-            return F.log_softmax(x, dim=-1)
+            return x
 
     def node_classification_loss(self, *args):
-        assert len(args) == 1 or len(args) == 3
-        if len(args) == 1:
+        if isinstance(args[0], Data):
             return self.mini_loss(*args)
         else:
             x, adjs, y = args
             pred = self.forward(x, adjs)
-            return F.nll_loss(pred, y)
+            return self.loss_fn(pred, y)
 
     def inference(self, x_all, data_loader):
         for i in range(len(self.convs)):
@@ -153,7 +152,7 @@ class Graphsage(BaseModel):
                     x = F.relu(x)
                 output.append(x.cpu())
             x_all = torch.cat(output, dim=0)
-        return F.log_softmax(x_all, dim=-1)
+        return x_all
 
     @staticmethod
     def get_trainer(task: Any, args: Any):

@@ -28,9 +28,9 @@ class GATLayer(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
         self.leakyrelu = nn.LeakyReLU(self.alpha)
-        self.reset_parameteres()
+        self.reset_parameters()
 
-    def reset_parameteres(self):
+    def reset_parameters(self):
         def reset(tensor):
             stdv = math.sqrt(6.0 / (tensor.size(-2) + tensor.size(-1)))
             tensor.data.uniform_(-stdv, stdv)
@@ -41,11 +41,10 @@ class GATLayer(nn.Module):
 
     def forward(self, x, edge):
         N = x.size()[0]
-        # h = self.W(x).view(-1, self.nhead, self.out_features)
         h = torch.matmul(x, self.W).view(-1, self.nhead, self.out_features)
         # h: N * H * d
-        if torch.isnan(h).any():
-            print("NaN in Graph Attention")
+        if torch.isnan(self.W.data).any():
+            # print("NaN in Graph Attention, ", self.nhead)
             h[torch.isnan(h)] = 0
 
         # Self-attention on the nodes - Shared attention mechanism
@@ -54,8 +53,6 @@ class GATLayer(nn.Module):
         edge_attention = self.leakyrelu(h_l + h_r)
         # edge_e: E * H
         edge_attention = mul_edge_softmax(edge, edge_attention, shape=(N, N))
-
-
 
         num_edges = edge.shape[1]
         num_nodes = x.shape[0]
@@ -80,10 +77,11 @@ class GATLayer(nn.Module):
             h_prime = h_prime.split([num_nodes] * self.nhead)
         else:
             h_prime = []
-            h = h.permute(1, 0, 2)
+            h = h.permute(1, 0, 2).contiguous()
             for i in range(self.nhead):
                 edge_weight = edge_attention[:, i]
                 hidden = h[i]
+                assert not torch.isnan(hidden).any()
                 h_prime.append(spmm(edge, edge_weight, hidden))
 
         if self.concat:
@@ -142,8 +140,12 @@ class GAT(BaseModel):
         super(GAT, self).__init__()
         self.dropout = dropout
 
-        self.attention = GATLayer(in_feats, hidden_size, dropout=dropout, alpha=alpha, nhead=nheads, concat=True, fast_mode=fast_mode)
-        self.out_att = GATLayer(hidden_size * nheads, out_features, dropout=dropout, alpha=alpha, nhead=1, concat=False, fast_mode=fast_mode)
+        self.attention = GATLayer(
+            in_feats, hidden_size, dropout=dropout, alpha=alpha, nhead=nheads, concat=True, fast_mode=fast_mode
+        )
+        self.out_att = GATLayer(
+            hidden_size * nheads, out_features, dropout=dropout, alpha=alpha, nhead=1, concat=False, fast_mode=False
+        )
 
     def forward(self, x, edge_index):
         edge_index, _ = add_remaining_self_loops(edge_index)

@@ -430,13 +430,12 @@ class DiffPool(BaseModel):
             readout = torch.sum(h, dim=1)
             readouts_all.append(readout)
         pred = self.fc(readout)
-        if batch.y is not None:
-            return pred, self.loss(pred, batch.y)
-        return pred, None
+        return pred
 
-    def loss(self, prediction, label):
-        criterion = nn.CrossEntropyLoss()
-        loss_n = criterion(prediction, label)
+    def graph_classificatoin_loss(self, batch):
+        pred = self.forward(batch)
+        pred = F.log_softmax(pred, dim=-1)
+        loss_n = F.nll_loss(pred, batch.y)
         loss_n += self.init_diffpool.get_loss()
         for layer in self.diffpool_layers:
             loss_n += layer.get_loss()

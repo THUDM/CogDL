@@ -21,7 +21,7 @@ def get_default_args():
         "dataset": "cora",
         "checkpoint": False,
         "sampler": "none",
-        "auxiliary-task": "none",
+        "auxiliary_task": "none",
     }
     return build_args_from_dict(default_dict)
 

@@ -12,7 +12,7 @@ class GATLayer(nn.Module):
     Sparse version GAT layer, similar to https://arxiv.org/abs/1710.10903
     """
 
-    def __init__(self, in_features, out_features, nhead=1, alpha=0.2, dropout=0.6, concat=True, fast_mode=False):
+    def __init__(self, in_features, out_features, nhead=1, alpha=0.2, dropout=0.6, concat=True, residual=False, fast_mode=False):
         super(GATLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -28,6 +28,12 @@ class GATLayer(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
         self.leakyrelu = nn.LeakyReLU(self.alpha)
+
+        if residual:
+            out_features = out_features * nhead if concat else out_features
+            self.residual = nn.Linear(in_features, out_features)
+        else:
+            self.register_buffer("residual", None)
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -84,12 +90,17 @@ class GATLayer(nn.Module):
                 assert not torch.isnan(hidden).any()
                 h_prime.append(spmm(edge, edge_weight, hidden))
 
+        if self.residual:
+            res = self.residual(x)
+        else:
+            res = 0
+
         if self.concat:
             # if this layer is not last layer,
-            out = torch.cat(h_prime, dim=1)
+            out = torch.cat(h_prime, dim=1) + res
         else:
             # if this layer is last layer,
-            out = sum(h_prime) / self.nhead
+            out = sum(h_prime) / self.nhead + res
         return out
 
     def __repr__(self):
@@ -115,11 +126,14 @@ class GAT(BaseModel):
         """Add model-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--num-features", type=int)
+        parser.add_argument("--num-layers", type=int, default=2)
+        parser.add_argument("--residual", action="store_true")
         parser.add_argument("--num-classes", type=int)
         parser.add_argument("--hidden-size", type=int, default=8)
         parser.add_argument("--dropout", type=float, default=0.6)
         parser.add_argument("--alpha", type=float, default=0.2)
-        parser.add_argument("--nheads", type=int, default=8)
+        parser.add_argument("--nhead", type=int, default=8)
+        parser.add_argument("--last-nhead", type=int, default=1)
         parser.add_argument("--fast-mode", action="store_true", default=False)
         # fmt: on
 
@@ -129,31 +143,40 @@ class GAT(BaseModel):
             args.num_features,
             args.hidden_size,
             args.num_classes,
+            args.num_layers,
             args.dropout,
             args.alpha,
-            args.nheads,
+            args.nhead,
+            args.residual,
+            args.last_nhead,
             args.fast_mode,
         )
 
-    def __init__(self, in_feats, hidden_size, out_features, dropout, alpha, nheads, fast_mode=False):
+    def __init__(self, in_feats, hidden_size, out_features, num_layers, dropout, alpha, nhead, residual, last_nhead, fast_mode=False):
         """Sparse version of GAT."""
         super(GAT, self).__init__()
         self.dropout = dropout
-
-        self.attention = GATLayer(
-            in_feats, hidden_size, dropout=dropout, alpha=alpha, nhead=nheads, concat=True, fast_mode=fast_mode
+        self.attentions = nn.ModuleList()
+        self.attentions.append(GATLayer(in_feats, hidden_size, nhead=nhead, dropout=dropout, alpha=alpha, concat=True, residual=residual, fast_mode=fast_mode))
+        for i in range(num_layers-2):
+            self.attentions.append(
+                GATLayer(hidden_size * nhead, hidden_size, nhead=nhead, dropout=dropout, alpha=alpha, concat=True, residual=residual, fast_mode=fast_mode)
+            )
+        self.attentions.append(GATLayer(
+            hidden_size * nhead, out_features, dropout=dropout, alpha=alpha, concat=False, nhead=last_nhead, residual=False, fast_mode=fast_mode)
         )
-        self.out_att = GATLayer(
-            hidden_size * nheads, out_features, dropout=dropout, alpha=alpha, nhead=1, concat=False, fast_mode=False
-        )
+        self.num_layers = num_layers
+        self.last_nhead = last_nhead
+        self.residual = residual
 
     def forward(self, x, edge_index):
         edge_index, _ = add_remaining_self_loops(edge_index)
 
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        x = F.elu(self.attention(x, edge_index))
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        x = F.elu(self.out_att(x, edge_index))
+        for i, layer in enumerate(self.attentions):
+            x = F.dropout(x, p=self.dropout, training=self.training)
+            x = layer(x, edge_index)
+            if i != self.num_layers - 1:
+                x = F.elu(x)
         return x
 
     def predict(self, data):

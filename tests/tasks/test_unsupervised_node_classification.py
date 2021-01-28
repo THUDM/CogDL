@@ -16,6 +16,7 @@ def get_default_args():
         "task": "unsupervised_node_classification",
         "checkpoint": False,
         "load_emb_path": None,
+        "training_percents": [0.1],
     }
     return build_args_from_dict(default_dict)
 
@@ -241,6 +242,7 @@ def get_unsupervised_nn_args():
         "task": "unsupervised_node_classification",
         "checkpoint": False,
         "load_emb_path": None,
+        "training_percents": [0.1],
     }
     return build_args_from_dict(default_dict)
 

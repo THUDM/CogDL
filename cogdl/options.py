@@ -119,7 +119,7 @@ def parse_args_and_arch(parser, args):
         if try_import_dataset(dataset):
             if hasattr(DATASET_REGISTRY[dataset], "add_args"):
                 DATASET_REGISTRY[dataset].add_args(parser)
-    if "trainer" in args:
+    if "trainer" in args and args.trainer is not None:
         for trainer in args.trainer:
             if try_import_universal_trainer(trainer):
                 if hasattr(UNIVERSAL_TRAINER_REGISTRY[trainer], "add_args"):

@@ -58,7 +58,7 @@ class NodeClassification(BaseTask):
         )
 
         if not self.trainer:
-            if hasattr(self.args, "trainer"):
+            if hasattr(self.args, "trainer") and self.args.trainer is not None:
                 if "saint" in self.args.trainer:
                     self.trainer = SAINTTrainer(self.args)
                 elif "self_auxiliary_task" in self.args.trainer:

@@ -8,6 +8,7 @@ from ogb.nodeproppred import PygNodePropPredDataset
 from ogb.graphproppred import PygGraphPropPredDataset
 
 from . import register_dataset
+from cogdl.utils import cross_entropy_loss, accuracy
 
 
 class OGBNDataset(PygNodePropPredDataset):
@@ -29,6 +30,12 @@ class OGBNDataset(PygNodePropPredDataset):
     def get(self, idx):
         assert idx == 0
         return self.data
+
+    def get_loss_fn(self):
+        return cross_entropy_loss
+
+    def get_evaluator(self):
+        return accuracy
 
 
 @register_dataset("ogbn-arxiv")

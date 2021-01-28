@@ -128,12 +128,17 @@ class UnsupervisedNodeClassification(BaseTask):
             self.save_emb(features_matrix)
         else:
             features_matrix = np.load(self.load_emb_path)
-        # label nor multi-label
+        # label or multi-label
         label_matrix = sp.csr_matrix(self.label_matrix)
 
         return self._evaluate(features_matrix, label_matrix, self.num_shuffle)
 
     def _evaluate(self, features_matrix, label_matrix, num_shuffle):
+        if len(label_matrix.shape) > 1:
+            labeled_nodes = np.nonzero(np.sum(label_matrix, axis=1) > 0)[0]
+            features_matrix = features_matrix[labeled_nodes]
+            label_matrix = label_matrix[labeled_nodes]
+
         # shuffle, to create train/test groups
         shuffles = []
         for _ in range(num_shuffle):
@@ -146,7 +151,7 @@ class UnsupervisedNodeClassification(BaseTask):
             for shuf in shuffles:
                 X, y = shuf
 
-                training_size = int(train_percent * self.num_nodes)
+                training_size = int(train_percent * len(features_matrix))
 
                 X_train = X[:training_size, :]
                 y_train = y[:training_size, :]

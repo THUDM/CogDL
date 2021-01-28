@@ -72,7 +72,7 @@ SUPPORTED_MODELS = {
     "line": "cogdl.models.emb.line",
     "sdne": "cogdl.models.emb.sdne",
     "prone": "cogdl.models.emb.prone",
-    "daegc": "cogdl.models.agc.pyg_daegc",
+    "daegc": "cogdl.models.agc.daegc",
     "agc": "cogdl.models.agc.agc",
     "dgi": "cogdl.models.nn.dgi",
     "mvgrl": "cogdl.models.nn.mvgrl",

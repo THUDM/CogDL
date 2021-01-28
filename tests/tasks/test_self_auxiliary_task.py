@@ -12,7 +12,8 @@ def get_default_args():
     cuda_available = torch.cuda.is_available()
     args = {
         "dataset": "cora",
-        "model": "pyg_gcn",
+        "trainer": ["self_auxiliary_task"],
+        "model": "gcn",
         "hidden_size": 64,
         "dropout": 0.5,
         "patience": 2,

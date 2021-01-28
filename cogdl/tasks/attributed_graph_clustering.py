@@ -26,6 +26,7 @@ class AttributedGraphClustering(BaseTask):
         parser.add_argument("--hidden-size", type=int, default=128)
         parser.add_argument("--model-type", type=str, default="content")
         parser.add_argument("--evaluate", type=str, default="full")
+        parser.add_argument('--enhance', type=str, default=None, help='use prone or prone++ to enhance embedding')
         # fmt: on
 
     def __init__(
@@ -86,7 +87,6 @@ class AttributedGraphClustering(BaseTask):
                 features_matrix[node] = embeddings[vid]
             features_matrix = torch.tensor(features_matrix)
             features_matrix = F.normalize(features_matrix, p=2, dim=1)
-            # features_matrix = self.momentum * node_attr + (1 - self.momentum) * features_matrix
         else:
             trainer = self.model.get_trainer(AttributedGraphClustering, self.args)(self.args)
             self.model = trainer.fit(self.model, self.data)
@@ -98,8 +98,6 @@ class AttributedGraphClustering(BaseTask):
             kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(features_matrix)
             clusters = kmeans.labels_
         else:
-            # features_matrix = np.dot(features_matrix, features_matrix.transpose())
-            # features_matrix = 0.5 * (np.abs(features_matrix) + np.abs(features_matrix.transpose()))
             clustering = SpectralClustering(
                 n_clusters=self.num_clusters, assign_labels="discretize", random_state=0
             ).fit(features_matrix)

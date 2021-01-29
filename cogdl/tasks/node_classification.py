@@ -10,6 +10,7 @@ from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificationModel
 from cogdl.trainers.sampled_trainer import SAINTTrainer
+from cogdl.trainers.self_auxiliary_task_trainer import SelfAuxiliaryTaskTrainer
 
 from . import BaseTask, register_task
 
@@ -57,15 +58,23 @@ class NodeClassification(BaseTask):
         )
 
         if not self.trainer:
-            self.optimizer = (
-                torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-                if not hasattr(self.model, "get_optimizer")
-                else self.model.get_optimizer(args)
-            )
-            self.data.apply(lambda x: x.to(self.device))
-            self.model: SupervisedHomogeneousNodeClassificationModel = self.model.to(self.device)
-            self.patience = args.patience
-            self.max_epoch = args.max_epoch
+            if hasattr(self.args, "trainer") and self.args.trainer is not None:
+                if "saint" in self.args.trainer:
+                    self.trainer = SAINTTrainer(self.args)
+                elif "self_auxiliary_task" in self.args.trainer:
+                    if not hasattr(self.model, "get_embeddings"):
+                        raise ValueError("Model ({}) must implement get_embeddings method".format(self.model_name))
+                    self.trainer = SelfAuxiliaryTaskTrainer(self.args)
+            else:
+                self.optimizer = (
+                    torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+                    if not hasattr(self.model, "get_optimizer")
+                    else self.model.get_optimizer(args)
+                )
+                self.data.apply(lambda x: x.to(self.device))
+                self.model: SupervisedHomogeneousNodeClassificationModel = self.model.to(self.device)
+                self.patience = args.patience
+                self.max_epoch = args.max_epoch
 
     def train(self):
         if self.trainer:

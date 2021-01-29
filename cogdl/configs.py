@@ -246,6 +246,13 @@ BEST_CONFIGS = {
             "imdb-m": {"degree_feature": True},
             "collab": {"degree_feature": True},
         },
+        "sortpool": {
+            "nci1": {
+                "dropout": 0.3,
+                "hidden_size": 64,
+                "num_layers": 5,
+            },
+        },
         "patchy_san": {
             "general": {
                 "lr": 0.001,

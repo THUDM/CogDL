@@ -143,6 +143,7 @@ class NetworkEmbeddingCMTYDataset(Dataset):
         edge_index = torch.from_numpy(edge_index)
         rev_edge_index = torch.stack([edge_index[1], edge_index[0]])
         edge_index = torch.cat((edge_index, rev_edge_index), dim=1)
+
         self_loop_mask = edge_index[0] != edge_index[1]
         edge_index = edge_index[:, self_loop_mask]
 
@@ -152,6 +153,7 @@ class NetworkEmbeddingCMTYDataset(Dataset):
 
         num_classes = len(cmty)
         num_nodes = torch.max(edge_index).item() + 1
+
         labels = np.zeros((num_nodes, num_classes), dtype=np.float)
         for i, cls in enumerate(cmty):
             labels[cls, i] = 1.0

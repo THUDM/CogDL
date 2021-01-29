@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import argparse
 import copy
 import time
 
@@ -12,6 +13,7 @@ from cogdl.data.sampler import NodeSampler, EdgeSampler, RWSampler, MRWSampler, 
 from cogdl.models.supervised_model import SupervisedModel
 from cogdl.trainers.base_trainer import BaseTrainer
 from cogdl.utils import add_remaining_self_loops
+from . import register_universal_trainer
 
 
 class SampledTrainer(BaseTrainer):
@@ -69,14 +71,27 @@ class SampledTrainer(BaseTrainer):
         return best_model
 
 
+@register_universal_trainer("saint")
 class SAINTTrainer(SampledTrainer):
-    def __init__(self, args):
-        super(SAINTTrainer, self).__init__(args)
-        self.args_sampler = self.sampler_from_args(args)
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        """Add trainer-specific arguments to the parser."""
+        # fmt: off
+        parser.add_argument('--sampler', default='none', type=str, help='graph samplers')
+        parser.add_argument('--sample-coverage', default=20, type=float, help='sample coverage ratio')
+        parser.add_argument('--size-subgraph', default=1200, type=int, help='subgraph size')
+        parser.add_argument('--num-walks', default=50, type=int, help='number of random walks')
+        parser.add_argument('--walk-length', default=20, type=int, help='random walk length')
+        parser.add_argument('--size-frontier', default=20, type=int, help='frontier size in multidimensional random walks')
+        # fmt: on
 
     @classmethod
     def build_trainer_from_args(cls, args):
         return cls(args)
+
+    def __init__(self, args):
+        super(SAINTTrainer, self).__init__(args)
+        self.args_sampler = self.sampler_from_args(args)
 
     def sampler_from_args(self, args):
         args_sampler = {

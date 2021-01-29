@@ -84,6 +84,16 @@ class TKipfGCN(BaseModel):
         self.num_layers = num_layers
         self.dropout = dropout
 
+    def get_embeddings(self, x, edge_index):
+        edge_index, edge_attr = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])
+        edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
+
+        h = x
+        for i in range(self.num_layers - 1):
+            h = F.dropout(h, self.dropout, training=self.training)
+            h = self.layers[i](h, edge_index, edge_attr)
+        return h
+
     def forward(self, x, edge_index):
 
         edge_index, edge_attr = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])

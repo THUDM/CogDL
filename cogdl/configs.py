@@ -245,6 +245,7 @@ BEST_CONFIGS = {
             "imdb-b": {"degree_feature": True},
             "imdb-m": {"degree_feature": True},
             "collab": {"degree_feature": True},
+            "nci1": {"num_layers": 3},
         },
         "sortpool": {
             "nci1": {

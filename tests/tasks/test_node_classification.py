@@ -66,7 +66,7 @@ def test_gat_cora():
     args.dataset = "cora"
     args.model = "gat"
     args.alpha = 0.2
-    args.nheads = 8
+    args.nhead = 8
     args.residual = False
     args.last_nhead = 2
     args.num_layers = 2

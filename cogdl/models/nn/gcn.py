@@ -34,13 +34,8 @@ class GraphConvolution(nn.Module):
     def forward(self, input, edge_index, edge_attr=None):
         if edge_attr is None:
             edge_attr = torch.ones(edge_index.shape[1]).float().to(input.device)
-        adj = torch.sparse_coo_tensor(
-            edge_index,
-            edge_attr,
-            (input.shape[0], input.shape[0]),
-        ).to(input.device)
         support = torch.mm(input, self.weight)
-        output = torch.spmm(adj, support)
+        output = spmm(edge_index, edge_attr, support)
         if self.bias is not None:
             return output + self.bias
         else:

@@ -37,9 +37,9 @@ class HOPE(BaseModel):
         S_katz = (M_g)^-1 * M_l = (I - beta*A)^-1 * beta*A = (I - beta*A)^-1 * (I - (I -beta*A))
         = (I - beta*A)^-1 - I
         """
-        adj = sp.csr_matrix(nx.adjacency_matrix(G))
+        adj = nx.adjacency_matrix(G).todense()
         n = adj.shape[0]
-        katz_matrix = sp.linalg.inv(sp.eye(n) - self.beta * adj) - sp.eye(n)
+        katz_matrix = np.asarray((np.eye(n) - self.beta * np.mat(adj)).I - np.eye(n))
         self.embeddings = self._get_embedding(katz_matrix, self.dimension)
         return self.embeddings
 

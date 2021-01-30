@@ -4,6 +4,7 @@ import scipy.sparse as sp
 from sklearn import preprocessing
 from sklearn.utils.extmath import randomized_svd
 from multiprocessing import Pool
+from tqdm import tqdm
 import time
 
 from cogdl.utils import alias_draw, alias_setup
@@ -97,7 +98,7 @@ class NetSMF(BaseModel):
         pool.join()
         print("random walk time", time.time() - t0)
 
-        matrix = sp.lil_matrix((self.num_node, self.num_node))
+        matrix = sp.csr_matrix((self.num_node, self.num_node))
         A = sp.csr_matrix(nx.adjacency_matrix(self.G))
         degree = sp.diags(np.array(A.sum(axis=0))[0], format="csr")
         degree_inv = degree.power(-1)
@@ -150,14 +151,11 @@ class NetSMF(BaseModel):
         np.random.seed(pid)
         matrix = sp.lil_matrix((self.num_node, self.num_node))
         t0 = time.time()
-        for round in range(int(self.num_round / self.worker)):
-            if round % 10 == 0 and pid == 0:
-                print("round %d / %d, time: %lf" % (round * self.worker, self.num_round, time.time() - t0))
-            for i in range(self.num_edge):
-                u, v = self.edges[i]
-                if not self.is_directed and np.random.rand() > 0.5:
-                    v, u = self.edges[i]
-                for r in range(1, self.window_size + 1):
-                    u_, v_, zp = self._path_sampling(u, v, r)
-                    matrix[u_, v_] += 2 * r / self.window_size / self.num_round / zp
-        return matrix
+        for i in tqdm(range(self.num_edge * self.num_round // self.worker)):
+            u, v = self.edges[i % self.num_edge]
+            if not self.is_directed and np.random.rand() > 0.5:
+                v, u = u, v
+            for r in range(1, self.window_size + 1):
+                u_, v_, zp = self._path_sampling(u, v, r)
+                matrix[u_, v_] += 2 * r / self.window_size / self.num_round / zp
+        return matrix.tocsr()

@@ -226,6 +226,11 @@ BEST_CONFIGS = {
                 "num_layers": 5,
                 "dropout": 0.0,
             },
+            "nci1": {
+                "num_layers": 5,
+                "dropout": 0.3,
+                "hidden_size": 64,
+            },
         },
         "infograph": {
             "general": {
@@ -240,6 +245,14 @@ BEST_CONFIGS = {
             "imdb-b": {"degree_feature": True},
             "imdb-m": {"degree_feature": True},
             "collab": {"degree_feature": True},
+            "nci1": {"num_layers": 3},
+        },
+        "sortpool": {
+            "nci1": {
+                "dropout": 0.3,
+                "hidden_size": 64,
+                "num_layers": 5,
+            },
         },
         "patchy_san": {
             "general": {
@@ -253,7 +266,22 @@ BEST_CONFIGS = {
             "collab": {"degree_feature": True},
         },
     },
-    "unsupervised_graph_classification": {},
+    "unsupervised_graph_classification": {
+        "graph2vec": {
+            "general": {},
+            "nci1": {
+                "lr": 0.001,
+                "window_size": 8,
+                "epoch": 10,
+                "iteration": 4,
+            },
+            "reddit-b": {
+                "lr": 0.01,
+                "degree_feature": True,
+                "hidden_size": 128,
+            },
+        }
+    },
     "link_prediction": {},
     "multiplex_link_prediction": {
         "gatne": {

@@ -23,6 +23,7 @@ class NodeClassification(BaseTask):
     def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
+        parser.add_argument("--missing-rate", type=int, default=0, help="missing rate, from 0 to 100")
         # fmt: on
 
     def __init__(

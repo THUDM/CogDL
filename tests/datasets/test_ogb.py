@@ -8,17 +8,16 @@ def test_ogbn_arxiv():
     dataset = build_dataset(args)
     data = dataset.data
     assert data.num_nodes == 169343
-    assert data.num_edges == 2315598
+    assert data.num_edges == 1136420
 
 
 def test_ogbg_molhiv():
     args = build_args_from_dict({"dataset": "ogbg-molhiv"})
     assert args.dataset == "ogbg-molhiv"
     dataset = build_dataset(args)
-    data = dataset.data
-    assert data.edge_index.shape[1] == 2259376
-    assert data.x.shape[0] == 1049163
-    assert data.y.shape[0] == 41127
+    assert dataset.all_edges == 2259376
+    assert dataset.all_nodes == 1049163
+    assert len(dataset.graphs) == 41127
 
 
 if __name__ == "__main__":

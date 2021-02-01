@@ -27,7 +27,7 @@ CogDL now supports the following datasets for different tasks:
     	<th rowspan="4">Transductive</th>
     </tr>
     <tr>
-        <td> <a href="https://cloud.tsinghua.edu.cn/d/71ee1916f3644f6f81b4/")]> Cora </a> </td>
+        <td> <a href="https://cloud.tsinghua.edu.cn/d/71ee1916f3644f6f81b4/"> Cora </a> </td>
         <td> 2,708 </td>
         <td> 5,429 </td>
         <td> 1,433 </td>
@@ -123,7 +123,8 @@ CogDL now supports the following datasets for different tasks:
 </table>
 
 
-<h3>Network Embedding(Unsupervsed Node classification)</h3>
+<h3>Network Embedding(Unsupervised Node classification)</h3>
+
 <table>
     <tr>
     	<th>Dataset</th>
@@ -182,7 +183,6 @@ CogDL now supports the following datasets for different tasks:
         <td> youtube-ne </td>
     </tr>
 </table>
-
 
 
 <h3>Heterogenous Graph</h3>

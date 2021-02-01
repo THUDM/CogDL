@@ -28,9 +28,8 @@ class Spectral(BaseModel):
         self.dimension = dimension
 
     def train(self, G):
-        matrix = nx.normalized_laplacian_matrix(G)
-        matrix = sp.csr_matrix(matrix)
-        matrix = sp.eye(matrix.shape[0]) - matrix
+        matrix = nx.normalized_laplacian_matrix(G).todense()
+        matrix = np.eye(matrix.shape[0]) - np.asarray(matrix)
         ut, s, _ = sp.linalg.svds(matrix, self.dimension)
         emb_matrix = ut * np.sqrt(s)
         emb_matrix = preprocessing.normalize(emb_matrix, "l2")

@@ -150,7 +150,6 @@ class NetSMF(BaseModel):
         # construct matrix based on random walk
         np.random.seed(pid)
         matrix = sp.lil_matrix((self.num_node, self.num_node))
-        t0 = time.time()
         for i in tqdm(range(self.num_edge * self.num_round // self.worker)):
             u, v = self.edges[i % self.num_edge]
             if not self.is_directed and np.random.rand() > 0.5:

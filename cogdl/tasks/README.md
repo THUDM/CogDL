@@ -107,6 +107,18 @@ For multiplex link prediction, we adopt Area Under the Receiver Operating Charac
 | 7    | Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751) |   94.39   |   74.66   |   70.61   |
 | 8    | GraRep [(Cao et al, CIKM'15)](http://dl.acm.org/citation.cfm?doid=2806416.2806512) |   83.88   |   71.37   |   49.64   |
 
+#### Knowledge graph completion
+
+For knowledge graph completion, we adopt Mean Reciprocal Rank (MRR) as the evaluation metric. Every triplet-based embedding algorithm is trained with 80000 steps, negative sample size 128 and learning rate 0.001. Every GNN-based embedding algorithm is trained with 3000 steps with patience 20.
+
+| Rank | Method                                                       | FB15k-237 |   WN18    |  WN18RR   |
+| ---- | ------------------------------------------------------------ | :-------: | :-------: | :-------: |
+| 1    | RotatE [(Sun et al, ICLR'19)](https://arxiv.org/pdf/1902.10197.pdf) | **31.10** | **93.99** | **46.05** |
+| 2    | ComplEx [(Trouillon et al, ICML'18)](https://arxiv.org/abs/1606.06357) |   15.38   |   86.40   |   40.77   |
+| 3    | TransE [(Bordes et al, NIPS'13)](https://proceedings.neurips.cc/paper/2013/file/1cecc7a77928ca8133fa24680a88d2f9-Paper.pdf) |   30.50   |   71.55   |   21.85   |
+| 4    | DistMult [(Yang et al, ICLR'15)](https://arxiv.org/pdf/1412.6575.pdf) |   15.91   |   75.60   |   39.06   |
+| 5    | CompGCN [(Vashishth et al, ICLR'20)](https://arxiv.org/abs/1911.03082) |   12.66   |   36.34   |   27.20   |
+
 ### Graph Classification
 
 This leaderboard reports the performance of graph classification methods. we run all algorithms on several datasets and report the sorted experimental results.

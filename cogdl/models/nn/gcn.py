@@ -89,9 +89,9 @@ class TKipfGCN(BaseModel):
             h = self.layers[i](h, edge_index, edge_attr)
         return h
 
-    def forward(self, x, edge_index):
+    def forward(self, x, edge_index, edge_weight=None):
 
-        edge_index, edge_attr = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])
+        edge_index, edge_attr = add_remaining_self_loops(edge_index, edge_weight, num_nodes=x.shape[0])
         edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
 
         h = x
@@ -103,4 +103,7 @@ class TKipfGCN(BaseModel):
         return h
 
     def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+        if hasattr(data, "norm_aggr"):
+            return self.forward(data.x, data.edge_index, data.norm_aggr)
+        else:
+            return self.forward(data.x, data.edge_index)

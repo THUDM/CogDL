@@ -120,13 +120,14 @@ class SAINTSampler(Sampler):
     def sample(self):
         pass
 
-    def extract_subgraph(self, edge_idx, directed=True):
+    def extract_subgraph(self, edge_idx, directed=False):
         edge_idx = np.unique(edge_idx)
         subg_edge = (
             self.data.edge_index_train.t()[edge_idx].cpu().numpy()
             if hasattr(self.data, "edge_index_train")
             else self.data.edge_index.t()[edge_idx].cpu().numpy()
         )
+        # print(subg_edge)
         if not directed:
             subg_edge = np.concatenate((subg_edge, subg_edge[:, [1, 0]]))
         subg_edge = np.unique(subg_edge, axis=0)
@@ -159,6 +160,7 @@ class SAINTSampler(Sampler):
             indices[i] = orig2subg[indices[i]]
         data = np.ones(indices.size)
         assert indptr[-1] == indices.size == subg_edge.size // 2
+        # print(indptr, indices)
         return indptr, indices, data, node_idx, edge_idx
 
     def get_subgraph(self, phase, require_norm=True):
@@ -206,10 +208,12 @@ class SAINTSampler(Sampler):
             if require_norm:
                 adj.data[:] = self.norm_aggr_train[edge_subgraph][:]
                 # normalization
+                """
                 D = adj.sum(1).flatten()
                 norm_diag = sp.dia_matrix((1 / D, 0), shape=adj.shape)
                 adj = norm_diag.dot(adj)
                 adj.sort_indices()
+                """
 
             adj = adj.tocoo()
             data = Data(

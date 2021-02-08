@@ -12,7 +12,7 @@ from cogdl.data import Dataset
 from cogdl.data.sampler import NodeSampler, EdgeSampler, RWSampler, MRWSampler, LayerSampler, NeighborSampler
 from cogdl.models.supervised_model import SupervisedModel
 from cogdl.trainers.base_trainer import BaseTrainer
-from cogdl.utils import add_remaining_self_loops
+from cogdl.utils import add_remaining_self_loops, multilabel_f1
 from . import register_universal_trainer
 
 
@@ -53,13 +53,14 @@ class SampledTrainer(BaseTrainer):
             self._train_step()
             train_acc, _ = self._test_step(split="train")
             val_acc, val_loss = self._test_step(split="val")
+            test_acc, _ = self._test_step(split="test")
             epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
             if val_loss <= min_loss or val_acc >= max_score:
                 if val_acc >= best_score:  # SAINT loss is not accurate
                     # best_loss = val_loss
                     best_score = val_acc
                     best_model = copy.deepcopy(self.model)
-                min_loss = np.min((min_loss, val_loss))
+                min_loss = np.min((min_loss, val_loss.cpu()))
                 max_score = np.max((max_score, val_acc))
                 patience = 0
             else:
@@ -107,7 +108,7 @@ class SAINTTrainer(SampledTrainer):
     def fit(self, model: SupervisedModel, dataset: Dataset):
         self.data = dataset.data
         self.data.apply(lambda x: x.to(self.device))
-        self.model = model
+        self.model = model.to(self.device)
         if self.args_sampler["sampler"] == "node":
             self.sampler = NodeSampler(self.data, self.args_sampler)
         elif self.args_sampler["sampler"] == "edge":
@@ -128,6 +129,20 @@ class SAINTTrainer(SampledTrainer):
         self.model.train()
         self.optimizer.zero_grad()
         self.model.node_classification_loss(self.data).backward()
+        # logits = F.log_softmax(self.model.predict(self.data))
+        logits = self.model.predict(self.data)
+        mask = self.data.train_mask
+        loss = torch.nn.BCEWithLogitsLoss(reduction="mean")(
+            logits[mask], self.data.y[mask].float(), weight=self.data.norm_aggr[mask]
+        )
+        loss.backward()
+        """
+        logits = F.log_softmax(self.model.predict(self.data))
+        mask = self.data.train_mask
+        loss = (
+            torch.nn.NLLLoss(reduction="none")(logits[mask], self.data.y[mask]) * self.data.norm_loss[mask]
+        ).sum()
+        """
         self.optimizer.step()
 
     def _test_step(self, split="val"):
@@ -142,6 +157,8 @@ class SAINTTrainer(SampledTrainer):
             mask = self.data.test_mask
 
         with torch.no_grad():
+            loss = self.model.node_classification_loss(self.data)
+            """
             logits = self.model.predict(self.data)
             loss = (
                 torch.nn.NLLLoss(reduction="none")(logits[mask], self.data.y[mask]) * self.data.norm_loss[mask]
@@ -150,6 +167,10 @@ class SAINTTrainer(SampledTrainer):
         pred = logits[mask].max(1)[1]
         acc = pred.eq(self.data.y[mask]).sum().item() / mask.sum().item()
         return acc, loss
+        """
+        logits = self.model.predict(self.data)
+        metric = multilabel_f1(logits[mask], self.data.y[mask])
+        return metric, loss
 
 
 class NeighborSamplingTrainer(SampledTrainer):

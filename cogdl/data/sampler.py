@@ -18,6 +18,7 @@ class Sampler:
 
     def __init__(self, data, args_params):
         self.data = data.clone()
+        self.ori_data = data.clone()
         self.num_nodes = self.data.x.size()[0]
         self.num_edges = (
             self.data.edge_index_train.size()[1]
@@ -181,7 +182,7 @@ class SAINTSampler(Sampler):
         """
         if phase in ["val", "test"]:
             node_subgraph = np.arange(self.data.num_nodes)
-            data = self.data.clone()
+            data = self.ori_data.clone()
             if require_norm:
                 data.norm_aggr = torch.ones(self.data.edge_index.size()[1])
                 data.norm_loss = self.norm_loss_test

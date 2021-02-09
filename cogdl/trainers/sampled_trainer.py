@@ -53,7 +53,8 @@ class SampledTrainer(BaseTrainer):
             self._train_step()
             train_acc, _ = self._test_step(split="train")
             val_acc, val_loss = self._test_step(split="val")
-            test_acc, _ = self._test_step(split="test")
+            # print(_, val_loss)
+            # test_acc, _ = self._test_step(split="test")
             epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
             if val_loss <= min_loss or val_acc >= max_score:
                 if val_acc >= best_score:  # SAINT loss is not accurate
@@ -84,6 +85,7 @@ class SAINTTrainer(SampledTrainer):
         parser.add_argument('--num-walks', default=50, type=int, help='number of random walks')
         parser.add_argument('--walk-length', default=20, type=int, help='random walk length')
         parser.add_argument('--size-frontier', default=20, type=int, help='frontier size in multidimensional random walks')
+        parser.add_argument('--valid-cpu', action='store_true', help='run validation on cpu')
         # fmt: on
 
     @classmethod
@@ -92,6 +94,7 @@ class SAINTTrainer(SampledTrainer):
 
     def __init__(self, args):
         super(SAINTTrainer, self).__init__(args)
+        self.valid_cpu = args.valid_cpu
         self.args_sampler = self.sampler_from_args(args)
 
     def sampler_from_args(self, args):
@@ -107,7 +110,7 @@ class SAINTTrainer(SampledTrainer):
 
     def fit(self, model: SupervisedModel, dataset: Dataset):
         self.data = dataset.data
-        self.data.apply(lambda x: x.to(self.device))
+        # self.data.apply(lambda x: x.to(self.device))
         self.model = model.to(self.device)
         if self.args_sampler["sampler"] == "node":
             self.sampler = NodeSampler(self.data, self.args_sampler)
@@ -126,15 +129,16 @@ class SAINTTrainer(SampledTrainer):
     def _train_step(self):
         self.data = self.sampler.get_subgraph("train")
         self.data.apply(lambda x: x.to(self.device))
+        self.model = self.model.to(self.device)
         self.model.train()
         self.optimizer.zero_grad()
         self.model.node_classification_loss(self.data).backward()
         # logits = F.log_softmax(self.model.predict(self.data))
         logits = self.model.predict(self.data)
         mask = self.data.train_mask
-        loss = torch.nn.BCEWithLogitsLoss(reduction="mean")(
-            logits[mask], self.data.y[mask].float(), weight=self.data.norm_aggr[mask]
-        )
+        weight = torch.matmul(self.data.norm_loss[mask].unsqueeze(-1), torch.ones([1, logits.shape[1]]).to(self.device))
+        # print(weight.shape)
+        loss = torch.nn.BCEWithLogitsLoss(reduction="mean", weight=weight)(logits[mask], self.data.y[mask].float())
         loss.backward()
         """
         logits = F.log_softmax(self.model.predict(self.data))
@@ -147,7 +151,10 @@ class SAINTTrainer(SampledTrainer):
 
     def _test_step(self, split="val"):
         self.data = self.sampler.get_subgraph(split)
-        self.data.apply(lambda x: x.to(self.device))
+        if split != "train" and self.valid_cpu:
+            self.model = self.model.cpu()
+        else:
+            self.data.apply(lambda x: x.to(self.device))
         self.model.eval()
         if split == "train":
             mask = self.data.train_mask

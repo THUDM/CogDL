@@ -388,6 +388,11 @@ class BertPredictionHeadTransform(nn.Module):
         self.dense_act = LinearActivation(config.hidden_size, config.hidden_size, act=config.hidden_act)
         self.LayerNorm = BertLayerNorm(config.hidden_size, eps=1e-12)
 
+    def forward(self, hidden_states):
+        hidden_states = self.dense_act(hidden_states)
+        hidden_states = self.LayerNorm(hidden_states)
+        return hidden_states
+
 
 class BertLMPredictionHead(nn.Module):
     def __init__(self, config, bert_model_embedding_weights):
@@ -400,12 +405,32 @@ class BertLMPredictionHead(nn.Module):
         self.decoder.weight = bert_model_embedding_weights
         self.bias = nn.Parameter(torch.zeros(bert_model_embedding_weights.size(0)))
 
+    def forward(self, hidden_states, masked_token_indexes):
+        hidden_states = self.transform(hidden_states)
+
+        if masked_token_indexes is not None:
+            hidden_states = torch.index_select(
+                hidden_states.view(-1, hidden_states.shape[-1]), 0,
+                masked_token_indexes)
+
+        hidden_states = self.decoder(hidden_states) + self.bias
+        return hidden_states
+
 
 class BertPreTrainingHeads(nn.Module):
     def __init__(self, config, bert_model_embedding_weights):
         super(BertPreTrainingHeads, self).__init__()
         self.predictions = BertLMPredictionHead(config, bert_model_embedding_weights)
         self.seq_relationship = nn.Linear(config.hidden_size, 2)
+
+    def forward(self,
+                sequence_output,
+                pooled_output,
+                masked_token_indexes=None):
+        prediction_scores = self.predictions(sequence_output,
+                                             masked_token_indexes)
+        seq_relationship_score = self.seq_relationship(pooled_output)
+        return prediction_scores, seq_relationship_score
 
 
 class BertPreTrainedModel(nn.Module):

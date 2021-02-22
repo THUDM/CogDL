@@ -6,10 +6,13 @@ from cogdl.utils import download_url, untar
 from transformers import BertTokenizer
 
 from .bert_model import BertConfig, BertForPreTrainingPreLN
+from .oagbert_metainfo import OAGMetaInfoBertModel
 
 PRETRAINED_MODEL_ARCHIVE_MAP = {
     "oagbert-v1": "https://cloud.tsinghua.edu.cn/f/051c9f87d8544698826e/?dl=1",
     "oagbert-test": "https://cloud.tsinghua.edu.cn/f/68a8d42802564d43984e/?dl=1",
+    "oagbert-v2-test": "https://cloud.tsinghua.edu.cn/f/baff5abe84c4483bb690/?dl=1",
+    "oagbert-v2": "https://cloud.tsinghua.edu.cn/f/f06448fa3c234317bd16/?dl=1"
 }
 
 
@@ -44,12 +47,22 @@ class OAGBertPretrainingModel(BertForPreTrainingPreLN):
                 model_name_or_path = f"saved/{model_name_or_path}"
             else:
                 raise KeyError("Cannot find the pretrained model {}".format(model_name_or_path))
+
+        try:
+            version = open(os.path.join(model_name_or_path, "version")).readline().strip()
+        except Exception:
+            version = None
+
         bert_config = BertConfig.from_dict(json.load(open(os.path.join(model_name_or_path, "bert_config.json"))))
         tokenizer = BertTokenizer.from_pretrained(model_name_or_path)
-        bert_model = OAGBertPretrainingModel(bert_config)
+        if version == "2":
+            bert_model = OAGMetaInfoBertModel(bert_config, tokenizer)
+        else:
+            bert_model = OAGBertPretrainingModel(bert_config)
 
-        if load_weights:
-            bert_model.load_state_dict(torch.load(os.path.join(model_name_or_path, "pytorch_model.bin")))
+        model_weight_path = os.path.join(model_name_or_path, "pytorch_model.bin")
+        if load_weights and os.path.exists(model_weight_path):
+            bert_model.load_state_dict(torch.load(model_weight_path))
 
         return bert_config, tokenizer, bert_model
 

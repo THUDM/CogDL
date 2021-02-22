@@ -79,7 +79,6 @@ class GraphClassification(BaseTask):
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
 
         if args.dataset.startswith("ogbg"):
-            self.data = dataset.data
             self.train_loader, self.val_loader, self.test_loader = dataset.get_loader(args)
             model = build_model(args) if model is None else model
         else:

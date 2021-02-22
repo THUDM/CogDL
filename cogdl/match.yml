@@ -97,6 +97,8 @@ graph_classification:
     - reddit-b
     - reddit-multi-5k
     - reddit-multi-12k
+    - ogbg-molbace
+    - ogbg-molhiv
 unsupervised_graph_classification:
   - model:
     - infograph

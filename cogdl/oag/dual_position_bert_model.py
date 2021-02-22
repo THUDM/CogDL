@@ -24,7 +24,6 @@ class DualPositionBertEmbeddings(nn.Module):
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, input_ids, token_type_ids, position_ids, position_ids_second):
-        seq_length = input_ids.size(1)
         if token_type_ids is None:
             token_type_ids = torch.zeros_like(input_ids)
 

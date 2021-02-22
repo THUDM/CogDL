@@ -2,7 +2,9 @@ from cogdl import oagbert
 from cogdl.oag.utils import colored
 import math
 
-tokenizer, model = oagbert("oagbert-v2")
+tokenizer, model = oagbert("oagbert-v2-test")
+# uncomment the following line to download and use oagbert
+# tokenizer, model = oagbert("oagbert-v2")
 model.eval()
 
 title = 'Language Models are Few-Shot Learners'
@@ -11,7 +13,8 @@ abstract = '''Recent work has demonstrated substantial gains on many NLP tasks a
 # calculate the probability of `machine learning`, `artificial intelligence`, `language model` for GPT-3 paper
 print('=== Span Probability ===')
 for span in ['machine learning', 'artificial intelligence', 'language model']:
-    span_prob, token_probs = model.calculate_span_prob(title=title, abstract=abstract, decode_span_type='FOS', decode_span=span, mask_propmt_text='Field of Study:', debug=False)
+    span_prob, token_probs = model.calculate_span_prob(
+        title=title, abstract=abstract, decode_span_type='FOS', decode_span=span, mask_propmt_text='Field of Study:', debug=False)
     print('%s probability: %.4f' % (span.ljust(30), span_prob))
 print()
 
@@ -21,9 +24,11 @@ print('=== Generated FOS ===')
 for i in range(16):
     candidates = []
     for span_length in range(1, 5):
-        results = model.decode_beamsearch(title=title, abstract=abstract, authors=[], concepts=concepts, decode_span_type='FOS', decode_span_length=span_length, beam_width=8, force_forward=False)
+        results = model.decode_beamsearch(title=title, abstract=abstract, authors=[
+        ], concepts=concepts, decode_span_type='FOS', decode_span_length=span_length, beam_width=8, force_forward=False)
         candidates.append(results[0])
     candidates.sort(key=lambda x: -x[1])
     span, prob = candidates[0]
-    print("%2d. %s %s" % (i+1, span, colored('[%s]' % (','.join(['%s(%.4f)' % (k, v) for k, v in candidates])), 'blue')))
+    print("%2d. %s %s" % (i + 1, span, colored('[%s]' %
+                                               (','.join(['%s(%.4f)' % (k, v) for k, v in candidates])), 'blue')))
     concepts.append(span)

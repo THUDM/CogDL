@@ -10,7 +10,9 @@ COLORCODES = {
     'reset': '\x1b[0m'
 }
 
+
 def colored(text, color):
     return COLORCODES.get(color, '') + text + COLORCODES.get('reset', '')
+
 
 OAG_TOKEN_TYPE_NAMES = ['TEXT', 'AUTHOR', 'VENUE', 'AFF', 'FOS']

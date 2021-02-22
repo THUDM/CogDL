@@ -28,9 +28,9 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
                            predictions=None):
         COLORS = ['white', 'green', 'blue', 'red', 'yellow']
         try:
-            termwidth, termheight = os.get_terminal_size()
-        except:
-            termwidth, termheight = 200, 100
+            termwidth, _ = os.get_terminal_size()
+        except Exception:
+            termwidth = 200
         K = predictions.shape[1] if predictions is not None else 0
         input_ids = [token_id for i, token_id in enumerate(input_ids) if input_masks[i] > 0]
         position_ids = [position_id for i, position_id in enumerate(position_ids) if input_masks[i] > 0]
@@ -45,7 +45,7 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
             masks[lm_pos] = lm_id
             mask_indices.append(lm_pos)
         for k in range(K):
-            for lm_pos, token_id in zip(mask_indices, predictions[:,k]):
+            for lm_pos, token_id in zip(mask_indices, predictions[:, k]):
                 prediction_topks[k][lm_pos] = token_id
         input_tokens = self.tokenizer.convert_ids_to_tokens(input_ids)
         masks_tokens = self.tokenizer.convert_ids_to_tokens(masks)
@@ -59,7 +59,8 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
         current_length = 0
         for pos, (input_token, position_id, position_id_second, token_type_id, mask) in enumerate(zip(input_tokens, position_ids, position_ids_second, token_type_ids, masks_tokens)):
             token_type = OAG_TOKEN_TYPE_NAMES[token_type_id]
-            length = max(len(input_token) + 1, 7, len(token_type) + 1, len(mask) + 1, *[len(prediction_tokens[k][pos]) + 1 for k in range(K)])
+            length = max(len(input_token) + 1, 7, len(token_type) + 1, len(mask)
+                         + 1, *[len(prediction_tokens[k][pos]) + 1 for k in range(K)])
             if current_length + length > termwidth:
                 current_length = 0
                 input_tokens_str.append('')
@@ -77,7 +78,8 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
             masks_str[-1] += colored(mask.rjust(length) if mask != '[PAD]' else ''.rjust(length), COLORS[token_type_id])
             for k in range(K):
                 v = prediction_tokens[k][pos] if prediction_tokens[k][pos] != '[PAD]' else ''
-                prediction_topk_strs[k][-1] += colored(v.rjust(length), 'magenta' if v != mask and mask != '[CLS]' else 'cyan')
+                prediction_topk_strs[k][-1] += colored(v.rjust(length), 'magenta' if v
+                                                       != mask and mask != '[CLS]' else 'cyan')
 
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
         size = len(masks_str)
@@ -154,22 +156,21 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
             raise Exception('Unexpected span type: %s' % decode_span_type)
 
         prompt_token_ids = self._convert_text_to_token_ids(mask_propmt_text)
-        prompt_length = len(prompt_token_ids)
 
         add_span(0, (self._convert_text_to_token_ids(title)
-                   + self._convert_text_to_token_ids(abstract)
-                   + prompt_token_ids)[:max_seq_length - decode_span_length])
+                     + self._convert_text_to_token_ids(abstract)
+                     + prompt_token_ids)[:max_seq_length - decode_span_length])
         add_span(2, self._convert_text_to_token_ids(venue)[:max_seq_length - len(input_ids) - decode_span_length])
         for author in authors:
             add_span(1, self._convert_text_to_token_ids(author)[:max_seq_length - len(input_ids) - decode_span_length])
         for concept in concepts:
             add_span(4, self._convert_text_to_token_ids(concept)[:max_seq_length - len(input_ids) - decode_span_length])
         for affiliation in affiliations:
-            add_span(3, self._convert_text_to_token_ids(affiliation)[:max_seq_length - len(input_ids) - decode_span_length])
+            add_span(3, self._convert_text_to_token_ids(affiliation)[
+                     :max_seq_length - len(input_ids) - decode_span_length])
 
         add_span(span_token_type_id, [0 for _ in range(decode_span_length)], is_mask=True)
         return input_ids, input_masks, token_type_ids, masked_lm_labels, position_ids, position_ids_second, masked_positions, num_spans
-
 
     def calculate_span_prob(self,
                             title='',
@@ -215,6 +216,7 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
 
         logprobs = 0.
         logproblist = []
+
         def tensorize(x):
             return torch.LongTensor(x).unsqueeze(0).to(device or 'cpu')
         for i in range(decode_span_length):
@@ -228,8 +230,8 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
                 position_ids_second=tensorize(position_ids_second))
             masked_token_indexes = torch.nonzero((tensorize(masked_lm_labels) + 1).view(-1)).view(-1)
             prediction_scores, _ = self.cls(sequence_output, pooled_output, masked_token_indexes)
-            prediction_scores = torch.nn.functional.log_softmax(prediction_scores, dim=1) # L x Vocab
-            token_log_probs = prediction_scores[torch.arange(len(decode_span_token_ids)),decode_span_token_ids]
+            prediction_scores = torch.nn.functional.log_softmax(prediction_scores, dim=1)  # L x Vocab
+            token_log_probs = prediction_scores[torch.arange(len(decode_span_token_ids)), decode_span_token_ids]
             if force_forward:
                 logprob, pos = token_log_probs[0], 0
             else:
@@ -250,10 +252,10 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
                                         position_ids=position_ids,
                                         position_ids_second=position_ids_second,
                                         predictions=torch.topk(prediction_scores, k=5, dim=1).indices.cpu().detach().numpy())
-                input('logprobs: %.4f, logprob: %.4f, pos: %d, real_pos: %d, token: %s' % (logprobs, logprob, pos.item(), real_pos, self.tokenizer.convert_ids_to_tokens([target_token])[0]))
+                input('logprobs: %.4f, logprob: %.4f, pos: %d, real_pos: %d, token: %s' %
+                      (logprobs, logprob, pos.item(), real_pos, self.tokenizer.convert_ids_to_tokens([target_token])[0]))
 
         return np.exp(logprobs), logproblist
-
 
     def decode_beamsearch(self,
                           title='',
@@ -298,10 +300,10 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
         )
 
         q = [(input_ids, masked_lm_labels, masked_positions, 0)]
+
         def tensorize(x):
             return torch.LongTensor(x).to(device or 'cpu')
         for i in range(decode_span_length):
-            bs = len(q)
             sequence_output, pooled_output = self.bert.forward(
                 input_ids=tensorize([_input_ids for _input_ids, _, _, _ in q]),
                 token_type_ids=tensorize([token_type_ids for _ in q]),
@@ -310,9 +312,11 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
                 checkpoint_activations=False,
                 position_ids=tensorize([position_ids for _ in q]),
                 position_ids_second=tensorize([position_ids_second for _ in q]))
-            masked_token_indexes = torch.nonzero((tensorize([_masked_lm_labels for _, _masked_lm_labels, _, _ in q]) + 1).view(-1)).view(-1)
+            masked_token_indexes = torch.nonzero(
+                (tensorize([_masked_lm_labels for _, _masked_lm_labels, _, _ in q]) + 1).view(-1)).view(-1)
             prediction_scores, _ = self.cls(sequence_output, pooled_output, masked_token_indexes)
-            prediction_scores = torch.nn.functional.log_softmax(prediction_scores, dim=1) # (len(q) * (range_length - i), VOCAB_SIZE)
+            prediction_scores = torch.nn.functional.log_softmax(
+                prediction_scores, dim=1)  # (len(q) * (range_length - i), VOCAB_SIZE)
             vocab_size = prediction_scores.shape[-1]
             _q = []
             mask_length = decode_span_length - i
@@ -320,7 +324,8 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
                 if force_forward:
                     log_probs, indices = torch.topk(prediction_scores[idx * mask_length].view(-1), k=beam_width)
                 else:
-                    log_probs, indices = torch.topk(prediction_scores[idx * mask_length:(idx+1) * mask_length].view(-1), k=beam_width)
+                    log_probs, indices = torch.topk(
+                        prediction_scores[idx * mask_length:(idx + 1) * mask_length].view(-1), k=beam_width)
                 for log_prob, index in zip(log_probs.detach().numpy(), indices.detach().numpy()):
                     new_input_ids = _input_ids.copy()
                     new_masked_lm_labels = _masked_lm_labels.copy()
@@ -346,7 +351,8 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
             if debug:
                 print('beam search, rest length: %d' % (decode_span_length - i))
                 for _input_ids, _masked_lm_labels, _masked_positions, _last_logprob in q:
-                    print('  %8.4f, %s' % (_last_logprob, self.tokenizer.convert_tokens_to_string(self.tokenizer.convert_ids_to_tokens(_input_ids[-decode_span_length:]))))
+                    print('  %8.4f, %s' % (_last_logprob, self.tokenizer.convert_tokens_to_string(
+                        self.tokenizer.convert_ids_to_tokens(_input_ids[-decode_span_length:]))))
 
         results = []
         for (_input_ids, _masked_lm_labels, _masked_positions, _logprob) in q:

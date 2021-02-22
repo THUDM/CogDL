@@ -60,8 +60,9 @@ class OAGBertPretrainingModel(BertForPreTrainingPreLN):
         else:
             bert_model = OAGBertPretrainingModel(bert_config)
 
-        if load_weights:
-            bert_model.load_state_dict(torch.load(os.path.join(model_name_or_path, "pytorch_model.bin")))
+        model_weight_path = os.path.join(model_name_or_path, "pytorch_model.bin")
+        if load_weights and os.path.exists(model_weight_path):
+            bert_model.load_state_dict(torch.load(model_weight_path))
 
         return bert_config, tokenizer, bert_model
 

@@ -2,9 +2,7 @@ from cogdl import oagbert
 from cogdl.oag.utils import colored
 import math
 
-tokenizer, model = oagbert("oagbert-v2-test")
-# uncomment the following line to download and use oagbert
-# tokenizer, model = oagbert("oagbert-v2")
+tokenizer, model = oagbert("oagbert-v2")
 model.eval()
 
 title = 'Language Models are Few-Shot Learners'

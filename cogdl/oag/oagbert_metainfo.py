@@ -228,7 +228,7 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
                 checkpoint_activations=False,
                 position_ids=tensorize(position_ids),
                 position_ids_second=tensorize(position_ids_second))
-            masked_token_indexes = torch.nonzero((tensorize(masked_lm_labels) + 1).view(-1)).view(-1)
+            masked_token_indexes = torch.nonzero((tensorize(masked_lm_labels) + 1).view(-1), as_tuple=False).view(-1)
             prediction_scores, _ = self.cls(sequence_output, pooled_output, masked_token_indexes)
             prediction_scores = torch.nn.functional.log_softmax(prediction_scores, dim=1)  # L x Vocab
             token_log_probs = prediction_scores[torch.arange(len(decode_span_token_ids)), decode_span_token_ids]
@@ -313,7 +313,7 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
                 position_ids=tensorize([position_ids for _ in q]),
                 position_ids_second=tensorize([position_ids_second for _ in q]))
             masked_token_indexes = torch.nonzero(
-                (tensorize([_masked_lm_labels for _, _masked_lm_labels, _, _ in q]) + 1).view(-1)).view(-1)
+                (tensorize([_masked_lm_labels for _, _masked_lm_labels, _, _ in q]) + 1).view(-1), as_tuple=False).view(-1)
             prediction_scores, _ = self.cls(sequence_output, pooled_output, masked_token_indexes)
             prediction_scores = torch.nn.functional.log_softmax(
                 prediction_scores, dim=1)  # (len(q) * (range_length - i), VOCAB_SIZE)

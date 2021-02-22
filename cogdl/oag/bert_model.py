@@ -413,11 +413,7 @@ class BertLMPredictionHead(nn.Module):
                 hidden_states.view(-1, hidden_states.shape[-1]), 0,
                 masked_token_indexes)
 
-        torch.cuda.nvtx.range_push(
-            "decoder input.size() = {}, weight.size() = {}".format(
-                hidden_states.size(), self.decoder.weight.size()))
         hidden_states = self.decoder(hidden_states) + self.bias
-        torch.cuda.nvtx.range_pop()
         return hidden_states
 
 

@@ -3,16 +3,16 @@ import itertools
 import os
 import os.path as osp
 import random
-import numba
 import shutil
+import time
 from collections import defaultdict
 from typing import Optional
-from urllib import request
 
 import numpy as np
-import scipy.sparse as sp
+import requests
 import torch
 import torch.nn.functional as F
+import tqdm
 from tabulate import tabulate
 
 
@@ -49,47 +49,92 @@ def untar(path, fname, deleteTar=True):
         os.remove(fullpath)
 
 
-def makedirs(path):
-    try:
-        os.makedirs(osp.expanduser(osp.normpath(path)))
-    except OSError as e:
-        if e.errno != errno.EEXIST and osp.isdir(path):
-            raise e
-
-
-def download_url(url, folder, name=None, log=True):
-    r"""Downloads the content of an URL to a specific folder.
-
-    Args:
-        url (string): The url.
-        folder (string): The folder.
-        name (string): saved filename.
-        log (bool, optional): If :obj:`False`, will not print anything to the
-            console. (default: :obj:`True`)
+def download_url(url, path, name=None, log=True, redownload=False):
     """
+    Downloads file using `requests`. If ``redownload`` is set to false, then
+    will not download tar file again if it is present (default ``True``).
+    """
+    fname = url.rpartition("/")[2] if name is None else name
+    outfile = os.path.join(path, fname)
+    download = not os.path.isfile(outfile) or redownload
     if log:
-        print("Downloading", url)
+        print("[ downloading: " + url + " to " + outfile + " ]")
+    retry = 5
+    exp_backoff = [2 ** r for r in reversed(range(retry))]
 
-    makedirs(folder)
+    pbar = tqdm.tqdm(unit="B", unit_scale=True, desc="Downloading {}".format(fname))
 
-    try:
-        data = request.urlopen(url)
-    except Exception as e:
-        print(e)
-        print("Failed to download the dataset.")
-        print(f"Please download the dataset manually and put it under {folder}.")
-        exit(1)
+    while download and retry >= 0:
+        resume_file = outfile + ".part"
+        resume = os.path.isfile(resume_file)
+        if resume:
+            resume_pos = os.path.getsize(resume_file)
+            mode = "ab"
+        else:
+            resume_pos = 0
+            mode = "wb"
+        response = None
 
-    if name is None:
-        filename = url.rpartition("/")[2]
-    else:
-        filename = name
-    path = osp.join(folder, filename)
+        with requests.Session() as session:
+            try:
+                header = {"Range": "bytes=%d-" % resume_pos, "Accept-Encoding": "identity"} if resume else {}
+                response = session.get(url, stream=True, timeout=5, headers=header)
 
-    with open(path, "wb") as f:
-        f.write(data.read())
+                # negative reply could be 'none' or just missing
+                if resume and response.headers.get("Accept-Ranges", "none") == "none":
+                    resume_pos = 0
+                    mode = "wb"
 
-    return path
+                CHUNK_SIZE = 32768
+                total_size = int(response.headers.get("Content-Length", -1))
+                # server returns remaining size if resuming, so adjust total
+                total_size += resume_pos
+                pbar.total = total_size
+                done = resume_pos
+
+                with open(resume_file, mode) as f:
+                    for chunk in response.iter_content(CHUNK_SIZE):
+                        if chunk:  # filter out keep-alive new chunks
+                            f.write(chunk)
+                        if total_size > 0:
+                            done += len(chunk)
+                            if total_size < done:
+                                # don't freak out if content-length was too small
+                                total_size = done
+                                pbar.total = total_size
+                            pbar.update(len(chunk))
+                    break
+            except requests.exceptions.ConnectionError:
+                retry -= 1
+                pbar.clear()
+                if retry >= 0:
+                    print("Connection error, retrying. (%d retries left)" % retry)
+                    time.sleep(exp_backoff[retry])
+                else:
+                    print("Retried too many times, stopped retrying.")
+            finally:
+                if response:
+                    response.close()
+    if retry < 0:
+        print(f"Failed to download the dataset, please download the dataset manually and save it to {outfile}.")
+        raise RuntimeWarning("Connection broken too many times. Stopped retrying.")
+
+    if download and retry > 0:
+        pbar.update(done - pbar.n)
+        if done < total_size:
+            print(f"Failed to download the dataset, please download the dataset manually and save it to {outfile}.")
+            raise RuntimeWarning(
+                "Received less data than specified in "
+                + "Content-Length header for "
+                + url
+                + "."
+                + " There may be a download problem."
+            )
+        shutil.move(resume_file, outfile)
+
+    pbar.close()
+
+    return outfile
 
 
 def alias_setup(probs):

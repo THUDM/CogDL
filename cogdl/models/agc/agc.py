@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from .. import BaseModel, register_model
 from cogdl.trainers.agc_trainer import AGCTrainer
 
+
 @register_model("agc")
 class AGC(BaseModel):
     r"""The AGC model from the `"Attributed Graph Clustering via Adaptive Graph Convolution"
@@ -14,6 +15,7 @@ class AGC(BaseModel):
         num_clusters (int) : Number of clusters.
         max_iter     (int) : Max iteration to increase k
     """
+
     @staticmethod
     def add_args(parser):
         parser.add_argument("--max-iter", type=int, default=60)
@@ -35,4 +37,3 @@ class AGC(BaseModel):
 
     def get_features(self, data):
         return self.features_matrix.detach().cpu()
-    

@@ -9,8 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class DualPositionBertEmbeddings(nn.Module):
-    """Construct the embeddings from word, position and token_type embeddings.
-    """
+    """Construct the embeddings from word, position and token_type embeddings."""
 
     def __init__(self, config):
         super(DualPositionBertEmbeddings, self).__init__()
@@ -47,28 +46,30 @@ class DualPositionBertModel(BertModel):
         self.apply(self.init_bert_weights)
         logger.info("Init BERT pretrain model")
 
-    def forward(self,
-                input_ids,
-                token_type_ids=None,
-                attention_mask=None,
-                output_all_encoded_layers=True,
-                checkpoint_activations=False,
-                position_ids=None,
-                position_ids_second=None):
+    def forward(
+        self,
+        input_ids,
+        token_type_ids=None,
+        attention_mask=None,
+        output_all_encoded_layers=True,
+        checkpoint_activations=False,
+        position_ids=None,
+        position_ids_second=None,
+    ):
         if attention_mask is None:
             attention_mask = torch.ones_like(input_ids)
         if token_type_ids is None:
             token_type_ids = torch.zeros_like(input_ids)
         extended_attention_mask = attention_mask.unsqueeze(1).unsqueeze(2)
-        extended_attention_mask = extended_attention_mask.to(
-            dtype=next(self.parameters()).dtype)  # fp16 compatibility
+        extended_attention_mask = extended_attention_mask.to(dtype=next(self.parameters()).dtype)  # fp16 compatibility
         extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
         embedding_output = self.embeddings(input_ids, token_type_ids, position_ids, position_ids_second)
         encoded_layers = self.encoder(
             embedding_output,
             extended_attention_mask,
             output_all_encoded_layers=output_all_encoded_layers,
-            checkpoint_activations=checkpoint_activations)
+            checkpoint_activations=checkpoint_activations,
+        )
         sequence_output = encoded_layers[-1]
         pooled_output = self.pooler(sequence_output)
 
@@ -87,18 +88,19 @@ class DualPositionBertForPreTrainingPreLN(BertPreTrainedModel):
     def __init__(self, config):
         super(DualPositionBertForPreTrainingPreLN, self).__init__(config)
         self.bert = DualPositionBertModel(config)
-        self.cls = BertPreTrainingHeads(
-            config, self.bert.embeddings.word_embeddings.weight)
+        self.cls = BertPreTrainingHeads(config, self.bert.embeddings.word_embeddings.weight)
         self.apply(self.init_bert_weights)
 
-    def forward(self,
-                input_ids,
-                token_type_ids=None,
-                attention_mask=None,
-                masked_lm_labels=None,
-                position_ids=None,
-                position_ids_second=None,
-                log=True):
+    def forward(
+        self,
+        input_ids,
+        token_type_ids=None,
+        attention_mask=None,
+        masked_lm_labels=None,
+        position_ids=None,
+        position_ids_second=None,
+        log=True,
+    ):
         sequence_output, pooled_output = self.bert(
             input_ids=input_ids,
             token_type_ids=token_type_ids,
@@ -106,22 +108,18 @@ class DualPositionBertForPreTrainingPreLN(BertPreTrainedModel):
             output_all_encoded_layers=False,
             checkpoint_activations=False,
             position_ids=position_ids,
-            position_ids_second=position_ids_second)
+            position_ids_second=position_ids_second,
+        )
 
         if masked_lm_labels is not None:
             # filter out all masked labels.
-            masked_token_indexes = torch.nonzero(
-                (masked_lm_labels + 1).view(-1)).view(-1)
-            prediction_scores, _ = self.cls(
-                sequence_output, pooled_output, masked_token_indexes)
-            target = torch.index_select(masked_lm_labels.view(-1), 0,
-                                        masked_token_indexes)
+            masked_token_indexes = torch.nonzero((masked_lm_labels + 1).view(-1)).view(-1)
+            prediction_scores, _ = self.cls(sequence_output, pooled_output, masked_token_indexes)
+            target = torch.index_select(masked_lm_labels.view(-1), 0, masked_token_indexes)
 
             loss_fct = CrossEntropyLoss(ignore_index=-1)
-            masked_lm_loss = loss_fct(
-                prediction_scores.view(-1, self.config.vocab_size), target)
+            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.config.vocab_size), target)
             return masked_lm_loss
         else:
-            prediction_scores, _ = self.cls(
-                sequence_output, pooled_output)
+            prediction_scores, _ = self.cls(sequence_output, pooled_output)
             return prediction_scores

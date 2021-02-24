@@ -409,9 +409,7 @@ class BertLMPredictionHead(nn.Module):
         hidden_states = self.transform(hidden_states)
 
         if masked_token_indexes is not None:
-            hidden_states = torch.index_select(
-                hidden_states.view(-1, hidden_states.shape[-1]), 0,
-                masked_token_indexes)
+            hidden_states = torch.index_select(hidden_states.view(-1, hidden_states.shape[-1]), 0, masked_token_indexes)
 
         hidden_states = self.decoder(hidden_states) + self.bias
         return hidden_states
@@ -423,12 +421,8 @@ class BertPreTrainingHeads(nn.Module):
         self.predictions = BertLMPredictionHead(config, bert_model_embedding_weights)
         self.seq_relationship = nn.Linear(config.hidden_size, 2)
 
-    def forward(self,
-                sequence_output,
-                pooled_output,
-                masked_token_indexes=None):
-        prediction_scores = self.predictions(sequence_output,
-                                             masked_token_indexes)
+    def forward(self, sequence_output, pooled_output, masked_token_indexes=None):
+        prediction_scores = self.predictions(sequence_output, masked_token_indexes)
         seq_relationship_score = self.seq_relationship(pooled_output)
         return prediction_scores, seq_relationship_score
 

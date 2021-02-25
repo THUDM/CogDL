@@ -1,3 +1,4 @@
+import argparse
 import copy
 
 import numpy as np
@@ -10,10 +11,31 @@ from cogdl.models.supervised_model import (
     SupervisedHomogeneousNodeClassificationModel,
 )
 from cogdl.trainers.supervised_model_trainer import SupervisedHomogeneousNodeClassificationTrainer
-from cogdl.trainers.self_task import EdgeMask, PairwiseDistance, Distance2Clusters, PairwiseAttrSim, Distance2ClustersPP
+from cogdl.utils.self_auxiliary_task import (
+    EdgeMask,
+    PairwiseDistance,
+    Distance2Clusters,
+    PairwiseAttrSim,
+    Distance2ClustersPP,
+)
+from . import register_trainer
 
 
-class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
+@register_trainer("self_auxiliary_task")
+class SelfAuxiliaryTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        """Add trainer-specific arguments to the parser."""
+        # fmt: off
+        parser.add_argument('--auxiliary-task', default="none", type=str)
+        parser.add_argument('--alpha', default=10, type=float)
+        parser.add_argument('--label-mask', default=0, type=float)
+        # fmt: on
+
+    @classmethod
+    def build_trainer_from_args(cls, args):
+        return cls(args)
+
     def __init__(self, args):
         self.device = args.device_id[0] if not args.cpu else "cpu"
         self.patience = args.patience
@@ -24,10 +46,6 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         self.hidden_size = args.hidden_size
         self.alpha = args.alpha
         self.label_mask = args.label_mask
-
-    @classmethod
-    def build_trainer_from_args(cls, args):
-        return cls(args)
 
     def resplit_data(self, data):
         trained = torch.where(data.train_mask)[0]
@@ -77,15 +95,10 @@ class SelfTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         for epoch in epoch_iter:
             if self.auxiliary_task == "distance2clusters++" and epoch % 40 == 0:
                 self.agent.update_cluster()
-            elif self.auxiliary_task == "scalable-distance-pred" and epoch % 10 == 0:
-                self.agent.update()
             self._train_step()
             train_acc, _ = self._test_step(split="train")
             val_acc, val_loss = self._test_step(split="val")
-            test_acc, test_loss = self._test_step(split="test")
-            epoch_iter.set_description(
-                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, Test: {test_acc:.4f}"
-            )
+            epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
             if val_loss <= min_loss or val_acc >= max_score:
                 if val_loss <= best_loss:  # and val_acc >= best_score:
                     best_loss = val_loss

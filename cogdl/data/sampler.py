@@ -7,6 +7,7 @@ import torch
 import torch.utils.data
 
 from cogdl.data import Data
+from cogdl.utils import remove_self_loops
 
 
 class Sampler:
@@ -54,7 +55,8 @@ class SAINTSampler(Sampler):
             (np.ones(self.num_edges), (edge_index[0], edge_index[1])),
             shape=(self.num_nodes, self.num_nodes),
         ).tocsr()
-        self.node_train = np.arange(1, self.num_nodes + 1) * self.data.train_mask.cpu().numpy()
+        self.train_mask = self.data.train_mask.cpu().numpy()
+        self.node_train = np.arange(1, self.num_nodes + 1) * self.train_mask
         self.node_train = self.node_train[self.node_train != 0] - 1
 
         self.sample_coverage = args_params["sample_coverage"]
@@ -183,11 +185,19 @@ class SAINTSampler(Sampler):
                 data.norm_aggr = torch.ones(self.data.edge_index.size()[1])
                 data.norm_loss = self.norm_loss_test
         else:
-            if len(self.subgraphs_nodes) == 0:
-                self.gen_subgraph()
+            while True:
+                if len(self.subgraphs_nodes) == 0:
+                    self.gen_subgraph()
 
-            node_subgraph = self.subgraphs_nodes.pop()
-            edge_subgraph = self.subgraphs_edge_index.pop()
+                node_subgraph = self.subgraphs_nodes.pop()
+                edge_subgraph = self.subgraphs_edge_index.pop()
+                flag = False
+                for idx in node_subgraph:
+                    if self.train_mask[idx]:
+                        flag = True
+                        break
+                if flag:
+                    break
             num_nodes_subgraph = node_subgraph.size
             adj = sp.csr_matrix(
                 (self.subgraphs_data.pop(), self.subgraphs_indices.pop(), self.subgraphs_indptr.pop()),
@@ -295,6 +305,8 @@ class RWSampler(SAINTSampler):
             for step in range(self.walk_length):
                 idx_s = self.adj.indptr[u]
                 idx_e = self.adj.indptr[u + 1]
+                if idx_s >= idx_e:
+                    break
                 e = np.random.randint(idx_s, idx_e)
                 edge_idx.append(e)
                 u = self.adj.indices[e]
@@ -401,6 +413,47 @@ class NeighborSampler(torch.utils.data.DataLoader):
             return src_id, edge_index, size
         else:
             return batch, node_id, adj_list[::-1]
+
+
+class ClusteredLoader(torch.utils.data.DataLoader):
+    metis_tool = None
+
+    def __init__(self, data: Data, n_cluster: int, **kwargs):
+        try:
+            import metis
+            ClusteredLoader.metis_tool = metis
+        except Exception as e:
+            print(e)
+            exit(1)
+
+        self.data = data
+        self.clusters = self.preprocess(n_cluster)
+        super(ClusteredLoader, self).__init__(list(range(n_cluster)), collate_fn=self.batcher, **kwargs)
+
+    def preprocess(self, n_cluster):
+        print("Preprocessing...")
+        edges = self.data.edge_index
+        edges, _ = remove_self_loops(edges)
+        if str(edges.device) != "cpu":
+            edges = edges.cpu()
+        edges = edges.numpy()
+        num_nodes = np.max(edges) + 1
+        adj = sp.csr_matrix((np.ones(edges.shape[1]), (edges[0], edges[1])), shape=(num_nodes, num_nodes))
+        indptr = adj.indptr
+        indptr = np.split(adj.indices, indptr[1:])[:-1]
+        _, parts = ClusteredLoader.metis_tool.part_graph(indptr, n_cluster, seed=1)
+        division = [[] for _ in range(n_cluster)]
+        for i, v in enumerate(parts):
+            division[v].append(i)
+        for k in range(len(division)):
+            division[k] = np.array(division[k], dtype=np.int)
+        print("Graph clustering over")
+        return division
+
+    def batcher(self, batch):
+        nodes = np.concatenate([self.clusters[i] for i in batch])
+        subgraph = self.data.subgraph(nodes)
+        return subgraph
 
 
 """class FastGCNSampler(LayerSampler):

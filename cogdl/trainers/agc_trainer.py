@@ -48,7 +48,6 @@ class AGCTrainer(BaseTrainer):
             clusters = clustering.labels_
             intra = self.compute_intra(x.cpu().numpy(), clusters)
             print("iter #%d, intra = %.4lf" % (t, intra))
-            # self.evaluate(clusters, data.y.cpu().numpy())
             if intra > pre_intra:
                 model.features_matrix = pre_feat
                 model.k = t - 1
@@ -70,32 +69,4 @@ class AGCTrainer(BaseTrainer):
                     num_per_cluster[clusters[i]] += 1
         intra = np.array(list(filter(lambda x: x > 0, intra)))
         num_per_cluster = np.array(list(filter(lambda x: x > 0, num_per_cluster)))
-        # print(intra / num_per_cluster)
         return np.mean(intra / num_per_cluster)
-
-
-"""
-    def evaluate(self, clusters, truth):
-        print("Evaluating...")
-        TP = 0
-        FP = 0
-        TN = 0
-        FN = 0
-        for i in range(self.num_nodes):
-            for j in range(i + 1, self.num_nodes):
-                if clusters[i] == clusters[j] and truth[i] == truth[j]:
-                    TP += 1
-                if clusters[i] != clusters[j] and truth[i] == truth[j]:
-                    FP += 1
-                if clusters[i] == clusters[j] and truth[i] != truth[j]:
-                    FN += 1
-                if clusters[i] != clusters[j] and truth[i] != truth[j]:
-                    TN += 1
-        precision = TP / (TP + FP)
-        recall = TP / (TP + FN)
-        print("TP", TP, "FP", FP, "TN", TN, "FN", FN)
-        micro_f1 = 2 * (precision * recall) / (precision + recall)
-        print(
-            "Accuracy = ", precision, "NMI = ", normalized_mutual_info_score(clusters, truth), "Micro_F1 = ", micro_f1
-        )
-"""

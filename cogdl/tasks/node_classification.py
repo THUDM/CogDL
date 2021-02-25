@@ -9,7 +9,7 @@ from tqdm import tqdm
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificationModel
-from cogdl.trainers.sampled_trainer import SAINTTrainer
+from cogdl.trainers.self_auxiliary_task_trainer import SelfAuxiliaryTaskTrainer
 
 from . import BaseTask, register_task
 
@@ -50,12 +50,7 @@ class NodeClassification(BaseTask):
         self.set_loss_fn(dataset)
         self.set_evaluator(dataset)
 
-        self.trainer = (
-            self.model.get_trainer(NodeClassification, self.args)(self.args)
-            if self.model.get_trainer(NodeClassification, self.args)
-            else None
-        )
-
+        self.trainer = self.get_trainer(self.model, self.args)
         if not self.trainer:
             self.optimizer = (
                 torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
@@ -69,15 +64,11 @@ class NodeClassification(BaseTask):
 
     def train(self):
         if self.trainer:
-            if isinstance(self.trainer, SAINTTrainer):
-                self.model = self.trainer.fit(self.model, self.dataset)
-                self.data.apply(lambda x: x.to(self.device))
+            result = self.trainer.fit(self.model, self.dataset)
+            if issubclass(type(result), torch.nn.Module):
+                self.model = result
             else:
-                result = self.trainer.fit(self.model, self.dataset)
-                if issubclass(type(result), torch.nn.Module):
-                    self.model = result
-                else:
-                    return result
+                return result
         else:
             epoch_iter = tqdm(range(self.max_epoch))
             patience = 0

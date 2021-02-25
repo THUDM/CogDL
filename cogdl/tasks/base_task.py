@@ -3,6 +3,7 @@ import argparse
 import atexit
 import os
 import torch
+from cogdl.trainers import build_trainer
 
 
 class LoadFrom(ABCMeta):
@@ -55,3 +56,13 @@ class BaseTask(ABC, metaclass=LoadFrom):
 
     def set_evaluator(self, dataset):
         self.evaluator = dataset.get_evaluator()
+
+    def get_trainer(self, model, args):
+        if hasattr(args, "trainer"):
+            if "self_auxiliary_task" in args.trainer and not hasattr(model, "get_embeddings"):
+                raise ValueError("Model ({}) must implement get_embeddings method".format(args.model))
+            return build_trainer(args)
+        elif model.get_trainer(None, args) is not None:
+            return model.get_trainer(None, args)(args)
+        else:
+            return None

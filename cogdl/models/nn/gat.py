@@ -12,7 +12,9 @@ class GATLayer(nn.Module):
     Sparse version GAT layer, similar to https://arxiv.org/abs/1710.10903
     """
 
-    def __init__(self, in_features, out_features, nhead=1, alpha=0.2, dropout=0.6, concat=True, residual=False, fast_mode=False):
+    def __init__(
+        self, in_features, out_features, nhead=1, alpha=0.2, dropout=0.6, concat=True, residual=False, fast_mode=False
+    ):
         super(GATLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -152,18 +154,59 @@ class GAT(BaseModel):
             args.fast_mode,
         )
 
-    def __init__(self, in_feats, hidden_size, out_features, num_layers, dropout, alpha, nhead, residual, last_nhead, fast_mode=False):
+    def __init__(
+        self,
+        in_feats,
+        hidden_size,
+        out_features,
+        num_layers,
+        dropout,
+        alpha,
+        nhead,
+        residual,
+        last_nhead,
+        fast_mode=False,
+    ):
         """Sparse version of GAT."""
         super(GAT, self).__init__()
         self.dropout = dropout
         self.attentions = nn.ModuleList()
-        self.attentions.append(GATLayer(in_feats, hidden_size, nhead=nhead, dropout=dropout, alpha=alpha, concat=True, residual=residual, fast_mode=fast_mode))
-        for i in range(num_layers-2):
-            self.attentions.append(
-                GATLayer(hidden_size * nhead, hidden_size, nhead=nhead, dropout=dropout, alpha=alpha, concat=True, residual=residual, fast_mode=fast_mode)
+        self.attentions.append(
+            GATLayer(
+                in_feats,
+                hidden_size,
+                nhead=nhead,
+                dropout=dropout,
+                alpha=alpha,
+                concat=True,
+                residual=residual,
+                fast_mode=fast_mode,
             )
-        self.attentions.append(GATLayer(
-            hidden_size * nhead, out_features, dropout=dropout, alpha=alpha, concat=False, nhead=last_nhead, residual=False, fast_mode=fast_mode)
+        )
+        for i in range(num_layers - 2):
+            self.attentions.append(
+                GATLayer(
+                    hidden_size * nhead,
+                    hidden_size,
+                    nhead=nhead,
+                    dropout=dropout,
+                    alpha=alpha,
+                    concat=True,
+                    residual=residual,
+                    fast_mode=fast_mode,
+                )
+            )
+        self.attentions.append(
+            GATLayer(
+                hidden_size * nhead,
+                out_features,
+                dropout=dropout,
+                alpha=alpha,
+                concat=False,
+                nhead=last_nhead,
+                residual=False,
+                fast_mode=fast_mode,
+            )
         )
         self.num_layers = num_layers
         self.last_nhead = last_nhead

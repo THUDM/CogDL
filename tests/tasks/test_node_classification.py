@@ -21,6 +21,8 @@ def get_default_args():
         "task": "node_classification",
         "dataset": "cora",
         "checkpoint": False,
+        "sampler": "none",
+        "auxiliary_task": "none",
     }
     return build_args_from_dict(default_dict)
 
@@ -64,12 +66,21 @@ def test_gat_cora():
     args.dataset = "cora"
     args.model = "gat"
     args.alpha = 0.2
-    args.nheads = 8
+    args.nhead = 8
+    args.residual = False
+    args.last_nhead = 2
+    args.num_layers = 2
     for i in [True, False]:
         args.fast_mode = i
         task = build_task(args)
         ret = task.train()
         assert 0 <= ret["Acc"] <= 1
+
+    args.num_layers = 3
+    args.residual = True
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
 
 
 def test_mlp_pubmed():
@@ -222,11 +233,12 @@ def test_pyg_gcn_cora():
     assert 0 <= ret["Acc"] <= 1
 
 
-def test_pyg_gcn_cora_sampler():
+def test_gcn_cora_sampler():
     args = get_default_args()
     args.task = "node_classification"
     args.dataset = "cora"
-    args.model = "pyg_gcn"
+    args.trainer = "saint"
+    args.model = "gcn"
     args.cpu = True
     args.num_layers = 2
     args.sample_coverage = 20
@@ -670,7 +682,7 @@ if __name__ == "__main__":
     test_gcnii_cora()
     test_deepergcn_cora()
     test_grand_cora()
-    test_pyg_gcn_cora_sampler()
+    test_gcn_cora_sampler()
     test_gpt_gnn_cora()
     test_sign_cora()
     test_jknet_jknet_cora()

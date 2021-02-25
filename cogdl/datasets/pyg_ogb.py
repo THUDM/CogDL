@@ -10,6 +10,7 @@ from ogb.graphproppred import PygGraphPropPredDataset
 from . import register_dataset
 from cogdl.utils import cross_entropy_loss, accuracy
 
+
 class OGBNDataset(PygNodePropPredDataset):
     def __init__(self, root, name):
         super(OGBNDataset, self).__init__(name, root)

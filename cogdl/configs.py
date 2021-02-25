@@ -157,7 +157,9 @@ BEST_CONFIGS = {
             "wikipedia": {"window_size": 1},
         },
         "netsmf": {
-            "general": {"window_size": 5},
+            "general": {"window_size": 10, "num_round": 1000},
+            "wikipedia": {"window_size": 1},
+            "blogcatalog": {"num_round": 10000},
         },
         "node2vec": {
             "general": {},

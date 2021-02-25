@@ -58,11 +58,12 @@ class GCN(BaseModel):
             x = F.dropout(x, p=self.dropout, training=self.training)
         return x
 
-    def node_classification_loss(self, data):
-        return F.nll_loss(
-            self.forward(data.x, data.edge_index, None if "norm_aggr" not in data else data.norm_aggr)[data.train_mask],
-            data.y[data.train_mask],
-        )
+    # def node_classification_loss(self, data):
+    #     edge_index = data.edge_index_train if hasattr(data, "edge_index_train") else data.edge_index
+    #     return F.nll_loss(
+    #         self.forward(data.x, edge_index, None if "norm_aggr" not in data else data.norm_aggr)[data.train_mask],
+    #         data.y[data.train_mask],
+    #     )
 
     def predict(self, data):
         return self.forward(data.x, data.edge_index, None if "norm_aggr" not in data else data.norm_aggr)

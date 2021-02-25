@@ -9,7 +9,6 @@ from tqdm import tqdm
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificationModel
-from cogdl.trainers.sampled_trainer import SAINTTrainer
 from cogdl.trainers.self_auxiliary_task_trainer import SelfAuxiliaryTaskTrainer
 
 from . import BaseTask, register_task
@@ -51,42 +50,25 @@ class NodeClassification(BaseTask):
         self.set_loss_fn(dataset)
         self.set_evaluator(dataset)
 
-        self.trainer = (
-            self.model.get_trainer(NodeClassification, self.args)(self.args)
-            if self.model.get_trainer(NodeClassification, self.args)
-            else None
-        )
-
+        self.trainer = self.get_trainer(self.model, self.args)
         if not self.trainer:
-            if hasattr(self.args, "trainer") and self.args.trainer is not None:
-                if "saint" in self.args.trainer:
-                    self.trainer = SAINTTrainer(self.args)
-                elif "self_auxiliary_task" in self.args.trainer:
-                    if not hasattr(self.model, "get_embeddings"):
-                        raise ValueError("Model ({}) must implement get_embeddings method".format(self.model_name))
-                    self.trainer = SelfAuxiliaryTaskTrainer(self.args)
-            else:
-                self.optimizer = (
-                    torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-                    if not hasattr(self.model, "get_optimizer")
-                    else self.model.get_optimizer(args)
-                )
-                self.data.apply(lambda x: x.to(self.device))
-                self.model: SupervisedHomogeneousNodeClassificationModel = self.model.to(self.device)
-                self.patience = args.patience
-                self.max_epoch = args.max_epoch
+            self.optimizer = (
+                torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+                if not hasattr(self.model, "get_optimizer")
+                else self.model.get_optimizer(args)
+            )
+            self.data.apply(lambda x: x.to(self.device))
+            self.model: SupervisedHomogeneousNodeClassificationModel = self.model.to(self.device)
+            self.patience = args.patience
+            self.max_epoch = args.max_epoch
 
     def train(self):
         if self.trainer:
-            if isinstance(self.trainer, SAINTTrainer):
-                self.model = self.trainer.fit(self.model, self.dataset)
-                self.data.apply(lambda x: x.to(self.device))
+            result = self.trainer.fit(self.model, self.dataset)
+            if issubclass(type(result), torch.nn.Module):
+                self.model = result
             else:
-                result = self.trainer.fit(self.model, self.dataset)
-                if issubclass(type(result), torch.nn.Module):
-                    self.model = result
-                else:
-                    return result
+                return result
         else:
             epoch_iter = tqdm(range(self.max_epoch))
             patience = 0

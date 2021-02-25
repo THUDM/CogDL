@@ -2,11 +2,10 @@ import random
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch_geometric.nn import DynamicEdgeConv, global_max_pool
 
 from .. import BaseModel, register_model
-from .gin import GINMLP
+from .mlp import MLP
 from cogdl.data import DataLoader, Data
 
 
@@ -67,10 +66,10 @@ class DGCNN(BaseModel):
     def __init__(self, in_feats, hidden_dim, out_feats, k=20, dropout=0.5):
         super(DGCNN, self).__init__()
         mlp1 = nn.Sequential(
-            GINMLP(2 * in_feats, hidden_dim, hidden_dim, num_layers=3), nn.ReLU(), nn.BatchNorm1d(hidden_dim)
+            MLP(2 * in_feats, hidden_dim, hidden_dim, num_layers=3, norm="batchnorm"), nn.ReLU(), nn.BatchNorm1d(hidden_dim)
         )
         mlp2 = nn.Sequential(
-            GINMLP(2 * hidden_dim, 2 * hidden_dim, 2 * hidden_dim, num_layers=1),
+            MLP(2 * hidden_dim, 2 * hidden_dim, 2 * hidden_dim, num_layers=1, norm="batchnorm"),
             nn.ReLU(),
             nn.BatchNorm1d(2 * hidden_dim),
         )

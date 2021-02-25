@@ -159,7 +159,7 @@ def add_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):
 def add_remaining_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):
     device = edge_index.device
     if edge_weight is None:
-        edge_weight = torch.ones(edge_index.shape[1]).to(device)
+        edge_weight = torch.ones(edge_index.shape[1], device=device)
     if num_nodes is None:
         num_nodes = torch.max(edge_index) + 1
     if fill_value is None:
@@ -216,8 +216,10 @@ def spmm(indices, values, b):
     return output
 
 
-def spmm_adj(indices, values, shape, b):
-    adj = torch.sparse_coo_tensor(indices=indices, values=values, size=shape)
+def spmm_adj(indices, values, b, num_nodes=None):
+    if num_nodes is None:
+        num_nodes = torch.max(indices) + 1
+    adj = torch.sparse_coo_tensor(indices=indices, values=values, size=(num_nodes, num_nodes))
     return torch.spmm(adj, b)
 
 

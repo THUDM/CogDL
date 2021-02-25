@@ -3,22 +3,31 @@ Install
 
 - Python version >= 3.6
 - PyTorch version >= 1.6.0
-- PyTorch Geometric (recommended)
-- Deep Graph Library (optional)
 
-Please follow the instructions here to install PyTorch: https://github.com/pytorch/pytorch#installation, PyTorch Geometric https://github.com/rusty1s/pytorch_geometric/#installation and Deep Graph Library https://docs.dgl.ai/install/index.html.
+Please follow the instructions here to install PyTorch (https://github.com/pytorch/pytorch#installation).
 
-Install cogdl with other dependencies: 
+When PyTorch has been installed, cogdl can be installed using pip as follows:
 
-.. code-block:: python
+.. code-block:: bash
 
     pip install cogdl
 
 
-If you want to experiment with the latest CogDL features which did not get released yet, you can install CogDL via:
+Install from source via:
 
-.. code-block:: python
+.. code-block:: bash
+
+    pip install git+https://github.com/thudm/cogdl.git
+
+
+Or clone the repository and install with the following commands:
+
+.. code-block:: bash
 
     git clone git@github.com:THUDM/cogdl.git
     cd cogdl
     pip install -e .
+
+
+If you want to use the modules from PyTorch Geometric (PyG), and Deep Graph Library (DGL), 
+you can follow the instructions to install PyTorch Geometric (https://github.com/rusty1s/pytorch_geometric/#installation) and Deep Graph Library (https://docs.dgl.ai/install/index.html).

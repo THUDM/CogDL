@@ -26,6 +26,7 @@ def get_parser():
                         help='which GPU to use')
     parser.add_argument('--save-dir', default='.', type=str)
     parser.add_argument('--checkpoint', action="store_true", help='load pre-trained model')
+    parser.add_argument('--use-best-config', action='store_true', help='use best config')
 
     # fmt: on
     return parser

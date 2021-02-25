@@ -16,6 +16,7 @@ def get_default_args():
         "task": "unsupervised_node_classification",
         "checkpoint": False,
         "load_emb_path": None,
+        "training_percents": [0.1],
     }
     return build_args_from_dict(default_dict)
 
@@ -32,7 +33,7 @@ def test_deepwalk_wikipedia():
     args.iteration = 1
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 def test_line_ppi():
@@ -48,7 +49,7 @@ def test_line_ppi():
     args.order = 1
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 def test_node2vec_ppi():
@@ -65,7 +66,7 @@ def test_node2vec_ppi():
     args.q = 1.0
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 def test_hope_ppi():
@@ -76,7 +77,7 @@ def test_hope_ppi():
     args.beta = 0.001
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 def test_prone_module():
@@ -104,7 +105,7 @@ def test_grarep_ppi():
     args.step = 1
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 def test_netmf_ppi():
@@ -118,7 +119,7 @@ def test_netmf_ppi():
     args.is_large = False
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 def test_netsmf_ppi():
@@ -132,7 +133,7 @@ def test_netsmf_ppi():
     args.worker = 5
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 def test_prone_blogcatalog():
@@ -145,7 +146,7 @@ def test_prone_blogcatalog():
     args.mu = 0.2
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 def test_prone_ppi():
@@ -160,7 +161,7 @@ def test_prone_ppi():
     args.mu = 0.2
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 def test_prone_usa_airport():
@@ -173,7 +174,7 @@ def test_prone_usa_airport():
     args.mu = 0.2
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 def test_spectral_ppi():
@@ -183,7 +184,7 @@ def test_spectral_ppi():
     args.model = "spectral"
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 def test_sdne_ppi():
@@ -202,7 +203,7 @@ def test_sdne_ppi():
     args.lr = 0.001
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 def test_dngr_ppi():
@@ -219,7 +220,7 @@ def test_dngr_ppi():
     args.lr = 0.001
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 def get_unsupervised_nn_args():
@@ -241,6 +242,7 @@ def get_unsupervised_nn_args():
         "task": "unsupervised_node_classification",
         "checkpoint": False,
         "load_emb_path": None,
+        "training_percents": [0.1],
     }
     return build_args_from_dict(default_dict)
 
@@ -337,7 +339,7 @@ def test_gcc_usa_airport():
     args.load_path = "./saved/gcc_pretrained.pth"
     task = build_task(args)
     ret = task.train()
-    assert ret["Micro-F1 0.9"] > 0
+    assert ret["Micro-F1 0.1"] > 0
 
 
 if __name__ == "__main__":

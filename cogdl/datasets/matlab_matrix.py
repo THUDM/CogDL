@@ -4,6 +4,7 @@ from itertools import product
 import numpy as np
 import scipy.io
 import torch
+import time
 
 from cogdl.data import Data, Dataset
 from cogdl.utils import download_url
@@ -133,6 +134,7 @@ class NetworkEmbeddingCMTYDataset(Dataset):
     def download(self):
         for name in self.raw_file_names:
             download_url(self.url.format(name), self.raw_dir, name=name)
+            time.sleep(0.5)
 
     def process(self):
         filenames = self.raw_paths

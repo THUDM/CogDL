@@ -7,7 +7,6 @@ from torch.nn.parameter import Parameter
 
 from .. import BaseModel, register_model, BaseLayer
 from cogdl.utils import add_remaining_self_loops, symmetric_normalization, spmm_adj
-from cogdl.trainers.sampled_trainer import ClusterGCNTrainer
 
 
 class GraphConvolution(BaseLayer):

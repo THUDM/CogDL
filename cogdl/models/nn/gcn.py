@@ -5,19 +5,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
-from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, spmm, symmetric_normalization
+from .. import BaseModel, register_model, BaseLayer
+from cogdl.utils import add_remaining_self_loops, symmetric_normalization, spmm_adj
+from cogdl.trainers.sampled_trainer import ClusterGCNTrainer
 
 
-class GraphConvolution(nn.Module):
+class GraphConvolution(BaseLayer):
     """
-    Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
+        Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
-
-    def __init__(self, in_features, out_features, bias=True):
+    def __init__(self, in_features, out_features, bias=True, fast_conv=False):
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
+        self.fast_conv = fast_conv
         self.weight = Parameter(torch.FloatTensor(in_features, out_features))
         if bias:
             self.bias = Parameter(torch.FloatTensor(out_features))
@@ -31,15 +32,16 @@ class GraphConvolution(nn.Module):
         if self.bias is not None:
             self.bias.data.zero_()
 
-    def forward(self, input, edge_index, edge_attr=None):
-        if edge_attr is None:
-            edge_attr = torch.ones(edge_index.shape[1]).float().to(input.device)
-        support = torch.mm(input, self.weight)
-        output = spmm(edge_index, edge_attr, support)
-        if self.bias is not None:
-            return output + self.bias
+    def forward(self, x, edge_index, edge_attr=None):
+        support = torch.mm(x, self.weight)
+        if self.fast_conv:
+            out = self.spmm(edge_index, edge_attr, support)
         else:
-            return output
+            out = spmm_adj(edge_index, edge_attr, support, num_nodes=x.shape[0])
+        if self.bias is not None:
+            return out + self.bias
+        else:
+            return out
 
     def __repr__(self):
         return self.__class__.__name__ + " (" + str(self.in_features) + " -> " + str(self.out_features) + ")"
@@ -75,9 +77,10 @@ class TKipfGCN(BaseModel):
     def __init__(self, in_feats, hidden_size, out_feats, num_layers, dropout):
         super(TKipfGCN, self).__init__()
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
-        self.layers = nn.ModuleList([GraphConvolution(shapes[i], shapes[i + 1]) for i in range(num_layers)])
+        self.layers = nn.ModuleList([GraphConvolution(shapes[i], shapes[i + 1], fast_conv=False) for i in range(num_layers)])
         self.num_layers = num_layers
         self.dropout = dropout
+        self.cache = dict()
 
     def get_embeddings(self, x, edge_index):
         edge_index, edge_attr = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])
@@ -90,16 +93,14 @@ class TKipfGCN(BaseModel):
         return h
 
     def forward(self, x, edge_index):
-
         edge_index, edge_attr = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])
         edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
-
         h = x
         for i in range(self.num_layers):
-            h = F.dropout(h, self.dropout, training=self.training)
             h = self.layers[i](h, edge_index, edge_attr)
             if i != self.num_layers - 1:
                 h = F.relu(h)
+                h = F.dropout(h, self.dropout, training=self.training)
         return h
 
     def predict(self, data):

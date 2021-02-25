@@ -4,7 +4,7 @@ import argparse
 from cogdl.datasets import DATASET_REGISTRY, try_import_dataset
 from cogdl.models import MODEL_REGISTRY, try_import_model
 from cogdl.tasks import TASK_REGISTRY
-from cogdl.trainers import UNIVERSAL_TRAINER_REGISTRY, try_import_universal_trainer
+from cogdl.trainers import TRAINER_REGISTRY, try_import_trainer
 
 
 def get_parser():
@@ -62,8 +62,9 @@ def add_model_args(parser):
 def add_trainer_args(parser):
     group = parser.add_argument_group("Trainer configuration")
     # fmt: off
-    group.add_argument('--trainer', metavar='TRAINER', nargs='+', required=False,
+    group.add_argument('--trainer', metavar='TRAINER', required=False,
                        help='Trainer')
+    group.add_argument('--eval-step', type=int, default=1)
     # fmt: on
     return group
 
@@ -120,10 +121,10 @@ def parse_args_and_arch(parser, args):
             if hasattr(DATASET_REGISTRY[dataset], "add_args"):
                 DATASET_REGISTRY[dataset].add_args(parser)
     if "trainer" in args and args.trainer is not None:
-        for trainer in args.trainer:
-            if try_import_universal_trainer(trainer):
-                if hasattr(UNIVERSAL_TRAINER_REGISTRY[trainer], "add_args"):
-                    UNIVERSAL_TRAINER_REGISTRY[trainer].add_args(parser)
+        # for trainer in args.trainer:
+        if try_import_trainer(args.trainer):
+            if hasattr(TRAINER_REGISTRY[args.trainer], "add_args"):
+                TRAINER_REGISTRY[args.trainer].add_args(parser)
     # Parse a second time.
     args = parser.parse_args()
 

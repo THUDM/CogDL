@@ -5,6 +5,8 @@ import torch
 import numpy as np
 import scipy.sparse as sparse
 
+import time
+
 
 @numba.njit
 def reindex(node_idx, col):
@@ -170,6 +172,8 @@ class Data(object):
         attributes.
         """
         for key, item in self(*keys):
+            if not isinstance(item, torch.Tensor):
+                continue
             self[key] = func(item)
         return self
 
@@ -195,10 +199,16 @@ class Data(object):
     def _build_adj_(self):
         if self.__adj is not None:
             return
+
         num_edges = self.edge_index.shape[1]
 
-        self.edge_row, col = self.edge_index.cpu()
-        self.edge_col = col.numpy()
+        if str(self.edge_index.device) == "cpu":
+            edge_index = self.edge_index
+        else:
+            edge_index = self.edge_index.cpu()
+        self.edge_row = edge_index[0]
+
+        self.edge_col = edge_index[1].numpy()
 
         self.node_idx = torch.unique(self.edge_index).cpu().numpy()
 
@@ -224,7 +234,6 @@ class Data(object):
         edge_index = torch.from_numpy(np.stack([row, col], axis=0)).to(self.x.device).long()
         keys = self.keys
 
-        print(keys)
         attrs = {key: self[key][node_idx] for key in keys if "edge" not in key and "node_idx" not in key}
         attrs["edge_index"] = edge_index
         if edge_attr is not None:
@@ -260,8 +269,10 @@ class Data(object):
         if isinstance(batch, torch.Tensor):
             batch = batch.cpu().numpy()
 
-        adj = self.__adj[batch].tocsr()
+        # t1 = time.time()
+        adj = self.__adj[batch]
         batch_size = len(batch)
+        # t2 = time.time()
         if size == -1:
             row, col = self.edge_row, self.edge_col
             _node_idx = self.node_idx
@@ -272,14 +283,18 @@ class Data(object):
             col = col.numpy()
             _node_idx = node_idx.numpy()
 
+        # t3 = time.time()
         # Reindexing: target nodes are always put at the front
         _node_idx = np.concatenate((batch, np.setdiff1d(_node_idx, batch)))
 
+        # t4 = time.time()
         new_col = torch.as_tensor(reindex(_node_idx, col), dtype=torch.long)
         edge_index = torch.stack([row.long(), new_col])
 
         node_idx = torch.as_tensor(_node_idx, dtype=torch.long).to(self.x.device)
         edge_index = edge_index.long().to(self.x.device)
+        # t5 = time.time()
+        # print(f"subgraph: {t2-t1:.5f}, sample_adj: {t3-t2: .5f}, reindexing: {t4-t3: .5f}, tensoring:{t5-t4:.5f}, total: {t5-t1}")
         return node_idx, edge_index
 
     def _sample_adj(self, batch_size, indices, indptr, size):

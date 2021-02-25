@@ -18,10 +18,10 @@ from cogdl.utils.self_auxiliary_task import (
     PairwiseAttrSim,
     Distance2ClustersPP,
 )
-from . import register_universal_trainer
+from . import register_trainer
 
 
-@register_universal_trainer("self_auxiliary_task")
+@register_trainer("self_auxiliary_task")
 class SelfAuxiliaryTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):

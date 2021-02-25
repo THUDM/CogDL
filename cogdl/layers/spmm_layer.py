@@ -3,7 +3,7 @@ import torch
 from torch.utils.cpp_extension import load
 
 path = os.path.realpath(__file__)
-path = os.path.join(os.path.dirname(path), "../tools")
+path = os.path.join(os.path.dirname(path), "../operators")
 
 if not torch.cuda.is_available():
     spmm = None

@@ -32,11 +32,13 @@ class AutoML(object):
         self.metric = kwargs["metric"] if "metric" in kwargs else None
         self.n_trials = n_trials
         self.best_value = None
+        self.best_params = None
         self.default_params = kwargs
 
     def _objective(self, trials):
         params = self.default_params
-        params.update(self.func_search(trials))
+        cur_params = self.func_search(trials)
+        params.update(cur_params)
         result_dict = raw_experiment(task=self.task, dataset=self.dataset, model=self.model, seed=self.seed, **params)
         result_list = list(result_dict.values())[0]
         item = result_list[0]
@@ -53,6 +55,7 @@ class AutoML(object):
 
         if self.best_value is None or mean > self.best_value:
             self.best_value = mean
+            self.best_params = cur_params
             self.best_results = result_list
 
         return mean
@@ -60,6 +63,7 @@ class AutoML(object):
     def run(self):
         study = optuna.create_study(direction="maximize")
         study.optimize(self._objective, n_trials=self.n_trials, n_jobs=1)
+        print("best value:", self.best_value, "best params:", self.best_params)
 
         return self.best_results
 

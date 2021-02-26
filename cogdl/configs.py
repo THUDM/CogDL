@@ -168,6 +168,7 @@ BEST_CONFIGS = {
             "general": {"step": 10},
             "ppi-ne": {"mu": 0.0},
             "wikipedia": {"mu": -4.0},
+            "dblp-ne": {"mu": 0.5},
         },
         "sdne": {
             "general": {},

@@ -29,6 +29,7 @@ class AutoML(object):
         self.seed = kwargs.pop("seed") if "seed" in kwargs else [1]
         assert "func_search" in kwargs
         self.func_search = kwargs["func_search"]
+        self.metric = kwargs["metric"] if "metric" in kwargs else None
         self.n_trials = n_trials
         self.best_value = None
         self.default_params = kwargs
@@ -39,13 +40,14 @@ class AutoML(object):
         result_dict = raw_experiment(task=self.task, dataset=self.dataset, model=self.model, seed=self.seed, **params)
         result_list = list(result_dict.values())[0]
         item = result_list[0]
-        key = None
-        for _key in item.keys():
-            if "Val" in _key or "val" in _key:
-                key = _key
-                break
+        key = self.metric
         if key is None:
-            raise KeyError("Unable to find validation metrics")
+            for _key in item.keys():
+                if "Val" in _key or "val" in _key:
+                    key = _key
+                    break
+            if key is None:
+                raise KeyError("Unable to find validation metrics")
         val = [result[key] for result in result_list]
         mean = sum(val) / len(val)
 

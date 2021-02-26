@@ -106,7 +106,6 @@ class NetSMF(BaseModel):
         t1 = time.time()
         for res in results:
             matrix += res.get()
-        print("number of nzz", matrix.nnz)
         t2 = time.time()
         print("construct random walk matrix time", time.time() - t1)
 
@@ -115,6 +114,8 @@ class NetSMF(BaseModel):
         M = M * A.sum() / self.negative
         M.data[M.data <= 1] = 1
         M.data = np.log(M.data)
+        M.eliminate_zeros()
+        print("number of nzz", M.nnz)
         print("construct matrix sparsifier time", time.time() - t2)
 
         embedding = self._get_embedding_rand(M)
@@ -135,7 +136,7 @@ class NetSMF(BaseModel):
     def _path_sampling(self, u, v, r):
         # sample a r-length path from edge(u, v) and return path end node
         k = np.random.randint(r) + 1
-        zp, rand_u, rand_v = 1e-20, k - 1, r - k
+        zp, rand_u, rand_v = 2.0 / self.node_weight[u][v], k - 1, r - k
         for i in range(rand_u):
             new_u = self.neighbors[u][alias_draw(self.alias_nodes[u][0], self.alias_nodes[u][1])]
             zp += 2.0 / self.node_weight[u][new_u]

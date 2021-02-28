@@ -318,7 +318,7 @@ class MRWSampler(SAINTSampler):
             deg[id] = self.adj.indptr[v + 1] - self.adj.indptr[v]
             deg_sum += deg[id]
 
-        return self.extract_subgraph(np.array(edge_idx))
+        return self.edge_induction(np.array(edge_idx))
 
 
 class LayerSampler(Sampler):

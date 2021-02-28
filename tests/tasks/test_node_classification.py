@@ -239,6 +239,7 @@ def test_gcn_cora_sampler():
     args.dataset = "cora"
     args.trainer = "saint"
     args.model = "gcn"
+    args.valid_cpu = True
     args.cpu = True
     args.num_layers = 2
     args.sample_coverage = 20

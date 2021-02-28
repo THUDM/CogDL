@@ -79,8 +79,12 @@ class NodeClassification(BaseTask):
     def train(self):
         if self.trainer:
             if isinstance(self.trainer, SAINTTrainer):
-                self.model = self.trainer.fit(self.model, self.dataset)
-                self.data.apply(lambda x: x.to(self.device))
+                result = self.trainer.fit(self.model, self.dataset)
+                if issubclass(type(result), torch.nn.Module):
+                    self.data.apply(lambda x: x.to(self.device))
+                    self.model = result
+                else:
+                    return result
             else:
                 result = self.trainer.fit(self.model, self.dataset)
                 if issubclass(type(result), torch.nn.Module):

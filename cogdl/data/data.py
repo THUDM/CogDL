@@ -238,7 +238,7 @@ class Data(object):
             attrs["edge_attr"] = edge_attr
         return Data(**attrs)
 
-    def edge_subgraph(self, edge_idx, requrie_idx=False):
+    def edge_subgraph(self, edge_idx, require_idx=False):
         """Return the induced edge subgraph."""
         if isinstance(edge_idx, torch.Tensor):
             edge_idx = edge_idx.cpu().numpy()
@@ -258,7 +258,7 @@ class Data(object):
         attrs["edge_index"] = edge_index
         if edge_attr is not None:
             attrs["edge_attr"] = edge_attr
-        if requrie_idx:
+        if require_idx:
             return Data(**attrs), node_idx, edge_idx
         return Data(**attrs)
 

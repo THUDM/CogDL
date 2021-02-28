@@ -76,7 +76,10 @@ class SampledTrainer(BaseTrainer):
         self.model = best_model
         val_acc, _ = self._test_step(split="val")
         test_acc, _ = self._test_step(split="test")
-        return dict(MicroF1=test_acc, ValMicroF1=val_acc)
+        if isinstance(self.dataset, SAINTDataset):
+            return dict(MicroF1=test_acc, ValMicroF1=val_acc)
+        else:
+            return dict(Acc=test_acc, ValAcc=val_acc)
 
 
 @register_universal_trainer("saint")

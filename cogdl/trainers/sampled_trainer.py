@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 import argparse
 import copy
 import time
-from line_profiler import LineProfiler
 
 import numpy as np
 import torch

@@ -4,6 +4,7 @@ import scipy.sparse as sp
 from sklearn import preprocessing
 from sklearn.utils.extmath import randomized_svd
 from multiprocessing import Pool
+from tqdm import tqdm
 import time
 
 from cogdl.utils import alias_draw, alias_setup
@@ -97,7 +98,7 @@ class NetSMF(BaseModel):
         pool.join()
         print("random walk time", time.time() - t0)
 
-        matrix = sp.lil_matrix((self.num_node, self.num_node))
+        matrix = sp.csr_matrix((self.num_node, self.num_node))
         A = sp.csr_matrix(nx.adjacency_matrix(self.G))
         degree = sp.diags(np.array(A.sum(axis=0))[0], format="csr")
         degree_inv = degree.power(-1)
@@ -105,7 +106,6 @@ class NetSMF(BaseModel):
         t1 = time.time()
         for res in results:
             matrix += res.get()
-        print("number of nzz", matrix.nnz)
         t2 = time.time()
         print("construct random walk matrix time", time.time() - t1)
 
@@ -114,6 +114,8 @@ class NetSMF(BaseModel):
         M = M * A.sum() / self.negative
         M.data[M.data <= 1] = 1
         M.data = np.log(M.data)
+        M.eliminate_zeros()
+        print("number of nzz", M.nnz)
         print("construct matrix sparsifier time", time.time() - t2)
 
         embedding = self._get_embedding_rand(M)
@@ -134,7 +136,7 @@ class NetSMF(BaseModel):
     def _path_sampling(self, u, v, r):
         # sample a r-length path from edge(u, v) and return path end node
         k = np.random.randint(r) + 1
-        zp, rand_u, rand_v = 1e-20, k - 1, r - k
+        zp, rand_u, rand_v = 2.0 / self.node_weight[u][v], k - 1, r - k
         for i in range(rand_u):
             new_u = self.neighbors[u][alias_draw(self.alias_nodes[u][0], self.alias_nodes[u][1])]
             zp += 2.0 / self.node_weight[u][new_u]
@@ -149,15 +151,11 @@ class NetSMF(BaseModel):
         # construct matrix based on random walk
         np.random.seed(pid)
         matrix = sp.lil_matrix((self.num_node, self.num_node))
-        t0 = time.time()
-        for round in range(int(self.num_round / self.worker)):
-            if round % 10 == 0 and pid == 0:
-                print("round %d / %d, time: %lf" % (round * self.worker, self.num_round, time.time() - t0))
-            for i in range(self.num_edge):
-                u, v = self.edges[i]
-                if not self.is_directed and np.random.rand() > 0.5:
-                    v, u = self.edges[i]
-                for r in range(1, self.window_size + 1):
-                    u_, v_, zp = self._path_sampling(u, v, r)
-                    matrix[u_, v_] += 2 * r / self.window_size / self.num_round / zp
-        return matrix
+        for i in tqdm(range(self.num_edge * self.num_round // self.worker)):
+            u, v = self.edges[i % self.num_edge]
+            if not self.is_directed and np.random.rand() > 0.5:
+                v, u = u, v
+            for r in range(1, self.window_size + 1):
+                u_, v_, zp = self._path_sampling(u, v, r)
+                matrix[u_, v_] += 2 * r / self.window_size / self.num_round / zp
+        return matrix.tocsr()

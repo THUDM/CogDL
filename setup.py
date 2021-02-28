@@ -80,7 +80,7 @@ setup(
         "grave",
         "scikit_learn",
         "tabulate",
-        "optuna",
+        "optuna == 2.4.0",
         "texttable",
         "ogb",
         "emoji",

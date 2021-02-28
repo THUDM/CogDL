@@ -1,14 +1,16 @@
 import json
-import torch
-import numpy as np
 import os.path as osp
+import time
+
+import numpy as np
 import scipy.sparse as sp
+import torch
+from cogdl.data import Data, Dataset
+from cogdl.utils import accuracy, bce_with_logits_loss, cross_entropy_loss, download_url, multilabel_f1
 from sklearn.preprocessing import StandardScaler
 
-from cogdl.data import Data, Dataset
-from cogdl.utils import download_url, accuracy, multilabel_f1, bce_with_logits_loss, cross_entropy_loss
-from .planetoid_data import index_to_mask
 from . import register_dataset
+from .planetoid_data import index_to_mask
 
 
 def read_saint_data(folder):
@@ -89,6 +91,7 @@ class SAINTDataset(Dataset):
     def download(self):
         for name in self.raw_file_names:
             download_url(self.url.format(name), self.raw_dir, name=name)
+            time.sleep(0.5)
 
     def process(self):
         data = read_saint_data(self.raw_dir)

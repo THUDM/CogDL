@@ -32,14 +32,22 @@ class GENConv(nn.Module):
         self.aggr = aggr
         if aggr == "softmax_sg":
             self.beta = torch.nn.Parameter(
-                torch.Tensor([beta,]),
+                torch.Tensor(
+                    [
+                        beta,
+                    ]
+                ),
                 requires_grad=learn_beta,
             )
         else:
             self.register_buffer("beta", None)
         if aggr == "powermean":
             self.p = torch.nn.Parameter(
-                torch.Tensor([p,]),
+                torch.Tensor(
+                    [
+                        p,
+                    ]
+                ),
                 requires_grad=learn_p,
             )
         else:

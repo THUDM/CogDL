@@ -152,15 +152,22 @@ BEST_CONFIGS = {
         },
         "netmf": {
             "general": {},
+            "ppi-ne": {"window_size": 10, "is_large": True},
+            "blogcatalog": {"window_size": 10, "is_large": True},
+            "wikipedia": {"window_size": 1},
         },
         "netsmf": {
-            "general": {"window_size": 5},
+            "general": {"window_size": 10, "num_round": 1000},
+            "wikipedia": {"window_size": 1},
+            "blogcatalog": {"num_round": 10000},
         },
         "node2vec": {
             "general": {},
         },
         "prone": {
-            "general": {},
+            "general": {"step": 10},
+            "ppi-ne": {"mu": 0.0},
+            "wikipedia": {"mu": -4.0},
         },
         "sdne": {
             "general": {},

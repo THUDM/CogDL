@@ -8,17 +8,16 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-**[Homepage](http://keg.cs.tsinghua.edu.cn/cogdl)** | **[BAAI link](http://open.baai.ac.cn/cogdl-toolkit)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Leaderboards](./cogdl/tasks/README.md)** | **[Datasets](./cogdl/datasets/README.md)** | **[中文](./README_CN.md)**
+**[Homepage](http://keg.cs.tsinghua.edu.cn/cogdl)** | **[Leaderboards](./cogdl/tasks/README.md)** | **[Documentation](https://cogdl.readthedocs.io)** | **[BAAI link](http://open.baai.ac.cn/cogdl-toolkit)** |  **[Datasets](./cogdl/datasets/README.md)** | **[中文](./README_CN.md)**
 
-CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or custom models for node classification, link prediction and other tasks on graphs. It provides implementations of many popular models, including: non-GNN Baselines like Deepwalk, LINE, NetMF, GNN Baselines like GCN, GAT, GraphSAGE.
+CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or customized models for node classification, graph classification, and other important tasks in the graph domain. 
 
-CogDL features:
+We summarize the contributions of CogDL as follows:
 
-- Task-Oriented: CogDL focuses on tasks on graphs and provides corresponding models, datasets, and leaderboards.
-- Easy-Running: CogDL supports running multiple experiments simultaneously on multiple models and datasets under a specific task using multiple GPUs.
-- Multiple Tasks: CogDL supports node classification and link prediction tasks on homogeneous/heterogeneous networks, as well as graph classification.
-- Extensibility: You can easily add new datasets, models and tasks and conduct experiments for them!
-
+- **High Efficiency**: CogDL utilizes well-optimized operators to speed up training and save GPU memory of GNN models.
+- **Easy-to-Use**: CogDL provides easy-to-use APIs for running experiments with the given models and datasets using hyper-parameter search.
+- **Extensibility**: The design of CogDL makes it easy to apply GNN models to new scenarios based on our framework.
+- **Reproducibility**: CogDL provides reproducible leaderboards for state-of-the-art models on most of important tasks in the graph domain.
 
 ## ❗ News
 
@@ -34,10 +33,8 @@ CogDL features:
 
 - Python version >= 3.6
 - PyTorch version >= 1.6.0
-- PyTorch Geometric (recommended)
-- Deep Graph Library (optional)
 
-Please follow the instructions here to install PyTorch (https://github.com/pytorch/pytorch#installation), PyTorch Geometric (https://github.com/rusty1s/pytorch_geometric/#installation), and Deep Graph Library (https://docs.dgl.ai/install/index.html).
+Please follow the instructions here to install PyTorch (https://github.com/pytorch/pytorch#installation).
 
 When PyTorch has been installed, cogdl can be installed using pip as follows:
 
@@ -167,6 +164,12 @@ And then clone your fork or this repository into the cogdl folder:
 ```
 git clone https://github.com/THUDM/cogdl /cogdl
 ```
+
+## Other libraries
+
+If you are familiar with other popular graph libraries, you can implement your own model in CogDL using modules from PyTorch Geometric (PyG), and Deep Graph Library (DGL).
+For the installation of these two libraries, you can follow the instructions from PyG (https://github.com/rusty1s/pytorch_geometric/#installation), and DGL (https://docs.dgl.ai/install/index.html).
+For the quick-start usage of how to use layers of PyG, you can find some examples in the [examples/pytorch_geometric](https://github.com/THUDM/cogdl/tree/master/examples/pytorch_geometric/).
 
 ## Contributing
 

@@ -25,6 +25,7 @@ node_classification:
     - dropedge_gcn
     - unet
     - pprgo
+    - graphsaint
     dataset:
     - cora
     - citeseer

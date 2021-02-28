@@ -57,6 +57,7 @@ unsupervised_node_classification:
     - ppi-ne
     - blogcatalog
     - wikipedia
+    - flickr-ne
     - usa-airport
     - youtube-ne
     - dblp-ne

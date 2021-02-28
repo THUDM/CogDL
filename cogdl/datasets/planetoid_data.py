@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from cogdl.data import Dataset, Data
-from cogdl.utils import remove_self_loops, download_url
+from cogdl.utils import remove_self_loops, download_url, untar
 from . import register_dataset
 
 
@@ -128,7 +128,7 @@ class Planetoid(Dataset):
     <https://arxiv.org/abs/1603.08861>`_ paper.
     """
 
-    url = "https://cloud.tsinghua.edu.cn/d/9b799d61c8544befbb41/files/?p=%2F"
+    url = "https://cloud.tsinghua.edu.cn/d/6808093f7f8042bfa1f0/files/?p=%2F"
 
     def __init__(self, root, name, split="public", num_train_per_class=20, num_val=500, num_test=1000):
         self.name = name
@@ -163,8 +163,9 @@ class Planetoid(Dataset):
         return int(torch.max(self.data.y)) + 1
 
     def download(self):
-        for name in self.raw_file_names:
-            download_url("{}{}&dl=1".format(self.url, name), self.raw_dir, name=name)
+        fname = "{}.zip".format(self.name.lower())
+        download_url("{}{}.zip&dl=1".format(self.url, self.name.lower()), self.raw_dir, fname)
+        untar(self.raw_dir, fname)
 
     def process(self):
         data = read_planetoid_data(self.raw_dir, self.name)

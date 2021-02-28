@@ -1,7 +1,7 @@
 import importlib
 
 from cogdl.data.dataset import Dataset
-from .customizezd_data import CustomizedGraphClassificationDataset, CustomizedNodeClassificationDataset, BaseDataset
+from .customized_data import CustomizedGraphClassificationDataset, CustomizedNodeClassificationDataset, BaseDataset
 
 try:
     import torch_geometric

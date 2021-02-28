@@ -17,6 +17,14 @@ CogDL now supports the following models for different tasks:
 
 - supervised graph classification: GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km), DiffPool [(Ying et al, NeuIPS'18)](https://arxiv.org/abs/1806.08804), SortPool [(Zhang et al, AAAI'18)](https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf), PATCH_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf), DGCNN [(Wang et al, ACM Transactions on Graphics'17)](https://arxiv.org/abs/1801.07829).
 
+> `metis` is required to run ClusterGCN, you can follow the following steps to install `metis`.
+1) Download metis-5.1.0.tar.gz from http://glaros.dtc.umn.edu/gkhome/metis/metis/download and unpack it
+2) cd metis-5.1.0
+3) make config shared=1 prefix=~/.local/
+4) make install
+5) export METIS_DLL=~/.local/lib/libmetis.so
+6) pip install metis
+
 ## Specific parameters
 
 for DeepWalk and node2vec:

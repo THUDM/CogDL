@@ -7,6 +7,7 @@ import torch
 import torch.utils.data
 
 from cogdl.data import Data
+from cogdl.utils import remove_self_loops
 
 
 class Sampler:
@@ -412,6 +413,48 @@ class NeighborSampler(torch.utils.data.DataLoader):
             return src_id, edge_index, size
         else:
             return batch, node_id, adj_list[::-1]
+
+
+class ClusteredLoader(torch.utils.data.DataLoader):
+    metis_tool = None
+
+    def __init__(self, data: Data, n_cluster: int, **kwargs):
+        try:
+            import metis
+
+            ClusteredLoader.metis_tool = metis
+        except Exception as e:
+            print(e)
+            exit(1)
+
+        self.data = data
+        self.clusters = self.preprocess(n_cluster)
+        super(ClusteredLoader, self).__init__(list(range(n_cluster)), collate_fn=self.batcher, **kwargs)
+
+    def preprocess(self, n_cluster):
+        print("Preprocessing...")
+        edges = self.data.edge_index
+        edges, _ = remove_self_loops(edges)
+        if str(edges.device) != "cpu":
+            edges = edges.cpu()
+        edges = edges.numpy()
+        num_nodes = np.max(edges) + 1
+        adj = sp.csr_matrix((np.ones(edges.shape[1]), (edges[0], edges[1])), shape=(num_nodes, num_nodes))
+        indptr = adj.indptr
+        indptr = np.split(adj.indices, indptr[1:])[:-1]
+        _, parts = ClusteredLoader.metis_tool.part_graph(indptr, n_cluster, seed=1)
+        division = [[] for _ in range(n_cluster)]
+        for i, v in enumerate(parts):
+            division[v].append(i)
+        for k in range(len(division)):
+            division[k] = np.array(division[k], dtype=np.int)
+        print("Graph clustering over")
+        return division
+
+    def batcher(self, batch):
+        nodes = np.concatenate([self.clusters[i] for i in batch])
+        subgraph = self.data.subgraph(nodes)
+        return subgraph
 
 
 """class FastGCNSampler(LayerSampler):

@@ -7,7 +7,17 @@ BEST_CONFIGS = {
             "citeseer": {"weight_decay": 0.001},
             "pubmed": {"weight_decay": 0.001},
         },
-        "gcn": {"general": {}},
+        "gcn": {
+            "general": {},
+            "ppi-large": {
+                "lr": 0.005,
+                "hidden_size": 2048,
+                "num_layers": 2,
+                "dropout": 0.3,
+                "max_epoch": 7000,
+                # 78.04
+            },
+        },
         "gcnii": {
             "general": {
                 "max_epoch": 1000,
@@ -36,6 +46,28 @@ BEST_CONFIGS = {
                 "dropout": 0.5,
                 "wd1": 5e-4,
             },
+            "reddit": {
+                "num_layers": 3,
+                "hidden_size": 256,
+                "alpha": 0.2,
+                "wd1": 0,
+                "wd2": 0,
+                "lr": 0.001,
+                "residual": True,
+                "max_epoch": 1000,
+                "lmbda": 1.0,
+                # 96.42
+            },
+            "flickr": {
+                "lr": 0.002,
+                "num_layers": 4,
+                "residual": True,
+                "wd1": 0.0005,
+                "wd2": 0.0005,
+                "lmbda": 1.0,
+                "alpha": 0.1,
+            }
+            # 52.54
         },
         "gdc_gcn": {
             "general": {"hidden_size": 16},
@@ -121,6 +153,60 @@ BEST_CONFIGS = {
                 "improved": False,
                 "n_pool": 4,
                 "pool_rate": [0.7, 0.5, 0.5, 0.4],
+            },
+        },
+        "ppnp": {
+            "flickr": {
+                "lr": 0.005,
+                "weight_decay": 0.001,
+                "dropout": 0.3,
+                "num_layers": 2,
+                "hidden_size": 256,
+                "max_epoch": 1000,
+                "num_iterations": 4,
+                "alpha": 0.5,
+                # 0.5227
+            },
+            "cora": {
+                "lr": 0.01,
+                "weight_decay": 0.000887,
+                "alpha": 0.1087,
+                "num_iterations": 7,
+                "num_layers": 2,
+                "max_epoch": 1000,
+                "hidden_size": 32,
+                "dropout": 0.8185,
+                #
+            },
+            "citeseer": {
+                "num_iterations": 4,
+                "hidden_size": 128,
+                "lr": 0.01,
+                "dropout": 0.3095,
+                "alpha": 0.171,
+                "weight_decay": 0.0004117,
+                "num_layers": 2,
+                "max_epoch": 1000,
+                # 0.7199
+            },
+            "pubmed": {
+                "num_iterations": 10,
+                "hidden_size": 256,
+                "dropout": 0.3766,
+                "alpha": 0.1201,
+                "weight_decay": 0.0002754,
+                "max_epoch": 1000,
+                "lr": 0.001,
+            },
+            "reddit": {
+                "lr": 0.005,
+                "hidden_size": 256,
+                "dropout": 0.3751,
+                "alpha": 0.1995,
+                "num_layers": 3,
+                "weight_decay": 5.918e-6,
+                "num_iterations": 3,
+                # 96.26
             },
         },
     },

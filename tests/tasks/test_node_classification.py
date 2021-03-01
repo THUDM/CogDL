@@ -235,6 +235,19 @@ def test_pyg_gcn_cora():
     assert 0 <= ret["Acc"] <= 1
 
 
+def test_clustergcn_cora():
+    args = get_default_args()
+    args.dataset = "pubmed"
+    args.model = "gcn"
+    args.trainer = "clustergcn"
+    args.cpu = True
+    args.batch_size = 3
+    args.n_cluster = 20
+    args.eval_step = 1
+    task = build_task(args)
+    assert 0 <= task.train()["Acc"] <= 1
+
+
 def test_gcn_cora_sampler():
     args = get_default_args()
     args.task = "node_classification"
@@ -663,19 +676,6 @@ def test_gcn_ppi():
     args.dataset = "ppi"
     args.model = "gcn"
     args.cpu = True
-    task = build_task(args)
-    assert 0 <= task.train()["Acc"] <= 1
-
-
-def test_clustergcn_cora():
-    args = get_default_args()
-    args.dataset = "cora"
-    args.model = "gcn"
-    args.trainer = "clustergcn"
-    args.cpu = True
-    args.batch_size = 3
-    args.n_cluster = 20
-    args.eval_step = 1
     task = build_task(args)
     assert 0 <= task.train()["Acc"] <= 1
 

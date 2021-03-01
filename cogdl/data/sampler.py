@@ -442,7 +442,7 @@ class ClusteredLoader(torch.utils.data.DataLoader):
         adj = sp.csr_matrix((np.ones(edges.shape[1]), (edges[0], edges[1])), shape=(num_nodes, num_nodes))
         indptr = adj.indptr
         indptr = np.split(adj.indices, indptr[1:])[:-1]
-        _, parts = ClusteredLoader.partition_tool.part_graph(indptr, n_part=n_cluster, seed=1)
+        _, parts = ClusteredLoader.partition_tool.part_graph(indptr, n_cluster, seed=1)
         division = [[] for _ in range(n_cluster)]
         for i, v in enumerate(parts):
             division[v].append(i)

@@ -8,3 +8,4 @@ cd ${file}
 make config shared=1 prefix=~/.local/
 make install
 export METIS_DLL="~/.local/lib/libmetis.so"
+cd ..

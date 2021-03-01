@@ -10,6 +10,10 @@ from cogdl.trainers.sampled_trainer import SAINTTrainer
 
 F_ACT = {"relu": nn.ReLU(), "I": lambda x: x}
 
+"""
+Borrowed from https://github.com/GraphSAINT/GraphSAINT
+"""
+
 
 class HighOrderAggregator(nn.Module):
     def __init__(self, dim_in, dim_out, dropout=0.0, act="relu", order=1, aggr="mean", bias="norm-nn", **kwargs):
@@ -117,6 +121,17 @@ class HighOrderAggregator(nn.Module):
         return adj_norm, feat_out  # return adj_norm to support Sequential
 
 
+def parse_arch(architecture, aggr, act, bias, hidden_size, num_features):
+    num_layers = len(architecture.split("-"))
+    # set default values, then update by arch_gcn
+    bias_layer = [bias] * num_layers
+    act_layer = [act] * num_layers
+    aggr_layer = [aggr] * num_layers
+    dims_layer = [hidden_size] * num_layers
+    order_layer = [int(order) for order in architecture.split("-")]
+    return [num_features] + dims_layer, order_layer, act_layer, bias_layer, aggr_layer
+
+
 @register_model("graphsaint")
 class GraphSAINT(BaseModel):
     @staticmethod
@@ -125,7 +140,10 @@ class GraphSAINT(BaseModel):
         # fmt: off
         parser.add_argument("--num-features", type=int)
         parser.add_argument("--hidden-size", type=int, default=128)
-        parser.add_argument("--num-layers", type=int, default=3)
+        parser.add_argument("--architecture", type=str, default="1-1-0")
+        parser.add_argument("--aggr", type=str, default="concat")
+        parser.add_argument("--act", type=str, default="relu")
+        parser.add_argument("--bias", type=str, default="norm")
         parser.add_argument("--dropout", type=float, default=0.1)
         parser.add_argument("--weight-decay", type=int, default=0)
         # fmt: on
@@ -135,13 +153,16 @@ class GraphSAINT(BaseModel):
         return cls(
             args.num_features,
             args.num_classes,
-            args.num_layers,
+            args.architecture,
+            args.aggr,
+            args.act,
+            args.bias,
             args.weight_decay,
             args.dropout,
             args.hidden_size,
         )
 
-    def __init__(self, num_features, num_classes, num_layers, weight_decay, dropout, hidden_size):
+    def __init__(self, num_features, num_classes, architecture, aggr, act, bias, weight_decay, dropout, hidden_size):
         """
         Build the multi-layer GNN architecture.
 
@@ -162,18 +183,15 @@ class GraphSAINT(BaseModel):
         super(GraphSAINT, self).__init__()
         self.aggregator_cls = HighOrderAggregator
         self.mulhead = 1
-        self.num_layers = num_layers
         self.weight_decay = weight_decay
         self.dropout = dropout
         self.sigmoid_loss = True
         self.num_classes = num_classes
-        self.order_layer = [1, 1, 0]
-        self.act_layer = ["relu"] * self.num_layers
-        self.bias_layer = ["norm"] * self.num_layers
-        self.aggr_layer = ["concat"] * self.num_layers
+        self.num_layers = len(architecture.split("-"))
+        _dims, self.order_layer, self.act_layer, self.bias_layer, self.aggr_layer = parse_arch(
+            architecture, aggr, act, bias, hidden_size, num_features
+        )
         # get layer index for each conv layer, useful for jk net last layer aggregation
-        _dims = [hidden_size] * self.num_layers
-        _dims = [num_features] + _dims
         self.set_idx_conv()
         self.set_dims(_dims)
 

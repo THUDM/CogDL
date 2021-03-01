@@ -13,7 +13,7 @@ install:
   - pip install dgl==0.4.3
   - pip install -r docs/requirements.txt
   - pip install -e .
-  - ./scripts/installation/metis.sh
+  - bash ./scripts/installation/metis.sh
 
 before_script:
   - black .

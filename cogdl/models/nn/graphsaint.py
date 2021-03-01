@@ -279,31 +279,7 @@ class GraphSAINT(BaseModel):
 
     def predict(self, data):
         return self(data)
-        # return nn.Sigmoid()(preds) if self.sigmoid_loss else F.softmax(preds, dim=1)
-
-    def train_step(self, node_subgraph, adj_subgraph, norm_loss_subgraph):
-        """
-        Forward and backward propagation
-        """
-        self.train()
-        self.optimizer.zero_grad()
-        preds, labels, labels_converted = self(node_subgraph, adj_subgraph)
-        loss = self._loss(preds, labels_converted, norm_loss_subgraph)  # labels.squeeze()?
-        loss.backward()
-        torch.nn.utils.clip_grad_norm(self.parameters(), 5)
-        self.optimizer.step()
-        return loss, self.predict(preds), labels
-
-    def eval_step(self, node_subgraph, adj_subgraph, norm_loss_subgraph):
-        """
-        Forward propagation only
-        """
-        self.eval()
-        with torch.no_grad():
-            print("eval:", norm_loss_subgraph)
-            preds, labels, labels_converted = self(node_subgraph, adj_subgraph)
-            loss = self._loss(preds, labels_converted, norm_loss_subgraph)
-        return loss, self.predict(preds), labels
+        # return nn.Sigmoid()(preds) if self.sigmoid_loss else F.softmax(preds, dim=1
 
     @staticmethod
     def get_trainer(task, args):

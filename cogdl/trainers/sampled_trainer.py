@@ -21,11 +21,11 @@ class SampledTrainer(BaseTrainer):
 
     @abstractmethod
     def _train_step(self):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def _test_step(self, split="val"):
-        pass
+        raise NotImplementedError
 
     def __init__(self, args):
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
@@ -65,7 +65,6 @@ class SampledTrainer(BaseTrainer):
                 else:
                     patience += 1
                     if patience == self.patience:
-                        self.model = best_model
                         epoch_iter.close()
                         break
         return best_model
@@ -247,6 +246,7 @@ class ClusterGCNTrainer(SampledTrainer):
         best_model = self.train()
         self.model = best_model
         metric, loss = self._test_step()
+
         return dict(Acc=metric["test"], ValAcc=metric["val"])
 
     def _train_step(self):

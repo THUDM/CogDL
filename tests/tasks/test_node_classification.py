@@ -21,7 +21,6 @@ def get_default_args():
         "task": "node_classification",
         "dataset": "cora",
         "checkpoint": False,
-        "sampler": "none",
         "auxiliary_task": "none",
     }
     return build_args_from_dict(default_dict)
@@ -668,6 +667,19 @@ def test_gcn_ppi():
     assert 0 <= task.train()["Acc"] <= 1
 
 
+def test_clustergcn_cora():
+    args = get_default_args()
+    args.dataset = "cora"
+    args.model = "gcn"
+    args.trainer = "clustergcn"
+    args.cpu = True
+    args.batch_size = 3
+    args.n_cluster = 20
+    args.eval_step = 1
+    task = build_task(args)
+    assert 0 <= task.train()["Acc"] <= 1
+
+
 if __name__ == "__main__":
     test_gdc_gcn_cora()
     test_gcn_cora()
@@ -698,3 +710,4 @@ if __name__ == "__main__":
     test_dropedge_resgcn_cora()
     test_dropedge_inceptiongcn_cora()
     test_dropedge_densegcn_cora()
+    test_clustergcn_cora()

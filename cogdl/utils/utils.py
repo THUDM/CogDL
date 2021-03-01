@@ -33,15 +33,6 @@ def build_args_from_dict(dic):
     return args
 
 
-def get_extra_args(args):
-    redundancy = {
-        "checkpoint": False,
-        "load_emb_path": None,
-    }
-    args = {**args, **redundancy}
-    return args
-
-
 def untar(path, fname, deleteTar=True):
     """
     Unpacks the given archive file to the same directory, then (by default)
@@ -246,7 +237,7 @@ def spmm(edge_index, edge_weight, x, num_nodes=None):
         x : Tensor, shape=(N, )
         num_nodes : Optional[int]
     """
-    if csrspmm is not None and str(x.device) != "cpu" and hasattr(_cache, "fast_spmm") and _cache["fast_spmm"]:
+    if csrspmm is not None and str(x.device) != "cpu" and "fast_spmm" in _cache and _cache["fast_spmm"] is True:
         (colptr, row_indices, csr_data, rowptr, col_indices, csc_data) = get_csr_ind(
             edge_index, edge_weight, x.shape[0]
         )

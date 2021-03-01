@@ -7,8 +7,3 @@ tar -xvf "${file}.tar"
 cd ${file}
 make config shared=1 prefix="~/.local/"
 make install
-export METIS_DLL="~/.local/lib/libmetis.so"
-echo $METIS_DLL
-echo $PWD
-ls ~/.local/lib
-cd ..

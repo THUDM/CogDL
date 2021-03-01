@@ -23,6 +23,7 @@ before_script:
 
 script:
   - export DGLBACKEND=pytorch
+  - export METIS_DLL=~/.local/libmetis.so
   - coverage run --source=cogdl -m pytest tests
   - cd docs && make clean && make html && cd ..
 

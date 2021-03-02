@@ -79,7 +79,6 @@ def test_unsupervised_node_classification():
     assert args.task == "unsupervised_node_classification"
     assert args.model[0] == "prone"
     assert args.dataset[0] == "ppi"
-    assert args.num_shuffle == 5
 
 
 if __name__ == "__main__":

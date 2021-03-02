@@ -29,8 +29,8 @@ This leaderboard reports unsupervised multi-label node classification setting. w
 | Rank | Method                                                                                                           |     PPI      |  Wikipedia   | Blogcatalog  |     DBLP     |    Flickr    |
 | ---- | ---------------------------------------------------------------------------------------------------------------- | :----------: | :----------: | :----------: | :----------: | :----------: |
 | 1    | NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971)                                                    | 23.73 ± 0.22 | 57.42 ± 0.56 | 42.47 ± 0.35 | 56.72 ± 0.14 | 36.27 ± 0.17 |
-| 2    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf)                                 | 24.60 ± 0.39 | 56.06 ± 0.48 | 41.14 ± 0.26 | 54.05 ± 0.44 | 36.56 ± 0.11 |
-| 3    | NetSMF [(Qiu et at, WWW'19)](https://arxiv.org/abs/1906.11156)                                                   | 21.67 ± 0.34 | 53.81 ± 0.58 | 34.76 ± 0.33 | 58.62 ± 0.25 | 35.49 ± 0.07 |
+| 2    | ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf)                                 | 24.60 ± 0.39 | 56.06 ± 0.48 | 41.14 ± 0.26 | 56.85 ± 0.28 | 36.56 ± 0.11 |
+| 3    | NetSMF [(Qiu et at, WWW'19)](https://arxiv.org/abs/1906.11156)                                                   | 23.88 ± 0.35 | 53.81 ± 0.58 | 40.62 ± 0.35 | 59.76 ± 0.41 | 35.49 ± 0.07 |
 | 4    | Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754)                           | 20.67 ± 0.54 | 54.59 ± 0.51 | 40.16 ± 0.29 | 57.36 ± 0.39 | 36.13 ± 0.13 |
 | 5    | LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578)                                                     | 21.82 ± 0.56 | 52.46 ± 0.26 | 38.06 ± 0.39 | 49.78 ± 0.37 | 31.61 ± 0.09 |
 | 6    | DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652)                                               | 20.74 ± 0.40 | 49.53 ± 0.54 | 40.48 ± 0.47 | 57.54 ± 0.32 | 36.09 ± 0.10 |

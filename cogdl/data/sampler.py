@@ -422,7 +422,7 @@ class ClusteredLoader(torch.utils.data.DataLoader):
         try:
             import metis
 
-            ClusteredLoader.partition_tool_tool = metis
+            ClusteredLoader.partition_tool = metis
         except Exception as e:
             print(e)
             exit(1)

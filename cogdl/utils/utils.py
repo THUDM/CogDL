@@ -14,12 +14,6 @@ import torch
 import torch.nn.functional as F
 from tabulate import tabulate
 
-try:
-    from cogdl.layers.spmm_layer import csrspmm
-except Exception as e:
-    print(e)
-    csrspmm = None
-
 
 class ArgClass(object):
     def __init__(self):
@@ -218,15 +212,19 @@ def spmm_adj(indices, values, x, num_nodes=None):
     return torch.spmm(adj, x)
 
 
+fast_spmm = None
 _cache = dict()
 
 
 def initialize_spmm(args):
-    global _cache
     if hasattr(args, "fast_spmm") and args.fast_spmm is True:
-        _cache["fast_spmm"] = True
-    else:
-        _cache["fast_spmm"] = False
+        try:
+            from cogdl.layers.spmm_layer import csrspmm
+
+            global fast_spmm
+            fast_spmm = csrspmm
+        except Exception as e:
+            print(e)
 
 
 def spmm(edge_index, edge_weight, x, num_nodes=None):
@@ -237,11 +235,11 @@ def spmm(edge_index, edge_weight, x, num_nodes=None):
         x : Tensor, shape=(N, )
         num_nodes : Optional[int]
     """
-    if csrspmm is not None and str(x.device) != "cpu" and "fast_spmm" in _cache and _cache["fast_spmm"] is True:
+    if fast_spmm is not None and str(x.device) != "cpu":
         (colptr, row_indices, csr_data, rowptr, col_indices, csc_data) = get_csr_ind(
             edge_index, edge_weight, x.shape[0]
         )
-        x = csrspmm(rowptr, col_indices, colptr, row_indices, x, csr_data, csc_data)
+        x = fast_spmm(rowptr, col_indices, colptr, row_indices, x, csr_data, csc_data)
     elif edge_weight.requires_grad:
         x = spmm_scatter(edge_index, edge_weight, x)
     else:

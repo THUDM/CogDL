@@ -149,7 +149,6 @@ class Grand(BaseModel):
         return x
 
     def rand_prop(self, x, edge_index, edge_weight):
-        edge_weight = symmetric_normalization(x.shape[0], edge_index, edge_weight)
         x = self.dropNode(x)
 
         y = x
@@ -180,9 +179,11 @@ class Grand(BaseModel):
         x = x * row_inv[:, None]
         return x
 
-    def forward(self, x, edge_index):
+    def forward(self, x, edge_index, edge_weight=None):
         x = self.normalize_x(x)
-        edge_weight = torch.ones(edge_index.shape[1], dtype=torch.float32).to(x.device)
+        if edge_weight is None:
+            edge_weight = torch.ones(edge_index.shape[1], dtype=torch.float32).to(x.device)
+        edge_weight = symmetric_normalization(x.shape[0], edge_index, edge_weight)
         x = self.rand_prop(x, edge_index, edge_weight)
         if self.use_bn:
             x = self.bn1(x)

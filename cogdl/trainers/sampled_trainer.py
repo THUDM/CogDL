@@ -4,16 +4,14 @@ import copy
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 from tqdm import tqdm
 
 from cogdl.data import Dataset
 from cogdl.data.sampler import NodeSampler, EdgeSampler, RWSampler, MRWSampler, NeighborSampler, ClusteredLoader
-from cogdl.datasets.saint_data import SAINTDataset
 from cogdl.models.supervised_model import SupervisedModel
 from cogdl.trainers.base_trainer import BaseTrainer
-from cogdl.utils import add_remaining_self_loops, multilabel_f1
-from cogdl.trainers import register_trainer
+from cogdl.utils import add_remaining_self_loops
+from . import register_trainer
 
 
 class SampledTrainer(BaseTrainer):
@@ -23,11 +21,11 @@ class SampledTrainer(BaseTrainer):
 
     @abstractmethod
     def _train_step(self):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def _test_step(self, split="val"):
-        pass
+        raise NotImplementedError
 
     def __init__(self, args):
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
@@ -67,7 +65,6 @@ class SampledTrainer(BaseTrainer):
                 else:
                     patience += 1
                     if patience == self.patience:
-                        self.model = best_model
                         epoch_iter.close()
                         break
         return best_model
@@ -141,12 +138,12 @@ class SAINTTrainer(SampledTrainer):
         self.optimizer.zero_grad()
 
         mask = self.data.train_mask
-        if isinstance(self.dataset, SAINTDataset):
+        if len(self.data.y.shape) > 1:
             logits = self.model.predict(self.data)
             weight = self.data.norm_loss[mask].unsqueeze(1)
             loss = torch.nn.BCEWithLogitsLoss(reduction="sum", weight=weight)(logits[mask], self.data.y[mask].float())
         else:
-            logits = F.log_softmax(self.model.predict(self.data))
+            logits = torch.nn.functional.log_softmax(self.model.predict(self.data))
             loss = (
                 torch.nn.NLLLoss(reduction="none")(logits[mask], self.data.y[mask]) * self.data.norm_loss[mask]
             ).sum()
@@ -163,9 +160,7 @@ class SAINTTrainer(SampledTrainer):
         masks = {"train": self.data.train_mask, "val": self.data.val_mask, "test": self.data.test_mask}
         with torch.no_grad():
             logits = self.model.predict(self.data)
-        # self.loss_fn(logits[val], self.data.y[val]) * self.data.norm_loss[val]
-        loss = {key: self.loss_fn(logits[val], self.data.y[val]) for key, val in masks.items()}
-        metric = {key: self.evaluator(logits[val], self.data.y[val]) for key, val in masks.items()}
+
         # if isinstance(self.dataset, SAINTDataset):
         #     weight = self.data.norm_loss.unsqueeze(1)
         #     loss = torch.nn.BCEWithLogitsLoss(reduction="sum", weight=weight)(logits, self.data.y.float())
@@ -177,6 +172,8 @@ class SAINTTrainer(SampledTrainer):
         #     ).sum()
         #     pred = logits[mask].max(1)[1]
         #     metric = pred.eq(self.data.y[mask]).sum().item() / mask.sum().item()
+        loss = {key: self.loss_fn(logits[val], self.data.y[val]) for key, val in masks.items()}
+        metric = {key: self.evaluator(logits[val], self.data.y[val]) for key, val in masks.items()}
         return metric, loss
 
 
@@ -281,6 +278,7 @@ class ClusterGCNTrainer(SampledTrainer):
         best_model = self.train()
         self.model = best_model
         metric, loss = self._test_step()
+
         return dict(Acc=metric["test"], ValAcc=metric["val"])
 
     def _train_step(self):
@@ -293,8 +291,91 @@ class ClusterGCNTrainer(SampledTrainer):
 
     def _test_step(self, split="val"):
         self.model.eval()
-        data = self.data.to(self.device)
-        # self.model = self.model.cpu()
+        data = self.data
+        self.model = self.model.cpu()
+        masks = {"train": self.data.train_mask, "val": self.data.val_mask, "test": self.data.test_mask}
+        with torch.no_grad():
+            logits = self.model.predict(data)
+        loss = {key: self.loss_fn(logits[val], self.data.y[val]) for key, val in masks.items()}
+        metric = {key: self.evaluator(logits[val], self.data.y[val]) for key, val in masks.items()}
+        return metric, loss
+
+
+@register_trainer("random_partition")
+class DeeperGCNTrainer(SampledTrainer):
+    @staticmethod
+    def add_args(parser):
+        # fmt: off
+        parser.add_argument("--n-cluster", type=int, default=10)
+        parser.add_argument("--batch-size", type=int, default=1)
+        # fmt: on
+
+    def __init__(self, args):
+        super(DeeperGCNTrainer, self).__init__(args)
+
+        self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
+        self.patience = args.patience // 5
+        self.max_epoch = args.max_epoch
+        self.lr = args.lr
+        self.weight_decay = args.weight_decay
+        self.cluster_number = args.n_cluster
+        self.batch_size = args.batch_size
+        self.data, self.optimizer, self.evaluator, self.loss_fn = None, None, None, None
+        self.edge_index, self.train_index = None, None
+
+    def generate_subgraph(self, data, parts, n_cluster):
+        subgraphs = []
+        for cluster in range(n_cluster):
+            node_cluster = np.where((parts == cluster))[0]
+            subgraph = data.subgraph(node_cluster)
+            subgraphs.append(subgraph)
+        return subgraphs
+
+    def random_partition_graph(self, num_nodes, cluster_number=10):
+        return np.random.randint(cluster_number, size=num_nodes)
+
+    def fit(self, model, dataset):
+        self.model = model.to(self.device)
+        self.data = dataset[0]
+
+        self.loss_fn = dataset.get_loss_fn()
+        self.evaluator = dataset.get_evaluator()
+
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        self.edge_index, _ = add_remaining_self_loops(
+            self.data.edge_index,
+            torch.ones(self.data.edge_index.shape[1]).to(self.data.x.device),
+            1,
+            self.data.x.shape[0],
+        )
+        self.train_index = torch.where(self.data.train_mask)[0].tolist()
+
+        best_model = self.train()
+        self.model = best_model
+        metric, loss = self._test_step()
+        return dict(Acc=metric["test"], ValAcc=metric["val"])
+
+    def _train_step(self):
+        self.model.train()
+        num_nodes = self.data.x.shape[0]
+
+        parts = self.random_partition_graph(num_nodes=num_nodes, cluster_number=self.cluster_number)
+        subgraphs = self.generate_subgraph(self.data, parts, self.cluster_number)
+        np.random.shuffle(subgraphs)
+
+        for batch in subgraphs:
+            self.optimizer.zero_grad()
+            batch = batch.to(self.device)
+            loss_n = self.model.node_classification_loss(batch)
+            loss_n.backward()
+            self.optimizer.step()
+            torch.cuda.empty_cache()
+
+    def _test_step(self, split="val"):
+        self.model.eval()
+        self.model = self.model.to("cpu")
+        data = self.data
+        self.model = self.model.cpu()
         masks = {"train": self.data.train_mask, "val": self.data.val_mask, "test": self.data.test_mask}
         with torch.no_grad():
             logits = self.model.predict(data)

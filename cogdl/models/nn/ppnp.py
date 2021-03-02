@@ -3,9 +3,8 @@ import torch.nn.functional as F
 
 from .. import BaseModel, register_model
 from cogdl.utils import add_remaining_self_loops, spmm
-
-from .gcn import TKipfGCN
 from .mlp import MLP
+
 
 @register_model("ppnp")
 class PPNP(BaseModel):
@@ -83,7 +82,7 @@ class PPNP(BaseModel):
             edge_index, edge_attr = self._calculate_A_hat(x, adj)
         # get prediction
         x = F.dropout(x, p=self.dropout, training=self.training)
-        local_preds = self.nn.forward(x, adj)
+        local_preds = self.nn.forward(x)
 
         # apply personalized pagerank
         if self.propagation == "ppnp":
@@ -96,7 +95,7 @@ class PPNP(BaseModel):
             preds = local_preds
             edge_attr = F.dropout(edge_attr, p=self.dropout, training=self.training)
             for _ in range(self.niter):
-                new_features = self.spmm(edge_index, edge_attr, preds)
+                new_features = spmm(edge_index, edge_attr, preds)
                 preds = (1 - self.alpha) * new_features + self.alpha * local_preds
             final_preds = preds
         return final_preds

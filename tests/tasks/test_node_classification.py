@@ -21,7 +21,6 @@ def get_default_args():
         "task": "node_classification",
         "dataset": "cora",
         "checkpoint": False,
-        "sampler": "none",
         "auxiliary_task": "none",
     }
     return build_args_from_dict(default_dict)
@@ -55,9 +54,11 @@ def test_gcn_cora():
     args.num_layers = 2
     args.dataset = "cora"
     args.model = "gcn"
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    for i in [True, False]:
+        args.fast_spmm = i
+        task = build_task(args)
+        ret = task.train()
+        assert 0 <= ret["Acc"] <= 1
 
 
 def test_gat_cora():
@@ -197,6 +198,7 @@ def test_graphsage_cora():
     args.hidden_size = [32, 32]
     args.sample_size = [3, 5]
     args.num_workers = 1
+    args.eval_step = 1
     args.dataset = "cora"
     task = build_task(args)
     ret = task.train()
@@ -233,11 +235,24 @@ def test_pyg_gcn_cora():
     assert 0 <= ret["Acc"] <= 1
 
 
+def test_clustergcn_cora():
+    args = get_default_args()
+    args.dataset = "pubmed"
+    args.model = "gcn"
+    args.trainer = "clustergcn"
+    args.cpu = True
+    args.batch_size = 3
+    args.n_cluster = 20
+    args.eval_step = 1
+    task = build_task(args)
+    assert 0 <= task.train()["Acc"] <= 1
+
+
 def test_gcn_cora_sampler():
     args = get_default_args()
     args.task = "node_classification"
     args.dataset = "cora"
-    args.trainer = "saint"
+    args.trainer = "graphsaint"
     args.model = "gcn"
     args.valid_cpu = True
     args.cpu = True
@@ -260,7 +275,7 @@ def test_graphsaint_cora():
     args = get_default_args()
     args.task = "node_classification"
     args.dataset = "cora"
-    args.trainer = "saint"
+    args.trainer = "graphsaint"
     args.model = "graphsaint"
     args.valid_cpu = True
     args.cpu = True
@@ -402,9 +417,11 @@ def test_gcnii_cora():
     args.wd1 = 0.001
     args.wd2 = 5e-4
     args.alpha = 0.1
-    task = build_task(args)
-    ret = task.train()
-    assert 0 < ret["Acc"] < 1
+    for residual in [False, True]:
+        args.residual = residual
+        task = build_task(args)
+        ret = task.train()
+        assert 0 < ret["Acc"] < 1
 
 
 def test_deepergcn_cora():
@@ -412,6 +429,7 @@ def test_deepergcn_cora():
     args.dataset = "cora"
     args.task = "node_classification"
     args.model = "deepergcn"
+    args.n_cluster = 10
     args.num_layers = 2
     args.connection = "res+"
     args.cluster_number = 3
@@ -717,3 +735,4 @@ if __name__ == "__main__":
     test_dropedge_resgcn_cora()
     test_dropedge_inceptiongcn_cora()
     test_dropedge_densegcn_cora()
+    test_clustergcn_cora()

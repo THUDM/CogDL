@@ -53,5 +53,6 @@ SUPPORTED_TRAINERS = {
     "graphsaint": "cogdl.trainers.sampled_trainer",
     "neighborsampler": "cogdl.trainers.sampled_trainer",
     "clustergcn": "cogdl.trainers.sampled_trainer",
+    "random_partition": "cogdl.trainers.sampled_trainer",
     "self_auxiliary_task": "cogdl.trainers.self_auxiliary_task_trainer",
 }

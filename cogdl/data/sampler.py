@@ -380,13 +380,13 @@ class NeighborSampler(torch.utils.data.DataLoader):
 
 
 class ClusteredLoader(torch.utils.data.DataLoader):
-    metis_tool = None
+    partition_tool = None
 
     def __init__(self, data: Data, n_cluster: int, **kwargs):
         try:
             import metis
 
-            ClusteredLoader.metis_tool = metis
+            ClusteredLoader.partition_tool = metis
         except Exception as e:
             print(e)
             exit(1)
@@ -406,7 +406,7 @@ class ClusteredLoader(torch.utils.data.DataLoader):
         adj = sp.csr_matrix((np.ones(edges.shape[1]), (edges[0], edges[1])), shape=(num_nodes, num_nodes))
         indptr = adj.indptr
         indptr = np.split(adj.indices, indptr[1:])[:-1]
-        _, parts = ClusteredLoader.metis_tool.part_graph(indptr, n_cluster, seed=1)
+        _, parts = ClusteredLoader.partition_tool.part_graph(indptr, n_cluster, seed=1)
         division = [[] for _ in range(n_cluster)]
         for i, v in enumerate(parts):
             division[v].append(i)

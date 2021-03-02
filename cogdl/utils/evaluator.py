@@ -22,7 +22,7 @@ def multilabel_f1(y_pred, y_true, sigmoid=False):
         y_pred[y_pred > 0] = 1
         y_pred[y_pred <= 0] = 0
     tp = (y_true * y_pred).sum().to(torch.float32)
-    tn = ((1 - y_true) * (1 - y_pred)).sum().to(torch.float32)
+    # tn = ((1 - y_true) * (1 - y_pred)).sum().to(torch.float32)
     fp = ((1 - y_true) * y_pred).sum().to(torch.float32)
     fn = (y_true * (1 - y_pred)).sum().to(torch.float32)
 

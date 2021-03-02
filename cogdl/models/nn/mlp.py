@@ -60,7 +60,7 @@ class MLP(BaseModel):
             else:
                 raise NotImplementedError(f"{norm} is not implemented in CogDL.")
 
-    def forward(self, x, edge_index):
+    def forward(self, x, *args, **kwargs):
         for i, fc in enumerate(self.mlp[:-1]):
             x = fc(x)
             if self.norm:
@@ -71,4 +71,4 @@ class MLP(BaseModel):
         return x
 
     def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+        return self.forward(data.x)

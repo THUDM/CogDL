@@ -3,7 +3,6 @@ import itertools
 import os
 import os.path as osp
 import random
-import numba
 import shutil
 from collections import defaultdict
 from typing import Optional
@@ -15,6 +14,12 @@ import torch
 import torch.nn.functional as F
 from tabulate import tabulate
 
+try:
+    from cogdl.layers.spmm_layer import csrspmm
+except Exception as e:
+    print(e)
+    csrspmm = None
+
 
 class ArgClass(object):
     def __init__(self):
@@ -25,15 +30,6 @@ def build_args_from_dict(dic):
     args = ArgClass()
     for key, value in dic.items():
         args.__setattr__(key, value)
-    return args
-
-
-def get_extra_args(args):
-    redundancy = {
-        "checkpoint": False,
-        "load_emb_path": None,
-    }
-    args = {**args, **redundancy}
     return args
 
 
@@ -188,7 +184,7 @@ def row_normalization(num_nodes, edge_index, edge_weight=None):
     device = edge_index.device
     if edge_weight is None:
         edge_weight = torch.ones(edge_index.shape[1]).to(device)
-    row_sum = spmm(edge_index, edge_weight, torch.ones(num_nodes, 1).to(device))
+    row_sum = spmm_scatter(edge_index, edge_weight, torch.ones(num_nodes, 1).to(device))
     row_sum_inv = row_sum.pow(-1).view(-1)
     return edge_weight * row_sum_inv[edge_index[0]]
 
@@ -197,18 +193,17 @@ def symmetric_normalization(num_nodes, edge_index, edge_weight=None):
     device = edge_index.device
     if edge_weight is None:
         edge_weight = torch.ones(edge_index.shape[1]).to(device)
-    row_sum = spmm(edge_index, edge_weight, torch.ones(num_nodes, 1).to(device)).view(-1)
+    row_sum = spmm_scatter(edge_index, edge_weight, torch.ones(num_nodes, 1).to(device)).view(-1)
     row_sum_inv_sqrt = row_sum.pow(-0.5)
     row_sum_inv_sqrt[row_sum_inv_sqrt == float("inf")] = 0
     return row_sum_inv_sqrt[edge_index[1]] * edge_weight * row_sum_inv_sqrt[edge_index[0]]
 
 
-def spmm(indices, values, b):
+def spmm_scatter(indices, values, b):
     r"""
     Args:
         indices : Tensor, shape=(2, E)
         values : Tensor, shape=(E,)
-        shape : tuple(int ,int)
         b : Tensor, shape=(N, )
     """
     output = b.index_select(0, indices[1]) * values.unsqueeze(-1)
@@ -216,11 +211,109 @@ def spmm(indices, values, b):
     return output
 
 
-def spmm_adj(indices, values, b, num_nodes=None):
+def spmm_adj(indices, values, x, num_nodes=None):
     if num_nodes is None:
-        num_nodes = torch.max(indices) + 1
+        num_nodes = x.shape[0]
     adj = torch.sparse_coo_tensor(indices=indices, values=values, size=(num_nodes, num_nodes))
-    return torch.spmm(adj, b)
+    return torch.spmm(adj, x)
+
+
+_cache = dict()
+
+
+def initialize_spmm(args):
+    global _cache
+    if hasattr(args, "fast_spmm") and args.fast_spmm is True:
+        _cache["fast_spmm"] = True
+    else:
+        _cache["fast_spmm"] = False
+
+
+def spmm(edge_index, edge_weight, x, num_nodes=None):
+    r"""
+    Args:
+        edge_index : Tensor, shape=(2, E)
+        edge_weight : Tensor, shape=(E,)
+        x : Tensor, shape=(N, )
+        num_nodes : Optional[int]
+    """
+    if csrspmm is not None and str(x.device) != "cpu" and "fast_spmm" in _cache and _cache["fast_spmm"] is True:
+        (colptr, row_indices, csr_data, rowptr, col_indices, csc_data) = get_csr_ind(
+            edge_index, edge_weight, x.shape[0]
+        )
+        x = csrspmm(rowptr, col_indices, colptr, row_indices, x, csr_data, csc_data)
+    elif edge_weight.requires_grad:
+        x = spmm_scatter(edge_index, edge_weight, x)
+    else:
+        x = spmm_adj(edge_index, edge_weight, x, num_nodes)
+    return x
+
+
+def get_csr_ind(edge_index, edge_weight=None, num_nodes=None):
+    flag = str(edge_index.shape[1])
+    if flag not in _cache:
+        if num_nodes is None:
+            num_nodes = torch.max(edge_index) + 1
+        if edge_weight is None:
+            edge_weight = torch.ones(edge_index.shape[1], device=edge_index.device)
+        _cache[flag] = get_csr_from_edge_index(edge_index, edge_weight, size=(num_nodes, num_nodes))
+    cache = _cache[flag]
+    colptr = cache["colptr"]
+    row_indices = cache["row_indices"]
+    csr_data = cache["csr_data"]
+    rowptr = cache["rowptr"]
+    col_indices = cache["col_indices"]
+    csc_data = cache["csc_data"]
+    return colptr, row_indices, csr_data, rowptr, col_indices, csc_data
+
+
+def get_csr_from_edge_index(edge_index, edge_attr, size):
+    device = edge_index.device
+    _edge_index = edge_index.cpu().numpy()
+    _edge_attr = edge_attr.cpu().numpy()
+    num_nodes = size[0]
+
+    adj = sp.csr_matrix((_edge_attr, (_edge_index[0], _edge_index[1])), shape=(num_nodes, num_nodes))
+    colptr = torch.as_tensor(adj.indptr, dtype=torch.int32).to(device)
+    row_indices = torch.as_tensor(adj.indices, dtype=torch.int32).to(device)
+    csr_data = torch.as_tensor(adj.data, dtype=torch.float).to(device)
+    adj = adj.tocsc()
+    rowptr = torch.as_tensor(adj.indptr, dtype=torch.int32).to(device)
+    col_indices = torch.as_tensor(adj.indices, dtype=torch.int32).to(device)
+    csc_data = torch.as_tensor(adj.data, dtype=torch.float).to(device)
+    cache = {
+        "colptr": colptr,
+        "row_indices": row_indices,
+        "csr_data": csr_data,
+        "rowptr": rowptr,
+        "col_indices": col_indices,
+        "csc_data": csc_data,
+    }
+    return cache
+
+
+def coo2csr(edge_index, edge_attr, num_nodes=None):
+    if num_nodes is None:
+        num_nodes = torch.max(edge_index) + 1
+    device = edge_index[0].device
+    sorted_index = torch.argsort(edge_index[0])
+    sorted_index = sorted_index.long()
+    edge_index = edge_index[:, sorted_index]
+    edge_attr = edge_attr[sorted_index]
+    indices = edge_index[1]
+
+    row = edge_index[0]
+    indptr = torch.zeros(num_nodes + 1, dtype=torch.int32, device=device)
+    elements, counts = torch.unique(row, return_counts=True)
+    elements = elements.long() + 1
+    indptr[elements] = counts.to(indptr.dtype)
+    indptr = indptr.cumsum(dim=0)
+    return indptr.int(), indices.int(), edge_attr
+
+
+def coo2csc(edge_index, edge_attr):
+    edge_index = torch.stack([edge_index[1], edge_index[0]])
+    return coo2csr(edge_index, edge_attr)
 
 
 # def naive_spspmm(edge_index1, value1, edge_index2, value2, shape):
@@ -255,7 +348,7 @@ def get_degrees(indices, num_nodes=None):
     if num_nodes is None:
         num_nodes = torch.max(values) + 1
     b = torch.ones((num_nodes, 1)).to(device)
-    degrees = spmm(indices, values, b).view(-1)
+    degrees = spmm_scatter(indices, values, b).view(-1)
     return degrees
 
 
@@ -270,7 +363,7 @@ def edge_softmax(indices, values, shape):
         Softmax values of edge values for nodes
     """
     values = torch.exp(values)
-    node_sum = spmm(indices, values, torch.ones(shape[0], 1).to(values.device)).squeeze()
+    node_sum = spmm_scatter(indices, values, torch.ones(shape[0], 1).to(values.device)).squeeze()
     softmax_values = values / node_sum[indices[0]]
     return softmax_values
 

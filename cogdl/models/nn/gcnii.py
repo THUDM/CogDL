@@ -4,11 +4,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .. import register_model, BaseModel, BaseLayer
-from cogdl.utils import symmetric_normalization, add_remaining_self_loops
+from .. import register_model, BaseModel
+from cogdl.utils import symmetric_normalization, add_remaining_self_loops, spmm
 
 
-class GCNIILayer(BaseLayer):
+class GCNIILayer(nn.Module):
     def __init__(self, n_channels, alpha=0.1, beta=1, residual=False):
         super(GCNIILayer, self).__init__()
         self.n_channels = n_channels
@@ -24,7 +24,7 @@ class GCNIILayer(BaseLayer):
 
     def forward(self, x, edge_index, edge_attr, init_x):
         """Symmetric normalization"""
-        hidden = self.spmm(edge_index, edge_attr, x)
+        hidden = spmm(edge_index, edge_attr, x)
         hidden = (1 - self.alpha) * hidden + self.alpha * init_x
         h = self.beta * torch.matmul(hidden, self.weight) + (1 - self.beta) * hidden
         if self.residual:
@@ -83,7 +83,19 @@ class GCNII(BaseModel):
             residual=args.residual,
         )
 
-    def __init__(self, in_feats, hidden_size, out_feats, num_layers, dropout=0.5, alpha=0.1, lmbda=1, wd1=0.0, wd2=0.0, residual=False):
+    def __init__(
+        self,
+        in_feats,
+        hidden_size,
+        out_feats,
+        num_layers,
+        dropout=0.5,
+        alpha=0.1,
+        lmbda=1,
+        wd1=0.0,
+        wd2=0.0,
+        residual=False,
+    ):
         super(GCNII, self).__init__()
         self.fc_layers = nn.ModuleList()
         self.fc_layers.append(nn.Linear(in_features=in_feats, out_features=hidden_size))

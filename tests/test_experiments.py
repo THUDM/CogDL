@@ -3,6 +3,8 @@ from collections import namedtuple
 from cogdl.experiments import check_task_dataset_model_match, experiment, gen_variants, train, set_best_config
 from cogdl.options import get_default_args
 
+import metis
+
 
 def test_set_best_config():
     args = get_default_args(task="node_classification", dataset="citeseer", model="gat")

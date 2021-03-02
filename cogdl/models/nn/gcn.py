@@ -5,19 +5,19 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
-from .. import BaseModel, register_model, BaseLayer
-from cogdl.utils import add_remaining_self_loops, symmetric_normalization, spmm_adj
+from .. import BaseModel, register_model
+from cogdl.utils import add_remaining_self_loops, symmetric_normalization, spmm
 
 
-class GraphConvolution(BaseLayer):
+class GraphConvolution(nn.Module):
     """
-        Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
+    Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
-    def __init__(self, in_features, out_features, bias=True, fast_conv=False):
+
+    def __init__(self, in_features, out_features, bias=True):
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.fast_conv = fast_conv
         self.weight = Parameter(torch.FloatTensor(in_features, out_features))
         if bias:
             self.bias = Parameter(torch.FloatTensor(out_features))
@@ -33,10 +33,9 @@ class GraphConvolution(BaseLayer):
 
     def forward(self, x, edge_index, edge_attr=None):
         support = torch.mm(x, self.weight)
-        if self.fast_conv:
-            out = self.spmm(edge_index, edge_attr, support)
-        else:
-            out = spmm_adj(edge_index, edge_attr, support, num_nodes=x.shape[0])
+        if edge_attr is None:
+            edge_attr = torch.ones(edge_index.shape[1]).to(x.device)
+        out = spmm(edge_index, edge_attr, support)
         if self.bias is not None:
             return out + self.bias
         else:
@@ -52,8 +51,8 @@ class TKipfGCN(BaseModel):
     <https://arxiv.org/abs/1609.02907>`_ paper
 
     Args:
-        num_features (int) : Number of input features.
-        num_classes (int) : Number of classes.
+        in_features (int) : Number of input features.
+        out_features (int) : Number of classes.
         hidden_size (int) : The dimension of node representation.
         dropout (float) : Dropout rate for model training.
     """
@@ -76,7 +75,7 @@ class TKipfGCN(BaseModel):
     def __init__(self, in_feats, hidden_size, out_feats, num_layers, dropout):
         super(TKipfGCN, self).__init__()
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
-        self.layers = nn.ModuleList([GraphConvolution(shapes[i], shapes[i + 1], fast_conv=False) for i in range(num_layers)])
+        self.layers = nn.ModuleList([GraphConvolution(shapes[i], shapes[i + 1]) for i in range(num_layers)])
         self.num_layers = num_layers
         self.dropout = dropout
         self.cache = dict()

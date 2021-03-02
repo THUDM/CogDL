@@ -67,6 +67,7 @@ class NodeClassification(BaseTask):
             result = self.trainer.fit(self.model, self.dataset)
             if issubclass(type(result), torch.nn.Module):
                 self.model = result
+                self.model.to(self.data.x.device)
             else:
                 return result
         else:

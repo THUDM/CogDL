@@ -1,6 +1,6 @@
 import importlib
 
-from .base_model import BaseModel, BaseLayer
+from .base_model import BaseModel
 
 
 MODEL_REGISTRY = {}

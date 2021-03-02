@@ -29,7 +29,7 @@ class UnsupervisedNodeClassification(BaseTask):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--hidden-size", type=int, default=128)
-        parser.add_argument("--num-shuffle", type=int, default=5)
+        parser.add_argument("--num-shuffle", type=int, default=1)
         parser.add_argument("--save-dir", type=str, default="./embedding")
         parser.add_argument("--load-emb-path", type=str, default=None)
         parser.add_argument('--training-percents', default=[0.9], type=float, nargs='+')

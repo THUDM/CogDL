@@ -180,3 +180,16 @@ git clone https://github.com/THUDM/cogdl /cogdl
 - 实现你自己的模型：如果您有一个性能优秀的算法，并愿意在我们的工具包中实现它，以帮助更多的人，您可以创建一个pull request，详细信息可见[该页面](https://help.github.com/en/articles/creating-a-pull-request)。
 
 如果您在我们的工具包或自定义步骤中遇到任何困难，请随时提出一个github issue或发表评论。您可以在24小时内得到答复。
+
+## 引用CogDL
+
+如果你觉得我们的代码或结果对你的研究有所帮助，请引用[CogDL论文](https://arxiv.org/abs/2103.00959)。
+
+```
+@article{cen2021cogdl,
+    title={CogDL: An Extensive Toolkit for Deep Learning on Graphs},
+    author={Yukuo Cen and Zhenyu Hou and Yan Wang and Qibin Chen and Yizhen Luo and Xingcheng Yao and Aohan Zeng and Shiguang Guo and Peng Zhang and Guohao Dai and Yu Wang and Chang Zhou and Hongxia Yang and Jie Tang},
+    journal={arXiv preprint arXiv:2103.00959},
+    year={2021}
+}
+```

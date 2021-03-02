@@ -4,14 +4,16 @@ import copy
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from tqdm import tqdm
 
 from cogdl.data import Dataset
 from cogdl.data.sampler import NodeSampler, EdgeSampler, RWSampler, MRWSampler, NeighborSampler, ClusteredLoader
+from cogdl.datasets.saint_data import SAINTDataset
 from cogdl.models.supervised_model import SupervisedModel
 from cogdl.trainers.base_trainer import BaseTrainer
-from cogdl.utils import add_remaining_self_loops
-from . import register_trainer
+from cogdl.utils import add_remaining_self_loops, multilabel_f1
+from cogdl.trainers import register_trainer
 
 
 class SampledTrainer(BaseTrainer):
@@ -83,6 +85,7 @@ class SAINTTrainer(SampledTrainer):
         parser.add_argument('--num-walks', default=50, type=int, help='number of random walks')
         parser.add_argument('--walk-length', default=20, type=int, help='random walk length')
         parser.add_argument('--size-frontier', default=20, type=int, help='frontier size in multidimensional random walks')
+        parser.add_argument('--valid-cpu', action='store_true', help='run validation on cpu')
         # fmt: on
 
     @classmethod
@@ -91,6 +94,7 @@ class SAINTTrainer(SampledTrainer):
 
     def __init__(self, args):
         super(SAINTTrainer, self).__init__(args)
+        self.valid_cpu = args.valid_cpu
         self.args_sampler = self.sampler_from_args(args)
 
     def sampler_from_args(self, args):
@@ -104,9 +108,9 @@ class SAINTTrainer(SampledTrainer):
         }
         return args_sampler
 
-    def fit(self, model: SupervisedModel, dataset: Dataset):
+    def set_data_model(self, dataset: Dataset, model: SupervisedModel):
+        self.dataset = dataset
         self.data = dataset.data
-        self.data.apply(lambda x: x.to(self.device))
         self.model = model.to(self.device)
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
@@ -119,23 +123,42 @@ class SAINTTrainer(SampledTrainer):
             self.sampler = RWSampler(self.data, self.args_sampler)
         elif self.args_sampler["sampler"] == "mrw":
             self.sampler = MRWSampler(self.data, self.args_sampler)
+        else:
+            raise NotImplementedError
 
         self.optimizer = torch.optim.Adam(model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        best_model = self.train()
-        self.model = best_model
-        return self.model
+
+    def fit(self, model: SupervisedModel, dataset: Dataset):
+        self.set_data_model(dataset, model)
+        return self.train()
 
     def _train_step(self):
-        self.data = self.sampler.get_subgraph("train")
+        self.data = self.sampler.one_batch("train")
         self.data.apply(lambda x: x.to(self.device))
+
+        self.model = self.model.to(self.device)
         self.model.train()
         self.optimizer.zero_grad()
-        self.model.node_classification_loss(self.data).backward()
+
+        mask = self.data.train_mask
+        if isinstance(self.dataset, SAINTDataset):
+            logits = self.model.predict(self.data)
+            weight = self.data.norm_loss[mask].unsqueeze(1)
+            loss = torch.nn.BCEWithLogitsLoss(reduction="sum", weight=weight)(logits[mask], self.data.y[mask].float())
+        else:
+            logits = F.log_softmax(self.model.predict(self.data))
+            loss = (
+                torch.nn.NLLLoss(reduction="none")(logits[mask], self.data.y[mask]) * self.data.norm_loss[mask]
+            ).sum()
+        loss.backward()
         self.optimizer.step()
 
     def _test_step(self, split="val"):
-        self.data = self.sampler.get_subgraph(split)
-        self.data.apply(lambda x: x.to(self.device))
+        self.data = self.sampler.one_batch(split)
+        if split != "train" and self.valid_cpu:
+            self.model = self.model.cpu()
+        else:
+            self.data.apply(lambda x: x.to(self.device))
         self.model.eval()
         masks = {"train": self.data.train_mask, "val": self.data.val_mask, "test": self.data.test_mask}
         with torch.no_grad():
@@ -143,6 +166,17 @@ class SAINTTrainer(SampledTrainer):
         # self.loss_fn(logits[val], self.data.y[val]) * self.data.norm_loss[val]
         loss = {key: self.loss_fn(logits[val], self.data.y[val]) for key, val in masks.items()}
         metric = {key: self.evaluator(logits[val], self.data.y[val]) for key, val in masks.items()}
+        # if isinstance(self.dataset, SAINTDataset):
+        #     weight = self.data.norm_loss.unsqueeze(1)
+        #     loss = torch.nn.BCEWithLogitsLoss(reduction="sum", weight=weight)(logits, self.data.y.float())
+        #     metric = multilabel_f1(logits[mask], self.data.y[mask])
+        # else:
+        #     loss = (
+        #         torch.nn.NLLLoss(reduction="none")(F.log_softmax(logits[mask]), self.data.y[mask])
+        #         * self.data.norm_loss[mask]
+        #     ).sum()
+        #     pred = logits[mask].max(1)[1]
+        #     metric = pred.eq(self.data.y[mask]).sum().item() / mask.sum().item()
         return metric, loss
 
 
@@ -243,12 +277,7 @@ class ClusterGCNTrainer(SampledTrainer):
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        self.train_loader = ClusteredLoader(
-            self.data,
-            self.n_cluster,
-            batch_size=self.batch_size,
-            shuffle=True
-        )
+        self.train_loader = ClusteredLoader(self.data, self.n_cluster, batch_size=self.batch_size, shuffle=True)
         best_model = self.train()
         self.model = best_model
         metric, loss = self._test_step()
@@ -272,89 +301,3 @@ class ClusterGCNTrainer(SampledTrainer):
         loss = {key: self.loss_fn(logits[val], self.data.y[val]) for key, val in masks.items()}
         metric = {key: self.evaluator(logits[val], self.data.y[val]) for key, val in masks.items()}
         return metric, loss
-
-
-"""
-class LayerSampledTrainer(SampledTrainer):
-    def __init__(self, args):
-        self.device = torch.device('cpu' if args.cpu else 'cuda')
-        self.patience = args.patience
-        self.max_epoch = args.max_epoch
-        self.batch_size = args.batch_size
-
-    def fit(self, model: SamplingNodeClassificationModel, dataset: Dataset):
-        self.model = model.to(self.device)
-        self.data = dataset.data
-        self.data.apply(lambda x: x.to(self.device))
-        self.sampler = LayerSampler(self.data, self.model, {})
-        self.num_nodes = self.data.x.shape[0]
-        self.adj_list = self.data.edge_index.detach().cpu().numpy()
-        self.model.set_adj(self.adj_list, self.num_nodes)
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay
-        )
-
-        epoch_iter = tqdm(range(self.max_epoch))
-        patience = 0
-        best_score = 0
-        best_loss = np.inf
-        max_score = 0
-        min_loss = np.inf
-        for epoch in epoch_iter:
-            self._train_step()
-            train_acc, _ = self._test_step(split="train")
-            val_acc, val_loss = self._test_step(split="val")
-            epoch_iter.set_description(
-                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}"
-            )
-            if val_loss <= min_loss or val_acc >= max_score:
-                if val_loss <= best_loss:  # and val_acc >= best_score:
-                    best_loss = val_loss
-                    best_score = val_acc
-                    best_model = copy.deepcopy(self.model)
-                min_loss = np.min((min_loss, val_loss))
-                max_score = np.max((max_score, val_acc))
-                patience = 0
-            else:
-                patience += 1
-                if patience == self.patience:
-                    self.model = best_model
-                    epoch_iter.close()
-                    break
-
-    def _train_step(self):
-        self.model.train()
-        train_nodes = np.where(self.data.train_mask.detach().cpu().numpy())[0]
-        train_labels = self.data.y.detach().cpu().numpy()
-        for batch_nodes, batch_labels in get_batches(train_nodes, train_labels, batch_size=self.batch_size):
-            batch_nodes = torch.LongTensor(batch_nodes)
-            batch_labels = torch.LongTensor(batch_labels).to(self.device)
-            sampled_x, sampled_adj, var_loss = self.sampler.sampling(self.data.x, batch_nodes)
-            self.optimizer.zero_grad()
-            output = self.model(sampled_x, sampled_adj)
-            loss = F.nll_loss(output, batch_labels) + 0.5 * var_loss
-            loss.backward()
-            self.optimizer.step()
-
-    def _test_step(self, split="val"):
-        self.model.eval()
-        _, mask = list(self.data(f"{split}_mask"))[0]
-        test_nodes = np.where(mask.detach().cpu().numpy())[0]
-        test_labels = self.data.y.detach().cpu().numpy()
-        all_loss = []
-        all_acc = []
-        for batch_nodes, batch_labels in get_batches(test_nodes, test_labels, batch_size=self.batch_size):
-            batch_nodes = torch.LongTensor(batch_nodes)
-            batch_labels = torch.LongTensor(batch_labels).to(self.device)
-            sampled_x, sampled_adj, var_loss = self.model.sampling(self.data.x, batch_nodes)
-            with torch.no_grad():
-                logits = self.model(sampled_x, sampled_adj)
-                loss = F.nll_loss(logits, batch_labels)
-            pred = logits.max(1)[1]
-            acc = pred.eq(self.data.y[batch_nodes]).sum().item() / batch_nodes.shape[0]
-
-            all_loss.append(loss.item())
-            all_acc.append(acc)
-
-        return np.mean(all_acc), np.mean(all_loss)
-"""

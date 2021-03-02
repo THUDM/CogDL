@@ -58,7 +58,7 @@ class BaseTask(ABC, metaclass=LoadFrom):
         self.evaluator = dataset.get_evaluator()
 
     def get_trainer(self, model, args):
-        if hasattr(args, "trainer"):
+        if hasattr(args, "trainer") and args.trainer is not None:
             if "self_auxiliary_task" in args.trainer and not hasattr(model, "get_embeddings"):
                 raise ValueError("Model ({}) must implement get_embeddings method".format(args.model))
             return build_trainer(args)

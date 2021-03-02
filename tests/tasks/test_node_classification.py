@@ -239,6 +239,7 @@ def test_gcn_cora_sampler():
     args.dataset = "cora"
     args.trainer = "saint"
     args.model = "gcn"
+    args.valid_cpu = True
     args.cpu = True
     args.num_layers = 2
     args.sample_coverage = 20
@@ -253,6 +254,29 @@ def test_gcn_cora_sampler():
         task = build_task(args)
         ret = task.train()
         assert 0 <= ret["Acc"] <= 1
+
+
+def test_graphsaint_cora():
+    args = get_default_args()
+    args.task = "node_classification"
+    args.dataset = "cora"
+    args.trainer = "saint"
+    args.model = "graphsaint"
+    args.valid_cpu = True
+    args.cpu = True
+    args.architecture = "1-1-0"
+    args.aggr = "concat"
+    args.act = "relu"
+    args.bias = "norm"
+    args.sample_coverage = 10
+    args.size_subgraph = 200
+    args.num_walks = 20
+    args.walk_length = 10
+    args.size_frontier = 20
+    args.sampler = "node"
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
 
 
 def test_unet_citeseer():
@@ -683,6 +707,7 @@ if __name__ == "__main__":
     test_deepergcn_cora()
     test_grand_cora()
     test_gcn_cora_sampler()
+    test_graphsaint_cora()
     test_gpt_gnn_cora()
     test_sign_cora()
     test_jknet_jknet_cora()

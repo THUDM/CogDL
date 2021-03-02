@@ -7,18 +7,20 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-**[主页](http://keg.cs.tsinghua.edu.cn/cogdl/cn)** | **[排行榜](./cogdl/tasks/README.md)** | **[文档](https://cogdl.readthedocs.io)** | **[智源链接](http://open.baai.ac.cn/cogdl-toolkit)** | **[数据集](./cogdl/datasets/README.md)** | **[English](./README.md)**
+**[主页](http://keg.cs.tsinghua.edu.cn/cogdl/cn)** | **[论文](https://arxiv.org/abs/2103.00959)** | **[排行榜](./cogdl/tasks/README.md)** | **[文档](https://cogdl.readthedocs.io)** | **[智源链接](http://open.baai.ac.cn/cogdl-toolkit)** | **[数据集](./cogdl/datasets/README.md)** | **[加入我们的Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[English](./README.md)**
 
 CogDL是由清华大学计算机系知识工程实验室（KEG）开发的基于图的深度学习的研究工具，基于Python语言和[PyTorch](https://github.com/pytorch/pytorch)库。CogDL允许研究人员和开发人员可以轻松地训练和比较基线算法或自定义模型，以进行结点分类，链接预测，图分类，社区发现等基于图结构的任务。 它提供了许多流行模型的实现，包括：非图神经网络算法例如Deepwalk、LINE、Node2vec、NetMF、ProNE、methpath2vec、PTE、graph2vec、DGK等；图神经网络算法例如GCN、GAT、GraphSAGE、FastGCN、GTN、HAN、GIN、DiffPool等。它也提供了一些下游任务，包括结点分类（分为是否具有节点属性），链接预测（分为同构和异构），图分类（分有监督和⽆监督）以及为这些任务构建各种算法效果的排行榜。
 
 CogDL的特性包括：
 
-- 任务导向： CogDL以图上的任务为主，提供了相关的模型、数据集以及我们得到的排行榜。
-- 一键运行： CogDL支持用户使用多个GPU同时运行同一个任务下多个模型在多个数据集上的多组实验。
-- 多类任务： CogDL支持同构/异构网络中的节点分类和链接预测任务以及图分类任务。
+- 高效：CogDL支持使用优化好的算子来加速GNN模型的训练。
+- 易用性：CogDL提供了非常易用的API来在给定的模型和数据集上运行实验。
 - 可扩展性：用户可以基于CogDL已有的框架来实现和提交新的数据集、模型和任务。
+- 可复现性：CogDL对图领域大多数重要的任务都提供了可复现的排行榜。
 
 ## ❗ 最新
+
+- 我们在arXiv上发布了 **[CogDL paper](https://arxiv.org/abs/2103.00959)** 的初版. 你可以加入[我们的slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)来讨论CogDL相关的内容。🎉
 
 - 最新的 **v0.2.0版本** 包含了非常易用的`experiment`和`pipeline`接口，其中`experiment`接口还支持超参搜索。这个版本还提供了`OAGBert`模型的接口（`OAGBert`是我们实验室推出的在大规模学术语料下训练的模型）。这个版本的很多内容是由开源社区的小伙伴们提供的，感谢大家的支持！🎉
 
@@ -32,10 +34,8 @@ CogDL的特性包括：
 
 - Python 版本 >= 3.6
 - PyTorch 版本 >= 1.6.0
-- PyTorch Geometric (建议安装)
-- Deep Graph Library (可选安装)
 
-请根据如下链接来安装PyTorch (https://github.com/pytorch/pytorch#installation)，PyTorch Geometric (https://github.com/rusty1s/pytorch_geometric/#installation)，和Deep Graph Libraray (https://docs.dgl.ai/install/index.html)。
+请根据如下链接来安装PyTorch (https://github.com/pytorch/pytorch#installation)。
 
 PyTorch安装好之后，cogdl能够直接通过pip来安装：
 ```bash
@@ -166,26 +166,11 @@ docker run -it -v cogdl:/cogdl cogdl /bin/bash
 git clone https://github.com/THUDM/cogdl /cogdl
 ```
 
-## CogDL的整体框架
+## 其他图深度学习库
 
-
-![avatar](cogdl_cn.png)
-
-CogDL的整体框架如上图所示，针对不同的任务，CogDL支持以下模型：
-
-*   无监督结点分类: ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf), NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971), Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754), NetSMF [(Qiu et at, WWW'19)](https://arxiv.org/abs/1906.11156), DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652), LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578), Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751), SDNE [(Wang et al, KDD'16)](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf), GraRep [(Cao et al, CIKM'15)](http://dl.acm.org/citation.cfm?doid=2806416.2806512), DNGR [(Cao et al, AAAI'16)](https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/download/12423/11715).  
-    
-*   半监督结点分类: SGC-PN [(Zhao & Akoglu, 2019)](https://arxiv.org/abs/1909.12223), Graph U-Net [(Gao et al., 2019)](https://arxiv.org/abs/1905.05178), MixHop [(Abu-El-Haija et al., ICML'19)](https://arxiv.org/abs/1905.00067), DR-GAT [(Zou et al., 2019)](https://arxiv.org/abs/1907.02237), GAT [(Veličković et al., ICLR'18)](https://arxiv.org/abs/1710.10903), DGI [(Veličković et al., ICLR'19)](https://arxiv.org/abs/1809.10341), GCN [(Kipf et al., ICLR'17)](https://arxiv.org/abs/1609.02907), GraphSAGE [(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216), Chebyshev [(Defferrard et al., NeurIPS'16)](https://arxiv.org/abs/1606.09375).  
-    
-*   异构结点分类: GTN [(Yun et al, NeurIPS'19)](https://arxiv.org/abs/1911.06455), HAN [(Xiao et al, WWW'19)](https://arxiv.org/abs/1903.07293), PTE [(Tang et al, KDD'15)](https://arxiv.org/abs/1508.00200), Metapath2vec [(Dong et al, KDD'17)](https://ericdongyx.github.io/papers/KDD17-dong-chawla-swami-metapath2vec.pdf), Hin2vec [(Fu et al, CIKM'17)](https://dl.acm.org/doi/10.1145/3132847.3132953).  
-    
-*   链接预测: ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf), NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971), Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754), DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652), LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578), Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751), NetSMF [(Qiu et at, WWW'19)](https://arxiv.org/abs/1906.11156), SDNE [(Wang et al, KDD'16)](https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf).  
-    
-*   多重边链接预测: GATNE [(Cen et al, KDD'19)](https://arxiv.org/abs/1905.01669), NetMF [(Qiu et al, WSDM'18)](http://arxiv.org/abs/1710.02971), ProNE [(Zhang et al, IJCAI'19)](https://www.ijcai.org/Proceedings/2019/0594.pdf), Node2vec [(Grover et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939754), DeepWalk [(Perozzi et al, KDD'14)](http://arxiv.org/abs/1403.6652), LINE [(Tang et al, WWW'15)](http://arxiv.org/abs/1503.03578), Hope [(Ou et al, KDD'16)](http://dl.acm.org/citation.cfm?doid=2939672.2939751), GraRep [(Cao et al, CIKM'15)](http://dl.acm.org/citation.cfm?doid=2806416.2806512).  
-    
-*   无监督图分类: Infograph [(Sun et al, ICLR'20)](https://openreview.net/forum?id=r1lfF2NYvH), Graph2Vec [(Narayanan et al, CoRR'17)](https://arxiv.org/abs/1707.05005), DGK [(Yanardag et al, KDD'15)](https://dl.acm.org/doi/10.1145/2783258.2783417).  
-    
-*   有监督图分类: GIN [(Xu et al, ICLR'19)](https://openreview.net/forum?id=ryGs6iA5Km), DiffPool [(Ying et al, NeuIPS'18)](https://arxiv.org/abs/1806.08804), SortPool [(Zhang et al, AAAI'18)](https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf), PATCH\_SAN [(Niepert et al, ICML'16)](https://arxiv.org/pdf/1605.05273.pdf), DGCNN [(Wang et al, ACM Transactions on Graphics'17)](https://arxiv.org/abs/1801.07829).
+如何你对其他图深度学习库（比如PyTorch Geometric，Deep Graph Library）比较熟悉，你可以基于这些库的模块来在CogDL里实现相关模型。
+你可以通过下述的指南来安装相应的库，例如PyTorch Geometric (https://github.com/rusty1s/pytorch_geometric/#installation)，和Deep Graph Libraray (https://docs.dgl.ai/install/index.html)。
+对于如何使用PyG的模块来实现模型，你可以在示例中找到一些参考：[examples/pytorch_geometric](https://github.com/THUDM/cogdl/tree/master/examples/pytorch_geometric/)。
 
 
 ## 自定义数据集或模型

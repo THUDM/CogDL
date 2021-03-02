@@ -5,7 +5,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .gin import GINLayer, GINMLP
+from .mlp import MLP
+from .gin import GINLayer
 from cogdl.data import DataLoader
 from cogdl.utils import batch_mean_pooling, batch_sum_pooling
 from .. import BaseModel, register_model
@@ -36,9 +37,9 @@ class Encoder(nn.Module):
         self.bn_layers = nn.ModuleList()
         for i in range(num_layers):
             if i == 0:
-                mlp = GINMLP(in_feats, hidden_dim, hidden_dim, num_mlp_layers, use_bn=True)
+                mlp = MLP(in_feats, hidden_dim, hidden_dim, num_mlp_layers, norm="batchnorm")
             else:
-                mlp = GINMLP(hidden_dim, hidden_dim, hidden_dim, num_mlp_layers, use_bn=True)
+                mlp = MLP(hidden_dim, hidden_dim, hidden_dim, num_mlp_layers, norm="batchnorm")
             self.gnn_layers.append(GINLayer(mlp, eps=0, train_eps=True))
             self.bn_layers.append(nn.BatchNorm1d(hidden_dim))
 
@@ -79,7 +80,7 @@ class FF(nn.Module):
 
     def __init__(self, in_feats, out_feats):
         super(FF, self).__init__()
-        self.block = GINMLP(in_feats, out_feats, out_feats, num_layers=3, use_bn=False)
+        self.block = MLP(in_feats, out_feats, out_feats, num_layers=3)
         self.shortcut = nn.Linear(in_feats, out_feats)
 
     def forward(self, x):

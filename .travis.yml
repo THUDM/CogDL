@@ -11,6 +11,8 @@ install:
   - pip install https://pytorch-geometric.com/whl/torch-1.6.0+cpu/torch_spline_conv-1.2.0-cp36-cp36m-linux_x86_64.whl
   - pip install torch-geometric
   - pip install dgl==0.4.3
+  - bash ./scripts/installation/metis.sh
+  - pip install metis
   - pip install -r docs/requirements.txt
   - pip install -e .
 
@@ -20,6 +22,8 @@ before_script:
 
 script:
   - export DGLBACKEND=pytorch
+  - export METIS_DLL=~/.local/lib/libmetis.so
+  - ls ~/.local/lib && echo $METIS_DLL
   - coverage run --source=cogdl -m pytest tests
   - cd docs && make clean && make html && cd ..
 

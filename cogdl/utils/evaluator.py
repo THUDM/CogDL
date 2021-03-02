@@ -2,6 +2,18 @@ import torch
 from sklearn.metrics import f1_score
 
 
+# def multilabel_f1(y_pred, y_true, sigmoid=False):
+#     if sigmoid:
+#         y_pred[y_pred > 0.5] = 1
+#         y_pred[y_pred <= 0.5] = 0
+#     else:
+#         y_pred[y_pred > 0] = 1
+#         y_pred[y_pred <= 0] = 0
+#     preds = y_pred.cpu().detach()
+#     labels = y_true.cpu().float()
+#     return f1_score(labels, preds, average="micro")
+
+
 def multilabel_f1(y_pred, y_true, sigmoid=False):
     if sigmoid:
         y_pred[y_pred > 0.5] = 1
@@ -9,9 +21,15 @@ def multilabel_f1(y_pred, y_true, sigmoid=False):
     else:
         y_pred[y_pred > 0] = 1
         y_pred[y_pred <= 0] = 0
-    preds = y_pred.cpu().detach()
-    labels = y_true.cpu().float()
-    return f1_score(labels, preds, average="micro")
+    tp = (y_true * y_pred).sum().to(torch.float32)
+    fp = ((1 - y_true) * y_pred).sum().to(torch.float32)
+    fn = (y_true * (1 - y_pred)).sum().to(torch.float32)
+
+    epsilon = 1e-7
+    precision = tp / (tp + fp + epsilon)
+    recall = tp / (tp + fn + epsilon)
+    f1 = (2 * precision * recall) / (precision + recall + epsilon)
+    return f1.item()
 
 
 def multiclass_f1(y_pred, y_true):

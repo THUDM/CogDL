@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 from .. import register_model, BaseModel
 from cogdl.utils import mul_edge_softmax, spmm, get_activation
-from cogdl.trainers.deepergcn_trainer import DeeperGCNTrainer
+from cogdl.trainers.sampled_trainer import DeeperGCNTrainer
 
 
 class GENConv(nn.Module):
@@ -162,8 +162,6 @@ class DeeperGCN(BaseModel):
         parser.add_argument("--dropout", type=float, default=0.5)
         parser.add_argument("--connection", type=str, default="res+")
         parser.add_argument("--activation", type=str, default="relu")
-        parser.add_argument("--batch-size", type=int, default=1)
-        parser.add_argument("--cluster-number", type=int, default=10)
         parser.add_argument("--aggr", type=str, default="softmax_sg")
         parser.add_argument("--beta", type=float, default=1.0)
         parser.add_argument("--p", type=float, default=1.0)
@@ -258,13 +256,8 @@ class DeeperGCN(BaseModel):
         h = self.fc(h)
         return h
 
-    def node_classification_loss(self, x, edge_index, y, x_mask):
-        pred = self.forward(x, edge_index)
-        pred = F.log_softmax(pred, dim=-1)[x_mask]
-        return F.nll_loss(pred, y)
-
-    def predict(self, x, edge_index):
-        return self.forward(x, edge_index)
+    def predict(self, data):
+        return self.forward(data.x, data.edge_index)
 
     @staticmethod
     def get_trainer(taskType: Any, args):

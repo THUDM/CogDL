@@ -5,6 +5,8 @@ import torch
 import numpy as np
 import scipy.sparse as sparse
 
+import time
+
 
 @numba.njit
 def reindex(node_idx, col):
@@ -170,6 +172,8 @@ class Data(object):
         attributes.
         """
         for key, item in self(*keys):
+            if not isinstance(item, torch.Tensor):
+                continue
             self[key] = func(item)
         return self
 
@@ -195,10 +199,16 @@ class Data(object):
     def _build_adj_(self):
         if self.__adj is not None:
             return
+
         num_edges = self.edge_index.shape[1]
 
-        self.edge_row, col = self.edge_index.cpu()
-        self.edge_col = col.numpy()
+        if str(self.edge_index.device) == "cpu":
+            edge_index = self.edge_index
+        else:
+            edge_index = self.edge_index.cpu()
+        self.edge_row = edge_index[0]
+
+        self.edge_col = edge_index[1].numpy()
 
         self.node_idx = torch.unique(self.edge_index).cpu().numpy()
 
@@ -224,7 +234,6 @@ class Data(object):
         edge_index = torch.from_numpy(np.stack([row, col], axis=0)).to(self.x.device).long()
         keys = self.keys
 
-        print(keys)
         attrs = {key: self[key][node_idx] for key in keys if "edge" not in key and "node_idx" not in key}
         attrs["edge_index"] = edge_index
         if edge_attr is not None:
@@ -260,7 +269,7 @@ class Data(object):
         if isinstance(batch, torch.Tensor):
             batch = batch.cpu().numpy()
 
-        adj = self.__adj[batch].tocsr()
+        adj = self.__adj[batch]
         batch_size = len(batch)
         if size == -1:
             row, col = self.edge_row, self.edge_col

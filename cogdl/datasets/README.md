@@ -11,6 +11,7 @@ CogDL now supports the following datasets for different tasks:
 
 <h3>Node classification</h3>
 
+
 <table>
     <tr>
         <th></th>
@@ -125,6 +126,7 @@ CogDL now supports the following datasets for different tasks:
 
 <h3>Network Embedding(Unsupervised Node classification)</h3>
 
+
 <table>
     <tr>
     	<th>Dataset</th>
@@ -186,6 +188,7 @@ CogDL now supports the following datasets for different tasks:
 
 
 <h3>Heterogenous Graph</h3>
+
 
 <table>
     <tr>
@@ -269,6 +272,7 @@ CogDL now supports the following datasets for different tasks:
 
 
 <h3>Knowledge Graph Link Prediction</h3>
+
 
 <table>
     <tr>

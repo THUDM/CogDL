@@ -9,7 +9,6 @@ from tqdm import tqdm
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificationModel
-from cogdl.trainers.self_auxiliary_task_trainer import SelfAuxiliaryTaskTrainer
 
 from . import BaseTask, register_task
 
@@ -83,7 +82,6 @@ class NodeClassification(BaseTask):
                 self._train_step()
                 train_acc, _ = self._test_step(split="train")
                 val_acc, val_loss = self._test_step(split="val")
-                print(_, val_loss)
                 epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
                 if val_loss <= min_loss or val_acc >= max_score:
                     if val_loss <= best_loss:  # and val_acc >= best_score:

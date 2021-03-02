@@ -172,6 +172,7 @@ class SAINTTrainer(SampledTrainer):
         #     ).sum()
         #     pred = logits[mask].max(1)[1]
         #     metric = pred.eq(self.data.y[mask]).sum().item() / mask.sum().item()
+
         loss = {key: self.loss_fn(logits[val], self.data.y[val]) for key, val in masks.items()}
         metric = {key: self.evaluator(logits[val], self.data.y[val]) for key, val in masks.items()}
         return metric, loss

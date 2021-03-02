@@ -7,7 +7,7 @@ import torch
 import torch.utils.data
 
 from cogdl.data import Data
-from cogdl.utils import remove_self_loops
+from cogdl.utils import remove_self_loops, row_normalization
 
 
 def normalize(adj):
@@ -172,10 +172,12 @@ class SAINTSampler(Sampler):
             data.val_mask = self.data.val_mask[node_idx]
             data.test_mask = self.data.test_mask[node_idx]
 
-        adj = data._build_adj_()
-        adj = normalize(adj).tocoo()
-        data.adj = _coo_scipy2torch(adj)
-        data._eliminate_adj_()
+        # adj = data._build_adj_()
+        # adj = normalize(adj).tocoo()
+        # data.adj = _coo_scipy2torch(adj)
+        edge_weight = row_normalization(data.x.shape[0], data.edge_index)
+        data.edge_weight = edge_weight
+        # data._eliminate_adj_()
         return data
 
     def exists_train_nodes(self, node_idx):

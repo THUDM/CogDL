@@ -30,7 +30,7 @@ class TestSmallDataset(Dataset):
         self.data.test_mask = torch.tensor(
             [False, False, True, False, True, False, False, True, True, False, True, False]
         )
-        self.num_classes = 4
+        # self.num_classes = 4
         self.transform = None
 
     def get(self, idx):

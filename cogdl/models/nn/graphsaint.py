@@ -3,9 +3,9 @@ from torch import nn
 import torch.nn.functional as F
 import numpy as np
 
-import scipy.sparse as sp
 from .. import BaseModel, register_model
 from cogdl.trainers.sampled_trainer import SAINTTrainer
+from cogdl.utils import spmm
 
 
 F_ACT = {"relu": nn.ReLU(), "I": lambda x: x}
@@ -100,13 +100,14 @@ class HighOrderAggregator(nn.Module):
             adj_norm        same as input (to facilitate nn.Sequential)
             feat_out        2D matrix of output node features
         """
-        adj_norm, feat_in = inputs
-        feat_in = self.f_dropout(feat_in)
+        x, edge_index, edge_weight = inputs
+        feat_in = self.f_dropout(x)
         feat_hop = [feat_in]
         # generate A^i X
         for o in range(self.order):
             # propagate(edge_index, x=x, norm=norm)
-            feat_hop.append(self._spmm(adj_norm, feat_hop[-1]))
+            # feat_hop.append(self._spmm(adj_norm, feat_hop[-1]))
+            feat_hop.append(spmm(edge_index, edge_weight, x))
         feat_partial = [self._f_feat_trans(ft, idf) for idf, ft in enumerate(feat_hop)]
         if self.aggr == "mean":
             feat_out = feat_partial[0]
@@ -118,7 +119,7 @@ class HighOrderAggregator(nn.Module):
             raise NotImplementedError
         if self.bias == "norm-nn":
             feat_out = self.f_norm(feat_out)
-        return adj_norm, feat_out  # return adj_norm to support Sequential
+        return feat_out, edge_index, edge_weight  # return adj_norm to support Sequential
 
 
 def parse_arch(architecture, aggr, act, bias, hidden_size, num_features):
@@ -241,9 +242,13 @@ class GraphSAINT(BaseModel):
             self.idx_conv = list(np.where(np.array(self.order_layer) == 1)[0])
 
     def forward(self, data):
-        _, emb_subg = self.conv_layers((data.adj, data.x))
+        if not hasattr(data, "edge_weight"):
+            edge_weight = torch.ones(data.edge_index.shape[1]).to(data.x.device)
+        else:
+            edge_weight = data.edge_weight
+        emb_subg, _, _ = self.conv_layers((data.x, data.edge_index, edge_weight))
         emb_subg_norm = F.normalize(emb_subg, p=2, dim=1)
-        pred_subg = self.classifier((None, emb_subg_norm))[1]
+        pred_subg = self.classifier((emb_subg_norm, None, None))[0]
         return pred_subg
 
     def _loss(self, preds, labels, norm_loss):

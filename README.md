@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-**[Homepage](http://keg.cs.tsinghua.edu.cn/cogdl)** | **[Leaderboards](./cogdl/tasks/README.md)** | **[Documentation](https://cogdl.readthedocs.io)** | **[BAAI link](http://open.baai.ac.cn/cogdl-toolkit)** |  **[Datasets](./cogdl/datasets/README.md)** | **[中文](./README_CN.md)**
+**[Homepage](http://keg.cs.tsinghua.edu.cn/cogdl)** | **[Paper](https://arxiv.org/abs/2103.00959)** | **[Leaderboards](./cogdl/tasks/README.md)** | **[Documentation](https://cogdl.readthedocs.io)** | **[BAAI link](http://open.baai.ac.cn/cogdl-toolkit)** |  **[Datasets](./cogdl/datasets/README.md)** | **[Join our Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[中文](./README_CN.md)**
 
 CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or customized models for node classification, graph classification, and other important tasks in the graph domain. 
 
@@ -20,6 +20,8 @@ We summarize the contributions of CogDL as follows:
 - **Reproducibility**: CogDL provides reproducible leaderboards for state-of-the-art models on most of important tasks in the graph domain.
 
 ## ❗ News
+
+- We release the first version of **[CogDL paper](https://arxiv.org/abs/2103.00959)** in arXiv. You can join [our slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg) for discussion.🎉
 
 - The new **v0.2.0 release** includes easy-to-use `experiment` and `pipeline` APIs for all experiments and applications. The `experiment` API supports automl features of searching hyper-parameters. This release also provides `OAGBert` API for model inference (`OAGBert` is trained on large-scale academic corpus by our lab). Some features and models are added by the open source community (thanks to all the contributors 🎉).
 

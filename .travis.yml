@@ -16,7 +16,6 @@ install:
   - pip install -r docs/requirements.txt
   - pip install -e .
 
-
 before_script:
   - black .
   - flake8 .
@@ -24,6 +23,7 @@ before_script:
 script:
   - export DGLBACKEND=pytorch
   - export METIS_DLL=~/.local/lib/libmetis.so
+  - ls ~/.local/lib && echo $METIS_DLL
   - coverage run --source=cogdl -m pytest tests
   - cd docs && make clean && make html && cd ..
 

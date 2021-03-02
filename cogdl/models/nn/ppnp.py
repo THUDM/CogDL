@@ -3,7 +3,6 @@ import torch.nn.functional as F
 
 from .. import BaseModel, register_model
 from cogdl.utils import add_remaining_self_loops, spmm
-
 from .mlp import MLP
 
 

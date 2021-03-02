@@ -22,6 +22,7 @@ class NodeClassification(BaseTask):
     def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
         # fmt: off
+        parser.add_argument("--missing-rate", type=int, default=0, help="missing rate, from 0 to 100")
         # fmt: on
 
     def __init__(
@@ -67,6 +68,7 @@ class NodeClassification(BaseTask):
             result = self.trainer.fit(self.model, self.dataset)
             if issubclass(type(result), torch.nn.Module):
                 self.model = result
+                self.model.to(self.data.x.device)
             else:
                 return result
         else:
@@ -81,13 +83,14 @@ class NodeClassification(BaseTask):
                 self._train_step()
                 train_acc, _ = self._test_step(split="train")
                 val_acc, val_loss = self._test_step(split="val")
+                print(_, val_loss)
                 epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
                 if val_loss <= min_loss or val_acc >= max_score:
                     if val_loss <= best_loss:  # and val_acc >= best_score:
                         best_loss = val_loss
                         best_score = val_acc
                         best_model = copy.deepcopy(self.model)
-                    min_loss = np.min((min_loss, val_loss))
+                    min_loss = np.min((min_loss, val_loss.cpu()))
                     max_score = np.max((max_score, val_acc))
                     patience = 0
                 else:

@@ -64,7 +64,6 @@ class AutoML(object):
         study = optuna.create_study(direction="maximize")
         study.optimize(self._objective, n_trials=self.n_trials, n_jobs=1)
         print(study.best_params)
-
         return self.best_results
 
 

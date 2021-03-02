@@ -218,6 +218,13 @@ class Data(object):
         self.__adj = sparse.csr_matrix(
             (edge_attr_np, (edge_index_np[0], edge_index_np[1])), shape=(num_nodes, num_nodes)
         )
+        return self.__adj
+
+    def _eliminate_adj_(self):
+        self.__adj = None
+        self.edge_row = None
+        self.edge_col = None
+        self.node_idx = None
 
     def subgraph(self, node_idx):
         """Return the induced node subgraph."""
@@ -240,7 +247,7 @@ class Data(object):
             attrs["edge_attr"] = edge_attr
         return Data(**attrs)
 
-    def edge_subgraph(self, edge_idx):
+    def edge_subgraph(self, edge_idx, require_idx=False):
         """Return the induced edge subgraph."""
         if isinstance(edge_idx, torch.Tensor):
             edge_idx = edge_idx.cpu().numpy()
@@ -260,6 +267,8 @@ class Data(object):
         attrs["edge_index"] = edge_index
         if edge_attr is not None:
             attrs["edge_attr"] = edge_attr
+        if require_idx:
+            return Data(**attrs), node_idx, edge_idx
         return Data(**attrs)
 
     def sample_adj(self, batch, size=-1, replace=True):

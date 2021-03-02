@@ -119,4 +119,5 @@ SUPPORTED_MODELS = {
     "pairnorm": "cogdl.models.nn.pairnorm",
     "unsup_graphsage": "cogdl.models.nn.unsup_graphsage",
     "sagpool": "cogdl.models.nn.pyg_sagpool",
+    "graphsaint": "cogdl.models.nn.graphsaint",
 }

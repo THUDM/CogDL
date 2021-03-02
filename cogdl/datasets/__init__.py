@@ -84,7 +84,7 @@ SUPPORTED_DATASETS = {
     "ogbn-arxiv": "cogdl.datasets.ogb",
     "ogbn-products": "cogdl.datasets.ogb",
     "ogbn-proteins": "cogdl.datasets.ogb",
-    "ogbn-mag": "cogdl.datasets.ogb",
+    "ogbn-mag": "cogdl.datasets.pyg_ogb",
     "ogbn-papers100M": "cogdl.datasets.ogb",
     "ogbg-molbace": "cogdl.datasets.ogb",
     "ogbg-molhiv": "cogdl.datasets.ogb",

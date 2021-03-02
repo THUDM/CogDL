@@ -156,9 +156,9 @@ class MVGRL(BaseModel):
         idx = np.random.randint(0, adj.shape[-1] - self.sample_size + 1, self.batch_size)
         ba, bd, bf = [], [], []
         for i in idx:
-            ba.append(adj[i : i + self.sample_size, i : i + self.sample_size])
-            bd.append(diff[i : i + self.sample_size, i : i + self.sample_size])
-            bf.append(x[i : i + self.sample_size])
+            ba.append(adj[i: i + self.sample_size, i: i + self.sample_size])
+            bd.append(diff[i: i + self.sample_size, i: i + self.sample_size])
+            bf.append(x[i: i + self.sample_size])
 
         ba = np.array(ba).reshape(self.batch_size, self.sample_size, self.sample_size)
         bd = np.array(bd)

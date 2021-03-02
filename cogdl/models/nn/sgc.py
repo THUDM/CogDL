@@ -11,12 +11,10 @@ class SimpleGraphConvolution(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.order = order
-        # self.weight = Parameter(torch.FloatTensor(in_features, out_features))
-
         self.W = nn.Linear(in_features, out_features)
 
-    def forward(self, input, edge_index, edge_attr=None):
-        output = self.W(input)
+    def forward(self, x, edge_index, edge_attr=None):
+        output = self.W(x)
         for _ in range(self.order):
             output = spmm(edge_index, edge_attr, output)
         return output

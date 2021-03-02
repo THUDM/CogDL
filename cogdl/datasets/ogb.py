@@ -31,6 +31,7 @@ def coalesce(row, col, edge_attr=None):
 
 class OGBNDataset(Dataset):
     def __init__(self, root, name):
+        super(OGBNDataset, self).__init__(root)
         dataset = NodePropPredDataset(name, root)
         graph, y = dataset[0]
         x = torch.tensor(graph["node_feat"])
@@ -68,6 +69,12 @@ class OGBNDataset(Dataset):
 
     def get_evaluator(self):
         return accuracy
+
+    def _download(self):
+        pass
+
+    def _process(self):
+        pass
 
 
 @register_dataset("ogbn-arxiv")
@@ -112,6 +119,7 @@ class OGBPapers100MDataset(OGBNDataset):
 
 class OGBGDataset(Dataset):
     def __init__(self, root, name):
+        super(OGBGDataset, self).__init__(root)
         self.name = name
         self.dataset = GraphPropPredDataset(self.name, root)
 
@@ -149,6 +157,12 @@ class OGBGDataset(Dataset):
 
     def get(self, idx):
         return self.graphs[idx]
+
+    def _download(self):
+        pass
+
+    def _process(self):
+        pass
 
     @property
     def num_classes(self):

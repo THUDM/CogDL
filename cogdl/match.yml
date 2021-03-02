@@ -65,6 +65,7 @@ node_classification:
     - dropedge_gcn
     - unet
     - pprgo
+    - graphsaint
     dataset:
     - cora
     - citeseer
@@ -78,6 +79,7 @@ node_classification:
     - ppi
     - ppi-large
     - reddit
+    - test_small
 unsupervised_node_classification:
   - model:
     - prone
@@ -137,8 +139,6 @@ graph_classification:
     - reddit-b
     - reddit-multi-5k
     - reddit-multi-12k
-    - ogbg-molbace
-    - ogbg-molhiv
 unsupervised_graph_classification:
   - model:
     - infograph

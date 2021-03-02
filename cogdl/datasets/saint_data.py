@@ -5,10 +5,10 @@ import time
 import numpy as np
 import scipy.sparse as sp
 import torch
-from cogdl.data import Data, Dataset
-from cogdl.utils import accuracy, bce_with_logits_loss, cross_entropy_loss, download_url, multilabel_f1
 from sklearn.preprocessing import StandardScaler
 
+from cogdl.data import Data, Dataset
+from cogdl.utils import download_url, accuracy, multilabel_f1, bce_with_logits_loss, cross_entropy_loss
 from . import register_dataset
 from .planetoid_data import index_to_mask
 

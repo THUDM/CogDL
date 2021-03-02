@@ -1,12 +1,29 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from .. import BaseModel, register_model
+from cogdl.utils import get_activation
 
 
 @register_model("mlp")
 class MLP(BaseModel):
+    r"""Multilayer perception with normalization
+
+    .. math::
+        x^{(i+1)} = \sigma(W^{i}x^{(i)})
+
+    Parameters
+    ----------
+    in_feats : int
+        Size of each input sample.
+    out_feats : int
+        Size of each output sample.
+    hidden_dim : int
+        Size of hidden layer dimension.
+    use_bn : bool, optional
+        Apply batch normalization if True, default: `True).
+    """
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -28,24 +45,30 @@ class MLP(BaseModel):
             args.dropout,
         )
 
-    def __init__(self, num_features, num_classes, hidden_size, num_layers, dropout):
+    def __init__(self, in_feats, out_feats, hidden_size, num_layers, dropout=0.0, activation="relu", norm=None):
         super(MLP, self).__init__()
-
-        self.num_features = num_features
-        self.num_classes = num_classes
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
+        self.norm = norm
+        self.activation = get_activation(activation)
         self.dropout = dropout
-        shapes = [num_features] + [hidden_size] * (num_layers - 1) + [num_classes]
+        shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
         self.mlp = nn.ModuleList([nn.Linear(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
+        if norm is not None and num_layers > 1:
+            if norm == "layernorm":
+                self.norm_list = nn.ModuleList(nn.LayerNorm(x) for x in shapes[1:-1])
+            elif norm == "batchnorm":
+                self.norm_list = nn.ModuleList(nn.BatchNorm1d(x) for x in shapes[1:-1])
+            else:
+                raise NotImplementedError(f"{norm} is not implemented in CogDL.")
 
-    def forward(self, x, edge_index):
-        for fc in self.mlp[:-1]:
-            x = F.relu(fc(x))
+    def forward(self, x, *args, **kwargs):
+        for i, fc in enumerate(self.mlp[:-1]):
+            x = fc(x)
+            if self.norm:
+                x = self.norm_list[i](x)
+            x = self.activation(x)
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.mlp[-1](x)
         return x
-        # return F.log_softmax(x, dim=1)
 
     def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+        return self.forward(data.x)

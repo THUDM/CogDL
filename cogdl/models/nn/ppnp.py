@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from .. import BaseModel, register_model
 from cogdl.utils import add_remaining_self_loops, spmm
 
-from .gcn import TKipfGCN
+from .mlp import MLP
 
 
 @register_model("ppnp")
@@ -36,10 +36,10 @@ class PPNP(BaseModel):
             args.num_iterations,
         )
 
-    def __init__(self, nfeat, nhid, nclass, num_layers, dropout, propagation, alpha, niter):
+    def __init__(self, nfeat, nhid, nclass, num_layers, dropout, propagation, alpha, niter, cache=True):
         super(PPNP, self).__init__()
         # GCN as a prediction and then apply the personalized page rank on the results
-        self.nn = TKipfGCN(nfeat, nhid, nclass, num_layers, dropout)
+        self.nn = MLP(nfeat, nclass, nhid, num_layers, dropout)
         if propagation not in ("appnp", "ppnp"):
             print("Invalid propagation type, using default appnp")
             propagation = "appnp"
@@ -49,6 +49,8 @@ class PPNP(BaseModel):
         self.niter = niter
         self.dropout = dropout
         self.vals = None  # speedup for ppnp
+        self.use_cache = cache
+        self.cache = dict()
 
     def _calculate_A_hat(self, x, edge_index):
         device = x.device
@@ -70,10 +72,19 @@ class PPNP(BaseModel):
             ).to(input.device)
             return adj
 
+        if self.use_cache:
+            flag = str(adj.shape[1])
+            if flag not in self.cache:
+                edge_index, edge_attr = self._calculate_A_hat(x, adj)
+                self.cache[flag] = (edge_index, edge_attr)
+            else:
+                edge_index, edge_attr = self.cache[flag]
+        else:
+            edge_index, edge_attr = self._calculate_A_hat(x, adj)
         # get prediction
-        local_preds = self.nn.forward(x, adj)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        local_preds = self.nn.forward(x)
 
-        edge_index, edge_attr = self._calculate_A_hat(x, adj)
         # apply personalized pagerank
         if self.propagation == "ppnp":
             if self.vals is None:
@@ -83,7 +94,8 @@ class PPNP(BaseModel):
             final_preds = F.dropout(self.vals) @ local_preds
         else:  # appnp
             preds = local_preds
-            for i in range(1, self.niter + 1):
+            edge_attr = F.dropout(edge_attr, p=self.dropout, training=self.training)
+            for _ in range(self.niter):
                 new_features = spmm(edge_index, edge_attr, preds)
                 preds = (1 - self.alpha) * new_features + self.alpha * local_preds
             final_preds = preds

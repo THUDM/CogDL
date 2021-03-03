@@ -52,7 +52,7 @@ Matlab matrix dataset
 PyG OGB dataset
 -------------------------------
 
-.. automodule:: cogdl.datasets.pyg_ogb
+.. automodule:: cogdl.datasets.ogb
     :members:
     :undoc-members:
     :show-inheritance:
@@ -60,7 +60,7 @@ PyG OGB dataset
 PyG strategies dataset
 -------------------------------
 
-.. automodule:: cogdl.datasets.pyg_strategies_data
+.. automodule:: cogdl.datasets.strategies_data
     :members:
     :undoc-members:
     :show-inheritance:

@@ -223,6 +223,7 @@ def initialize_spmm(args):
 
             global fast_spmm
             fast_spmm = csrspmm
+            print("Using fast-spmm to speed up training")
         except Exception as e:
             print(e)
 

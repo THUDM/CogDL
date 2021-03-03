@@ -5,7 +5,6 @@ from cogdl.datasets import DATASET_REGISTRY, try_import_dataset
 from cogdl.models import MODEL_REGISTRY, try_import_model
 from cogdl.tasks import TASK_REGISTRY
 from cogdl.trainers import TRAINER_REGISTRY, try_import_trainer
-from cogdl.utils import initialize_spmm
 
 
 def get_parser():
@@ -131,7 +130,6 @@ def parse_args_and_arch(parser, args):
                 TRAINER_REGISTRY[args.trainer].add_args(parser)
     # Parse a second time.
     args = parser.parse_args()
-    initialize_spmm(args)
     return args
 
 

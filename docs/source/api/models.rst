@@ -306,11 +306,6 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.fastgcn.FastGCN
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: cogdl.models.nn.mlp.MLP
     :members:
     :undoc-members:
@@ -321,7 +316,7 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_stpgnn.stpgnn
+.. autoclass:: cogdl.models.nn.stpgnn.stpgnn
     :members:
     :undoc-members:
     :show-inheritance:
@@ -332,11 +327,6 @@ GNN Model
     :show-inheritance:
 
 .. autoclass:: cogdl.models.nn.pyg_srgcn.SRGCN
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.nn.asgcn.ASGCN
     :members:
     :undoc-members:
     :show-inheritance:
@@ -365,7 +355,7 @@ GNN Model
 AGC Model
 ---------
 
-.. autoclass:: cogdl.models.agc.pyg_daegc.DAEGC
+.. autoclass:: cogdl.models.agc.daegc.DAEGC
     :members:
     :undoc-members:
     :show-inheritance:

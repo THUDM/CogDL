@@ -58,7 +58,7 @@ pip install -e .
 
 ## 使用说明
 
-### API
+### API用法
 
 您可以通过CogDL API进行各种实验，尤其是`experiment`。[quick_start.py](https://github.com/THUDM/cogdl/tree/master/examples/quick_start.py)这是一个快速入门的代码。您也可以使用自己的数据集和模型进行实验。[examples/](https://github.com/THUDM/cogdl/tree/master/examples/) 文件夹里提供了一些例子。
 
@@ -94,15 +94,12 @@ from cogdl import pipeline
 stats = pipeline("dataset-stats")
 stats(["cora", "citeseer"])
 
-# visualize k-hop neighbors of seed in the dataset
-visual = pipeline("dataset-visual")
-visual("cora", seed=0, depth=3)
-
 # load OAGBert model and perform inference
 oagbert = pipeline("oagbert")
 outputs = oagbert(["CogDL is developed by KEG, Tsinghua.", "OAGBert is developed by KEG, Tsinghua."])
 ```
 
+有关OAGBert更多的用法可以参见[这里](./cogdl/oag/README.md).
 
 ### 命令行
 基本用法可以使用 `python train.py --task example_task --dataset example_dataset --model example_model` 来在 `example_data` 上运行 `example_model` 并使用 `example_task` 来评测结果。
@@ -137,6 +134,11 @@ $ python scripts/parallel_train.py --task node_classification --dataset cora --m
 | ('cora', 'gcn') | 0.8236±0.0033 |
 | ('cora', 'gat') | 0.8262±0.0032 |
 
+### Fast-Spmm用法
+
+CogDL提供了一种快速的稀疏矩阵乘的操作（[GE-SpMM](https://arxiv.org/abs/2007.03179)）来加速图神经网络模型在GPU上的训练效率。
+你可以设置`fast_spmm=True`或者`--fast-spmm`来启用这个特性。
+需要注意的是这个特性仍在测试阶段，可能在某些CUDA版本下无法正常使用。
 
 ## Docker
 

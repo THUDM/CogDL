@@ -26,14 +26,6 @@ Unsupervised Node Classification
     :undoc-members:
     :show-inheritance:
 
-Node Classification (with sampling)
--------------------------------------------
-
-.. automodule:: cogdl.tasks.node_classification_sampling
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Heterogeneous Node Classification
 --------------------------------------------
 

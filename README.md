@@ -97,14 +97,12 @@ from cogdl import pipeline
 stats = pipeline("dataset-stats")
 stats(["cora", "citeseer"])
 
-# visualize k-hop neighbors of seed in the dataset
-visual = pipeline("dataset-visual")
-visual("cora", seed=0, depth=3)
-
 # load OAGBert model and perform inference
 oagbert = pipeline("oagbert")
 outputs = oagbert(["CogDL is developed by KEG, Tsinghua.", "OAGBert is developed by KEG, Tsinghua."])
 ```
+
+More details of the OAGBert usage can be found [here](./cogdl/oag/README.md).
 
 ### Command-Line Usage
 
@@ -143,6 +141,12 @@ Expected output:
 | ('cora', 'gat') | 0.8262±0.0032 |
 
 If you have ANY difficulties to get things working in the above steps, feel free to open an issue. You can expect a reply within 24 hours.
+
+### Fast-Spmm Usage
+
+CogDL provides a fast sparse matrix-matrix multiplication operator called [GE-SpMM](https://arxiv.org/abs/2007.03179) to speed up training of GNN models on the GPU. 
+You can set `fast_spmm=True` in the API usage or `--fast-spmm` in the command-line usage to enable this feature.
+Note that this feature is still in testing and may not work under some versions of CUDA.
 
 ## Docker container
 

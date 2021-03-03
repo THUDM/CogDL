@@ -72,3 +72,11 @@ Variant                    Acc
 ('cora', 'gcn')            0.8236±0.0033  
 ('cora', 'gat')            0.8262±0.0032  
 =========================  ============== 
+
+
+Fast-Spmm Usage
+---------------
+
+CogDL provides a fast sparse matrix-matrix multiplication operator called `GE-SpMM <https://arxiv.org/abs/2007.03179>`_ to speed up training of GNN models on the GPU. 
+You can set ``fast_spmm=True`` in the API usage or ``--fast-spmm`` in the command-line usage to enable this feature.
+Note that this feature is still in testing and may not work under some versions of CUDA.

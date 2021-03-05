@@ -1,6 +1,7 @@
 ![CogDL](docs/source/_static/cogdl-logo.png)
 ===
 
+[![PyPI Latest Release](https://badge.fury.io/py/cogdl.svg)](https://pypi.org/project/cogdl/)
 [![Build Status](https://travis-ci.org/THUDM/cogdl.svg?branch=master)](https://travis-ci.org/THUDM/cogdl)
 [![Coverage Status](https://coveralls.io/repos/github/THUDM/cogdl/badge.svg?branch=master)](https://coveralls.io/github/THUDM/cogdl?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/cogdl/badge/?version=latest)](https://cogdl.readthedocs.io/en/latest/?badge=latest)
@@ -20,7 +21,7 @@ CogDL的特性包括：
 
 ## ❗ 最新
 
-- 我们在arXiv上发布了 **[CogDL paper](https://arxiv.org/abs/2103.00959)** 的初版. 你可以加入[我们的slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)来讨论CogDL相关的内容。🎉
+- 最新的 **v0.3.0版本** 提供了快速的稀疏矩阵乘操作来加速图神经网络模型的训练。我们在arXiv上发布了 **[CogDL paper](https://arxiv.org/abs/2103.00959)** 的初版. 你可以加入[我们的slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)来讨论CogDL相关的内容。🎉
 
 - 最新的 **v0.2.0版本** 包含了非常易用的`experiment`和`pipeline`接口，其中`experiment`接口还支持超参搜索。这个版本还提供了`OAGBert`模型的接口（`OAGBert`是我们实验室推出的在大规模学术语料下训练的模型）。这个版本的很多内容是由开源社区的小伙伴们提供的，感谢大家的支持！🎉
 

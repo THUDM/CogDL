@@ -1,3 +1,5 @@
+#ifndef computeUtil_H
+#define computeUtil_H
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 #include "device_launch_parameters.h"
@@ -131,3 +133,4 @@ __device__ __forceinline__ void AllReduce(data multi, int stride, int warpSize)
         multi += shlf_xor_sync(0xffffffff, multi, stride, warpSize);
     }
 }
+#endif computeUtil_H

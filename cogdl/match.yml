@@ -66,6 +66,7 @@ node_classification:
     - unet
     - pprgo
     - graphsaint
+    - m3s
     dataset:
     - cora
     - citeseer

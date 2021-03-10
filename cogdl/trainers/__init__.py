@@ -55,4 +55,5 @@ SUPPORTED_TRAINERS = {
     "clustergcn": "cogdl.trainers.sampled_trainer",
     "random_partition": "cogdl.trainers.sampled_trainer",
     "self_auxiliary_task": "cogdl.trainers.self_auxiliary_task_trainer",
+    "m3s": "cogdl.trainers.m3s_trainer",
 }

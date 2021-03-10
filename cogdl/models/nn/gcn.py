@@ -76,6 +76,7 @@ class TKipfGCN(BaseModel):
         super(TKipfGCN, self).__init__()
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
         self.layers = nn.ModuleList([GraphConvolution(shapes[i], shapes[i + 1]) for i in range(num_layers)])
+        print(self.layers)
         self.num_layers = num_layers
         self.dropout = dropout
 

@@ -6,7 +6,6 @@ import scipy.sparse as sp
 import torch
 import torch.utils.data
 
-from cogdl.data import Data
 from cogdl.utils import remove_self_loops, row_normalization
 
 
@@ -337,7 +336,7 @@ class LayerSampler(Sampler):
 
 
 class NeighborSampler(torch.utils.data.DataLoader):
-    def __init__(self, data: Data, sizes: List[int], mask=None, **kwargs):
+    def __init__(self, data, sizes: List[int], mask=None, **kwargs):
         self.data = data
         self.sizes = sizes
         node_idx = np.arange(0, data.x.shape[0])
@@ -369,14 +368,14 @@ class NeighborSampler(torch.utils.data.DataLoader):
         node_id = batch
         adj_list = []
         for size in self.sizes:
-            src_id, _edge_index = self.data.sample_adj(node_id, size, replace=False)
+            src_id, graph = self.data.sample_adj(node_id, size, replace=False)
             size = (len(src_id), len(node_id))
-            adj_list.append((src_id, _edge_index, size))  # src_id, edge_index, (src_size, target_size)
+            adj_list.append((src_id, graph, size))  # src_id, graph, (src_size, target_size)
             node_id = src_id
         if self.sizes == [-1]:
-            src_id, edge_index, _ = adj_list[0]
+            src_id, graph, _ = adj_list[0]
             size = (len(src_id), len(batch))
-            return src_id, edge_index, size
+            return src_id, graph, size
         else:
             return batch, node_id, adj_list[::-1]
 
@@ -384,7 +383,7 @@ class NeighborSampler(torch.utils.data.DataLoader):
 class ClusteredLoader(torch.utils.data.DataLoader):
     partition_tool = None
 
-    def __init__(self, data: Data, n_cluster: int, **kwargs):
+    def __init__(self, data, n_cluster: int, **kwargs):
         try:
             import metis
 

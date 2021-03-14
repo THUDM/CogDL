@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from cogdl.data import Data
+from cogdl.data import Graph
 from cogdl.utils import add_remaining_self_loops, symmetric_normalization
 from scipy.linalg import expm
 
@@ -152,26 +152,26 @@ class GDC_GCN(BaseModel):
             edge_index = [edges_i, edges_j]
             return torch.as_tensor(edge_index, dtype=torch.long), torch.as_tensor(edge_attr, dtype=torch.float)
 
-        edge_index, edge_attr = get_diffusion(data.x, data.edge_index)
+        edge_index, edge_weight = get_diffusion(data.x, data.edge_index)
 
         if hasattr(data, "edge_index_train"):
-            edge_index_train, edge_attr_train = get_diffusion(data.x, data.edge_index_train)
-            data = Data(
+            edge_index_train, edge_weight_train = get_diffusion(data.x, data.edge_index_train)
+            data = Graph(
                 x=data.x,
                 edge_index=edge_index,
-                edge_attr=edge_attr,
+                edge_weight=edge_weight,
                 edge_index_train=edge_index_train,
-                edge_attr_train=edge_attr_train,
+                edge_weight_train=edge_weight_train,
                 y=data.y,
                 train_mask=data.train_mask,
                 test_mask=data.test_mask,
                 val_mask=data.val_mask,
             )
         else:
-            data = Data(
+            data = Graph(
                 x=data.x,
                 edge_index=edge_index,
-                edge_attr=edge_attr,
+                edge_weight=edge_weight,
                 y=data.y,
                 train_mask=data.train_mask,
                 test_mask=data.test_mask,

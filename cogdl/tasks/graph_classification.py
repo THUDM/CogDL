@@ -6,7 +6,7 @@ import torch
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
-from cogdl.data import Data, DataLoader
+from cogdl.data import Graph, DataLoader
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.utils import add_remaining_self_loops
@@ -219,10 +219,8 @@ class GraphClassification(BaseTask):
 
     def generate_data(self, dataset, args):
         datalist = []
-        # if isinstance(dataset[0], Data):
-        #     return dataset
         for idata in dataset:
-            data = Data()
+            data = Graph()
             for key in idata.keys:
                 data[key] = idata[key]
             datalist.append(data)

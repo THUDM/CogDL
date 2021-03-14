@@ -9,7 +9,7 @@ from cogdl.layers import MeanAggregator, SumAggregator
 from cogdl.trainers.sampled_trainer import NeighborSamplingTrainer
 
 from .. import BaseModel, register_model
-from cogdl.data import Data
+from cogdl.data import Graph
 
 
 def sage_sampler(adjlist, edge_index, num_sample):
@@ -45,15 +45,8 @@ class GraphSAGELayer(nn.Module):
         else:
             raise NotImplementedError
 
-    def forward(self, x, edge_index, edge_weight=None):
-        if edge_weight is None:
-            edge_weight = torch.ones(edge_index.shape[1]).float().to(x.device)
-        adj_sp = torch.sparse_coo_tensor(
-            indices=edge_index,
-            values=edge_weight,
-            size=(x.shape[0], x.shape[0]),
-        ).to(x.device)
-        out = self.aggr(x, adj_sp)
+    def forward(self, x, graph):
+        out = self.aggr(x, graph)
         if self.normalize:
             out = F.normalize(out, p=2.0, dim=-1)
         return out
@@ -123,9 +116,9 @@ class Graphsage(BaseModel):
             return self.mini_forward(*args)
         else:
             x, adjs = args
-            for i, (src_id, edge_index, size) in enumerate(adjs):
-                edge_index = edge_index.to(self.device)
-                output = self.convs[i](x, edge_index)
+            for i, (src_id, graph, size) in enumerate(adjs):
+                graph = graph.to(self.device)
+                output = self.convs[i](x, graph)
                 x = output[0 : size[1]]
                 if i != self.num_layers - 1:
                     x = F.relu(x)
@@ -133,7 +126,7 @@ class Graphsage(BaseModel):
             return x
 
     def node_classification_loss(self, *args):
-        if isinstance(args[0], Data):
+        if isinstance(args[0], Graph):
             return self.mini_loss(*args)
         else:
             x, adjs, y = args

@@ -213,7 +213,7 @@ class GAT(BaseModel):
         self.residual = residual
 
     def forward(self, x, edge_index):
-        edge_index, _ = add_remaining_self_loops(edge_index)
+        # edge_index, _ = add_remaining_self_loops(edge_index)
 
         for i, layer in enumerate(self.attentions):
             x = F.dropout(x, p=self.dropout, training=self.training)

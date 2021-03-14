@@ -1,8 +1,7 @@
-import torch
 import torch.nn as nn
 
 from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, symmetric_normalization, spmm
+from cogdl.utils import spmm
 
 
 class SimpleGraphConvolution(nn.Module):
@@ -13,10 +12,10 @@ class SimpleGraphConvolution(nn.Module):
         self.order = order
         self.W = nn.Linear(in_features, out_features)
 
-    def forward(self, x, edge_index, edge_attr=None):
+    def forward(self, x, graph):
         output = self.W(x)
         for _ in range(self.order):
-            output = spmm(edge_index, edge_attr, output)
+            output = spmm(graph, output)
         return output
 
 
@@ -36,16 +35,10 @@ class sgc(BaseModel):
         self.nn = SimpleGraphConvolution(in_feats, out_feats)
         self.cache = dict()
 
-    def forward(self, x, edge_index):
-        flag = str(edge_index.shape[1])
-        if flag not in self.cache:
-            edge_attr = torch.ones(edge_index.shape[1]).to(x.device)
-            edge_index, edge_attr = add_remaining_self_loops(edge_index, edge_attr, 1, x.shape[0])
-            edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
-            self.cache[flag] = (edge_index, edge_attr)
-        edge_index, edge_attr = self.cache[flag]
+    def forward(self, x, graph):
+        graph.sym_norm()
 
-        x = self.nn(x, edge_index, edge_attr)
+        x = self.nn(x, graph)
         return x
 
     def predict(self, data):

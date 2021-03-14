@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import torch
 
-from cogdl.data import Data, Dataset
+from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 
 from . import register_dataset
@@ -23,8 +23,8 @@ class GCCDataset(Dataset):
         edge_index_1, dict_1, self.node2id_1 = self.preprocess(root, name1)
         edge_index_2, dict_2, self.node2id_2 = self.preprocess(root, name2)
         self.data = [
-            Data(x=None, edge_index=edge_index_1, y=dict_1),
-            Data(x=None, edge_index=edge_index_2, y=dict_2),
+            Graph(x=None, edge_index=edge_index_1, y=dict_1),
+            Graph(x=None, edge_index=edge_index_2, y=dict_2),
         ]
         self.transform = None
 
@@ -154,7 +154,7 @@ class Edgelist(Dataset):
         y = torch.zeros(num_nodes, len(label2id))
         y[nodes, labels] = 1
 
-        data = Data(edge_index=torch.LongTensor(edge_list).t(), x=None, y=y)
+        data = Graph(edge_index=torch.LongTensor(edge_list).t(), x=None, y=y)
 
         torch.save(data, self.processed_paths[0])
 

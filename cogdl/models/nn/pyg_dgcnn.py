@@ -6,7 +6,7 @@ from torch_geometric.nn import DynamicEdgeConv, global_max_pool
 
 from .. import BaseModel, register_model
 from .mlp import MLP
-from cogdl.data import DataLoader, Data
+from cogdl.data import DataLoader, Graph
 
 
 @register_model("dgcnn")
@@ -45,8 +45,8 @@ class DGCNN(BaseModel):
     @classmethod
     def split_dataset(cls, dataset, args):
         if "ModelNet" in args.dataset:
-            train_data = [Data(x=d.pos, y=d.y) for d in dataset["train"]]
-            test_data = [Data(x=d.pos, y=d.y) for d in dataset["test"]]
+            train_data = [Graph(x=d.pos, y=d.y) for d in dataset["train"]]
+            test_data = [Graph(x=d.pos, y=d.y) for d in dataset["test"]]
             train_loader = DataLoader(train_data, batch_size=args.batch_size, num_workers=6)
             test_loader = DataLoader(test_data, batch_size=args.batch_size, num_workers=6, shuffle=False)
             return train_loader, test_loader, test_loader

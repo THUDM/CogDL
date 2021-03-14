@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
 from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, symmetric_normalization, spmm
+from cogdl.utils import spmm
 
 
 class GraphConvolution(nn.Module):
@@ -31,18 +31,13 @@ class GraphConvolution(nn.Module):
         if self.bias is not None:
             self.bias.data.zero_()
 
-    def forward(self, x, edge_index, edge_attr=None):
+    def forward(self, x, graph):
         support = torch.mm(x, self.weight)
-        if edge_attr is None:
-            edge_attr = torch.ones(edge_index.shape[1]).to(x.device)
-        out = spmm(edge_index, edge_attr, support)
+        out = spmm(graph, support)
         if self.bias is not None:
             return out + self.bias
         else:
             return out
-
-    def __repr__(self):
-        return self.__class__.__name__ + " (" + str(self.in_features) + " -> " + str(self.out_features) + ")"
 
 
 @register_model("gcn")
@@ -79,29 +74,22 @@ class TKipfGCN(BaseModel):
         self.num_layers = num_layers
         self.dropout = dropout
 
-    def get_embeddings(self, x, edge_index):
-        edge_index, edge_attr = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])
-        edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
-
-        h = x
+    def get_embeddings(self, graph):
+        h = graph.x
         for i in range(self.num_layers - 1):
             h = F.dropout(h, self.dropout, training=self.training)
-            h = self.layers[i](h, edge_index, edge_attr)
+            h = self.layers[i](h, graph)
         return h
 
-    def forward(self, x, edge_index, edge_weight=None):
-        edge_index, edge_weight = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])
-        edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_weight)
-        h = x
+    def forward(self, graph):
+        graph.sym_norm()
+        h = graph.x
         for i in range(self.num_layers):
-            h = self.layers[i](h, edge_index, edge_attr)
+            h = self.layers[i](h, graph)
             if i != self.num_layers - 1:
                 h = F.relu(h)
                 h = F.dropout(h, self.dropout, training=self.training)
         return h
 
     def predict(self, data):
-        if hasattr(data, "norm_aggr"):
-            return self.forward(data.x, data.edge_index, data.norm_aggr)
-        else:
-            return self.forward(data.x, data.edge_index)
+        return self.forward(data)

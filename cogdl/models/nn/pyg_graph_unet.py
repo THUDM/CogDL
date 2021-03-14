@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 from .. import BaseModel, register_model
 from .gcn import GraphConvolution
-from cogdl.data import Data
+from cogdl.data import Graph
 
 from cogdl.utils import get_activation, row_normalization, add_remaining_self_loops, dropout_adj
 from torch_sparse import spspmm
@@ -23,13 +23,13 @@ class Pool(nn.Module):
         self.proj = nn.Linear(in_feats, 1)
         self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity
 
-    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> Tuple[Data, torch.Tensor]:
+    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> Tuple[Graph, torch.Tensor]:
         x = self.dropout(x)
         h = self.proj(x).squeeze()
         scores = self.act(h)
         return self.top_k(x, edge_index, scores)
 
-    def top_k(self, x: torch.Tensor, edge_index: torch.Tensor, scores: torch.Tensor) -> Tuple[Data, torch.Tensor]:
+    def top_k(self, x: torch.Tensor, edge_index: torch.Tensor, scores: torch.Tensor) -> Tuple[Graph, torch.Tensor]:
         org_n_nodes = x.shape[0]
         num = int(self.pooling_rate * x.shape[0])
         values, indices = torch.topk(scores, max(2, num))
@@ -40,7 +40,7 @@ class Pool(nn.Module):
             edge_index, _ = spspmm(edge_index, edge_attr, edge_index, edge_attr, org_n_nodes, org_n_nodes, org_n_nodes)
             edge_index = edge_index.to(x.device)
 
-        batch = Data(x=x, edge_index=edge_index)
+        batch = Graph(x=x, edge_index=edge_index)
         new_batch = batch.subgraph(indices)
         num_nodes = new_batch.x.shape[0]
         new_batch.edge_attr = row_normalization(num_nodes, new_batch.edge_index)

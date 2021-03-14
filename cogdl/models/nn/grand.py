@@ -148,12 +148,12 @@ class Grand(BaseModel):
             x = x * (1.0 - self.dropnode_rate)
         return x
 
-    def rand_prop(self, x, edge_index, edge_weight):
+    def rand_prop(self, x, graph):
         x = self.dropNode(x)
 
         y = x
         for i in range(self.order):
-            x = spmm(edge_index, edge_weight, x).detach_()
+            x = spmm(graph, x).detach_()
             y.add_(x)
         return y.div_(self.order + 1.0).detach_()
 
@@ -179,12 +179,11 @@ class Grand(BaseModel):
         x = x * row_inv[:, None]
         return x
 
-    def forward(self, x, edge_index, edge_weight=None):
+    def forward(self, graph):
+        graph.sym_norm()
+        x = graph.x
         x = self.normalize_x(x)
-        if edge_weight is None:
-            edge_weight = torch.ones(edge_index.shape[1], dtype=torch.float32).to(x.device)
-        edge_weight = symmetric_normalization(x.shape[0], edge_index, edge_weight)
-        x = self.rand_prop(x, edge_index, edge_weight)
+        x = self.rand_prop(x, graph)
         if self.use_bn:
             x = self.bn1(x)
         x = F.dropout(x, self.input_droprate, training=self.training)
@@ -195,21 +194,20 @@ class Grand(BaseModel):
         x = self.layer2(x)
         return x
 
-    def node_classification_loss(self, data):
+    def node_classification_loss(self, graph):
         output_list = []
-        edge_index = data.edge_index_train if hasattr(data, "edge_index_train") and self.training else data.edge_index
         for i in range(self.sample):
-            output_list.append(self.forward(data.x, edge_index))
+            output_list.append(self.forward(graph))
         loss_train = 0.0
         for output in output_list:
-            loss_train += self.loss_fn(output[data.train_mask], data.y[data.train_mask])
+            loss_train += self.loss_fn(output[graph.train_mask], graph.y[graph.train_mask])
         loss_train = loss_train / self.sample
 
-        if len(data.y.shape) > 1:
+        if len(graph.y.shape) > 1:
             output_list = [torch.sigmoid(x) for x in output_list]
         else:
             output_list = [F.log_softmax(x, dim=-1) for x in output_list]
-        loss_consis = self.consis_loss(output_list, data.train_mask)
+        loss_consis = self.consis_loss(output_list, graph.train_mask)
 
         return loss_train + loss_consis
 

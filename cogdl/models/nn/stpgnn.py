@@ -1,6 +1,3 @@
-import torch
-from torch.nn.modules import activation
-
 from .. import BaseModel, register_model
 from cogdl.layers.strategies_layers import (
     ContextPredictTrainer,

@@ -2,7 +2,7 @@ import os.path as osp
 
 import numpy as np
 import torch
-from cogdl.data import Data, Dataset
+from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 from cogdl.datasets import register_dataset
 
@@ -216,7 +216,7 @@ def read_triplet_data(folder):
 
     edge_index = torch.LongTensor(edge_index).t()
     edge_attr = torch.LongTensor(edge_attr)
-    data = Data()
+    data = Graph()
     data.edge_index = edge_index
     data.edge_attr = edge_attr
 

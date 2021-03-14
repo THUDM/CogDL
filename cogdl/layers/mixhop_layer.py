@@ -38,11 +38,3 @@ class MixHopLayer(nn.Module):
             output_list.append(output)
 
         return torch.cat(output_list, dim=1)
-
-
-if __name__ == "__main__":
-    layer = MixHopLayer(10, [1, 3], [16, 32])
-    x = torch.ones(5, 10)
-    adj = torch.LongTensor([[0, 1, 1, 2, 2, 3, 4], [1, 2, 3, 0, 4, 4, 1]])
-    output = layer(x, adj)
-    print(output.shape)

@@ -2,17 +2,16 @@
 #include <torch/types.h>
 #include "computeUtil.h"
 
-template <typename T>
 __global__ void sddmmCOO4Scale(int D_kcols, const unsigned long Size,
-                              int *S_cooRowInd, int *S_cooColInd, T *D1_dnVal,
-                              T *D2_dnVal, T *O_cooVal)
+                               int *S_cooRowInd, int *S_cooColInd, float *D1_dnVal,
+                               float *D2_dnVal, float *O_cooVal)
 {
     int eid = (blockIdx.x << 4) + (threadIdx.y << 2);
     int cid = (threadIdx.x << 2);
 
     if (blockIdx.x < Size / 16)
     {
-        T multi[4] = {0, 0, 0, 0};
+        float multi[4] = {0, 0, 0, 0};
         int offset1[4], offset2[4];
         float4 D1tmp[4], D2tmp[4];
         Load<int4, int>(offset1, S_cooRowInd, eid);
@@ -28,13 +27,13 @@ __global__ void sddmmCOO4Scale(int D_kcols, const unsigned long Size,
             cid += 32;
         }
         int res = D_kcols & 31;
-        if(res)
+        if (res)
         {
             int cid2 = threadIdx.x + D_kcols - res;
-            float D1[4] =  {0, 0, 0, 0}, D2[4] =  {0, 0, 0, 0};
-            for(int i = 0;i < res/8 + 1;i++)
+            float D1[4] = {0, 0, 0, 0}, D2[4] = {0, 0, 0, 0};
+            for (int i = 0; i < res / 8 + 1; i++)
             {
-                if(i * 8 + threadIdx.x < res)
+                if (i * 8 + threadIdx.x < res)
                 {
                     Load4<float, float>(D1, D1_dnVal, offset1, cid2);
                     Load4<float, float>(D2, D2_dnVal, offset2, cid2);
@@ -54,7 +53,7 @@ __global__ void sddmmCOO4Scale(int D_kcols, const unsigned long Size,
         eid = Size - (Size & 15) + (blockIdx.x - (Size / 16));
         int offset1 = S_cooRowInd[eid] * D_kcols;
         int offset2 = S_cooColInd[eid] * D_kcols;
-        T multi = 0;
+        float multi = 0;
         int off1 = cid = threadIdx.x + (threadIdx.y << 3);
         float D1tmp0, D2tmp0;
         for (int cc = 0; cc < (D_kcols >> 5); cc++)
@@ -66,9 +65,9 @@ __global__ void sddmmCOO4Scale(int D_kcols, const unsigned long Size,
         }
         int res = D_kcols & 31;
         D1tmp0 = D2tmp0 = 0;
-        if(res)
+        if (res)
         {
-            if(off1 < res)
+            if (off1 < res)
             {
                 D1tmp0 = D1_dnVal[offset1 + cid];
                 D2tmp0 = D2_dnVal[offset2 + cid];
@@ -86,17 +85,16 @@ __global__ void sddmmCOO4Scale(int D_kcols, const unsigned long Size,
     }
 }
 
-template <typename T>
 __global__ void sddmmCOO2Scale(int D_kcols, const unsigned long Size,
-                              int *S_cooRowInd, int *S_cooColInd, T *D1_dnVal,
-                              T *D2_dnVal, T *O_cooVal)
+                               int *S_cooRowInd, int *S_cooColInd, float *D1_dnVal,
+                               float *D2_dnVal, float *O_cooVal)
 {
     int eid = (blockIdx.x << 4) + (threadIdx.y << 2);
     int cid = threadIdx.x << 1;
 
     if (blockIdx.x < Size / 16)
     {
-        T multi[4] = {0, 0, 0, 0};
+        float multi[4] = {0, 0, 0, 0};
         int offset1[4], offset2[4];
         float2 D1tmp[4], D2tmp[4];
         Load<int4, int>(offset1, S_cooRowInd, eid);
@@ -112,13 +110,13 @@ __global__ void sddmmCOO2Scale(int D_kcols, const unsigned long Size,
             cid += 32;
         }
         int res = D_kcols & 31;
-        if(res)
+        if (res)
         {
             int cid2 = threadIdx.x + D_kcols - res;
-            float D1[4] =  {0, 0, 0, 0}, D2[4] =  {0, 0, 0, 0};
-            for(int i = 0;i < (res >> 4) + 1;i++)
+            float D1[4] = {0, 0, 0, 0}, D2[4] = {0, 0, 0, 0};
+            for (int i = 0; i < (res >> 4) + 1; i++)
             {
-                if((i << 4) + threadIdx.x < res)
+                if ((i << 4) + threadIdx.x < res)
                 {
                     Load4<float, float>(D1, D1_dnVal, offset1, cid2);
                     Load4<float, float>(D2, D2_dnVal, offset2, cid2);
@@ -138,7 +136,7 @@ __global__ void sddmmCOO2Scale(int D_kcols, const unsigned long Size,
         eid = Size - (Size & 15) + (blockIdx.x - (Size / 16));
         int offset1 = S_cooRowInd[eid] * D_kcols;
         int offset2 = S_cooColInd[eid] * D_kcols;
-        T multi = 0;
+        float multi = 0;
         int off1 = cid = (threadIdx.y << 4) + threadIdx.x;
         float D1tmp0, D2tmp0;
         for (int cc = 0; cc < (D_kcols >> 5); cc++)
@@ -150,9 +148,9 @@ __global__ void sddmmCOO2Scale(int D_kcols, const unsigned long Size,
         }
         int res = D_kcols & 31;
         D1tmp0 = D2tmp0 = 0;
-        if(res)
+        if (res)
         {
-            if(off1 < res)
+            if (off1 < res)
             {
                 D1tmp0 = D1_dnVal[offset1 + cid];
                 D2tmp0 = D2_dnVal[offset2 + cid];
@@ -170,17 +168,16 @@ __global__ void sddmmCOO2Scale(int D_kcols, const unsigned long Size,
     }
 }
 
-template <typename T>
 __global__ void sddmmCOO1Scale(int D_kcols, const unsigned long Size,
-                              int *S_cooRowInd, int *S_cooColInd, T *D1_dnVal,
-                              T *D2_dnVal, T *O_cooVal)
+                               int *S_cooRowInd, int *S_cooColInd, float *D1_dnVal,
+                               float *D2_dnVal, float *O_cooVal)
 {
     int eid = (blockIdx.x << 4) + (threadIdx.y << 2);
     int cid = threadIdx.x;
 
     if (blockIdx.x < Size / 16)
     {
-        T multi[4] = {0, 0, 0, 0};
+        float multi[4] = {0, 0, 0, 0};
         int offset1[4], offset2[4];
         float D1tmp[4], D2tmp[4];
         Load<int4, int>(offset1, S_cooRowInd, eid);
@@ -196,10 +193,10 @@ __global__ void sddmmCOO1Scale(int D_kcols, const unsigned long Size,
             cid += 32;
         }
         int res = D_kcols & 31;
-        if(res)
+        if (res)
         {
-            float D1[4] =  {0, 0, 0, 0}, D2[4] =  {0, 0, 0, 0};
-            if(threadIdx.x < res)
+            float D1[4] = {0, 0, 0, 0}, D2[4] = {0, 0, 0, 0};
+            if (threadIdx.x < res)
             {
                 Load4<float, float>(D1, D1_dnVal, offset1, cid);
                 Load4<float, float>(D2, D2_dnVal, offset2, cid);
@@ -217,7 +214,7 @@ __global__ void sddmmCOO1Scale(int D_kcols, const unsigned long Size,
         eid = Size - (Size & 15) + (blockIdx.x - (Size / 16));
         int offset1 = S_cooRowInd[eid] * D_kcols;
         int offset2 = S_cooColInd[eid] * D_kcols;
-        T multi = 0;
+        float multi = 0;
         int off1 = cid = threadIdx.x;
         float D1tmp0, D2tmp0;
         for (int cc = 0; cc < (D_kcols >> 5); cc++)
@@ -229,9 +226,9 @@ __global__ void sddmmCOO1Scale(int D_kcols, const unsigned long Size,
         }
         int res = D_kcols & 31;
         D1tmp0 = D2tmp0 = 0;
-        if(res)
+        if (res)
         {
-            if(off1 < res)
+            if (off1 < res)
             {
                 D1tmp0 = D1_dnVal[offset1 + cid];
                 D2tmp0 = D2_dnVal[offset2 + cid];
@@ -249,18 +246,16 @@ __global__ void sddmmCOO1Scale(int D_kcols, const unsigned long Size,
     }
 }
 
-
-template <typename T>
 __global__ void sddmmCSR2Scale(const int S_mrows, int D_kcols, const unsigned long Size,
-                              int *S_csrRowPtr, int *S_csrColInd, T *D1_dnVal,
-                              T *D2_dnVal, T *O_csrVal)
+                               int *S_csrRowPtr, int *S_csrColInd, float *D1_dnVal,
+                               float *D2_dnVal, float *O_csrVal)
 {
     int eid = (blockIdx.x << 4) + (threadIdx.y << 2);
     int cid = threadIdx.x << 1;
 
     if (blockIdx.x < Size / 16)
     {
-        T multi[4] = {0, 0, 0, 0};
+        float multi[4] = {0, 0, 0, 0};
         int offset1[4], offset2[4];
         float2 D1tmp[4], D2tmp[4];
         Load<int4, int>(offset2, S_csrColInd, eid);
@@ -279,13 +274,13 @@ __global__ void sddmmCSR2Scale(const int S_mrows, int D_kcols, const unsigned lo
             cid += 32;
         }
         int res = D_kcols & 31;
-        if(res)
+        if (res)
         {
             int cid2 = threadIdx.x + D_kcols - res;
-            float D1[4] =  {0, 0, 0, 0}, D2[4] =  {0, 0, 0, 0};
-            for(int i = 0;i < (res >> 4) + 1;i++)
+            float D1[4] = {0, 0, 0, 0}, D2[4] = {0, 0, 0, 0};
+            for (int i = 0; i < (res >> 4) + 1; i++)
             {
-                if((i << 4) + threadIdx.x < res)
+                if ((i << 4) + threadIdx.x < res)
                 {
                     Load4<float, float>(D1, D1_dnVal, offset1, cid2);
                     Load4<float, float>(D2, D2_dnVal, offset2, cid2);
@@ -305,7 +300,7 @@ __global__ void sddmmCSR2Scale(const int S_mrows, int D_kcols, const unsigned lo
         eid = Size - (Size & 15) + (blockIdx.x - (Size / 16));
         int offset1 = findRow(S_csrRowPtr, eid, 0, S_mrows) * D_kcols;
         int offset2 = S_csrColInd[eid] * D_kcols;
-        T multi = 0;
+        float multi = 0;
         int off1 = cid = (threadIdx.y << 4) + threadIdx.x;
         float D1tmp0, D2tmp0;
         for (int cc = 0; cc < (D_kcols >> 5); cc++)
@@ -317,9 +312,9 @@ __global__ void sddmmCSR2Scale(const int S_mrows, int D_kcols, const unsigned lo
         }
         int res = D_kcols & 31;
         D1tmp0 = D2tmp0 = 0;
-        if(res)
+        if (res)
         {
-            if(off1 < res)
+            if (off1 < res)
             {
                 D1tmp0 = D1_dnVal[offset1 + cid];
                 D2tmp0 = D2_dnVal[offset2 + cid];
@@ -337,17 +332,16 @@ __global__ void sddmmCSR2Scale(const int S_mrows, int D_kcols, const unsigned lo
     }
 }
 
-template <typename T>
 __global__ void sddmmCSR1Scale(const int S_mrows, int D_kcols, const unsigned long Size,
-                              int *S_csrRowPtr, int *S_csrColInd, T *D1_dnVal,
-                              T *D2_dnVal, T *O_csrVal)
+                               int *S_csrRowPtr, int *S_csrColInd, float *D1_dnVal,
+                               float *D2_dnVal, float *O_csrVal)
 {
     int eid = (blockIdx.x << 4) + (threadIdx.y << 2);
     int cid = threadIdx.x;
 
     if (blockIdx.x < Size / 16)
     {
-        T multi[4] = {0, 0, 0, 0};
+        float multi[4] = {0, 0, 0, 0};
         int offset1[4], offset2[4];
         float D1tmp[4], D2tmp[4];
 
@@ -369,10 +363,10 @@ __global__ void sddmmCSR1Scale(const int S_mrows, int D_kcols, const unsigned lo
             cid += 32;
         }
         int res = D_kcols & 31;
-        if(res)
+        if (res)
         {
-            float D1[4] =  {0, 0, 0, 0}, D2[4] =  {0, 0, 0, 0};
-            if(threadIdx.x < res)
+            float D1[4] = {0, 0, 0, 0}, D2[4] = {0, 0, 0, 0};
+            if (threadIdx.x < res)
             {
                 Load4<float, float>(D1, D1_dnVal, offset1, cid);
                 Load4<float, float>(D2, D2_dnVal, offset2, cid);
@@ -390,7 +384,7 @@ __global__ void sddmmCSR1Scale(const int S_mrows, int D_kcols, const unsigned lo
         eid = Size - (Size & 15) + (blockIdx.x - (Size / 16));
         int offset1 = findRow(S_csrRowPtr, eid, 0, S_mrows) * D_kcols;
         int offset2 = S_csrColInd[eid] * D_kcols;
-        T multi = 0;
+        float multi = 0;
         int off1 = cid = threadIdx.x;
         float D1tmp0, D2tmp0;
         for (int cc = 0; cc < (D_kcols >> 5); cc++)
@@ -402,9 +396,9 @@ __global__ void sddmmCSR1Scale(const int S_mrows, int D_kcols, const unsigned lo
         }
         int res = D_kcols & 31;
         D1tmp0 = D2tmp0 = 0;
-        if(res)
+        if (res)
         {
-            if(off1 < res)
+            if (off1 < res)
             {
                 D1tmp0 = D1_dnVal[offset1 + cid];
                 D2tmp0 = D2_dnVal[offset2 + cid];
@@ -421,35 +415,34 @@ __global__ void sddmmCSR1Scale(const int S_mrows, int D_kcols, const unsigned lo
         }
     }
 }
-
 
 torch::Tensor sddmm_cuda_coo(
     torch::Tensor rowind,
     torch::Tensor colind,
     torch::Tensor D1,
-    torch::Tensor D2) 
+    torch::Tensor D2)
 {
     const auto k = D1.size(1);
     const auto nnz = rowind.size(0);
     auto devid = D1.device().index();
     auto options = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCUDA, devid);
     auto out = torch::empty({nnz}, options);
-    if((k % 4) == 0)
+    if ((k % 4) == 0)
     {
         sddmmCOO4Scale<<<dim3(nnz / 16 + (nnz & 15), 1, 1), dim3(8, 4, 1)>>>(
-            k, nnz, rowind.data_ptr<int>(), colind.data_ptr<int>(), 
+            k, nnz, rowind.data_ptr<int>(), colind.data_ptr<int>(),
             D1.data_ptr<float>(), D2.data_ptr<float>(), out.data_ptr<float>());
     }
-    else if((k % 2) == 0)
+    else if ((k % 2) == 0)
     {
         sddmmCOO2Scale<<<dim3(nnz / 16 + (nnz & 15), 1, 1), dim3(16, 4, 1)>>>(
-            k, nnz, rowind.data_ptr<int>(), colind.data_ptr<int>(), 
+            k, nnz, rowind.data_ptr<int>(), colind.data_ptr<int>(),
             D1.data_ptr<float>(), D2.data_ptr<float>(), out.data_ptr<float>());
     }
     else
     {
         sddmmCOO1Scale<<<dim3(nnz / 16 + (nnz & 15), 1, 1), dim3(32, 4, 1)>>>(
-            k, nnz, rowind.data_ptr<int>(), colind.data_ptr<int>(), 
+            k, nnz, rowind.data_ptr<int>(), colind.data_ptr<int>(),
             D1.data_ptr<float>(), D2.data_ptr<float>(), out.data_ptr<float>());
     }
     return out;
@@ -459,7 +452,7 @@ torch::Tensor sddmm_cuda_csr(
     torch::Tensor rowptr,
     torch::Tensor colind,
     torch::Tensor D1,
-    torch::Tensor D2) 
+    torch::Tensor D2)
 {
     const auto m = D1.size(0);
     const auto k = D1.size(1);
@@ -467,16 +460,16 @@ torch::Tensor sddmm_cuda_csr(
     auto devid = D1.device().index();
     auto options = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCUDA, devid);
     auto out = torch::empty({nnz}, options);
-    if((k % 2) == 0)
+    if ((k % 2) == 0)
     {
         sddmmCSR2Scale<<<dim3(nnz / 16 + (nnz & 15), 1, 1), dim3(16, 4, 1)>>>(
-            m, k, nnz, rowptr.data_ptr<int>(), colind.data_ptr<int>(), 
+            m, k, nnz, rowptr.data_ptr<int>(), colind.data_ptr<int>(),
             D1.data_ptr<float>(), D2.data_ptr<float>(), out.data_ptr<float>());
     }
     else
     {
         sddmmCSR1Scale<<<dim3(nnz / 16 + (nnz & 15), 1, 1), dim3(32, 4, 1)>>>(
-            m, k, nnz, rowptr.data_ptr<int>(), colind.data_ptr<int>(), 
+            m, k, nnz, rowptr.data_ptr<int>(), colind.data_ptr<int>(),
             D1.data_ptr<float>(), D2.data_ptr<float>(), out.data_ptr<float>());
     }
     return out;

@@ -212,4 +212,4 @@ class Grand(BaseModel):
         return loss_train + loss_consis
 
     def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+        return self.forward(data)

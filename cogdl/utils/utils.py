@@ -244,11 +244,10 @@ def spmm(graph, x):
         x = fast_spmm(row_ptr.int(), col_indices.int(), col_ptr.int(), row_indices.int(), x, csr_data, csc_data)
         if graph.in_norm is not None:
             x = graph.in_norm * x
-    else:
-        # elif graph.edge_weight.requires_grad:
+    elif graph.edge_weight.requires_grad:
         x = spmm_scatter(graph.edge_index, graph.edge_weight, x)
-    # else:
-    #     x = spmm_adj(graph.edge_index, graph.edge_weight, x, graph.num_nodes)
+    else:
+        x = spmm_adj(graph.edge_index, graph.edge_weight, x, graph.num_nodes)
     return x
 
 
@@ -511,7 +510,7 @@ def coalesce(row, col, value=None):
     mask = idx[1:] > idx[:-1]
 
     if mask.all():
-        return row, col
+        return row, col, value
     row = row[mask]
     if value is not None:
         _value = torch.zeros(row.shape[0], dtype=torch.float).to(row.device)

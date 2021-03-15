@@ -44,11 +44,11 @@ def edge_index_from_dict(graph_dict, num_nodes=None):
 
     edge_index = torch.tensor(edge_index, dtype=torch.long)
     # There may be duplicated edges and self loops in the datasets.
-    row, col, _ = coalesce(edge_index[0], edge_index[1])
-    edge_index = torch.stack([row, col])
     edge_index, _ = remove_self_loops(edge_index)
     row = torch.cat([edge_index[0], edge_index[1]])
     col = torch.cat([edge_index[1], edge_index[0]])
+
+    row, col, _ = coalesce(row, col)
     edge_index = torch.stack([row, col])
     return edge_index
 

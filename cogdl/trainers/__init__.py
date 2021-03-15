@@ -54,6 +54,7 @@ SUPPORTED_TRAINERS = {
     "neighborsampler": "cogdl.trainers.sampled_trainer",
     "clustergcn": "cogdl.trainers.sampled_trainer",
     "random_partition": "cogdl.trainers.sampled_trainer",
-    "self_auxiliary_task": "cogdl.trainers.self_auxiliary_task_trainer",
+    "self_auxiliary_task_pretrain": "cogdl.trainers.self_auxiliary_task_trainer",
+    "self_auxiliary_task_joint": "cogdl.trainers.self_auxiliary_task_trainer",
     "m3s": "cogdl.trainers.m3s_trainer",
 }

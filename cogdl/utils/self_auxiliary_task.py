@@ -6,7 +6,7 @@ import scipy.sparse as sp
 import numpy as np
 import networkx as nx
 import random
-
+from cogdl.data import Data
 
 class SSLTask:
     def __init__(self, edge_index, features, device):
@@ -67,27 +67,92 @@ class EdgeMask(SSLTask):
 
 
 class PairwiseDistance(SSLTask):
-    def __init__(self, edge_index, features, hidden_size, num_class, device):
+    def __init__(self, edge_index, features, hidden_size, class_split, sampling, device):
         super().__init__(edge_index, features, device)
-        self.linear = nn.Linear(hidden_size, num_class).to(device)
-        self.nclass = num_class
+        self.nclass = len(class_split) + 1
+        self.class_split = class_split
+        self.max_distance = self.class_split[self.nclass - 2][1]
+        self.sampling = sampling
+        self.batch_size = 256
+        self.linear = nn.Linear(hidden_size, self.nclass).to(device)
         self.get_distance()
 
     def get_distance(self):
-        G = nx.Graph()
-        G.add_edges_from(self.edge_index.cpu().t().numpy())
+        if self.sampling:
+            self.dis_node_pairs = [[] for i in range(self.nclass)]
+            node_idx = random.sample(range(self.num_nodes), self.batch_size)
+            adj = sp.coo_matrix(
+                (np.ones(self.num_edges), (self.edge_index[0], self.edge_index[1])),
+                shape=(self.num_nodes, self.num_nodes),
+            ).tocsr()
+            
+            for idx in node_idx:
+                queue = [idx]
+                dis = -np.ones(self.num_nodes)
+                dis[idx] = 0
+                head = 0
+                tail = 0
+                cur_class = 0
+                max_dis = 1
+                stack = []
+                # bfs algorithm
+                while head <= tail:
+                    u = queue[head]
+                    if cur_class != self.nclass - 1 and dis[u] >= self.class_split[cur_class][1]:
+                        sampled = random.sample(stack, 1024) if len(stack) > 1024 else stack
+                        if self.dis_node_pairs[cur_class] == []:
+                            self.dis_node_pairs[cur_class] = np.array([[idx] * len(sampled), sampled]).transpose()
+                        else:
+                            self.dis_node_pairs[cur_class] = np.concatenate((
+                                                                self.dis_node_pairs[cur_class], 
+                                                                np.array([[idx] * len(sampled), sampled]).transpose()
+                                                            ), axis=0)
+                        cur_class += 1
+                        if cur_class == self.nclass - 1:
+                            break
+                        stack = []
+                    if u != idx:
+                        stack.append(u)
+                    head += 1
+                    i_s = adj.indptr[u]
+                    i_e = adj.indptr[u + 1]
+                    for i in range(i_s, i_e):
+                        v = adj.indices[i]
+                        if dis[v] == -1:
+                            dis[v] = dis[u] + 1
+                            tail += 1
+                            queue.append(v)
+                remain = list(np.where(dis == -1)[0])
+                sampled = random.sample(remain, 1024) if len(remain) > 1024 else remain
+                if self.dis_node_pairs[cur_class] == []:
+                    self.dis_node_pairs[cur_class] = np.array([[idx] * len(sampled), sampled]).transpose()
+                else:
+                    self.dis_node_pairs[cur_class] = np.concatenate((
+                                                        self.dis_node_pairs[cur_class], 
+                                                        np.array([[idx] * len(sampled), sampled]).transpose()
+                                                    ), axis=0)
+            if self.class_split[0][1] == 2:
+                self.dis_node_pairs[0] = self.edge_index.numpy().transpose()
+            for i in range(self.nclass):
+                print(self.dis_node_pairs[i].shape)
+        else:
+            G = nx.Graph()
+            G.add_edges_from(self.edge_index.cpu().t().numpy())
 
-        path_length = dict(nx.all_pairs_shortest_path_length(G, cutoff=self.nclass - 1))
-        distance = -np.ones((self.num_nodes, self.num_nodes), dtype=np.int)
-        for u, p in path_length.items():
-            for v, d in p.items():
-                distance[u][v] = d - 1
-        distance[distance == -1] = self.nclass - 1
-        self.distance = distance
+            path_length = dict(nx.all_pairs_shortest_path_length(G, cutoff=self.max_distance))
+            distance = -np.ones((self.num_nodes, self.num_nodes), dtype=np.int)
+            for u, p in path_length.items():
+                for v, d in p.items():
+                    distance[u][v] = d - 1
+            self.distance = distance
 
-        self.dis_node_pairs = []
-        for i in range(self.nclass):
-            tmp = np.array(np.where(distance == i)).transpose()
+            self.dis_node_pairs = []
+            for i in range(self.nclass - 1):
+                tmp = np.array(np.where((distance >= self.class_split[i][0]) * (distance < self.class_split[i][1]))).transpose()
+                np.random.shuffle(tmp)
+                self.dis_node_pairs.append(tmp)
+            tmp = np.array(np.where(distance == -1)).transpose()
+            np.random.shuffle(tmp)
             self.dis_node_pairs.append(tmp)
 
     def transform_data(self):
@@ -105,8 +170,12 @@ class PairwiseDistance(SSLTask):
         pseudo_labels = torch.tensor([]).long()
         for i in range(self.nclass):
             tmp = self.dis_node_pairs[i]
+            x = int(random.random() * (len(tmp) - k))
+            sampled = torch.cat([sampled, torch.tensor(tmp[x: x + k]).long().t()], 1)
+            """
             indices = np.random.choice(np.arange(len(tmp)), k, replace=False)
-            sampled = torch.cat([sampled, torch.tensor(tmp[indices]).t()], 1)
+            sampled = torch.cat([sampled, torch.tensor(tmp[indices]).long().t()], 1)
+            """
             pseudo_labels = torch.cat([pseudo_labels, torch.ones(k).long() * i])
         return sampled.to(self.device), pseudo_labels.to(self.device)
 
@@ -144,7 +213,6 @@ class Distance2Clusters(SSLTask):
         for i in range(self.num_clusters):
             subgraph = G.subgraph(node_clusters[i])
             center = None
-            # print(subgraph.nodes)
             for node in subgraph.nodes:
                 if center is None or subgraph.degree[node] > subgraph.degree[center]:
                     center = node

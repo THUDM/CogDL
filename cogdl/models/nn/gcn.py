@@ -86,6 +86,7 @@ class TKipfGCN(BaseModel):
         h = x
         for i in range(self.num_layers - 1):
             h = F.dropout(h, self.dropout, training=self.training)
+            h = F.relu(h)
             h = self.layers[i](h, edge_index, edge_attr)
         return h
 

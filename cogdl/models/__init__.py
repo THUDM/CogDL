@@ -74,6 +74,8 @@ SUPPORTED_MODELS = {
     "prone": "cogdl.models.emb.prone",
     "daegc": "cogdl.models.agc.daegc",
     "agc": "cogdl.models.agc.agc",
+    "gae": "cogdl.models.nn.gae",
+    "vgae": "cogdl.models.nn.gae",
     "dgi": "cogdl.models.nn.dgi",
     "mvgrl": "cogdl.models.nn.mvgrl",
     "patchy_san": "cogdl.models.nn.patchy_san",

@@ -455,7 +455,26 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
                        device=None,
                        early_stopping=False,
                        debug=False):
+        """generate paper titles given other information
 
+        Args:
+            abstract (str, optional): [paper abstract]. Defaults to ''.
+            venue (str, optional): [paper venue]. Defaults to ''.
+            authors (list, optional): [paper author]. Defaults to [].
+            affiliations (list, optional): [paper affiliations]. Defaults to [].
+            concepts (list, optional): [paper concepts]. Defaults to [].
+            num_beams (int, optional): [beam search width, notice that this function will run one step of beam search in a batch, which should ensure that your gpu (if using) should be able to hold this number of instances]. Defaults to 1.
+            no_repeat_ngram_size (int, optional): [n-grams phrases cannot repeat in title]. Defaults to 3.
+            num_return_sequences (int, optional): [number of sequences to return]. Defaults to 1.
+            min_length (int, optional): [the minimum length of generated title]. Defaults to 10.
+            min_length (int, optional): [the maximum length of generated title]. Defaults to 30.
+            early_stopping (bool, optional): [terminate generation while target number of generated sequences reach <EOS>]. Defaults to false.
+            device ([type], optional): [device for the inputs, default to cpu]. Defaults to None.
+            debug (bool, optional): [if debug is true, the beam search progress will be shown]. Defaults to False.
+
+        Returns:
+            [list of (string, float)]: [a list of generated titles with their probablities]
+        """
         if num_return_sequences > num_beams:
             raise Exception('num_return_sequences(%d) cannot be larger than num_beams(%d)' %
                             (num_return_sequences, num_beams))

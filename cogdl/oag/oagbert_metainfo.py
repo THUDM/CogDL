@@ -33,10 +33,10 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
         except Exception:
             termwidth = 200
         K = predictions.shape[1] if predictions is not None else 0
-        input_ids = [token_id for i, token_id in enumerate(input_ids) if input_masks[i] > 0]
-        position_ids = [position_id for i, position_id in enumerate(position_ids) if input_masks[i] > 0]
-        position_ids_second = [position_id for i, position_id in enumerate(position_ids_second) if input_masks[i] > 0]
-        token_type_ids = [token_type_id for i, token_type_id in enumerate(token_type_ids) if input_masks[i] > 0]
+        input_ids = [token_id for i, token_id in enumerate(input_ids) if input_masks[i].sum() > 0]
+        position_ids = [position_id for i, position_id in enumerate(position_ids) if input_masks[i].sum() > 0]
+        position_ids_second = [position_id for i, position_id in enumerate(position_ids_second) if input_masks[i].sum() > 0]
+        token_type_ids = [token_type_id for i, token_type_id in enumerate(token_type_ids) if input_masks[i].sum() > 0]
         masks = [0 for i in input_ids]
         prediction_topks = [[0 for i in input_ids] for _ in range(K)]
         mask_indices = []
@@ -438,4 +438,160 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
         for (_input_ids, _masked_lm_labels, _masked_positions, _logprob) in q:
             generated_entity = self._convert_token_ids_to_text(_input_ids[-decode_span_length:])
             results.append((generated_entity, np.exp(_logprob)))
+        return results
+
+
+    def generate_title(self,
+                       abstract='',
+                       authors=[],
+                       venue='',
+                       affiliations=[],
+                       concepts=[],
+                       num_beams=1,
+                       no_repeat_ngram_size=3,
+                       num_return_sequences=1,
+                       min_length=10,
+                       max_length=30,
+                       device=None,
+                       early_stopping=False,
+                       debug=False):
+
+        if num_return_sequences > num_beams:
+            raise Exception('num_return_sequences(%d) cannot be larger than num_beams(%d)' % (num_return_sequences, num_beams))
+
+        selected_ngrams={}
+        mask_token_id = self.tokenizer.mask_token_id
+        eos_token_id = 1
+        token_type_id = 0
+
+        input_ids, input_masks, token_type_ids, masked_lm_labels, position_ids, position_ids_second, masked_positions, num_spans = self.build_inputs(
+            title="[CLS] [SEP]",
+            abstract=abstract,
+            venue=venue,
+            authors=authors,
+            concepts=concepts,
+            affiliations=affiliations,
+            decode_span_type="TEXT",
+            decode_span_length=0,
+            max_seq_length=512,
+            mask_propmt_text="")
+
+        context_length = len(input_ids)
+        num_spans = 0
+        decode_pos = 1
+        decode_postion_ids_second = 1
+        for i in range(1, context_length):
+            if token_type_ids[i] == 0:
+                position_ids_second[i] = i + 1
+
+        input_ids.insert(decode_pos, mask_token_id)
+        token_type_ids.insert(decode_pos, token_type_id)
+        position_ids.insert(decode_pos, num_spans)
+        position_ids_second.insert(decode_pos, decode_postion_ids_second)
+        masked_lm_labels.insert(decode_pos, self.tokenizer.cls_token_id)
+
+        q = [(input_ids, 0)]
+        selected_entities = []
+
+        def tensorize(x):
+            return torch.LongTensor(x).to(device or "cpu")
+
+        while True:
+            batch_input_ids = tensorize([_input_ids for _input_ids, _ in q])
+            batch_token_type_ids = tensorize([token_type_ids for _ in q])
+
+            current_total_length = batch_input_ids.shape[1]
+            current_entity_length = current_total_length - context_length
+
+            batch_attention_mask = torch.ones((current_total_length, current_total_length))
+            batch_attention_mask[decode_pos-current_entity_length+1:decode_pos+1,decode_pos-current_entity_length+1:decode_pos+1] = torch.tril(batch_attention_mask[decode_pos-current_entity_length+1:decode_pos+1,decode_pos-current_entity_length+1:decode_pos+1])
+            batch_attention_mask = batch_attention_mask.unsqueeze(0).repeat(len(q), 1, 1).to(device or "cpu")
+
+            batch_position_ids = tensorize([position_ids for _ in q])
+            batch_position_ids_second = tensorize([position_ids_second for _ in q])
+            batch_masked_lm_labels = tensorize([masked_lm_labels for _ in q])
+            sequence_output, pooled_output = self.bert.forward(
+                input_ids=batch_input_ids,
+                token_type_ids=batch_token_type_ids,
+                attention_mask=batch_attention_mask,
+                output_all_encoded_layers=False,
+                checkpoint_activations=False,
+                position_ids=batch_position_ids,
+                position_ids_second=batch_position_ids_second)
+            masked_token_indexes = torch.nonzero((batch_masked_lm_labels + 1).view(-1)).view(-1)
+            prediction_scores, _ = self.cls(sequence_output, pooled_output, masked_token_indexes)
+            prediction_scores = torch.nn.functional.log_softmax(prediction_scores, dim=1)
+            vocab_size = prediction_scores.shape[-1]
+            # surpress existing n-grams
+            for idx, (_input_ids, _) in enumerate(q):
+                if current_entity_length >= no_repeat_ngram_size:
+                    prefix_key = tuple(_input_ids[decode_pos-no_repeat_ngram_size+1:decode_pos])
+                    for token_id in selected_ngrams.get(prefix_key, set()):
+                        prediction_scores[idx, token_id] = -10000
+                prefix_key = tuple(_input_ids[decode_pos-current_entity_length:decode_pos])
+                if prefix_key in selected_ngrams:
+                    for token_id in selected_ngrams.get(prefix_key, set()):
+                        prediction_scores[idx, token_id] = -10000
+                if current_entity_length <= min_length:
+                    prediction_scores[idx, eos_token_id] = -10000
+                prediction_scores[idx, _input_ids[decode_pos]] = -10000
+
+            decode_pos += 1
+            _q = []
+            log_probs, indices = torch.topk(prediction_scores, k=num_beams)
+            for idx, (_input_ids, _last_logprob) in enumerate(q):
+                for k in range(log_probs.shape[1]):
+                    new_input_ids = _input_ids.copy()
+                    new_input_ids.insert(decode_pos, indices[idx, k].item())
+                    _q.append((new_input_ids, _last_logprob + log_probs[idx, k].item()))
+
+            q = []
+            for _input_ids, _last_logprob in _q:
+                prefix_key = None
+                if current_entity_length >= no_repeat_ngram_size:
+                    prefix_key = tuple(_input_ids[decode_pos-no_repeat_ngram_size+1:decode_pos])
+                    if prefix_key not in selected_ngrams:
+                        selected_ngrams[prefix_key] = set()
+                    selected_ngrams[prefix_key].add(_input_ids[decode_pos])
+                if _input_ids[decode_pos] == eos_token_id:
+                    selected_entities.append((_input_ids, _last_logprob))
+                else:
+                    q.append((_input_ids, _last_logprob))
+            q.sort(key=lambda tup: tup[-1], reverse=True)
+            selected_entities.sort(key=lambda tup: tup[-1], reverse=True)
+            q = q[:num_beams]
+            if current_entity_length >= max_length + 2:
+                break
+            if len(selected_entities) >= num_return_sequences:
+                if early_stopping or len(q) == 0 or q[0][-1] <= selected_entities[num_return_sequences-1][-1]:
+                    break
+
+            token_type_ids.insert(decode_pos, token_type_id)
+            position_ids.insert(decode_pos, num_spans)
+            position_ids_second.insert(decode_pos, decode_postion_ids_second)
+            masked_lm_labels[decode_pos-1] = -1
+            masked_lm_labels.insert(decode_pos, self.tokenizer.cls_token_id)
+
+            if debug:
+                batch = [None] + [batch_input_ids, batch_attention_mask, batch_token_type_ids, batch_masked_lm_labels, batch_position_ids, batch_position_ids_second]
+                self.print_oag_instance(
+                    input_ids=batch_input_ids[0].cpu().detach().numpy(),
+                    token_type_ids=batch_token_type_ids[0].cpu().detach().numpy(),
+                    input_masks=batch_attention_mask[0].cpu().detach().numpy(),
+                    masked_lm_labels=batch_masked_lm_labels[0].cpu().detach().numpy(),
+                    position_ids=batch_position_ids[0].cpu().detach().numpy(),
+                    position_ids_second=batch_position_ids_second[0].cpu().detach().numpy(),
+                    predictions=torch.topk(prediction_scores, k=5, dim=1).indices.cpu().detach().numpy()
+                )
+                input('== Press Enter for next step ==')
+
+        results = []
+        for seq, logprob in selected_entities[:num_return_sequences]:
+            token_ids = []
+            for _id in seq[decode_pos-current_entity_length+1:decode_pos]:
+                if _id != eos_token_id:
+                    token_ids.append(_id)
+                else:
+                    break
+            results.append((self._convert_token_ids_to_text(token_ids), logprob))
         return results

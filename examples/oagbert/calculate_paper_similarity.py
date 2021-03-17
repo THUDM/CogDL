@@ -56,10 +56,10 @@ _, paper_embed_2 = model.bert.forward(
 # Negative Paper 3
 title = "Traceability and international comparison of ultraviolet irradiance"
 abstract = "NIM took part in the CIPM Key Comparison of ″Spectral Irradiance 250 to 2500 nm″. In UV and NIR wavelength, the international comparison results showed that the consistency between Chinese value and the international reference one"
-authors =  ['Jing Yu', 'Bo Huang', 'Jia-Lin Yu', 'Yan-Dong Lin', 'Cai-Hong Dai']
+authors = ['Jing Yu', 'Bo Huang', 'Jia-Lin Yu', 'Yan-Dong Lin', 'Cai-Hong Dai']
 veune = 'Jiliang Xuebao/Acta Metrologica Sinica'
 affiliations = ['Department of Electronic Engineering']
-concept= ['Optical Division']
+concept = ['Optical Division']
 
 input_ids, input_masks, token_type_ids, masked_lm_labels, position_ids, position_ids_second, masked_positions, num_spans = model.build_inputs(
     title=title, abstract=abstract, venue=venue, authors=authors, concepts=concepts, affiliations=affiliations
@@ -85,4 +85,3 @@ paper_embed_3 = F.normalize(paper_embed_3, p=2, dim=1)
 sim12 = torch.mm(paper_embed_1, paper_embed_2.transpose(0, 1))
 sim13 = torch.mm(paper_embed_1, paper_embed_3.transpose(0, 1))
 print(sim12, sim13)
-

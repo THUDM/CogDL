@@ -429,7 +429,7 @@ def get_degrees(indices, num_nodes=None):
     return degrees
 
 
-def edge_softmax(indices, values, shape):
+def edge_softmax_(indices, values, shape):
     """
     Args:
         indices: Tensor, shape=(2, E)
@@ -445,7 +445,25 @@ def edge_softmax(indices, values, shape):
     return softmax_values
 
 
-def mul_edge_softmax(indices, values, shape):
+def edge_softmax(graph, edge_val):
+    with graph.local_graph():
+        edge_val = torch.exp(edge_val)
+        graph.edge_weight = edge_val
+        x = torch.ones(graph.num_nodes, 1).to(edge_val.device)
+        node_sum = spmm(graph, x).squeeze()
+        row = graph.edge_index[0]
+        softmax_values = edge_val / node_sum[row]
+        return softmax_values
+
+
+def mul_edge_softmax(graph, edge_val):
+    val = []
+    for i in range(edge_val.shape[1]):
+        val.append(edge_softmax(graph, edge_val[:, i]))
+    return torch.stack(val)
+
+
+def mul_edge_softmax_(indices, values, shape):
     """
     Args:
         indices: Tensor, shape=(2, E)

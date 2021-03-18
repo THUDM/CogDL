@@ -115,6 +115,7 @@ class NodeClassification(BaseTask):
         self.model.train()
         self.optimizer.zero_grad()
         self.model.node_classification_loss(self.data).backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
         self.optimizer.step()
 
     def _test_step(self, split=None, logits=None):

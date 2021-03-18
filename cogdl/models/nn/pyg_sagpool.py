@@ -9,6 +9,7 @@ from torch_geometric.nn import global_mean_pool as gap, global_max_pool as gmp
 from .. import BaseModel, register_model
 from cogdl.data import DataLoader
 from .gcn import GraphConvolution
+from .gin import split_dataset_general
 
 
 class SAGPoolLayers(nn.Module):
@@ -58,17 +59,7 @@ class SAGPoolNetwork(BaseModel):
 
     @classmethod
     def split_dataset(cls, dataset, args):
-        random.shuffle(dataset)
-        train_size = int(len(dataset) * args.train_ratio)
-        test_size = int(len(dataset) * args.test_ratio)
-        bs = args.batch_size
-        train_loader = DataLoader(dataset[:train_size], batch_size=bs)
-        test_loader = DataLoader(dataset[-test_size:], batch_size=bs)
-        if args.train_ratio + args.test_ratio < 1:
-            valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
-        else:
-            valid_loader = test_loader
-        return train_loader, valid_loader, test_loader
+        return split_dataset_general(dataset, args)
 
     def __init__(self, nfeat, nhid, nclass, dropout, pooling_ratio, pooling_layer_type):
         def __get_layer_from_str__(str):

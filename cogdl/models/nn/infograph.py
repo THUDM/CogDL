@@ -6,8 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .mlp import MLP
-from .gin import GINLayer
-from cogdl.data import DataLoader
+from .gin import GINLayer, split_dataset_general
 from cogdl.utils import batch_mean_pooling, batch_sum_pooling
 from .. import BaseModel, register_model
 
@@ -124,27 +123,7 @@ class InfoGraph(BaseModel):
 
     @classmethod
     def split_dataset(cls, dataset, args):
-        if args.dataset == "qm9":
-            test_dataset = dataset[:10000]
-            val_dataset = dataset[10000:20000]
-            train_dataset = dataset[20000 : 20000 + args.train_num]
-            return (
-                DataLoader(train_dataset, batch_size=args.batch_size),
-                DataLoader(val_dataset, batch_size=args.batch_size),
-                DataLoader(test_dataset, batch_size=args.batch_size),
-            )
-        else:
-            random.shuffle(dataset)
-            train_size = int(len(dataset) * args.train_ratio)
-            test_size = int(len(dataset) * args.test_ratio)
-            bs = args.batch_size
-            train_loader = DataLoader(dataset[:train_size], batch_size=bs)
-            test_loader = DataLoader(dataset[-test_size:], batch_size=bs)
-            if args.train_ratio + args.test_ratio < 1:
-                valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
-            else:
-                valid_loader = test_loader
-            return train_loader, valid_loader, test_loader
+        return split_dataset_general(dataset, args)
 
     def __init__(self, in_feats, hidden_dim, out_feats, num_layers=3, sup=False):
         super(InfoGraph, self).__init__()

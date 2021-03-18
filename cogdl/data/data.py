@@ -303,8 +303,7 @@ class Adjacency(BaseGraph):
         return getattr(self, item)
 
     def __copy__(self):
-        cls = self.__class__
-        result = cls.__new__(cls)
+        result = self.__class__()
         for key in self.keys:
             setattr(result, key, copy.copy(self[key]))
         result.__num_nodes__ = self.__num_nodes__

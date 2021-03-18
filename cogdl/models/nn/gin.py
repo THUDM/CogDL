@@ -10,6 +10,26 @@ from cogdl.data import DataLoader
 from cogdl.utils import spmm
 
 
+def split_dataset_general(dataset, args):
+    train_size = int(len(dataset) * args.train_ratio)
+    test_size = int(len(dataset) * args.test_ratio)
+    index = list(range(len(dataset)))
+    random.shuffle(index)
+
+    train_index = index[:train_size]
+    test_index = index[-test_size:]
+
+    bs = args.batch_size
+    train_loader = DataLoader([dataset[i] for i in train_index], batch_size=bs)
+    test_loader = DataLoader([dataset[i] for i in test_index], batch_size=bs)
+    if args.train_ratio + args.test_ratio < 1:
+        val_index = index[train_size:-test_size]
+        valid_loader = DataLoader([dataset[i] for i in val_index], batch_size=bs)
+    else:
+        valid_loader = test_loader
+    return train_loader, valid_loader, test_loader
+
+
 class GINLayer(nn.Module):
     r"""Graph Isomorphism Network layer from paper `"How Powerful are Graph
     Neural Networks?" <https://arxiv.org/pdf/1810.00826.pdf>`__.
@@ -103,17 +123,7 @@ class GIN(BaseModel):
 
     @classmethod
     def split_dataset(cls, dataset, args):
-        random.shuffle(dataset)
-        train_size = int(len(dataset) * args.train_ratio)
-        test_size = int(len(dataset) * args.test_ratio)
-        bs = args.batch_size
-        train_loader = DataLoader(dataset[:train_size], batch_size=bs)
-        test_loader = DataLoader(dataset[-test_size:], batch_size=bs)
-        if args.train_ratio + args.test_ratio < 1:
-            valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
-        else:
-            valid_loader = test_loader
-        return train_loader, valid_loader, test_loader
+        return split_dataset_general(dataset, args)
 
     def __init__(
         self,

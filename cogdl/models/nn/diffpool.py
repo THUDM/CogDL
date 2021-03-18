@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .. import BaseModel, register_model
-from cogdl.data import DataLoader
+from .gin import split_dataset_general
 from .graphsage import GraphSAGELayer
 
 
@@ -324,17 +324,7 @@ class DiffPool(BaseModel):
 
     @classmethod
     def split_dataset(cls, dataset, args):
-        random.shuffle(dataset)
-        train_size = int(len(dataset) * args.train_ratio)
-        test_size = int(len(dataset) * args.test_ratio)
-        bs = args.batch_size
-        train_loader = DataLoader(dataset[:train_size], batch_size=bs, drop_last=True)
-        test_loader = DataLoader(dataset[-test_size:], batch_size=bs, drop_last=True)
-        if args.train_ratio + args.test_ratio < 1:
-            valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs, drop_last=True)
-        else:
-            valid_loader = test_loader
-        return train_loader, valid_loader, test_loader
+        return split_dataset_general(dataset, args)
 
     def __init__(
         self,

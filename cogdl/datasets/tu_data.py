@@ -244,7 +244,7 @@ class TUDataset(MultiGraphDataset):
     def __init__(self, root, name):
         self.name = name
         super(TUDataset, self).__init__(root)
-        self.data = torch.load(self.processed_paths[0])
+        # self.data = torch.load(self.processed_paths[0])
 
         # if self.data[0].x is not None:
         #     num_node_attributes = self.num_node_attributes
@@ -284,9 +284,11 @@ class TUDataset(MultiGraphDataset):
         return self.y.max().item() + 1 if self.y.dim() == 1 else self.y.size(1)
 
     def __len__(self):
-        for item in self.slices.values():
-            return len(item) - 1
-        return 0
+        # for item in self.slices.values():
+        #     return len(item) - 1
+        # return 0
+
+        return len(self.data)
 
 
 @register_dataset("mutag")

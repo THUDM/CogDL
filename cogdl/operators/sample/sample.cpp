@@ -18,20 +18,25 @@ sample_adj(torch::Tensor indptr, torch::Tensor indices, torch::Tensor node_idx, 
     std::vector<int64_t> new_indices;
     std::vector<int64_t> new_edges;
     std::vector<int64_t> new_node_idx;
-    std::unordered_map<int64_t, int64_t> node_id_map;
+
+    auto assoc = torch::full({indptr.size(0) - 1}, -1, node_idx.options());
+    assoc.index_copy_(0, node_idx, torch::arange(num_input_nodes, node_idx.options()));
+    auto assoc_data = assoc.data_ptr<int64_t>();
+
+//    std::unordered_map<int64_t, int64_t> node_id_map;
 
     int64_t node = 0;
     for(int64_t i = 0; i < node_idx.numel(); i++) {
         node = node_idx_data[i];
-        node_id_map[node] = i;
+//        node_id_map[node] = i;
         new_node_idx.push_back(node);
     }
+
 
     int64_t row_start, row_count, edge, src_node;
     int64_t num_nodes = node_idx.numel();
     if(num_neighbors < 0){
-
-        for(int64_t i = 0; i < node_idx.numel(); i++) {
+        for(int64_t i = 0; i < num_input_nodes; i++) {
             node = node_idx_data[i];
             row_start = indptr_data[node];
             row_count = indptr_data[node+1] - row_start;
@@ -40,18 +45,26 @@ sample_adj(torch::Tensor indptr, torch::Tensor indices, torch::Tensor node_idx, 
                 edge = row_start + k;
                 src_node = indices_data[edge];
 
-                if(node_id_map.count(src_node) == 0) {
-                    node_id_map[src_node] = num_nodes;
-                    new_node_idx.push_back(num_nodes);
+                if(assoc_data[src_node] == -1) {
+                    assoc_data[src_node] = num_nodes;
+                    new_node_idx.push_back(src_node);
                     num_nodes++;
                 }
-                new_indices.push_back(node_id_map[src_node]);
+                new_indices.push_back(assoc_data[src_node]);
+
+//                if(node_id_map.count(src_node) == 0) {
+//                    node_id_map[src_node] = num_nodes;
+//                    new_node_idx.push_back(src_node);
+//                    num_nodes++;
+//                }
+//                new_indices.push_back(node_id_map[src_node]);
+
                 new_edges.push_back(edge);
             }
             out_indptr_data[i+1] = row_count + out_indptr_data[i];
         }
     } else if(replace) {
-        for(int64_t i = 0; i < node_idx.numel(); i++) {
+        for(int64_t i = 0; i < num_input_nodes; i++) {
             node = node_idx_data[i];
             row_start = indptr_data[node];
             row_count = indptr_data[node+1] - row_start;
@@ -59,18 +72,27 @@ sample_adj(torch::Tensor indptr, torch::Tensor indices, torch::Tensor node_idx, 
             for(int64_t k = 0; k < num_neighbors; k++) {
                 edge = row_start + rand() % row_count;
                 src_node = indices_data[edge];
-                if(node_id_map.count(src_node) == 0) {
-                    node_id_map[src_node] = num_nodes;
-                    new_node_idx.push_back(num_nodes);
+
+                if(assoc_data[src_node] == -1) {
+                    assoc_data[src_node] = num_nodes;
+                    new_node_idx.push_back(src_node);
                     num_nodes++;
                 }
-                new_indices.push_back(node_id_map[src_node]);
+                new_indices.push_back(assoc_data[src_node]);
+
+//                if(node_id_map.count(src_node) == 0) {
+//                    node_id_map[src_node] = num_nodes;
+//                    new_node_idx.push_back(src_node);
+//                    num_nodes++;
+//                }
+//                new_indices.push_back(node_id_map[src_node]);
+
                 new_edges.push_back(edge);
             }
             out_indptr_data[i+1] = num_neighbors + out_indptr_data[i];
         }
     } else {
-        for(int64_t i = 0; i < node_idx.numel(); i++) {
+        for(int64_t i = 0; i < num_input_nodes; i++) {
             node = node_idx_data[i];
             row_start = indptr_data[node];
             row_count = indptr_data[node+1] - row_start;
@@ -90,12 +112,21 @@ sample_adj(torch::Tensor indptr, torch::Tensor indices, torch::Tensor node_idx, 
             for(const int64_t &p : perm) {
                 edge = row_start + p;
                 src_node = indices_data[edge];
-                if(node_id_map.count(src_node) == 0) {
-                    node_id_map[src_node] = num_nodes;
-                    new_node_idx.push_back(num_nodes);
+
+                if(assoc_data[src_node] == -1) {
+                    assoc_data[src_node] = num_nodes;
+                    new_node_idx.push_back(src_node);
                     num_nodes++;
                 }
-                new_indices.push_back(node_id_map[src_node]);
+                new_indices.push_back(assoc_data[src_node]);
+
+//                if(node_id_map.count(src_node) == 0) {
+//                    node_id_map[src_node] = num_nodes;
+//                    new_node_idx.push_back(src_node);
+//                    num_nodes++;
+//                }
+//                new_indices.push_back(node_id_map[src_node]);
+
                 new_edges.push_back(edge);
             }
             out_indptr_data[i+1] = perm.size() + out_indptr_data[i];

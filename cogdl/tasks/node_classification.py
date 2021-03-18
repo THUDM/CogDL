@@ -65,7 +65,6 @@ class NodeClassification(BaseTask):
         self.data.add_remaining_self_loops()
 
     def train(self):
-        self.preprocess()
         if self.trainer:
             result = self.trainer.fit(self.model, self.dataset)
             if issubclass(type(result), torch.nn.Module):
@@ -74,6 +73,7 @@ class NodeClassification(BaseTask):
             else:
                 return result
         else:
+            self.preprocess()
             epoch_iter = tqdm(range(self.max_epoch))
             patience = 0
             best_score = 0

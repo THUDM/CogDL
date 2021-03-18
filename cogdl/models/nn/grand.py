@@ -148,7 +148,7 @@ class Grand(BaseModel):
             x = x * (1.0 - self.dropnode_rate)
         return x
 
-    def rand_prop(self, x, graph):
+    def rand_prop(self, graph, x):
         x = self.dropNode(x)
 
         y = x
@@ -183,7 +183,7 @@ class Grand(BaseModel):
         graph.sym_norm()
         x = graph.x
         x = self.normalize_x(x)
-        x = self.rand_prop(x, graph)
+        x = self.rand_prop(graph, x)
         if self.use_bn:
             x = self.bn1(x)
         x = F.dropout(x, self.input_droprate, training=self.training)

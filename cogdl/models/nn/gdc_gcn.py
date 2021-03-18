@@ -78,33 +78,29 @@ class GDC_GCN(BaseModel):
         self.gc2 = GraphConvolution(nhid, nclass)
         self.dropout = dropout
 
-    def forward(self, x, edge_index):
-        edge_index, edge_attr = add_remaining_self_loops(edge_index)
-        edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
-        adj_values = edge_attr
+    def forward(self, graph):
+        x = graph.x
+        graph.sym_norm()
 
         x = F.dropout(x, self.dropout, training=self.training)
-        x = F.relu(self.gc1(x, edge_index, adj_values))
+        x = F.relu(self.gc1(graph, x))
 
         x = F.dropout(x, self.dropout, training=self.training)
-        x = self.gc2(x, edge_index, adj_values)
+        x = self.gc2(graph, x)
         return x
 
     def node_classification_loss(self, data):
         if self.data is None:
             self.reset_data(data)
         mask = data.train_mask
-        edge_index = (
-            self.data.edge_index_train
-            if hasattr(self.data, "edge_index_train") and self.training
-            else self.data.edge_index
-        )
-        pred = self.forward(self.data.x, edge_index)
+        self.data.apply(lambda x: x.to(self.device))
+        pred = self.forward(self.data)
 
         return self.loss_fn(pred[mask], self.data.y[mask])
 
     def predict(self, data=None):
-        return self.forward(self.data.x, self.data.edge_index)
+        self.data.apply(lambda x: x.to(self.device))
+        return self.forward(self.data)
 
     def reset_data(self, data):
         if self.data is None:
@@ -153,32 +149,15 @@ class GDC_GCN(BaseModel):
             return torch.as_tensor(edge_index, dtype=torch.long), torch.as_tensor(edge_attr, dtype=torch.float)
 
         edge_index, edge_weight = get_diffusion(data.x, data.edge_index)
+        data.edge_index = edge_index
+        data.edge_weight = edge_weight
 
-        if hasattr(data, "edge_index_train"):
-            edge_index_train, edge_weight_train = get_diffusion(data.x, data.edge_index_train)
-            data = Graph(
-                x=data.x,
-                edge_index=edge_index,
-                edge_weight=edge_weight,
-                edge_index_train=edge_index_train,
-                edge_weight_train=edge_weight_train,
-                y=data.y,
-                train_mask=data.train_mask,
-                test_mask=data.test_mask,
-                val_mask=data.val_mask,
-            )
-        else:
-            data = Graph(
-                x=data.x,
-                edge_index=edge_index,
-                edge_weight=edge_weight,
-                y=data.y,
-                train_mask=data.train_mask,
-                test_mask=data.test_mask,
-                val_mask=data.val_mask,
-            )
-        data.apply(lambda x: x.to(self.device))
-
+        if self.training and data.adj_train is not None:
+            data.eval()
+            edge_index, edge_weight = get_diffusion(data.x, data.edge_index)
+            data.edge_index = edge_index
+            data.edge_weight = edge_weight
+            data.train()
         return data
 
     def _get_adj_matrix(self, x, edge_index):

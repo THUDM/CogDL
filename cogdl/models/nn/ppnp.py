@@ -78,14 +78,12 @@ class PPNP(BaseModel):
             final_preds = F.dropout(self.vals) @ local_preds
         else:  # appnp
             preds = local_preds
-            # TODO:
-            graph.mute()
-            graph.edge_weight = F.dropout(graph.edge_attr, p=self.dropout, training=self.training)
-            for _ in range(self.niter):
-                new_features = spmm(graph, preds)
-                preds = (1 - self.alpha) * new_features + self.alpha * local_preds
-            final_preds = preds
-            graph.active()
+            with graph.local_graph("edge_weight"):
+                graph.edge_weight = F.dropout(graph.edge_weight, p=self.dropout, training=self.training)
+                for _ in range(self.niter):
+                    new_features = spmm(graph, preds)
+                    preds = (1 - self.alpha) * new_features + self.alpha * local_preds
+                final_preds = preds
         return final_preds
 
     def predict(self, graph):

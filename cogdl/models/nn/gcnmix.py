@@ -52,13 +52,10 @@ class GCNConv(nn.Module):
         self.edge_index = None
         self.edge_attr = None
 
-    def forward(self, x, edge_index, edge_attr=None):
-        if self.edge_index is None:
-            num_nodes = torch.max(edge_index) + 1
-            self.edge_index = edge_index
-            self.edge_attr = symmetric_normalization(num_nodes, edge_index)
-        h = spmm(self.edge_index, self.edge_attr, x)
-        return self.weight(h)
+    def forward(self, graph, x):
+        h = self.weight(x)
+        h = spmm(graph, h)
+        return h
 
     def forward_aux(self, x):
         return self.weight(x)
@@ -76,12 +73,14 @@ class BaseGNNMix(BaseModel):
         self.hidden_gnn = GCNConv(hidden_size, num_classes)
         self.loss_f = nn.BCELoss()
 
-    def forward(self, x, edge_index):
+    def forward(self, graph):
+        graph.sym_norm()
+        x = graph.x
         h = F.dropout(x, p=self.dropout, training=self.training)
-        h = self.input_gnn(h, edge_index)
+        h = self.input_gnn(graph, h)
         h = F.relu(h)
         h = F.dropout(h, p=self.dropout, training=self.training)
-        h = self.hidden_gnn(h, edge_index)
+        h = self.hidden_gnn(graph, h)
         return h
 
     def forward_aux(self, x, label, train_index, mix_hidden=True, layer_mix=1):
@@ -127,8 +126,8 @@ class BaseGNNMix(BaseModel):
         loss_sum = sup_loss + mixup_weight * unsup_loss
         return loss_sum
 
-    def update_soft(self, data, labels, train_index):
-        out = self.forward(data.x, data.edge_index)
+    def update_soft(self, graph, labels, train_index):
+        out = self.forward(graph)
         out = F.log_softmax(out, dim=-1)
         loss_sum = F.nll_loss(out[train_index], labels[train_index])
         return loss_sum
@@ -144,7 +143,7 @@ class BaseGNNMix(BaseModel):
             return self.update_soft(data, data.y, train_index)
 
     def predict_noise(self, data, tau=1):
-        out = self.forward(data.x, data.edge_index) / tau
+        out = self.forward(data) / tau
         return out
 
 
@@ -206,11 +205,11 @@ class GCNMix(BaseModel):
 
         self.epoch = 0
 
-    def forward(self, x, edge_index):
-        return self.base_gnn.forward(x, edge_index)
+    def forward(self, graph):
+        return self.base_gnn.forward(graph)
 
-    def forward_ema(self, x, edge_index):
-        return self.ema_gnn(x, edge_index)
+    def forward_ema(self, graph):
+        return self.ema_gnn(graph)
 
     def node_classification_loss(self, data):
         opt = {
@@ -229,5 +228,5 @@ class GCNMix(BaseModel):
         return loss_n
 
     def predict(self, data):
-        prediction = self.forward_ema(data.x, data.edge_index)
+        prediction = self.forward_ema(data)
         return prediction

@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from .. import BaseModel, register_model
 from .mlp import MLP
 from cogdl.data import DataLoader
-from cogdl.utils import remove_self_loops, spmm_g
+from cogdl.utils import spmm
 
 
 class GINLayer(nn.Module):
@@ -37,13 +37,13 @@ class GINLayer(nn.Module):
             self.register_buffer("eps", torch.FloatTensor([eps]))
         self.apply_func = apply_func
 
-    def forward(self, x, batch):
+    def forward(self, graph, x):
         # edge_index, _ = remove_self_loops()
         # edge_weight = torch.ones(edge_index.shape[1]).to(x.device) if edge_weight is None else edge_weight
         # adj = torch.sparse_coo_tensor(edge_index, edge_weight, (x.shape[0], x.shape[0]))
         # adj = adj.to(x.device)
         # out = (1 + self.eps) * x + torch.spmm(adj, x)
-        out = (1 + self.eps) * x + spmm_g(batch, x)
+        out = (1 + self.eps) * x + spmm(graph, x)
         if self.apply_func is not None:
             out = self.apply_func(out)
         return out
@@ -155,7 +155,7 @@ class GIN(BaseModel):
 
         layer_rep = [h]
         for i in range(self.num_layers - 1):
-            h = self.gin_layers[i](h, batch)
+            h = self.gin_layers[i](batch, h)
             h = self.batch_norm[i](h)
             h = F.relu(h)
             layer_rep.append(h)

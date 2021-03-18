@@ -25,13 +25,13 @@ class SelfSupervisedTrainer(BaseTrainer):
 
     def fit(self, model, data):
         self.data = data
-        self.data.edge_attr = torch.ones(data.edge_index.shape[1]).to(self.device)
-        self.data.apply(lambda x: x.to(self.device))
 
         if self.load_emb_path is not None:
             embeds = np.load(self.load_emb_path)
             embeds = torch.from_numpy(embeds).to(self.device)
             return self.evaluate(embeds)
+
+        self.data.to(self.device)
 
         best = 1e9
         cnt_wait = 0
@@ -69,12 +69,12 @@ class SelfSupervisedTrainer(BaseTrainer):
     def evaluate(self, embeds):
         nclass = int(torch.max(self.data.y) + 1)
         opt = {
-            "idx_train": self.data.train_mask,
-            "idx_val": self.data.val_mask,
-            "idx_test": self.data.test_mask,
+            "idx_train": self.data.train_mask.to(self.device),
+            "idx_val": self.data.val_mask.to(self.device),
+            "idx_test": self.data.test_mask.to(self.device),
             "num_classes": nclass,
         }
-        result = LogRegTrainer().train(embeds, self.data.y, opt)
+        result = LogRegTrainer().train(embeds, self.data.y.to(self.device), opt)
         print(f"TestAcc: {result: .4f}")
         return dict(Acc=result)
 

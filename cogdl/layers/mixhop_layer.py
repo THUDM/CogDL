@@ -1,9 +1,6 @@
-import math
-
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torch.nn.parameter import Parameter
+from cogdl.utils import spmm
 
 
 class MixHopLayer(nn.Module):
@@ -23,18 +20,16 @@ class MixHopLayer(nn.Module):
         for linear in self.linears:
             linear.reset_parameters()
 
-    def adj_pow_x(self, x, adj, p):
+    def adj_pow_x(self, graph, x, p):
         for _ in range(p):
-            x = torch.spmm(adj, x)
+            x = spmm(graph, x)
         return x
 
-    def forward(self, x, edge_index):
-        adj = torch.sparse_coo_tensor(
-            edge_index, torch.ones(edge_index.shape[1]).float(), (x.shape[0], x.shape[0]), device=x.device
-        )
+    def forward(self, graph, x):
+        graph.sym_norm()
         output_list = []
         for p, linear in zip(self.adj_pows, self.linears):
-            output = linear(self.adj_pow_x(x, adj, p))
+            output = linear(self.adj_pow_x(graph, x, p))
             output_list.append(output)
 
         return torch.cat(output_list, dim=1)

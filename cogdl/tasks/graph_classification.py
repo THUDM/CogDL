@@ -83,7 +83,7 @@ class GraphClassification(BaseTask):
             self.train_loader, self.val_loader, self.test_loader = dataset.get_loader(args)
             model = build_model(args) if model is None else model
         else:
-            self.data = self.generate_data(dataset, args)
+            self.data = dataset
             model = build_model(args) if model is None else model
             (
                 self.train_loader,
@@ -216,16 +216,3 @@ class GraphClassification(BaseTask):
             res = self._train()
             acc.append(res["Acc"])
         return dict(Acc=np.mean(acc), Std=np.std(acc))
-
-    def generate_data(self, dataset, args):
-        datalist = []
-        for idata in dataset:
-            data = Graph()
-            for key in idata.keys:
-                data[key] = idata[key]
-            datalist.append(data)
-
-        if args.degree_feature:
-            datalist = node_degree_as_feature(datalist)
-            args.num_features = datalist[0].num_features
-        return datalist

@@ -31,7 +31,7 @@ class GraphConvolution(nn.Module):
         if self.bias is not None:
             self.bias.data.zero_()
 
-    def forward(self, x, graph):
+    def forward(self, graph, x):
         support = torch.mm(x, self.weight)
         out = spmm(graph, support)
         if self.bias is not None:
@@ -85,7 +85,7 @@ class TKipfGCN(BaseModel):
         graph.sym_norm()
         h = graph.x
         for i in range(self.num_layers):
-            h = self.layers[i](h, graph)
+            h = self.layers[i](graph, h)
             if i != self.num_layers - 1:
                 h = F.relu(h)
                 h = F.dropout(h, self.dropout, training=self.training)

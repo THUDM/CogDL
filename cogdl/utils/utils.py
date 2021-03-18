@@ -228,7 +228,7 @@ def initialize_spmm(args):
             fast_spmm = csrspmm
             print("Using fast-spmm to speed up training")
         except Exception as e:
-            print(e)
+            print("import csr_spmm:", e)
 
 
 def spmm(graph, x):
@@ -241,13 +241,15 @@ def spmm(graph, x):
             col_ptr, row_indices, csc_data = csc_from_csr(row_ptr, col_indices, csr_data)
         if graph.out_norm is not None:
             x = graph.out_norm * x
-        x = fast_spmm(row_ptr.int(), col_indices.int(), col_ptr.int(), row_indices.int(), x, csr_data, csc_data)
+        x = fast_spmm(
+            row_ptr.int(), col_indices.int(), col_ptr.int(), row_indices.int(), x, csr_data.contiguous(), sym=True
+        )
         if graph.in_norm is not None:
             x = graph.in_norm * x
     elif graph.edge_weight.requires_grad:
         x = spmm_scatter(graph.edge_index, graph.edge_weight, x)
     else:
-        x = spmm_adj(graph.edge_index, graph.edge_weight, x, graph.num_nodes)
+        x = spmm_adj(graph.edge_index, graph.edge_weight, x)
     return x
 
 
@@ -384,7 +386,7 @@ def csr2csc(indptr, indices, data=None):
 
 
 def csr2coo(indptr, indices, data):
-    num_nodes = indptr.size(0)
+    num_nodes = indptr.size(0) - 1
     row = torch.arange(num_nodes, device=indptr.device)
     row_count = indptr[1:] - indptr[:-1]
     row = row.repeat_interleave(row_count)

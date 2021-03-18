@@ -14,7 +14,7 @@ class MeanAggregator(torch.nn.Module):
         self.linear = nn.Linear(in_channels, out_channels, bias)
 
     @staticmethod
-    def norm(x, graph):
+    def norm(graph, x):
         # here edge_index is already a sparse tensor
 
         graph.row_norm()
@@ -23,10 +23,10 @@ class MeanAggregator(torch.nn.Module):
 
         return x
 
-    def forward(self, x, adj_sp):
+    def forward(self, graph, x):
         """"""
         x = self.linear(x)
-        x = self.norm(x, adj_sp)
+        x = self.norm(graph, x)
         return x
 
     def __repr__(self):
@@ -44,15 +44,15 @@ class SumAggregator(torch.nn.Module):
         self.linear = nn.Linear(in_channels, out_channels, bias)
 
     @staticmethod
-    def aggr(x, graph):
+    def aggr(graph, x):
         x = spmm(graph, x)
         #  x：512*dim, edge_weight：256*512
         return x
 
-    def forward(self, x, adj):
+    def forward(self, graph, x):
         """"""
         x = self.linear(x)
-        x = self.aggr(x, adj)
+        x = self.aggr(graph, x)
         return x
 
     def __repr__(self):

@@ -35,7 +35,7 @@ class SampledTrainer(BaseTrainer):
         self.weight_decay = args.weight_decay
         self.loss_fn, self.evaluator = None, None
         self.data, self.train_loader, self.optimizer = None, None, None
-        self.eval_step = 1
+        self.eval_step = args.eval_step
 
     @classmethod
     def build_trainer_from_args(cls, args):
@@ -208,6 +208,7 @@ class NeighborSamplingTrainer(SampledTrainer):
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
 
+        self.data.train()
         self.train_loader = NeighborSampler(
             data=self.data,
             mask=self.data.train_mask,
@@ -216,6 +217,7 @@ class NeighborSamplingTrainer(SampledTrainer):
             num_workers=self.num_workers,
             shuffle=True,
         )
+        self.data.eval()
         self.test_loader = NeighborSampler(
             data=self.data, mask=None, sizes=[-1], batch_size=self.batch_size, shuffle=False
         )
@@ -228,6 +230,7 @@ class NeighborSamplingTrainer(SampledTrainer):
         return dict(Acc=acc["test"], ValAcc=acc["val"])
 
     def _train_step(self):
+        self.data.train()
         self.model.train()
         for target_id, n_id, adjs in self.train_loader:
             self.optimizer.zero_grad()
@@ -275,7 +278,8 @@ class ClusterGCNTrainer(SampledTrainer):
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        self.train_loader = ClusteredLoader(self.data, self.n_cluster, batch_size=self.batch_size, shuffle=True)
+        self.data.train()
+        self.train_loader = ClusteredLoader(dataset, self.n_cluster, batch_size=self.batch_size, shuffle=True)
         best_model = self.train()
         self.model = best_model
         metric, loss = self._test_step()
@@ -292,6 +296,7 @@ class ClusterGCNTrainer(SampledTrainer):
 
     def _test_step(self, split="val"):
         self.model.eval()
+        self.data.eval()
         data = self.data
         self.model = self.model.cpu()
         masks = {"train": self.data.train_mask, "val": self.data.val_mask, "test": self.data.test_mask}
@@ -322,7 +327,6 @@ class DeeperGCNTrainer(SampledTrainer):
         self.cluster_number = args.n_cluster
         self.batch_size = args.batch_size
         self.data, self.optimizer, self.evaluator, self.loss_fn = None, None, None, None
-        self.edge_index, self.train_index = None, None
 
     def generate_subgraph(self, data, parts, n_cluster):
         subgraphs = []
@@ -341,15 +345,9 @@ class DeeperGCNTrainer(SampledTrainer):
 
         self.loss_fn = dataset.get_loss_fn()
         self.evaluator = dataset.get_evaluator()
+        self.data.add_remaining_self_loops()
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        self.edge_index, _ = add_remaining_self_loops(
-            self.data.edge_index,
-            torch.ones(self.data.edge_index.shape[1]).to(self.data.x.device),
-            1,
-            self.data.x.shape[0],
-        )
-        self.train_index = torch.where(self.data.train_mask)[0].tolist()
 
         best_model = self.train()
         self.model = best_model
@@ -358,6 +356,7 @@ class DeeperGCNTrainer(SampledTrainer):
 
     def _train_step(self):
         self.model.train()
+        self.data.train()
         num_nodes = self.data.x.shape[0]
 
         parts = self.random_partition_graph(num_nodes=num_nodes, cluster_number=self.cluster_number)
@@ -374,6 +373,7 @@ class DeeperGCNTrainer(SampledTrainer):
 
     def _test_step(self, split="val"):
         self.model.eval()
+        self.data.eval()
         self.model = self.model.to("cpu")
         data = self.data
         self.model = self.model.cpu()

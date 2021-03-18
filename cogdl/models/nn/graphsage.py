@@ -45,8 +45,8 @@ class GraphSAGELayer(nn.Module):
         else:
             raise NotImplementedError
 
-    def forward(self, x, graph):
-        out = self.aggr(x, graph)
+    def forward(self, graph, x):
+        out = self.aggr(graph, x)
         if self.normalize:
             out = F.normalize(out, p=2.0, dim=-1)
         return out
@@ -92,9 +92,10 @@ class Graphsage(BaseModel):
         shapes = [num_features] + hidden_size + [num_classes]
         self.convs = nn.ModuleList([GraphSAGELayer(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
 
-    def mini_forward(self, x, edge_index):
+    def mini_forward(self, graph):
+        x = graph.x
         for i in range(self.num_layers):
-            edge_index_sp = self.sampling(edge_index, self.sample_size[i]).to(x.device)
+            edge_index_sp = self.sampling(graph.edge_index, self.sample_size[i]).to(x.device)
             x = self.convs[i](x, edge_index_sp)
             if i != self.num_layers - 1:
                 x = F.relu(x)
@@ -103,12 +104,12 @@ class Graphsage(BaseModel):
 
     def mini_loss(self, data):
         return self.loss_fn(
-            self.mini_forward(data.x, data.edge_index)[data.train_mask],
+            self.mini_forward(data)[data.train_mask],
             data.y[data.train_mask],
         )
 
     def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+        return self.forward(data)
 
     def forward(self, *args):
         assert len(args) == 2
@@ -118,7 +119,7 @@ class Graphsage(BaseModel):
             x, adjs = args
             for i, (src_id, graph, size) in enumerate(adjs):
                 graph = graph.to(self.device)
-                output = self.convs[i](x, graph)
+                output = self.convs[i](graph, x)
                 x = output[0 : size[1]]
                 if i != self.num_layers - 1:
                     x = F.relu(x)
@@ -136,10 +137,10 @@ class Graphsage(BaseModel):
     def inference(self, x_all, data_loader):
         for i in range(len(self.convs)):
             output = []
-            for src_id, edge_index, size in data_loader:
+            for src_id, graph, size in data_loader:
                 x = x_all[src_id].to(self.device)
-                edge_index = edge_index.to(self.device)
-                x = self.convs[i](x, edge_index)
+                graph = graph.to(self.device)
+                x = self.convs[i](graph, x)
                 x = x[: size[1]]
                 if i != self.num_layers - 1:
                     x = F.relu(x)

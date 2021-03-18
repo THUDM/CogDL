@@ -1,5 +1,5 @@
 from typing import List
-
+import os
 import random
 import numpy as np
 import scipy.sparse as sp
@@ -383,7 +383,7 @@ class NeighborSampler(torch.utils.data.DataLoader):
 class ClusteredLoader(torch.utils.data.DataLoader):
     partition_tool = None
 
-    def __init__(self, data, n_cluster: int, **kwargs):
+    def __init__(self, dataset, n_cluster: int, **kwargs):
         try:
             import metis
 
@@ -392,11 +392,15 @@ class ClusteredLoader(torch.utils.data.DataLoader):
             print(e)
             exit(1)
 
-        self.data = data
+        self.data = dataset.data
+        self.dataset_name = dataset.__class__.__name__
         self.clusters = self.preprocess(n_cluster)
         super(ClusteredLoader, self).__init__(list(range(n_cluster)), collate_fn=self.batcher, **kwargs)
 
     def preprocess(self, n_cluster):
+        save_name = f"{self.dataset_name}-{n_cluster}.cluster"
+        if os.path.exists(save_name):
+            return torch.load(save_name)
         print("Preprocessing...")
         edges = self.data.edge_index
         edges, _ = remove_self_loops(edges)
@@ -413,6 +417,7 @@ class ClusteredLoader(torch.utils.data.DataLoader):
             division[v].append(i)
         for k in range(len(division)):
             division[k] = np.array(division[k], dtype=np.int)
+        torch.save(division, save_name)
         print("Graph clustering over")
         return division
 

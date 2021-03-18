@@ -22,7 +22,7 @@ class GCNIILayer(nn.Module):
         stdv = 1.0 / math.sqrt(self.n_channels)
         self.weight.data.uniform_(-stdv, stdv)
 
-    def forward(self, x, graph, init_x):
+    def forward(self, graph, x, init_x):
         """Symmetric normalization"""
         hidden = spmm(graph, x)
         hidden = (1 - self.alpha) * hidden + self.alpha * init_x
@@ -125,7 +125,7 @@ class GCNII(BaseModel):
 
         for layer in self.layers:
             h = F.dropout(h, p=self.dropout, training=self.training)
-            h = layer(h, graph, init_h)
+            h = layer(graph, h, init_h)
             h = self.activation(h)
         h = F.dropout(h, p=self.dropout, training=self.training)
         out = self.fc_layers[1](h)

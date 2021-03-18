@@ -44,6 +44,7 @@ class Batch(Graph):
         cumsum = {key: 0 for key in keys}
         batch.batch = []
         num_nodes_cum = [0]
+        num_edges_cum = [0]
         for i, data in enumerate(data_list):
             for key in data.keys:
                 item = data[key]
@@ -64,6 +65,7 @@ class Batch(Graph):
             num_nodes = data.num_nodes
             if num_nodes is not None:
                 num_nodes_cum.append(num_nodes + num_nodes_cum[-1])
+                num_edges_cum.append(data.num_edges + num_edges_cum[-1])
                 item = torch.full((num_nodes,), i, dtype=torch.long)
                 batch.batch.append(item)
         if num_nodes is None:
@@ -83,18 +85,12 @@ class Batch(Graph):
                         )
                     elif k == "row_ptr":
                         _item = torch.cat(
-                            [x[k][:-1] + num_nodes_cum[i] for i, x in enumerate(batch[key][:-1])],
+                            [x[k][:-1] + num_edges_cum[i] for i, x in enumerate(batch[key][:-1])],
                             dim=item.cat_dim(k, None),
                         )
-                        _item = torch.cat([_item, batch[key][-1] + num_nodes_cum[-1]], dim=item.cat_dim(k, None))
+                        _item = torch.cat([_item, batch[key][-1][k] + num_edges_cum[-2]], dim=item.cat_dim(k, None))
                     else:
                         _item = torch.cat([x[k] for i, x in enumerate(batch[key])], dim=item.cat_dim(k, None))
-                    # if "edge" not in k:
-                    #     continue
-                    # if "edge_index" in k:
-                    #     _item = torch.cat([x[k] + num_nodes_cum[i] for i, x in enumerate(batch[key])], dim=item.cat_dim(k, None))
-                    # else:
-                    #     _item = torch.cat([x[k] for i, x in enumerate(batch[key])], dim=item.cat_dim(k, None))
                     target[k] = _item
                 batch[key] = target.to(item.device)
         return batch.contiguous()

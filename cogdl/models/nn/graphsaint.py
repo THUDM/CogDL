@@ -75,11 +75,6 @@ class HighOrderAggregator(nn.Module):
             self.f_norm = nn.BatchNorm1d(final_dim_out, eps=1e-9, track_running_stats=True)
         self.num_param = int(self.num_param)
 
-    def _spmm(self, adj_norm, _feat):
-        """ sparce feature matrix multiply dense feature matrix """
-        # alternative ways: use geometric.propagate or torch.mm
-        return torch.sparse.mm(adj_norm, _feat)
-
     def _f_feat_trans(self, _feat, _id):
         feat = self.act(self.f_lin[_id](_feat) + self.f_bias[_id])
         if self.bias == "norm":
@@ -90,7 +85,7 @@ class HighOrderAggregator(nn.Module):
             feat_out = feat
         return feat_out
 
-    def forward(self, inputs):
+    def forward(self, input):
         """
         Inputs:.
             adj_norm        normalized adj matrix of the subgraph
@@ -100,14 +95,13 @@ class HighOrderAggregator(nn.Module):
             adj_norm        same as input (to facilitate nn.Sequential)
             feat_out        2D matrix of output node features
         """
-        x, edge_index, edge_weight = inputs
+
+        graph, x = input
         feat_in = self.f_dropout(x)
         feat_hop = [feat_in]
         # generate A^i X
         for o in range(self.order):
-            # propagate(edge_index, x=x, norm=norm)
-            # feat_hop.append(self._spmm(adj_norm, feat_hop[-1]))
-            feat_hop.append(spmm(edge_index, edge_weight, x))
+            feat_hop.append(spmm(graph, x))
         feat_partial = [self._f_feat_trans(ft, idf) for idf, ft in enumerate(feat_hop)]
         if self.aggr == "mean":
             feat_out = feat_partial[0]
@@ -119,7 +113,7 @@ class HighOrderAggregator(nn.Module):
             raise NotImplementedError
         if self.bias == "norm-nn":
             feat_out = self.f_norm(feat_out)
-        return feat_out, edge_index, edge_weight  # return adj_norm to support Sequential
+        return graph, x  # return adj_norm to support Sequential
 
 
 def parse_arch(architecture, aggr, act, bias, hidden_size, num_features):
@@ -241,12 +235,9 @@ class GraphSAINT(BaseModel):
         else:
             self.idx_conv = list(np.where(np.array(self.order_layer) == 1)[0])
 
-    def forward(self, data):
-        if not hasattr(data, "edge_weight"):
-            edge_weight = torch.ones(data.edge_index.shape[1]).to(data.x.device)
-        else:
-            edge_weight = data.edge_weight
-        emb_subg, _, _ = self.conv_layers((data.x, data.edge_index, edge_weight))
+    def forward(self, graph):
+        x = graph.x
+        _, emb_subg = self.conv_layers(((graph, x)))
         emb_subg_norm = F.normalize(emb_subg, p=2, dim=1)
         pred_subg = self.classifier((emb_subg_norm, None, None))[0]
         return pred_subg

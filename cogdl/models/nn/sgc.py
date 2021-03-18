@@ -12,7 +12,7 @@ class SimpleGraphConvolution(nn.Module):
         self.order = order
         self.W = nn.Linear(in_features, out_features)
 
-    def forward(self, x, graph):
+    def forward(self, graph, x):
         output = self.W(x)
         for _ in range(self.order):
             output = spmm(graph, output)
@@ -35,11 +35,11 @@ class sgc(BaseModel):
         self.nn = SimpleGraphConvolution(in_feats, out_feats)
         self.cache = dict()
 
-    def forward(self, x, graph):
+    def forward(self, graph):
         graph.sym_norm()
 
-        x = self.nn(x, graph)
+        x = self.nn(graph, graph.x)
         return x
 
     def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+        return self.forward(data)

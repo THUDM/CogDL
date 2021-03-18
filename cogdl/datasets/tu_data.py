@@ -73,14 +73,20 @@ def split(data, batch):
 
 
 def _split(edge_index, batch, x=None, y=None, edge_attr=None):
-    node_slice = torch.from_numpy(np.bincount(batch)), 0
+    node_slice = np.bincount(batch).tolist()
     row, _ = edge_index
-    edge_slice = torch.from_numpy(np.bincount(batch[row]))
-    if x is not None:
-        x = x.split(node_slice)
+    edge_slice = np.bincount(batch[row]).tolist()
     if edge_attr is not None:
         edge_attr = edge_attr.split(edge_slice)
     edge_index_t = edge_index.T.split(edge_slice)
+    if x is not None:
+        x = x.split(node_slice)
+        num_nodes = [i.shape[0] for i in x]
+    else:
+        num_nodes = [edge.max().item() for edge in edge_index_t]
+    num_nodes_cum = np.cumsum(num_nodes).tolist()
+    num_nodes_cum = [0] + num_nodes_cum
+    edge_index_t = [edge_index_t[i] - num_nodes_cum[i] for i in range(len(edge_index_t))]
     data = []
     for i in range(len(node_slice)):
         g = Graph(edge_index=edge_index_t[i].T)

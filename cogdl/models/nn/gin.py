@@ -7,7 +7,29 @@ import torch.nn.functional as F
 from .. import BaseModel, register_model
 from .mlp import MLP
 from cogdl.data import DataLoader
-from cogdl.utils import remove_self_loops
+from cogdl.utils import spmm
+
+
+def split_dataset_general(dataset, args):
+    droplast = args.model == "diffpool"
+
+    train_size = int(len(dataset) * args.train_ratio)
+    test_size = int(len(dataset) * args.test_ratio)
+    index = list(range(len(dataset)))
+    random.shuffle(index)
+
+    train_index = index[:train_size]
+    test_index = index[-test_size:]
+
+    bs = args.batch_size
+    train_loader = DataLoader([dataset[i] for i in train_index], batch_size=bs, drop_last=droplast)
+    test_loader = DataLoader([dataset[i] for i in test_index], batch_size=bs, drop_last=droplast)
+    if args.train_ratio + args.test_ratio < 1:
+        val_index = index[train_size:-test_size]
+        valid_loader = DataLoader([dataset[i] for i in val_index], batch_size=bs, drop_last=droplast)
+    else:
+        valid_loader = test_loader
+    return train_loader, valid_loader, test_loader
 
 
 class GINLayer(nn.Module):
@@ -37,12 +59,13 @@ class GINLayer(nn.Module):
             self.register_buffer("eps", torch.FloatTensor([eps]))
         self.apply_func = apply_func
 
-    def forward(self, x, edge_index, edge_weight=None):
-        edge_index, _ = remove_self_loops(edge_index)
-        edge_weight = torch.ones(edge_index.shape[1]).to(x.device) if edge_weight is None else edge_weight
-        adj = torch.sparse_coo_tensor(edge_index, edge_weight, (x.shape[0], x.shape[0]))
-        adj = adj.to(x.device)
-        out = (1 + self.eps) * x + torch.spmm(adj, x)
+    def forward(self, graph, x):
+        # edge_index, _ = remove_self_loops()
+        # edge_weight = torch.ones(edge_index.shape[1]).to(x.device) if edge_weight is None else edge_weight
+        # adj = torch.sparse_coo_tensor(edge_index, edge_weight, (x.shape[0], x.shape[0]))
+        # adj = adj.to(x.device)
+        # out = (1 + self.eps) * x + torch.spmm(adj, x)
+        out = (1 + self.eps) * x + spmm(graph, x)
         if self.apply_func is not None:
             out = self.apply_func(out)
         return out
@@ -102,17 +125,7 @@ class GIN(BaseModel):
 
     @classmethod
     def split_dataset(cls, dataset, args):
-        random.shuffle(dataset)
-        train_size = int(len(dataset) * args.train_ratio)
-        test_size = int(len(dataset) * args.test_ratio)
-        bs = args.batch_size
-        train_loader = DataLoader(dataset[:train_size], batch_size=bs)
-        test_loader = DataLoader(dataset[-test_size:], batch_size=bs)
-        if args.train_ratio + args.test_ratio < 1:
-            valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
-        else:
-            valid_loader = test_loader
-        return train_loader, valid_loader, test_loader
+        return split_dataset_general(dataset, args)
 
     def __init__(
         self,
@@ -154,7 +167,7 @@ class GIN(BaseModel):
 
         layer_rep = [h]
         for i in range(self.num_layers - 1):
-            h = self.gin_layers[i](h, batch.edge_index)
+            h = self.gin_layers[i](batch, h)
             h = self.batch_norm[i](h)
             h = F.relu(h)
             layer_rep.append(h)

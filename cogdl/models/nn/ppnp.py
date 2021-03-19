@@ -51,16 +51,7 @@ class PPNP(BaseModel):
         self.use_cache = cache
         self.cache = dict()
 
-    def _calculate_A_hat(self, x, edge_index):
-        device = x.device
-        edge_attr = torch.ones(edge_index.shape[1]).to(device)
-        edge_index, edge_attr = add_remaining_self_loops(edge_index, edge_attr, 1, x.shape[0])
-        deg = spmm(edge_index, edge_attr, torch.ones(x.shape[0], 1).to(device)).squeeze()
-        deg_sqrt = deg.pow(-1 / 2)
-        edge_attr = deg_sqrt[edge_index[1]] * edge_attr * deg_sqrt[edge_index[0]]
-        return edge_index, edge_attr
-
-    def forward(self, x, adj):
+    def forward(self, graph):
         def get_ready_format(input, edge_index, edge_attr=None):
             if edge_attr is None:
                 edge_attr = torch.ones(edge_index.shape[1]).float().to(input.device)
@@ -71,15 +62,8 @@ class PPNP(BaseModel):
             ).to(input.device)
             return adj
 
-        if self.use_cache:
-            flag = str(adj.shape[1])
-            if flag not in self.cache:
-                edge_index, edge_attr = self._calculate_A_hat(x, adj)
-                self.cache[flag] = (edge_index, edge_attr)
-            else:
-                edge_index, edge_attr = self.cache[flag]
-        else:
-            edge_index, edge_attr = self._calculate_A_hat(x, adj)
+        x = graph.x
+        graph.sym_norm()
         # get prediction
         x = F.dropout(x, p=self.dropout, training=self.training)
         local_preds = self.nn.forward(x)
@@ -88,17 +72,19 @@ class PPNP(BaseModel):
         if self.propagation == "ppnp":
             if self.vals is None:
                 self.vals = self.alpha * torch.inverse(
-                    torch.eye(x.shape[0]).to(x.device) - (1 - self.alpha) * get_ready_format(x, edge_index, edge_attr)
+                    torch.eye(x.shape[0]).to(x.device)
+                    - (1 - self.alpha) * get_ready_format(x, graph.edge_index, graph.edge_attr)
                 )
             final_preds = F.dropout(self.vals) @ local_preds
         else:  # appnp
             preds = local_preds
-            edge_attr = F.dropout(edge_attr, p=self.dropout, training=self.training)
-            for _ in range(self.niter):
-                new_features = spmm(edge_index, edge_attr, preds)
-                preds = (1 - self.alpha) * new_features + self.alpha * local_preds
-            final_preds = preds
+            with graph.local_graph("edge_weight"):
+                graph.edge_weight = F.dropout(graph.edge_weight, p=self.dropout, training=self.training)
+                for _ in range(self.niter):
+                    new_features = spmm(graph, preds)
+                    preds = (1 - self.alpha) * new_features + self.alpha * local_preds
+                final_preds = preds
         return final_preds
 
-    def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+    def predict(self, graph):
+        return self.forward(graph)

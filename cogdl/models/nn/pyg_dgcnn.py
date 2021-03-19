@@ -1,12 +1,10 @@
-import random
-
 import torch
 import torch.nn as nn
 from torch_geometric.nn import DynamicEdgeConv, global_max_pool
 
 from .. import BaseModel, register_model
 from .mlp import MLP
-from cogdl.data import DataLoader, Data
+from .gin import split_dataset_general
 
 
 @register_model("dgcnn")
@@ -44,24 +42,7 @@ class DGCNN(BaseModel):
 
     @classmethod
     def split_dataset(cls, dataset, args):
-        if "ModelNet" in args.dataset:
-            train_data = [Data(x=d.pos, y=d.y) for d in dataset["train"]]
-            test_data = [Data(x=d.pos, y=d.y) for d in dataset["test"]]
-            train_loader = DataLoader(train_data, batch_size=args.batch_size, num_workers=6)
-            test_loader = DataLoader(test_data, batch_size=args.batch_size, num_workers=6, shuffle=False)
-            return train_loader, test_loader, test_loader
-        else:
-            random.shuffle(dataset)
-            train_size = int(len(dataset) * args.train_ratio)
-            test_size = int(len(dataset) * args.test_ratio)
-            bs = args.batch_size
-            train_loader = DataLoader(dataset[:train_size], batch_size=bs)
-            test_loader = DataLoader(dataset[-test_size:], batch_size=bs)
-            if args.train_ratio + args.test_ratio < 1:
-                valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
-            else:
-                valid_loader = test_loader
-            return train_loader, valid_loader, test_loader
+        return split_dataset_general(dataset, args)
 
     def __init__(self, in_feats, hidden_dim, out_feats, k=20, dropout=0.5):
         super(DGCNN, self).__init__()

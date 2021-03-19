@@ -22,6 +22,7 @@ def get_default_args():
         "dataset": "cora",
         "checkpoint": False,
         "auxiliary_task": "none",
+        "eval_step": 1,
     }
     return build_args_from_dict(default_dict)
 
@@ -102,86 +103,6 @@ def test_mixhop_citeseer():
     args.model = "mixhop"
     args.layer1_pows = [20, 20, 20]
     args.layer2_pows = [20, 20, 20]
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-
-def test_pairnorm_cora_deepgcn():
-    args = get_default_args()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "pairnorm"
-    args.pn_model = "DeepGCN"
-    args.nlayer = 10
-    args.missing_rate = 100
-    args.norm_mode = "PN-SI"
-    args.residual = 0
-    args.hidden_layers = 64
-    args.nhead = 1
-    args.dropout = 0.6
-    args.norm_scale = 1.0
-    args.no_fea_norm = "store_false"
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-
-def test_pairnorm_cora_gcn():
-    args = get_default_args()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "pairnorm"
-    args.pn_model = "GCN"
-    args.nlayer = 10
-    args.missing_rate = 100
-    args.norm_mode = "PN-SI"
-    args.residual = 0
-    args.hidden_layers = 64
-    args.nhead = 1
-    args.dropout = 0.6
-    args.norm_scale = 1.0
-    args.no_fea_norm = "store_false"
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-
-def test_pairnorm_cora_sgc():
-    args = get_default_args()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "pairnorm"
-    args.pn_model = "SGC"
-    args.nlayer = 10
-    args.missing_rate = 100
-    args.norm_mode = "PN-SI"
-    args.residual = 0
-    args.hidden_layers = 64
-    args.nhead = 1
-    args.dropout = 0.6
-    args.norm_scale = 1.0
-    args.no_fea_norm = "store_false"
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-
-def test_pairnorm_cora_deepgat():
-    args = get_default_args()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "pairnorm"
-    args.pn_model = "DeepGAT"
-    args.nlayer = 10
-    args.missing_rate = 100
-    args.norm_mode = "PN-SI"
-    args.residual = 0
-    args.hidden_layers = 64
-    args.nhead = 2
-    args.dropout = 0.6
-    args.norm_scale = 1.0
-    args.no_fea_norm = "store_false"
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
@@ -708,10 +629,6 @@ if __name__ == "__main__":
     test_gdc_gcn_cora()
     test_gcn_cora()
     test_gat_cora()
-    test_pairnorm_cora_deepgcn()
-    test_pairnorm_cora_deepgat()
-    test_pairnorm_cora_gcn()
-    test_pairnorm_cora_sgc()
     test_sgc_cora()
     test_mlp_pubmed()
     test_mixhop_citeseer()

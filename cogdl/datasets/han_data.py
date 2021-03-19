@@ -3,7 +3,7 @@ import os.path as osp
 import numpy as np
 import scipy.io as sio
 import torch
-from cogdl.data import Data, Dataset
+from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url, untar
 
 from . import register_dataset
@@ -83,7 +83,7 @@ class HANDataset(Dataset):
         y_val = np.argmax(y[val_mask, :], axis=1)
         y_test = np.argmax(y[test_mask, :], axis=1)
 
-        data = Data()
+        data = Graph()
         A = []
         for i, edge in enumerate(rownetworks):
             edge_tmp = torch.from_numpy(np.vstack((edge.nonzero()[0], edge.nonzero()[1]))).type(torch.LongTensor)

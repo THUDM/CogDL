@@ -4,7 +4,6 @@ import os
 import torch
 import scipy.sparse as sp
 
-from cogdl.utils import symmetric_normalization, row_normalization
 from cogdl.layers.pprgo_modules import build_topk_ppr_matrix_from_data, PPRGoDataset
 
 
@@ -154,15 +153,8 @@ class PPRGoTrainer(object):
     def _test_step(self, data):
         self.model.eval()
 
-        if self.normalization == "sym":
-            norm_func = symmetric_normalization
-        elif self.normalization == "row":
-            norm_func = row_normalization
-        else:
-            raise NotImplementedError
-
         with torch.no_grad():
-            predictions = self.model.predict(data.x, data.edge_index, self.test_batch_size, norm_func)
+            predictions = self.model.predict(data, self.test_batch_size, self.normalization)
 
         labels = data.y[data.test_mask]
         preds = predictions[data.test_mask]

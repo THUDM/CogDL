@@ -6,7 +6,7 @@ import torch
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
-from cogdl.data import Data, DataLoader
+from cogdl.data import Graph, DataLoader
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.utils import add_remaining_self_loops
@@ -83,7 +83,10 @@ class GraphClassification(BaseTask):
             self.train_loader, self.val_loader, self.test_loader = dataset.get_loader(args)
             model = build_model(args) if model is None else model
         else:
-            self.data = self.generate_data(dataset, args)
+            self.data = dataset
+            if self.data[0].x is None:
+                self.data = node_degree_as_feature(dataset)
+                args.num_features = self.data.num_features
             model = build_model(args) if model is None else model
             (
                 self.train_loader,
@@ -216,18 +219,3 @@ class GraphClassification(BaseTask):
             res = self._train()
             acc.append(res["Acc"])
         return dict(Acc=np.mean(acc), Std=np.std(acc))
-
-    def generate_data(self, dataset, args):
-        datalist = []
-        # if isinstance(dataset[0], Data):
-        #     return dataset
-        for idata in dataset:
-            data = Data()
-            for key in idata.keys:
-                data[key] = idata[key]
-            datalist.append(data)
-
-        if args.degree_feature:
-            datalist = node_degree_as_feature(datalist)
-            args.num_features = datalist[0].num_features
-        return datalist

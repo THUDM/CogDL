@@ -62,7 +62,7 @@ torch::Tensor csr_sddmm(
 
 PYBIND11_MODULE(sddmm, m)
 {
-    m.doc() = "SDDMM kernel. Format of COO and CSR are provided."
+    m.doc() = "SDDMM kernel. Format of COO and CSR are provided.";
     m.def("coo_sddmm", &coo_sddmm, "COO SDDMM");
     m.def("csr_sddmm", &csr_sddmm, "CSR SDDMM");
 }

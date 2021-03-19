@@ -6,18 +6,18 @@ import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
 from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, symmetric_normalization, spmm
+from cogdl.utils import spmm
 
 
 from fmoe import FMoETransformerMLP
+
+
 class CustomizedMoEPositionwiseFF(FMoETransformerMLP):
     def __init__(self, d_model, d_inner, dropout, moe_num_expert=64, moe_top_k=2):
-        activation = nn.Sequential(
-            nn.GELU(),
-            nn.Dropout(dropout)
+        activation = nn.Sequential(nn.GELU(), nn.Dropout(dropout))
+        super().__init__(
+            num_expert=moe_num_expert, d_model=d_model, d_hidden=d_inner, top_k=moe_top_k, activation=activation
         )
-        super().__init__(num_expert=moe_num_expert, d_model=d_model, d_hidden=d_inner, top_k=moe_top_k,
-                activation=activation)
 
         self.dropout = nn.Dropout(dropout)
         self.bn_layer = nn.BatchNorm1d(d_model)
@@ -55,11 +55,9 @@ class GraphConv(nn.Module):
         if self.bias is not None:
             self.bias.data.zero_()
 
-    def forward(self, x, edge_index, edge_attr=None):
+    def forward(self, graph, x):
         support = torch.mm(x, self.weight)
-        if edge_attr is None:
-            edge_attr = torch.ones(edge_index.shape[1]).to(x.device)
-        out = spmm(edge_index, edge_attr, support)
+        out = spmm(graph, support)
         if self.bias is not None:
             return out + self.bias
         else:
@@ -70,7 +68,7 @@ class GraphConv(nn.Module):
 
 
 class GraphConvBlock(nn.Module):
-    def __init__(self, in_feats, out_feats, activation=None, dropout=0.):
+    def __init__(self, in_feats, out_feats, activation=None, dropout=0.0):
         super(GraphConvBlock, self).__init__()
 
         self.activation = activation
@@ -79,9 +77,7 @@ class GraphConvBlock(nn.Module):
         self.res_connection = nn.Linear(in_feats, out_feats)
         self.bn_layer_1 = nn.BatchNorm1d(out_feats)
         self.bn_layer_2 = nn.BatchNorm1d(out_feats)
-        self.pos_ff = CustomizedMoEPositionwiseFF(out_feats, out_feats * 2, dropout,
-                                moe_num_expert=64,
-                                moe_top_k=2)
+        self.pos_ff = CustomizedMoEPositionwiseFF(out_feats, out_feats * 2, dropout, moe_num_expert=64, moe_top_k=2)
 
     def reset_parameters(self):
         """Reinitialize model parameters."""
@@ -90,8 +86,8 @@ class GraphConvBlock(nn.Module):
         self.bn_layer_1.reset_parameters()
         self.bn_layer_2.reset_parameters()
 
-    def forward(self, feats, edge_index, edge_attr=None):
-        new_feats = self.graph_conv(feats, edge_index, edge_attr)
+    def forward(self, graph, feats):
+        new_feats = self.graph_conv(graph, feats)
         res_feats = self.res_connection(feats)
         if self.activation is not None:
             res_feats = self.activation(res_feats)
@@ -102,6 +98,7 @@ class GraphConvBlock(nn.Module):
         new_feats = self.pos_ff(new_feats)
 
         return new_feats
+
 
 @register_model("moe_gcn")
 class MoEGCN(BaseModel):
@@ -133,33 +130,30 @@ class MoEGCN(BaseModel):
     def __init__(self, in_feats, hidden_size, out_feats, num_layers, dropout):
         super(MoEGCN, self).__init__()
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
-        self.layers = nn.ModuleList([GraphConvBlock(shapes[i], shapes[i + 1], activation=F.gelu, dropout=dropout) for i in range(num_layers)])
+        self.layers = nn.ModuleList(
+            [GraphConvBlock(shapes[i], shapes[i + 1], activation=F.gelu, dropout=dropout) for i in range(num_layers)]
+        )
         self.num_layers = num_layers
         self.dropout = dropout
 
-    def get_embeddings(self, x, edge_index):
-        edge_index, edge_attr = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])
-        edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
+    def get_embeddings(self, graph):
+        graph.sym_norm()
 
-        h = x
+        h = graph.x
         for i in range(self.num_layers - 1):
             h = F.dropout(h, self.dropout, training=self.training)
-            h = self.layers[i](h, edge_index, edge_attr)
+            h = self.layers[i](graph, h)
         return h
 
-    def forward(self, x, edge_index, edge_weight=None):
-        edge_index, edge_weight = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])
-        edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_weight)
-        h = x
+    def forward(self, graph):
+        graph.sym_norm()
+        h = graph.x
         for i in range(self.num_layers):
-            h = self.layers[i](h, edge_index, edge_attr)
+            h = self.layers[i](graph, h)
             if i != self.num_layers - 1:
                 h = F.relu(h)
                 h = F.dropout(h, self.dropout, training=self.training)
         return h
 
     def predict(self, data):
-        if hasattr(data, "norm_aggr"):
-            return self.forward(data.x, data.edge_index, data.norm_aggr)
-        else:
-            return self.forward(data.x, data.edge_index)
+        return self.forward(data)

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, symmetric_normalization, get_activation
+from cogdl.utils import get_activation, spmm
 from cogdl.trainers.self_supervised_trainer import SelfSupervisedTrainer
 
 
@@ -30,18 +30,18 @@ class GCN(nn.Module):
                 m.bias.data.fill_(0.0)
 
     # Shape of seq: (batch, nodes, features)
-    def forward(self, seq, adj, sparse=False):
+    def forward(self, graph, seq, sparse=False):
         seq_fts = self.fc(seq)
         if len(seq_fts.shape) > 2:
             if sparse:
-                out = torch.unsqueeze(torch.spmm(adj, torch.squeeze(seq_fts, 0)), 0)
+                out = torch.unsqueeze(spmm(graph, torch.squeeze(seq_fts, 0)), 0)
             else:
-                out = torch.bmm(adj, seq_fts)
+                out = torch.bmm(graph, seq_fts)
         else:
             if sparse:
-                out = torch.spmm(adj, torch.squeeze(seq_fts, 0))
+                out = spmm(graph, torch.squeeze(seq_fts, 0))
             else:
-                out = torch.mm(adj, seq_fts)
+                out = torch.mm(graph, seq_fts)
         if self.bias is not None:
             out += self.bias
 
@@ -120,45 +120,37 @@ class DGIModel(BaseModel):
         self.cache = None
         self.sparse = True
 
-    def _forward(self, seq1, seq2, adj, sparse, msk):
-        h_1 = self.gcn(seq1, adj, sparse)
+    def _forward(self, graph, seq1, seq2, sparse, msk):
+        h_1 = self.gcn(graph, seq1, sparse)
 
         c = self.read(h_1, msk)
         c = self.sigm(c)
 
-        h_2 = self.gcn(seq2, adj, sparse)
+        h_2 = self.gcn(graph, seq2, sparse)
 
         ret = self.disc(c, h_1, h_2)
 
         return ret
 
-    def forward(self, x, edge_index, edge_attr=None):
-        num_nodes = x.shape[0]
-        if self.cache is None:
-            self.cache = dict()
-        if "edge_weight" not in self.cache:
-            edge_index, edge_weight = add_remaining_self_loops(edge_index, edge_attr)
-            edge_weight = symmetric_normalization(x.shape[0], edge_index, edge_weight)
-            self.cache["edge_index"] = edge_index
-            self.cache["edge_weight"] = edge_weight
-        edge_index, edge_weight = self.cache["edge_index"].to(x.device), self.cache["edge_weight"].to(x.device)
-        adj = torch.sparse_coo_tensor(edge_index, edge_weight, (num_nodes, num_nodes))
+    def forward(self, graph):
+        graph.sym_norm()
+        x = graph.x
 
-        idx = np.random.permutation(num_nodes)
+        idx = np.random.permutation(graph.num_nodes)
         shuf_fts = x[idx, :]
 
-        logits = self._forward(x, shuf_fts, adj, True, None)
+        logits = self._forward(graph, x, shuf_fts, True, None)
         return logits
 
     def loss(self, data):
         if self.cache is None:
-            num_nodes = data.x.shape[0]
+            num_nodes = data.num_nodes
             lbl_1 = torch.ones(1, num_nodes)
             lbl_2 = torch.zeros(1, num_nodes)
             self.cache = {"labels": torch.cat((lbl_1, lbl_2), 1).to(data.x.device)}
         labels = self.cache["labels"].to(data.x.device)
 
-        logits = self.forward(data.x, data.edge_index, data.edge_attr)
+        logits = self.forward(data)
         logits = logits.unsqueeze(0)
         loss = self.loss_f(logits, labels)
         return loss
@@ -168,13 +160,7 @@ class DGIModel(BaseModel):
 
     # Detach the return variables
     def embed(self, data, msk=None):
-        if "edge_weight" in self.cache:
-            edge_index, edge_weight = self.cache["edge_index"], self.cache["edge_weight"]
-        else:
-            edge_index, edge_weight = data.edge_index, data.edge_attr
-        num_nodes = data.x.shape[0]
-        adj = torch.sparse_coo_tensor(edge_index, edge_weight, (num_nodes, num_nodes))
-        h_1 = self.gcn(data.x, adj, self.sparse)
+        h_1 = self.gcn(data, data.x, self.sparse)
         # c = self.read(h_1, msk)
         return h_1.detach()  # , c.detach()
 

@@ -5,8 +5,9 @@ import torch.nn.functional as F
 
 from .. import register_model, BaseModel
 from cogdl.models.nn.gcn import GraphConvolution
-from cogdl.utils import get_activation, filter_adj, add_remaining_self_loops, symmetric_normalization
+from cogdl.utils import get_activation, filter_adj
 from cogdl.trainers.self_supervised_trainer import SelfSupervisedTrainer
+from cogdl.data import Graph
 
 
 class GraceEncoder(nn.Module):
@@ -22,10 +23,10 @@ class GraceEncoder(nn.Module):
         self.layers = nn.ModuleList([GraphConvolution(shapes[i], shapes[i + 1]) for i in range(num_layers)])
         self.activation = get_activation(activation)
 
-    def forward(self, x: torch.Tensor, edge_index: torch.Tensor, edge_weight: torch.Tensor):
+    def forward(self, graph: Graph, x: torch.Tensor):
         h = x
         for layer in self.layers:
-            h = layer(h, edge_index, edge_weight)
+            h = layer(graph, h)
             h = self.activation(h)
         return h
 
@@ -85,26 +86,23 @@ class GRACE(BaseModel):
 
     def forward(
         self,
+        graph: Graph,
         x: torch.Tensor,
-        edge_index: torch.Tensor,
-        edge_weight: Optional[torch.Tensor] = None,
     ):
-        num_nodes = x.shape[0]
-        edge_index, edge_weight = add_remaining_self_loops(edge_index, edge_weight)
-        edge_weight = symmetric_normalization(num_nodes, edge_index)
-        return self.encoder(x, edge_index, edge_weight)
+        graph.sym_norm()
+        return self.encoder(graph, x)
 
     def prop(
         self,
+        graph: Graph,
         x: torch.Tensor,
-        edge_index: torch.Tensor,
-        edge_weight: Optional[torch.Tensor] = None,
         drop_feature_rate: float = 0.0,
         drop_edge_rate: float = 0.0,
     ):
         x = self.drop_feature(x, drop_feature_rate)
-        edge_index, edge_weight = self.drop_adj(edge_index, edge_weight, drop_edge_rate)
-        return self.forward(x, edge_index, edge_weight)
+        with graph.local_graph():
+            graph = self.drop_adj(graph, drop_edge_rate)
+            return self.forward(graph, x)
 
     def contrastive_loss(self, z1: torch.Tensor, z2: torch.Tensor):
         z1 = F.normalize(z1, p=2, dim=-1)
@@ -138,9 +136,9 @@ class GRACE(BaseModel):
             losses.append(_loss)
         return sum(losses) / len(losses)
 
-    def node_classification_loss(self, data):
-        z1 = self.prop(data.x, data.edge_index, data.edge_attr, self.drop_feature_rates[0], self.drop_edge_rates[0])
-        z2 = self.prop(data.x, data.edge_index, data.edge_attr, self.drop_feature_rates[1], self.drop_edge_rates[1])
+    def node_classification_loss(self, graph):
+        z1 = self.prop(graph, graph.x, self.drop_feature_rates[0], self.drop_edge_rates[0])
+        z2 = self.prop(graph, graph.x, self.drop_feature_rates[1], self.drop_edge_rates[1])
 
         z1 = self.project_head(z1)
         z2 = self.project_head(z2)
@@ -151,19 +149,23 @@ class GRACE(BaseModel):
             return 0.5 * (self.contrastive_loss(z1, z2) + self.contrastive_loss(z2, z1))
 
     def embed(self, data):
-        pred = self.forward(data.x, data.edge_index, data.edge_attr)
+        pred = self.forward(data, data.x)
         return pred
 
-    def drop_adj(self, edge_index: torch.Tensor, edge_weight: Optional[torch.Tensor] = None, drop_rate: float = 0.5):
+    def drop_adj(self, graph: Graph, drop_rate: float = 0.5):
         if drop_rate < 0.0 or drop_rate > 1.0:
             raise ValueError("Dropout probability has to be between 0 and 1, " "but got {}".format(drop_rate))
         if not self.training:
-            return edge_index, edge_weight
+            return graph
 
-        mask = edge_index.new_full((edge_index.size(1),), 1 - drop_rate, dtype=torch.float)
+        num_edges = graph.num_edges
+        mask = torch.full((num_edges,), 1 - drop_rate, dtype=torch.float)
         mask = torch.bernoulli(mask).to(torch.bool)
-        edge_index, edge_weight = filter_adj(edge_index[0], edge_index[1], edge_weight, mask)
-        return edge_index, edge_weight
+        edge_index = graph.edge_index
+        edge_weight = graph.edge_weight
+        graph.edge_index = edge_index[:, mask]
+        graph.edge_weight = edge_weight[mask]
+        return graph
 
     def drop_feature(self, x: torch.Tensor, droprate: float):
         n = x.shape[1]

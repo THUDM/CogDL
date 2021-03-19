@@ -12,7 +12,7 @@ from cogdl.utils import download_url
 import os.path as osp
 from itertools import repeat
 
-from cogdl.data import Data, MultiGraphDataset
+from cogdl.data import Graph, MultiGraphDataset
 
 # ================
 # Dataset utils
@@ -77,7 +77,7 @@ def nx_to_graph_data_obj(
         # id is 0
 
     # construct data obj
-    data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
+    data = Graph(x=x, edge_index=edge_index, edge_attr=edge_attr)
     data.species_id = species_id
     data.center_node_idx = center_node_idx
 
@@ -192,7 +192,7 @@ def nx_to_graph_data_obj_simple(G):
         edge_index = torch.empty((2, 0), dtype=torch.long)
         edge_attr = torch.empty((0, num_bond_features), dtype=torch.long)
 
-    data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
+    data = Graph(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
     return data
 
@@ -556,7 +556,7 @@ class ChemExtractSubstructureContextPair:
 # ==================
 
 
-class BatchFinetune(Data):
+class BatchFinetune(Graph):
     def __init__(self, batch=None, **kwargs):
         super(BatchFinetune, self).__init__(**kwargs)
         self.batch = batch
@@ -602,7 +602,7 @@ class BatchFinetune(Data):
         return self.batch[-1].item() + 1
 
 
-class BatchMasking(Data):
+class BatchMasking(Graph):
     def __init__(self, batch=None, **kwargs):
         super(BatchMasking, self).__init__(**kwargs)
         self.batch = batch
@@ -660,7 +660,7 @@ class BatchMasking(Data):
         return self.batch[-1].item() + 1
 
 
-class BatchAE(Data):
+class BatchAE(Graph):
     def __init__(self, batch=None, **kwargs):
         super(BatchAE, self).__init__(**kwargs)
         self.batch = batch
@@ -707,7 +707,7 @@ class BatchAE(Data):
         return -1 if key in ["edge_index", "negative_edge_index"] else 0
 
 
-class BatchSubstructContext(Data):
+class BatchSubstructContext(Graph):
     def __init__(self, batch=None, **kwargs):
         super(BatchSubstructContext, self).__init__(**kwargs)
         self.batch = batch
@@ -861,7 +861,7 @@ class TestBioDataset(MultiGraphDataset):
         edge_attr = torch.zeros(num_edges * num_graphs, 9)
         for idx, val in enumerate(torch.randint(0, 9, size=(num_edges * num_graphs,))):
             edge_attr[idx][val] = 1.0
-        self.data = Data(
+        self.data = Graph(
             x=torch.ones(num_graphs * num_nodes, 1),
             edge_index=edge_index,
             edge_attr=edge_attr,
@@ -925,7 +925,7 @@ class TestChemDataset(MultiGraphDataset):
         for idx, val in enumerate(torch.randint(0, 3, size=(num_edges * num_graphs,))):
             x[idx][1] = val
 
-        self.data = Data(
+        self.data = Graph(
             x=x.to(torch.long),
             edge_index=edge_index.to(torch.long),
             edge_attr=edge_attr.to(torch.long),
@@ -1026,7 +1026,7 @@ class MoleculeDataset(MultiGraphDataset):
 @register_dataset("bace")
 class BACEDataset(MultiGraphDataset):
     def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False):
-        self.url = "https://cloud.tsinghua.edu.cn/f/253270b278f4465380f1/?dl=1"
+        self.url = "https://cloud.tsinghua.edu.cn/d/c6bd3405569b4fab9c4a/files/?p=%2Fprocessed.zip&dl=1"
         self.root = osp.join("data", "BACE")
 
         super(BACEDataset, self).__init__(self.root, transform, pre_transform, pre_filter)
@@ -1041,7 +1041,7 @@ class BACEDataset(MultiGraphDataset):
 
     @property
     def processed_file_names(self):
-        return ["geometric_data_processed.pt"]
+        return ["processed.pt"]
 
     def download(self):
         download_url(self.url, self.raw_dir, name="processed.zip")
@@ -1056,7 +1056,7 @@ class BACEDataset(MultiGraphDataset):
 @register_dataset("bbbp")
 class BBBPDataset(MultiGraphDataset):
     def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False):
-        self.url = "https://cloud.tsinghua.edu.cn/f/ab8ff4d0a68c40a38956/?dl=1"
+        self.url = "https://cloud.tsinghua.edu.cn/d/9db9e16a949b4877bb4e/files/?p=%2Fprocessed.zip&dl=1"
         self.root = osp.join("data", "BBBP")
 
         super(BBBPDataset, self).__init__(self.root, transform, pre_transform, pre_filter)
@@ -1071,7 +1071,7 @@ class BBBPDataset(MultiGraphDataset):
 
     @property
     def processed_file_names(self):
-        return ["geometric_data_processed.pt"]
+        return ["processed.pt"]
 
     def download(self):
         download_url(self.url, self.raw_dir, name="processed.zip")

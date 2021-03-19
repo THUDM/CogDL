@@ -39,7 +39,7 @@ class DisenGCNLayer(nn.Module):
         nn.init.xavier_normal_(self.weight.data, gain=1.414)
         nn.init.zeros_(self.bias.data)
 
-    def forward(self, x, edge_index):
+    def forward(self, graph, x):
         num_nodes = x.shape[0]
         device = x.device
 
@@ -54,13 +54,12 @@ class DisenGCNLayer(nn.Module):
         h_src = h_dst = h_normed.permute(1, 0, 2)  # (N, K, d)
         add_shape = h.shape  # (K, N, d)
 
+        edge_index = graph.edge_index
         for _ in range(self.iterations):
             src_edge_attr = h_dst[edge_index[0]] * h_src[edge_index[1]]
             src_edge_attr = src_edge_attr.sum(dim=-1) / self.tau  # shape: (N, K)
-            edge_attr_softmax = mul_edge_softmax(
-                edge_index, src_edge_attr, shape=(num_nodes, num_nodes)
-            )  # shape: (E, K)
-            edge_attr_softmax = edge_attr_softmax.t().unsqueeze(-1)  # shape: (K, E, 1)
+            edge_attr_softmax = mul_edge_softmax(graph, src_edge_attr)  # shape: (E, K)
+            edge_attr_softmax = edge_attr_softmax.unsqueeze(-1)  # shape: (K, E, 1)
 
             dst_edge_attr = h_src.index_select(0, edge_index[1]).permute(1, 0, 2)  # shape: (E, K, d) -> (K, E, d)
             dst_edge_attr = dst_edge_attr * edge_attr_softmax
@@ -143,15 +142,15 @@ class DisenGCN(BaseModel):
         nn.init.xavier_normal_(self.weight.data, gain=1.414)
         nn.init.zeros_(self.bias.data)
 
-    def forward(self, x, edge_index):
-        h = x
-        edge_index, _ = remove_self_loops(edge_index)
+    def forward(self, graph):
+        h = graph.x
+        graph.remove_self_loops()
         for layer in self.layers:
-            h = layer(h, edge_index)
+            h = layer(graph, h)
             # h = F.leaky_relu(h)
             h = F.dropout(h, p=self.dropout, training=self.training)
         out = torch.matmul(h, self.weight) + self.bias
         return out
 
     def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+        return self.forward(data)

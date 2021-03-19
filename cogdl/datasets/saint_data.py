@@ -7,7 +7,7 @@ import scipy.sparse as sp
 import torch
 from sklearn.preprocessing import StandardScaler
 
-from cogdl.data import Data, Dataset
+from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url, accuracy, multilabel_f1, bce_with_logits_loss, cross_entropy_loss
 from . import register_dataset
 from .planetoid_data import index_to_mask
@@ -51,7 +51,7 @@ def read_saint_data(folder):
     edge_index_full, edge_attr_full = get_adj(adj_full)
     edge_index_train, edge_attr_train = get_adj(adj_train)
 
-    data = Data(
+    data = Graph(
         x=feats,
         y=labels,
         edge_index=edge_index_full,

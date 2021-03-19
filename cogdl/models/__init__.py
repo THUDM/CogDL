@@ -119,4 +119,5 @@ SUPPORTED_MODELS = {
     "unsup_graphsage": "cogdl.models.nn.unsup_graphsage",
     "sagpool": "cogdl.models.nn.pyg_sagpool",
     "graphsaint": "cogdl.models.nn.graphsaint",
+    "moe_gcn": "cogdl.models.nn.moe_gcn",
 }

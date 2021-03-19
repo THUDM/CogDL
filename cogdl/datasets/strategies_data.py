@@ -1026,7 +1026,7 @@ class MoleculeDataset(MultiGraphDataset):
 @register_dataset("bace")
 class BACEDataset(MultiGraphDataset):
     def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False):
-        self.url = "https://cloud.tsinghua.edu.cn/f/253270b278f4465380f1/?dl=1"
+        self.url = "https://cloud.tsinghua.edu.cn/d/c6bd3405569b4fab9c4a/files/?p=%2Fprocessed.zip&dl=1"
         self.root = osp.join("data", "BACE")
 
         super(BACEDataset, self).__init__(self.root, transform, pre_transform, pre_filter)
@@ -1056,7 +1056,7 @@ class BACEDataset(MultiGraphDataset):
 @register_dataset("bbbp")
 class BBBPDataset(MultiGraphDataset):
     def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False):
-        self.url = "https://cloud.tsinghua.edu.cn/f/ab8ff4d0a68c40a38956/?dl=1"
+        self.url = "https://cloud.tsinghua.edu.cn/d/9db9e16a949b4877bb4e/files/?p=%2Fprocessed.zip&dl=1"
         self.root = osp.join("data", "BBBP")
 
         super(BBBPDataset, self).__init__(self.root, transform, pre_transform, pre_filter)

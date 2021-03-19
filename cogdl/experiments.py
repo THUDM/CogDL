@@ -127,7 +127,7 @@ def check_task_dataset_model_match(task, variants):
             and (item.model in SUPPORTED_MODELS)
             and (item.model, item.dataset) not in pairs
         ):
-            print(f"({item.model}, {item.dataset}) is not implemented in task '{task}''.")
+            print(f"({item.model}, {item.dataset}) is not implemented in task '{task}'.")
             continue
         clean_variants.append(item)
     if not clean_variants:

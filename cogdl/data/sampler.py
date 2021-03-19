@@ -76,11 +76,7 @@ class SAINTSampler(Sampler):
         self.preprocess()
 
     def gen_adj(self):
-        edge_index = (
-            self.data.edge_index_train.cpu().numpy()
-            if hasattr(self.data, "edge_index_train")
-            else self.data.edge_index.cpu().numpy()
-        )
+        edge_index = self.data.edge_index
 
         self.adj = sp.coo_matrix(
             (np.ones(self.num_edges), (edge_index[0], edge_index[1])),
@@ -167,16 +163,8 @@ class SAINTSampler(Sampler):
                 data.norm_aggr = torch.FloatTensor(self.norm_aggr_train[edge_idx][:])
                 data.norm_loss = self.norm_loss_train[node_idx]
 
-            data.train_mask = self.data.train_mask[node_idx]
-            data.val_mask = self.data.val_mask[node_idx]
-            data.test_mask = self.data.test_mask[node_idx]
-
-        # adj = data._build_adj_()
-        # adj = normalize(adj).tocoo()
-        # data.adj = _coo_scipy2torch(adj)
         edge_weight = row_normalization(data.x.shape[0], data.edge_index)
         data.edge_weight = edge_weight
-        # data._eliminate_adj_()
         return data
 
     def exists_train_nodes(self, node_idx):

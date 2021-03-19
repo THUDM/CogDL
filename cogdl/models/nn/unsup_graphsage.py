@@ -94,7 +94,7 @@ class SAGE(BaseModel):
         return self.loss(data)
 
     def loss(self, data):
-        x = self.forward(data.x, data.edge_index)
+        x = self.forward(data)
         device = x.device
 
         self.random_walker.build_up(data.edge_index, data.x.shape[0])

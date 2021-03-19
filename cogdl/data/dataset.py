@@ -167,7 +167,7 @@ class MultiGraphDataset(Dataset):
         if hasattr(self.data, "__num_nodes__"):
             data.num_nodes = self.data.__num_nodes__[idx]
 
-        for key in self.data.keys:
+        for key in self.data.__old_keys__():
             item, slices = self.data[key], self.slices[key]
             start, end = slices[idx].item(), slices[idx + 1].item()
             if torch.is_tensor(item):
@@ -181,7 +181,13 @@ class MultiGraphDataset(Dataset):
         return data
 
     def get(self, idx):
+        try:
+            idx = int(idx)
+        except Exception:
+            idx = idx
         if isinstance(idx, int) or (len(idx) == 0):
+            if self.slices is not None:
+                return self._get(idx)
             return self.data[idx]
         elif len(idx) > 1:
             return self.from_data_list([self.data[i] for i in idx])

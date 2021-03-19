@@ -66,15 +66,14 @@ class GENConv(nn.Module):
     def forward(self, graph, x):
         edge_index = graph.edge_index
         dim = x.shape[1]
-        num_nodes = x.shape[0]
         edge_msg = x[edge_index[1]]  # if edge_attr is None else x[edge_index[1]] + edge_attr
         edge_msg = self.act(edge_msg) + self.eps
 
         if self.aggr == "softmax_sg":
-            h = mul_edge_softmax(edge_index, self.beta * edge_msg, shape=(num_nodes, num_nodes))
+            h = mul_edge_softmax(graph, self.beta * edge_msg).T
             h = edge_msg * h
         elif self.aggr == "softmax":
-            h = mul_edge_softmax(edge_index, edge_msg, shape=(num_nodes, num_nodes))
+            h = mul_edge_softmax(graph, edge_msg).T
             h = edge_msg * h
         elif self.aggr == "powermean":
             deg = graph.degrees()

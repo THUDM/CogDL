@@ -67,14 +67,14 @@ class GraphSAGE(nn.Module):
                     self.bn_list.append(nn.BatchNorm1d(hidden_dim))
             self.convlist.append(GraphSAGELayer(hidden_dim, out_feats, normalize, aggr))
 
-    def forward(self, x, edge_index, edge_weight=None):
+    def forward(self, graph, x):
         h = x
         for i in range(self.num_layers - 1):
             h = F.dropout(h, p=self.dropout, training=self.training)
-            h = self.convlist[i](h, edge_index, edge_weight)
+            h = self.convlist[i](graph, h)
             if self.use_bn:
                 h = self.bn_list[i](h)
-        return self.convlist[self.num_layers - 1](h, edge_index, edge_weight)
+        return self.convlist[self.num_layers - 1](graph, h)
 
 
 class BatchedGraphSAGE(nn.Module):
@@ -150,9 +150,9 @@ class BatchedDiffPoolLayer(nn.Module):
 
         self.loss_dict = dict()
 
-    def forward(self, x, edge_index, batch, edge_weight=None):
-        embed = self.embd_gnn(x, edge_index)
-        pooled = F.softmax(self.pool_gnn(x, edge_index), dim=-1)
+    def forward(self, graph, x, batch):
+        embed = self.embd_gnn(graph, x)
+        pooled = F.softmax(self.pool_gnn(graph, x), dim=-1)
         device = x.device
         masked_tensor = []
         value_set, value_counts = torch.unique(batch, return_counts=True)
@@ -168,9 +168,7 @@ class BatchedDiffPoolLayer(nn.Module):
         # result = masked_softmax(pooled, masked, memory_efficient=False)
 
         h = torch.matmul(result.t(), embed)
-        if not edge_weight:
-            edge_weight = torch.ones(edge_index.shape[1]).to(x.device)
-        adj = torch.sparse_coo_tensor(edge_index, edge_weight)
+        adj = torch.sparse_coo_tensor(graph.edge_index, graph.edge_weight)
         adj_new = torch.sparse.mm(adj, result)
         adj_new = torch.mm(result.t(), adj_new)
 
@@ -405,8 +403,8 @@ class DiffPool(BaseModel):
     def forward(self, batch):
         readouts_all = []
 
-        init_emb = self.before_pooling(batch.x, batch.edge_index)
-        adj, h = self.init_diffpool(init_emb, batch.edge_index, batch.batch)
+        init_emb = self.before_pooling(batch, batch.x)
+        adj, h = self.init_diffpool(batch, init_emb, batch.batch)
         value_set, value_counts = torch.unique(batch.batch, return_counts=True)
         batch_size = len(value_set)
         adj, h = toBatchedGraph(adj, h, adj.size(0) // batch_size)

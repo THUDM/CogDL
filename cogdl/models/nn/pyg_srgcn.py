@@ -69,7 +69,8 @@ class SrgcnHead(nn.Module):
         self.dropout = dropout
         self.node_dropout = node_dropout
 
-    def forward(self, x, edge_index):
+    def forward(self, graph, x):
+        edge_index = graph.edge_index
         N, dim = x.shape
 
         # nl_adj_mat_ind, nl_adj_mat_val = add_self_loops(edge_index, num_nodes=N)[0], edge_attr.squeeze()
@@ -94,17 +95,20 @@ class SrgcnHead(nn.Module):
 
             val_h = h
 
-            for _ in range(i + 1):
-                val_h = spmm(adj_mat_ind, adj_mat_val, val_h)
-                # val_h = spmm(adj_mat_ind, F.dropout(adj_mat_val, p=self.node_dropout, training=self.training), N, N, val_h)
+            with graph.local_graph():
+                graph.edge_index = adj_mat_ind
+                graph.edge_weight = adj_mat_val
+                for _ in range(i + 1):
+                    val_h = spmm(graph, val_h)
+                    # val_h = spmm(adj_mat_ind, F.dropout(adj_mat_val, p=self.node_dropout, training=self.training), N, N, val_h)
 
-            # val_h = val_h / norm
-            val_h[val_h != val_h] = 0
-            val_h = val_h + self.bias[i]
-            val_h = self.adaptive_enc[i](val_h)
-            val_h = self.activation(val_h)
-            val_h = F.dropout(val_h, p=self.dropout, training=self.training)
-            result.append(val_h)
+                # val_h = val_h / norm
+                val_h[val_h != val_h] = 0
+                val_h = val_h + self.bias[i]
+                val_h = self.adaptive_enc[i](val_h)
+                val_h = self.activation(val_h)
+                val_h = F.dropout(val_h, p=self.dropout, training=self.training)
+                result.append(val_h)
         h_res = torch.cat(result, dim=1)
         return h_res
 
@@ -138,10 +142,11 @@ class SrgcnSoftmaxHead(nn.Module):
         self.dropout = dropout
         self.node_dropout = node_dropout
 
-    def forward(self, x, edge_index):
+    def forward(self, graph, x):
         N, dim = x.shape
         # x = self.dropout(x)
 
+        edge_index = graph.edge_index
         # adj_mat_ind, adj_mat_val = add_self_loops(edge_index, num_nodes=N)[0], edge_attr.squeeze()
         adj_mat_ind = add_remaining_self_loops(edge_index, num_nodes=N)[0]
         adj_mat_val = torch.ones(adj_mat_ind.shape[1]).to(x.device)
@@ -162,7 +167,10 @@ class SrgcnSoftmaxHead(nn.Module):
 
         # MATRIX_MUL
         # val_h = spmm(adj_mat_ind, F.dropout(adj_mat_val, p=self.node_dropout, training=self.training), N, N, val_h)
-        val_h = spmm(adj_mat_ind, adj_mat_val, val_h)
+        with graph.local_graph():
+            graph.edge_index = adj_mat_ind
+            graph.edge_weight = adj_mat_val
+            val_h = spmm(graph, val_h)
 
         val_h[val_h != val_h] = 0
         val_h = val_h + self.bias
@@ -253,11 +261,11 @@ class SRGCN(BaseModel):
             node_dropout=node_dropout,
         )
 
-    def forward(self, x, edge_index):
-        x = torch.cat([att(x, edge_index) for att in self.attentions], dim=1)
+    def forward(self, graph):
+        x = torch.cat([att(graph, graph.x) for att in self.attentions], dim=1)
         x = F.elu(x)
-        x = self.out_att(x, edge_index)
+        x = self.out_att(graph, x)
         return x
 
     def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+        return self.forward(data)

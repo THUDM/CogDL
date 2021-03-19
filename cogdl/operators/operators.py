@@ -66,4 +66,4 @@ class SPMMFunction(torch.autograd.Function):
         else:
             grad_feat = spmm.csr_spmm_no_edge_value(colptr, rowind, grad_out)
             grad_edge_weight = None
-        return None, None, None, None, grad_feat, grad_edge_weight, None
+        return None, None, None, None, grad_feat, grad_edge_weight, sym

@@ -20,15 +20,15 @@ class SAGPoolLayers(nn.Module):
         self.score_layer = Conv(nhid, 1)
         self.non_linearity = non_linearity
 
-    def forward(self, input, edge_index, edge_attr=None, batch=None):
+    def forward(self, graph, x, batch=None):
         if batch is None:
-            batch = edge_index.new_zeros(input.size(0))
-        score = self.score_layer(input, edge_index).squeeze()
+            batch = graph.edge_index.new_zeros(x.size(0))
+        score = self.score_layer(graph, x).squeeze()
         perm = topk(score, self.ratio, batch)
-        input = input[perm] * self.non_linearity(score[perm]).view(-1, 1)
+        x = x[perm] * self.non_linearity(score[perm]).view(-1, 1)
         batch = batch[perm]
-        edge_index, edge_attr = filter_adj(edge_index, edge_attr, perm, num_nodes=score.size(0))
-        return input, edge_index, edge_attr, batch, perm
+        edge_index, edge_attr = filter_adj(graph.edge_index, graph.edge_weight, perm, num_nodes=score.size(0))
+        return x, edge_index, edge_attr, batch, perm
 
 
 @register_model("sagpool")
@@ -98,17 +98,20 @@ class SAGPoolNetwork(BaseModel):
         edge_index = batch.edge_index
         batch_h = batch.batch
 
-        x = F.relu(self.conv_layer_1(x, edge_index))
-        x, edge_index, _, batch_h, _ = self.pool_layer_1(x, edge_index, None, batch_h)
-        out = torch.cat([gmp(x, batch_h), gap(x, batch_h)], dim=1)
+        with batch.local_graph():
+            x = F.relu(self.conv_layer_1(batch, x))
+            x, edge_index, _, batch_h, _ = self.pool_layer_1(batch, x, batch_h)
+            out = torch.cat([gmp(x, batch_h), gap(x, batch_h)], dim=1)
 
-        x = F.relu(self.conv_layer_2(x, edge_index))
-        x, edge_index, _, batch_h, _ = self.pool_layer_2(x, edge_index, None, batch_h)
-        out += torch.cat([gmp(x, batch_h), gap(x, batch_h)], dim=1)
+            batch.edge_index = edge_index
+            x = F.relu(self.conv_layer_2(batch, x))
+            x, edge_index, _, batch_h, _ = self.pool_layer_2(batch, x, batch_h)
+            out += torch.cat([gmp(x, batch_h), gap(x, batch_h)], dim=1)
 
-        x = F.relu(self.conv_layer_3(x, edge_index))
-        x, edge_index, _, batch_h, _ = self.pool_layer_3(x, edge_index, None, batch_h)
-        out += torch.cat([gmp(x, batch_h), gap(x, batch_h)], dim=1)
+            batch.edge_index = edge_index
+            x = F.relu(self.conv_layer_3(batch, x))
+            x, edge_index, _, batch_h, _ = self.pool_layer_3(batch, x, batch_h)
+            out += torch.cat([gmp(x, batch_h), gap(x, batch_h)], dim=1)
 
         out = F.relu(self.lin_layer_1(out))
         out = F.dropout(out, p=self.dropout, training=self.training)

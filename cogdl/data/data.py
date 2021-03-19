@@ -29,14 +29,6 @@ class BaseGraph(object):
     def train(self):
         pass
 
-    @staticmethod
-    def from_dict(dictionary):
-        r"""Creates a data object from a python dictionary."""
-        data = Graph()
-        for key, item in dictionary.items():
-            data[key] = item
-        return data
-
     def __getitem__(self, key):
         r"""Gets the data of the attribute :obj:`key`."""
         return getattr(self, key)
@@ -104,7 +96,7 @@ class BaseGraph(object):
         # creating batches.
         return self.num_nodes if bool(re.search("(index|face)", key)) else 0
 
-    def __cat_dim__(self, key, value):
+    def __cat_dim__(self, key, value=None):
         return self.cat_dim(key, value)
 
     def apply(self, func, *keys):
@@ -136,9 +128,6 @@ class BaseGraph(object):
     def cuda(self, *keys):
         return self.apply(lambda x: x.cuda(), *keys)
 
-    def clone(self):
-        return BaseGraph.from_dict({k: v.clone() for k, v in self})
-
 
 class Adjacency(BaseGraph):
     def __init__(self, row=None, col=None, row_ptr=None, weight=None, attr=None, num_nodes=None, **kwargs):
@@ -162,36 +151,10 @@ class Adjacency(BaseGraph):
         if indicator is True:
             self._to_csr()
 
-    def remove_remaining_self_loops(self):
+    def remove_self_loops(self):
         edge_index = torch.stack([self.row, self.col])
         edge_index, self.weight = remove_self_loops(edge_index, self.weight)
         self.row, self.col = edge_index
-        if indicator is True:
-            self._to_csr()
-
-    def is_symmetric(self):
-        return self.__symmetric__
-
-    @property
-    def degrees(self):
-        if self.row_ptr is not None:
-            return self.row_ptr[1:] - self.row_ptr[:-1]
-        else:
-            edge_index = torch.stack([self.row, self.col])
-            return get_degrees(edge_index, num_nodes=self.num_nodes)
-
-    @property
-    def edge_index(self):
-        if self.row is None:
-            self.row, _, _ = csr2coo(self.row_ptr, self.col, self.weight)
-        return torch.stack([self.row, self.col])
-
-    @edge_index.setter
-    def edge_index(self, edge_index):
-        row, col = edge_index
-        if self.row is not None and self.row.shape == row.shape:
-            return
-        self.row, self.col = row, col
         if indicator is True:
             self._to_csr()
 
@@ -256,6 +219,38 @@ class Adjacency(BaseGraph):
         else:
             self.weight = self.weight[reindex]
 
+    def is_symmetric(self):
+        return self.__symmetric__
+
+    @property
+    def degrees(self):
+        if self.row_ptr is not None:
+            return self.row_ptr[1:] - self.row_ptr[:-1]
+        else:
+            edge_index = torch.stack([self.row, self.col])
+            return get_degrees(edge_index, num_nodes=self.num_nodes)
+
+    @property
+    def edge_index(self):
+        if self.row is None:
+            self.row, _, _ = csr2coo(self.row_ptr, self.col, self.weight)
+        return torch.stack([self.row, self.col])
+
+    @edge_index.setter
+    def edge_index(self, edge_index):
+        row, col = edge_index
+        if self.row is not None and self.row.shape == row.shape:
+            return
+        self.row, self.col = row, col
+        if indicator is True:
+            self._to_csr()
+
+    @property
+    def row_indptr(self):
+        if self.row_ptr is None:
+            self._to_csr()
+        return self.row_ptr
+
     @property
     def num_edges(self):
         if self.row is not None:
@@ -310,8 +305,7 @@ class Adjacency(BaseGraph):
         return result
 
     def __deepcopy__(self, memodict={}):
-        cls = self.__class__
-        result = cls.__new__(cls)
+        result = self.__class__()
         memodict[id(self)] = result
         for k in self.keys:
             v = self[k]
@@ -326,6 +320,17 @@ class Adjacency(BaseGraph):
             if not key.startswith("__") and self[key] is not None
         ]
         return "{}({})".format(self.__class__.__name__, ", ".join(info))
+
+    def clone(self):
+        return Adjacency.from_dict({k: v.clone() for k, v in self})
+
+    @staticmethod
+    def from_dict(dictionary):
+        r"""Creates a data object from a python dictionary."""
+        data = Adjacency()
+        for key, item in dictionary.items():
+            data[key] = item
+        return data
 
 
 KEY_MAP = {
@@ -406,6 +411,11 @@ class Graph(BaseGraph):
         if self.adj_train is not None:
             self.adj_train.add_remaining_self_loops()
 
+    def remove_self_loops(self):
+        self.adj_full.remove_self_loops()
+        if self.adj_train is not None:
+            self.adj_train.remove_self_loops()
+
     def row_norm(self):
         self.adj.row_norm()
 
@@ -431,6 +441,19 @@ class Graph(BaseGraph):
             node_idx = torch.from_numpy(node_idx)
         return self.csr_subgraph(node_idx)
 
+    def edge_subgraph(self, edge_idx, require_idx=True):
+        edge_index = self.adj.edge_index
+        edge_index = edge_index[:, edge_idx]
+        nodes, new_edge_index = torch.unique(edge_index, return_inverse=True)
+        g = Graph(edge_index=new_edge_index)
+        for key in self.__keys__():
+            g[key] = self[key][nodes]
+
+        if require_idx:
+            return g, nodes, edge_idx
+        else:
+            return g
+
     def is_symmetric(self):
         return self.adj.is_symmetric()
 
@@ -447,10 +470,6 @@ class Graph(BaseGraph):
         yield
         del adj
         self.adj = self.__temp_adj_stack__.pop()
-        # if self.__is_train__ and self.adj_train is not None:
-        #     self.adj = self.adj_train
-        # else:
-        #     self.adj = self.adj_full
 
     @property
     def edge_index(self):
@@ -458,7 +477,7 @@ class Graph(BaseGraph):
 
     @property
     def edge_weight(self):
-        if self.adj.weight is None:
+        if self.adj.weight is None or self.adj.weight.shape[0] != self.adj.col.shape[0]:
             self.adj.weight = torch.ones(self.adj.num_edges, device=self.adj.device)
         return self.adj.weight
 
@@ -521,6 +540,11 @@ class Graph(BaseGraph):
         keys = [key for key in self.keys if "adj" not in key]
         return keys
 
+    def __old_keys__(self):
+        keys = self.__keys__()
+        keys += ["edge_index", "edge_attr"]
+        return keys
+
     def __getitem__(self, key):
         r"""Gets the data of the attribute :obj:`key`."""
         if is_adj_key(key):
@@ -548,7 +572,7 @@ class Graph(BaseGraph):
 
     @property
     def num_nodes(self):
-        if hasattr(self, "__num_nodes__"):
+        if hasattr(self, "__num_nodes__") and self.__num_nodes__ is not None:
             return self.__num_nodes__
         elif self.x is not None:
             return self.x.shape[0]
@@ -581,3 +605,14 @@ class Graph(BaseGraph):
         (row_indptr, col_indices, nodes, edges) = sample_adj_c(self.adj.row_ptr, self.adj.col, batch, size, replace)
         g = Graph(row_ptr=row_indptr, col=col_indices)
         return nodes, g
+
+    def clone(self):
+        return Graph.from_dict({k: v.clone() for k, v in self})
+
+    @staticmethod
+    def from_dict(dictionary):
+        r"""Creates a data object from a python dictionary."""
+        data = Graph()
+        for key, item in dictionary.items():
+            data[key] = item
+        return data

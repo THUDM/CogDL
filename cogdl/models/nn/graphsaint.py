@@ -113,7 +113,7 @@ class HighOrderAggregator(nn.Module):
             raise NotImplementedError
         if self.bias == "norm-nn":
             feat_out = self.f_norm(feat_out)
-        return graph, x  # return adj_norm to support Sequential
+        return graph, feat_out  # return adj_norm to support Sequential
 
 
 def parse_arch(architecture, aggr, act, bias, hidden_size, num_features):
@@ -239,7 +239,7 @@ class GraphSAINT(BaseModel):
         x = graph.x
         _, emb_subg = self.conv_layers(((graph, x)))
         emb_subg_norm = F.normalize(emb_subg, p=2, dim=1)
-        pred_subg = self.classifier((emb_subg_norm, None, None))[0]
+        pred_subg = self.classifier((None, emb_subg_norm))[1]
         return pred_subg
 
     def _loss(self, preds, labels, norm_loss):
@@ -274,7 +274,7 @@ class GraphSAINT(BaseModel):
         return aggregators, num_param
 
     def predict(self, data):
-        return self(data)
+        return self.forward(data)
         # return nn.Sigmoid()(preds) if self.sigmoid_loss else F.softmax(preds, dim=1
 
     @staticmethod

@@ -3,6 +3,7 @@ import torch.nn.functional as F
 
 from .. import BaseModel, register_model
 from cogdl.utils import get_activation
+from cogdl.data import Graph
 
 
 @register_model("mlp")
@@ -61,6 +62,8 @@ class MLP(BaseModel):
                 raise NotImplementedError(f"{norm} is not implemented in CogDL.")
 
     def forward(self, x, *args, **kwargs):
+        if isinstance(x, Graph):
+            x = x.x
         for i, fc in enumerate(self.mlp[:-1]):
             x = fc(x)
             if self.norm:

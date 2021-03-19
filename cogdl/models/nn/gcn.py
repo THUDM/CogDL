@@ -78,7 +78,7 @@ class TKipfGCN(BaseModel):
         h = graph.x
         for i in range(self.num_layers - 1):
             h = F.dropout(h, self.dropout, training=self.training)
-            h = self.layers[i](h, graph)
+            h = self.layers[i](graph, h)
         return h
 
     def forward(self, graph):

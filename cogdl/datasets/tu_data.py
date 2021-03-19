@@ -82,11 +82,13 @@ def _split(edge_index, batch, x=None, y=None, edge_attr=None):
     if x is not None:
         x = x.split(node_slice)
         num_nodes = [i.shape[0] for i in x]
+        num_nodes_cum = np.cumsum(num_nodes).tolist()
     else:
-        num_nodes = [edge.max().item() for edge in edge_index_t]
-    num_nodes_cum = np.cumsum(num_nodes).tolist()
+        num_nodes_cum = [edge.max().item() + 1 for edge in edge_index_t]
+
     num_nodes_cum = [0] + num_nodes_cum
-    edge_index_t = [edge_index_t[i] - num_nodes_cum[i] for i in range(len(edge_index_t))]
+    if edge_index_t[-1].min() > 0:
+        edge_index_t = [edge_index_t[i] - num_nodes_cum[i] for i in range(len(edge_index_t))]
     data = []
     for i in range(len(node_slice)):
         g = Graph(edge_index=edge_index_t[i].T)
@@ -193,11 +195,14 @@ def read_tu_data(folder, prefix):
     if edge_attr is not None:
         edge_attr = edge_attr[mask]
 
+    print(edge_index.min())
     edge_index, edge_attr = coalesce(edge_index, edge_attr, num_nodes, num_nodes)
+    print(edge_index.min())
     if x is not None:
         x = x[:, num_node_attributes(x) :]
     if edge_attr is not None:
         edge_attr = edge_attr[:, num_edge_attributes(edge_attr)]
+    print("10")
 
     graphs = _split(edge_index, batch=batch, x=x, y=y, edge_attr=edge_attr)
     return graphs, y
@@ -284,10 +289,6 @@ class TUDataset(MultiGraphDataset):
         return self.y.max().item() + 1 if self.y.dim() == 1 else self.y.size(1)
 
     def __len__(self):
-        # for item in self.slices.values():
-        #     return len(item) - 1
-        # return 0
-
         return len(self.data)
 
 

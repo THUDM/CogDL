@@ -84,6 +84,9 @@ class GraphClassification(BaseTask):
             model = build_model(args) if model is None else model
         else:
             self.data = dataset
+            if self.data[0].x is None:
+                self.data = node_degree_as_feature(dataset)
+                args.num_features = self.data.num_features
             model = build_model(args) if model is None else model
             (
                 self.train_loader,

@@ -35,7 +35,7 @@ class SampledTrainer(BaseTrainer):
         self.weight_decay = args.weight_decay
         self.loss_fn, self.evaluator = None, None
         self.data, self.train_loader, self.optimizer = None, None, None
-        self.eval_step = args.eval_step
+        self.eval_step = args.eval_step if hasattr(args, "eval_step") else 1
 
     @classmethod
     def build_trainer_from_args(cls, args):
@@ -314,6 +314,7 @@ class DeeperGCNTrainer(SampledTrainer):
         # fmt: off
         parser.add_argument("--n-cluster", type=int, default=10)
         parser.add_argument("--batch-size", type=int, default=1)
+        parser.add_argument('--eval-step', type=int, default=1)
         # fmt: on
 
     def __init__(self, args):

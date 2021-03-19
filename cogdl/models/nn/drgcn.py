@@ -50,10 +50,10 @@ class DrGCN(BaseModel):
         x = graph.x
         x = self.ses[0](x)
         for se, conv in zip(self.ses[1:], self.convs[:-1]):
-            x = F.relu(conv(x, graph))
+            x = F.relu(conv(graph, x))
             x = se(x)
             x = F.dropout(x, p=self.dropout, training=self.training)
-        x = self.convs[-1](x, graph)
+        x = self.convs[-1](graph, x)
         return x
 
     def predict(self, graph):

@@ -104,9 +104,9 @@ class GDC_GCN(BaseModel):
 
     def reset_data(self, data):
         if self.data is None:
-            data.apply(lambda x: x.cpu())
+            data.to("cpu")
             self.data = self.preprocessing(data, gdc_type=self.gdc_type)
-            data.apply(lambda x: x.to(self.device))
+            data.to(self.device)
 
     def preprocessing(self, data, gdc_type="ppr"):
         # generate adjacency matrix from sparse representation

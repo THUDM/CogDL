@@ -47,7 +47,6 @@ class PatchySAN(BaseModel):
 
     @classmethod
     def split_dataset(self, dataset, args):
-        random.shuffle(dataset)
         # process each graph and add it into Data() as attribute tx
         for i, data in enumerate(dataset):
             new_feature = get_single_feature(

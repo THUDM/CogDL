@@ -96,7 +96,9 @@ class Graphsage(BaseModel):
         x = graph.x
         for i in range(self.num_layers):
             edge_index_sp = self.sampling(graph.edge_index, self.sample_size[i]).to(x.device)
-            x = self.convs[i](x, edge_index_sp)
+            with graph.local_graph():
+                graph.edge_index = edge_index_sp
+                x = self.convs[i](graph, x)
             if i != self.num_layers - 1:
                 x = F.relu(x)
                 x = F.dropout(x, p=self.dropout, training=self.training)
@@ -112,8 +114,7 @@ class Graphsage(BaseModel):
         return self.forward(data)
 
     def forward(self, *args):
-        assert len(args) == 2
-        if isinstance(args[1], torch.Tensor):
+        if isinstance(args[0], Graph):
             return self.mini_forward(*args)
         else:
             x, adjs = args
@@ -150,7 +151,7 @@ class Graphsage(BaseModel):
 
     @staticmethod
     def get_trainer(task: Any, args: Any):
-        if args.dataset not in ["cora", "citeseer"]:
+        if args.dataset not in ["cora", "citeseer", "pubmed"]:
             return NeighborSamplingTrainer
         if hasattr(args, "use_trainer"):
             return NeighborSamplingTrainer

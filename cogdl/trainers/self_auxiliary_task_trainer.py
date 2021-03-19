@@ -111,11 +111,12 @@ class SelfAuxiliaryTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         return best_model
 
     def _train_step(self):
-        self.data.edge_index, self.data.x = self.agent.transform_data()
-        self.model.train()
-        self.optimizer.zero_grad()
-        embeddings = self.model.get_embeddings(self.data.x, self.data.edge_index)
-        loss = self.model.node_classification_loss(self.data) + self.alpha * self.agent.make_loss(embeddings)
+        with self.data.local_graph():
+            self.data.edge_index, self.data.x = self.agent.transform_data()
+            self.model.train()
+            self.optimizer.zero_grad()
+            embeddings = self.model.get_embeddings(self.data)
+            loss = self.model.node_classification_loss(self.data) + self.alpha * self.agent.make_loss(embeddings)
         loss.backward()
         self.optimizer.step()
 

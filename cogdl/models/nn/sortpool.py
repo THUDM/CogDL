@@ -108,7 +108,7 @@ class SortPool(BaseModel):
     def forward(self, batch):
         h = batch.x
         for i in range(self.num_layers):
-            h = self.gnn_convs[i](h, batch.edge_index)
+            h = self.gnn_convs[i](batch, h)
             h = F.relu(h)
 
         h, _ = h.sort(dim=-1)

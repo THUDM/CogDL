@@ -11,6 +11,8 @@ from cogdl.utils import spmm
 
 
 def split_dataset_general(dataset, args):
+    droplast = args.model == "diffpool"
+
     train_size = int(len(dataset) * args.train_ratio)
     test_size = int(len(dataset) * args.test_ratio)
     index = list(range(len(dataset)))
@@ -20,11 +22,11 @@ def split_dataset_general(dataset, args):
     test_index = index[-test_size:]
 
     bs = args.batch_size
-    train_loader = DataLoader([dataset[i] for i in train_index], batch_size=bs)
-    test_loader = DataLoader([dataset[i] for i in test_index], batch_size=bs)
+    train_loader = DataLoader([dataset[i] for i in train_index], batch_size=bs, drop_last=droplast)
+    test_loader = DataLoader([dataset[i] for i in test_index], batch_size=bs, drop_last=droplast)
     if args.train_ratio + args.test_ratio < 1:
         val_index = index[train_size:-test_size]
-        valid_loader = DataLoader([dataset[i] for i in val_index], batch_size=bs)
+        valid_loader = DataLoader([dataset[i] for i in val_index], batch_size=bs, drop_last=droplast)
     else:
         valid_loader = test_loader
     return train_loader, valid_loader, test_loader

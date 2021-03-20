@@ -308,36 +308,39 @@ def csr_csc_from_edge_index(edge_index, edge_attr, size):
     return cache
 
 
-# def coo2csr(edge_index, data, num_nodes=None, sorted=False):
-#     if sorted:
-#         indptr, indices, data = sorted_coo2csr(edge_index, data)
-#         return indptr, indices, data
-#     if num_nodes is None:
-#         num_nodes = torch.max(edge_index) + 1
-#     device = edge_index[0].device
-#     sorted_index = torch.argsort(edge_index[0])
-#     sorted_index = sorted_index.long()
-#     edge_index = edge_index[:, sorted_index]
-#     indices = edge_index[1]
-#
-#     row = edge_index[0]
-#     indptr = torch.zeros(num_nodes + 1, dtype=torch.int32, device=device)
-#     elements, counts = torch.unique(row, return_counts=True)
-#     elements = elements.long() + 1
-#     indptr[elements] = counts.to(indptr.dtype)
-#     indptr = indptr.cumsum(dim=0)
-#
-#     if data is not None:
-#         data = data[sorted_index]
-#     return indptr, indices, data
+def _coo2csr(edge_index, data, num_nodes=None, ordered=False, return_index=False):
+    if ordered:
+        return sorted_coo2csr(edge_index[0], edge_index[1], data, return_index=return_index)
+    if num_nodes is None:
+        num_nodes = torch.max(edge_index) + 1
+    device = edge_index[0].device
+    sorted_index = torch.argsort(edge_index[0])
+    sorted_index = sorted_index.long()
+    edge_index = edge_index[:, sorted_index]
+    indices = edge_index[1]
+
+    row = edge_index[0]
+    indptr = torch.zeros(num_nodes + 1, dtype=torch.int32, device=device)
+    elements, counts = torch.unique(row, return_counts=True)
+    elements = elements.long() + 1
+    indptr[elements] = counts.to(indptr.dtype)
+    indptr = indptr.cumsum(dim=0)
+
+    if return_index:
+        return indptr, sorted_index
+    if data is not None:
+        data = data[sorted_index]
+    return indptr, indices, data
 
 
-def coo2csr(row, col, data, num_nodes=None, sorted=False):
-    if sorted:
+def coo2csr(row, col, data, num_nodes=None, ordered=False):
+    if ordered:
         indptr, indices, data = sorted_coo2csr(row, col, data)
         return indptr, indices, data
     if num_nodes is None:
         num_nodes = torch.max(torch.stack(row, col)).item() + 1
+    if coo2csr_cpu is None:
+        return _coo2csr(torch.stack([row, col]), data, num_nodes)
     device = row.device
     row = row.long().cpu()
     col = col.long().cpu()
@@ -349,6 +352,8 @@ def coo2csr(row, col, data, num_nodes=None, sorted=False):
 def coo2csr_index(row, col, num_nodes=None):
     if num_nodes is None:
         num_nodes = torch.max(torch.stack(row, col)).item() + 1
+    if coo2csr_cpu_index is None:
+        return _coo2csr(torch.stack([row, col]), None, num_nodes=num_nodes, return_index=True)
     device = row.device
     row = row.long().cpu()
     col = col.long().cpu()
@@ -356,11 +361,13 @@ def coo2csr_index(row, col, num_nodes=None):
     return indptr.to(device), reindex.to(device)
 
 
-def sorted_coo2csr(row, col, data, num_nodes=None):
+def sorted_coo2csr(row, col, data, num_nodes=None, return_index=False):
     indptr = torch.bincount(row)
     indptr = indptr.cumsum(dim=0)
     zero = torch.zeros(1, device=indptr.device)
     indptr = torch.cat([zero, indptr])
+    if return_index:
+        return indptr, torch.arange(0, row.shape[0])
     return indptr, col, data
 
 
@@ -446,6 +453,11 @@ def edge_softmax_(indices, values, shape):
 
 
 def edge_softmax(graph, edge_val):
+    edge_val_max = edge_val.max().item()
+    while edge_val_max > 10:
+        edge_val -= edge_val / 2
+        edge_val_max = edge_val.max().item()
+
     with graph.local_graph():
         edge_val = torch.exp(edge_val)
         graph.edge_weight = edge_val
@@ -457,6 +469,10 @@ def edge_softmax(graph, edge_val):
 
 
 def mul_edge_softmax(graph, edge_val):
+    """
+    Returns:
+        Softmax values of multi-dimension edge values. shape: [d, E]
+    """
     val = []
     for i in range(edge_val.shape[1]):
         val.append(edge_softmax(graph, edge_val[:, i]))

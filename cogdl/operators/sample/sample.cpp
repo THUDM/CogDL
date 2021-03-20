@@ -276,7 +276,3 @@ PYBIND11_MODULE(sampler, m) {
     m.def("coo2csr_cpu", &coo2csr_cpu, "coo2csr");
     m.def("coo2csr_cpu_index", &coo2csr_cpu_index, "coo2csr with index");
 }
-
-// static auto registry = torch::RegisterOperators("sample::sample__adj", &sample_adj)
-// .op("sample::subgraph", &subgraph)
-// .op("sample::csr2coo", &csr2coo);

@@ -15,6 +15,8 @@ except Exception as e:
     print(e)
     subgraph_c = None
     sample_adj_c = None
+    coo2csr_cpu_index = None
+    coo2csr_cpu = None
 
 
 # SPMM

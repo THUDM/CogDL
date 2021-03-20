@@ -39,24 +39,22 @@ class GATLayer(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        # def reset(tensor):
-        #     stdv = math.sqrt(6.0 / (tensor.size(-2) + tensor.size(-1)))
-        #     tensor.data.uniform_(-stdv, stdv)
-        #
-        # reset(self.a_l)
-        # reset(self.a_r)
-        # reset(self.W)
+        def reset(tensor):
+            stdv = math.sqrt(6.0 / (tensor.size(-2) + tensor.size(-1)))
+            tensor.data.uniform_(-stdv, stdv)
 
-        nn.init.xavier_uniform_(self.W.data, gain=1.414)
-        nn.init.xavier_uniform_(self.a_r.data, gain=1.414)
-        nn.init.xavier_uniform_(self.a_l.data, gain=1.414)
+        reset(self.a_l)
+        reset(self.a_r)
+        reset(self.W)
+
+        # nn.init.xavier_uniform_(self.W.data, gain=1.414)
+        # nn.init.xavier_uniform_(self.a_r.data, gain=1.414)
+        # nn.init.xavier_uniform_(self.a_l.data, gain=1.414)
 
     def forward(self, graph, x):
         h = torch.matmul(x, self.W).view(-1, self.nhead, self.out_features)
         # h: N * H * d
-        if torch.isnan(h).any():
-            # print("NaN in Graph Attention, ", self.nhead)
-            h[torch.isnan(h)] = 0
+        h[torch.isnan(h)] = 0.0
 
         edge_index = graph.edge_index
         # Self-attention on the nodes - Shared attention mechanism
@@ -65,11 +63,10 @@ class GATLayer(nn.Module):
         edge_attention = self.leakyrelu(h_l + h_r)
         # edge_e: E * H
         edge_attention = mul_edge_softmax(graph, edge_attention)
-
         num_edges = graph.num_edges
         num_nodes = graph.num_nodes
 
-        with graph.local_graph("edge_weight"):
+        with graph.local_graph():
             if self.fast_mode:
                 edge_attention = edge_attention.view(-1)
                 edge_attention = self.dropout(edge_attention)
@@ -91,6 +88,7 @@ class GATLayer(nn.Module):
                 assert not torch.isnan(h_prime).any()
                 h_prime = h_prime.split([num_nodes] * self.nhead)
             else:
+                edge_attention = self.dropout(edge_attention)
                 h_prime = []
                 h = h.permute(1, 0, 2).contiguous()
                 for i in range(self.nhead):

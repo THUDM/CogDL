@@ -202,9 +202,7 @@ class NeighborSamplingTrainer(SampledTrainer):
 
     def fit(self, model, dataset):
         self.data = dataset[0]
-        self.data.edge_index, _ = add_remaining_self_loops(self.data.edge_index)
-        if hasattr(self.data, "edge_index_train"):
-            self.data.edge_index_train, _ = add_remaining_self_loops(self.data.edge_index_train)
+        self.data.add_remaining_self_loops()
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
 
@@ -274,6 +272,7 @@ class ClusterGCNTrainer(SampledTrainer):
 
     def fit(self, model, dataset):
         self.data = dataset[0]
+        self.data.add_remaining_self_loops()
         self.model = model.to(self.device)
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
@@ -343,6 +342,7 @@ class DeeperGCNTrainer(SampledTrainer):
     def fit(self, model, dataset):
         self.model = model.to(self.device)
         self.data = dataset[0]
+        self.data.add_remaining_self_loops()
 
         self.loss_fn = dataset.get_loss_fn()
         self.evaluator = dataset.get_evaluator()

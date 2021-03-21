@@ -152,7 +152,7 @@ class GDC_GCN(BaseModel):
         data.edge_index = edge_index
         data.edge_weight = edge_weight
 
-        if self.training and data.adj_train is not None:
+        if self.training and data._adj_train is not None:
             data.eval()
             edge_index, edge_weight = get_diffusion(data.x, data.edge_index)
             data.edge_index = edge_index

@@ -1,6 +1,7 @@
 import re
 import copy
 from contextlib import contextmanager
+import scipy.sparse as sp
 
 import torch
 import numpy as np
@@ -422,38 +423,6 @@ class Graph(BaseGraph):
     def sym_norm(self):
         self._adj.sym_norm()
 
-    def csr_subgraph(self, node_idx):
-        if subgraph_c is None:
-            return None
-        indptr, indices, nodes, edges = subgraph_c(self._adj.row_ptr, self._adj.col, node_idx.cpu())
-        nodes = nodes.to(self._adj.device)
-        edge_weight = self.edge_weight[edges]
-
-        data = Graph(row_ptr=indptr, col=indices, weight=edge_weight)
-        for key in self.__keys__():
-            data[key] = self[key][nodes]
-        return data
-
-    def subgraph(self, node_idx):
-        if isinstance(node_idx, list):
-            node_idx = torch.as_tensor(node_idx, dtype=torch.long)
-        elif isinstance(node_idx, np.ndarray):
-            node_idx = torch.from_numpy(node_idx)
-        return self.csr_subgraph(node_idx)
-
-    def edge_subgraph(self, edge_idx, require_idx=True):
-        edge_index = self._adj.edge_index
-        edge_index = edge_index[:, edge_idx]
-        nodes, new_edge_index = torch.unique(edge_index, return_inverse=True)
-        g = Graph(edge_index=new_edge_index)
-        for key in self.__keys__():
-            g[key] = self[key][nodes]
-
-        if require_idx:
-            return g, nodes, edge_idx
-        else:
-            return g
-
     def is_symmetric(self):
         return self._adj.is_symmetric()
 
@@ -593,26 +562,109 @@ class Graph(BaseGraph):
         val = {k: v for k, v in data}
         return Graph(**val)
 
+    def clone(self):
+        return Graph.from_dict({k: v.clone() for k, v in self})
+
     def __repr__(self):
         info = ["{}={}".format(key, list(self[key].size())) for key in self.__keys__() if not key.startswith("_")]
         info += self._adj.__out_repr__()
         return "{}({})".format(self.__class__.__name__, ", ".join(info))
 
     def sample_adj(self, batch, size=-1, replace=True):
-        if not torch.is_tensor(batch):
-            batch = torch.tensor(batch, dtype=torch.long)
+        if sample_adj_c is not None:
+            if not torch.is_tensor(batch):
+                batch = torch.tensor(batch, dtype=torch.long)
 
-        (row_indptr, col_indices, nodes, edges) = sample_adj_c(self._adj.row_ptr, self._adj.col, batch, size, replace)
-        if row_indptr.shape[0] - 1 < nodes.shape[0]:
-            padding = torch.full(
-                (nodes.shape[0] - row_indptr.shape[0] + 1,), row_indptr[-1].item(), dtype=row_indptr.dtype
-            )
-            row_indptr = torch.cat([row_indptr, padding])
-        g = Graph(row_ptr=row_indptr, col=col_indices)
+            (row_ptr, col_indices, nodes, edges) = sample_adj_c(self._adj.row_ptr, self._adj.col, batch, size, replace)
+        else:
+            if torch.is_tensor(batch):
+                batch = batch.cpu().numpy()
+            if not hasattr(self, "__mx__"):
+                row, col = self._adj.edge_index.numpy()
+                val = self.edge_weight.numpy()
+                N = self.num_nodes
+                self.__mx__ = sp.csr_matrix((val, (row, col)), shape=(N, N))
+            adj = self.__mx__[batch, :]
+
+            indptr = adj.indptr
+            indices = adj.indices
+            if size != -1:
+                indptr, indices = self._sample_adj(len(batch), indices, indptr, size)
+                indptr = indptr.numpy()
+                indices = indices.numpy()
+            col_nodes = np.unique(indices)
+            _node_idx = np.concatenate([batch, np.setdiff1d(col_nodes, batch)])
+            nnmap = {v: k for k, v in enumerate(_node_idx)}
+            col_indices = torch.tensor([nnmap[i] for i in indices], dtype=torch.long)
+            row_ptr = torch.tensor(indptr, dtype=torch.long)
+            nodes = torch.from_numpy(_node_idx)
+
+        if row_ptr.shape[0] - 1 < nodes.shape[0]:
+            padding = torch.full((nodes.shape[0] - row_ptr.shape[0] + 1,), row_ptr[-1].item(), dtype=row_ptr.dtype)
+            row_ptr = torch.cat([row_ptr, padding])
+        g = Graph(row_ptr=row_ptr, col=col_indices)
         return nodes, g
 
-    def clone(self):
-        return Graph.from_dict({k: v.clone() for k, v in self})
+    def _sample_adj(self, batch_size, indices, indptr, size):
+        if not torch.is_tensor(indices):
+            indices = torch.from_numpy(indices)
+        if not torch.is_tensor(indptr):
+            indptr = torch.from_numpy(indptr)
+        row_counts = (indptr[1:] - indptr[:-1]).long()
+        rand = torch.rand(batch_size, size)
+        rand = rand * row_counts.view(-1, 1) - 1e-3
+        rand = rand.long()
+
+        rand = rand + indptr[:-1].view(-1, 1)
+        edge_cols = indices[rand].view(-1)
+        row_ptr = torch.arange(0, batch_size * size + size, size)
+        return row_ptr, edge_cols
+
+    def csr_subgraph(self, node_idx):
+        indptr, indices, nodes, edges = subgraph_c(self._adj.row_ptr, self._adj.col, node_idx.cpu())
+        nodes = nodes.to(self._adj.device)
+        edge_weight = self.edge_weight[edges]
+
+        data = Graph(row_ptr=indptr, col=indices, weight=edge_weight)
+        for key in self.__keys__():
+            data[key] = self[key][nodes]
+        return data
+
+    def subgraph(self, node_idx):
+        if isinstance(node_idx, list):
+            node_idx = torch.as_tensor(node_idx, dtype=torch.long)
+        elif isinstance(node_idx, np.ndarray):
+            node_idx = torch.from_numpy(node_idx)
+        if subgraph_c is not None:
+            return self.csr_subgraph(node_idx)
+        else:
+            if not hasattr(self, "__mx__"):
+                row, col = self._adj.edge_index.numpy()
+                val = self.edge_weight.numpy()
+                N = self.num_nodes
+                self.__mx__ = sp.csr_matrix((val, (row, col)), shape=(N, N))
+            node_idx = node_idx.numpy()
+            sub_adj = self.__mx__[node_idx, :][:, node_idx]
+            sub_g = Graph()
+            sub_g.row_indptr = torch.from_numpy(sub_adj.indptr).long()
+            sub_g.col_indices = torch.from_numpy(sub_adj.indices).long()
+            sub_g.edge_weight = torch.from_numpy(sub_adj.data)
+            for key in self.__keys__():
+                sub_g[key] = self[key][node_idx]
+            return sub_g.to(self._adj.device)
+
+    def edge_subgraph(self, edge_idx, require_idx=True):
+        edge_index = self._adj.edge_index
+        edge_index = edge_index[:, edge_idx]
+        nodes, new_edge_index = torch.unique(edge_index, return_inverse=True)
+        g = Graph(edge_index=new_edge_index)
+        for key in self.__keys__():
+            g[key] = self[key][nodes]
+
+        if require_idx:
+            return g, nodes, edge_idx
+        else:
+            return g
 
     @staticmethod
     def from_dict(dictionary):

@@ -1023,6 +1023,19 @@ class MoleculeDataset(MultiGraphDataset):
 # ==========
 
 
+def convert(data):
+    if not hasattr(data, "_adj"):
+        g = Graph()
+        for key in data.keys:
+            if "adj" in key:
+                g["_" + key] = data[key]
+            else:
+                g[key] = data[key]
+        return g
+    else:
+        return data
+
+
 @register_dataset("bace")
 class BACEDataset(MultiGraphDataset):
     def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False):
@@ -1034,6 +1047,7 @@ class BACEDataset(MultiGraphDataset):
 
         if not empty:
             self.data, self.slices = torch.load(self.processed_paths[0])
+            self.data = convert(self.data)
 
     @property
     def raw_file_names(self):
@@ -1064,6 +1078,7 @@ class BBBPDataset(MultiGraphDataset):
 
         if not empty:
             self.data, self.slices = torch.load(self.processed_paths[0])
+            self.data = convert(self.data)
 
     @property
     def raw_file_names(self):

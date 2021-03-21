@@ -255,9 +255,9 @@ def spmm(graph, x):
 
 def csc_from_csr(indptr, indices, data):
     flag = str(indptr.shape) + str(indices.shape)
-    if flag not in _cache:
-        col_indptr, row_indices, data = csr2csc(indptr, indices, data)
-        _cache[flag] = {"col_indptr": indptr, "row_indices": row_indices, "csc_data": data}
+    # if flag not in _cache:
+    col_indptr, row_indices, data = csr2csc(indptr, indices, data)
+    _cache[flag] = {"col_indptr": indptr, "row_indices": row_indices, "csc_data": data}
     cache = _cache[flag]
     col_indptr = cache["col_indptr"]
     row_indices = cache["row_indices"]

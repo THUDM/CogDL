@@ -190,7 +190,9 @@ class MultiGraphDataset(Dataset):
                 return self._get(idx)
             return self.data[idx]
         elif len(idx) > 1:
-            return self.from_data_list([self.data[i] for i in idx])
+            if self.slices is not None:
+                return [self._get(i) for i in idx]
+            return [self.data[i] for i in idx]
 
     @staticmethod
     def from_data_list(data_list):

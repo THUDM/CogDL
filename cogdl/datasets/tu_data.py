@@ -140,9 +140,7 @@ def coalesce(index, value, m, n):
     if value is not None:
         ptr = mask.nonzero().flatten()
         ptr = torch.cat([ptr, ptr.new_full((1,), value.size(0))])
-        # print(value.size(), ptr.size())
         value = segment(value, ptr)
-        # print(value.size())
         value = value[0] if isinstance(value, tuple) else value
 
     return torch.stack([row, col], dim=0), value
@@ -195,21 +193,14 @@ def read_tu_data(folder, prefix):
     if edge_attr is not None:
         edge_attr = edge_attr[mask]
 
-    print(edge_index.min())
     edge_index, edge_attr = coalesce(edge_index, edge_attr, num_nodes, num_nodes)
-    print(edge_index.min())
     if x is not None:
         x = x[:, num_node_attributes(x) :]
     if edge_attr is not None:
         edge_attr = edge_attr[:, num_edge_attributes(edge_attr)]
-    print("10")
 
     graphs = _split(edge_index, batch=batch, x=x, y=y, edge_attr=edge_attr)
     return graphs, y
-    # data = Graph(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y)
-    # data, slices = split(data, batch)
-    #
-    # return data, slices
 
 
 def num_node_labels(x=None):

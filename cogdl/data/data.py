@@ -170,7 +170,7 @@ class Adjacency(BaseGraph):
             self.generate_normalization("row")
         else:
             self.normalize_adj("row")
-        self.__symmetric__ = False
+            self.__symmetric__ = False
 
     def generate_normalization(self, norm="sym"):
         if self.__normed__:
@@ -354,7 +354,7 @@ def is_adj_key(key):
 
 
 def is_read_adj_key(key):
-    return sum([x in key for x in ["edge_index", "edge_attr", "edge_weight"]]) > 0 or is_adj_key(key)
+    return sum([x in key for x in [EDGE_INDEX, EDGE_WEIGHT, EDGE_ATTR]]) > 0 or is_adj_key(key)
 
 
 class Graph(BaseGraph):
@@ -511,7 +511,7 @@ class Graph(BaseGraph):
 
     def __old_keys__(self):
         keys = self.__keys__()
-        keys += ["edge_index", "edge_attr"]
+        keys += [EDGE_INDEX, EDGE_ATTR]
         return keys
 
     def __getitem__(self, key):
@@ -594,10 +594,16 @@ class Graph(BaseGraph):
                 indices = indices.numpy()
             col_nodes = np.unique(indices)
             _node_idx = np.concatenate([batch, np.setdiff1d(col_nodes, batch)])
-            nnmap = {v: k for k, v in enumerate(_node_idx)}
-            col_indices = torch.tensor([nnmap[i] for i in indices], dtype=torch.long)
+
+            nodes = torch.tensor(_node_idx, dtype=torch.long)
+            _node_idx_min = -_node_idx.min()
+            _node_idx = _node_idx - _node_idx_min
+            indices = indices - _node_idx_min
+            assoc = np.full((_node_idx.max() + 1,), -1, dtype=_node_idx.dtype)
+            assoc[_node_idx] = np.arange(0, _node_idx.shape[0])
+
+            col_indices = torch.tensor([assoc[i] for i in indices], dtype=torch.long)
             row_ptr = torch.tensor(indptr, dtype=torch.long)
-            nodes = torch.from_numpy(_node_idx)
 
         if row_ptr.shape[0] - 1 < nodes.shape[0]:
             padding = torch.full((nodes.shape[0] - row_ptr.shape[0] + 1,), row_ptr[-1].item(), dtype=row_ptr.dtype)
@@ -631,19 +637,22 @@ class Graph(BaseGraph):
         return data
 
     def subgraph(self, node_idx):
-        if isinstance(node_idx, list):
-            node_idx = torch.as_tensor(node_idx, dtype=torch.long)
-        elif isinstance(node_idx, np.ndarray):
-            node_idx = torch.from_numpy(node_idx)
         if subgraph_c is not None:
+            if isinstance(node_idx, list):
+                node_idx = torch.as_tensor(node_idx, dtype=torch.long)
+            elif isinstance(node_idx, np.ndarray):
+                node_idx = torch.from_numpy(node_idx)
             return self.csr_subgraph(node_idx)
         else:
+            if isinstance(node_idx, list):
+                node_idx = np.array(node_idx)
+            elif torch.is_tensor(node_idx):
+                node_idx = node_idx.cpu().numpy()
             if not hasattr(self, "__mx__"):
                 row, col = self._adj.edge_index.numpy()
                 val = self.edge_weight.numpy()
                 N = self.num_nodes
                 self.__mx__ = sp.csr_matrix((val, (row, col)), shape=(N, N))
-            node_idx = node_idx.numpy()
             sub_adj = self.__mx__[node_idx, :][:, node_idx]
             sub_g = Graph()
             sub_g.row_indptr = torch.from_numpy(sub_adj.indptr).long()

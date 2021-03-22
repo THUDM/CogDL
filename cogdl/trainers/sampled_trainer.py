@@ -217,7 +217,11 @@ class NeighborSamplingTrainer(SampledTrainer):
         )
         self.data.eval()
         self.test_loader = NeighborSampler(
-            data=self.data, mask=None, sizes=[-1], batch_size=self.batch_size, shuffle=False
+            data=self.data,
+            mask=None,
+            sizes=[-1],
+            batch_size=self.batch_size,
+            shuffle=False,
         )
         self.model = model.to(self.device)
         self.model.set_data_device(self.device)
@@ -287,6 +291,7 @@ class ClusterGCNTrainer(SampledTrainer):
 
     def _train_step(self):
         self.model.train()
+        self.data.train()
         for batch in self.train_loader:
             self.optimizer.zero_grad()
             batch = batch.to(self.device)
@@ -370,7 +375,6 @@ class DeeperGCNTrainer(SampledTrainer):
             loss_n = self.model.node_classification_loss(batch)
             loss_n.backward()
             self.optimizer.step()
-            torch.cuda.empty_cache()
 
     def _test_step(self, split="val"):
         self.model.eval()

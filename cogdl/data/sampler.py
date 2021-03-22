@@ -324,10 +324,11 @@ class LayerSampler(Sampler):
 
 
 class NeighborSampler(torch.utils.data.DataLoader):
-    def __init__(self, data, sizes: List[int], mask=None, **kwargs):
+    def __init__(self, data, sizes: List[int], mask=None, train=True, **kwargs):
         self.data = data
         self.sizes = sizes
         node_idx = np.arange(0, data.x.shape[0])
+        self.train = train
         if mask is not None:
             node_idx = node_idx[mask]
         node_idx = node_idx.tolist()
@@ -371,7 +372,7 @@ class NeighborSampler(torch.utils.data.DataLoader):
 class ClusteredLoader(torch.utils.data.DataLoader):
     partition_tool = None
 
-    def __init__(self, dataset, n_cluster: int, **kwargs):
+    def __init__(self, dataset, n_cluster: int, train=True, **kwargs):
         try:
             import metis
 
@@ -383,6 +384,7 @@ class ClusteredLoader(torch.utils.data.DataLoader):
         self.data = dataset.data
         self.dataset_name = dataset.__class__.__name__
         self.clusters = self.preprocess(n_cluster)
+        self.train = train
         super(ClusteredLoader, self).__init__(list(range(n_cluster)), collate_fn=self.batcher, **kwargs)
 
     def preprocess(self, n_cluster):
@@ -410,6 +412,8 @@ class ClusteredLoader(torch.utils.data.DataLoader):
         return division
 
     def batcher(self, batch):
+        if self.train:
+            self.data.train()
         nodes = np.concatenate([self.clusters[i] for i in batch])
         subgraph = self.data.subgraph(nodes)
         return subgraph

@@ -67,7 +67,7 @@ class Dataset(torch.utils.data.Dataset):
 
     def __len__(self):
         r"""The number of examples in the dataset."""
-        raise NotImplementedError
+        return 1
 
     def get(self, idx):
         r"""Gets the data object at index :obj:`idx`."""

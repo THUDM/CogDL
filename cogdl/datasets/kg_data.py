@@ -283,8 +283,8 @@ class KnowledgeGraphDataset(Dataset):
 
     def download(self):
         for name in self.raw_file_names:
-            download_url("{}/{}/{}".format(self.url, self.name, name), self.raw_dir)
-            download_url(self.url.format(self.name, name), self.raw_dir)
+            # download_url("{}/{}/{}".format(self.url, self.name, name), self.raw_dir)
+            download_url(self.url.format(self.name, name), self.raw_dir, name=name)
 
     def process(self):
         (

@@ -350,8 +350,6 @@ class WN18RRDataset(KnowledgeGraphDataset):
 
 @register_dataset("fb13s")
 class FB13SDatset(KnowledgeGraphDataset):
-    url = "https://raw.githubusercontent.com/cenyk1230/test-data/main"
-
     def __init__(self):
         dataset = "FB13-S"
         path = osp.join("data", dataset)

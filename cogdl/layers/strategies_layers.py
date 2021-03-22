@@ -1,4 +1,3 @@
-import copy
 import math
 import os
 
@@ -10,7 +9,6 @@ from cogdl.datasets import build_dataset_from_name
 from cogdl.datasets.strategies_data import (
     BioDataset,
     ChemExtractSubstructureContextPair,
-    DataLoaderFinetune,
     DataLoaderMasking,
     DataLoaderSubstructContext,
     ExtractSubstructureContextPair,
@@ -268,7 +266,6 @@ class Pretrainer(nn.Module):
         self.dataset_name = args.dataset
         self.num_workers = args.num_workers
         self.output_model_file = os.path.join(args.output_model_file, args.pretrain_task)
-        self.finetune = args.finetune
 
         self.dataset, self.opt = self.get_dataset(dataset_name=args.dataset, transform=transform)
 
@@ -339,15 +336,6 @@ class Pretrainer(nn.Module):
         if not self.output_model_file == "":
             if not os.path.exists("./saved"):
                 os.mkdir("./saved")
-
-            if isinstance(self.model, GNNPred):
-                model = self.model.gnn
-            else:
-                model = self.model
-            if self.finetune:
-                torch.save(model.state_dict(), self.output_model_file + "_ft.pth")
-            else:
-                torch.save(model.state_dict(), self.output_model_file + ".pth")
 
         return dict(Acc=train_acc.item())
 
@@ -448,6 +436,8 @@ class ContextPredictTrainer(Pretrainer):
             transform = ExtractSubstructureContextPair(args.l1, args.center)
         elif "chem" in args.dataset:
             transform = ChemExtractSubstructureContextPair(args.num_layers, args.l1, args.l2)
+        else:
+            transform = None
         args.data_type = "unsupervised"
         super(ContextPredictTrainer, self).__init__(args, transform)
         self.mode = args.mode
@@ -590,6 +580,8 @@ class MaskTrainer(Pretrainer):
             transform = MaskEdge(mask_rate=args.mask_rate)
         elif "chem" in args.dataset:
             transform = MaskAtom(mask_rate=args.mask_rate, num_atom_type=119, num_edge_type=5)
+        else:
+            transform = None
         args.data_type = "unsupervised"
         super(MaskTrainer, self).__init__(args, transform)
         self.dataloader = DataLoaderMasking(self.dataset, args.batch_size, shuffle=True, num_workers=args.num_workers)
@@ -716,7 +708,7 @@ class SupervisedTrainer(Pretrainer):
         length = len(self.dataset)
         indices = np.arange(length)
         np.random.shuffle(indices)
-        self.train_ratio = 0.9
+        self.train_ratio = 0.6
         train_index = torch.LongTensor(indices[: int(length * self.train_ratio)])
         dataset = self.dataset[train_index]
         dataloader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
@@ -771,155 +763,3 @@ class SupervisedTrainer(Pretrainer):
                 auc_scores = np.array(auc_scores)
                 auc_items.append(np.mean(auc_scores[np.where(~np.isnan(auc_scores))]))
         return np.mean(loss_items), np.mean(auc_items)
-
-
-class Finetuner(Pretrainer):
-    @staticmethod
-    def add_args(parser):
-        parser.add_argument("--load-path", type=str, default="./saved")
-        parser.add_argument("--pooling", type=str, default="mean")
-
-    def __init__(self, args):
-        args.data_type = "supervised"
-        super(Finetuner, self).__init__(args)
-        self.model_file = args.load_path
-        self.patience = args.patience
-        self.train_ratio = 0.8
-        self.valid_ratio = 0.1
-        self.test_ratio = 0.1
-        (
-            self.train_loader,
-            self.val_loader,
-            self.test_loader,
-        ) = self.split_data()
-
-        self.model = self.build_model(args)
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        self.loss_fn = nn.BCEWithLogitsLoss()
-
-    def build_model(self, args):
-        if "bio" in args.dataset:
-            num_tasks = len(self.dataset[0].go_target_downstream)
-        elif "bbbp" == args.dataset or "bace" == args.dataset:
-            num_tasks = 1
-
-        model = GNNPred(
-            num_layers=args.num_layers,
-            hidden_size=args.hidden_size,
-            num_tasks=num_tasks,
-            JK=self.JK,
-            dropout=args.dropout,
-            graph_pooling=args.pooling,
-            input_layer=self.opt.get("input_layer", None),
-            edge_emb=self.opt.get("edge_emb", None),
-            edge_encode=self.opt.get("edge_encode", None),
-            num_atom_type=self.opt.get("num_atom_type", None),
-            num_chirality_tag=self.opt.get("num_chirality_tag", None),
-            concat=self.opt["concat"],
-        )
-        model.load_from_pretrained(args.load_path)
-        return model
-
-    def split_data(self):
-        length = len(self.dataset)
-        indices = np.arange(length)
-        np.random.shuffle(indices)
-        train_index = torch.LongTensor(indices[: int(length * self.train_ratio)])
-        valid_index = torch.LongTensor(indices[int(length * self.train_ratio) : -int(length * self.test_ratio)])
-        test_index = torch.LongTensor(indices[-int(length * self.test_ratio) :])
-
-        datasets = [self.dataset[train_index], self.dataset[valid_index], self.dataset[test_index]]
-        dataloaders = [
-            DataLoaderFinetune(
-                dataset=item,
-                batch_size=self.batch_size * (1 + int(idx == 0) * 9),
-                shuffle=(idx == 0),
-                num_workers=self.num_workers,
-            )
-            for idx, item in enumerate(datasets)
-        ]
-        return dataloaders
-
-    def _train_step(self):
-        self.model.train()
-        for batch in self.train_loader:
-            batch = batch.to(self.device)
-            pred = self.model(batch, self.self_loop_index, self.self_loop_type)
-            if "bio" in self.dataset_name:
-                labels = batch.go_target_downstream.view(pred.shape).to(torch.float64)
-                is_valid = labels != -1
-            else:
-                labels = batch.y.view(pred.shape).to(torch.float64)
-                is_valid = labels ** 2 > 0
-                labels = (labels + 1) / 2
-
-            self.optimizer.zero_grad()
-            loss = self.loss_fn(pred, labels)
-            loss = torch.where(is_valid, loss, torch.zeros(loss.shape).to(loss.device).to(loss.dtype))
-            loss = torch.sum(loss) / torch.sum(is_valid)
-            loss.backward()
-            self.optimizer.step()
-
-    @torch.no_grad()
-    def _test_step(self, split="val"):
-        self.model.eval()
-        if split == "val":
-            loader = self.val_loader
-        elif split == "test":
-            loader = self.test_loader
-        else:
-            loader = self.train_loader
-
-        y_pred = []
-        y_labels = []
-        for batch in loader:
-            batch = batch.to(self.device)
-            pred = self.model(batch, self.self_loop_index, self.self_loop_type)
-            y_pred.append(pred)
-            if "bio" in self.dataset_name:
-                target = batch.go_target_downstream.view(pred.shape)
-            else:
-                target = batch.y.view(pred.shape)
-            y_labels.append(target)
-        y_pred = torch.cat(y_pred, dim=0)
-        y_labels = torch.cat(y_labels, dim=0)
-
-        loss = self.loss_fn(y_pred, y_labels.to(torch.float64))
-        y_pred = y_pred.cpu().numpy()
-        y_labels = y_labels.cpu().numpy()
-        auc_scores = []
-        for i in range(len(y_pred[1])):
-            if "bio" in self.dataset_name:
-                is_valid = y_labels[:, i] != -1
-            else:
-                is_valid = y_labels[:, i] ** 2 > 0
-                y_labels[:, i] = (y_labels[:, i] + 1) / 2
-            if (y_labels[is_valid, i] == 1).sum() > 0 and (y_labels[is_valid, i] == 0).sum() > 0:
-                auc_scores.append(roc_auc_score(y_labels[:, i], y_pred[:, i]))
-            else:
-                # All zeros or all ones
-                auc_scores.append(np.nan)
-        auc_scores = np.array(auc_scores)
-        return np.mean(auc_scores[np.where(~np.isnan(auc_scores))]), loss.item()
-
-    def fit(self):
-        best_loss = 100000.0
-        best_model = None
-        patience = 0
-        for epoch in range(self.max_epoch):
-            self._train_step()
-            val_auc, val_loss = self._test_step(split="val")
-            print(f"#epoch {epoch}: val_loss: {val_loss}, val_auc: {val_auc}, best_loss: {best_loss}")
-
-            if val_loss < best_loss:
-                best_loss = val_loss
-                best_model = copy.deepcopy(self.model)
-                patience = 0
-            else:
-                patience += 1
-                if patience > self.patience:
-                    break
-        self.model = best_model
-        test_auc, test_loss = self._test_step(split="test")
-        print(f"Test auc:{test_auc}, test loss: {test_loss}")
-        return dict(Acc=test_auc)

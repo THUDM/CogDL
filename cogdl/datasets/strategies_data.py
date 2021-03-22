@@ -10,9 +10,8 @@ import numpy as np
 import torch
 from cogdl.utils import download_url
 import os.path as osp
-from itertools import repeat
 
-from cogdl.data import Graph, MultiGraphDataset
+from cogdl.data import Graph, MultiGraphDataset, Adjacency
 
 # ================
 # Dataset utils
@@ -556,50 +555,30 @@ class ChemExtractSubstructureContextPair:
 # ==================
 
 
-class BatchFinetune(Graph):
-    def __init__(self, batch=None, **kwargs):
-        super(BatchFinetune, self).__init__(**kwargs)
-        self.batch = batch
-
-    @staticmethod
-    def from_data_list(data_list):
-        r"""Constructs a batch object from a python list holding
-        :class:`torch_geometric.data.Data` objects.
-        The assignment vector :obj:`batch` is created on the fly."""
-        keys = [set(data.keys) for data in data_list]
-        keys = list(set.union(*keys))
-        assert "batch" not in keys
-
-        batch = BatchMasking()
-
-        for key in keys:
-            batch[key] = []
-        batch.batch = []
-
-        cumsum_node = 0
-        cumsum_edge = 0
-
-        for i, data in enumerate(data_list):
-            num_nodes = data.num_nodes
-            batch.batch.append(torch.full((num_nodes,), i, dtype=torch.long))
-            for key in data.keys:
-                item = data[key]
-                if key in ["edge_index", "center_node_idx"]:
-                    item = item + cumsum_node
-                batch[key].append(item)
-
-            cumsum_node += num_nodes
-            cumsum_edge += data.edge_index.shape[1]
-
-        for key in keys:
+def build_batch(batch, data_list, num_nodes_cum, num_edges_cum, keys):
+    for key in batch.keys:
+        item = batch[key][0]
+        if torch.is_tensor(item):
+            # batch[key] = torch.cat(batch[key], dim=data_list[0].cat_dim(key, item))
             batch[key] = torch.cat(batch[key], dim=data_list[0].__cat_dim__(key, batch[key][0]))
-        batch.batch = torch.cat(batch.batch, dim=-1)
-        return batch.contiguous()
-
-    @property
-    def num_graphs(self):
-        """Returns the number of graphs in the batch."""
-        return self.batch[-1].item() + 1
+        elif isinstance(item, Adjacency):
+            target = Adjacency()
+            for k in item.keys:
+                if k == "row" or k == "col":
+                    _item = torch.cat(
+                        [x[k] + num_nodes_cum[i] for i, x in enumerate(batch[key])], dim=item.cat_dim(k, None)
+                    )
+                elif k == "row_ptr":
+                    _item = torch.cat(
+                        [x[k][:-1] + num_edges_cum[i] for i, x in enumerate(batch[key][:-1])],
+                        dim=item.cat_dim(k, None),
+                    )
+                    _item = torch.cat([_item, batch[key][-1][k] + num_edges_cum[-2]], dim=item.cat_dim(k, None))
+                else:
+                    _item = torch.cat([x[k] for i, x in enumerate(batch[key])], dim=item.cat_dim(k, None))
+                target[k] = _item
+            batch[key] = target.to(item.device)
+    return batch
 
 
 class BatchMasking(Graph):
@@ -624,6 +603,8 @@ class BatchMasking(Graph):
 
         cumsum_node = 0
         cumsum_edge = 0
+        num_nodes_cum = [0]
+        num_edges_cum = [0]
 
         for i, data in enumerate(data_list):
             num_nodes = data.num_nodes
@@ -638,10 +619,13 @@ class BatchMasking(Graph):
 
             cumsum_node += num_nodes
             cumsum_edge += data.edge_index.shape[1]
+            num_nodes_cum.append(num_nodes)
+            num_edges_cum.append(data.edge_index.shape[1])
 
-        for key in keys:
-            batch[key] = torch.cat(batch[key], dim=data_list[0].__cat_dim__(key, batch[key][0]))
-        batch.batch = torch.cat(batch.batch, dim=-1)
+        # for key in keys:
+        #     batch[key] = torch.cat(batch[key], dim=data_list[0].__cat_dim__(key, batch[key][0]))
+        batch = build_batch(batch, data_list, num_nodes_cum, num_edges_cum, keys)
+        # batch.batch = torch.cat(batch.batch, dim=-1)
         return batch.contiguous()
 
     def cumsum(self, key, item):
@@ -693,6 +677,7 @@ class BatchAE(Graph):
 
             cumsum_node += num_nodes
 
+        assert "batch" not in keys
         for key in keys:
             batch[key] = torch.cat(batch[key], dim=batch.cat_dim(key))
         batch.batch = torch.cat(batch.batch, dim=-1)
@@ -773,6 +758,7 @@ class BatchSubstructContext(Graph):
 
         for key in keys:
             batch[key] = torch.cat(batch[key], dim=batch.cat_dim(key))
+        # batch = build_batch(batch, data_list, num_nodes_cum, num_edges_cum)
         # batch.batch = torch.cat(batch.batch, dim=-1)
         batch.batch_overlapped_context = torch.cat(batch.batch_overlapped_context, dim=-1)
         batch.overlapped_context_size = torch.LongTensor(batch.overlapped_context_size)
@@ -802,13 +788,6 @@ class BatchSubstructContext(Graph):
     def num_graphs(self):
         """Returns the number of graphs in the batch."""
         return self.batch[-1].item() + 1
-
-
-class DataLoaderFinetune(torch.utils.data.DataLoader):
-    def __init__(self, dataset, batch_size=1, shuffle=True, **kwargs):
-        super(DataLoaderFinetune, self).__init__(
-            dataset, batch_size, shuffle, collate_fn=lambda data_list: BatchFinetune.from_data_list(data_list), **kwargs
-        )
 
 
 class DataLoaderMasking(torch.utils.data.DataLoader):
@@ -846,7 +825,7 @@ class TestBioDataset(MultiGraphDataset):
     def __init__(self, data_type="unsupervised", root="testbio", transform=None, pre_transform=None, pre_filter=None):
         super(TestBioDataset, self).__init__(root, transform, pre_transform, pre_filter)
         num_nodes = 20
-        num_edges = 20
+        num_edges = 40
         num_graphs = 200
 
         def cycle_index(num, shift):
@@ -854,8 +833,8 @@ class TestBioDataset(MultiGraphDataset):
             arr[-shift:] = torch.arange(shift)
             return arr
 
-        upp = torch.cat([torch.arange(0, num_nodes)] * num_graphs)
-        dwn = torch.cat([cycle_index(num_nodes, 1)] * num_graphs)
+        upp = torch.cat([torch.cat((torch.arange(0, num_nodes), torch.arange(0, num_nodes)))] * num_graphs)
+        dwn = torch.cat([torch.cat((torch.arange(0, num_nodes), cycle_index(num_nodes, 1)))] * num_graphs)
         edge_index = torch.stack([upp, dwn])
 
         edge_attr = torch.zeros(num_edges * num_graphs, 9)
@@ -867,6 +846,7 @@ class TestBioDataset(MultiGraphDataset):
             edge_attr=edge_attr,
         )
         self.data.center_node_idx = torch.randint(0, num_nodes, size=(num_graphs,))
+
         self.slices = {
             "x": torch.arange(0, (num_graphs + 1) * num_nodes, num_nodes),
             "edge_index": torch.arange(0, (num_graphs + 1) * num_edges, num_edges),

@@ -185,13 +185,15 @@ class MultiGraphDataset(Dataset):
             idx = int(idx)
         except Exception:
             idx = idx
-        if isinstance(idx, int) or (len(idx) == 0):
+        if torch.is_tensor(idx):
+            idx = idx.numpy().tolist()
+        if isinstance(idx, int):
             if self.slices is not None:
                 return self._get(idx)
             return self.data[idx]
         elif len(idx) > 1:
             if self.slices is not None:
-                return [self._get(i) for i in idx]
+                return [self._get(int(i)) for i in idx]
             return [self.data[i] for i in idx]
 
     @staticmethod

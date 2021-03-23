@@ -19,10 +19,10 @@ class Test_Data(object):
         assert subgraph.x.shape[0] == len(set(sampled_nodes))
         assert subgraph.x.shape[1] == self.data.x.shape[1]
 
-    # def test_edge_subgraph_sampling(self):
-    #     sampled_edges = np.random.randint(0, self.num_edges, (200,))
-    #     subgraph = self.data.edge_subgraph(sampled_edges)
-    #     assert subgraph.edge_index.shape == (2, len(sampled_edges))
+    def test_edge_subgraph_sampling(self):
+        sampled_edges = np.random.randint(0, self.num_edges, (200,))
+        subgraph = self.data.edge_subgraph(sampled_edges, require_idx=False)
+        assert subgraph.edge_index.shape == (2, len(sampled_edges))
 
     def test_adj_sampling(self):
         sampled_nodes = np.random.randint(0, self.num_nodes, (10,))

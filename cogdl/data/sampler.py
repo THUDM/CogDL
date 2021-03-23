@@ -381,6 +381,61 @@ class NeighborSampler(torch.utils.data.DataLoader):
             return batch, node_id, adj_list[::-1]
 
 
+class ClusteredDataset(torch.utils.data.Dataset):
+    partition_tool = None
+
+    def __init__(self, data: Data, n_cluster: int, batch_size: int, log=False):
+        super(ClusteredDataset).__init__()
+        try:
+            import metis
+
+            ClusteredDataset.partition_tool = metis
+        except Exception as e:
+            print(e)
+            exit(1)
+
+        self.data = data
+        self.batch_size = batch_size
+        self.log = log
+        self.clusters = self.preprocess(n_cluster)
+        self.batch_idx = np.array(range(n_cluster))
+
+    def shuffle(self):
+        random.shuffle(self.batch_idx)
+
+    def __len__(self):
+        return (len(self.clusters) - 1) // self.batch_size + 1
+
+    def __getitem__(self, idx):
+        batch = self.batch_idx[idx * self.batch_size : (idx + 1) * self.batch_size]
+        nodes = np.concatenate([self.clusters[i] for i in batch])
+        subgraph = self.data.subgraph(nodes)
+
+        return subgraph
+
+    def preprocess(self, n_cluster):
+        if self.log:
+            print("Preprocessing...")
+        edges = self.data.edge_index
+        edges, _ = remove_self_loops(edges)
+        if str(edges.device) != "cpu":
+            edges = edges.cpu()
+        edges = edges.numpy()
+        num_nodes = np.max(edges) + 1
+        adj = sp.csr_matrix((np.ones(edges.shape[1]), (edges[0], edges[1])), shape=(num_nodes, num_nodes))
+        indptr = adj.indptr
+        indptr = np.split(adj.indices, indptr[1:])[:-1]
+        _, parts = ClusteredDataset.partition_tool.part_graph(indptr, n_cluster, seed=1)
+        division = [[] for _ in range(n_cluster)]
+        for i, v in enumerate(parts):
+            division[v].append(i)
+        for k in range(len(division)):
+            division[k] = np.array(division[k], dtype=np.int)
+        if self.log:
+            print("Graph clustering done")
+        return division
+
+
 class ClusteredLoader(torch.utils.data.DataLoader):
     partition_tool = None
 
@@ -414,7 +469,7 @@ class ClusteredLoader(torch.utils.data.DataLoader):
             division[v].append(i)
         for k in range(len(division)):
             division[k] = np.array(division[k], dtype=np.int)
-        print("Graph clustering over")
+        print("Graph clustering done")
         return division
 
     def batcher(self, batch):

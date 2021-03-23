@@ -35,7 +35,7 @@ class SampledTrainer(BaseTrainer):
         self.weight_decay = args.weight_decay
         self.loss_fn, self.evaluator = None, None
         self.data, self.train_loader, self.optimizer = None, None, None
-        self.eval_step = 1
+        self.eval_step = args.eval_step
 
     @classmethod
     def build_trainer_from_args(cls, args):

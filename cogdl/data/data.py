@@ -574,17 +574,22 @@ class Graph(BaseGraph):
         if sample_adj_c is not None:
             if not torch.is_tensor(batch):
                 batch = torch.tensor(batch, dtype=torch.long)
-
             (row_ptr, col_indices, nodes, edges) = sample_adj_c(self._adj.row_ptr, self._adj.col, batch, size, replace)
         else:
+            if not (batch[1:] > batch[:-1]).all():
+                batch = batch.sort()[0]
             if torch.is_tensor(batch):
                 batch = batch.cpu().numpy()
-            if not hasattr(self, "__mx__"):
+            if self.__is_train__ and self._adj_train is not None:
+                key = "__mx_train__"
+            else:
+                key = "__mx__"
+            if not hasattr(self, key):
                 row, col = self._adj.edge_index.numpy()
                 val = self.edge_weight.numpy()
                 N = self.num_nodes
-                self.__mx__ = sp.csr_matrix((val, (row, col)), shape=(N, N))
-            adj = self.__mx__[batch, :]
+                self[key] = sp.csr_matrix((val, (row, col)), shape=(N, N))
+            adj = self[key][batch, :]
 
             indptr = adj.indptr
             indices = adj.indices
@@ -594,15 +599,11 @@ class Graph(BaseGraph):
                 indices = indices.numpy()
             col_nodes = np.unique(indices)
             _node_idx = np.concatenate([batch, np.setdiff1d(col_nodes, batch)])
-
             nodes = torch.tensor(_node_idx, dtype=torch.long)
-            _node_idx_min = -_node_idx.min()
-            _node_idx = _node_idx - _node_idx_min
-            indices = indices - _node_idx_min
-            assoc = np.full((_node_idx.max() + 1,), -1, dtype=_node_idx.dtype)
-            assoc[_node_idx] = np.arange(0, _node_idx.shape[0])
 
-            col_indices = torch.tensor([assoc[i] for i in indices], dtype=torch.long)
+            assoc_dict = {v: i for i, v in enumerate(_node_idx)}
+
+            col_indices = torch.tensor([assoc_dict[i] for i in indices], dtype=torch.long)
             row_ptr = torch.tensor(indptr, dtype=torch.long)
 
         if row_ptr.shape[0] - 1 < nodes.shape[0]:
@@ -616,9 +617,10 @@ class Graph(BaseGraph):
             indices = torch.from_numpy(indices)
         if not torch.is_tensor(indptr):
             indptr = torch.from_numpy(indptr)
+        assert indptr.shape[0] - 1 == batch_size
         row_counts = (indptr[1:] - indptr[:-1]).long()
         rand = torch.rand(batch_size, size)
-        rand = rand * row_counts.view(-1, 1) - 1e-3
+        rand = rand * row_counts.view(-1, 1)
         rand = rand.long()
 
         rand = rand + indptr[:-1].view(-1, 1)
@@ -648,12 +650,16 @@ class Graph(BaseGraph):
                 node_idx = np.array(node_idx)
             elif torch.is_tensor(node_idx):
                 node_idx = node_idx.cpu().numpy()
-            if not hasattr(self, "__mx__"):
+            if self.__is_train__ and self._adj_train is not None:
+                key = "__mx_train__"
+            else:
+                key = "__mx__"
+            if not hasattr(self, key):
                 row, col = self._adj.edge_index.numpy()
                 val = self.edge_weight.numpy()
                 N = self.num_nodes
-                self.__mx__ = sp.csr_matrix((val, (row, col)), shape=(N, N))
-            sub_adj = self.__mx__[node_idx, :][:, node_idx]
+                self[key] = sp.csr_matrix((val, (row, col)), shape=(N, N))
+            sub_adj = self[key][node_idx, :][:, node_idx]
             sub_g = Graph()
             sub_g.row_indptr = torch.from_numpy(sub_adj.indptr).long()
             sub_g.col_indices = torch.from_numpy(sub_adj.indices).long()

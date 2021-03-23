@@ -354,7 +354,7 @@ class NeighborSampler(torch.utils.data.DataLoader):
                     sampled_adjs: List[Tuple(Tensor, Tensor, Tuple[int]]
                 )
         """
-        node_id = batch
+        node_id = torch.tensor(batch, dtype=torch.long)
         adj_list = []
         for size in self.sizes:
             src_id, graph = self.data.sample_adj(node_id, size, replace=False)

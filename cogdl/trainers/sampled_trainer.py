@@ -178,6 +178,7 @@ class SAINTTrainer(SampledTrainer):
         return metric, loss
 
 
+@register_trainer("neighborsampler")
 class NeighborSamplingTrainer(SampledTrainer):
     model: torch.nn.Module
 
@@ -220,7 +221,7 @@ class NeighborSamplingTrainer(SampledTrainer):
             data=self.data,
             mask=None,
             sizes=[-1],
-            batch_size=self.batch_size,
+            batch_size=self.batch_size * 10,
             shuffle=False,
         )
         self.model = model.to(self.device)
@@ -244,13 +245,13 @@ class NeighborSamplingTrainer(SampledTrainer):
 
     def _test_step(self, split="val"):
         self.model.eval()
+        self.data.eval()
         masks = {"train": self.data.train_mask, "val": self.data.val_mask, "test": self.data.test_mask}
         with torch.no_grad():
             logits = self.model.inference(self.data.x, self.test_loader)
 
         loss = {key: self.loss_fn(logits[val], self.data.y[val]) for key, val in masks.items()}
         acc = {key: self.evaluator(logits[val], self.data.y[val]) for key, val in masks.items()}
-
         return acc, loss
 
     @classmethod

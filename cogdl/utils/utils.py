@@ -232,30 +232,31 @@ def initialize_spmm(args):
 
 
 def spmm(graph, x):
+    if graph.out_norm is not None:
+        x = graph.out_norm * x
+
     if fast_spmm is not None and str(x.device) != "cpu":
         row_ptr, col_indices = graph.row_indptr, graph.col_indices
         csr_data = graph.edge_weight
         if graph.is_symmetric():
-            col_ptr, row_indices, csc_data = row_ptr, col_indices, csr_data
+            col_ptr, row_indices, csc_data = row_ptr.clone(), col_indices.clone(), csr_data.clone()
         else:
             col_ptr, row_indices, csc_data = csc_from_csr(row_ptr, col_indices, csr_data)
-        if graph.out_norm is not None:
-            x = graph.out_norm * x
         x = fast_spmm(
             row_ptr.int(), col_indices.int(), col_ptr.int(), row_indices.int(), x, csr_data.contiguous(), sym=True
         )
-        if graph.in_norm is not None:
-            x = graph.in_norm * x
     elif graph.edge_weight.requires_grad:
         x = spmm_scatter(graph.edge_index, graph.edge_weight, x)
     else:
         x = spmm_adj(graph.edge_index, graph.edge_weight, x)
+
+    if graph.in_norm is not None:
+        x = graph.in_norm * x
     return x
 
 
 def csc_from_csr(indptr, indices, data):
     flag = str(indptr.shape) + str(indices.shape)
-    # if flag not in _cache:
     col_indptr, row_indices, data = csr2csc(indptr, indices, data)
     _cache[flag] = {"col_indptr": indptr, "row_indices": row_indices, "csc_data": data}
     cache = _cache[flag]
@@ -266,14 +267,11 @@ def csc_from_csr(indptr, indices, data):
 
 
 def csr_csc_from_coo(edge_index, edge_weight=None, num_nodes=None):
-    flag = str(edge_index.shape[1])
-    if flag not in _cache:
-        if num_nodes is None:
-            num_nodes = torch.max(edge_index) + 1
-        if edge_weight is None:
-            edge_weight = torch.ones(edge_index.shape[1], device=edge_index.device)
-        _cache[flag] = csr_csc_from_edge_index(edge_index, edge_weight, size=(num_nodes, num_nodes))
-    cache = _cache[flag]
+    if num_nodes is None:
+        num_nodes = torch.max(edge_index) + 1
+    if edge_weight is None:
+        edge_weight = torch.ones(edge_index.shape[1], device=edge_index.device)
+    cache = csr_csc_from_edge_index(edge_index, edge_weight, size=(num_nodes, num_nodes))
     col_ptr = cache["col_ptr"]
     row_indices = cache["row_indices"]
     csr_data = cache["csr_data"]

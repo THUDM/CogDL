@@ -351,6 +351,6 @@ class WN18RRDataset(KnowledgeGraphDataset):
 @register_dataset("fb13s")
 class FB13SDatset(KnowledgeGraphDataset):
     def __init__(self):
-        dataset = "FB13-S"
+        dataset = "FB13S"
         path = osp.join("data", dataset)
         super(FB13SDatset, self).__init__(path, dataset)

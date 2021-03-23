@@ -233,7 +233,8 @@ def read_triplet_data(folder):
 
 
 class KnowledgeGraphDataset(Dataset):
-    url = "https://raw.githubusercontent.com/thunlp/OpenKE/OpenKE-PyTorch/benchmarks"
+    # url = "https://raw.githubusercontent.com/thunlp/OpenKE/OpenKE-PyTorch/benchmarks"
+    url = "https://cloud.tsinghua.edu.cn/d/b567292338f2488699b7/files/?p=%2F{}%2F{}&dl=1"
 
     def __init__(self, root, name):
         self.name = name
@@ -282,7 +283,8 @@ class KnowledgeGraphDataset(Dataset):
 
     def download(self):
         for name in self.raw_file_names:
-            download_url("{}/{}/{}".format(self.url, self.name, name), self.raw_dir)
+            # download_url("{}/{}/{}".format(self.url, self.name, name), self.raw_dir)
+            download_url(self.url.format(self.name, name), self.raw_dir, name=name)
 
     def process(self):
         (
@@ -348,9 +350,7 @@ class WN18RRDataset(KnowledgeGraphDataset):
 
 @register_dataset("fb13s")
 class FB13SDatset(KnowledgeGraphDataset):
-    url = "https://raw.githubusercontent.com/cenyk1230/test-data/main"
-
     def __init__(self):
-        dataset = "FB13-S"
+        dataset = "FB13S"
         path = osp.join("data", dataset)
         super(FB13SDatset, self).__init__(path, dataset)

@@ -112,7 +112,7 @@ def test_graphsage_cora():
     args = get_default_args()
     args.task = "node_classification"
     args.model = "graphsage"
-    args.batch_size = 256
+    args.batch_size = 128
     args.num_layers = 2
     args.patience = 1
     args.max_epoch = 5

@@ -67,7 +67,7 @@ class Dataset(torch.utils.data.Dataset):
 
     def __len__(self):
         r"""The number of examples in the dataset."""
-        raise NotImplementedError
+        return 1
 
     def get(self, idx):
         r"""Gets the data object at index :obj:`idx`."""
@@ -185,12 +185,16 @@ class MultiGraphDataset(Dataset):
             idx = int(idx)
         except Exception:
             idx = idx
-        if isinstance(idx, int) or (len(idx) == 0):
+        if torch.is_tensor(idx):
+            idx = idx.numpy().tolist()
+        if isinstance(idx, int):
             if self.slices is not None:
                 return self._get(idx)
             return self.data[idx]
         elif len(idx) > 1:
-            return self.from_data_list([self.data[i] for i in idx])
+            if self.slices is not None:
+                return [self._get(int(i)) for i in idx]
+            return [self.data[i] for i in idx]
 
     @staticmethod
     def from_data_list(data_list):

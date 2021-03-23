@@ -202,9 +202,7 @@ class NeighborSamplingTrainer(SampledTrainer):
 
     def fit(self, model, dataset):
         self.data = dataset[0]
-        self.data.edge_index, _ = add_remaining_self_loops(self.data.edge_index)
-        if hasattr(self.data, "edge_index_train"):
-            self.data.edge_index_train, _ = add_remaining_self_loops(self.data.edge_index_train)
+        self.data.add_remaining_self_loops()
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
 
@@ -219,7 +217,11 @@ class NeighborSamplingTrainer(SampledTrainer):
         )
         self.data.eval()
         self.test_loader = NeighborSampler(
-            data=self.data, mask=None, sizes=[-1], batch_size=self.batch_size, shuffle=False
+            data=self.data,
+            mask=None,
+            sizes=[-1],
+            batch_size=self.batch_size,
+            shuffle=False,
         )
         self.model = model.to(self.device)
         self.model.set_data_device(self.device)
@@ -274,6 +276,7 @@ class ClusterGCNTrainer(SampledTrainer):
 
     def fit(self, model, dataset):
         self.data = dataset[0]
+        self.data.add_remaining_self_loops()
         self.model = model.to(self.device)
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
@@ -288,6 +291,7 @@ class ClusterGCNTrainer(SampledTrainer):
 
     def _train_step(self):
         self.model.train()
+        self.data.train()
         for batch in self.train_loader:
             self.optimizer.zero_grad()
             batch = batch.to(self.device)
@@ -343,6 +347,7 @@ class DeeperGCNTrainer(SampledTrainer):
     def fit(self, model, dataset):
         self.model = model.to(self.device)
         self.data = dataset[0]
+        self.data.add_remaining_self_loops()
 
         self.loss_fn = dataset.get_loss_fn()
         self.evaluator = dataset.get_evaluator()
@@ -370,7 +375,6 @@ class DeeperGCNTrainer(SampledTrainer):
             loss_n = self.model.node_classification_loss(batch)
             loss_n.backward()
             self.optimizer.step()
-            torch.cuda.empty_cache()
 
     def _test_step(self, split="val"):
         self.model.eval()

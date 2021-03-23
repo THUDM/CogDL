@@ -121,7 +121,7 @@ class Graphsage(BaseModel):
             for i, (src_id, graph, size) in enumerate(adjs):
                 graph = graph.to(self.device)
                 output = self.convs[i](graph, x)
-                x = output[0 : size[1]]
+                x = output[: size[1]]
                 if i != self.num_layers - 1:
                     x = F.relu(x)
                     x = F.dropout(x, p=self.dropout, training=self.training)

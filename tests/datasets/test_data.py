@@ -25,7 +25,7 @@ class Test_Data(object):
         assert subgraph.edge_index.shape == (2, len(sampled_edges))
 
     def test_adj_sampling(self):
-        sampled_nodes = np.random.randint(0, self.num_nodes, (10,))
+        sampled_nodes = np.arange(0, 10)
         edge_index = self.data.edge_index.t().cpu().numpy()
         edge_index = [tuple(x) for x in edge_index]
         print(np.array(edge_index).shape)

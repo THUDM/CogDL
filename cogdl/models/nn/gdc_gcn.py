@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from cogdl.data import Data
+from cogdl.data import Graph
 from cogdl.utils import add_remaining_self_loops, symmetric_normalization
 from scipy.linalg import expm
 
@@ -78,39 +78,35 @@ class GDC_GCN(BaseModel):
         self.gc2 = GraphConvolution(nhid, nclass)
         self.dropout = dropout
 
-    def forward(self, x, edge_index):
-        edge_index, edge_attr = add_remaining_self_loops(edge_index)
-        edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
-        adj_values = edge_attr
+    def forward(self, graph):
+        x = graph.x
+        graph.sym_norm()
 
         x = F.dropout(x, self.dropout, training=self.training)
-        x = F.relu(self.gc1(x, edge_index, adj_values))
+        x = F.relu(self.gc1(graph, x))
 
         x = F.dropout(x, self.dropout, training=self.training)
-        x = self.gc2(x, edge_index, adj_values)
+        x = self.gc2(graph, x)
         return x
 
     def node_classification_loss(self, data):
         if self.data is None:
             self.reset_data(data)
         mask = data.train_mask
-        edge_index = (
-            self.data.edge_index_train
-            if hasattr(self.data, "edge_index_train") and self.training
-            else self.data.edge_index
-        )
-        pred = self.forward(self.data.x, edge_index)
+        self.data.apply(lambda x: x.to(self.device))
+        pred = self.forward(self.data)
 
         return self.loss_fn(pred[mask], self.data.y[mask])
 
     def predict(self, data=None):
-        return self.forward(self.data.x, self.data.edge_index)
+        self.data.apply(lambda x: x.to(self.device))
+        return self.forward(self.data)
 
     def reset_data(self, data):
         if self.data is None:
-            data.apply(lambda x: x.cpu())
+            data.to("cpu")
             self.data = self.preprocessing(data, gdc_type=self.gdc_type)
-            data.apply(lambda x: x.to(self.device))
+            data.to(self.device)
 
     def preprocessing(self, data, gdc_type="ppr"):
         # generate adjacency matrix from sparse representation
@@ -152,33 +148,16 @@ class GDC_GCN(BaseModel):
             edge_index = [edges_i, edges_j]
             return torch.as_tensor(edge_index, dtype=torch.long), torch.as_tensor(edge_attr, dtype=torch.float)
 
-        edge_index, edge_attr = get_diffusion(data.x, data.edge_index)
+        edge_index, edge_weight = get_diffusion(data.x, data.edge_index)
+        data.edge_index = edge_index
+        data.edge_weight = edge_weight
 
-        if hasattr(data, "edge_index_train"):
-            edge_index_train, edge_attr_train = get_diffusion(data.x, data.edge_index_train)
-            data = Data(
-                x=data.x,
-                edge_index=edge_index,
-                edge_attr=edge_attr,
-                edge_index_train=edge_index_train,
-                edge_attr_train=edge_attr_train,
-                y=data.y,
-                train_mask=data.train_mask,
-                test_mask=data.test_mask,
-                val_mask=data.val_mask,
-            )
-        else:
-            data = Data(
-                x=data.x,
-                edge_index=edge_index,
-                edge_attr=edge_attr,
-                y=data.y,
-                train_mask=data.train_mask,
-                test_mask=data.test_mask,
-                val_mask=data.val_mask,
-            )
-        data.apply(lambda x: x.to(self.device))
-
+        if self.training and data._adj_train is not None:
+            data.eval()
+            edge_index, edge_weight = get_diffusion(data.x, data.edge_index)
+            data.edge_index = edge_index
+            data.edge_weight = edge_weight
+            data.train()
         return data
 
     def _get_adj_matrix(self, x, edge_index):

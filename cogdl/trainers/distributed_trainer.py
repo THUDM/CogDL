@@ -39,7 +39,7 @@ def batcher(data):
     return data[0]
 
 
-def train(model, data, args, rank, evaluator, loss_fn):
+def train(model, dataset, args, rank, evaluator, loss_fn):
     print(f"Running on rank {rank}.")
 
     os.environ["MASTER_ADDR"] = "localhost"
@@ -51,7 +51,9 @@ def train(model, data, args, rank, evaluator, loss_fn):
     model = copy.deepcopy(model).to(rank)
     model = DDP(model, device_ids=[rank])
 
-    train_dataset = ClusteredDataset(data, args.n_cluster, args.batch_size, log=(rank == 0))
+    data = dataset[0]
+
+    train_dataset = ClusteredDataset(dataset, args.n_cluster, args.batch_size, log=(rank == 0))
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(
         train_dataset, num_replicas=args.world_size, rank=rank
@@ -154,7 +156,7 @@ class DistributedClusterGCNTrainer(BaseTrainer):
 
         processes = []
         for rank in range(size):
-            p = Process(target=train, args=(model, data, self.args, rank, evaluator, loss_fn))
+            p = Process(target=train, args=(model, dataset, self.args, rank, evaluator, loss_fn))
             p.start()
             processes.append(p)
 

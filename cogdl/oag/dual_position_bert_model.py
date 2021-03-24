@@ -60,7 +60,14 @@ class DualPositionBertModel(BertModel):
             attention_mask = torch.ones_like(input_ids)
         if token_type_ids is None:
             token_type_ids = torch.zeros_like(input_ids)
-        extended_attention_mask = attention_mask.unsqueeze(1).unsqueeze(2)
+
+        if len(attention_mask.shape) == 2:
+            extended_attention_mask = attention_mask.unsqueeze(1).unsqueeze(2)
+        elif len(attention_mask.shape) == 3:
+            extended_attention_mask = attention_mask.unsqueeze(1)
+        else:
+            raise Exception('invalid attention mask shape! shape: %s' % (attention_mask.shape))
+
         extended_attention_mask = extended_attention_mask.to(dtype=next(self.parameters()).dtype)  # fp16 compatibility
         extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
         embedding_output = self.embeddings(input_ids, token_type_ids, position_ids, position_ids_second)

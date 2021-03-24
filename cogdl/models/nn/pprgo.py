@@ -105,8 +105,9 @@ class PPRGo(BaseModel):
         loss = self.loss_fn(pred, y)
         return loss
 
-    def predict(self, x, edge_index, batch_size, norm_func):
+    def predict(self, graph, batch_size, norm):
         device = next(self.fc.parameters()).device
+        x = graph.x
         num_nodes = x.shape[0]
         pred_logits = []
         with torch.no_grad():
@@ -116,12 +117,19 @@ class PPRGo(BaseModel):
                 pred_logits.append(batch_logits.cpu())
         pred_logits = torch.cat(pred_logits, dim=0)
 
-        edge_weight = norm_func(num_nodes, edge_index)
-        edge_weight = edge_weight * (1 - self.alpha)
+        with graph.local_graph():
+            if norm == "sym":
+                graph.sym_norm()
+            elif norm == "row":
+                graph.row_norm()
+            else:
+                raise NotImplementedError
+            edge_weight = graph.edge_weight * (1 - self.alpha)
 
-        predictions = pred_logits
-        for _ in range(self.nprop):
-            predictions = spmm(edge_index, edge_weight, predictions) + self.alpha * pred_logits
+            graph.edge_weight = edge_weight
+            predictions = pred_logits
+            for _ in range(self.nprop):
+                predictions = spmm(graph, predictions) + self.alpha * pred_logits
         return predictions
 
     @staticmethod

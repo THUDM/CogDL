@@ -1,64 +1,34 @@
 import re
-import numba
+import copy
+from contextlib import contextmanager
+import scipy.sparse as sp
 
 import torch
 import numpy as np
-import scipy.sparse as sparse
+from cogdl.utils import (
+    csr2coo,
+    coo2csr_index,
+    add_remaining_self_loops,
+    remove_self_loops,
+    symmetric_normalization,
+    row_normalization,
+    fast_spmm,
+    get_degrees,
+)
+from cogdl.operators.operators import sample_adj_c, subgraph_c
 
-import time
+indicator = fast_spmm is None
 
 
-@numba.njit
-def reindex(node_idx, col):
-    node_dict = dict()
-    cnt = 0
-    for i in node_idx:
-        node_dict[i] = cnt
-        cnt += 1
-    new_col = [node_dict[i] for i in col]
-    return np.array(new_col)
+class BaseGraph(object):
+    def __init__(self):
+        pass
 
+    def eval(self):
+        pass
 
-class Data(object):
-    r"""A plain old python object modeling a single graph with various
-    (optional) attributes:
-
-    Args:
-        x (Tensor, optional): Node feature matrix with shape :obj:`[num_nodes,
-            num_node_features]`. (default: :obj:`None`)
-        edge_index (LongTensor, optional): Graph connectivity in COO format
-            with shape :obj:`[2, num_edges]`. (default: :obj:`None`)
-        edge_attr (Tensor, optional): Edge feature matrix with shape
-            :obj:`[num_edges, num_edge_features]`. (default: :obj:`None`)
-        y (Tensor, optional): Graph or node targets with arbitrary shape.
-            (default: :obj:`None`)
-        pos (Tensor, optional): Node position matrix with shape
-            :obj:`[num_nodes, num_dimensions]`. (default: :obj:`None`)
-
-    The data object is not restricted to these attributes and can be extented
-    by any other additional data.
-    """
-
-    def __init__(self, x=None, edge_index=None, edge_attr=None, y=None, pos=None, **kwargs):
-        self.x = x
-        self.edge_index = edge_index
-        self.edge_attr = edge_attr
-        self.y = y
-        self.pos = pos
-        for key, item in kwargs.items():
-            if key == "num_nodes":
-                self.__num_nodes__ = item
-            else:
-                self[key] = item
-        self.__adj = None
-
-    @staticmethod
-    def from_dict(dictionary):
-        r"""Creates a data object from a python dictionary."""
-        data = Data()
-        for key, item in dictionary.items():
-            data[key] = item
-        return data
+    def train(self):
+        pass
 
     def __getitem__(self, key):
         r"""Gets the data of the attribute :obj:`key`."""
@@ -127,44 +97,8 @@ class Data(object):
         # creating batches.
         return self.num_nodes if bool(re.search("(index|face)", key)) else 0
 
-    def __cat_dim__(self, key, value):
+    def __cat_dim__(self, key, value=None):
         return self.cat_dim(key, value)
-
-    @property
-    def num_edges(self):
-        r"""Returns the number of edges in the graph."""
-        for key, item in self("edge_index", "edge_attr"):
-            return item.size(self.cat_dim(key, item))
-        return None
-
-    @property
-    def num_features(self):
-        r"""Returns the number of features per node in the graph."""
-        if self.x is None:
-            return 0
-        return 1 if self.x.dim() == 1 else self.x.size(1)
-
-    @property
-    def num_nodes(self):
-        if self.x is not None:
-            return self.x.shape[0]
-        return torch.max(self.edge_index) + 1
-
-    @property
-    def num_classes(self):
-        if self.y is not None:
-            return int(torch.max(self.y) + 1) if self.y.dim() == 1 else self.y.shape[-1]
-
-    @num_nodes.setter
-    def num_nodes(self, num_nodes):
-        self.__num_nodes__ = num_nodes
-
-    def is_coalesced(self):
-        r"""Returns :obj:`True`, if edge indices are ordered and do not contain
-        duplicate entries."""
-        row, col = self.edge_index
-        index = self.num_nodes * row + col
-        return row.size(0) == torch.unique(index).size(0)
 
     def apply(self, func, *keys):
         r"""Applies the function :obj:`func` to all attributes :obj:`*keys`.
@@ -172,6 +106,8 @@ class Data(object):
         attributes.
         """
         for key, item in self(*keys):
+            if isinstance(item, Adjacency):
+                self[key] = func(item)
             if not isinstance(item, torch.Tensor):
                 continue
             self[key] = func(item)
@@ -193,132 +129,562 @@ class Data(object):
     def cuda(self, *keys):
         return self.apply(lambda x: x.cuda(), *keys)
 
-    def clone(self):
-        return Data.from_dict({k: v.clone() for k, v in self})
 
-    def _build_adj_(self):
-        if self.__adj is not None:
-            return
+class Adjacency(BaseGraph):
+    def __init__(self, row=None, col=None, row_ptr=None, weight=None, attr=None, num_nodes=None, **kwargs):
+        super(Adjacency, self).__init__()
+        self.row = row
+        self.col = col
+        self.row_ptr = row_ptr
+        self.weight = weight
+        self.attr = attr
+        self.__num_nodes__ = num_nodes
+        self.__normed__ = None
+        self.__in_norm__ = self.__out_norm__ = None
+        self.__symmetric__ = True
+        for key, item in kwargs.items():
+            self[key] = item
 
-        num_edges = self.edge_index.shape[1]
+    def add_remaining_self_loops(self):
+        edge_index = torch.stack([self.row, self.col])
+        edge_index, self.weight = add_remaining_self_loops(edge_index, num_nodes=self.num_nodes)
+        self.row, self.col = edge_index
+        if indicator is True:
+            self._to_csr()
 
-        if str(self.edge_index.device) == "cpu":
-            edge_index = self.edge_index
+    def remove_self_loops(self):
+        edge_index = torch.stack([self.row, self.col])
+        edge_index, self.weight = remove_self_loops(edge_index, self.weight)
+        self.row, self.col = edge_index
+        if indicator is True:
+            self._to_csr()
+
+    def sym_norm(self):
+        if self.row is None:
+            self.generate_normalization("sym")
         else:
-            edge_index = self.edge_index.cpu()
-        self.edge_row = edge_index[0]
+            self.normalize_adj("sym")
 
-        self.edge_col = edge_index[1].numpy()
+    def row_norm(self):
+        if self.row is None:
+            self.generate_normalization("row")
+        else:
+            self.normalize_adj("row")
+            self.__symmetric__ = False
 
-        self.node_idx = torch.unique(self.edge_index).cpu().numpy()
+    def generate_normalization(self, norm="sym"):
+        if self.__normed__:
+            return
+        degrees = (self.row_ptr[1:] - self.row_ptr[:-1]).float()
+        if norm == "sym":
+            edge_norm = torch.pow(degrees, -0.5).to(self.device)
+            edge_norm[torch.isinf(edge_norm)] = 0
+            self.__out_norm__ = self.__in_norm__ = edge_norm.view(-1, 1)
+        elif norm == "row":
+            edge_norm = torch.pow(degrees, -1).to(self.device)
+            edge_norm[torch.isinf(edge_norm)] = 0
+            self.__out_norm__ = None
+            self.__in_norm__ = edge_norm.view(-1, 1)
+        else:
+            raise NotImplementedError
+        self.__normed__ = norm
 
-        edge_index_np = self.edge_index.cpu().numpy()
-        num_nodes = self.x.shape[0]
-        edge_attr_np = np.ones(num_edges)
-        self.__adj = sparse.csr_matrix(
-            (edge_attr_np, (edge_index_np[0], edge_index_np[1])), shape=(num_nodes, num_nodes)
-        )
-        return self.__adj
+    def normalize_adj(self, norm="sym"):
+        if self.__normed__:
+            return
+        if self.weight is None or self.weight.shape[0] != self.edge_index.shape[1]:
+            self.weight = torch.ones(self.num_edges, device=self.device)
 
-    def _eliminate_adj_(self):
-        self.__adj = None
-        self.edge_row = None
-        self.edge_col = None
-        self.node_idx = None
+        edge_index = torch.stack([self.row, self.col])
+        if norm == "sym":
+            self.weight = symmetric_normalization(self.num_nodes, edge_index, self.weight)
+        elif norm == "row":
+            self.weight = row_normalization(self.num_nodes, edge_index, self.weight)
+        else:
+            raise NotImplementedError
+        self.__normed__ = norm
 
-    def subgraph(self, node_idx):
-        """Return the induced node subgraph."""
-        if self.__adj is None:
-            self._build_adj_()
-        if isinstance(node_idx, torch.Tensor):
-            node_idx = node_idx.cpu().numpy()
-        node_idx = np.unique(node_idx)
+    def in_degrees(self):
+        return self.row_ptr[1:] - self.row_ptr[:-1]
 
-        adj = self.__adj[node_idx, :][:, node_idx]
-        adj_coo = sparse.coo_matrix(adj)
-        row, col = adj_coo.row, adj_coo.col
-        edge_attr = torch.from_numpy(adj_coo.data).to(self.x.device)
-        edge_index = torch.from_numpy(np.stack([row, col], axis=0)).to(self.x.device).long()
-        keys = self.keys
+    def convert_csr(self):
+        if indicator is True:
+            self._to_csr()
 
-        attrs = {key: self[key][node_idx] for key in keys if "edge" not in key and "node_idx" not in key}
-        attrs["edge_index"] = edge_index
-        if edge_attr is not None:
-            attrs["edge_attr"] = edge_attr
-        return Data(**attrs)
+    def _to_csr(self):
+        self.row_ptr, reindex = coo2csr_index(self.row, self.col, num_nodes=self.num_nodes)
+        self.col = self.col[reindex]
+        self.row = self.row[reindex]
+        if self.weight is None:
+            self.weight = torch.ones(self.row.shape[0]).to(self.row.device)
+        else:
+            self.weight = self.weight[reindex]
 
-    def edge_subgraph(self, edge_idx, require_idx=False):
-        """Return the induced edge subgraph."""
-        if isinstance(edge_idx, torch.Tensor):
-            edge_idx = edge_idx.cpu().numpy()
-        edge_index = self.edge_index.T[edge_idx].cpu().numpy()
-        node_idx = np.unique(edge_index)
-        idx_dict = {val: key for key, val in enumerate(node_idx)}
+    def is_symmetric(self):
+        return self.__symmetric__
 
-        def func(x):
-            return [idx_dict[x[0]], idx_dict[x[1]]]
+    @property
+    def degrees(self):
+        if self.row_ptr is not None:
+            return self.row_ptr[1:] - self.row_ptr[:-1]
+        else:
+            edge_index = torch.stack([self.row, self.col])
+            return get_degrees(edge_index, num_nodes=self.num_nodes)
 
-        edge_index = np.array([func(x) for x in edge_index]).transpose()
-        edge_index = torch.from_numpy(edge_index).to(self.x.device)
-        edge_attr = self.edge_attr[edge_idx] if self.edge_attr else None
+    @property
+    def edge_index(self):
+        if self.row is None:
+            self.row, _, _ = csr2coo(self.row_ptr, self.col, self.weight)
+        return torch.stack([self.row, self.col])
 
-        keys = self.keys
-        attrs = {key: self[key][node_idx] for key in keys if "edge" not in key}
-        attrs["edge_index"] = edge_index
-        if edge_attr is not None:
-            attrs["edge_attr"] = edge_attr
-        if require_idx:
-            return Data(**attrs), node_idx, edge_idx
-        return Data(**attrs)
+    @edge_index.setter
+    def edge_index(self, edge_index):
+        row, col = edge_index
+        if self.row is not None and self.row.shape == row.shape:
+            return
+        self.row, self.col = row, col
+        if indicator is True:
+            self._to_csr()
+
+    @property
+    def row_indptr(self):
+        if self.row_ptr is None:
+            self._to_csr()
+        return self.row_ptr
+
+    @property
+    def num_edges(self):
+        if self.row is not None:
+            return self.row.shape[0]
+        elif self.row_ptr is not None:
+            return self.row_ptr[-1]
+        else:
+            return None
+
+    @property
+    def num_nodes(self):
+        if self.__num_nodes__ is not None:
+            return self.__num_nodes__
+        elif self.row_ptr is not None:
+            return max(torch.max(self.col).item() + 1, self.row_ptr.shape[0] - 1)
+        else:
+            return torch.max(torch.stack([self.row, self.col])).item() + 1
+
+    @property
+    def device(self):
+        return self.row.device if self.row is not None else self.row_ptr.device
+
+    @property
+    def keys(self):
+        r"""Returns all names of graph attributes."""
+        keys = [key for key in self.__dict__.keys() if self[key] is not None]
+        keys = [key for key in keys if key[:2] != "__" and key[-2:] != "__"]
+        return keys
+
+    def __out_repr__(self):
+        if self.row is not None:
+            info = ["{}={}".format(key, list(self[key].size())) for key in ["edge_index"]]
+        else:
+            info = ["{}={}".format(key, list(self[key].size())) for key in ["row", "col"] if self[key] is not None]
+        info += [
+            "edge_{}={}".format(key, list(self[key].size())) for key in ["weight", "attr"] if self[key] is not None
+        ]
+        return info
+
+    def __getitem__(self, item):
+        assert type(item) == str, f"{item} must be str"
+        if item[0] == "_" and item[1] != "_":
+            # item = re.search("[_]*(.*)", item).group(1)
+            item = item[1:]
+        return getattr(self, item)
+
+    def __copy__(self):
+        result = self.__class__()
+        for key in self.keys:
+            setattr(result, key, copy.copy(self[key]))
+        result.__num_nodes__ = self.__num_nodes__
+        return result
+
+    def __deepcopy__(self, memodict={}):
+        result = self.__class__()
+        memodict[id(self)] = result
+        for k in self.keys:
+            v = self[k]
+            setattr(result, k, copy.deepcopy(v, memodict))
+        result.__num_nodes__ = self.__num_nodes__
+        return result
+
+    def __repr__(self):
+        info = [
+            "{}={}".format(key, list(self[key].size()))
+            for key in self.keys
+            if not key.startswith("__") and self[key] is not None
+        ]
+        return "{}({})".format(self.__class__.__name__, ", ".join(info))
+
+    def clone(self):
+        return Adjacency.from_dict({k: v.clone() for k, v in self})
+
+    @staticmethod
+    def from_dict(dictionary):
+        r"""Creates a data object from a python dictionary."""
+        data = Adjacency()
+        for key, item in dictionary.items():
+            data[key] = item
+        return data
+
+
+KEY_MAP = {
+    "edge_weight": "weight",
+    "edge_attr": "attr",
+}
+EDGE_INDEX = "edge_index"
+EDGE_WEIGHT = "edge_weight"
+EDGE_ATTR = "edge_attr"
+ROW_PTR = "row_indptr"
+COL_INDICES = "col_indices"
+
+
+def is_adj_key_train(key):
+    return key.endswith("_train") and is_read_adj_key(key)
+
+
+def is_adj_key(key):
+    return key in ["row", "col", "row_ptr", "attr", "weight"]
+
+
+def is_read_adj_key(key):
+    return sum([x in key for x in [EDGE_INDEX, EDGE_WEIGHT, EDGE_ATTR]]) > 0 or is_adj_key(key)
+
+
+class Graph(BaseGraph):
+    def __init__(self, x=None, y=None, **kwargs):
+        super(Graph, self).__init__()
+        self.x = x
+        self.y = y
+
+        for key, item in kwargs.items():
+            if key == "num_nodes":
+                self.__num_nodes__ = item
+            elif not is_read_adj_key(key):
+                self[key] = item
+
+        num_nodes = x.shape[0] if x is not None else None
+        if "edge_index_train" in kwargs:
+            self._adj_train = Adjacency(num_nodes=num_nodes)
+            for key, item in kwargs.items():
+                if is_adj_key_train(key):
+                    _key = re.search(r"(.*)_train", key).group(1)
+                    if _key.startswith("edge_"):
+                        _key = _key.split("edge_")[1]
+                    if _key == "index":
+                        self._adj_train.edge_index = item
+                    else:
+                        self._adj_train[_key] = item
+        else:
+            self._adj_train = None
+
+        self._adj_full = Adjacency(num_nodes=num_nodes)
+        for key, item in kwargs.items():
+            if is_read_adj_key(key) and not is_adj_key_train(key):
+                if key.startswith("edge_"):
+                    key = key.split("edge_")[-1]
+                if key == "index":
+                    self._adj_full.edge_index = item
+                else:
+                    self._adj_full[key] = item
+
+        self._adj = self._adj_full
+        self.__is_train__ = False
+        self.__temp_adj_stack__ = list()
+
+    def train(self):
+        self.__is_train__ = True
+        if self._adj_train is not None:
+            self._adj = self._adj_train
+
+    def eval(self):
+        self._adj = self._adj_full
+        self.__is_train__ = False
+
+    def add_remaining_self_loops(self):
+        self._adj_full.add_remaining_self_loops()
+        if self._adj_train is not None:
+            self._adj_train.add_remaining_self_loops()
+
+    def remove_self_loops(self):
+        self._adj_full.remove_self_loops()
+        if self._adj_train is not None:
+            self._adj_train.remove_self_loops()
+
+    def row_norm(self):
+        self._adj.row_norm()
+
+    def sym_norm(self):
+        self._adj.sym_norm()
+
+    def is_symmetric(self):
+        return self._adj.is_symmetric()
+
+    @contextmanager
+    def local_graph(self, key=None):
+        self.__temp_adj_stack__.append(self._adj)
+        if key is None:
+            adj = copy.copy(self._adj)
+        else:
+            adj = copy.copy(self._adj)
+            key = KEY_MAP.get(key, key)
+            adj[key] = self._adj[key].clone()
+        self._adj = adj
+        yield
+        del adj
+        self._adj = self.__temp_adj_stack__.pop()
+
+    @property
+    def edge_index(self):
+        return self._adj.edge_index
+
+    @property
+    def edge_weight(self):
+        if self._adj.weight is None or self._adj.weight.shape[0] != self._adj.col.shape[0]:
+            self._adj.weight = torch.ones(self._adj.num_edges, device=self._adj.device)
+        return self._adj.weight
+
+    @property
+    def edge_attr(self):
+        return self._adj.attr
+
+    @edge_index.setter
+    def edge_index(self, edge_index):
+        row, col = edge_index
+        self._adj.row = row
+        self._adj.col = col
+
+    @edge_weight.setter
+    def edge_weight(self, edge_weight):
+        self._adj.weight = edge_weight
+
+    @edge_attr.setter
+    def edge_attr(self, edge_attr):
+        self._adj.attr = edge_attr
+
+    @property
+    def row_indptr(self):
+        if self._adj.row_ptr is None:
+            self._adj.convert_csr()
+        return self._adj.row_ptr
+
+    @property
+    def col_indices(self):
+        if self._adj.row_ptr is None:
+            self._adj.convert_csr()
+        return self._adj.col
+
+    @row_indptr.setter
+    def row_indptr(self, row_ptr):
+        self._adj.row_ptr = row_ptr
+
+    @col_indices.setter
+    def col_indices(self, col_indices):
+        self._adj.col = col_indices
+
+    @property
+    def in_norm(self):
+        return self._adj.__in_norm__
+
+    @property
+    def out_norm(self):
+        return self._adj.__out_norm__
+
+    @property
+    def keys(self):
+        keys = [key for key in self.__dict__.keys() if self[key] is not None]
+        keys = [key for key in keys if key[:2] != "__" and key[-2:] != "__"]
+        return keys
+
+    def degrees(self):
+        return self._adj.degrees
+
+    def __keys__(self):
+        keys = [key for key in self.keys if "adj" not in key]
+        return keys
+
+    def __old_keys__(self):
+        keys = self.__keys__()
+        keys += [EDGE_INDEX, EDGE_ATTR]
+        return keys
+
+    def __getitem__(self, key):
+        r"""Gets the data of the attribute :obj:`key`."""
+        if is_adj_key(key):
+            return getattr(self._adj, key)
+        else:
+            return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        if is_adj_key(key):
+            self._adj[key] = value
+        else:
+            setattr(self, key, value)
+
+    @property
+    def num_edges(self):
+        r"""Returns the number of edges in the graph."""
+        return self._adj.num_edges
+
+    @property
+    def num_features(self):
+        r"""Returns the number of features per node in the graph."""
+        if self.x is None:
+            return 0
+        return 1 if self.x.dim() == 1 else self.x.size(1)
+
+    @property
+    def num_nodes(self):
+        if hasattr(self, "__num_nodes__") and self.__num_nodes__ is not None:
+            return self.__num_nodes__
+        elif self.x is not None:
+            return self.x.shape[0]
+        else:
+            return self._adj.num_nodes
+
+    @property
+    def num_classes(self):
+        if self.y is not None:
+            return int(torch.max(self.y) + 1) if self.y.dim() == 1 else self.y.shape[-1]
+
+    @num_nodes.setter
+    def num_nodes(self, num_nodes):
+        self.__num_nodes__ = num_nodes
+
+    @staticmethod
+    def from_pyg_data(data):
+        val = {k: v for k, v in data}
+        return Graph(**val)
+
+    def clone(self):
+        return Graph.from_dict({k: v.clone() for k, v in self})
+
+    def __repr__(self):
+        info = ["{}={}".format(key, list(self[key].size())) for key in self.__keys__() if not key.startswith("_")]
+        info += self._adj.__out_repr__()
+        return "{}({})".format(self.__class__.__name__, ", ".join(info))
 
     def sample_adj(self, batch, size=-1, replace=True):
-        assert size != 0
-        if self.__adj is None:
-            self._build_adj_()
-        if isinstance(batch, torch.Tensor):
-            batch = batch.cpu().numpy()
-
-        adj = self.__adj[batch]
-        batch_size = len(batch)
-        if size == -1:
-            row, col = self.edge_row, self.edge_col
-            _node_idx = self.node_idx
+        if sample_adj_c is not None:
+            if not torch.is_tensor(batch):
+                batch = torch.tensor(batch, dtype=torch.long)
+            (row_ptr, col_indices, nodes, edges) = sample_adj_c(self._adj.row_ptr, self._adj.col, batch, size, replace)
         else:
-            indices = torch.from_numpy(adj.indices)
-            indptr = torch.from_numpy(adj.indptr)
-            node_idx, (row, col) = self._sample_adj(batch_size, indices, indptr, size)
-            col = col.numpy()
-            _node_idx = node_idx.numpy()
+            if not (batch[1:] > batch[:-1]).all():
+                batch = batch.sort()[0]
+            if torch.is_tensor(batch):
+                batch = batch.cpu().numpy()
+            if self.__is_train__ and self._adj_train is not None:
+                key = "__mx_train__"
+            else:
+                key = "__mx__"
+            if not hasattr(self, key):
+                row, col = self._adj.edge_index.numpy()
+                val = self.edge_weight.numpy()
+                N = self.num_nodes
+                self[key] = sp.csr_matrix((val, (row, col)), shape=(N, N))
+            adj = self[key][batch, :]
 
-        # Reindexing: target nodes are always put at the front
-        _node_idx = np.concatenate((batch, np.setdiff1d(_node_idx, batch)))
+            indptr = adj.indptr
+            indices = adj.indices
+            if size != -1:
+                indptr, indices = self._sample_adj(len(batch), indices, indptr, size)
+                indptr = indptr.numpy()
+                indices = indices.numpy()
+            col_nodes = np.unique(indices)
+            _node_idx = np.concatenate([batch, np.setdiff1d(col_nodes, batch)])
+            nodes = torch.tensor(_node_idx, dtype=torch.long)
 
-        new_col = torch.as_tensor(reindex(_node_idx, col), dtype=torch.long)
-        edge_index = torch.stack([row.long(), new_col])
+            assoc_dict = {v: i for i, v in enumerate(_node_idx)}
 
-        node_idx = torch.as_tensor(_node_idx, dtype=torch.long).to(self.x.device)
-        edge_index = edge_index.long().to(self.x.device)
-        return node_idx, edge_index
+            col_indices = torch.tensor([assoc_dict[i] for i in indices], dtype=torch.long)
+            row_ptr = torch.tensor(indptr, dtype=torch.long)
+
+        if row_ptr.shape[0] - 1 < nodes.shape[0]:
+            padding = torch.full((nodes.shape[0] - row_ptr.shape[0] + 1,), row_ptr[-1].item(), dtype=row_ptr.dtype)
+            row_ptr = torch.cat([row_ptr, padding])
+        g = Graph(row_ptr=row_ptr, col=col_indices)
+        return nodes, g
 
     def _sample_adj(self, batch_size, indices, indptr, size):
-        row_counts = torch.as_tensor([indptr[i] - indptr[i - 1] for i in range(1, len(indptr))]).long()
-
+        if not torch.is_tensor(indices):
+            indices = torch.from_numpy(indices)
+        if not torch.is_tensor(indptr):
+            indptr = torch.from_numpy(indptr)
+        assert indptr.shape[0] - 1 == batch_size
+        row_counts = (indptr[1:] - indptr[:-1]).long()
         rand = torch.rand(batch_size, size)
         rand = rand * row_counts.view(-1, 1)
         rand = rand.long()
 
         rand = rand + indptr[:-1].view(-1, 1)
         edge_cols = indices[rand].view(-1)
-        row = torch.arange(0, batch_size).view(-1, 1).repeat(1, size).view(-1)
-        node_idx = torch.unique(edge_cols)
+        row_ptr = torch.arange(0, batch_size * size + size, size)
+        return row_ptr, edge_cols
 
-        return node_idx, (row, edge_cols)
+    def csr_subgraph(self, node_idx):
+        indptr, indices, nodes, edges = subgraph_c(self._adj.row_ptr, self._adj.col, node_idx.cpu())
+        nodes = nodes.to(self._adj.device)
+        edge_weight = self.edge_weight[edges]
+
+        data = Graph(row_ptr=indptr, col=indices, weight=edge_weight)
+        for key in self.__keys__():
+            data[key] = self[key][nodes]
+        return data
+
+    def subgraph(self, node_idx):
+        if subgraph_c is not None:
+            if isinstance(node_idx, list):
+                node_idx = torch.as_tensor(node_idx, dtype=torch.long)
+            elif isinstance(node_idx, np.ndarray):
+                node_idx = torch.from_numpy(node_idx)
+            return self.csr_subgraph(node_idx)
+        else:
+            if isinstance(node_idx, list):
+                node_idx = np.array(node_idx)
+            elif torch.is_tensor(node_idx):
+                node_idx = node_idx.cpu().numpy()
+            if self.__is_train__ and self._adj_train is not None:
+                key = "__mx_train__"
+            else:
+                key = "__mx__"
+            if not hasattr(self, key):
+                row, col = self._adj.edge_index.numpy()
+                val = self.edge_weight.numpy()
+                N = self.num_nodes
+                self[key] = sp.csr_matrix((val, (row, col)), shape=(N, N))
+            sub_adj = self[key][node_idx, :][:, node_idx]
+            sub_g = Graph()
+            sub_g.row_indptr = torch.from_numpy(sub_adj.indptr).long()
+            sub_g.col_indices = torch.from_numpy(sub_adj.indices).long()
+            sub_g.edge_weight = torch.from_numpy(sub_adj.data)
+            for key in self.__keys__():
+                sub_g[key] = self[key][node_idx]
+            return sub_g.to(self._adj.device)
+
+    def edge_subgraph(self, edge_idx, require_idx=True):
+        edge_index = self._adj.edge_index
+        edge_index = edge_index[:, edge_idx]
+        nodes, new_edge_index = torch.unique(edge_index, return_inverse=True)
+        g = Graph(edge_index=new_edge_index)
+        for key in self.__keys__():
+            g[key] = self[key][nodes]
+
+        if require_idx:
+            return g, nodes, edge_idx
+        else:
+            return g
 
     @staticmethod
-    def from_pyg_data(data):
-        val = {k: v for k, v in data}
-        return Data(**val)
-
-    def __repr__(self):
-        info = ["{}={}".format(key, list(item.size())) for key, item in self if not key.startswith("_")]
-        return "{}({})".format(self.__class__.__name__, ", ".join(info))
+    def from_dict(dictionary):
+        r"""Creates a data object from a python dictionary."""
+        data = Graph()
+        for key, item in dictionary.items():
+            data[key] = item
+        return data

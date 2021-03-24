@@ -47,61 +47,64 @@ class GATLayer(nn.Module):
         reset(self.a_r)
         reset(self.W)
 
-    def forward(self, x, edge):
-        N = x.size()[0]
+        # nn.init.xavier_uniform_(self.W.data, gain=1.414)
+        # nn.init.xavier_uniform_(self.a_r.data, gain=1.414)
+        # nn.init.xavier_uniform_(self.a_l.data, gain=1.414)
+
+    def forward(self, graph, x):
         h = torch.matmul(x, self.W).view(-1, self.nhead, self.out_features)
         # h: N * H * d
-        if torch.isnan(self.W.data).any():
-            # print("NaN in Graph Attention, ", self.nhead)
-            h[torch.isnan(h)] = 0
+        h[torch.isnan(h)] = 0.0
 
+        edge_index = graph.edge_index
         # Self-attention on the nodes - Shared attention mechanism
-        h_l = (self.a_l * h).sum(dim=-1)[edge[0, :]]
-        h_r = (self.a_r * h).sum(dim=-1)[edge[1, :]]
+        h_l = (self.a_l * h).sum(dim=-1)[edge_index[0, :]]
+        h_r = (self.a_r * h).sum(dim=-1)[edge_index[1, :]]
         edge_attention = self.leakyrelu(h_l + h_r)
         # edge_e: E * H
-        edge_attention = mul_edge_softmax(edge, edge_attention, shape=(N, N))
+        edge_attention = mul_edge_softmax(graph, edge_attention)
+        num_edges = graph.num_edges
+        num_nodes = graph.num_nodes
 
-        num_edges = edge.shape[1]
-        num_nodes = x.shape[0]
+        with graph.local_graph():
+            if self.fast_mode:
+                edge_attention = edge_attention.view(-1)
+                edge_attention = self.dropout(edge_attention)
 
-        if self.fast_mode:
-            edge_attention = edge_attention.view(-1)
-            edge_attention = self.dropout(edge_attention)
+                edge_index = edge_index.view(-1)
+                edge_index = edge_index.unsqueeze(0).repeat(self.nhead, 1)
+                add_num = torch.arange(0, self.nhead * num_nodes, num_nodes).view(-1, 1).to(edge_index.device)
+                edge_index = edge_index + add_num
+                edge_index = edge_index.split((num_edges, num_edges), dim=1)
 
-            edge_index = edge.view(-1)
-            edge_index = edge_index.unsqueeze(0).repeat(self.nhead, 1)
-            add_num = torch.arange(0, self.nhead * num_nodes, num_nodes).view(-1, 1).to(edge_index.device)
-            edge_index = edge_index + add_num
-            edge_index = edge_index.split((num_edges, num_edges), dim=1)
+                row, col = edge_index
+                row = row.reshape(-1)
+                col = col.reshape(-1)
+                edge_index = torch.stack([row, col])
 
-            row, col = edge_index
-            row = row.reshape(-1)
-            col = col.reshape(-1)
-            edge_index = torch.stack([row, col])
-
-            h_prime = spmm(edge_index, edge_attention, h.permute(1, 0, 2).reshape(num_nodes * self.nhead, -1))
-            assert not torch.isnan(h_prime).any()
-            h_prime = h_prime.split([num_nodes] * self.nhead)
-        else:
-            h_prime = []
-            h = h.permute(1, 0, 2).contiguous()
-            for i in range(self.nhead):
-                edge_weight = edge_attention[:, i]
-                hidden = h[i]
-                assert not torch.isnan(hidden).any()
-                h_prime.append(spmm(edge, edge_weight, hidden))
-
+                graph.edge_index = edge_index
+                graph.edge_weight = edge_attention
+                h_prime = spmm(graph, h.permute(1, 0, 2).reshape(num_nodes * self.nhead, -1))
+                assert not torch.isnan(h_prime).any()
+                h_prime = h_prime.split([num_nodes] * self.nhead)
+            else:
+                edge_attention = self.dropout(edge_attention)
+                h_prime = []
+                h = h.permute(1, 0, 2).contiguous()
+                for i in range(self.nhead):
+                    edge_weight = edge_attention[i]
+                    graph.edge_weight = edge_weight
+                    hidden = h[i]
+                    assert not torch.isnan(hidden).any()
+                    h_prime.append(spmm(graph, hidden))
         if self.residual:
             res = self.residual(x)
         else:
             res = 0
 
         if self.concat:
-            # if this layer is not last layer,
             out = torch.cat(h_prime, dim=1) + res
         else:
-            # if this layer is last layer,
             out = sum(h_prime) / self.nhead + res
         return out
 
@@ -212,15 +215,14 @@ class GAT(BaseModel):
         self.last_nhead = last_nhead
         self.residual = residual
 
-    def forward(self, x, edge_index):
-        edge_index, _ = add_remaining_self_loops(edge_index)
-
+    def forward(self, graph):
+        x = graph.x
         for i, layer in enumerate(self.attentions):
             x = F.dropout(x, p=self.dropout, training=self.training)
-            x = layer(x, edge_index)
+            x = layer(graph, x)
             if i != self.num_layers - 1:
                 x = F.elu(x)
         return x
 
-    def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+    def predict(self, graph):
+        return self.forward(graph)

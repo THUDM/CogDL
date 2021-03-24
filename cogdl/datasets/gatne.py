@@ -1,9 +1,8 @@
 import os.path as osp
-import sys
 
 import torch
 
-from cogdl.data import Data, Dataset
+from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 
 from . import register_dataset
@@ -34,7 +33,7 @@ def read_gatne_data(folder):
                 test_data[items[0]] = [[], []]
             test_data[items[0]][1 - int(items[3])].append([int(items[1]), int(items[2])])
 
-    data = Data()
+    data = Graph()
     data.train_data = train_data
     data.valid_data = valid_data
     data.test_data = test_data

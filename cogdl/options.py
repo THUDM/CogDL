@@ -67,7 +67,6 @@ def add_trainer_args(parser):
     # fmt: off
     group.add_argument('--trainer', metavar='TRAINER', required=False,
                        help='Trainer')
-    group.add_argument('--eval-step', type=int, default=1)
     # fmt: on
     return group
 

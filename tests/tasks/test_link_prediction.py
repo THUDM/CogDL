@@ -25,7 +25,7 @@ def get_default_args():
 def test_prone_ppi():
     args = get_default_args()
     args.task = "link_prediction"
-    args.dataset = "ppi"
+    args.dataset = "ppi-ne"
     args.model = "prone"
     args.step = 3
     args.theta = 0.5

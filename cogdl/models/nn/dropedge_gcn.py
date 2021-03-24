@@ -7,6 +7,7 @@ from torch.nn.modules.module import Module
 from torch.nn.parameter import Parameter
 
 from .. import BaseModel, register_model
+from cogdl.utils import spmm
 
 
 class GraphConvolutionBS(Module):
@@ -58,12 +59,12 @@ class GraphConvolutionBS(Module):
         if self.bias is not None:
             self.bias.data.uniform_(-stdv, stdv)
 
-    def forward(self, input, adj):
-        support = torch.mm(input, self.weight)
-        output = torch.spmm(adj, support)
+    def forward(self, graph, x):
+        support = torch.mm(x, self.weight)
+        output = spmm(graph, support)
 
         # Self-loop
-        output = output + torch.mm(input, self.self_weight) if self.self_weight is not None else output
+        output = output + torch.mm(x, self.self_weight) if self.self_weight is not None else output
 
         output = output + self.bias if self.bias is not None else output
         # BN
@@ -162,19 +163,19 @@ class GraphBaseBlock(Module):
         elif self.aggrmethod == "nores":
             return x
 
-    def forward(self, input, adj):
-        x = input
+    def forward(self, graph, x):
+        h = x
         denseout = None
         # Here out is the result in all levels.
         for gc in self.hiddenlayers:
-            denseout = self._doconcat(denseout, x)
-            x = gc(x, adj)
-            x = F.dropout(x, self.dropout, training=self.training)
+            denseout = self._doconcat(denseout, h)
+            h = gc(graph, h)
+            h = F.dropout(h, self.dropout, training=self.training)
 
         if not self.dense:
-            return self._doconcat(x, input)
+            return self._doconcat(h, x)
 
-        return self._doconcat(x, denseout) if denseout is not None else x
+        return self._doconcat(h, denseout) if denseout is not None else h
 
     def get_outdim(self):
         return self.out_features
@@ -232,8 +233,8 @@ class MultiLayerGCNBlock(Module):
             aggrmethod="nores",
         )
 
-    def forward(self, input, adj):
-        return self.model.forward(input, adj)
+    def forward(self, graph, x):
+        return self.model.forward(graph, x)
 
     def get_outdim(self):
         return self.model.get_outdim()
@@ -291,8 +292,8 @@ class ResGCNBlock(Module):
             aggrmethod="add",
         )
 
-    def forward(self, input, adj):
-        return self.model.forward(input, adj)
+    def forward(self, graph, x):
+        return self.model.forward(graph, x)
 
     def get_outdim(self):
         return self.model.get_outdim()
@@ -350,8 +351,8 @@ class DenseGCNBlock(Module):
             aggrmethod=aggrmethod,
         )
 
-    def forward(self, input, adj):
-        return self.model.forward(input, adj)
+    def forward(self, graph, x):
+        return self.model.forward(graph, x)
 
     def get_outdim(self):
         return self.model.get_outdim()
@@ -444,12 +445,11 @@ class InceptionGCNBlock(Module):
                 reslayer.append(layer)
             self.midlayers.append(reslayer)
 
-    def forward(self, input, adj):
-        x = input
+    def forward(self, graph, x):
         for reslayer in self.midlayers:
-            subx = input
+            subx = x
             for gc in reslayer:
-                subx = gc(subx, adj)
+                subx = gc(graph, x)
                 subx = F.dropout(subx, self.dropout, training=self.training)
             x = self._doconcat(x, subx)
         return x
@@ -496,8 +496,8 @@ class Dense(Module):
         if self.bias is not None:
             self.bias.data.uniform_(-stdv, stdv)
 
-    def forward(self, input, adj):
-        output = torch.mm(input, self.weight)
+    def forward(self, graph, x):
+        output = torch.mm(x, self.weight)
         output = output + self.bias if self.bias is not None else output
         output = self.bn(output)
         return self.sigma(output)
@@ -666,33 +666,21 @@ class DropEdge_GCN(BaseModel):
     def reset_parameters(self):
         pass
 
-    def forward(self, fea, adj):
-        def fix_adj_format(input, edge_index, edge_attr=None):
-            if edge_attr is None:
-                edge_attr = torch.ones(edge_index.shape[1]).float().to(input.device)
-            adj = torch.sparse_coo_tensor(
-                edge_index,
-                edge_attr,
-                (input.shape[0], input.shape[0]),
-            ).to(input.device)
-            return adj
+    def forward(self, graph):
+        x = graph.x
 
-        # get correct format
-        adj = fix_adj_format(fea, adj)
-        # input
-        x = self.ingc(fea, adj)
-
+        x = self.ingc(graph, x)
         x = F.dropout(x, self.dropout, training=self.training)
 
         # mid block connections
         # for i in xrange(len(self.midlayer)):
         for i in range(len(self.midlayer)):
             midgc = self.midlayer[i]
-            x = midgc(x, adj)
+            x = midgc(graph, x)
         # output, no relu and dropput here.
-        x = self.outgc(x, adj)
+        x = self.outgc(graph, x)
         x = F.log_softmax(x, dim=1)
         return x
 
     def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+        return self.forward(data)

@@ -15,7 +15,7 @@ from cogdl.utils import (
     fast_spmm,
     get_degrees,
 )
-from cogdl.operators.operators import sample_adj_c, subgraph_c
+from cogdl.operators.sample import sample_adj_c, subgraph_c
 
 indicator = fast_spmm is None
 

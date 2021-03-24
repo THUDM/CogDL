@@ -14,7 +14,7 @@ import torch
 import torch.nn.functional as F
 from tabulate import tabulate
 
-from cogdl.operators.operators import coo2csr_cpu, coo2csr_cpu_index
+from cogdl.operators.sample import coo2csr_cpu, coo2csr_cpu_index
 
 
 class ArgClass(object):
@@ -222,7 +222,7 @@ _cache = dict()
 def initialize_spmm(args):
     if hasattr(args, "fast_spmm") and args.fast_spmm is True:
         try:
-            from cogdl.operators.operators import csrspmm
+            from cogdl.operators.spmm import csrspmm
 
             global fast_spmm
             fast_spmm = csrspmm

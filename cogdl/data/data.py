@@ -12,12 +12,12 @@ from cogdl.utils import (
     remove_self_loops,
     symmetric_normalization,
     row_normalization,
-    fast_spmm,
     get_degrees,
 )
-from cogdl.operators.sample import sample_adj_c, subgraph_c
+from cogdl.operators.sample import sample_adj_c
 
-indicator = fast_spmm is None
+indicator = False
+subgraph_c = None
 
 
 class BaseGraph(object):

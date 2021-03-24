@@ -63,10 +63,9 @@ def train(model, dataset, args, rank, evaluator, loss_fn):
         dataset=train_dataset,
         batch_size=1,
         shuffle=False,
-        num_workers=4,
-        pin_memory=False,
+        num_workers=0,
+        pin_memory=True,
         sampler=train_sampler,
-        persistent_workers=True,
         collate_fn=batcher,
     )
 

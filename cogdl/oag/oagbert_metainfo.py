@@ -3,19 +3,65 @@ import re
 import torch
 import numpy as np
 from .dual_position_bert_model import DualPositionBertForPreTrainingPreLN
-from .utils import colored, OAG_TOKEN_TYPE_NAMES
+from .utils import colored, OAG_TOKEN_TYPE_NAMES, stringLenCJK, stringRjustCJK
+from transformers import BertTokenizer
+import sentencepiece as spm
 
 
 class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
     def __init__(self, bert_config, tokenizer):
         super(OAGMetaInfoBertModel, self).__init__(bert_config)
         self.tokenizer = tokenizer
+        self.spm = not isinstance(self.tokenizer, BertTokenizer)
+        if self.spm:
+            self.tokenizer.cls_token_id, self.tokenizer.mask_token_id, self.tokenizer.sep_token_id = self.tokenizer.PieceToId(['[CLS]', '[MASK]', '[SEP]'])
+
+    def __recursively_build_spm_token_ids(self, text, splitters=[]):
+        if len(splitters) == 0:
+            return self.tokenizer.encode(text)
+        splitter = splitters[0]
+        splitters = splitters[1:]
+        start = 0
+        parts = []
+        while start >= 0 and start < len(text):
+            end = text.find(splitter, start)
+            if end >= 0:
+                parts += self.__recursively_build_spm_token_ids(text[start:end].strip(), splitters)
+                start = end + len(splitter)
+                parts.append(self.tokenizer.PieceToId(splitter))
+            else:
+                end = len(text)
+                parts += self.__recursively_build_spm_token_ids(text[start:end].strip(), splitters)
+                break
+        return parts
 
     def _convert_text_to_token_ids(self, text):
-        return self.tokenizer(text, add_special_tokens=False)["input_ids"] if len(text) > 0 else []
+        if self.spm:
+            return self.__recursively_build_spm_token_ids(text, splitters=['[PAD]', '[EOS]', '[UNK]', '[CLS]', '[SEP]', '[MASK]', '[BOS]'])
+        else:
+            return self.tokenizer(text, add_special_tokens=False)["input_ids"] if len(text) > 0 else []
+
+    def _convert_ids_to_tokens(self, token_ids):
+        if self.spm:
+            _ids = []
+            for _id in token_ids:
+                if not isinstance(_id, int):
+                    _id = _id.item()
+                _ids.append(_id)
+            return self.tokenizer.id_to_piece(_ids)
+        else:
+            return self.tokenizer.convert_ids_to_tokens(token_ids)
 
     def _convert_token_ids_to_text(self, token_ids):
-        return self.tokenizer.convert_tokens_to_string(self.tokenizer.convert_ids_to_tokens(token_ids))
+        if self.spm:
+            _ids = []
+            for _id in token_ids:
+                if not isinstance(_id, int):
+                    _id = _id.item()
+                _ids.append(_id)
+            return self.tokenizer.decode(_ids)
+        else:
+            return self.tokenizer.convert_tokens_to_string(self.tokenizer.convert_ids_to_tokens(token_ids))
 
     def print_oag_instance(
         self,
@@ -27,7 +73,7 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
         position_ids_second,
         predictions=None,
     ):
-        COLORS = ["white", "green", "blue", "red", "yellow"]
+        COLORS = ["white", "green", "blue", "red", "yellow", "magenta"]
         try:
             termwidth, _ = os.get_terminal_size()
         except Exception:
@@ -50,9 +96,9 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
         for k in range(K):
             for lm_pos, token_id in zip(mask_indices, predictions[:, k]):
                 prediction_topks[k][lm_pos] = token_id
-        input_tokens = self.tokenizer.convert_ids_to_tokens(input_ids)
-        masks_tokens = self.tokenizer.convert_ids_to_tokens(masks)
-        prediction_tokens = [self.tokenizer.convert_ids_to_tokens(prediction_topks[k]) for k in range(K)]
+        input_tokens = self._convert_ids_to_tokens(input_ids)
+        masks_tokens = self._convert_ids_to_tokens(masks)
+        prediction_tokens = [self._convert_ids_to_tokens(prediction_topks[k]) for k in range(K)]
         input_tokens_str = [""]
         position_ids_str = [""]
         position_ids_second_str = [""]
@@ -65,11 +111,11 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
         ):
             token_type = OAG_TOKEN_TYPE_NAMES[token_type_id]
             length = max(
-                len(input_token) + 1,
+                stringLenCJK(input_token) + 1,
                 7,
-                len(token_type) + 1,
-                len(mask) + 1,
-                *[len(prediction_tokens[k][pos]) + 1 for k in range(K)],
+                stringLenCJK(token_type) + 1,
+                stringLenCJK(mask) + 1,
+                *[stringLenCJK(prediction_tokens[k][pos]) + 1 for k in range(K)],
             )
             if current_length + length > termwidth:
                 current_length = 0
@@ -81,15 +127,15 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
                 for k in range(K):
                     prediction_topk_strs[k].append("")
             current_length += length
-            input_tokens_str[-1] += colored(input_token.rjust(length), COLORS[token_type_id])
-            position_ids_str[-1] += str(position_id).rjust(length)
-            position_ids_second_str[-1] += str(position_id_second).rjust(length)
-            token_type_ids_str[-1] += token_type.rjust(length)
-            masks_str[-1] += colored(mask.rjust(length) if mask != "[PAD]" else "".rjust(length), COLORS[token_type_id])
+            input_tokens_str[-1] += colored(stringRjustCJK(input_token, length), COLORS[token_type_id])
+            position_ids_str[-1] += stringRjustCJK(str(position_id), length)
+            position_ids_second_str[-1] += stringRjustCJK(str(position_id_second), length)
+            token_type_ids_str[-1] += stringRjustCJK(token_type, length)
+            masks_str[-1] += colored(stringRjustCJK(mask, length) if mask != "[PAD]" else stringRjustCJK("", length), COLORS[token_type_id])
             for k in range(K):
                 v = prediction_tokens[k][pos] if prediction_tokens[k][pos] != "[PAD]" else ""
                 prediction_topk_strs[k][-1] += colored(
-                    v.rjust(length), "magenta" if v != mask and mask != "[CLS]" else "cyan"
+                    stringRjustCJK(v, length), "magenta" if v != mask and mask != "[CLS]" else "cyan"
                 )
 
         ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
@@ -304,7 +350,7 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
                 )
                 input(
                     "logprobs: %.4f, logprob: %.4f, pos: %d, real_pos: %d, token: %s"
-                    % (logprobs, logprob, pos.item(), real_pos, self.tokenizer.convert_ids_to_tokens([target_token])[0])
+                    % (logprobs, logprob, pos.item(), real_pos, self._convert_ids_to_tokens([target_token])[0])
                 )
 
         return np.exp(logprobs), logproblist
@@ -430,9 +476,7 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
                         "  %8.4f, %s"
                         % (
                             _last_logprob,
-                            self.tokenizer.convert_tokens_to_string(
-                                self.tokenizer.convert_ids_to_tokens(_input_ids[-decode_span_length:])
-                            ),
+                            self._convert_token_ids_to_string(_input_ids[-decode_span_length:]),
                         )
                     )
 

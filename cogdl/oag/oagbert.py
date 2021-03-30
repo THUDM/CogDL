@@ -77,6 +77,9 @@ class OAGBertPretrainingModel(BertForPreTrainingPreLN):
 
 
 def oagbert(model_name_or_path="oagbert-v1", load_weights=True):
+    """
+    load oagbert model, return the underlying torch module and tokenizer. Tokenizer can be either BertTokenizer (en) or SentencePieceTokenizer (zh).
+    """
     _, tokenizer, bert_model = OAGBertPretrainingModel._load(model_name_or_path, load_weights)
 
     return tokenizer, bert_model

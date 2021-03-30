@@ -19,7 +19,7 @@ else:
             verbose=False,
         )
 
-        def csrspmm(rowptr, colind, colptr, rowind, x, csr_data, sym=True):
+        def csrspmm(rowptr, colind, colptr, rowind, x, csr_data, sym=False):
             return SPMMFunction.apply(rowptr, colind, colptr, rowind, x, csr_data, sym)
 
     except Exception as e:
@@ -41,14 +41,11 @@ class SPMMFunction(torch.autograd.Function):
     def backward(ctx, grad_out):
         rowptr, colind, colptr, rowind, feat, edge_weight_csr, sym = ctx.backward_csc
         if edge_weight_csr is not None:
-            if sym is False:
-                edge_weight_csc = spmm.csr2csc(rowptr, colind, colptr, rowind, edge_weight_csr)
-                grad_feat = spmm.csr_spmm(colptr, rowind, edge_weight_csc, grad_out)
-            else:  # without transpose
-                # TODO:
-                grad_out = grad_out.contiguous()
-                grad_feat = spmm.csr_spmm(rowptr, colind, edge_weight_csr, grad_out)
-            grad_edge_weight = sddmm.csr_sddmm(colptr, rowind, grad_out, feat)
+            grad_out = grad_out.contiguous()
+            edge_weight_csc = spmm.csr2csc(rowptr, colind, colptr, rowind, edge_weight_csr)
+            grad_feat = spmm.csr_spmm(colptr, rowind, edge_weight_csc, grad_out)
+            grad_edge_weight = sddmm.csr_sddmm(rowptr, colind, grad_out, feat)
+            # TODO: symmetry
         else:
             grad_feat = spmm.csr_spmm_no_edge_value(colptr, rowind, grad_out)
             grad_edge_weight = None

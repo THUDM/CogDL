@@ -4,6 +4,7 @@ import os
 import torch
 from cogdl.utils import download_url, untar
 from transformers import BertTokenizer
+import sentencepiece as spm
 
 from .bert_model import BertConfig, BertForPreTrainingPreLN
 from .oagbert_metainfo import OAGMetaInfoBertModel
@@ -14,7 +15,8 @@ PRETRAINED_MODEL_ARCHIVE_MAP = {
     "oagbert-v2-test": "https://cloud.tsinghua.edu.cn/f/baff5abe84c4483bb690/?dl=1",
     "oagbert-v2": "https://cloud.tsinghua.edu.cn/f/f06448fa3c234317bd16/?dl=1",
     "oagbert-v2-lm": "https://cloud.tsinghua.edu.cn/f/efb2094951a94084947d/?dl=1",
-    "oagbert-v2-sim": "https://cloud.tsinghua.edu.cn/f/103a467b0fe14177bf51/?dl=1"
+    "oagbert-v2-sim": "https://cloud.tsinghua.edu.cn/f/103a467b0fe14177bf51/?dl=1",
+    "oagbert-v2-zh": "https://cloud.tsinghua.edu.cn/f/8efc97a77af046dc8d24/?dl=1"
 }
 
 
@@ -56,7 +58,12 @@ class OAGBertPretrainingModel(BertForPreTrainingPreLN):
             version = None
 
         bert_config = BertConfig.from_dict(json.load(open(os.path.join(model_name_or_path, "bert_config.json"))))
-        tokenizer = BertTokenizer.from_pretrained(model_name_or_path)
+        if os.path.exists(os.path.join(model_name_or_path, 'vocab.txt')):
+            tokenizer = BertTokenizer.from_pretrained(model_name_or_path)
+        elif os.path.exists(os.path.join(model_name_or_path, 'vocab.model')):
+            tokenizer = spm.SentencePieceProcessor(model_file=os.path.join(model_name_or_path, 'vocab.model'))
+        else:
+            raise FileNotFoundError('Cannot find vocabulary file')
         if version == "2":
             bert_model = OAGMetaInfoBertModel(bert_config, tokenizer)
         else:
@@ -70,6 +77,9 @@ class OAGBertPretrainingModel(BertForPreTrainingPreLN):
 
 
 def oagbert(model_name_or_path="oagbert-v1", load_weights=True):
+    """
+    load oagbert model, return the underlying torch module and tokenizer. Tokenizer can be either BertTokenizer (en) or SentencePieceTokenizer (zh).
+    """
     _, tokenizer, bert_model = OAGBertPretrainingModel._load(model_name_or_path, load_weights)
 
     return tokenizer, bert_model

@@ -168,10 +168,7 @@ class SAINTSampler(Sampler):
         return data
 
     def exists_train_nodes(self, node_idx):
-        for idx in node_idx:
-            if self.train_mask[idx]:
-                return True
-        return False
+        return self.train_mask[node_idx].any().item()
 
     def node_induction(self, node_idx):
         node_idx = np.unique(node_idx)
@@ -199,6 +196,53 @@ class SAINTSampler(Sampler):
 
     def sample(self):
         pass
+
+
+class SAINTDataset(torch.utils.data.Dataset):
+    partition_tool = None
+
+    def __init__(self, dataset, args_sampler, require_norm=True, log=False):
+        super(SAINTDataset).__init__()
+
+        self.data = dataset.data
+        self.dataset_name = dataset.__class__.__name__
+        self.args_sampler = args_sampler
+        self.require_norm = require_norm
+        self.log = log
+
+        if self.args_sampler["sampler"] == "node":
+            self.sampler = NodeSampler(self.data, self.args_sampler)
+        elif self.args_sampler["sampler"] == "edge":
+            self.sampler = EdgeSampler(self.data, self.args_sampler)
+        elif self.args_sampler["sampler"] == "rw":
+            self.sampler = RWSampler(self.data, self.args_sampler)
+        elif self.args_sampler["sampler"] == "mrw":
+            self.sampler = MRWSampler(self.data, self.args_sampler)
+        else:
+            raise NotImplementedError
+
+        self.batch_idx = np.array(range(len(self.sampler.subgraph_data)))
+
+    def shuffle(self):
+        random.shuffle(self.batch_idx)
+
+    def __len__(self):
+        return len(self.sampler.subgraph_data)
+
+    def __getitem__(self, idx):
+        new_idx = self.batch_idx[idx]
+        data = self.sampler.subgraph_data[new_idx]
+        node_idx = self.sampler.subgraph_node_idx[new_idx]
+        edge_idx = self.sampler.subgraph_edge_idx[new_idx]
+
+        if self.require_norm:
+            data.norm_aggr = torch.FloatTensor(self.sampler.norm_aggr_train[edge_idx][:])
+            data.norm_loss = self.sampler.norm_loss_train[node_idx]
+
+        edge_weight = row_normalization(data.x.shape[0], data.edge_index)
+        data.edge_weight = edge_weight
+
+        return data
 
 
 class NodeSampler(SAINTSampler):

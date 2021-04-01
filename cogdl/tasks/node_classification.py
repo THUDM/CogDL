@@ -34,7 +34,7 @@ class NodeClassification(BaseTask):
 
         self.args = args
         self.model_name = args.model
-        self.infer = args.inference
+        self.infer = hasattr(args, "inference") and args.inference
 
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         dataset = build_dataset(args) if dataset is None else dataset

@@ -457,21 +457,20 @@ torch::Tensor spmm_cuda(
     }
 }
 
-torch::Tensor csr2csc_cuda(
+std::vector<torch::Tensor> csr2csc_cuda(
   torch::Tensor csrRowPtr,
   torch::Tensor csrColInd,
-  torch::Tensor csrVal,
-  torch::Tensor cscColPtr,
-  torch::Tensor cscRowInd
-)
+  torch::Tensor csrVal)
 {
-  const auto m = csrRowPtr.size(0) - 1;
-  const auto n = cscColPtr.size(0) - 1;
+  const auto n = csrRowPtr.size(0) - 1;
   const auto nnz = csrColInd.size(0);
   auto devid = csrRowPtr.device().index();
-  auto options = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCUDA, devid);
-  auto cscVal = torch::empty({nnz}, options);
-  csr2cscKernel(m, n, nnz, csrRowPtr.data_ptr<int>(), csrColInd.data_ptr<int>(), csrVal.data_ptr<float>(), 
-  cscColPtr.data_ptr<int>(), cscRowInd.data_ptr<int>(), cscVal.data_ptr<float>());
-  return cscVal;
+  auto optionsF = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCUDA, devid);
+  auto optionsI = torch::TensorOptions().dtype(torch::kInt32).device(torch::kCUDA, devid);
+  auto cscColPtr = torch::empty({n + 1}, optionsI);
+  auto cscRowInd = torch::empty({nnz}, optionsI);
+  auto cscVal = torch::empty({nnz}, optionsF);
+  csr2cscKernel(n, n, nnz, csrRowPtr.data_ptr<int>(), csrColInd.data_ptr<int>(), csrVal.data_ptr<float>(),
+                cscColPtr.data_ptr<int>(), cscRowInd.data_ptr<int>(), cscVal.data_ptr<float>());
+  return {cscColPtr, cscRowInd, cscVal};
 }

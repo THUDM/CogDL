@@ -238,12 +238,8 @@ def spmm(graph, x):
     if fast_spmm is not None and str(x.device) != "cpu":
         row_ptr, col_indices = graph.row_indptr, graph.col_indices
         csr_data = graph.edge_weight
-        if graph.is_symmetric():
-            col_ptr, row_indices, csc_data = row_ptr.clone(), col_indices.clone(), csr_data.clone()
-        else:
-            col_ptr, row_indices, csc_data = csc_from_csr(row_ptr, col_indices, csr_data)
         x = fast_spmm(
-            row_ptr.int(), col_indices.int(), col_ptr.int(), row_indices.int(), x, csr_data.contiguous(), sym=True
+            row_ptr.int(), col_indices.int(), x, csr_data.contiguous(), graph.is_symmetric()
         )
     elif graph.edge_weight.requires_grad:
         x = spmm_scatter(graph.edge_index, graph.edge_weight, x)

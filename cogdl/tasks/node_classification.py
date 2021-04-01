@@ -21,6 +21,7 @@ class NodeClassification(BaseTask):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--missing-rate", type=int, default=0, help="missing rate, from 0 to 100")
+        parser.add_argument("--inference", action="store_true")
         # fmt: on
 
     def __init__(
@@ -33,6 +34,7 @@ class NodeClassification(BaseTask):
 
         self.args = args
         self.model_name = args.model
+        self.infer = args.inference
 
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         dataset = build_dataset(args) if dataset is None else dataset
@@ -65,7 +67,10 @@ class NodeClassification(BaseTask):
         self.data.add_remaining_self_loops()
 
     def train(self):
-        if self.trainer:
+        if self.infer:
+            self.preprocess()
+            self.inference()
+        elif self.trainer:
             result = self.trainer.fit(self.model, self.dataset)
             if issubclass(type(result), torch.nn.Module):
                 self.model = result
@@ -142,3 +147,14 @@ class NodeClassification(BaseTask):
             metrics = {key: self.evaluator(logits[mask], self.data.y[mask]) for key, mask in masks.items()}
             losses = {key: self.loss_fn(logits[mask], self.data.y[mask]) for key, mask in masks.items()}
             return metrics, losses
+
+    def inference(self):
+        self.data.eval()
+        self.model.eval()
+        with torch.no_grad():
+            logits = self.model.predict(self.data)
+        metric = self.evaluator(logits[self.data.test_mask], self.data.y[self.data.test_mask])
+        print(f"Metric in test set: {metric: .4f}")
+        key = f"{self.args.model}_{self.args.dataset}.pred"
+        torch.save(logits, key)
+        print(f"Prediction results saved in {key}")

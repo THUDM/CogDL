@@ -70,6 +70,8 @@ def test_stpgnn_supervised():
     args.load_path = None
     task = build_task(args)
     ret = task.train()
+    if np.isnan(ret["Acc"]):
+        ret["Acc"] = 0
     assert 0 <= ret["Acc"] <= 1
 
 

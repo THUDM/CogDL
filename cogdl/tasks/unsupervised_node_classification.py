@@ -34,6 +34,7 @@ class UnsupervisedNodeClassification(BaseTask):
         parser.add_argument("--load-emb-path", type=str, default=None)
         parser.add_argument('--training-percents', default=[0.9], type=float, nargs='+')
         parser.add_argument('--enhance', type=str, default=None, help='use prone or prone++ to enhance embedding')
+        parser.add_argument("--eval", action="store_true")
         # fmt: on
 
     def __init__(self, args, dataset=None, model=None):

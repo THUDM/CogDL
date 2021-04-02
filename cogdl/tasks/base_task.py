@@ -29,10 +29,15 @@ class BaseTask(ABC, metaclass=LoadFrom):
 
         self.load_from_checkpoint = hasattr(args, "checkpoint") and args.checkpoint
         if self.load_from_checkpoint:
-            self._checkpoint = os.path.join("checkpoints", f"{args.model}_{args.dataset}.pt")
-            atexit.register(self.save_checkpoint)
+            self._checkpoint = args.checkpoint
         else:
             self._checkpoint = None
+
+        if hasattr(args, "save_model") and args.save_model is not None:
+            atexit.register(self.save_checkpoint)
+            self.save_path = args.save_model
+        else:
+            self.save_path = None
 
     def train(self):
         raise NotImplementedError
@@ -47,8 +52,9 @@ class BaseTask(ABC, metaclass=LoadFrom):
         return self.model
 
     def save_checkpoint(self):
-        if self._checkpoint and hasattr(self.model, "_parameters()"):
-            torch.save(self.model.state_dict(), self._checkpoint)
+        if self.save_path and hasattr(self.model, "_parameters"):
+            torch.save(self.model.state_dict(), self.save_path)
+            print(f"Model saved in {self.save_path}")
 
     def set_loss_fn(self, dataset):
         self.loss_fn = dataset.get_loss_fn()

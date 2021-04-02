@@ -1,6 +1,7 @@
 import json
 import argparse
 import os
+import os.path as osp
 from tqdm import tqdm
 from langdetect import detect
 import random
@@ -8,12 +9,13 @@ import time
 import torch
 import subprocess
 import numpy as np
-# import multiprocessing
-# from multiprocessing import Manager, Pool
 from cogdl.oag.bert_model import BertConfig, BertForPreTrainingPreLN
 from cogdl.oag.oagbert_metainfo import OAGMetaInfoBertModel
 from cogdl.oag.oagbert import OAGBertPretrainingModel
-# from cogdl.oag.utils_389 import print_instance, MultiProcessTqdm, write_success, check_success
+import multiprocessing
+from multiprocessing import Manager
+from cogdl.oag.utils_389 import MultiProcessTqdm
+from cogdl.datasets import build_dataset
 from transformers import BertTokenizer
 from collections import Counter
 
@@ -128,7 +130,6 @@ def get_span_decode_prob(model, tokenizer, model_name, title='', abstract='', ve
     return np.exp(logprobs), logproblist
 
 def calculate_samples(model, model_name, tokenizer, input_dir, sample_file, output_file, debug=False, device=None, wprop=False, wabs=False, token_type='FOS', force_forward=False):
-    # print('calculate_samples called')
     candidates = []
     with open('%s/._SUCCESS' % input_dir) as f:
         for line in f:
@@ -182,7 +183,6 @@ def process_file(model, tokenizer, cuda_idx, input_dir, sample_file, output_file
     calculate_samples(model=model, model_name=model_name, tokenizer=tokenizer, input_dir=input_dir, sample_file=sample_file, output_file=output_file, debug=debug, device=device, wprop=wprop, wabs=wabs, token_type=token_type, force_forward=force_forward)
     # write_success(output_file)
 
-
 @register_task("oagbert_tasks")
 class zero_shot_inference(BaseTask):
 
@@ -199,7 +199,6 @@ class zero_shot_inference(BaseTask):
         parser.add_argument('--debug', action='store_true', dest='debug', default=False)
         parser.add_argument('--force_forward', action='store_true', dest='force_forward', default=False)
 
-
     def __init__(self, args):
         super(zero_shot_inference, self).__init__(args)
         '''
@@ -208,12 +207,14 @@ class zero_shot_inference(BaseTask):
         venue, authors=list, concepts=list, affiliations=list, 
         force_forward=False, span_type='', span='', debug=False, max_seq_length=512, device=None, wprop=False, wabs=False
         '''
-        # print(f'The arguements are: {args}')
         # args: checkpoint=False, cpu=False, dataset='l0fos', debug=False, device_id=[0], eval_step=1, fast_spmm=False, force_forward=False, lr=0.01, max_epoch=500, model='oagbert', n_gpu=8, patience=100, samples_per_class=1000, save_dir='.', seed=1, task='oagbert_tasks', token_type='FOS', trainer=None, use_best_config=False, wabs=False, weight_decay=0.0005, wprop=False
 
-        self.dataset = args.dataset
-        self.src_dir = 'saved/testset/%s' % args.dataset
-        self.input_dir = 'saved/oagbert_v1.5/%s/samples' % args.dataset
+        dataset = build_dataset(args)
+        self.dataset = 'l0fos'
+        # self.src_dir = 'saved/testset/%s' % args.dataset
+        # self.input_dir = 'saved/oagbert_v1.5/%s/samples' % args.dataset
+        self.src_dir = osp.join(dataset.raw_dir, 'l0fos')
+        self.input_dir = dataset.processed_dir
         self.output_dir = 'saved/oagbert_v1.5/%s/results/%s-%sprop-%sabs%s%s' % (args.dataset, args.model, 'w' if args.wprop else 'n', 'w' if args.wabs else 'n', '' if not args.force_forward else '_ff', '' if not args.debug else '_debug')
         self.load_model("oagbert-v2", True)
 
@@ -224,73 +225,43 @@ class zero_shot_inference(BaseTask):
         self.wabs = args.wprop
         self.token_type = args.token_type
         self.force_forward = args.force_forward
-        self.samples_per_class = args.samples_per_class
-
-        # print('oagbert')
-        self.make_data()
-
-        # if args.model == 'oagbert':
-        #     self.model_name = 'oagbert'
-        #     self.model, self.tokenizer = oagbert('oagbert-v2')
-        
+        self.samples_per_class = args.samples_per_class        
             
     def train(self):
-        # print('train function called')
-        input_dir = self.input_dir
-        os.makedirs(self.output_dir, exist_ok=True)
-        results = []
-        idx = 0
-        for filename in os.listdir(self.input_dir):
-            if not filename.endswith('.jsonl'):
-                continue
-            infile = self.input_dir + '/' + filename
-            outfile = self.output_dir + '/' + filename
+        with Manager() as manager:
+            lock = manager.Lock()
+            positions = manager.dict()
 
-            if not self.debug:
-                process_file(self.model, self.tokenizer,idx % self.n_gpu if not self.debug else -1, self.input_dir, infile, outfile, self.model_name, self.wprop, self.wabs, self.token_type, False, self.force_forward)
-            else:
-                process_file(self.model, self.tokenizer, idx % self.n_gpu, self.input_dir, infile, outfile, self.model_name, self.wprop, self.wabs, self.token_type, True, self.force_forward)
-            idx += 1
-            if idx% 100 == 0:
-                print(idx)
+            summary_pbar = MultiProcessTqdm(lock, positions, update_interval=1)
+            pool = multiprocessing.get_context('spawn').Pool(4 * self.n_gpu)
 
+            input_dir = self.input_dir
+            os.makedirs(self.output_dir, exist_ok=True)
+            results = []
+            idx = 0
+            for filename in os.listdir(self.input_dir):
+                if not filename.endswith('.jsonl'):
+                    continue
+                infile = self.input_dir + '/' + filename
+                outfile = self.output_dir + '/' + filename
+                pbar = MultiProcessTqdm(lock, positions, update_interval=1)
+                r = pool.apply_async(process_file, (self.model, self.tokenizer,idx % self.n_gpu if not self.debug else -1, self.input_dir, infile, outfile, self.model_name, self.wprop, self.wabs, self.token_type, False, self.force_forward))
+                results.append((r, filename))
+                idx += 1
+
+            summary_pbar.reset(total=len(results), name='Total')
+            finished = set()
+            while len(finished) < len(results):
+                for r, filename in results:
+                    if filename not in finished:
+                        if r.ready():
+                            r.get()
+                            finished.add(filename)
+                            summary_pbar.update(1)
+                time.sleep(1)
+
+            pool.close()
         return self.analysis_result()
-    
-    
-    def make_data(self):
-        os.makedirs(self.input_dir, exist_ok=True)
-        if os.path.exists(self.input_dir + '/._SUCCESS'):
-            return
-        classes = []
-        for filename in os.listdir(self.src_dir):
-            if not filename.endswith('.jsonl'):
-                continue
-            clz = filename.split('.')[0]
-            classes.append(clz)
-            data = []
-            with open('%s/%s' % (self.src_dir, filename)) as f:
-                for line in tqdm(f, desc='processing %s' % filename):
-                    obj = json.loads(line.strip())
-                    try:
-                        if detect(obj['title']) != 'en':
-                            continue
-                        if detect(''.join(obj['abstracts'])) != 'en':
-                            continue
-                    except Exception as e:
-                        print('Error: %s, Obj: %s' % (e, obj))
-                        continue
-                    data.append(line)
-                    if len(data) >= self.samples_per_class:
-                        break
-            random.shuffle(data)
-            if len(data) < self.samples_per_class:
-                continue
-            with open('%s/%s.jsonl' % (self.input_dir, clz), 'w') as fout:
-                for row in data[:self.samples_per_class]:
-                    fout.write('%s' % row)
-        with open(self.input_dir + '/._SUCCESS', 'w') as f:
-            for clz in classes:
-                f.write('%s\n' % clz)
 
     def load_model(self, model_name_or_path: str, load_weights: bool):
         # print(model_name_or_path)

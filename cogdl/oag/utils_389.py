@@ -212,110 +212,110 @@ def get_argument_parser():
     return parser
 
 
-def is_time_to_exit(args, epoch_steps=0, global_steps=0):
-    return (epoch_steps >= args.max_steps_per_epoch) or \
-            (global_steps >= args.max_steps)
+# def is_time_to_exit(args, epoch_steps=0, global_steps=0):
+#     return (epoch_steps >= args.max_steps_per_epoch) or \
+#             (global_steps >= args.max_steps)
 
-import os
-from termcolor import colored
-import h5py
-from transformers import BertTokenizerFast
-import re
-tokenizer = BertTokenizerFast.from_pretrained('/mnt/V2OAG/models/oagbert_v1/model')
+# import os
+# from termcolor import colored
+# import h5py
+# from transformers import BertTokenizerFast
+# import re
+# tokenizer = BertTokenizerFast.from_pretrained('/mnt/V2OAG/models/oagbert_v1/model')
 
-def print_instance(batch, predictions=None, _tokenizer=None, prediction_scores=None):
-    if _tokenizer is None:
-        _tokenizer = tokenizer
-    token_type_str_lookup = ['TEXT', 'AUTHOR', 'VENUE', 'AFF', 'FOS']
-    COLORS = ['white', 'green', 'blue', 'red', 'yellow']
-    try:
-        (termwidth, termheight) = os.get_terminal_size()
-    except:
-        termwidth, termheight = 200, 100
-    input_ids = batch[1]
-    token_type_ids = batch[3]
-    input_mask = batch[2]
-    masked_lm_labels = batch[4]
-    position_ids = batch[5]
-    position_ids_second = batch[6]
-    inputs = {
-        'input_ids': batch[1][0].cpu().detach().numpy(),
-        'input_mask': batch[2][0].cpu().detach().numpy(),
-        'token_type_ids': batch[3][0].cpu().detach().numpy(),
-        'masked_lm_labels': batch[4][0].cpu().detach().numpy(),
-        'position_ids': batch[5][0].cpu().detach().numpy(),
-        'position_ids_second': batch[6][0].cpu().detach().numpy(),
-        'predictions': predictions.cpu().detach().numpy() if predictions is not None else None
-    }
-    K = inputs['predictions'].shape[1] if predictions is not None else 0
-    input_ids = [token_id for i, token_id in enumerate(inputs['input_ids']) if inputs['input_mask'][i].sum() > 0]
-    position_ids = [position_id for i, position_id in enumerate(inputs['position_ids']) if inputs['input_mask'][i].sum() > 0]
-    position_ids_second = [position_id for i, position_id in enumerate(inputs['position_ids_second']) if inputs['input_mask'][i].sum() > 0]
-    token_type_ids = [token_type_id for i, token_type_id in enumerate(inputs['token_type_ids']) if inputs['input_mask'][i].sum() > 0]
-    masks = [0 for i in inputs['input_ids']]
-    prediction_topks = [[0 for i in inputs['input_ids']] for _ in range(K)]
-    mask_indices = []
-    for lm_pos, lm_id in enumerate(inputs['masked_lm_labels']):
-        if lm_id < 0:
-            continue
-        masks[lm_pos] = lm_id
-        mask_indices.append(lm_pos)
-    for k in range(K):
-        for lm_pos, token_id in zip(mask_indices, inputs['predictions'][:,k]):
-            prediction_topks[k][lm_pos] = token_id
-    input_tokens = _tokenizer.convert_ids_to_tokens(input_ids)
-    masks_tokens = _tokenizer.convert_ids_to_tokens(masks)
-    prediction_tokens = [_tokenizer.convert_ids_to_tokens(prediction_topks[k]) for k in range(K)]
-    if prediction_scores is not None:
-        for k in range(K):
-            _idx = 0
-            for _i, tok in enumerate(prediction_tokens[k]):
-                if tok != '[PAD]':
-                    prediction_tokens[k][_i] += '(%.4f)' % torch.exp(prediction_scores[_idx][k])
-                    _idx += 1
-    input_tokens_str = ['']
-    position_ids_str = ['']
-    position_ids_second_str = ['']
-    token_type_ids_str = ['']
-    masks_str = ['']
-    prediction_topk_strs = [[''] for _ in range(K)]
-    current_length = 0
-    for pos, (input_token, position_id, position_id_second, token_type_id, mask) in enumerate(zip(input_tokens, position_ids, position_ids_second, token_type_ids, masks_tokens)):
-        token_type = token_type_str_lookup[token_type_id]
-        length = max(len(input_token) + 1, 7, len(token_type) + 1, len(mask) + 1, *[len(prediction_tokens[k][pos]) + 1 for k in range(K)])
-        if current_length + length > termwidth:
-            current_length = 0
-            input_tokens_str.append('')
-            position_ids_str.append('')
-            position_ids_second_str.append('')
-            token_type_ids_str.append('')
-            masks_str.append('')
-            for k in range(K):
-                prediction_topk_strs[k].append('')
-        current_length += length
-        input_tokens_str[-1] += colored(input_token.rjust(length), COLORS[token_type_id])
-        position_ids_str[-1] += str(position_id).rjust(length)
-        position_ids_second_str[-1] += str(position_id_second).rjust(length)
-        token_type_ids_str[-1] += token_type.rjust(length)
-        masks_str[-1] += colored(mask.rjust(length) if mask != '[PAD]' else ''.rjust(length), COLORS[token_type_id])
-        for k in range(K):
-            v = prediction_tokens[k][pos] if prediction_tokens[k][pos] != '[PAD]' else ''
-            prediction_topk_strs[k][-1] += colored(v.rjust(length), 'magenta' if v != mask and mask != '[CLS]' else 'cyan')
+# def print_instance(batch, predictions=None, _tokenizer=None, prediction_scores=None):
+#     if _tokenizer is None:
+#         _tokenizer = tokenizer
+#     token_type_str_lookup = ['TEXT', 'AUTHOR', 'VENUE', 'AFF', 'FOS']
+#     COLORS = ['white', 'green', 'blue', 'red', 'yellow']
+#     try:
+#         (termwidth, termheight) = os.get_terminal_size()
+#     except:
+#         termwidth, termheight = 200, 100
+#     input_ids = batch[1]
+#     token_type_ids = batch[3]
+#     input_mask = batch[2]
+#     masked_lm_labels = batch[4]
+#     position_ids = batch[5]
+#     position_ids_second = batch[6]
+#     inputs = {
+#         'input_ids': batch[1][0].cpu().detach().numpy(),
+#         'input_mask': batch[2][0].cpu().detach().numpy(),
+#         'token_type_ids': batch[3][0].cpu().detach().numpy(),
+#         'masked_lm_labels': batch[4][0].cpu().detach().numpy(),
+#         'position_ids': batch[5][0].cpu().detach().numpy(),
+#         'position_ids_second': batch[6][0].cpu().detach().numpy(),
+#         'predictions': predictions.cpu().detach().numpy() if predictions is not None else None
+#     }
+#     K = inputs['predictions'].shape[1] if predictions is not None else 0
+#     input_ids = [token_id for i, token_id in enumerate(inputs['input_ids']) if inputs['input_mask'][i].sum() > 0]
+#     position_ids = [position_id for i, position_id in enumerate(inputs['position_ids']) if inputs['input_mask'][i].sum() > 0]
+#     position_ids_second = [position_id for i, position_id in enumerate(inputs['position_ids_second']) if inputs['input_mask'][i].sum() > 0]
+#     token_type_ids = [token_type_id for i, token_type_id in enumerate(inputs['token_type_ids']) if inputs['input_mask'][i].sum() > 0]
+#     masks = [0 for i in inputs['input_ids']]
+#     prediction_topks = [[0 for i in inputs['input_ids']] for _ in range(K)]
+#     mask_indices = []
+#     for lm_pos, lm_id in enumerate(inputs['masked_lm_labels']):
+#         if lm_id < 0:
+#             continue
+#         masks[lm_pos] = lm_id
+#         mask_indices.append(lm_pos)
+#     for k in range(K):
+#         for lm_pos, token_id in zip(mask_indices, inputs['predictions'][:,k]):
+#             prediction_topks[k][lm_pos] = token_id
+#     input_tokens = _tokenizer.convert_ids_to_tokens(input_ids)
+#     masks_tokens = _tokenizer.convert_ids_to_tokens(masks)
+#     prediction_tokens = [_tokenizer.convert_ids_to_tokens(prediction_topks[k]) for k in range(K)]
+#     if prediction_scores is not None:
+#         for k in range(K):
+#             _idx = 0
+#             for _i, tok in enumerate(prediction_tokens[k]):
+#                 if tok != '[PAD]':
+#                     prediction_tokens[k][_i] += '(%.4f)' % torch.exp(prediction_scores[_idx][k])
+#                     _idx += 1
+#     input_tokens_str = ['']
+#     position_ids_str = ['']
+#     position_ids_second_str = ['']
+#     token_type_ids_str = ['']
+#     masks_str = ['']
+#     prediction_topk_strs = [[''] for _ in range(K)]
+#     current_length = 0
+#     for pos, (input_token, position_id, position_id_second, token_type_id, mask) in enumerate(zip(input_tokens, position_ids, position_ids_second, token_type_ids, masks_tokens)):
+#         token_type = token_type_str_lookup[token_type_id]
+#         length = max(len(input_token) + 1, 7, len(token_type) + 1, len(mask) + 1, *[len(prediction_tokens[k][pos]) + 1 for k in range(K)])
+#         if current_length + length > termwidth:
+#             current_length = 0
+#             input_tokens_str.append('')
+#             position_ids_str.append('')
+#             position_ids_second_str.append('')
+#             token_type_ids_str.append('')
+#             masks_str.append('')
+#             for k in range(K):
+#                 prediction_topk_strs[k].append('')
+#         current_length += length
+#         input_tokens_str[-1] += colored(input_token.rjust(length), COLORS[token_type_id])
+#         position_ids_str[-1] += str(position_id).rjust(length)
+#         position_ids_second_str[-1] += str(position_id_second).rjust(length)
+#         token_type_ids_str[-1] += token_type.rjust(length)
+#         masks_str[-1] += colored(mask.rjust(length) if mask != '[PAD]' else ''.rjust(length), COLORS[token_type_id])
+#         for k in range(K):
+#             v = prediction_tokens[k][pos] if prediction_tokens[k][pos] != '[PAD]' else ''
+#             prediction_topk_strs[k][-1] += colored(v.rjust(length), 'magenta' if v != mask and mask != '[CLS]' else 'cyan')
 
-    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-    size = len(masks_str)
-    for i in range(size):
-        print()
-        print(input_tokens_str[i])
-        print(position_ids_str[i])
-        print(position_ids_second_str[i])
-        print(token_type_ids_str[i])
-        if ansi_escape.sub('', masks_str[i]).strip() != '':
-            print(masks_str[i])
-        for k in range(K):
-            if ansi_escape.sub('', prediction_topk_strs[k][i]).strip() != '':
-                print(prediction_topk_strs[k][i])
-        print('-' * termwidth)
+#     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+#     size = len(masks_str)
+#     for i in range(size):
+#         print()
+#         print(input_tokens_str[i])
+#         print(position_ids_str[i])
+#         print(position_ids_second_str[i])
+#         print(token_type_ids_str[i])
+#         if ansi_escape.sub('', masks_str[i]).strip() != '':
+#             print(masks_str[i])
+#         for k in range(K):
+#             if ansi_escape.sub('', prediction_topk_strs[k][i]).strip() != '':
+#                 print(prediction_topk_strs[k][i])
+#         print('-' * termwidth)
 
 
 

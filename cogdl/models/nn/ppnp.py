@@ -80,6 +80,7 @@ class PPNP(BaseModel):
             preds = local_preds
             with graph.local_graph("edge_weight"):
                 graph.edge_weight = F.dropout(graph.edge_weight, p=self.dropout, training=self.training)
+                graph.set_symmetric()
                 for _ in range(self.niter):
                     new_features = spmm(graph, preds)
                     preds = (1 - self.alpha) * new_features + self.alpha * local_preds

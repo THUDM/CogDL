@@ -58,7 +58,10 @@ class SPMMFunction(torch.autograd.Function):
         rowptr, colind, feat, edge_weight_csr, sym = ctx.backward_csc
         if edge_weight_csr is not None:
             grad_out = grad_out.contiguous()
-            colptr, rowind, edge_weight_csc = spmm.csr2csc(rowptr, colind, edge_weight_csr)
+            if sym:
+                colptr, rowind, edge_weight_csc = rowptr, colind, edge_weight_csr
+            else:
+                colptr, rowind, edge_weight_csc = spmm.csr2csc(rowptr, colind, edge_weight_csr)
             grad_feat = spmm.csr_spmm(colptr, rowind, edge_weight_csc, grad_out)
             grad_edge_weight = sddmm.csr_sddmm(rowptr, colind, grad_out, feat)
         else:

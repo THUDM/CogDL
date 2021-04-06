@@ -10,8 +10,9 @@ from cogdl.data import Dataset
 from cogdl.data.sampler import NodeSampler, EdgeSampler, RWSampler, MRWSampler, NeighborSampler, ClusteredLoader
 from cogdl.models.supervised_model import SupervisedModel
 from cogdl.trainers.base_trainer import BaseTrainer
-from cogdl.utils import add_remaining_self_loops
 from . import register_trainer
+
+from line_profiler import LineProfiler
 
 
 class SampledTrainer(BaseTrainer):
@@ -47,8 +48,14 @@ class SampledTrainer(BaseTrainer):
         max_score = 0
         min_loss = np.inf
         best_model = copy.deepcopy(self.model)
+
+        # lp = LineProfiler()
+        # lp_wrapper = lp(self._train_step)
+
         for epoch in epoch_iter:
             self._train_step()
+            # lp_wrapper()
+            # lp.print_stats()
             if (epoch + 1) % self.eval_step == 0:
                 acc, loss = self._test_step()
                 train_acc = acc["train"]
@@ -208,13 +215,16 @@ class NeighborSamplingTrainer(SampledTrainer):
         self.loss_fn = dataset.get_loss_fn()
 
         self.data.train()
+
         self.train_loader = NeighborSampler(
             data=self.data,
             mask=self.data.train_mask,
             sizes=self.sample_size,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            shuffle=True,
+            shuffle=False,
+            persistent_workers=True,
+            pin_memory=True,
         )
         self.data.eval()
         self.test_loader = NeighborSampler(
@@ -222,7 +232,10 @@ class NeighborSamplingTrainer(SampledTrainer):
             mask=None,
             sizes=[-1],
             batch_size=self.batch_size * 10,
+            num_workers=self.num_workers,
             shuffle=False,
+            persistent_workers=True,
+            pin_memory=True,
         )
         self.model = model.to(self.device)
         self.model.set_data_device(self.device)
@@ -235,10 +248,18 @@ class NeighborSamplingTrainer(SampledTrainer):
     def _train_step(self):
         self.data.train()
         self.model.train()
+        self.train_loader.shuffle()
+
+        x_all = self.data.x.to(self.device)
+        y_all = self.data.y.to(self.device)
+
         for target_id, n_id, adjs in self.train_loader:
             self.optimizer.zero_grad()
-            x_src = self.data.x[n_id].to(self.device)
-            y = self.data.y[target_id].to(self.device)
+            n_id = n_id.numpy()
+            target_id = target_id.numpy()
+            x_src = x_all[n_id].to(self.device)
+
+            y = y_all[target_id].to(self.device)
             loss = self.model.node_classification_loss(x_src, adjs, y)
             loss.backward()
             self.optimizer.step()

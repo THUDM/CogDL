@@ -324,21 +324,50 @@ class LayerSampler(Sampler):
 
 
 class NeighborSampler(torch.utils.data.DataLoader):
-    def __init__(self, data, sizes: List[int], mask=None, train=True, **kwargs):
-        self.data = data
-        self.sizes = sizes
-        node_idx = np.arange(0, data.x.shape[0])
-        self.train = train
-        if mask is not None:
-            node_idx = node_idx[mask]
-        node_idx = node_idx.tolist()
-        super(NeighborSampler, self).__init__(node_idx, collate_fn=self.sample, **kwargs)
+    def __init__(self, data, sizes: List[int], mask=None, **kwargs):
+        if "batch_size" in kwargs:
+            batch_size = kwargs["batch_size"]
+        else:
+            batch_size = 8
+        self.dataset = NeighborSamplerDataset(data, sizes, batch_size, mask)
+        kwargs["batch_size"] = 1
+        kwargs["shuffle"] = False
+        kwargs["collate_fn"] = NeighborSampler.batcher
+        super(NeighborSampler, self).__init__(dataset=self.dataset, **kwargs)
 
-    def sample(self, batch):
+    @staticmethod
+    def batcher(data):
+        return data[0]
+
+    def shuffle(self):
+        self.dataset.shuffle_()
+
+
+class NeighborSamplerDataset(torch.utils.data.Dataset):
+    def __init__(self, data, sizes: List[int], batch_size: int, mask=None):
+        super(NeighborSamplerDataset, self).__init__()
+        self.data = data
+        self.x = data.x
+        self.y = data.y
+        self.sizes = sizes
+        self.batch_size = batch_size
+        self.node_idx = torch.arange(0, data.x.shape[0], dtype=torch.long)
+        if mask is not None:
+            self.node_idx = self.node_idx[mask]
+        self.num_nodes = self.node_idx.shape[0]
+
+    def shuffle_(self):
+        idx = torch.randperm(self.num_nodes)
+        self.node_idx = self.node_idx[idx]
+
+    def __len__(self):
+        return (self.num_nodes - 1) // self.batch_size + 1
+
+    def __getitem__(self, idx):
         """
             Sample a subgraph with neighborhood sampling
         Args:
-            batch: torch.Tensor / np.array
+            idx: torch.Tensor / np.array
                 Target nodes
         Returns:
             if `size` is `[-1,]`,
@@ -354,13 +383,15 @@ class NeighborSampler(torch.utils.data.DataLoader):
                     sampled_adjs: List[Tuple(Tensor, Tensor, Tuple[int]]
                 )
         """
-        node_id = torch.tensor(batch, dtype=torch.long)
+        batch = self.node_idx[idx * self.batch_size : (idx + 1) * self.batch_size]
+        node_id = batch
         adj_list = []
         for size in self.sizes:
             src_id, graph = self.data.sample_adj(node_id, size, replace=False)
             size = (len(src_id), len(node_id))
             adj_list.append((src_id, graph, size))  # src_id, graph, (src_size, target_size)
             node_id = src_id
+
         if self.sizes == [-1]:
             src_id, graph, _ = adj_list[0]
             size = (len(src_id), len(batch))

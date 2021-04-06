@@ -14,7 +14,7 @@ import torch
 import torch.nn.functional as F
 from tabulate import tabulate
 
-from cogdl.operators.operators import coo2csr_cpu, coo2csr_cpu_index
+from cogdl.operators.graph_ops import coo2csr_cpu, coo2csr_cpu_index
 
 
 class ArgClass(object):
@@ -222,7 +222,7 @@ _cache = dict()
 def initialize_spmm(args):
     if hasattr(args, "fast_spmm") and args.fast_spmm is True:
         try:
-            from cogdl.operators.operators import csrspmm
+            from cogdl.operators.spmm_ops import csrspmm
 
             global fast_spmm
             fast_spmm = csrspmm
@@ -238,13 +238,7 @@ def spmm(graph, x):
     if fast_spmm is not None and str(x.device) != "cpu":
         row_ptr, col_indices = graph.row_indptr, graph.col_indices
         csr_data = graph.edge_weight
-        if graph.is_symmetric():
-            col_ptr, row_indices, csc_data = row_ptr.clone(), col_indices.clone(), csr_data.clone()
-        else:
-            col_ptr, row_indices, csc_data = csc_from_csr(row_ptr, col_indices, csr_data)
-        x = fast_spmm(
-            row_ptr.int(), col_indices.int(), col_ptr.int(), row_indices.int(), x, csr_data.contiguous(), sym=True
-        )
+        x = fast_spmm(row_ptr.int(), col_indices.int(), x, csr_data.contiguous(), graph.is_symmetric())
     elif graph.edge_weight.requires_grad:
         x = spmm_scatter(graph.edge_index, graph.edge_weight, x)
     else:
@@ -396,32 +390,6 @@ def csr2coo(indptr, indices, data):
     row_count = indptr[1:] - indptr[:-1]
     row = row.repeat_interleave(row_count)
     return row, indices, data
-
-
-# def naive_spspmm(edge_index1, value1, edge_index2, value2, shape):
-#     if isinstance(edge_index1, torch.Tensor):
-#         row1, col1 = edge_index1.cpu().numpy()
-#         value1 = value1.cpu().numpy()
-#     else:
-#         row1, col1 = edge_index1
-#     if isinstance(edge_index2, torch.Tensor):
-#         row2, col2 = edge_index2.cpu().numpy()
-#         value2 = value2.cpu().numpy()
-#     else:
-#         row2, col2 = edge_index2
-#     adj1 = sp.csr_matrix((value1, (row1, col1)), shape=shape)
-#     adj2 = sp.csc_matrix((value2, (row2, col2)), shape=shape)
-#     indptr1 = adj1.indptr
-#     indices1 = adj1.indices
-#
-#     indptr2 = adj2.indptr
-#     indices2 = adj2.indices
-#
-#     result = _naive_spspmm(indptr1, indices1, indptr2, indices2)
-#
-#
-# @numba.njit
-# def _naive_spspmm(indptr_row, indices_row, indptr_col, indices_col):
 
 
 def get_degrees(indices, num_nodes=None):

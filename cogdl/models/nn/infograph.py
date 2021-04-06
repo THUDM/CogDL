@@ -6,8 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .mlp import MLP
-from .gin import GINLayer
-from cogdl.data import DataLoader
+from .gin import GINLayer, split_dataset_general
 from cogdl.utils import batch_mean_pooling, batch_sum_pooling
 from .. import BaseModel, register_model
 
@@ -50,12 +49,13 @@ class Encoder(nn.Module):
         else:
             raise NotImplementedError
 
-    def forward(self, x, edge_index, batch, *args):
+    def forward(self, graph, x=None, *args):
+        batch = graph.batch
         if x is None:
             x = torch.ones((batch.shape[0], 1)).to(batch.device)
         layer_rep = []
         for i in range(self.num_layers):
-            x = F.relu(self.bn_layers[i](self.gnn_layers[i](x, edge_index)))
+            x = F.relu(self.bn_layers[i](self.gnn_layers[i](graph, x)))
             layer_rep.append(x)
 
         pooled_rep = [self.pooling(h, batch) for h in layer_rep]
@@ -123,27 +123,7 @@ class InfoGraph(BaseModel):
 
     @classmethod
     def split_dataset(cls, dataset, args):
-        if args.dataset == "qm9":
-            test_dataset = dataset[:10000]
-            val_dataset = dataset[10000:20000]
-            train_dataset = dataset[20000 : 20000 + args.train_num]
-            return (
-                DataLoader(train_dataset, batch_size=args.batch_size),
-                DataLoader(val_dataset, batch_size=args.batch_size),
-                DataLoader(test_dataset, batch_size=args.batch_size),
-            )
-        else:
-            random.shuffle(dataset)
-            train_size = int(len(dataset) * args.train_ratio)
-            test_size = int(len(dataset) * args.test_ratio)
-            bs = args.batch_size
-            train_loader = DataLoader(dataset[:train_size], batch_size=bs)
-            test_loader = DataLoader(dataset[-test_size:], batch_size=bs)
-            if args.train_ratio + args.test_ratio < 1:
-                valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
-            else:
-                valid_loader = test_loader
-            return train_loader, valid_loader, test_loader
+        return split_dataset_general(dataset, args)
 
     def __init__(self, in_feats, hidden_dim, out_feats, num_layers=3, sup=False):
         super(InfoGraph, self).__init__()
@@ -175,28 +155,28 @@ class InfoGraph(BaseModel):
 
     def forward(self, batch):
         if self.sup:
-            return self.sup_forward(batch.x, batch.edge_index, batch.batch, batch.y, batch.edge_attr)
+            return self.sup_forward(batch, batch.x)
         else:
-            return self.unsup_forward(batch.x, batch.edge_index, batch.batch)
+            return self.unsup_forward(batch, batch.x)
 
     def graph_classification_loss(self, batch):
         if self.sup:
-            pred = self.sup_forward(batch.x, batch.edge_index, batch.batch, batch.y, batch.edge_attr)
+            pred = self.sup_forward(batch, batch.x)
             loss = self.sup_loss(pred, batch)
         else:
-            graph_feat, node_feat = self.unsup_forward(batch.x, batch.edge_index, batch.batch)
+            graph_feat, node_feat = self.unsup_forward(batch, batch.x)
             loss = self.unsup_loss(graph_feat, node_feat, batch.batch)
         return loss
 
-    def sup_forward(self, x, edge_index=None, batch=None, label=None, edge_attr=None):
-        node_feat, graph_feat = self.sem_encoder(x, edge_index, batch, edge_attr)
+    def sup_forward(self, batch, x):
+        node_feat, graph_feat = self.sem_encoder(batch, x)
         node_feat = F.relu(self.sem_fc1(node_feat))
         node_feat = self.sem_fc2(node_feat)
         return node_feat
 
-    def unsup_forward(self, x, edge_index=None, batch=None):
+    def unsup_forward(self, batch, x):
         # return self.unsup_loss(x, edge_index, batch)
-        graph_feat, node_feat = self.unsup_encoder(x, edge_index, batch)
+        graph_feat, node_feat = self.unsup_encoder(batch, x)
         if self.training:
             return graph_feat, node_feat
         else:
@@ -206,7 +186,7 @@ class InfoGraph(BaseModel):
         pred = F.softmax(pred, dim=1)
         loss = self.criterion(pred, batch)
         loss += self.unsup_loss(batch.x, batch.edge_index, batch.batch)[1]
-        loss += self.unsup_sup_loss(batch.x, batch.edge_index, batch.batch)
+        loss += self.unsup_sup_loss(batch, batch.x)
         return loss
 
     def unsup_loss(self, graph_feat, node_feat, batch):
@@ -225,9 +205,9 @@ class InfoGraph(BaseModel):
         loss = InfoGraph.mi_loss(pos_mask, neg_mask, glob_local_mi, num_nodes, num_nodes * (num_graphs - 1))
         return loss
 
-    def unsup_sup_loss(self, x, edge_index, batch):
-        sem_g_feat, _ = self.sem_encoder(x, edge_index, batch)
-        un_g_feat, _ = self.unsup_encoder(x, edge_index, batch)
+    def unsup_sup_loss(self, batch, x):
+        sem_g_feat, _ = self.sem_encoder(batch, x)
+        un_g_feat, _ = self.unsup_encoder(batch, x)
 
         sem_encode = self._fc1(sem_g_feat)
         un_encode = self._fc2(un_g_feat)

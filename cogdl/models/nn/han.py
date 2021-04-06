@@ -25,10 +25,13 @@ class HANLayer(nn.Module):
             self.gat_layer.append(GATLayer(w_in, w_out // 8, 8))
         self.att_layer = AttentionLayer(w_out)
 
-    def forward(self, x, adj):
+    def forward(self, graph, x):
+        adj = graph.adj
         output = []
-        for i, edge in enumerate(adj):
-            output.append(self.gat_layer[i](x, edge[0]))
+        with graph.local_graph():
+            for i, edge in enumerate(adj):
+                graph.edge_index = edge[0]
+                output.append(self.gat_layer[i](graph, x))
         output = torch.stack(output, dim=1)
 
         return self.att_layer(output)
@@ -78,19 +81,20 @@ class HAN(BaseModel):
         self.cross_entropy_loss = nn.CrossEntropyLoss()
         self.linear = nn.Linear(self.w_out, self.num_class)
 
-    def forward(self, A, X, target_x, target):
+    def forward(self, graph, target_x, target):
+        X = graph.x
         for i in range(self.num_layers):
-            X = self.layers[i](X, A)
+            X = self.layers[i](graph, X)
 
         y = self.linear(X[target_x])
         loss = self.cross_entropy_loss(y, target)
         return loss, y
 
     def loss(self, data):
-        loss, y = self.forward(data.adj, data.x, data.train_node, data.train_target)
+        loss, y = self.forward(data, data.train_node, data.train_target)
         return loss
 
     def evaluate(self, data, nodes, targets):
-        loss, y = self.forward(data.adj, data.x, nodes, targets)
+        loss, y = self.forward(data, nodes, targets)
         f1 = accuracy(y, targets)
         return loss.item(), f1

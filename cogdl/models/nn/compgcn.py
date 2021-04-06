@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from cogdl.data import Graph
 from cogdl.utils import row_normalization
 from cogdl.layers.link_prediction_module import GNNLinkPredict, sampling_edge_uniform, cal_mrr
 from .. import BaseModel, register_model
@@ -100,10 +101,13 @@ class CompGCNLayer(nn.Module):
         nn.init.xavier_normal_(weight.data)
         return weight
 
-    def forward(self, x, edge_index, edge_type, rel_embed=None):
+    # def forward(self, x, edge_index, edge_type, rel_embed=None):
+    def forward(self, graph, x, rel_embed):
         device = x.device
         if self.use_bases:
             rel_embed = self.basis_weight()
+        edge_index = graph.edge_index
+        edge_type = graph.edge_attr
         rel_embed = torch.cat((rel_embed, self.loop_rel), dim=0)
         num_edges = edge_index.shape[1] // 2
         num_entities = x.shape[0]
@@ -205,11 +209,11 @@ class CompGCN(nn.Module):
                 )
             )
 
-    def forward(self, x, edge_index, edge_types):
+    def forward(self, graph, x):
         rel_embed = self.init_rel.weight
         node_embed = x
         for layer in self.convs:
-            node_embed, rel_embed = layer(node_embed, edge_index, edge_types, rel_embed)
+            node_embed, rel_embed = layer(graph, node_embed, rel_embed)
         return node_embed, rel_embed
 
 
@@ -279,15 +283,18 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
         edge_types = torch.cat([edge_types, edge_types_rev])
         return edge_index, edge_types
 
-    def forward(self, edge_index, edge_types):
+    def forward(self, graph):
+        edge_index = graph.edge_index
         # edge_index, edge_types = self.add_reverse_edges(edge_index, edge_types)
         reindexed_node, reindexed_edge_index = torch.unique(edge_index, return_inverse=True, sorted=True)
         self.cache_index = reindexed_node
         node_embed = self.emb(reindexed_node)
-        node_embed, rel_embed = self.model(node_embed, reindexed_edge_index, edge_types)
+        with graph.local_graph():
+            graph.edge_index = reindexed_edge_index
+            node_embed, rel_embed = self.model(graph, node_embed)
         return node_embed, rel_embed
 
-    def loss(self, data, split="train"):
+    def loss(self, data: Graph, split="train"):
         if split == "train":
             mask = data.train_mask
         elif split == "val":
@@ -306,7 +313,10 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
             label_smoothing=self.lbl_smooth,
             num_entities=self.num_entities,
         )
-        node_embed, rel_embed = self.forward(batch_edges, batch_attr)
+        with data.local_graph():
+            data.edge_index = batch_edges
+            data.edge_attr = batch_attr
+            node_embed, rel_embed = self.forward(data)
 
         sampled_nodes, reindexed_edges = torch.unique(samples, sorted=True, return_inverse=True)
         assert (self.cache_index == sampled_nodes).any()
@@ -321,11 +331,13 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
         # loss_r = self.penalty * self._regularization([self.emb(sampled_nodes), rel_embed])
         # return loss_n + loss_r
 
-    def predict(self, edge_index, edge_types):
-        indices = torch.arange(0, self.num_entities).to(edge_index.device)
+    def predict(self, graph):
+        device = next(self.parameters()).device
+        indices = torch.arange(0, self.num_entities).to(device)
         x = self.emb(indices)
         # edge_index, edge_types = self.add_reverse_edges(edge_index, edge_types)
-        node_embed, rel_embed = self.model(x, edge_index, edge_types)
+        node_embed, rel_embed = self.model(graph, x)
+        edge_index, edge_types = graph.edge_index, graph.edge_attr
         mrr, hits = cal_mrr(
             node_embed,
             rel_embed,

@@ -1,11 +1,10 @@
 import argparse
 import copy
 import os
-from collections import defaultdict
 
 import numpy as np
 import torch
-from cogdl.data import Data, DataLoader
+from cogdl.data import Graph, DataLoader
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from sklearn.metrics import f1_score
@@ -43,7 +42,7 @@ class UnsupervisedGraphClassification(BaseTask):
         else:
             self.label = np.array([data.y for data in dataset])
             self.data = [
-                Data(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr, pos=data.pos).apply(
+                Graph(x=data.x, y=data.y, edge_index=data.edge_index, edge_attr=data.edge_attr).apply(
                     lambda x: x.to(self.device)
                 )
                 for data in dataset

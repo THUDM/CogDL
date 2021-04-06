@@ -78,20 +78,23 @@ class SAGE(BaseModel):
         self.convs = nn.ModuleList([GraphSAGELayer(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
         self.random_walker = RandomWalker()
 
-    def forward(self, x, edge_index):
+    def forward(self, graph):
+        x = graph.x
         for i in range(self.num_layers):
-            edge_index_sp = self.sampling(edge_index, self.sample_size[i]).to(x.device)
-            x = self.convs[i](x, edge_index_sp)
-            if i != self.num_layers - 1:
-                x = F.relu(x)
-                x = F.dropout(x, p=self.dropout, training=self.training)
+            edge_index_sp = self.sampling(graph.edge_index, self.sample_size[i]).to(x.device)
+            with graph.local_graph():
+                graph.edge_index = edge_index_sp
+                x = self.convs[i](graph, x)
+                if i != self.num_layers - 1:
+                    x = F.relu(x)
+                    x = F.dropout(x, p=self.dropout, training=self.training)
         return x
 
     def node_classification_loss(self, data):
         return self.loss(data)
 
     def loss(self, data):
-        x = self.forward(data.x, data.edge_index)
+        x = self.forward(data)
         device = x.device
 
         self.random_walker.build_up(data.edge_index, data.x.shape[0])
@@ -119,7 +122,7 @@ class SAGE(BaseModel):
         return (pos_loss + neg_loss) / 2
 
     def embed(self, data):
-        emb = self.forward(data.x, data.edge_index)
+        emb = self.forward(data)
         return emb
 
     def sampling(self, edge_index, num_sample):

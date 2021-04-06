@@ -14,17 +14,18 @@ class Test_Data(object):
 
     def test_subgraph_sampling(self):
         sampled_nodes = np.random.randint(0, self.num_nodes, (100,))
+        sampled_nodes = np.unique(sampled_nodes)
         subgraph = self.data.subgraph(sampled_nodes)
         assert subgraph.x.shape[0] == len(set(sampled_nodes))
         assert subgraph.x.shape[1] == self.data.x.shape[1]
 
     def test_edge_subgraph_sampling(self):
         sampled_edges = np.random.randint(0, self.num_edges, (200,))
-        subgraph = self.data.edge_subgraph(sampled_edges)
+        subgraph = self.data.edge_subgraph(sampled_edges, require_idx=False)
         assert subgraph.edge_index.shape == (2, len(sampled_edges))
 
     def test_adj_sampling(self):
-        sampled_nodes = np.random.randint(0, self.num_nodes, (10,))
+        sampled_nodes = np.arange(0, 10)
         edge_index = self.data.edge_index.t().cpu().numpy()
         edge_index = [tuple(x) for x in edge_index]
         print(np.array(edge_index).shape)

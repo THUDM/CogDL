@@ -9,7 +9,7 @@ from cogdl.layers import MeanAggregator, SumAggregator
 from cogdl.trainers.sampled_trainer import NeighborSamplingTrainer
 
 from .. import BaseModel, register_model
-from cogdl.data import Data
+from cogdl.data import Graph
 
 
 def sage_sampler(adjlist, edge_index, num_sample):
@@ -45,15 +45,8 @@ class GraphSAGELayer(nn.Module):
         else:
             raise NotImplementedError
 
-    def forward(self, x, edge_index, edge_weight=None):
-        if edge_weight is None:
-            edge_weight = torch.ones(edge_index.shape[1]).float().to(x.device)
-        adj_sp = torch.sparse_coo_tensor(
-            indices=edge_index,
-            values=edge_weight,
-            size=(x.shape[0], x.shape[0]),
-        ).to(x.device)
-        out = self.aggr(x, adj_sp)
+    def forward(self, graph, x):
+        out = self.aggr(graph, x)
         if self.normalize:
             out = F.normalize(out, p=2.0, dim=-1)
         return out
@@ -99,10 +92,13 @@ class Graphsage(BaseModel):
         shapes = [num_features] + hidden_size + [num_classes]
         self.convs = nn.ModuleList([GraphSAGELayer(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
 
-    def mini_forward(self, x, edge_index):
+    def mini_forward(self, graph):
+        x = graph.x
         for i in range(self.num_layers):
-            edge_index_sp = self.sampling(edge_index, self.sample_size[i]).to(x.device)
-            x = self.convs[i](x, edge_index_sp)
+            edge_index_sp = self.sampling(graph.edge_index, self.sample_size[i]).to(x.device)
+            with graph.local_graph():
+                graph.edge_index = edge_index_sp
+                x = self.convs[i](graph, x)
             if i != self.num_layers - 1:
                 x = F.relu(x)
                 x = F.dropout(x, p=self.dropout, training=self.training)
@@ -110,30 +106,29 @@ class Graphsage(BaseModel):
 
     def mini_loss(self, data):
         return self.loss_fn(
-            self.mini_forward(data.x, data.edge_index)[data.train_mask],
+            self.mini_forward(data)[data.train_mask],
             data.y[data.train_mask],
         )
 
     def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+        return self.forward(data)
 
     def forward(self, *args):
-        assert len(args) == 2
-        if isinstance(args[1], torch.Tensor):
+        if isinstance(args[0], Graph):
             return self.mini_forward(*args)
         else:
             x, adjs = args
-            for i, (src_id, edge_index, size) in enumerate(adjs):
-                edge_index = edge_index.to(self.device)
-                output = self.convs[i](x, edge_index)
-                x = output[0 : size[1]]
+            for i, (src_id, graph, size) in enumerate(adjs):
+                graph = graph.to(self.device)
+                output = self.convs[i](graph, x)
+                x = output[: size[1]]
                 if i != self.num_layers - 1:
                     x = F.relu(x)
                     x = F.dropout(x, p=self.dropout, training=self.training)
             return x
 
     def node_classification_loss(self, *args):
-        if isinstance(args[0], Data):
+        if isinstance(args[0], Graph):
             return self.mini_loss(*args)
         else:
             x, adjs, y = args
@@ -143,10 +138,10 @@ class Graphsage(BaseModel):
     def inference(self, x_all, data_loader):
         for i in range(len(self.convs)):
             output = []
-            for src_id, edge_index, size in data_loader:
+            for src_id, graph, size in data_loader:
                 x = x_all[src_id].to(self.device)
-                edge_index = edge_index.to(self.device)
-                x = self.convs[i](x, edge_index)
+                graph = graph.to(self.device)
+                x = self.convs[i](graph, x)
                 x = x[: size[1]]
                 if i != self.num_layers - 1:
                     x = F.relu(x)
@@ -156,7 +151,7 @@ class Graphsage(BaseModel):
 
     @staticmethod
     def get_trainer(task: Any, args: Any):
-        if args.dataset not in ["cora", "citeseer"]:
+        if args.dataset not in ["cora", "citeseer", "pubmed"]:
             return NeighborSamplingTrainer
         if hasattr(args, "use_trainer"):
             return NeighborSamplingTrainer

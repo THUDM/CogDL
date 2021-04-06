@@ -18,16 +18,16 @@ class DAEGCTrainer(BaseTrainer):
         self.gamma = args.gamma
         self.device = args.device_id[0] if not args.cpu else "cpu"
 
-    @staticmethod
-    def build_trainer_from_args(args):
-        pass
+    @classmethod
+    def build_trainer_from_args(cls, args):
+        return cls(args)
 
     def fit(self, model, data):
         # edge_index_2hop = model.get_2hop(data.edge_index)
-        data.adj = torch.sparse_coo_tensor(
+        data.add_remaining_self_loops()
+        data.adj_mx = torch.sparse_coo_tensor(
             data.edge_index, torch.ones(data.edge_index.shape[1]), torch.Size([data.x.shape[0], data.x.shape[0]])
         ).to_dense()
-        data.adj += torch.eye(data.x.shape[0])
         data.apply(lambda x: x.to(self.device))
         edge_index_2hop = data.edge_index
         model = model.to(self.device)
@@ -37,19 +37,19 @@ class DAEGCTrainer(BaseTrainer):
         epoch_iter = tqdm(range(self.max_epoch))
         optimizer = torch.optim.Adam(model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
-        for epoch in epoch_iter:
-            model.train()
-            optimizer.zero_grad()
-            z = model(data.x, edge_index_2hop)
-            # print(z)
-            loss = model.recon_loss(z, data.adj)
-            loss.backward()
-            optimizer.step()
-            epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss:.4f}")
+        with data.local_graph():
+            data.edge_index = edge_index_2hop
+            for epoch in epoch_iter:
+                model.train()
+                optimizer.zero_grad()
+                z = model(data)
+                loss = model.recon_loss(z, data.adj_mx)
+                loss.backward()
+                optimizer.step()
+                epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss:.4f}")
+
         print("Getting cluster centers...")
-        kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(
-            model(data.x, data.edge_index).detach().cpu().numpy()
-        )
+        kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(model(data).detach().cpu().numpy())
         model.cluster_center = torch.nn.Parameter(torch.tensor(kmeans.cluster_centers_, device=self.device))
 
         print("Self-optimizing...")
@@ -57,16 +57,13 @@ class DAEGCTrainer(BaseTrainer):
         # optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=self.weight_decay)
         for epoch in epoch_iter:
             self.cluster_center = model.cluster_center
-            # print("center=", model.cluster_center)
             model.train()
             optimizer.zero_grad()
-            z = model(data.x, edge_index_2hop)
-            # print("z=", z)
+            z = model(data)
             Q = self.getQ(z)
             if epoch % self.T == 0:
                 P = self.getP(Q).detach()
-            # print(self.cluster_loss(P, Q))
-            loss = model.recon_loss(z, data.adj) + self.gamma * self.cluster_loss(P, Q)
+            loss = model.recon_loss(z, data.adj_mx) + self.gamma * self.cluster_loss(P, Q)
             loss.backward()
             optimizer.step()
             epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss:.4f}")

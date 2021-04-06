@@ -8,9 +8,9 @@ from sklearn.preprocessing import MinMaxScaler
 
 from .. import BaseModel, register_model
 from .dgi import GCN, AvgReadout
-from cogdl.utils import add_remaining_self_loops, symmetric_normalization
 from cogdl.layers.pprgo_modules import build_topk_ppr_matrix_from_data
 from cogdl.trainers.self_supervised_trainer import SelfSupervisedTrainer
+from cogdl.data import Graph, Batch
 
 
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
@@ -80,6 +80,7 @@ class MVGRL(BaseModel):
         super(MVGRL, self).__init__()
         self.sample_size = sample_size
         self.batch_size = batch_size
+        self.hidden_size = hidden_size
         self.alpha = alpha
         self.sparse = True
         self.dataset_name = dataset
@@ -95,57 +96,72 @@ class MVGRL(BaseModel):
 
         self.cache = None
 
-    def _forward(self, seq1, seq2, adj, diff, sparse, msk):
-        h_1 = self.gcn1(seq1, adj, sparse)
+    def _forward(self, adj, diff, seq1, seq2, msk):
+        out_shape = list(seq1.shape[:-1]) + [self.hidden_size]
+
+        seq1 = seq1.view(-1, seq1.shape[-1])
+        seq2 = seq2.view(-1, seq2.shape[-1])
+
+        h_1 = self.gcn1(adj, seq1, True)
+        h_1 = h_1.view(out_shape)
         c_1 = self.read(h_1, msk)
         c_1 = self.sigm(c_1)
 
-        h_2 = self.gcn2(seq1, diff, sparse)
+        h_2 = self.gcn2(diff, seq1, True)
+        h_2 = h_2.view(out_shape)
         c_2 = self.read(h_2, msk)
         c_2 = self.sigm(c_2)
 
-        h_3 = self.gcn1(seq2, adj, sparse)
-        h_4 = self.gcn2(seq2, diff, sparse)
+        h_3 = self.gcn1(adj, seq2, True)
+        h_4 = self.gcn2(diff, seq2, True)
+        h_3 = h_3.view(out_shape)
+        h_4 = h_4.view(out_shape)
 
         ret = self.disc(c_1, c_2, h_1, h_2, h_3, h_4)
 
         return ret, h_1, h_2
 
-    def preprocess(self, x, edge_index, edge_attr=None):
-        num_nodes = x.shape[0]
+    def preprocess(self, graph):
+        num_nodes = graph.num_nodes
+        graph.add_remaining_self_loops()
+        graph.sym_norm()
 
-        edge_index, edge_weight = add_remaining_self_loops(edge_index, edge_attr)
+        adj = sp.coo_matrix(
+            (graph.edge_weight.cpu().numpy(), (graph.edge_index[0].cpu().numpy(), graph.edge_index[1].cpu().numpy())),
+            shape=(graph.num_nodes, graph.num_nodes),
+        )
 
-        adj = edge_index.cpu().numpy()
-        edge_weight = symmetric_normalization(x.shape[0], edge_index, edge_weight)
-        adj = sp.coo_matrix((edge_weight.cpu().numpy(), (adj[0], adj[1])), shape=(num_nodes, num_nodes)).tocsr()
-
-        diff = compute_ppr(adj, np.arange(num_nodes), self.alpha)
+        diff = compute_ppr(adj.to_csr(), np.arange(num_nodes), self.alpha)
 
         if self.cache is None:
             self.cache = dict()
-        self.cache["diff"] = diff
-        self.cache["adj"] = adj
+        graphs = []
+        for g in [adj, diff]:
+            row = torch.from_numpy(g.row).long()
+            col = torch.from_numpy(g.col).long()
+            val = torch.from_numpy(g.data).float()
+            edge_index = torch.stack([row, col])
+            graphs.append(Graph(edge_index=edge_index, edge_weight=val))
+
+        self.cache["diff"] = graphs[1]
+        self.cache["adj"] = graphs[0]
         self.device = next(self.gcn1.parameters()).device
 
-    def forward(self, x, edge_index, edge_attr=None):
+    def forward(self, graph):
+        x = graph.x
         if self.cache is None or "diff" not in self.cache:
-            self.preprocess(x, edge_index, edge_attr)
+            self.preprocess(graph)
         diff, adj = self.cache["diff"], self.cache["adj"]
 
         idx = np.random.randint(0, adj.shape[-1] - self.sample_size + 1, self.batch_size)
         logits = []
         for i in idx:
-            ba = sparse_mx_to_torch_sparse_tensor(
-                sp.coo_matrix(adj[i : i + self.sample_size, i : i + self.sample_size])
-            ).to(self.device)
-            bd = sparse_mx_to_torch_sparse_tensor(
-                sp.coo_matrix(diff[i : i + self.sample_size, i : i + self.sample_size])
-            ).to(self.device)
+            ba = adj.subgraph(list(range(i, i + self.sample_size)))
+            bd = diff.subgraph(list(range(i, i + self.sample_size)))
             bf = x[i : i + self.sample_size].to(self.device)
             idx = np.random.permutation(self.sample_size)
             shuf_fts = bf[idx, :].to(self.device)
-            logit, _, _ = self._forward(bf, shuf_fts, ba, bd, self.sparse, None)
+            logit, _, _ = self._forward(ba, bd, bf, shuf_fts, None)
             logits.append(logit)
 
         return torch.stack(logits)
@@ -159,7 +175,7 @@ class MVGRL(BaseModel):
             lbl = lbl.to(self.device)
             self.cache = {"labels": lbl}
         lbl = self.cache["labels"]
-        logits = self.forward(data.x, data.edge_index, data.edge_attr)
+        logits = self.forward(data)
         loss = self.loss_f(logits, lbl)
         return loss
 
@@ -167,10 +183,10 @@ class MVGRL(BaseModel):
         return self.loss(data)
 
     def embed(self, data, msk=None):
-        adj = sparse_mx_to_torch_sparse_tensor(self.cache["adj"]).float().to(data.x.device)
-        diff = sparse_mx_to_torch_sparse_tensor(self.cache["diff"]).float().to(data.x.device)
-        h_1 = self.gcn1(data.x, adj, self.sparse)
-        h_2 = self.gcn2(data.x, diff, self.sparse)
+        adj = self.cache["adj"].to(self.device)
+        diff = self.cache["diff"].to(self.device)
+        h_1 = self.gcn1(adj, data.x.to(self.device), True)
+        h_2 = self.gcn2(diff, data.x.to(self.device), True)
         # c = self.read(h_1, msk)
         return (h_1 + h_2).detach()  # , c.detach()
 

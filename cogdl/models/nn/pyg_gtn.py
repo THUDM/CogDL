@@ -156,7 +156,9 @@ class GTN(BaseModel):
 
         return deg_inv_sqrt[row], deg_inv_sqrt[col]
 
-    def forward(self, A, X, target_x, target):
+    def forward(self, graph, target_x, target):
+        A = graph.adj
+        X = graph.x
         Ws = []
         for i in range(self.num_layers):
             if i == 0:
@@ -165,14 +167,19 @@ class GTN(BaseModel):
                 H = self.normalization(H)
                 H, W = self.layers[i](A, H)
             Ws.append(W)
-        for i in range(self.num_channels):
-            if i == 0:
-                edge_index, edge_weight = H[i][0], H[i][1]
-                X_ = self.gcn(X, edge_index.detach(), edge_weight)
-                X_ = F.relu(X_)
-            else:
-                edge_index, edge_weight = H[i][0], H[i][1]
-                X_ = torch.cat((X_, F.relu(self.gcn(X, edge_index.detach(), edge_weight))), dim=1)
+        with graph.local_graph():
+            for i in range(self.num_channels):
+                if i == 0:
+                    edge_index, edge_weight = H[i][0], H[i][1]
+                    graph.edge_index = edge_index.detach()
+                    graph.edge_weight = edge_weight
+                    X_ = self.gcn(graph, X)
+                    X_ = F.relu(X_)
+                else:
+                    edge_index, edge_weight = H[i][0], H[i][1]
+                    graph.edge_index = edge_index.detach()
+                    graph.edge_weight = edge_weight
+                    X_ = torch.cat((X_, F.relu(self.gcn(graph, X))), dim=1)
         X_ = self.linear1(X_)
         X_ = F.relu(X_)
         # X_ = F.dropout(X_, p=0.5)
@@ -181,10 +188,10 @@ class GTN(BaseModel):
         return loss, y, Ws
 
     def loss(self, data):
-        loss, y, _ = self.forward(data.adj, data.x, data.train_node, data.train_target)
+        loss, y, _ = self.forward(data, data.train_node, data.train_target)
         return loss
 
     def evaluate(self, data, nodes, targets):
-        loss, y, _ = self.forward(data.adj, data.x, nodes, targets)
+        loss, y, _ = self.forward(data, nodes, targets)
         f1 = accuracy(y, targets)
         return loss.item(), f1

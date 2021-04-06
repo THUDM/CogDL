@@ -2,9 +2,8 @@ import random
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from cogdl.data import DataLoader
 from .. import BaseModel, register_model
+from .gin import split_dataset_general
 
 import numpy as np
 import networkx as nx
@@ -48,7 +47,6 @@ class PatchySAN(BaseModel):
 
     @classmethod
     def split_dataset(self, dataset, args):
-        random.shuffle(dataset)
         # process each graph and add it into Data() as attribute tx
         for i, data in enumerate(dataset):
             new_feature = get_single_feature(
@@ -56,16 +54,7 @@ class PatchySAN(BaseModel):
             )
             dataset[i].tx = torch.from_numpy(new_feature)
 
-        train_size = int(len(dataset) * args.train_ratio)
-        test_size = int(len(dataset) * args.test_ratio)
-        bs = args.batch_size
-        train_loader = DataLoader(dataset[:train_size], batch_size=bs)
-        test_loader = DataLoader(dataset[-test_size:], batch_size=bs)
-        if args.train_ratio + args.test_ratio < 1:
-            valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
-        else:
-            valid_loader = test_loader
-        return train_loader, valid_loader, test_loader
+        return split_dataset_general(dataset, args)
 
     def __init__(self, batch_size, num_features, num_classes, num_sample, stride, num_neighbor, iteration):
         super(PatchySAN, self).__init__()

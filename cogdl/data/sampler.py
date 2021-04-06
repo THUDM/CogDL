@@ -1,12 +1,11 @@
 from typing import List
-
+import os
 import random
 import numpy as np
 import scipy.sparse as sp
 import torch
 import torch.utils.data
 
-from cogdl.data import Data
 from cogdl.utils import remove_self_loops, row_normalization
 
 
@@ -77,11 +76,7 @@ class SAINTSampler(Sampler):
         self.preprocess()
 
     def gen_adj(self):
-        edge_index = (
-            self.data.edge_index_train.cpu().numpy()
-            if hasattr(self.data, "edge_index_train")
-            else self.data.edge_index.cpu().numpy()
-        )
+        edge_index = self.data.edge_index
 
         self.adj = sp.coo_matrix(
             (np.ones(self.num_edges), (edge_index[0], edge_index[1])),
@@ -168,16 +163,8 @@ class SAINTSampler(Sampler):
                 data.norm_aggr = torch.FloatTensor(self.norm_aggr_train[edge_idx][:])
                 data.norm_loss = self.norm_loss_train[node_idx]
 
-            data.train_mask = self.data.train_mask[node_idx]
-            data.val_mask = self.data.val_mask[node_idx]
-            data.test_mask = self.data.test_mask[node_idx]
-
-        # adj = data._build_adj_()
-        # adj = normalize(adj).tocoo()
-        # data.adj = _coo_scipy2torch(adj)
         edge_weight = row_normalization(data.x.shape[0], data.edge_index)
         data.edge_weight = edge_weight
-        # data._eliminate_adj_()
         return data
 
     def exists_train_nodes(self, node_idx):
@@ -337,10 +324,11 @@ class LayerSampler(Sampler):
 
 
 class NeighborSampler(torch.utils.data.DataLoader):
-    def __init__(self, data: Data, sizes: List[int], mask=None, **kwargs):
+    def __init__(self, data, sizes: List[int], mask=None, train=True, **kwargs):
         self.data = data
         self.sizes = sizes
         node_idx = np.arange(0, data.x.shape[0])
+        self.train = train
         if mask is not None:
             node_idx = node_idx[mask]
         node_idx = node_idx.tolist()
@@ -366,17 +354,17 @@ class NeighborSampler(torch.utils.data.DataLoader):
                     sampled_adjs: List[Tuple(Tensor, Tensor, Tuple[int]]
                 )
         """
-        node_id = batch
+        node_id = torch.tensor(batch, dtype=torch.long)
         adj_list = []
         for size in self.sizes:
-            src_id, _edge_index = self.data.sample_adj(node_id, size, replace=False)
+            src_id, graph = self.data.sample_adj(node_id, size, replace=False)
             size = (len(src_id), len(node_id))
-            adj_list.append((src_id, _edge_index, size))  # src_id, edge_index, (src_size, target_size)
+            adj_list.append((src_id, graph, size))  # src_id, graph, (src_size, target_size)
             node_id = src_id
         if self.sizes == [-1]:
-            src_id, edge_index, _ = adj_list[0]
+            src_id, graph, _ = adj_list[0]
             size = (len(src_id), len(batch))
-            return src_id, edge_index, size
+            return src_id, graph, size
         else:
             return batch, node_id, adj_list[::-1]
 
@@ -384,7 +372,7 @@ class NeighborSampler(torch.utils.data.DataLoader):
 class ClusteredLoader(torch.utils.data.DataLoader):
     partition_tool = None
 
-    def __init__(self, data: Data, n_cluster: int, **kwargs):
+    def __init__(self, dataset, n_cluster: int, train=True, **kwargs):
         try:
             import metis
 
@@ -393,11 +381,16 @@ class ClusteredLoader(torch.utils.data.DataLoader):
             print(e)
             exit(1)
 
-        self.data = data
+        self.data = dataset.data
+        self.dataset_name = dataset.__class__.__name__
         self.clusters = self.preprocess(n_cluster)
+        self.train = train
         super(ClusteredLoader, self).__init__(list(range(n_cluster)), collate_fn=self.batcher, **kwargs)
 
     def preprocess(self, n_cluster):
+        save_name = f"{self.dataset_name}-{n_cluster}.cluster"
+        if os.path.exists(save_name):
+            return torch.load(save_name)
         print("Preprocessing...")
         edges = self.data.edge_index
         edges, _ = remove_self_loops(edges)
@@ -414,10 +407,13 @@ class ClusteredLoader(torch.utils.data.DataLoader):
             division[v].append(i)
         for k in range(len(division)):
             division[k] = np.array(division[k], dtype=np.int)
+        torch.save(division, save_name)
         print("Graph clustering over")
         return division
 
     def batcher(self, batch):
+        if self.train:
+            self.data.train()
         nodes = np.concatenate([self.clusters[i] for i in batch])
         subgraph = self.data.subgraph(nodes)
         return subgraph

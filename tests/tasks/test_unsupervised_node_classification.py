@@ -263,13 +263,14 @@ def test_unsupervised_graphsage():
     args.task = "unsupervised_node_classification"
     args.dataset = "cora"
     args.max_epochs = 2
+    args.save_model = "graphsage.pt"
     args.model = "unsup_graphsage"
     args, dataset = build_nn_dataset(args)
     task = build_task(args)
     ret = task.train()
     assert ret["Acc"] > 0
 
-    args.checkpoint = True
+    args.checkpoint = "graphsage.pt"
     task = build_task(args)
     ret = task.train()
     assert ret["Acc"] > 0

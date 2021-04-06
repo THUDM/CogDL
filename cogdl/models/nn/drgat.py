@@ -42,14 +42,12 @@ class DrGAT(BaseModel):
         self.se1 = SELayer(num_features, se_channels=int(np.sqrt(num_features)))
         self.se2 = SELayer(hidden_size * num_heads, se_channels=int(np.sqrt(hidden_size * num_heads)))
 
-    def forward(self, x, edge_index):
+    def forward(self, graph):
+        x = graph.x
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.se1(x)
-        x = F.elu(self.conv1(x, edge_index))
+        x = F.elu(self.conv1(graph, x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.se2(x)
-        x = F.elu(self.conv2(x, edge_index))
+        x = F.elu(self.conv2(graph, x))
         return x
-
-    def predict(self, data):
-        return self.forward(data.x, data.edge_index)

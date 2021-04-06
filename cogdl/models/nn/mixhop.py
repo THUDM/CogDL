@@ -51,13 +51,13 @@ class MixHop(BaseModel):
         )
         self.fc = nn.Linear(shapes[-1], num_classes)
 
-    def forward(self, x, edge_index):
-        edge_index, _ = add_remaining_self_loops(edge_index)
+    def forward(self, graph):
+        x = graph.x
         for mixhop in self.mixhops:
-            x = F.relu(mixhop(x, edge_index))
+            x = F.relu(mixhop(graph, x))
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.fc(x)
         return x
 
     def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+        return self.forward(data)

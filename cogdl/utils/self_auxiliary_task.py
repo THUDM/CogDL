@@ -6,7 +6,9 @@ import scipy.sparse as sp
 import numpy as np
 import networkx as nx
 import random
+from tqdm import tqdm
 from cogdl.data import Data
+
 
 class SSLTask:
     def __init__(self, edge_index, features, device):
@@ -25,15 +27,16 @@ class SSLTask:
 
 
 class EdgeMask(SSLTask):
-    def __init__(self, edge_index, features, hidden_size, device):
+    def __init__(self, edge_index, features, hidden_size, mask_ratio, device):
         super().__init__(edge_index, features, device)
         self.linear = nn.Linear(hidden_size, 2).to(device)
+        self.mask_ratio = mask_ratio
 
-    def transform_data(self, mask_ratio=0.1):
+    def transform_data(self):
         if self.cached_edges is None:
             edges = self.edge_index.t()
             perm = np.random.permutation(self.num_edges)
-            preserve_nnz = int(self.num_edges * (1 - mask_ratio))
+            preserve_nnz = int(self.num_edges * (1 - self.mask_ratio))
             masked = perm[preserve_nnz:]
             preserved = perm[:preserve_nnz]
             self.masked_edges = edges[masked].t()
@@ -66,6 +69,31 @@ class EdgeMask(SSLTask):
                 yield t
 
 
+class AttributeMask(SSLTask):
+    def __init__(self, edge_index, features, hidden_size, train_mask, mask_ratio, device):
+        super().__init__(edge_index, features, device)
+        self.linear = nn.Linear(hidden_size, features.shape[1]).to(device)
+        self.unlabeled = np.array([i for i in range(self.num_nodes) if not train_mask[i]])
+        self.cached_features = None
+        self.mask_ratio = mask_ratio
+
+    def transform_data(self):
+        if self.cached_features is None:
+            perm = np.random.permutation(self.unlabeled)
+            mask_nnz = int(self.num_nodes * self.mask_ratio)
+            self.masked_nodes = perm[:mask_nnz]
+            self.cached_features = self.features.clone()
+            self.cached_features[self.masked_nodes] = torch.zeros(self.features.shape[1]).to(self.device)
+            self.pseudo_labels = self.features[self.masked_nodes]
+
+        return self.edge_index, self.cached_features
+
+    def make_loss(self, embeddings):
+        embeddings = self.linear(embeddings[self.masked_nodes])
+        loss = F.mse_loss(embeddings, self.pseudo_labels, reduction="mean")
+        return loss
+
+
 class PairwiseDistance(SSLTask):
     def __init__(self, edge_index, features, hidden_size, class_split, sampling, device):
         super().__init__(edge_index, features, device)
@@ -82,18 +110,20 @@ class PairwiseDistance(SSLTask):
             self.dis_node_pairs = [[] for i in range(self.nclass)]
             node_idx = random.sample(range(self.num_nodes), self.batch_size)
             adj = sp.coo_matrix(
-                (np.ones(self.num_edges), (self.edge_index[0], self.edge_index[1])),
+                (np.ones(self.num_edges), (self.edge_index[0].cpu().numpy(), self.edge_index[1].cpu().numpy())),
                 shape=(self.num_nodes, self.num_nodes),
             ).tocsr()
-            
-            for idx in node_idx:
+
+            num_samples = tqdm(range(self.batch_size))
+            for i in num_samples:
+                num_samples.set_description(f"Generating node pairs {i:03d}")
+                idx = node_idx[i]
                 queue = [idx]
                 dis = -np.ones(self.num_nodes)
                 dis[idx] = 0
                 head = 0
                 tail = 0
                 cur_class = 0
-                max_dis = 1
                 stack = []
                 # bfs algorithm
                 while head <= tail:
@@ -103,10 +133,10 @@ class PairwiseDistance(SSLTask):
                         if self.dis_node_pairs[cur_class] == []:
                             self.dis_node_pairs[cur_class] = np.array([[idx] * len(sampled), sampled]).transpose()
                         else:
-                            self.dis_node_pairs[cur_class] = np.concatenate((
-                                                                self.dis_node_pairs[cur_class], 
-                                                                np.array([[idx] * len(sampled), sampled]).transpose()
-                                                            ), axis=0)
+                            self.dis_node_pairs[cur_class] = np.concatenate(
+                                (self.dis_node_pairs[cur_class], np.array([[idx] * len(sampled), sampled]).transpose()),
+                                axis=0,
+                            )
                         cur_class += 1
                         if cur_class == self.nclass - 1:
                             break
@@ -127,12 +157,11 @@ class PairwiseDistance(SSLTask):
                 if self.dis_node_pairs[cur_class] == []:
                     self.dis_node_pairs[cur_class] = np.array([[idx] * len(sampled), sampled]).transpose()
                 else:
-                    self.dis_node_pairs[cur_class] = np.concatenate((
-                                                        self.dis_node_pairs[cur_class], 
-                                                        np.array([[idx] * len(sampled), sampled]).transpose()
-                                                    ), axis=0)
+                    self.dis_node_pairs[cur_class] = np.concatenate(
+                        (self.dis_node_pairs[cur_class], np.array([[idx] * len(sampled), sampled]).transpose()), axis=0
+                    )
             if self.class_split[0][1] == 2:
-                self.dis_node_pairs[0] = self.edge_index.numpy().transpose()
+                self.dis_node_pairs[0] = self.edge_index.cpu().numpy().transpose()
             for i in range(self.nclass):
                 print(self.dis_node_pairs[i].shape)
         else:
@@ -148,7 +177,9 @@ class PairwiseDistance(SSLTask):
 
             self.dis_node_pairs = []
             for i in range(self.nclass - 1):
-                tmp = np.array(np.where((distance >= self.class_split[i][0]) * (distance < self.class_split[i][1]))).transpose()
+                tmp = np.array(
+                    np.where((distance >= self.class_split[i][0]) * (distance < self.class_split[i][1]))
+                ).transpose()
                 np.random.shuffle(tmp)
                 self.dis_node_pairs.append(tmp)
             tmp = np.array(np.where(distance == -1)).transpose()
@@ -158,7 +189,7 @@ class PairwiseDistance(SSLTask):
     def transform_data(self):
         return self.edge_index, self.features
 
-    def make_loss(self, embeddings, k=4000):
+    def make_loss(self, embeddings, k=100000):
         node_pairs, pseudo_labels = self.sample(k)
         # print(node_pairs, pseudo_labels)
         embeddings = self.linear(torch.abs(embeddings[node_pairs[0]] - embeddings[node_pairs[1]]))
@@ -171,7 +202,7 @@ class PairwiseDistance(SSLTask):
         for i in range(self.nclass):
             tmp = self.dis_node_pairs[i]
             x = int(random.random() * (len(tmp) - k))
-            sampled = torch.cat([sampled, torch.tensor(tmp[x: x + k]).long().t()], 1)
+            sampled = torch.cat([sampled, torch.tensor(tmp[x : x + k]).long().t()], 1)
             """
             indices = np.random.choice(np.arange(len(tmp)), k, replace=False)
             sampled = torch.cat([sampled, torch.tensor(tmp[indices]).long().t()], 1)
@@ -198,11 +229,17 @@ class Distance2Clusters(SSLTask):
 
             _, parts = metis.part_graph(G, self.num_clusters)
         else:
+            """
             from sklearn.cluster import SpectralClustering
 
             clustering = SpectralClustering(
                 n_clusters=self.num_clusters, assign_labels="discretize", random_state=0
             ).fit(self.features.cpu())
+            parts = clustering.labels_
+            """
+            from sklearn.cluster import KMeans
+
+            clustering = KMeans(n_clusters=self.num_clusters, random_state=0, verbose=1).fit(self.features.cpu())
             parts = clustering.labels_
 
         node_clusters = [[] for i in range(self.num_clusters)]

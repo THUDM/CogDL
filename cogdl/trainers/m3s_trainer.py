@@ -10,6 +10,7 @@ import torch
 import torch.nn.functional as F
 from .base_trainer import BaseTrainer
 
+
 class M3STrainer(BaseTrainer):
     def __init__(self, args):
         super(M3STrainer, self).__init__()
@@ -22,6 +23,7 @@ class M3STrainer(BaseTrainer):
         self.num_stages = args.num_stages
         self.label_rate = args.label_rate
         self.num_new_labels = args.num_new_labels
+        self.approximate = args.approximate
         self.lr = args.lr
         self.alpha = args.alpha
 
@@ -46,19 +48,41 @@ class M3STrainer(BaseTrainer):
             shape=(self.num_nodes, self.num_nodes),
         ).tocsr()
         D = A.sum(1).flat
-        L = sp.diags(D, dtype=np.float32) - A
-        L += self.alpha * sp.eye(L.shape[0], dtype=L.dtype)
-        P = slinalg.inv(L.tocsc()).toarray().transpose()
-
-        # Sort nodes by confidence for each class
         self.confidence = np.zeros([self.num_classes, self.num_nodes])
         self.confidence_ranking = np.zeros([self.num_classes, self.num_nodes], dtype=int)
-        for j in range(self.num_nodes):
-            if data.train_mask[j]:
-                self.confidence[data.y[j]] += P[j]
+
+        if self.approximate:
+            eps = 1e-2
+            for i in range(self.num_classes):
+                q = list(torch.where(data.y == i)[0].numpy())
+                q = list(filter(lambda x: data.train_mask[x], q))
+                r = {idx: 1 for idx in q}
+                while len(q) > 0:
+                    unode = q.pop()
+                    res = self.alpha / (self.alpha + D[unode]) * r[unode] if unode in r else 0
+                    self.confidence[i][unode] += res
+                    r[unode] = 0
+                    for vnode in A.indices[A.indptr[unode] : A.indptr[unode + 1]]:
+                        val = res / self.alpha
+                        if vnode in r:
+                            r[vnode] += val
+                        else:
+                            r[vnode] = val
+                        # print(vnode, val)
+                        if val > eps * D[vnode] and vnode not in q:
+                            q.append(vnode)
+        else:
+            L = sp.diags(D, dtype=np.float32) - A
+            L += self.alpha * sp.eye(L.shape[0], dtype=L.dtype)
+            P = slinalg.inv(L.tocsc()).toarray().transpose()
+            for i in range(self.num_nodes):
+                if data.train_mask[i]:
+                    self.confidence[data.y[i]] += P[i]
+
+        # Sort nodes by confidence for each class
         for i in range(self.num_classes):
             self.confidence_ranking[i] = np.argsort(-self.confidence[i])
-
+            print(self.confidence_ranking[i][:10])
         return data
 
     def fit(self, model, dataset):
@@ -77,6 +101,7 @@ class M3STrainer(BaseTrainer):
 
         print("Training on original split...")
         self.data = self.data.apply(lambda x: x.to(self.device))
+        self.model = self.model.to(self.device)
         epoch_iter = tqdm(range(self.epochs))
         for epoch in epoch_iter:
             self._train_step()
@@ -88,13 +113,13 @@ class M3STrainer(BaseTrainer):
                     best_loss = val_loss
                     best_score = val_acc
                     best_model = copy.deepcopy(self.model)
-                min_loss = np.min((min_loss, val_loss))
+                min_loss = np.min((min_loss, val_loss.cpu()))
                 max_score = np.max((max_score, val_acc))
 
         for stage in range(self.num_stages):
             print(f"Stage # {stage}:")
-            self.data = self.data.apply(lambda x: x.cpu())
             emb = best_model.get_embeddings(self.data.x, self.data.edge_index)
+            self.data = self.data.apply(lambda x: x.cpu())
             kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(emb)
             clusters = kmeans.labels_
 
@@ -111,7 +136,9 @@ class M3STrainer(BaseTrainer):
             align = np.zeros(self.num_clusters, dtype=int)
             for i in range(self.num_clusters):
                 for j in range(self.num_classes):
-                    if np.linalg.norm(unlabeled_centroid[i] - labeled_centroid[j]) < np.linalg.norm(unlabeled_centroid[i] - labeled_centroid[align[i]]):
+                    if np.linalg.norm(unlabeled_centroid[i] - labeled_centroid[j]) < np.linalg.norm(
+                        unlabeled_centroid[i] - labeled_centroid[align[i]]
+                    ):
                         align[i] = j
 
             # Add new labels
@@ -131,7 +158,7 @@ class M3STrainer(BaseTrainer):
             self.data = self.data.apply(lambda x: x.to(self.device))
             epoch_iter = tqdm(range(self.epochs))
             for epoch in epoch_iter:
-                loss = self._train_step()
+                self._train_step()
                 train_acc, _ = self._test_step(split="train")
                 val_acc, val_loss = self._test_step(split="val")
                 epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
@@ -140,8 +167,9 @@ class M3STrainer(BaseTrainer):
                         best_loss = val_loss
                         best_score = val_acc
                         best_model = copy.deepcopy(self.model)
-                    min_loss = np.min((min_loss, val_loss))
+                    min_loss = np.min((min_loss, val_loss.cpu()))
                     max_score = np.max((max_score, val_acc))
+        print("Val accuracy %.4lf" % (best_score))
 
         return best_model
 
@@ -161,7 +189,7 @@ class M3STrainer(BaseTrainer):
             mask = self.data.val_mask
         else:
             mask = self.data.test_mask
-    
+
         loss = self.loss_fn(logits[mask], self.data.y[mask])
         metric = self.evaluator(logits[mask], self.data.y[mask])
         return metric, loss

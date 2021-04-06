@@ -13,6 +13,7 @@ from cogdl.models.supervised_model import (
 from cogdl.trainers.supervised_model_trainer import SupervisedHomogeneousNodeClassificationTrainer
 from cogdl.utils.self_auxiliary_task import (
     EdgeMask,
+    AttributeMask,
     PairwiseDistance,
     Distance2Clusters,
     PairwiseAttrSim,
@@ -23,6 +24,7 @@ from .self_supervised_trainer import LogRegTrainer
 
 from sklearn.cluster import KMeans, SpectralClustering
 from sklearn.metrics.cluster import normalized_mutual_info_score
+
 
 class SelfAuxiliaryTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
     @classmethod
@@ -39,6 +41,7 @@ class SelfAuxiliaryTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         self.hidden_size = args.hidden_size
         self.label_mask = args.label_mask
         self.sampling = args.sampling
+        self.mask_ratio = args.mask_ratio
 
     def resplit_data(self, data):
         trained = torch.where(data.train_mask)[0]
@@ -50,11 +53,26 @@ class SelfAuxiliaryTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         data.train_mask[preserved] = True
         data.test_mask[masked] = True
 
+    def set_loss_eval(self, dataset):
+        self.evaluator = dataset.get_evaluator()
+        self.loss_fn = dataset.get_loss_fn()
+
     def set_agent(self):
         if self.auxiliary_task == "edgemask":
-            self.agent = EdgeMask(self.data.edge_index, self.data.x, self.hidden_size, self.device)
+            self.agent = EdgeMask(self.data.edge_index, self.data.x, self.hidden_size, self.mask_ratio, self.device)
+        elif self.auxiliary_task == "attributemask":
+            self.agent = AttributeMask(
+                self.data.edge_index, self.data.x, self.hidden_size, self.data.train_mask, self.mask_ratio, self.device
+            )
         elif self.auxiliary_task == "pairwise-distance":
-            self.agent = PairwiseDistance(self.data.edge_index, self.data.x, self.hidden_size, [(1, 2), (2, 3), (3, 5)], self.sampling, self.device)
+            self.agent = PairwiseDistance(
+                self.data.edge_index,
+                self.data.x,
+                self.hidden_size,
+                [(1, 2), (2, 3), (3, 5)],
+                self.sampling,
+                self.device,
+            )
         elif self.auxiliary_task == "distance2clusters":
             self.agent = Distance2Clusters(self.data.edge_index, self.data.x, self.hidden_size, 30, self.device)
         elif self.auxiliary_task == "pairwise-attr-sim":
@@ -69,7 +87,6 @@ class SelfAuxiliaryTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
             )
 
     def _test_step(self, split="val"):
-        self.data = self.original_data
         self.model.eval()
         if split == "train":
             mask = self.data.train_mask
@@ -77,13 +94,12 @@ class SelfAuxiliaryTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
             mask = self.data.val_mask
         else:
             mask = self.data.test_mask
+        with torch.no_grad():
+            logits = self.model.predict(self.original_data if self.original_data is not None else self.data)
+        loss = self.loss_fn(logits[mask], self.data.y[mask])
+        metric = self.evaluator(logits[mask], self.data.y[mask])
+        return metric, loss
 
-        logits = self.model.predict(self.data)
-        loss = F.nll_loss(logits[mask], self.data.y[mask]).item()
-
-        pred = logits[mask].max(1)[1]
-        acc = pred.eq(self.data.y[mask]).sum().item() / mask.sum().item()
-        return acc, loss
 
 @register_trainer("self_auxiliary_task_pretrain")
 class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
@@ -93,10 +109,11 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
         # fmt: off
         parser.add_argument('--auxiliary-task', default="none", type=str)
         parser.add_argument('--label-mask', default=0, type=float)
+        parser.add_argument("--mask-ratio", default=0.1, type=float)
         parser.add_argument('--sampling', action="store_true")
         parser.add_argument("--freeze", action="store_true")
         # fmt: on
-    
+
     def __init__(self, args):
         super().__init__(args)
         self.freeze = args.freeze
@@ -108,6 +125,7 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
         self.data.apply(lambda x: x.to(self.device))
         self.set_agent()
         self.model = model
+        self.set_loss_eval(dataset)
 
         self.optimizer = torch.optim.Adam(
             list(model.parameters()) + list(self.agent.linear.parameters()), lr=self.lr, weight_decay=self.weight_decay
@@ -139,8 +157,8 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
         self.model.to(self.device)
 
         embeddings = self.best_model.get_embeddings(self.original_data.x, self.original_data.edge_index).detach()
-        """
         nclass = int(torch.max(self.data.y) + 1)
+        """
         kmeans = KMeans(n_clusters=nclass, random_state=0).fit(embeddings.cpu().numpy())
         clusters = kmeans.labels_
         print("cluster NMI: %.4lf" % (normalized_mutual_info_score(clusters, self.data.y)))
@@ -156,7 +174,6 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
             print(f"TestAcc: {result: .4f}")
             return dict(Acc=result)
         else:
-            best_score = 0
             best_loss = np.inf
             max_score = 0
             min_loss = np.inf
@@ -166,13 +183,14 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
                 train_acc, _ = self._test_step(split="train")
                 val_acc, val_loss = self._test_step(split="val")
                 test_acc, test_loss = self._test_step(split="test")
-                epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, Test: {test_acc:.4f}")
+                epoch_iter.set_description(
+                    f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, Test: {test_acc:.4f}"
+                )
                 if val_loss <= min_loss or val_acc >= max_score:
                     if val_loss <= best_loss:  # and val_acc >= best_score:
                         best_loss = val_loss
-                        best_score = val_acc
                         best_model = copy.deepcopy(self.model)
-                    min_loss = np.min((min_loss, val_loss))
+                    min_loss = np.min((min_loss, val_loss.cpu()))
                     max_score = np.max((max_score, val_acc))
         return best_model
 
@@ -180,7 +198,8 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
         self.data.edge_index, self.data.x = self.agent.transform_data()
         self.model.train()
         self.optimizer.zero_grad()
-        embeddings = self.model.get_embeddings(self.data.x, self.data.edge_index)
+        edge_index = self.data.edge_index_train if hasattr(self.data, "edge_index_train") else self.data.edge_index
+        embeddings = self.model.get_embeddings(self.data.x, edge_index)
         loss = self.agent.make_loss(embeddings)
         loss.backward()
         self.optimizer.step()
@@ -193,6 +212,7 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
         loss.backward()
         self.optimizer.step()
 
+
 @register_trainer("self_auxiliary_task_joint")
 class SelfAuxiliaryTaskJointTrainer(SelfAuxiliaryTaskTrainer):
     @staticmethod
@@ -202,6 +222,7 @@ class SelfAuxiliaryTaskJointTrainer(SelfAuxiliaryTaskTrainer):
         parser.add_argument('--auxiliary-task', default="none", type=str)
         parser.add_argument('--alpha', default=10, type=float)
         parser.add_argument('--label-mask', default=0, type=float)
+        parser.add_argument("--mask-ratio", default=0.1, type=float)
         parser.add_argument('--sampling', action="store_true")
         # fmt: on
 
@@ -214,9 +235,11 @@ class SelfAuxiliaryTaskJointTrainer(SelfAuxiliaryTaskTrainer):
         self.data = dataset.data
         self.original_data = dataset.data
         self.data.apply(lambda x: x.to(self.device))
-        self.original_data.apply(lambda x: x.to(self.device))
         self.set_agent()
+        self.data.edge_index, self.data.x = self.agent.transform_data()
+        self.original_data.apply(lambda x: x.to(self.device))
         self.model = model
+        self.set_loss_eval(dataset)
 
         self.optimizer = torch.optim.Adam(
             list(model.parameters()) + list(self.agent.linear.parameters()), lr=self.lr, weight_decay=self.weight_decay
@@ -236,24 +259,26 @@ class SelfAuxiliaryTaskJointTrainer(SelfAuxiliaryTaskTrainer):
             train_acc, _ = self._test_step(split="train")
             val_acc, val_loss = self._test_step(split="val")
             test_acc, test_loss = self._test_step(split="test")
-            epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, Test: {test_acc:.4f}")
+            epoch_iter.set_description(
+                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, Test: {test_acc:.4f}"
+            )
             if val_loss <= min_loss or val_acc >= max_score:
                 if val_loss <= best_loss:  # and val_acc >= best_score:
                     best_loss = val_loss
                     best_score = val_acc
                     best_model = copy.deepcopy(self.model)
-                min_loss = np.min((min_loss, val_loss))
+                min_loss = np.min((min_loss, val_loss.cpu()))
                 max_score = np.max((max_score, val_acc))
         print(f"Valid accurracy = {best_score}")
 
         return best_model
 
     def _train_step(self):
-        self.data.edge_index, self.data.x = self.agent.transform_data()
         self.model.train()
         self.optimizer.zero_grad()
-        embeddings = self.model.get_embeddings(self.data.x, self.data.edge_index)
+        edge_index = self.data.edge_index_train if hasattr(self.data, "edge_index_train") else self.data.edge_index
+        embeddings = self.model.get_embeddings(self.data.x, edge_index)
+        print(self.model.node_classification_loss(self.data).item(), self.agent.make_loss(embeddings).item())
         loss = self.model.node_classification_loss(self.data) + self.alpha * self.agent.make_loss(embeddings)
         loss.backward()
         self.optimizer.step()
-

@@ -9,6 +9,7 @@ from cogdl.utils import add_remaining_self_loops, symmetric_normalization
 from cogdl.trainers.m3s_trainer import M3STrainer
 from .gcn import GraphConvolution
 
+
 @register_model("m3s")
 class M3S(BaseModel):
     @staticmethod
@@ -25,6 +26,7 @@ class M3S(BaseModel):
         parser.add_argument("--label-rate", type=float, default=1)
         parser.add_argument("--num-new-labels", type=int, default=2)
         parser.add_argument("--alpha", type=float, default=1)
+        parser.add_argument("--approximate", action="store_true")
         # fmt: on
 
     @classmethod
@@ -49,7 +51,7 @@ class M3S(BaseModel):
         h = x
         h = self.gcn1(h, edge_index, edge_attr)
         h = F.relu(F.dropout(h, self.dropout, training=self.training))
-        return h.detach().numpy()
+        return h.detach().cpu().numpy()
 
     def forward(self, x, edge_index):
         edge_index, edge_attr = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])

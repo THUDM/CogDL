@@ -77,6 +77,7 @@ SUPPORTED_MODELS = {
     "gae": "cogdl.models.nn.gae",
     "vgae": "cogdl.models.nn.gae",
     "dgi": "cogdl.models.nn.dgi",
+    "dgi_sampling": "cogdl.models.nn.dgi",
     "mvgrl": "cogdl.models.nn.mvgrl",
     "patchy_san": "cogdl.models.nn.patchy_san",
     "chebyshev": "cogdl.models.nn.pyg_cheb",
@@ -123,4 +124,5 @@ SUPPORTED_MODELS = {
     "sagpool": "cogdl.models.nn.pyg_sagpool",
     "graphsaint": "cogdl.models.nn.graphsaint",
     "m3s": "cogdl.models.nn.m3s",
+    "supergat": "cogdl.models.nn.pyg_supergat",
 }

@@ -67,6 +67,7 @@ node_classification:
     - pprgo
     - graphsaint
     - m3s
+    - supergat
     dataset:
     - cora
     - citeseer
@@ -107,6 +108,7 @@ unsupervised_node_classification:
   - model:
     - unsup_graphsage
     - dgi
+    - dgi_sampling
     - mvgrl
     - grace
     dataset:

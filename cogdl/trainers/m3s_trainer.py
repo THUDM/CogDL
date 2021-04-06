@@ -32,6 +32,7 @@ class M3STrainer(BaseTrainer):
         return cls(args)
 
     def preprocess(self, data):
+        data.add_remaining_self_loops()
         train_nodes = torch.where(self.data.train_mask)[0]
         if len(train_nodes) / self.num_nodes > self.label_rate:
             perm = np.random.permutation(train_nodes.shape[0])
@@ -116,59 +117,60 @@ class M3STrainer(BaseTrainer):
                 min_loss = np.min((min_loss, val_loss.cpu()))
                 max_score = np.max((max_score, val_acc))
 
-        for stage in range(self.num_stages):
-            print(f"Stage # {stage}:")
-            emb = best_model.get_embeddings(self.data.x, self.data.edge_index)
-            self.data = self.data.apply(lambda x: x.cpu())
-            kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(emb)
-            clusters = kmeans.labels_
+        with self.data.local_graph():
+            for stage in range(self.num_stages):
+                print(f"Stage # {stage}:")
+                emb = best_model.get_embeddings(self.data)
+                # self.data = self.data.apply(lambda x: x.cpu())
+                kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(emb)
+                clusters = kmeans.labels_
 
-            # Compute centroids μ_m of each class m in labeled data and v_l of each cluster l in unlabeled data.
-            labeled_centroid = np.zeros([self.num_classes, self.hidden_size])
-            unlabeled_centroid = np.zeros([self.num_clusters, self.hidden_size])
-            for i in range(self.num_nodes):
-                if self.data.train_mask[i]:
-                    labeled_centroid[self.data.y[i]] += emb[i]
-                else:
-                    unlabeled_centroid[clusters[i]] += emb[i]
+                # Compute centroids μ_m of each class m in labeled data and v_l of each cluster l in unlabeled data.
+                labeled_centroid = np.zeros([self.num_classes, self.hidden_size])
+                unlabeled_centroid = np.zeros([self.num_clusters, self.hidden_size])
+                for i in range(self.num_nodes):
+                    if self.data.train_mask[i]:
+                        labeled_centroid[self.data.y[i]] += emb[i]
+                    else:
+                        unlabeled_centroid[clusters[i]] += emb[i]
 
-            # Align labels for each cluster
-            align = np.zeros(self.num_clusters, dtype=int)
-            for i in range(self.num_clusters):
-                for j in range(self.num_classes):
-                    if np.linalg.norm(unlabeled_centroid[i] - labeled_centroid[j]) < np.linalg.norm(
-                        unlabeled_centroid[i] - labeled_centroid[align[i]]
-                    ):
-                        align[i] = j
+                # Align labels for each cluster
+                align = np.zeros(self.num_clusters, dtype=int)
+                for i in range(self.num_clusters):
+                    for j in range(self.num_classes):
+                        if np.linalg.norm(unlabeled_centroid[i] - labeled_centroid[j]) < np.linalg.norm(
+                            unlabeled_centroid[i] - labeled_centroid[align[i]]
+                        ):
+                            align[i] = j
 
-            # Add new labels
-            for i in range(self.num_classes):
-                t = self.num_new_labels
-                for j in range(self.num_nodes):
-                    idx = self.confidence_ranking[i][j]
-                    if not self.data.train_mask[idx]:
-                        if t <= 0:
-                            break
-                        t -= 1
-                        if align[clusters[idx]] == i:
-                            self.data.train_mask[idx] = True
-                            self.data.y[idx] = i
+                # Add new labels
+                for i in range(self.num_classes):
+                    t = self.num_new_labels
+                    for j in range(self.num_nodes):
+                        idx = self.confidence_ranking[i][j]
+                        if not self.data.train_mask[idx]:
+                            if t <= 0:
+                                break
+                            t -= 1
+                            if align[clusters[idx]] == i:
+                                self.data.train_mask[idx] = True
+                                self.data.y[idx] = i
 
-            # Training
-            self.data = self.data.apply(lambda x: x.to(self.device))
-            epoch_iter = tqdm(range(self.epochs))
-            for epoch in epoch_iter:
-                self._train_step()
-                train_acc, _ = self._test_step(split="train")
-                val_acc, val_loss = self._test_step(split="val")
-                epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
-                if val_loss <= min_loss or val_acc >= max_score:
-                    if val_loss <= best_loss:  # and val_acc >= best_score:
-                        best_loss = val_loss
-                        best_score = val_acc
-                        best_model = copy.deepcopy(self.model)
-                    min_loss = np.min((min_loss, val_loss.cpu()))
-                    max_score = np.max((max_score, val_acc))
+                # Training
+                self.data = self.data.apply(lambda x: x.to(self.device))
+                epoch_iter = tqdm(range(self.epochs))
+                for epoch in epoch_iter:
+                    self._train_step()
+                    train_acc, _ = self._test_step(split="train")
+                    val_acc, val_loss = self._test_step(split="val")
+                    epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
+                    if val_loss <= min_loss or val_acc >= max_score:
+                        if val_loss <= best_loss:  # and val_acc >= best_score:
+                            best_loss = val_loss
+                            best_score = val_acc
+                            best_model = copy.deepcopy(self.model)
+                        min_loss = np.min((min_loss, val_loss.cpu()))
+                        max_score = np.max((max_score, val_acc))
         print("Val accuracy %.4lf" % (best_score))
 
         return best_model

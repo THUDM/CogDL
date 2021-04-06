@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from .gcn import TKipfGCN, GraphConvolution
 from .. import register_model, BaseModel
 from cogdl.trainers.gae_trainer import GAETrainer
-from cogdl.utils import add_remaining_self_loops, symmetric_normalization
+
 
 @register_model("gae")
 class GAE(TKipfGCN):
@@ -14,19 +14,20 @@ class GAE(TKipfGCN):
 
     def __init__(self, in_feats, hidden_size, num_layers, dropout):
         super(GAE, self).__init__(in_feats, hidden_size, 1, num_layers, dropout)
-        
-    def make_loss(self, data):
-        embeddings = self.get_embeddings(data.x, data.edge_index)
-        adj = torch.sparse_coo_tensor(
-            data.edge_index, torch.ones(data.edge_index.shape[1]), torch.Size([data.x.shape[0], data.x.shape[0]])
-        ).to_dense()
-        return F.binary_cross_entropy(F.softmax(torch.mm(embeddings, embeddings.t())), adj, reduction="sum") / data.x.shape[0]
-    
+
+    def make_loss(self, data, adj):
+        embeddings = self.get_embeddings(data)
+        return (
+            F.binary_cross_entropy(F.softmax(torch.mm(embeddings, embeddings.t())), adj, reduction="sum")
+            / data.x.shape[0]
+        )
+
     def get_features(self, data):
-        return self.get_embeddings(data.x, data.edge_index).detach()
+        return self.get_embeddings(data).detach()
 
     def get_trainer(self, task, args):
         return GAETrainer
+
 
 @register_model("vgae")
 class VGAE(BaseModel):
@@ -55,37 +56,34 @@ class VGAE(BaseModel):
         z = mean + torch.randn_like(log_var) * sigma
         return z
 
-    def encode(self, x, edge_index):
-        edge_index, edge_attr = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])
-        edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
+    def encode(self, graph):
+        graph.add_remaining_self_loops()
+        graph.sym_norm()
 
-        h = x
-        h = self.conv1(h, edge_index, edge_attr)
+        h = graph.x
+        h = self.conv1(graph, h)
         h = F.relu(h)
-        mean = self.conv2_mean(h, edge_index, edge_attr)
-        log_var = self.conv2_var(h, edge_index, edge_attr)
+        mean = self.conv2_mean(graph, h)
+        log_var = self.conv2_var(graph, h)
         return mean, log_var
 
     def decode(self, x):
         return torch.sigmoid(torch.matmul(x, x.t()))
 
-    def forward(self, x, edge_index):
-        mean, log_var = self.encode(x, edge_index)
+    def forward(self, graph):
+        mean, log_var = self.encode(graph)
         return self.reparameterize(mean, log_var)
 
-    def get_features(self, data):
-        return self.forward(data.x, data.edge_index).detach()
+    def get_features(self, graph):
+        return self.forward(graph).detach()
 
-    def make_loss(self, data):
-        mean, log_var = self.encode(data.x, data.edge_index)
+    def make_loss(self, data, adj):
+        mean, log_var = self.encode(data)
         z = self.reparameterize(mean, log_var)
         mat = self.decode(z)
-        adj = torch.sparse_coo_tensor(
-            data.edge_index, torch.ones(data.edge_index.shape[1]), torch.Size([data.x.shape[0], data.x.shape[0]])
-        ).to_dense()
         recon_loss = F.binary_cross_entropy(mat, adj, reduction="sum")
         var = torch.exp(log_var)
-        kl_loss = 0.5 * torch.mean(torch.sum(mean * mean + var - log_var - 1, dim = 1))
+        kl_loss = 0.5 * torch.mean(torch.sum(mean * mean + var - log_var - 1, dim=1))
         print("recon_loss = %.3f, kl_loss = %.3f" % (recon_loss, kl_loss))
         return recon_loss + kl_loss
 

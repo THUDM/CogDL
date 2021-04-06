@@ -132,7 +132,6 @@ class DGIModel(BaseModel):
         h_2 = self.gcn(graph, seq2, sparse)
 
         ret = self.disc(c, h_1, h_2)
-        print(ret)
 
         return ret
 

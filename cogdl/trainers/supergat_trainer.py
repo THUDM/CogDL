@@ -126,7 +126,7 @@ class SuperGATTrainer(BaseTrainer):
             self.data.x,
             self.data.edge_index,
             batch=None,
-            attention_edge_index=getattr(self.data, "train_edge_index", None),
+            attention_edge_index=getattr(self.data, "edge_index_train", None),
         )
 
         # Loss

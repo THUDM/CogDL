@@ -131,7 +131,7 @@ class MVGRL(BaseModel):
             shape=(graph.num_nodes, graph.num_nodes),
         )
 
-        diff = compute_ppr(adj.to_csr(), np.arange(num_nodes), self.alpha)
+        diff = compute_ppr(adj.tocsr(), np.arange(num_nodes), self.alpha).tocoo()
 
         if self.cache is None:
             self.cache = dict()
@@ -153,11 +153,11 @@ class MVGRL(BaseModel):
             self.preprocess(graph)
         diff, adj = self.cache["diff"], self.cache["adj"]
 
-        idx = np.random.randint(0, adj.shape[-1] - self.sample_size + 1, self.batch_size)
+        idx = np.random.randint(0, graph.num_nodes - self.sample_size + 1, self.batch_size)
         logits = []
         for i in idx:
-            ba = adj.subgraph(list(range(i, i + self.sample_size)))
-            bd = diff.subgraph(list(range(i, i + self.sample_size)))
+            ba = adj.subgraph(list(range(i, i + self.sample_size))).to(self.device)
+            bd = diff.subgraph(list(range(i, i + self.sample_size))).to(self.device)
             bf = x[i : i + self.sample_size].to(self.device)
             idx = np.random.permutation(self.sample_size)
             shuf_fts = bf[idx, :].to(self.device)

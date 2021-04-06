@@ -44,27 +44,23 @@ class M3S(BaseModel):
         self.gcn1 = GraphConvolution(num_features, hidden_size)
         self.gcn2 = GraphConvolution(hidden_size, num_classes)
 
-    def get_embeddings(self, x, edge_index):
-        edge_index, edge_attr = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])
-        edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
-
-        h = x
-        h = self.gcn1(h, edge_index, edge_attr)
+    def get_embeddings(self, graph):
+        graph.sym_norm()
+        h = graph.x
+        h = self.gcn1(graph, h)
         h = F.relu(F.dropout(h, self.dropout, training=self.training))
         return h.detach().cpu().numpy()
 
-    def forward(self, x, edge_index):
-        edge_index, edge_attr = add_remaining_self_loops(edge_index, num_nodes=x.shape[0])
-        edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
-
-        h = x
-        h = self.gcn1(h, edge_index, edge_attr)
+    def forward(self, graph):
+        graph.sym_norm()
+        h = graph.x
+        h = self.gcn1(graph, h)
         h = F.dropout(F.relu(h), self.dropout, training=self.training)
-        h = self.gcn2(h, edge_index, edge_attr)
+        h = self.gcn2(graph, h)
         return h
 
     def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+        return self.forward(data)
 
     @staticmethod
     def get_trainer(taskType, args):

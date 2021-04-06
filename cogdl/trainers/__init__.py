@@ -8,12 +8,12 @@ TRAINER_REGISTRY = {}
 
 def register_trainer(name):
     """
-    New universal trainer types can be added to cogdl with the :func:`register_universal_trainer`
+    New universal trainer types can be added to cogdl with the :func:`register_trainer`
     function decorator.
 
     For example::
 
-        @register_universal_trainer('self_auxiliary_task')
+        @register_trainer('self_auxiliary_task')
         class SelfAuxiliaryTaskTrainer(BaseModel):
             (...)
 

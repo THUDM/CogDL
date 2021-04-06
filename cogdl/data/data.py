@@ -467,6 +467,8 @@ class Graph(BaseGraph):
     @edge_index.setter
     def edge_index(self, edge_index):
         row, col = edge_index
+        if row.shape[0] != self._adj.row.shape[0]:
+            self._adj.row_ptr = None
         self._adj.row = row
         self._adj.col = col
 

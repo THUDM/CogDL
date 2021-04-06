@@ -223,6 +223,10 @@ class Adjacency(BaseGraph):
     def is_symmetric(self):
         return self.__symmetric__
 
+    def set_symmetric(self, val):
+        assert val in [True, False]
+        self.__symmetric__ = val
+
     @property
     def degrees(self):
         if self.row_ptr is not None:
@@ -426,6 +430,12 @@ class Graph(BaseGraph):
     def is_symmetric(self):
         return self._adj.is_symmetric()
 
+    def set_symmetric(self):
+        self._adj.set_symmetric(True)
+
+    def set_asymmetric(self):
+        self._adj.set_symmetric(False)
+
     @contextmanager
     def local_graph(self, key=None):
         self.__temp_adj_stack__.append(self._adj)
@@ -463,6 +473,7 @@ class Graph(BaseGraph):
     @edge_weight.setter
     def edge_weight(self, edge_weight):
         self._adj.weight = edge_weight
+        self._adj.set_symmetric(False)
 
     @edge_attr.setter
     def edge_attr(self, edge_attr):

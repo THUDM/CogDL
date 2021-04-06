@@ -7,14 +7,14 @@ def test_dataset_stats():
     outputs = outputs[0]
 
     assert len(outputs) == 6
-    assert tuple(outputs) == ("cora", 2708, 10484, 1433, 7, 140)
+    assert tuple(outputs) == ("cora", 2708, 10184, 1433, 7, 140)
 
 
 def test_dataset_visual():
     visual = pipeline("dataset-visual")
     outputs = visual("cora", seed=0, depth=3)
 
-    assert len(outputs) == 71
+    assert len(outputs) == 72
 
 
 def test_oagbert():

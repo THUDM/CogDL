@@ -107,7 +107,7 @@ class GNNLinkPredict(nn.Module):
         else:
             raise NotImplementedError
 
-    def forward(self, edge_index, edge_type):
+    def forward(self, graph):
         raise NotImplementedError
 
     def get_score(self, heads, tails, rels):

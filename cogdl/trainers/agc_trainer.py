@@ -1,12 +1,10 @@
 import torch
 import torch.nn
-import torch.nn.functional as F
 import torch.sparse
 import numpy as np
 from sklearn.cluster import SpectralClustering
-from sklearn.metrics.cluster import normalized_mutual_info_score
 
-from cogdl.utils import add_remaining_self_loops, spmm
+from cogdl.utils import spmm
 from .base_trainer import BaseTrainer
 
 
@@ -16,30 +14,26 @@ class AGCTrainer(BaseTrainer):
         self.max_iter = args.max_iter
         self.device = args.device_id[0] if not args.cpu else "cpu"
 
-    @staticmethod
-    def build_trainer_from_args(args):
-        pass
+    @classmethod
+    def build_trainer_from_args(cls, args):
+        return cls(args)
 
     def fit(self, model, data):
         model = model.to(self.device)
-        data.apply(lambda x: x.to(self.device))
+        data.to(self.device)
         self.num_nodes = data.x.shape[0]
+        graph = data
+        graph.add_remaining_self_loops()
 
-        adj = data.edge_index
-        adj_values = torch.ones(adj.shape[1]).to(self.device)
-        deg = spmm(adj, adj_values, torch.ones(data.x.shape[0], 1).to(self.device)).squeeze()
-        deg_sqrt = deg.pow(-1 / 2)
-        adj_values = deg_sqrt[adj[1]] * adj_values * deg_sqrt[adj[0]]
-        adj, adj_values = add_remaining_self_loops(adj, adj_values, 1, data.x.shape[0])
-        adj_values = 0.5 * adj_values
-        adj = torch.sparse_coo_tensor(adj, adj_values, torch.Size([data.x.shape[0], data.x.shape[0]])).to(self.device)
+        graph.sym_norm()
+        graph.edge_weight = data.edge_weight * 0.5
 
         pre_intra = 1e27
         pre_feat = None
         for t in range(1, self.max_iter + 1):
             x = data.x
             for i in range(t):
-                x = torch.spmm(adj, x)
+                x = spmm(graph, x)
             k = torch.mm(x, x.t())
             w = (torch.abs(k) + torch.abs(k.t())) / 2
             clustering = SpectralClustering(

@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .. import BaseModel, register_model
-from cogdl.data import DataLoader
+from .gin import split_dataset_general
 from .graphsage import GraphSAGELayer
 
 
@@ -67,14 +67,14 @@ class GraphSAGE(nn.Module):
                     self.bn_list.append(nn.BatchNorm1d(hidden_dim))
             self.convlist.append(GraphSAGELayer(hidden_dim, out_feats, normalize, aggr))
 
-    def forward(self, x, edge_index, edge_weight=None):
+    def forward(self, graph, x):
         h = x
         for i in range(self.num_layers - 1):
             h = F.dropout(h, p=self.dropout, training=self.training)
-            h = self.convlist[i](h, edge_index, edge_weight)
+            h = self.convlist[i](graph, h)
             if self.use_bn:
                 h = self.bn_list[i](h)
-        return self.convlist[self.num_layers - 1](h, edge_index, edge_weight)
+        return self.convlist[self.num_layers - 1](graph, h)
 
 
 class BatchedGraphSAGE(nn.Module):
@@ -150,9 +150,9 @@ class BatchedDiffPoolLayer(nn.Module):
 
         self.loss_dict = dict()
 
-    def forward(self, x, edge_index, batch, edge_weight=None):
-        embed = self.embd_gnn(x, edge_index)
-        pooled = F.softmax(self.pool_gnn(x, edge_index), dim=-1)
+    def forward(self, graph, x, batch):
+        embed = self.embd_gnn(graph, x)
+        pooled = F.softmax(self.pool_gnn(graph, x), dim=-1)
         device = x.device
         masked_tensor = []
         value_set, value_counts = torch.unique(batch, return_counts=True)
@@ -168,9 +168,7 @@ class BatchedDiffPoolLayer(nn.Module):
         # result = masked_softmax(pooled, masked, memory_efficient=False)
 
         h = torch.matmul(result.t(), embed)
-        if not edge_weight:
-            edge_weight = torch.ones(edge_index.shape[1]).to(x.device)
-        adj = torch.sparse_coo_tensor(edge_index, edge_weight)
+        adj = torch.sparse_coo_tensor(graph.edge_index, graph.edge_weight)
         adj_new = torch.sparse.mm(adj, result)
         adj_new = torch.mm(result.t(), adj_new)
 
@@ -324,17 +322,7 @@ class DiffPool(BaseModel):
 
     @classmethod
     def split_dataset(cls, dataset, args):
-        random.shuffle(dataset)
-        train_size = int(len(dataset) * args.train_ratio)
-        test_size = int(len(dataset) * args.test_ratio)
-        bs = args.batch_size
-        train_loader = DataLoader(dataset[:train_size], batch_size=bs, drop_last=True)
-        test_loader = DataLoader(dataset[-test_size:], batch_size=bs, drop_last=True)
-        if args.train_ratio + args.test_ratio < 1:
-            valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs, drop_last=True)
-        else:
-            valid_loader = test_loader
-        return train_loader, valid_loader, test_loader
+        return split_dataset_general(dataset, args)
 
     def __init__(
         self,
@@ -415,8 +403,8 @@ class DiffPool(BaseModel):
     def forward(self, batch):
         readouts_all = []
 
-        init_emb = self.before_pooling(batch.x, batch.edge_index)
-        adj, h = self.init_diffpool(init_emb, batch.edge_index, batch.batch)
+        init_emb = self.before_pooling(batch, batch.x)
+        adj, h = self.init_diffpool(batch, init_emb, batch.batch)
         value_set, value_counts = torch.unique(batch.batch, return_counts=True)
         batch_size = len(value_set)
         adj, h = toBatchedGraph(adj, h, adj.size(0) // batch_size)

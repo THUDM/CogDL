@@ -7,7 +7,7 @@ import scipy.sparse as sp
 import torch
 from sklearn.preprocessing import StandardScaler
 
-from cogdl.data import Data, Dataset
+from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url, accuracy, multilabel_f1, bce_with_logits_loss, cross_entropy_loss
 from . import register_dataset
 from .planetoid_data import index_to_mask
@@ -51,7 +51,7 @@ def read_saint_data(folder):
     edge_index_full, edge_attr_full = get_adj(adj_full)
     edge_index_train, edge_attr_train = get_adj(adj_train)
 
-    data = Data(
+    data = Graph(
         x=feats,
         y=labels,
         edge_index=edge_index_full,
@@ -115,9 +115,20 @@ class SAINTDataset(Dataset):
 
 def scale_feats(data):
     scaler = StandardScaler()
-    scaler.fit(data.x.numpy())
-    data.x = torch.from_numpy(scaler.transform(data.x)).float()
+    feats = data.x.numpy()
+    scaler.fit(feats)
+    feats = torch.from_numpy(scaler.transform(feats)).float()
+    data.x = feats
     return data
+
+
+# def scale_feats(data):
+#     x_sum = torch.sum(data.x, dim=1)
+#     x_rev = x_sum.pow(-1).flatten()
+#     x_rev[torch.isnan(x_rev)] = 0.0
+#     x_rev[torch.isinf(x_rev)] = 0.0
+#     data.x = data.x * x_rev.unsqueeze(-1).expand_as(data.x)
+#     return data
 
 
 @register_dataset("yelp")

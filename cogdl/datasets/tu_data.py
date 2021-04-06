@@ -3,15 +3,14 @@ import os
 import os.path as osp
 import shutil
 import zipfile
-from itertools import repeat
 
 import numpy as np
 import torch
 import torch.nn.functional as F
 
-from cogdl.data.dataset import Dataset
+from cogdl.data.dataset import MultiGraphDataset
 from . import register_dataset
-from ..data import Data
+from ..data import Graph
 from ..utils import download_url
 
 
@@ -73,6 +72,36 @@ def split(data, batch):
     return data, slices
 
 
+def _split(edge_index, batch, x=None, y=None, edge_attr=None):
+    node_slice = np.bincount(batch).tolist()
+    row, _ = edge_index
+    edge_slice = np.bincount(batch[row]).tolist()
+    if edge_attr is not None:
+        edge_attr = edge_attr.split(edge_slice)
+    edge_index_t = edge_index.T.split(edge_slice)
+    if x is not None:
+        x = x.split(node_slice)
+        num_nodes = [i.shape[0] for i in x]
+        num_nodes_cum = np.cumsum(num_nodes).tolist()
+    else:
+        num_nodes_cum = [edge.max().item() + 1 for edge in edge_index_t]
+
+    num_nodes_cum = [0] + num_nodes_cum
+    if edge_index_t[-1].min() > 0:
+        edge_index_t = [edge_index_t[i] - num_nodes_cum[i] for i in range(len(edge_index_t))]
+    data = []
+    for i in range(len(node_slice)):
+        g = Graph(edge_index=edge_index_t[i].T)
+        if x is not None:
+            g.x = x[i]
+        if y is not None:
+            g.y = y[i].view(1)
+        if edge_attr is not None:
+            g.edge_attr = edge_attr[i]
+        data.append(g)
+    return data
+
+
 def segment(src, indptr):
     out_list = []
     for i in range(indptr.size(-1) - 1):
@@ -111,9 +140,7 @@ def coalesce(index, value, m, n):
     if value is not None:
         ptr = mask.nonzero().flatten()
         ptr = torch.cat([ptr, ptr.new_full((1,), value.size(0))])
-        # print(value.size(), ptr.size())
         value = segment(value, ptr)
-        # print(value.size())
         value = value[0] if isinstance(value, tuple) else value
 
     return torch.stack([row, col], dim=0), value
@@ -167,26 +194,62 @@ def read_tu_data(folder, prefix):
         edge_attr = edge_attr[mask]
 
     edge_index, edge_attr = coalesce(edge_index, edge_attr, num_nodes, num_nodes)
+    if x is not None:
+        x = x[:, num_node_attributes(x) :]
+    if edge_attr is not None:
+        edge_attr = edge_attr[:, num_edge_attributes(edge_attr)]
 
-    data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y)
-    data, slices = split(data, batch)
-
-    return data, slices
+    graphs = _split(edge_index, batch=batch, x=x, y=y, edge_attr=edge_attr)
+    return graphs, y
 
 
-class TUDataset(Dataset):
+def num_node_labels(x=None):
+    if x is None:
+        return 0
+    for i in range(x.size(1)):
+        _x = x[:, i:]
+        if ((_x == 0) | (_x == 1)).all() and (_x.sum(dim=1) == 1).all():
+            return x.size(1) - i
+    return 0
+
+
+def num_node_attributes(x=None):
+    if x is None:
+        return 0
+    return x.size(1) - num_node_labels(x)
+
+
+def num_edge_labels(edge_attr=None):
+    if edge_attr is None:
+        return 0
+    for i in range(edge_attr.size(1)):
+        if edge_attr[:, i:].sum() == edge_attr.size(0):
+            return edge_attr.size(1) - i
+    return 0
+
+
+def num_edge_attributes(edge_attr=None):
+    if edge_attr is None:
+        return 0
+    return edge_attr.size(1) - num_edge_labels(edge_attr)
+
+
+class TUDataset(MultiGraphDataset):
     url = "https://www.chrsmrrs.com/graphkerneldatasets"
 
     def __init__(self, root, name):
         self.name = name
         super(TUDataset, self).__init__(root)
-        self.data, self.slices = torch.load(self.processed_paths[0])
-        if self.data.x is not None:
-            num_node_attributes = self.num_node_attributes
-            self.data.x = self.data.x[:, num_node_attributes:]
-        if self.data.edge_attr is not None:
-            num_edge_attributes = self.num_edge_attributes
-            self.data.edge_attr = self.data.edge_attr[:, num_edge_attributes:]
+        # self.data = torch.load(self.processed_paths[0])
+
+        # if self.data[0].x is not None:
+        #     num_node_attributes = self.num_node_attributes
+        #     self.data.x = self.data.x[:, num_node_attributes:]
+        # if self.data.edge_attr is not None:
+        #     num_edge_attributes = self.num_edge_attributes
+        #     self.data.edge_attr = self.data.edge_attr[:, num_edge_attributes:]
+
+        self.data, self.y = torch.load(self.processed_paths[0])
 
     @property
     def raw_file_names(self):
@@ -208,69 +271,16 @@ class TUDataset(Dataset):
         os.rename(osp.join(folder, self.name), self.raw_dir)
 
     def process(self):
-        self.data = read_tu_data(self.raw_dir, self.name)
-        torch.save(self.data, self.processed_paths[0])
-
-    @property
-    def num_node_labels(self):
-        if self.data.x is None:
-            return 0
-        for i in range(self.data.x.size(1)):
-            x = self.data.x[:, i:]
-            if ((x == 0) | (x == 1)).all() and (x.sum(dim=1) == 1).all():
-                return self.data.x.size(1) - i
-        return 0
-
-    @property
-    def num_node_attributes(self):
-        if self.data.x is None:
-            return 0
-        return self.data.x.size(1) - self.num_node_labels
-
-    @property
-    def num_edge_labels(self):
-        if self.data.edge_attr is None:
-            return 0
-        for i in range(self.data.edge_attr.size(1)):
-            if self.data.edge_attr[:, i:].sum() == self.data.edge_attr.size(0):
-                return self.data.edge_attr.size(1) - i
-        return 0
-
-    @property
-    def num_edge_attributes(self):
-        if self.data.edge_attr is None:
-            return 0
-        return self.data.edge_attr.size(1) - self.num_edge_labels
+        data = read_tu_data(self.raw_dir, self.name)
+        torch.save(data, self.processed_paths[0])
 
     @property
     def num_classes(self):
         r"""The number of classes in the dataset."""
-        y = self.data.y
-        return y.max().item() + 1 if y.dim() == 1 else y.size(1)
+        return self.y.max().item() + 1 if self.y.dim() == 1 else self.y.size(1)
 
     def __len__(self):
-        for item in self.slices.values():
-            return len(item) - 1
-        return 0
-
-    def get(self, idx):
-        data = self.data.__class__()
-        if hasattr(self.data, "__num_nodes__"):
-            data.num_nodes = self.data.__num_nodes__[idx]
-
-        for key in self.data.keys:
-            item, slices = self.data[key], self.slices[key]
-            start, end = slices[idx].item(), slices[idx + 1].item()
-            if torch.is_tensor(item):
-                s = list(repeat(slice(None), item.dim()))
-                s[self.data.cat_dim(key, item)] = slice(start, end)
-            elif start + 1 == end:
-                s = slices[start]
-            else:
-                s = slice(start, end)
-            data[key] = item[s]
-
-        return data
+        return len(self.data)
 
 
 @register_dataset("mutag")

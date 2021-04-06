@@ -274,11 +274,11 @@ class SelfAuxiliaryTaskJointTrainer(SelfAuxiliaryTaskTrainer):
         return best_model
 
     def _train_step(self):
-        self.model.train()
-        self.optimizer.zero_grad()
-        edge_index = self.data.edge_index_train if hasattr(self.data, "edge_index_train") else self.data.edge_index
-        embeddings = self.model.get_embeddings(self.data.x, edge_index)
-        print(self.model.node_classification_loss(self.data).item(), self.agent.make_loss(embeddings).item())
-        loss = self.model.node_classification_loss(self.data) + self.alpha * self.agent.make_loss(embeddings)
+        with self.data.local_graph():
+            self.data.edge_index, self.data.x = self.agent.transform_data()
+            self.model.train()
+            self.optimizer.zero_grad()
+            embeddings = self.model.get_embeddings(self.data)
+            loss = self.model.node_classification_loss(self.data) + self.alpha * self.agent.make_loss(embeddings)
         loss.backward()
         self.optimizer.step()

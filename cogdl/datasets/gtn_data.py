@@ -3,7 +3,7 @@ import pickle
 
 import numpy as np
 import torch
-from cogdl.data import Data, Dataset
+from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url, untar
 
 from . import register_dataset
@@ -46,7 +46,7 @@ class GTNDataset(Dataset):
         labels = pickle.load(open(osp.join(folder, "labels.pkl"), "rb"))
         node_features = pickle.load(open(osp.join(folder, "node_features.pkl"), "rb"))
 
-        data = Data()
+        data = Graph()
         data.x = torch.from_numpy(node_features).type(torch.FloatTensor)
 
         num_nodes = edges[0].shape[0]

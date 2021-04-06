@@ -428,7 +428,10 @@ class KGLinkPrediction(nn.Module):
             mask = self.data.test_mask
         edge_index = self.data.edge_index[:, mask]
         edge_attr = self.data.edge_attr[mask]
-        mrr, hits = self.model.predict(edge_index, edge_attr)
+        with self.data.local_graph():
+            self.data.edge_index = edge_index
+            self.data.edge_attr = edge_attr
+            mrr, hits = self.model.predict(self.data)
         return mrr, hits
 
 
@@ -493,10 +496,16 @@ class GNNHomoLinkPrediction(nn.Module):
         labels = self.get_link_labels(train_pos_edges.shape[1], train_neg_edges.shape[1], self.device)
 
         if hasattr(self.model, "link_prediction_loss"):
-            loss = self.model.link_prediction_loss(self.data.x, edge_index, labels)
+            with self.data.local_graph():
+                self.data.edge_index = edge_index
+                self.data.y = labels
+                loss = self.model.link_prediction_loss(self.data)
+                # loss = self.model.link_prediction_loss(self.data.x, edge_index, labels)
         else:
             # link prediction loss
-            emb = self.model(self.data.x, edge_index)
+            with self.data.local_graph():
+                self.data.edge_index = edge_index
+                emb = self.model(self.data)
             pred = (emb[edge_index[0]] * emb[edge_index[1]]).sum(1)
             pred = torch.sigmoid(pred)
             loss = torch.nn.BCELoss()(pred, labels)
@@ -518,9 +527,11 @@ class GNNHomoLinkPrediction(nn.Module):
         train_edges = self.data.train_edges
         edges = torch.cat([pos_edges, neg_edges], dim=1)
         labels = self.get_link_labels(pos_edges.shape[1], neg_edges.shape[1], self.device).long()
-        with torch.no_grad():
-            emb = self.model(self.data.x, train_edges)
-            pred = (emb[edges[0]] * emb[edges[1]]).sum(-1)
+        with self.data.local_graph():
+            self.data.edge_index = train_edges
+            with torch.no_grad():
+                emb = self.model(self.data)
+                pred = (emb[edges[0]] * emb[edges[1]]).sum(-1)
         pred = torch.sigmoid(pred)
 
         auc_score = roc_auc_score(labels.cpu().numpy(), pred.cpu().numpy())

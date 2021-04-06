@@ -1,7 +1,7 @@
 import torch.utils.data
 from torch.utils.data.dataloader import default_collate
 
-from cogdl.data import Batch, Data
+from cogdl.data import Batch, Graph
 
 
 class DataLoader(torch.utils.data.DataLoader):
@@ -29,7 +29,7 @@ class DataLoader(torch.utils.data.DataLoader):
     @staticmethod
     def collate_fn(batch):
         item = batch[0]
-        if isinstance(item, Data):
+        if isinstance(item, Graph):
             return Batch.from_data_list(batch)
         elif isinstance(item, torch.Tensor):
             return default_collate(batch)

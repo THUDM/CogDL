@@ -1,6 +1,5 @@
 import argparse
 import copy
-from typing import Optional
 
 import numpy as np
 import torch
@@ -8,7 +7,7 @@ from tqdm import tqdm
 
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
-from cogdl.models.supervised_model import SupervisedHomogeneousNodeClassificationModel
+from cogdl.utils import add_remaining_self_loops
 
 from . import BaseTask, register_task
 
@@ -22,18 +21,20 @@ class NodeClassification(BaseTask):
         """Add task-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--missing-rate", type=int, default=0, help="missing rate, from 0 to 100")
+        parser.add_argument("--inference", action="store_true")
         # fmt: on
 
     def __init__(
         self,
         args,
         dataset=None,
-        model: Optional[SupervisedHomogeneousNodeClassificationModel] = None,
+        model=None,
     ):
         super(NodeClassification, self).__init__(args)
 
         self.args = args
         self.model_name = args.model
+        self.infer = hasattr(args, "inference") and args.inference
 
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
         dataset = build_dataset(args) if dataset is None else dataset
@@ -44,7 +45,7 @@ class NodeClassification(BaseTask):
         args.num_classes = dataset.num_classes
         args.num_nodes = dataset.data.x.shape[0]
 
-        self.model: SupervisedHomogeneousNodeClassificationModel = build_model(args) if model is None else model
+        self.model = build_model(args) if model is None else model
         self.model.set_device(self.device)
 
         self.set_loss_fn(dataset)
@@ -58,12 +59,18 @@ class NodeClassification(BaseTask):
                 else self.model.get_optimizer(args)
             )
             self.data.apply(lambda x: x.to(self.device))
-            self.model: SupervisedHomogeneousNodeClassificationModel = self.model.to(self.device)
+            self.model = self.model.to(self.device)
             self.patience = args.patience
             self.max_epoch = args.max_epoch
 
+    def preprocess(self):
+        self.data.add_remaining_self_loops()
+
     def train(self):
-        if self.trainer:
+        if self.infer:
+            self.preprocess()
+            self.inference()
+        elif self.trainer:
             result = self.trainer.fit(self.model, self.dataset)
             if issubclass(type(result), torch.nn.Module):
                 self.model = result
@@ -71,6 +78,7 @@ class NodeClassification(BaseTask):
             else:
                 return result
         else:
+            self.preprocess()
             epoch_iter = tqdm(range(self.max_epoch))
             patience = 0
             best_score = 0
@@ -80,9 +88,13 @@ class NodeClassification(BaseTask):
             best_model = copy.deepcopy(self.model)
             for epoch in epoch_iter:
                 self._train_step()
-                train_acc, _ = self._test_step(split="train")
-                val_acc, val_loss = self._test_step(split="val")
-                epoch_iter.set_description(f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}")
+                acc, losses = self._test_step()
+                train_acc = acc["train"]
+                val_acc = acc["val"]
+                val_loss = losses["val"]
+                epoch_iter.set_description(
+                    f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, ValLoss:{val_loss: .4f}"
+                )
                 if val_loss <= min_loss or val_acc >= max_score:
                     if val_loss <= best_loss:  # and val_acc >= best_score:
                         best_loss = val_loss
@@ -104,12 +116,15 @@ class NodeClassification(BaseTask):
         return dict(Acc=test_acc, ValAcc=val_acc)
 
     def _train_step(self):
+        self.data.train()
         self.model.train()
         self.optimizer.zero_grad()
         self.model.node_classification_loss(self.data).backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
         self.optimizer.step()
 
-    def _test_step(self, split="val", logits=None):
+    def _test_step(self, split=None, logits=None):
+        self.data.eval()
         self.model.eval()
         with torch.no_grad():
             logits = logits if logits else self.model.predict(self.data)
@@ -117,8 +132,29 @@ class NodeClassification(BaseTask):
             mask = self.data.train_mask
         elif split == "val":
             mask = self.data.val_mask
-        else:
+        elif split == "test":
             mask = self.data.test_mask
-        loss = self.loss_fn(logits[mask], self.data.y[mask])
-        metric = self.evaluator(logits[mask], self.data.y[mask])
-        return metric, loss
+        else:
+            mask = None
+
+        if mask is not None:
+            loss = self.loss_fn(logits[mask], self.data.y[mask])
+            metric = self.evaluator(logits[mask], self.data.y[mask])
+            return metric, loss
+        else:
+
+            masks = {x: self.data[x + "_mask"] for x in ["train", "val", "test"]}
+            metrics = {key: self.evaluator(logits[mask], self.data.y[mask]) for key, mask in masks.items()}
+            losses = {key: self.loss_fn(logits[mask], self.data.y[mask]) for key, mask in masks.items()}
+            return metrics, losses
+
+    def inference(self):
+        self.data.eval()
+        self.model.eval()
+        with torch.no_grad():
+            logits = self.model.predict(self.data)
+        metric = self.evaluator(logits[self.data.test_mask], self.data.y[self.data.test_mask])
+        print(f"Metric in test set: {metric: .4f}")
+        key = f"{self.args.model}_{self.args.dataset}.pred"
+        torch.save(logits, key)
+        print(f"Prediction results saved in {key}")

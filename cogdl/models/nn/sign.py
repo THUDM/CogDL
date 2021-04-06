@@ -13,20 +13,16 @@ from cogdl.utils import (
 )
 
 
-def get_adj(row, col, asymm_norm=False, set_diag=True, remove_diag=False):
-    edge_index = torch.stack([row, col])
-    edge_attr = torch.ones(edge_index.shape[1]).to(edge_index.device)
+def get_adj(graph, asymm_norm=False, set_diag=True, remove_diag=False):
     if set_diag:
-        edge_index, edge_attr = add_remaining_self_loops(edge_index, edge_attr)
+        graph.add_remaining_self_loops()
     elif remove_diag:
-        edge_index, _ = remove_self_loops(edge_index)
-
-    num_nodes = int(torch.max(edge_index)) + 1
-    if not asymm_norm:
-        edge_attr = row_normalization(num_nodes, edge_index, edge_attr)
+        graph.remove_self_loops()
+    if asymm_norm:
+        graph.row_norm()
     else:
-        edge_attr = symmetric_normalization(num_nodes, edge_index, edge_attr)
-    return edge_index, edge_attr
+        graph.sym_norm()
+    return graph
 
 
 @register_model("sign")
@@ -109,45 +105,36 @@ class MLP(BaseModel):
         for bn in self.bns:
             bn.reset_parameters()
 
-    def _preprocessing(self, x, edge_index):
-        num_nodes = x.shape[0]
-
+    def _preprocessing(self, graph, x):
         op_embedding = []
         op_embedding.append(x)
 
+        edge_index = graph.edge_index
+
         # Convert to numpy arrays on cpu
         edge_index, _ = dropout_adj(edge_index, drop_rate=self.dropedge_rate)
-        row, col = edge_index
 
-        if self.undirected:
-            edge_index = to_undirected(edge_index, num_nodes)
-            row, col = edge_index
+        # if self.undirected:
+        #     edge_index = to_undirected(edge_index, num_nodes)
 
-        # adj matrix
-        edge_index, edge_attr = get_adj(
-            row, col, asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag
-        )
+        graph = get_adj(graph, asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag)
 
-        nx = x
+        with graph.local_graph():
+            graph.edge_index = edge_index
+            for _ in range(self.num_propagations):
+                x = spmm(graph, x)
+                op_embedding.append(x)
+
         for _ in range(self.num_propagations):
-            nx = spmm(edge_index, edge_attr, nx)
-            op_embedding.append(nx)
-
-        # transpose adj matrix
-        edge_index, edge_attr = get_adj(
-            col, row, asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag
-        )
-
-        nx = x
-        for _ in range(self.num_propagations):
-            nx = spmm(edge_index, edge_attr, nx)
+            nx = spmm(graph, x)
             op_embedding.append(nx)
 
         return torch.cat(op_embedding, dim=1)
 
-    def forward(self, x, edge_index):
+    def forward(self, graph):
         if self.cache_x is None:
-            self.cache_x = self._preprocessing(x, edge_index)
+            x = graph.x
+            self.cache_x = self._preprocessing(graph, x)
         x = self.cache_x
         for i, lin in enumerate(self.lins[:-1]):
             x = lin(x)
@@ -155,14 +142,4 @@ class MLP(BaseModel):
             x = F.relu(x)
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lins[-1](x)
-        return torch.log_softmax(x, dim=-1)
-
-    def node_classification_loss(self, data, mask=None):
-        if mask is None:
-            mask = data.train_mask
-        edge_index = data.edge_index_train if hasattr(data, "edge_index_train") and self.training else data.edge_index
-        pred = self.forward(data.x, edge_index)
-        return self.loss_fn(pred[mask], data.y[mask])
-
-    def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+        return x

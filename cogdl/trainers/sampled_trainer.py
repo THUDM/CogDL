@@ -83,6 +83,7 @@ class SAINTTrainer(SampledTrainer):
         parser.add_argument('--walk-length', default=20, type=int, help='random walk length')
         parser.add_argument('--size-frontier', default=20, type=int, help='frontier size in multidimensional random walks')
         parser.add_argument('--valid-cpu', action='store_true', help='run validation on cpu')
+        parser.add_argument("--eval-step", type=int, default=1)
         # fmt: on
 
     @classmethod

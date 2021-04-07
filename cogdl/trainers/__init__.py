@@ -57,4 +57,5 @@ SUPPORTED_TRAINERS = {
     "self_auxiliary_task_pretrain": "cogdl.trainers.self_auxiliary_task_trainer",
     "self_auxiliary_task_joint": "cogdl.trainers.self_auxiliary_task_trainer",
     "m3s": "cogdl.trainers.m3s_trainer",
+    "distributed_trainer": "cogdl.trainers.distributed_trainer",
 }

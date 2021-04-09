@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-**[主页](http://keg.cs.tsinghua.edu.cn/cogdl/cn)** | **[论文](https://arxiv.org/abs/2103.00959)** | **[排行榜](./cogdl/tasks/README.md)** | **[文档](https://cogdl.readthedocs.io)** | **[智源链接](http://open.baai.ac.cn/cogdl-toolkit)** | **[数据集](./cogdl/datasets/README.md)** | **[加入我们的Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[English](./README.md)**
+**[主页](https://cogdl.ai/zh)** | **[论文](https://arxiv.org/abs/2103.00959)** | **[排行榜](./cogdl/tasks/README.md)** | **[文档](https://cogdl.readthedocs.io)** | **[智源链接](http://open.baai.ac.cn/cogdl-toolkit)** | **[数据集](./cogdl/datasets/README.md)** | **[加入我们的Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[English](./README.md)**
 
 CogDL是由清华大学计算机系知识工程实验室（KEG）开发的基于图的深度学习的研究工具，基于Python语言和[PyTorch](https://github.com/pytorch/pytorch)库。CogDL允许研究人员和开发人员可以轻松地训练和比较基线算法或自定义模型，以进行结点分类，链接预测，图分类，社区发现等基于图结构的任务。 它提供了许多流行模型的实现，包括：非图神经网络算法例如Deepwalk、LINE、Node2vec、NetMF、ProNE、methpath2vec、PTE、graph2vec、DGK等；图神经网络算法例如GCN、GAT、GraphSAGE、FastGCN、GTN、HAN、GIN、DiffPool等。它也提供了一些下游任务，包括结点分类（分为是否具有节点属性），链接预测（分为同构和异构），图分类（分有监督和⽆监督）以及为这些任务构建各种算法效果的排行榜。
 
@@ -21,20 +21,30 @@ CogDL的特性包括：
 
 ## ❗ 最新
 
+- CogDL支持图神经网络模型使用混合专家模块（Mixture of Experts, MoE）。 你可以安装[FastMoE](https://github.com/laekov/fastmoe)然后在CogDL中尝试 **[MoE GCN](./cogdl/models/nn/moe_gcn.py)** 模型!
+
 - 最新的 **v0.3.0版本** 提供了快速的稀疏矩阵乘操作来加速图神经网络模型的训练。我们在arXiv上发布了 **[CogDL paper](https://arxiv.org/abs/2103.00959)** 的初版. 你可以加入[我们的slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)来讨论CogDL相关的内容。🎉
 
 - 最新的 **v0.2.0版本** 包含了非常易用的`experiment`和`pipeline`接口，其中`experiment`接口还支持超参搜索。这个版本还提供了`OAGBert`模型的接口（`OAGBert`是我们实验室推出的在大规模学术语料下训练的模型）。这个版本的很多内容是由开源社区的小伙伴们提供的，感谢大家的支持！🎉
 
+<details>
+<summary>
+历史
+</summary>
+<br/>
+
 - 最新的 **v0.1.2版本** 包括了预训练任务、各种使用样例、OGB数据集、知识图谱表示学习算法和一些图神经网络模型。CogDL的测试覆盖率增加至80%。正在开发和测试一些新的API，比如`Trainer`和`Sampler`。
 
 - 最新的 **v0.1.1版本** 包括了知识图谱链接预测任务、很多前沿的模型，支持使用`optuna`进行超参搜索。我们同时发布了一篇[推送](https://mp.weixin.qq.com/s/IUh-ctQwtSXGvdTij5eDDg)来介绍CogDL。
+
+</details>
 
 ## 安装说明
 
 ### 系统配置要求
 
 - Python 版本 >= 3.6
-- PyTorch 版本 >= 1.6.0
+- PyTorch 版本 >= 1.7.1
 
 请根据如下链接来安装PyTorch (https://github.com/pytorch/pytorch#installation)。
 
@@ -122,6 +132,36 @@ $ python scripts/train.py --task unsupervised_node_classification --dataset wiki
 | ('wikipedia', 'line')  | 0.4069±0.0011  | 0.4071±0.0010  | 0.4055±0.0013  | 0.4054±0.0020  | 0.4080±0.0042  |
 | ('wikipedia', 'netmf') | 0.4551±0.0024  | 0.4932±0.0022  | 0.5046±0.0017  | 0.5084±0.0057  | 0.5125±0.0035  |
 
+如果您在我们的工具包或自定义步骤中遇到任何困难，请随时提出一个github issue或发表评论。您可以在24小时内得到答复。
+
+## ❗ 常见的问答
+
+<details>
+<summary>
+如何给CogDL贡献代码？
+</summary>
+<br/>
+
+如果您有一个性能优秀的模型，并愿意在我们的工具包中实现它，以帮助更多的人，您可以[开启一个issue](https://github.com/THUDM/cogdl/issues)然后创建一个pull request，详细信息可见[该页面](https://help.github.com/en/articles/creating-a-pull-request)。
+
+在提交修改之前，请先运行`pre-commit install`来设置检查代码格式(`black`)和风格(`flake8`)的钩子，然后`pre-commit`会在执行`git commit`的时候自动运行。关于`pre-commit`的详细信息请参考[这里](https://pre-commit.com/)。
+</details>
+
+<details>
+<summary>
+如何启用快速的图神经网络的训练方式？
+</summary>
+<br/>
+CogDL提供了一种快速的稀疏矩阵乘的操作（[GE-SpMM](https://arxiv.org/abs/2007.03179)）来加速图神经网络模型在GPU上的训练效率。
+你可以设置`fast_spmm=True`或者`--fast-spmm`来启用这个特性。
+需要注意的是这个特性仍在测试阶段，可能在某些CUDA版本下无法正常使用。
+</details>
+
+<details>
+<summary>
+如何使用多个 GPU 同时进行多组实验？
+</summary>
+<br/>
 如果你想使用多个 GPU 同时在 Cora 数据集上运行 GCN 和 GAT 模型，可以使用如下指令:
 
 ```bash
@@ -134,15 +174,13 @@ $ python scripts/parallel_train.py --task node_classification --dataset cora --m
 | --------------- | ------------- |
 | ('cora', 'gcn') | 0.8236±0.0033 |
 | ('cora', 'gat') | 0.8262±0.0032 |
+</details>
 
-### Fast-Spmm用法
-
-CogDL提供了一种快速的稀疏矩阵乘的操作（[GE-SpMM](https://arxiv.org/abs/2007.03179)）来加速图神经网络模型在GPU上的训练效率。
-你可以设置`fast_spmm=True`或者`--fast-spmm`来启用这个特性。
-需要注意的是这个特性仍在测试阶段，可能在某些CUDA版本下无法正常使用。
-
-## Docker
-
+<details>
+<summary>
+如何使用docker容器来配置cogdl的环境？
+</summary>
+<br/>
 您也可以选择使用Docker来配置cogdl所需的环境。要构建Docker镜像，只需运行以下命令。
 
 ```bash
@@ -151,10 +189,10 @@ docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VER
 请根据您的CUDA版本（或CPU）更换 `YOUR_CUDA_VERSION` 以及 更换 `YOUR_TORCH_VERSION` 为您使用的PyTorch版本。
 
 
-例如，使用 CUDA 10.1 和 PyTorch 1.7.0 一起运行
+例如，使用 CUDA 10.1 和 PyTorch 1.7.1 一起运行
 
 ```bash
-docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.0 --tag cogdl .
+docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.1 --tag cogdl .
 ```
 
 启动容器
@@ -168,21 +206,17 @@ docker run -it -v cogdl:/cogdl cogdl /bin/bash
 ```bash
 git clone https://github.com/THUDM/cogdl /cogdl
 ```
+</details>
 
-## 其他图深度学习库
-
+<details>
+<summary>
+如何使用其他图深度学习库中的模型？
+</summary>
+<br/>
 如何你对其他图深度学习库（比如PyTorch Geometric，Deep Graph Library）比较熟悉，你可以基于这些库的模块来在CogDL里实现相关模型。
 你可以通过下述的指南来安装相应的库，例如PyTorch Geometric (https://github.com/rusty1s/pytorch_geometric/#installation)，和Deep Graph Libraray (https://docs.dgl.ai/install/index.html)。
 对于如何使用PyG的模块来实现模型，你可以在示例中找到一些参考：[examples/pytorch_geometric](https://github.com/THUDM/cogdl/tree/master/examples/pytorch_geometric/)。
-
-
-## 自定义数据集或模型
-
-- 提交你的先进算法：如果您有一个性能优异的算法并愿意发布出来，你可以在我们的代码仓库里提出一个[issue](https://github.com/qibinc/cognitive_graph/issues)。在验证该算法的原创性，创造性和效果后，我们将该算法的效果添加到我们的排行榜上。
-- 添加你自己的数据集：如果您有一个独特，有研究价值的数据集并且愿意发布出来，你可以在我们的代码仓库里提出一个[issue](https://github.com/qibinc/cognitive_graph/issues)，我们将把所以适合的模型在您的数据集上运行并更新我们的排行榜。
-- 实现你自己的模型：如果您有一个性能优秀的算法，并愿意在我们的工具包中实现它，以帮助更多的人，您可以创建一个pull request，详细信息可见[该页面](https://help.github.com/en/articles/creating-a-pull-request)。
-
-如果您在我们的工具包或自定义步骤中遇到任何困难，请随时提出一个github issue或发表评论。您可以在24小时内得到答复。
+</details>
 
 ## 引用CogDL
 

@@ -236,6 +236,11 @@ So how do you do a unit test?
 * After modifying `tests/tasks/test_node_classification.py`, commit it together with your `models/nn/abcgnn.py` and your pull request should pass.
 </details>
 
+## CogDL Team
+CogDL is developed and maintained by [Tsinghua, BAAI, DAMO Academy, and ZHIPU.AI](https://cogdl.ai/about/). 
+
+The core development team can be reached at [cogdlteam@gmail.com](mailto:cogdlteam@gmail.com).
+
 ## Citing CogDL
 
 Please cite [our paper](https://arxiv.org/abs/2103.00959) if you find our code or results useful for your research:

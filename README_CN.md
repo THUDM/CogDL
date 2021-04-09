@@ -218,6 +218,11 @@ git clone https://github.com/THUDM/cogdl /cogdl
 对于如何使用PyG的模块来实现模型，你可以在示例中找到一些参考：[examples/pytorch_geometric](https://github.com/THUDM/cogdl/tree/master/examples/pytorch_geometric/)。
 </details>
 
+## CogDL团队
+CogDL是由[清华, 北京智源, 阿里达摩院, 智谱.AI](https://cogdl.ai/zh/about/)开发并维护。
+
+CogDL核心开发团队可以通过[cogdlteam@gmail.com](mailto:cogdlteam@gmail.com)这个邮箱来联系。
+
 ## 引用CogDL
 
 如果你觉得我们的代码或结果对你的研究有所帮助，请引用[CogDL论文](https://arxiv.org/abs/2103.00959)。

@@ -83,8 +83,6 @@ setup(
         "optuna == 2.4.0",
         "texttable",
         "ogb",
-        "emoji",
-        "pyinquirer",
         "pre-commit",
         "flake8",
         "numba",

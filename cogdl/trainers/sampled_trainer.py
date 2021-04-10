@@ -66,7 +66,7 @@ class SampledTrainer(BaseTrainer):
                 if val_loss <= min_loss or val_acc >= max_score:
                     if val_loss <= min_loss:
                         best_model = copy.deepcopy(self.model)
-                    min_loss = np.min((min_loss, val_loss))
+                    min_loss = np.min((min_loss, val_loss.cpu()))
                     max_score = np.max((max_score, val_acc))
                     patience = 0
                 else:
@@ -90,6 +90,7 @@ class SAINTTrainer(SampledTrainer):
         parser.add_argument('--walk-length', default=20, type=int, help='random walk length')
         parser.add_argument('--size-frontier', default=20, type=int, help='frontier size in multidimensional random walks')
         parser.add_argument('--valid-cpu', action='store_true', help='run validation on cpu')
+        parser.add_argument("--eval-step", type=int, default=1)
         # fmt: on
 
     @classmethod

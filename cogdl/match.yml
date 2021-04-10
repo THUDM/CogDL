@@ -26,6 +26,8 @@ node_classification:
     - unet
     - pprgo
     - graphsaint
+    - m3s
+    - supergat
     - moe_gcn
     dataset:
     - cora
@@ -67,6 +69,7 @@ unsupervised_node_classification:
   - model:
     - unsup_graphsage
     - dgi
+    - dgi_sampling
     - mvgrl
     - grace
     dataset:
@@ -219,6 +222,8 @@ attributed_graph_clustering:
     - prone
     - netmf
     - line
+    - gae
+    - vgae
     - agc
     - daegc
     dataset:

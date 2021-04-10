@@ -2,8 +2,7 @@ import os
 import torch
 from torch.utils.cpp_extension import load
 
-path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "operators")
-
+path = os.path.join(os.path.dirname(__file__))
 
 # SPMM
 if not torch.cuda.is_available():

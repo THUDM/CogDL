@@ -171,8 +171,9 @@ class GRACE(BaseModel):
         n = x.shape[1]
         drop_rates = torch.ones(n) * droprate
         if self.training:
-            masks = torch.bernoulli(1.0 - drop_rates).unsqueeze(0).expand_as(x)
-            x = masks.to(x.device) * x
+            masks = torch.bernoulli(1.0 - drop_rates).view(1, -1).expand_as(x)
+            masks = masks.to(x.device)
+            x = masks * x
         return x
 
     @staticmethod

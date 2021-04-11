@@ -74,7 +74,10 @@ SUPPORTED_MODELS = {
     "prone": "cogdl.models.emb.prone",
     "daegc": "cogdl.models.agc.daegc",
     "agc": "cogdl.models.agc.agc",
+    "gae": "cogdl.models.nn.gae",
+    "vgae": "cogdl.models.nn.gae",
     "dgi": "cogdl.models.nn.dgi",
+    "dgi_sampling": "cogdl.models.nn.dgi",
     "mvgrl": "cogdl.models.nn.mvgrl",
     "patchy_san": "cogdl.models.nn.patchy_san",
     "chebyshev": "cogdl.models.nn.pyg_cheb",
@@ -119,5 +122,7 @@ SUPPORTED_MODELS = {
     "unsup_graphsage": "cogdl.models.nn.unsup_graphsage",
     "sagpool": "cogdl.models.nn.pyg_sagpool",
     "graphsaint": "cogdl.models.nn.graphsaint",
+    "m3s": "cogdl.models.nn.m3s",
+    "supergat": "cogdl.models.nn.pyg_supergat",
     "moe_gcn": "cogdl.models.nn.moe_gcn",
 }

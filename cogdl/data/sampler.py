@@ -168,10 +168,7 @@ class SAINTSampler(Sampler):
         return data
 
     def exists_train_nodes(self, node_idx):
-        for idx in node_idx:
-            if self.train_mask[idx]:
-                return True
-        return False
+        return self.train_mask[node_idx].any().item()
 
     def node_induction(self, node_idx):
         node_idx = np.unique(node_idx)
@@ -199,6 +196,53 @@ class SAINTSampler(Sampler):
 
     def sample(self):
         pass
+
+
+class SAINTDataset(torch.utils.data.Dataset):
+    partition_tool = None
+
+    def __init__(self, dataset, args_sampler, require_norm=True, log=False):
+        super(SAINTDataset).__init__()
+
+        self.data = dataset.data
+        self.dataset_name = dataset.__class__.__name__
+        self.args_sampler = args_sampler
+        self.require_norm = require_norm
+        self.log = log
+
+        if self.args_sampler["sampler"] == "node":
+            self.sampler = NodeSampler(self.data, self.args_sampler)
+        elif self.args_sampler["sampler"] == "edge":
+            self.sampler = EdgeSampler(self.data, self.args_sampler)
+        elif self.args_sampler["sampler"] == "rw":
+            self.sampler = RWSampler(self.data, self.args_sampler)
+        elif self.args_sampler["sampler"] == "mrw":
+            self.sampler = MRWSampler(self.data, self.args_sampler)
+        else:
+            raise NotImplementedError
+
+        self.batch_idx = np.array(range(len(self.sampler.subgraph_data)))
+
+    def shuffle(self):
+        random.shuffle(self.batch_idx)
+
+    def __len__(self):
+        return len(self.sampler.subgraph_data)
+
+    def __getitem__(self, idx):
+        new_idx = self.batch_idx[idx]
+        data = self.sampler.subgraph_data[new_idx]
+        node_idx = self.sampler.subgraph_node_idx[new_idx]
+        edge_idx = self.sampler.subgraph_edge_idx[new_idx]
+
+        if self.require_norm:
+            data.norm_aggr = torch.FloatTensor(self.sampler.norm_aggr_train[edge_idx][:])
+            data.norm_loss = self.sampler.norm_loss_train[node_idx]
+
+        edge_weight = row_normalization(data.x.shape[0], data.edge_index)
+        data.edge_weight = edge_weight
+
+        return data
 
 
 class NodeSampler(SAINTSampler):
@@ -367,6 +411,66 @@ class NeighborSampler(torch.utils.data.DataLoader):
             return src_id, graph, size
         else:
             return batch, node_id, adj_list[::-1]
+
+
+class ClusteredDataset(torch.utils.data.Dataset):
+    partition_tool = None
+
+    def __init__(self, dataset, n_cluster: int, batch_size: int, log=False):
+        super(ClusteredDataset).__init__()
+        try:
+            import metis
+
+            ClusteredDataset.partition_tool = metis
+        except Exception as e:
+            print(e)
+            exit(1)
+
+        self.data = dataset.data
+        self.dataset_name = dataset.__class__.__name__
+        self.batch_size = batch_size
+        self.log = log
+        self.clusters = self.preprocess(n_cluster)
+        self.batch_idx = np.array(range(n_cluster))
+
+    def shuffle(self):
+        random.shuffle(self.batch_idx)
+
+    def __len__(self):
+        return (len(self.clusters) - 1) // self.batch_size + 1
+
+    def __getitem__(self, idx):
+        batch = self.batch_idx[idx * self.batch_size : (idx + 1) * self.batch_size]
+        nodes = np.concatenate([self.clusters[i] for i in batch])
+        subgraph = self.data.subgraph(nodes)
+
+        return subgraph
+
+    def preprocess(self, n_cluster):
+        save_name = f"{self.dataset_name}-{n_cluster}.cluster"
+        if os.path.exists(save_name):
+            return torch.load(save_name)
+        if self.log:
+            print("Preprocessing...")
+        edges = self.data.edge_index
+        edges, _ = remove_self_loops(edges)
+        if str(edges.device) != "cpu":
+            edges = edges.cpu()
+        edges = edges.numpy()
+        num_nodes = np.max(edges) + 1
+        adj = sp.csr_matrix((np.ones(edges.shape[1]), (edges[0], edges[1])), shape=(num_nodes, num_nodes))
+        indptr = adj.indptr
+        indptr = np.split(adj.indices, indptr[1:])[:-1]
+        _, parts = ClusteredDataset.partition_tool.part_graph(indptr, n_cluster, seed=1)
+        division = [[] for _ in range(n_cluster)]
+        for i, v in enumerate(parts):
+            division[v].append(i)
+        for k in range(len(division)):
+            division[k] = np.array(division[k], dtype=np.int)
+        torch.save(division, save_name)
+        if self.log:
+            print("Graph clustering done")
+        return division
 
 
 class ClusteredLoader(torch.utils.data.DataLoader):

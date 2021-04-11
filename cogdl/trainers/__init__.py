@@ -8,12 +8,12 @@ TRAINER_REGISTRY = {}
 
 def register_trainer(name):
     """
-    New universal trainer types can be added to cogdl with the :func:`register_universal_trainer`
+    New universal trainer types can be added to cogdl with the :func:`register_trainer`
     function decorator.
 
     For example::
 
-        @register_universal_trainer('self_auxiliary_task')
+        @register_trainer('self_auxiliary_task')
         class SelfAuxiliaryTaskTrainer(BaseModel):
             (...)
 
@@ -54,5 +54,8 @@ SUPPORTED_TRAINERS = {
     "neighborsampler": "cogdl.trainers.sampled_trainer",
     "clustergcn": "cogdl.trainers.sampled_trainer",
     "random_partition": "cogdl.trainers.sampled_trainer",
-    "self_auxiliary_task": "cogdl.trainers.self_auxiliary_task_trainer",
+    "self_auxiliary_task_pretrain": "cogdl.trainers.self_auxiliary_task_trainer",
+    "self_auxiliary_task_joint": "cogdl.trainers.self_auxiliary_task_trainer",
+    "m3s": "cogdl.trainers.m3s_trainer",
+    "distributed_trainer": "cogdl.trainers.distributed_trainer",
 }

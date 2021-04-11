@@ -16,7 +16,8 @@ PRETRAINED_MODEL_ARCHIVE_MAP = {
     "oagbert-v2": "https://cloud.tsinghua.edu.cn/f/f06448fa3c234317bd16/?dl=1",
     "oagbert-v2-lm": "https://cloud.tsinghua.edu.cn/f/efb2094951a94084947d/?dl=1",
     "oagbert-v2-sim": "https://cloud.tsinghua.edu.cn/f/103a467b0fe14177bf51/?dl=1",
-    "oagbert-v2-zh": "https://cloud.tsinghua.edu.cn/f/8efc97a77af046dc8d24/?dl=1"
+    "oagbert-v2-zh": "https://cloud.tsinghua.edu.cn/f/8efc97a77af046dc8d24/?dl=1",
+    "oagbert-v2-zh-sim": "https://cloud.tsinghua.edu.cn/f/6faaf0d095ee4013a098/?dl=1",
 }
 
 

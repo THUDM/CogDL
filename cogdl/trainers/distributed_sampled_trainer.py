@@ -178,30 +178,27 @@ class DistributedClusterGCNTrainer(DistributedSampledTrainer, ClusterGCNTrainer)
         train_sampler = torch.utils.data.distributed.DistributedSampler(
             train_dataset, num_replicas=self.args.world_size, rank=rank
         )
-        data.train()
-        train_loader = ClusteredLoader(
-            dataset=train_dataset,
-            n_cluster=self.args.n_cluster,
-            batch_size=self.args.batch_size,
-            method="metis",
+
+        settings = dict(
             num_workers=self.num_workers,
             persistent_workers=True,
             pin_memory=True,
-            sampler=train_sampler,
+            batch_size=self.args.batch_size,
+        )
+
+        if torch.__version__.split("+")[0] < "1.7.1":
+            settings.pop("persistent_workers")
+
+        data.train()
+        train_loader = ClusteredLoader(
+            dataset=train_dataset, n_cluster=self.args.n_cluster, method="metis", sampler=train_sampler, **settings
         )
         if self.device == 0:
             dist.barrier()
 
+        settings["batch_size"] *= 5
         data.eval()
-        test_loader = NeighborSampler(
-            dataset=dataset,
-            sizes=[-1],
-            batch_size=self.batch_size * 10,
-            num_workers=self.num_workers,
-            shuffle=False,
-            persistent_workers=True,
-            pin_memory=True,
-        )
+        test_loader = NeighborSampler(dataset=dataset, sizes=[-1], **settings)
         val_loader = test_loader
         return train_dataset, (train_loader, val_loader, test_loader)
 
@@ -229,27 +226,23 @@ class DistributedNeighborSamplerTrainer(DistributedSampledTrainer, NeighborSampl
         train_sampler = torch.utils.data.distributed.DistributedSampler(
             train_dataset, num_replicas=self.args.world_size, rank=rank
         )
-        data.train()
-        train_loader = NeighborSampler(
-            dataset=train_dataset,
-            sizes=self.sample_size,
+
+        settings = dict(
             num_workers=self.num_workers,
-            shuffle=False,
             persistent_workers=True,
             pin_memory=True,
-            sampler=train_sampler,
+            batch_size=self.args.batch_size,
         )
 
+        if torch.__version__.split("+")[0] < "1.7.1":
+            settings.pop("persistent_workers")
+
+        data.train()
+        train_loader = NeighborSampler(dataset=train_dataset, sizes=self.sample_size, sampler=train_sampler, **settings)
+
+        settings["batch_size"] *= 5
         data.eval()
-        test_loader = NeighborSampler(
-            dataset=dataset,
-            sizes=[-1],
-            batch_size=self.batch_size * 10,
-            num_workers=self.num_workers,
-            shuffle=False,
-            persistent_workers=True,
-            pin_memory=True,
-        )
+        test_loader = NeighborSampler(dataset=dataset, sizes=[-1], **settings)
         val_loader = test_loader
         return train_dataset, (train_loader, val_loader, test_loader)
 
@@ -259,15 +252,25 @@ class DistributedNeighborSamplerTrainer(DistributedSampledTrainer, NeighborSampl
 
     def _test_step(self, split="val"):
         if split == "test":
-            self.test_loader = NeighborSampler(
-                dataset=self.dataset,
-                sizes=[-1],
-                batch_size=self.batch_size * 10,
-                num_workers=self.num_workers,
-                shuffle=False,
-                persistent_workers=True,
-                pin_memory=True,
-            )
+            if torch.__version__.split("+")[0] < "1.7.1":
+                self.test_loader = NeighborSampler(
+                    dataset=self.dataset,
+                    sizes=[-1],
+                    batch_size=self.batch_size * 10,
+                    num_workers=self.num_workers,
+                    shuffle=False,
+                    pin_memory=True,
+                )
+            else:
+                self.test_loader = NeighborSampler(
+                    dataset=self.dataset,
+                    sizes=[-1],
+                    batch_size=self.batch_size * 10,
+                    num_workers=self.num_workers,
+                    shuffle=False,
+                    persistent_workers=True,
+                    pin_memory=True,
+                )
         return super(DistributedNeighborSamplerTrainer, self)._test_step()
 
 
@@ -286,6 +289,17 @@ class DistributedSAINTTrainer(DistributedSampledTrainer, SAINTTrainer):
         train_sampler = torch.utils.data.distributed.DistributedSampler(
             train_dataset, num_replicas=self.args.world_size, rank=rank
         )
+
+        settings = dict(
+            num_workers=self.num_workers,
+            persistent_workers=True,
+            pin_memory=True,
+            batch_size=self.args.batch_size,
+        )
+
+        if torch.__version__.split("+")[0] < "1.7.1":
+            settings.pop("persistent_workers")
+
         train_loader = torch.utils.data.DataLoader(
             dataset=train_dataset,
             batch_size=1,
@@ -295,14 +309,11 @@ class DistributedSAINTTrainer(DistributedSampledTrainer, SAINTTrainer):
             sampler=train_sampler,
             collate_fn=lambda x: x[0],
         )
+
         test_loader = NeighborSampler(
             dataset=dataset,
             sizes=[-1],
-            batch_size=self.batch_size * 5,
-            num_workers=self.num_workers,
-            shuffle=False,
-            persistent_workers=True,
-            pin_memory=True,
+            **settings,
         )
         val_loader = test_loader
         return train_dataset, (train_loader, val_loader, test_loader)

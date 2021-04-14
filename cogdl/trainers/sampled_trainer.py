@@ -225,27 +225,32 @@ class NeighborSamplingTrainer(SampledTrainer):
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
 
-        self.data.train()
-        self.train_loader = NeighborSampler(
-            dataset=dataset,
-            mask=self.data.train_mask,
-            sizes=self.sample_size,
+        settings = dict(
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=False,
             persistent_workers=True,
             pin_memory=True,
         )
+
+        if torch.__version__.split("+")[0] < "1.7.1":
+            settings.pop("persistent_workers")
+
+        self.data.train()
+        self.train_loader = NeighborSampler(
+            dataset=dataset,
+            mask=self.data.train_mask,
+            sizes=self.sample_size,
+            **settings,
+        )
+
+        settings["batch_size"] *= 5
         self.data.eval()
         self.test_loader = NeighborSampler(
             dataset=dataset,
             mask=None,
             sizes=[-1],
-            batch_size=self.batch_size * 10,
-            num_workers=self.num_workers,
-            shuffle=False,
-            persistent_workers=True,
-            pin_memory=True,
+            **settings,
         )
         self.model = model.to(self.device)
         self.model.set_data_device(self.device)
@@ -313,15 +318,20 @@ class ClusterGCNTrainer(SampledTrainer):
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+
+        settings = dict(
+            batch_size=self.batch_size, num_workers=self.num_workers, persistent_workers=True, pin_memory=True
+        )
+
+        if torch.__version__.split("+")[0] < "1.7.1":
+            settings.pop("persistent_workers")
+
         self.data.train()
         self.train_loader = ClusteredLoader(
             dataset,
             self.n_cluster,
             method="metis",
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            persistent_workers=True,
-            pin_memory=True,
+            **settings,
         )
         best_model = self.train()
         self.model = best_model
@@ -378,14 +388,13 @@ class RandomClusterTrainer(SampledTrainer):
 
         self.loss_fn = dataset.get_loss_fn()
         self.evaluator = dataset.get_evaluator()
-        self.train_loader = ClusteredLoader(
-            dataset=dataset,
-            n_cluster=self.n_cluster,
-            method="random",
-            num_workers=self.num_workers,
-            persistent_workers=True,
-            pin_memory=True,
-        )
+
+        settings = dict(num_workers=self.num_workers, persistent_workers=True, pin_memory=True)
+
+        if torch.__version__.split("+")[0] < "1.7.1":
+            settings.pop("persistent_workers")
+
+        self.train_loader = ClusteredLoader(dataset=dataset, n_cluster=self.n_cluster, method="random", **settings)
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         best_model = self.train()

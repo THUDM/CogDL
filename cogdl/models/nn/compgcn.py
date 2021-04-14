@@ -23,7 +23,7 @@ def conj(a):
 
 def ccorr(a, b):
     """Borrowed from https://github.com/malllabiisc/CompGCN"""
-    return torch.irfft(com_mult(conj(torch.rfft(a, 1)), torch.rfft(b, 1)), 1, signal_sizes=(a.shape[-1],))
+    return torch.fft.irfft(com_mult(conj(torch.fft.rfft(a, 1)), torch.fft.rfft(b, 1)), 1, signal_sizes=(a.shape[-1],))
 
 
 class BasesRelEmbLayer(nn.Module):
@@ -149,9 +149,9 @@ class CompGCNLayer(nn.Module):
         return F.dropout(embed, p=self.dropout, training=self.training)
 
     def rel_transform(self, ent_embed, rel_embed):
-        if self.opn == "corr":
-            trans_embed = ccorr(ent_embed, rel_embed)
-        elif self.opn == "sub":
+        # if self.opn == "corr":
+        #     trans_embed = ccorr(ent_embed, rel_embed)
+        if self.opn == "sub":
             trans_embed = ent_embed - rel_embed
         elif self.opn == "mult":
             trans_embed = ent_embed * rel_embed
@@ -165,7 +165,7 @@ class CompGCN(nn.Module):
         self, num_entities, num_rels, num_bases, in_feats, hidden_size, out_feats, layers, dropout, activation
     ):
         super(CompGCN, self).__init__()
-        self.opn = "corr"
+        self.opn = "sub"
         self.num_rels = num_rels
         self.num_entities = num_entities
         if num_bases is not None and num_bases > 0:

@@ -6,8 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .. import register_model, BaseModel
-from cogdl.utils import mul_edge_softmax, spmm, get_activation
-from cogdl.trainers.sampled_trainer import DeeperGCNTrainer
+from cogdl.utils import mul_edge_softmax, get_activation
+from cogdl.trainers.sampled_trainer import RandomClusterTrainer
 
 
 class GENConv(nn.Module):
@@ -257,4 +257,4 @@ class DeeperGCN(BaseModel):
 
     @staticmethod
     def get_trainer(taskType: Any, args):
-        return DeeperGCNTrainer
+        return RandomClusterTrainer

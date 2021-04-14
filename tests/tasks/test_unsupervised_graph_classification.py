@@ -24,6 +24,9 @@ def get_default_args():
         "lr": 0.001,
         "weight_decay": 5e-4,
         "checkpoint": False,
+        "activation": "relu",
+        "residual": False,
+        "norm": None,
     }
     return build_args_from_dict(default_dict)
 

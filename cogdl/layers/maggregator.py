@@ -15,16 +15,11 @@ class MeanAggregator(torch.nn.Module):
 
     @staticmethod
     def norm(graph, x):
-        # here edge_index is already a sparse tensor
-
         graph.row_norm()
         x = spmm(graph, x)
-        #  x：512*dim, edge_weight：256*512
-
         return x
 
     def forward(self, graph, x):
-        """"""
         x = self.linear(x)
         x = self.norm(graph, x)
         return x
@@ -46,11 +41,9 @@ class SumAggregator(torch.nn.Module):
     @staticmethod
     def aggr(graph, x):
         x = spmm(graph, x)
-        #  x：512*dim, edge_weight：256*512
         return x
 
     def forward(self, graph, x):
-        """"""
         x = self.linear(x)
         x = self.aggr(graph, x)
         return x

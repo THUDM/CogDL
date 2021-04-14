@@ -23,6 +23,9 @@ def get_default_args():
         "sampler": "none",
         "degree_feature": False,
         "checkpoint": False,
+        "residual": False,
+        "activation": "relu",
+        "norm": None,
     }
     return build_args_from_dict(default_dict)
 

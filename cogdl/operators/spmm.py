@@ -4,6 +4,7 @@ from torch.utils.cpp_extension import load
 
 path = os.path.join(os.path.dirname(__file__))
 
+# SPMM
 if not torch.cuda.is_available():
     spmm = None
 else:

@@ -165,6 +165,7 @@ class GRACE(BaseModel):
         edge_weight = graph.edge_weight
         graph.edge_index = edge_index[:, mask]
         graph.edge_weight = edge_weight[mask]
+        torch.save([graph.edge_index, graph.edge_weight], "grace_mask.graph")
         return graph
 
     def drop_feature(self, x: torch.Tensor, droprate: float):

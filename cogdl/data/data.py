@@ -14,10 +14,9 @@ from cogdl.utils import (
     row_normalization,
     get_degrees,
 )
-from cogdl.operators.sample import sample_adj_c
+from cogdl.operators.sample import sample_adj_c, subgraph_c
 
-indicator = False
-subgraph_c = None
+indicator = True
 
 
 class BaseGraph(object):
@@ -270,7 +269,7 @@ class Adjacency(BaseGraph):
         if self.__num_nodes__ is not None:
             return self.__num_nodes__
         elif self.row_ptr is not None:
-            return max(torch.max(self.col).item() + 1, self.row_ptr.shape[0] - 1)
+            return self.row_ptr.shape[0] - 1
         else:
             return torch.max(torch.stack([self.row, self.col])).item() + 1
 
@@ -406,10 +405,12 @@ class Graph(BaseGraph):
         self.__is_train__ = True
         if self._adj_train is not None:
             self._adj = self._adj_train
+        return self
 
     def eval(self):
         self._adj = self._adj_full
         self.__is_train__ = False
+        return self
 
     def add_remaining_self_loops(self):
         self._adj_full.add_remaining_self_loops()
@@ -467,6 +468,8 @@ class Graph(BaseGraph):
     @edge_index.setter
     def edge_index(self, edge_index):
         row, col = edge_index
+        if self._adj.row is not None and row.shape[0] != self._adj.row.shape[0]:
+            self._adj.row_ptr = None
         self._adj.row = row
         self._adj.col = col
 
@@ -575,6 +578,10 @@ class Graph(BaseGraph):
 
     def clone(self):
         return Graph.from_dict({k: v.clone() for k, v in self})
+
+    def __delitem__(self, key):
+        if hasattr(self, key):
+            self[key] = None
 
     def __repr__(self):
         info = ["{}={}".format(key, list(self[key].size())) for key in self.__keys__() if not key.startswith("_")]

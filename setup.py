@@ -83,10 +83,12 @@ setup(
         "optuna == 2.4.0",
         "texttable",
         "ogb",
+        "emoji",
         "pre-commit",
         "flake8",
         "numba",
         "transformers",
+        "sentencepiece",
     ],
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,

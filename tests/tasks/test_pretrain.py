@@ -102,7 +102,7 @@ def test_chem_supervised():
     args.load_path = None
     task = build_task(args)
     ret = task.train()
-    assert 0 < ret["Acc"] <= 1
+    assert 0 <= ret["Acc"] <= 1
 
 
 def test_bbbp():

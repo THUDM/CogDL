@@ -17,6 +17,9 @@ def get_default_args():
         "checkpoint": False,
         "load_emb_path": None,
         "training_percents": [0.1],
+        "activation": "relu",
+        "residual": False,
+        "norm": None,
     }
     return build_args_from_dict(default_dict)
 

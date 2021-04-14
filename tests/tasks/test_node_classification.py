@@ -23,6 +23,10 @@ def get_default_args():
         "checkpoint": False,
         "auxiliary_task": "none",
         "eval_step": 1,
+        "activation": "relu",
+        "residual": False,
+        "norm": None,
+        "num_workers": 1,
     }
     return build_args_from_dict(default_dict)
 
@@ -60,6 +64,15 @@ def test_gcn_cora():
         task = build_task(args)
         ret = task.train()
         assert 0 <= ret["Acc"] <= 1
+    for n in ["batchnorm", "layernorm"]:
+        args.norm = n
+        task = build_task(args)
+        ret = task.train()
+        assert 0 <= ret["Acc"] <= 1
+    args.residual = True
+    task = build_task(args)
+    ret = task.train()
+    assert 0 <= ret["Acc"] <= 1
 
 
 def test_gat_cora():
@@ -112,6 +125,7 @@ def test_graphsage_cora():
     args = get_default_args()
     args.task = "node_classification"
     args.model = "graphsage"
+    args.aggr = "mean"
     args.batch_size = 128
     args.num_layers = 2
     args.patience = 1
@@ -174,6 +188,7 @@ def test_gcn_cora_sampler():
     args.task = "node_classification"
     args.dataset = "cora"
     args.trainer = "graphsaint"
+    args.batch_size = 10
     args.model = "gcn"
     args.valid_cpu = True
     args.cpu = True
@@ -199,6 +214,7 @@ def test_graphsaint_cora():
     args.trainer = "graphsaint"
     args.model = "graphsaint"
     args.valid_cpu = True
+    args.batch_size = 10
     args.cpu = True
     args.architecture = "1-1-0"
     args.aggr = "concat"

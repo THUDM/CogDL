@@ -29,8 +29,10 @@ def get_default_args():
         "missing_rate": -1,
         "task": "node_classification",
         "checkpoint": False,
-        "label_mask": 0,
         "num_layers": 2,
+        "activation": "relu",
+        "residual": False,
+        "norm": None,
     }
     args = build_args_from_dict(args)
     dataset = build_dataset(args)

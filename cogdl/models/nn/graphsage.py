@@ -63,6 +63,7 @@ class Graphsage(BaseModel):
         parser.add_argument("--sample-size", type=int, nargs='+', default=[10, 10])
         parser.add_argument("--dropout", type=float, default=0.5)
         parser.add_argument("--batch-size", type=int, default=128)
+        parser.add_argument("--aggr", type=str, default="mean")
         # fmt: on
 
     @classmethod
@@ -74,12 +75,13 @@ class Graphsage(BaseModel):
             args.num_layers,
             args.sample_size,
             args.dropout,
+            args.aggr,
         )
 
     def sampling(self, edge_index, num_sample):
         return sage_sampler(self.adjlist, edge_index, num_sample)
 
-    def __init__(self, num_features, num_classes, hidden_size, num_layers, sample_size, dropout):
+    def __init__(self, num_features, num_classes, hidden_size, num_layers, sample_size, dropout, aggr):
         super(Graphsage, self).__init__()
         assert num_layers == len(sample_size)
         self.adjlist = {}
@@ -90,7 +92,9 @@ class Graphsage(BaseModel):
         self.sample_size = sample_size
         self.dropout = dropout
         shapes = [num_features] + hidden_size + [num_classes]
-        self.convs = nn.ModuleList([GraphSAGELayer(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
+        self.convs = nn.ModuleList(
+            [GraphSAGELayer(shapes[layer], shapes[layer + 1], aggr=aggr) for layer in range(num_layers)]
+        )
 
     def mini_forward(self, graph):
         x = graph.x
@@ -117,9 +121,10 @@ class Graphsage(BaseModel):
         if isinstance(args[0], Graph):
             return self.mini_forward(*args)
         else:
+            device = next(self.parameters()).device
             x, adjs = args
             for i, (src_id, graph, size) in enumerate(adjs):
-                graph = graph.to(self.device)
+                graph = graph.to(device)
                 output = self.convs[i](graph, x)
                 x = output[: size[1]]
                 if i != self.num_layers - 1:
@@ -136,11 +141,12 @@ class Graphsage(BaseModel):
             return self.loss_fn(pred, y)
 
     def inference(self, x_all, data_loader):
+        device = next(self.parameters()).device
         for i in range(len(self.convs)):
             output = []
             for src_id, graph, size in data_loader:
-                x = x_all[src_id].to(self.device)
-                graph = graph.to(self.device)
+                x = x_all[src_id].to(device)
+                graph = graph.to(device)
                 x = self.convs[i](graph, x)
                 x = x[: size[1]]
                 if i != self.num_layers - 1:

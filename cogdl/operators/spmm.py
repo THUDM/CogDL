@@ -23,8 +23,7 @@ else:
         def csrspmm(rowptr, colind, x, csr_data, sym=False):
             return SPMMFunction.apply(rowptr, colind, x, csr_data, sym)
 
-    except Exception as e:
-        print(e)
+    except Exception:
         spmm = None
 
 

@@ -227,8 +227,8 @@ def initialize_spmm(args):
             global fast_spmm
             fast_spmm = csrspmm
             print("Using fast-spmm to speed up training")
-        except Exception as e:
-            print("import csr_spmm:", e)
+        except Exception:
+            print("Failed to load fast version of SpMM, use torch.spmm instead.")
 
 
 def spmm(graph, x):

@@ -648,12 +648,12 @@ class Graph(BaseGraph):
 
     def csr_subgraph(self, node_idx):
         indptr, indices, nodes, edges = subgraph_c(self._adj.row_ptr, self._adj.col, node_idx.cpu())
-        nodes = nodes.to(self._adj.device)
+        nodes_idx = node_idx.to(self._adj.device)
         edge_weight = self.edge_weight[edges]
 
         data = Graph(row_ptr=indptr, col=indices, weight=edge_weight)
         for key in self.__keys__():
-            data[key] = self[key][nodes]
+            data[key] = self[key][nodes_idx]
         return data
 
     def subgraph(self, node_idx):

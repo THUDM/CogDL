@@ -197,7 +197,7 @@ def read_tu_data(folder, prefix):
     if x is not None:
         x = x[:, num_node_attributes(x) :]
     if edge_attr is not None:
-        edge_attr = edge_attr[:, num_edge_attributes(edge_attr)]
+        edge_attr = edge_attr[:, : num_edge_attributes(edge_attr)]
 
     graphs = _split(edge_index, batch=batch, x=x, y=y, edge_attr=edge_attr)
     return graphs, y

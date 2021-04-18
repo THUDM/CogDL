@@ -27,6 +27,12 @@ from . import register_trainer
 from cogdl.trainers.base_trainer import BaseTrainer
 
 
+import resource
+
+rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
+resource.setrlimit(resource.RLIMIT_NOFILE, (4096, rlimit[1]))
+
+
 class DistributedSampledTrainer(BaseTrainer):
     def __init__(self, args):
         super(DistributedSampledTrainer, self).__init__(args)
@@ -274,6 +280,10 @@ class DistributedNeighborSamplerTrainer(DistributedSampledTrainer, NeighborSampl
         return super(DistributedNeighborSamplerTrainer, self)._test_step()
 
 
+def batcher(data):
+    return data[0]
+
+
 @register_trainer("dist_saint")
 class DistributedSAINTTrainer(DistributedSampledTrainer, SAINTTrainer):
     @staticmethod
@@ -304,10 +314,11 @@ class DistributedSAINTTrainer(DistributedSampledTrainer, SAINTTrainer):
             dataset=train_dataset,
             batch_size=1,
             shuffle=False,
-            num_workers=0,
+            num_workers=4,
+            persistent_workers=True,
             pin_memory=True,
             sampler=train_sampler,
-            collate_fn=lambda x: x[0],
+            collate_fn=batcher,
         )
 
         test_loader = NeighborSampler(

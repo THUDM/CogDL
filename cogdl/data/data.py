@@ -130,13 +130,14 @@ class BaseGraph(object):
 
 
 class Adjacency(BaseGraph):
-    def __init__(self, row=None, col=None, row_ptr=None, weight=None, attr=None, num_nodes=None, **kwargs):
+    def __init__(self, row=None, col=None, row_ptr=None, weight=None, attr=None, num_nodes=None, types=None, **kwargs):
         super(Adjacency, self).__init__()
         self.row = row
         self.col = col
         self.row_ptr = row_ptr
         self.weight = weight
         self.attr = attr
+        self.types = types
         self.__num_nodes__ = num_nodes
         self.__normed__ = None
         self.__in_norm__ = self.__out_norm__ = None
@@ -299,6 +300,8 @@ class Adjacency(BaseGraph):
         if item[0] == "_" and item[1] != "_":
             # item = re.search("[_]*(.*)", item).group(1)
             item = item[1:]
+        if item.startswith("edge_") and item != "edge_index":
+            item = item[5:]
         return getattr(self, item)
 
     def __copy__(self):
@@ -337,10 +340,7 @@ class Adjacency(BaseGraph):
         return data
 
 
-KEY_MAP = {
-    "edge_weight": "weight",
-    "edge_attr": "attr",
-}
+KEY_MAP = {"edge_weight": "weight", "edge_attr": "attr", "edge_types": "types"}
 EDGE_INDEX = "edge_index"
 EDGE_WEIGHT = "edge_weight"
 EDGE_ATTR = "edge_attr"
@@ -353,7 +353,7 @@ def is_adj_key_train(key):
 
 
 def is_adj_key(key):
-    return key in ["row", "col", "row_ptr", "attr", "weight"]
+    return key in ["row", "col", "row_ptr", "attr", "weight", "types"] or key.startswith("edge_")
 
 
 def is_read_adj_key(key):
@@ -465,6 +465,10 @@ class Graph(BaseGraph):
     def edge_attr(self):
         return self._adj.attr
 
+    @property
+    def edge_types(self):
+        return self._adj.types
+
     @edge_index.setter
     def edge_index(self, edge_index):
         row, col = edge_index
@@ -481,6 +485,10 @@ class Graph(BaseGraph):
     @edge_attr.setter
     def edge_attr(self, edge_attr):
         self._adj.attr = edge_attr
+
+    @edge_types.setter
+    def edge_types(self, edge_types):
+        self._adj.types = edge_types
 
     @property
     def row_indptr(self):
@@ -531,6 +539,7 @@ class Graph(BaseGraph):
     def __getitem__(self, key):
         r"""Gets the data of the attribute :obj:`key`."""
         if is_adj_key(key):
+
             return getattr(self._adj, key)
         else:
             return getattr(self, key)
@@ -654,6 +663,10 @@ class Graph(BaseGraph):
         data = Graph(row_ptr=indptr, col=indices, weight=edge_weight)
         for key in self.__keys__():
             data[key] = self[key][nodes_idx]
+        for key in self._adj.keys:
+            if "row" in key or "col" in key:
+                continue
+            data._adj[key] = self._adj[key][edges]
         return data
 
     def subgraph(self, node_idx):

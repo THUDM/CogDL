@@ -295,6 +295,15 @@ class Adjacency(BaseGraph):
         ]
         return info
 
+    # def __getitem__(self, item):
+    #     assert type(item) == str, f"{item} must be str"
+    #     if item[0] == "_" and item[1] != "_":
+    #         # item = re.search("[_]*(.*)", item).group(1)
+    #         item = item[1:]
+    #     if item.startswith("edge_") and item != "edge_index":
+    #         item = item[5:]
+    #     return getattr(self, item)
+
     def __getitem__(self, item):
         assert type(item) == str, f"{item} must be str"
         if item[0] == "_" and item[1] != "_":
@@ -302,7 +311,10 @@ class Adjacency(BaseGraph):
             item = item[1:]
         if item.startswith("edge_") and item != "edge_index":
             item = item[5:]
-        return getattr(self, item)
+        if item in self.__dict__:
+            return self.__dict__[item]
+        else:
+            raise KeyError(f"{item} not in Adjacency")
 
     def __copy__(self):
         result = self.__class__()
@@ -539,13 +551,20 @@ class Graph(BaseGraph):
     def __getitem__(self, key):
         r"""Gets the data of the attribute :obj:`key`."""
         if is_adj_key(key):
-
+            if key[0] == "_" and key[1] != "_":
+                key = key[1:]
+            if key.startswith("edge_") and key != "edge_index":
+                key = key[5:]
             return getattr(self._adj, key)
         else:
             return getattr(self, key)
 
     def __setitem__(self, key, value):
         if is_adj_key(key):
+            if key[0] == "_" and key[1] != "_":
+                key = key[1:]
+            if key.startswith("edge_") and key != "edge_index":
+                key = key[5:]
             self._adj[key] = value
         else:
             setattr(self, key, value)

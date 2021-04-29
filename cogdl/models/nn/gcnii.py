@@ -22,9 +22,9 @@ class GCNIILayer(nn.Module):
         stdv = 1.0 / math.sqrt(self.n_channels)
         self.weight.data.uniform_(-stdv, stdv)
 
-    def forward(self, x, edge_index, edge_attr, init_x):
+    def forward(self, graph, x, init_x):
         """Symmetric normalization"""
-        hidden = spmm(edge_index, edge_attr, x)
+        hidden = spmm(graph, x)
         hidden = (1 - self.alpha) * hidden + self.alpha * init_x
         h = self.beta * torch.matmul(hidden, self.weight) + (1 - self.beta) * hidden
         if self.residual:
@@ -114,22 +114,10 @@ class GCNII(BaseModel):
 
         self.fc_parameters = list(self.fc_layers.parameters())
         self.conv_parameters = list(self.layers.parameters())
-        self.cache = dict()
 
-    def forward(self, x, edge_index, edge_attr=None):
-        _attr = str(edge_index.shape[1])
-        if _attr not in self.cache:
-            edge_index, edge_attr = add_remaining_self_loops(
-                edge_index=edge_index,
-                edge_weight=torch.ones(edge_index.shape[1]).to(x.device),
-                fill_value=1,
-                num_nodes=x.shape[0],
-            )
-            edge_attr = symmetric_normalization(x.shape[0], edge_index, edge_attr)
-
-            self.cache[_attr] = (edge_index, edge_attr)
-        edge_index, edge_attr = self.cache[_attr]
-
+    def forward(self, graph):
+        graph.sym_norm()
+        x = graph.x
         init_h = F.dropout(x, p=self.dropout, training=self.training)
         init_h = F.relu(self.fc_layers[0](init_h))
 
@@ -137,14 +125,14 @@ class GCNII(BaseModel):
 
         for layer in self.layers:
             h = F.dropout(h, p=self.dropout, training=self.training)
-            h = layer(h, edge_index, edge_attr, init_h)
+            h = layer(graph, h, init_h)
             h = self.activation(h)
         h = F.dropout(h, p=self.dropout, training=self.training)
         out = self.fc_layers[1](h)
         return out
 
-    def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+    def predict(self, graph):
+        return self.forward(graph)
 
     def get_optimizer(self, args):
         return torch.optim.Adam(

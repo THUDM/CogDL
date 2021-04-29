@@ -1,13 +1,13 @@
 from typing import List
-
+import os
 import random
 import numpy as np
 import scipy.sparse as sp
 import torch
 import torch.utils.data
 
-from cogdl.data import Data
 from cogdl.utils import remove_self_loops, row_normalization
+from cogdl.data import Graph
 
 
 def normalize(adj):
@@ -77,11 +77,7 @@ class SAINTSampler(Sampler):
         self.preprocess()
 
     def gen_adj(self):
-        edge_index = (
-            self.data.edge_index_train.cpu().numpy()
-            if hasattr(self.data, "edge_index_train")
-            else self.data.edge_index.cpu().numpy()
-        )
+        edge_index = self.data.edge_index
 
         self.adj = sp.coo_matrix(
             (np.ones(self.num_edges), (edge_index[0], edge_index[1])),
@@ -168,23 +164,12 @@ class SAINTSampler(Sampler):
                 data.norm_aggr = torch.FloatTensor(self.norm_aggr_train[edge_idx][:])
                 data.norm_loss = self.norm_loss_train[node_idx]
 
-            data.train_mask = self.data.train_mask[node_idx]
-            data.val_mask = self.data.val_mask[node_idx]
-            data.test_mask = self.data.test_mask[node_idx]
-
-        # adj = data._build_adj_()
-        # adj = normalize(adj).tocoo()
-        # data.adj = _coo_scipy2torch(adj)
         edge_weight = row_normalization(data.x.shape[0], data.edge_index)
         data.edge_weight = edge_weight
-        # data._eliminate_adj_()
         return data
 
     def exists_train_nodes(self, node_idx):
-        for idx in node_idx:
-            if self.train_mask[idx]:
-                return True
-        return False
+        return self.train_mask[node_idx].any().item()
 
     def node_induction(self, node_idx):
         node_idx = np.unique(node_idx)
@@ -212,6 +197,64 @@ class SAINTSampler(Sampler):
 
     def sample(self):
         pass
+
+
+class SAINTDataset(torch.utils.data.Dataset):
+    def __init__(self, dataset, args_sampler, require_norm=True, log=False):
+        super(SAINTDataset).__init__()
+
+        self.data = dataset.data
+        self.dataset_name = dataset.__class__.__name__
+        self.args_sampler = args_sampler
+        self.require_norm = require_norm
+        self.log = log
+
+        if self.args_sampler["sampler"] == "node":
+            self.sampler = NodeSampler(self.data, self.args_sampler)
+        elif self.args_sampler["sampler"] == "edge":
+            self.sampler = EdgeSampler(self.data, self.args_sampler)
+        elif self.args_sampler["sampler"] == "rw":
+            self.sampler = RWSampler(self.data, self.args_sampler)
+        elif self.args_sampler["sampler"] == "mrw":
+            self.sampler = MRWSampler(self.data, self.args_sampler)
+        else:
+            raise NotImplementedError
+
+        self.batch_idx = np.array(range(len(self.sampler.subgraph_data)))
+
+    def shuffle(self):
+        random.shuffle(self.batch_idx)
+
+    def __len__(self):
+        return len(self.sampler.subgraph_data)
+
+    def __getitem__(self, idx):
+        new_idx = self.batch_idx[idx]
+        data = self.sampler.subgraph_data[new_idx]
+        node_idx = self.sampler.subgraph_node_idx[new_idx]
+        edge_idx = self.sampler.subgraph_edge_idx[new_idx]
+
+        if self.require_norm:
+            data.norm_aggr = torch.FloatTensor(self.sampler.norm_aggr_train[edge_idx][:])
+            data.norm_loss = self.sampler.norm_loss_train[node_idx]
+
+        edge_weight = row_normalization(data.x.shape[0], data.edge_index)
+        data.edge_weight = edge_weight
+
+        return data
+
+
+class SAINTDataLoader(torch.utils.data.DataLoader):
+    def __init__(self, dataset, **kwargs):
+        self.dataset = dataset
+        kwargs["batch_size"] = 1
+        kwargs["shuffle"] = False
+        kwargs["collate_fn"] = SAINTDataLoader.collate_fn
+        super(SAINTDataLoader, self).__init__(datase=dataset, **kwargs)
+
+    @staticmethod
+    def collate_fn(data):
+        return data[0]
 
 
 class NodeSampler(SAINTSampler):
@@ -337,20 +380,54 @@ class LayerSampler(Sampler):
 
 
 class NeighborSampler(torch.utils.data.DataLoader):
-    def __init__(self, data: Data, sizes: List[int], mask=None, **kwargs):
-        self.data = data
-        self.sizes = sizes
-        node_idx = np.arange(0, data.x.shape[0])
-        if mask is not None:
-            node_idx = node_idx[mask]
-        node_idx = node_idx.tolist()
-        super(NeighborSampler, self).__init__(node_idx, collate_fn=self.sample, **kwargs)
+    def __init__(self, dataset, sizes: List[int], mask=None, **kwargs):
+        if "batch_size" in kwargs:
+            batch_size = kwargs["batch_size"]
+        else:
+            batch_size = 8
 
-    def sample(self, batch):
+        if isinstance(dataset.data, Graph):
+            self.dataset = NeighborSamplerDataset(dataset, sizes, batch_size, mask)
+        else:
+            self.dataset = dataset
+        kwargs["batch_size"] = 1
+        kwargs["shuffle"] = False
+        kwargs["collate_fn"] = NeighborSampler.collate_fn
+        super(NeighborSampler, self).__init__(dataset=self.dataset, **kwargs)
+
+    @staticmethod
+    def collate_fn(data):
+        return data[0]
+
+    def shuffle(self):
+        self.dataset.shuffle()
+
+
+class NeighborSamplerDataset(torch.utils.data.Dataset):
+    def __init__(self, dataset, sizes: List[int], batch_size: int, mask=None):
+        super(NeighborSamplerDataset, self).__init__()
+        self.data = dataset.data
+        self.x = self.data.x
+        self.y = self.data.y
+        self.sizes = sizes
+        self.batch_size = batch_size
+        self.node_idx = torch.arange(0, self.data.x.shape[0], dtype=torch.long)
+        if mask is not None:
+            self.node_idx = self.node_idx[mask]
+        self.num_nodes = self.node_idx.shape[0]
+
+    def shuffle(self):
+        idx = torch.randperm(self.num_nodes)
+        self.node_idx = self.node_idx[idx]
+
+    def __len__(self):
+        return (self.num_nodes - 1) // self.batch_size + 1
+
+    def __getitem__(self, idx):
         """
             Sample a subgraph with neighborhood sampling
         Args:
-            batch: torch.Tensor / np.array
+            idx: torch.Tensor / np.array
                 Target nodes
         Returns:
             if `size` is `[-1,]`,
@@ -366,38 +443,59 @@ class NeighborSampler(torch.utils.data.DataLoader):
                     sampled_adjs: List[Tuple(Tensor, Tensor, Tuple[int]]
                 )
         """
+        batch = self.node_idx[idx * self.batch_size : (idx + 1) * self.batch_size]
         node_id = batch
         adj_list = []
         for size in self.sizes:
-            src_id, _edge_index = self.data.sample_adj(node_id, size, replace=False)
+            src_id, graph = self.data.sample_adj(node_id, size, replace=False)
             size = (len(src_id), len(node_id))
-            adj_list.append((src_id, _edge_index, size))  # src_id, edge_index, (src_size, target_size)
+            adj_list.append((src_id, graph, size))  # src_id, graph, (src_size, target_size)
             node_id = src_id
+
         if self.sizes == [-1]:
-            src_id, edge_index, _ = adj_list[0]
+            src_id, graph, _ = adj_list[0]
             size = (len(src_id), len(batch))
-            return src_id, edge_index, size
+            return src_id, graph, size
         else:
             return batch, node_id, adj_list[::-1]
 
 
-class ClusteredLoader(torch.utils.data.DataLoader):
+class ClusteredDataset(torch.utils.data.Dataset):
     partition_tool = None
 
-    def __init__(self, data: Data, n_cluster: int, **kwargs):
+    def __init__(self, dataset, n_cluster: int, batch_size: int):
+        super(ClusteredDataset).__init__()
         try:
             import metis
 
-            ClusteredLoader.partition_tool = metis
+            ClusteredDataset.partition_tool = metis
         except Exception as e:
             print(e)
             exit(1)
 
-        self.data = data
+        self.data = dataset.data
+        self.dataset_name = dataset.__class__.__name__
+        self.batch_size = batch_size
+        self.n_cluster = n_cluster
         self.clusters = self.preprocess(n_cluster)
-        super(ClusteredLoader, self).__init__(list(range(n_cluster)), collate_fn=self.batcher, **kwargs)
+        self.batch_idx = np.array(range(n_cluster))
+
+    def shuffle(self):
+        random.shuffle(self.batch_idx)
+
+    def __len__(self):
+        return (self.n_cluster - 1) // self.batch_size + 1
+
+    def __getitem__(self, idx):
+        batch = self.batch_idx[idx * self.batch_size : (idx + 1) * self.batch_size]
+        nodes = np.concatenate([self.clusters[i] for i in batch])
+        subgraph = self.data.subgraph(nodes)
+        return subgraph
 
     def preprocess(self, n_cluster):
+        save_name = f"{self.dataset_name}-{n_cluster}.cluster"
+        if os.path.exists(save_name):
+            return torch.load(save_name)
         print("Preprocessing...")
         edges = self.data.edge_index
         edges, _ = remove_self_loops(edges)
@@ -408,16 +506,61 @@ class ClusteredLoader(torch.utils.data.DataLoader):
         adj = sp.csr_matrix((np.ones(edges.shape[1]), (edges[0], edges[1])), shape=(num_nodes, num_nodes))
         indptr = adj.indptr
         indptr = np.split(adj.indices, indptr[1:])[:-1]
-        _, parts = ClusteredLoader.partition_tool.part_graph(indptr, n_cluster, seed=1)
+        _, parts = ClusteredDataset.partition_tool.part_graph(indptr, n_cluster, seed=1)
         division = [[] for _ in range(n_cluster)]
         for i, v in enumerate(parts):
             division[v].append(i)
         for k in range(len(division)):
             division[k] = np.array(division[k], dtype=np.int)
-        print("Graph clustering over")
+        torch.save(division, save_name)
+        print("Graph clustering done")
         return division
 
-    def batcher(self, batch):
-        nodes = np.concatenate([self.clusters[i] for i in batch])
-        subgraph = self.data.subgraph(nodes)
+
+class ClusteredLoader(torch.utils.data.DataLoader):
+    def __init__(self, dataset, n_cluster: int, method="metis", **kwargs):
+        if "batch_size" in kwargs:
+            batch_size = kwargs["batch_size"]
+        else:
+            batch_size = 20
+
+        if isinstance(dataset, ClusteredDataset) or isinstance(dataset, RandomPartitionDataset):
+            self.dataset = dataset
+        elif isinstance(dataset.data, Graph):
+            if method == "metis":
+                self.dataset = ClusteredDataset(dataset, n_cluster, batch_size)
+            else:
+                self.dataset = RandomPartitionDataset(dataset, n_cluster)
+        kwargs["batch_size"] = 1
+        kwargs["shuffle"] = False
+        super(ClusteredLoader, self).__init__(dataset=self.dataset, collate_fn=ClusteredLoader.collate_fn, **kwargs)
+
+    @staticmethod
+    def collate_fn(item):
+        return item[0]
+
+    def shuffle(self):
+        self.dataset.shuffle()
+
+
+class RandomPartitionDataset(torch.utils.data.Dataset):
+    """
+    For ClusteredLoader
+    """
+
+    def __init__(self, dataset, n_cluster):
+        self.data = dataset.data
+        self.n_cluster = n_cluster
+        self.num_nodes = dataset.data.x.shape[0]
+        self.parts = torch.randint(0, self.n_cluster, size=(self.num_nodes,))
+
+    def __getitem__(self, idx):
+        node_cluster = torch.where(self.parts == idx)[0]
+        subgraph = self.data.subgraph(node_cluster)
         return subgraph
+
+    def __len__(self):
+        return self.n_cluster
+
+    def shuffle(self):
+        self.parts = torch.randint(0, self.n_cluster, size=(self.num_nodes,))

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from cogdl.utils import spmm
 
 
 class MeanAggregator(torch.nn.Module):
@@ -13,22 +14,14 @@ class MeanAggregator(torch.nn.Module):
         self.linear = nn.Linear(in_channels, out_channels, bias)
 
     @staticmethod
-    def norm(x, adj_sp):
-        # here edge_index is already a sparse tensor
-        deg = torch.sparse.sum(adj_sp, 1)
-        deg_inv = deg.pow(-1).to_dense()
+    def norm(graph, x):
+        graph.row_norm()
+        x = spmm(graph, x)
+        return x
 
-        x = torch.spmm(adj_sp, x)
-        #  print(x,deg_inv)
-        x = x.t() * deg_inv
-        #  x：512*dim, edge_weight：256*512
-
-        return x.t()
-
-    def forward(self, x, adj_sp):
-        """"""
+    def forward(self, graph, x):
         x = self.linear(x)
-        x = self.norm(x, adj_sp)
+        x = self.norm(graph, x)
         return x
 
     def __repr__(self):
@@ -46,15 +39,13 @@ class SumAggregator(torch.nn.Module):
         self.linear = nn.Linear(in_channels, out_channels, bias)
 
     @staticmethod
-    def aggr(x, adj):
-        x = torch.spmm(adj, x)
-        #  x：512*dim, edge_weight：256*512
+    def aggr(graph, x):
+        x = spmm(graph, x)
         return x
 
-    def forward(self, x, adj):
-        """"""
+    def forward(self, graph, x):
         x = self.linear(x)
-        x = self.aggr(x, adj)
+        x = self.aggr(graph, x)
         return x
 
     def __repr__(self):

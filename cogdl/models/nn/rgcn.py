@@ -101,11 +101,11 @@ class RGCNLayer(nn.Module):
         if self.self_loop is not None:
             nn.init.xavier_uniform_(self.weight_self_loop, gain=nn.init.calculate_gain("relu"))
 
-    def forward(self, x, edge_index, edge_type):
+    def forward(self, graph, x):
         if self.regularizer == "basis":
-            h_list = self.basis_forward(x, edge_index, edge_type)
+            h_list = self.basis_forward(graph, x)
         else:
-            h_list = self.bdd_forward(x, edge_index, edge_type)
+            h_list = self.bdd_forward(graph, x)
 
         h_result = sum(h_list)
         h_result = F.dropout(h_result, p=self.dropout, training=self.training)
@@ -117,26 +117,33 @@ class RGCNLayer(nn.Module):
             h_result += F.dropout(torch.matmul(x, self.weight_self_loop), p=self.self_dropout, training=self.training)
         return h_result
 
-    def basis_forward(self, x, edge_index, edge_type):
+    def basis_forward(self, graph, x):
+        edge_type = graph.edge_attr
         if self.num_bases < self.num_edge_types:
             weight = torch.matmul(self.alpha, self.weight.view(self.num_bases, -1))
             weight = weight.view(self.num_edge_types, self.in_feats, self.out_feats)
         else:
             weight = self.weight
-        edge_weight = torch.ones(edge_type.shape).to(x.device)
-        edge_weight = row_normalization(x.shape[0], edge_index, edge_weight)
 
-        h = torch.matmul(x, weight)  # (N, d1) by (r, d1, d2) -> (r, N, d2)
+        edge_index = graph.edge_index
+        edge_weight = graph.edge_weight
 
-        h_list = []
-        for edge_t in range(self.num_edge_types):
-            edge_mask = edge_type == edge_t
-            _edge_index_t = edge_index.t()[edge_mask].t()
-            temp = spmm(_edge_index_t, edge_weight[edge_mask], h[edge_t])
-            h_list.append(temp)
-        return h_list
+        with graph.local_graph():
+            graph.row_norm()
+            h = torch.matmul(x, weight)  # (N, d1) by (r, d1, d2) -> (r, N, d2)
 
-    def bdd_forward(self, x, edge_index, edge_type):
+            h_list = []
+            for edge_t in range(self.num_edge_types):
+                edge_mask = edge_type == edge_t
+                graph.edge_index = edge_index[:, edge_mask]
+                graph.edge_weight = edge_weight[edge_mask]
+                temp = spmm(graph, h[edge_t])
+                h_list.append(temp)
+            return h_list
+
+    def bdd_forward(self, graph, x):
+        edge_type = graph.edge_attr
+        edge_index = graph.edge_index
         _x = x.view(-1, self.num_bases, self.block_in_feats)
 
         edge_weight = torch.ones(edge_type.shape).to(x.device)
@@ -175,10 +182,10 @@ class RGCN(nn.Module):
             for i in range(num_layers)
         )
 
-    def forward(self, x, edge_index, edge_type):
+    def forward(self, graph, x):
         h = x
         for i in range(len(self.layers)):
-            h = self.layers[i](x, edge_index, edge_type)
+            h = self.layers[i](graph, h)
             if i < self.num_layers - 1:
                 h = F.relu(h)
         return h
@@ -257,46 +264,53 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
         self.rel_weight = nn.Embedding(num_rels, hidden_size)
         self.emb = nn.Embedding(num_entities, hidden_size)
 
-    def forward(self, edge_index, edge_type):
-        reindexed_nodes, reindexed_indices = torch.unique(edge_index, sorted=True, return_inverse=True)
+    def forward(self, graph):
+        reindexed_nodes, reindexed_edges = torch.unique(graph.edge_index, sorted=True, return_inverse=True)
         x = self.emb(reindexed_nodes)
         self.cahce_index = reindexed_nodes
-        output = self.model(x, reindexed_indices, edge_type)
+
+        graph.edge_index = reindexed_edges
+        output = self.model(graph, x)
+        # output = self.model(x, reindexed_indices, graph.edge_type)
         return output
 
-    def loss(self, data, split="train"):
+    def loss(self, graph, split="train"):
         if split == "train":
-            mask = data.train_mask
+            mask = graph.train_mask
         elif split == "val":
-            mask = data.val_mask
+            mask = graph.val_mask
         else:
-            mask = data.test_mask
-        edge_index, edge_types = data.edge_index[:, mask], data.edge_attr[mask]
+            mask = graph.test_mask
+        edge_index, edge_types = graph.edge_index[:, mask], graph.edge_attr[mask]
 
         self.get_edge_set(edge_index, edge_types)
         batch_edges, batch_attr, samples, rels, labels = sampling_edge_uniform(
             edge_index, edge_types, self.edge_set, self.sampling_rate, self.num_rels
         )
-        output = self.forward(batch_edges, batch_attr)
-        edge_weight = self.rel_weight(rels)
-        sampled_nodes, reindexed_edges = torch.unique(samples, sorted=True, return_inverse=True)
-        assert (sampled_nodes == self.cahce_index).any()
-        sampled_types = torch.unique(rels)
+        with graph.local_graph():
+            graph.edge_index = batch_edges
+            graph.edge_attr = batch_attr
+            output = self.forward(graph)
+            edge_weight = self.rel_weight(rels)
+            sampled_nodes, reindexed_edges = torch.unique(samples, sorted=True, return_inverse=True)
+            assert (sampled_nodes == self.cahce_index).any()
+            sampled_types = torch.unique(rels)
 
-        loss_n = self._loss(
-            output[reindexed_edges[0]], output[reindexed_edges[1]], edge_weight, labels
-        ) + self.penalty * self._regularization([self.emb(sampled_nodes), self.rel_weight(sampled_types)])
+            loss_n = self._loss(
+                output[reindexed_edges[0]], output[reindexed_edges[1]], edge_weight, labels
+            ) + self.penalty * self._regularization([self.emb(sampled_nodes), self.rel_weight(sampled_types)])
         return loss_n
 
-    def predict(self, edge_index, edge_type):
-        indices = torch.arange(0, self.num_nodes).to(edge_index.device)
+    def predict(self, graph):
+        device = next(self.parameters()).device
+        indices = torch.arange(0, self.num_nodes).to(device)
         x = self.emb(indices)
-        output = self.model(x, edge_index, edge_type)
+        output = self.model(graph, x)
         mrr, hits = cal_mrr(
             output,
             self.rel_weight.weight,
-            edge_index,
-            edge_type,
+            graph.edge_index,
+            graph.edge_attr,
             scoring=self.scoring,
             protocol="raw",
             batch_size=500,

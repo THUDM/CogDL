@@ -25,7 +25,8 @@ def get_parser():
     parser.add_argument('--device-id', default=[0], type=int, nargs='+',
                         help='which GPU to use')
     parser.add_argument('--save-dir', default='.', type=str)
-    parser.add_argument('--checkpoint', action="store_true", help='load pre-trained model')
+    parser.add_argument('--checkpoint', type=str, default=None, help='load pre-trained model')
+    parser.add_argument('--save-model', type=str, default=None, help='save trained model')
     parser.add_argument('--use-best-config', action='store_true', help='use best config')
 
     # fmt: on
@@ -67,7 +68,6 @@ def add_trainer_args(parser):
     # fmt: off
     group.add_argument('--trainer', metavar='TRAINER', required=False,
                        help='Trainer')
-    group.add_argument('--eval-step', type=int, default=1)
     # fmt: on
     return group
 

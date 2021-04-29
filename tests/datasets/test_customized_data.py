@@ -1,5 +1,5 @@
 import torch
-from cogdl.data import Data
+from cogdl.data import Graph
 from cogdl.datasets import BaseDataset, register_dataset, build_dataset, build_dataset_from_name
 from cogdl.utils import build_args_from_dict
 
@@ -27,14 +27,14 @@ class MyNodeClassificationDataset(BaseDataset):
         val_mask[int(0.3 * num_nodes) : int(0.7 * num_nodes)] = True
         test_mask = torch.zeros(num_nodes).bool()
         test_mask[int(0.7 * num_nodes) :] = True
-        data = Data(x=x, edge_index=edge_index, y=y, train_mask=train_mask, val_mask=val_mask, test_mask=test_mask)
+        data = Graph(x=x, edge_index=edge_index, y=y, train_mask=train_mask, val_mask=val_mask, test_mask=test_mask)
         torch.save(data, "mydata.pt")
         return data
 
 
 def test_customized_dataset():
     dataset = build_dataset_from_name("mydataset")
-    assert isinstance(dataset[0], Data)
+    assert isinstance(dataset[0], Graph)
     assert dataset[0].x.shape[0] == 100
 
 

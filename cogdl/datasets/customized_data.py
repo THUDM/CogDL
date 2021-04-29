@@ -1,6 +1,6 @@
 import torch
 
-from cogdl.data import Dataset, MultiGraphDataset, Batch
+from cogdl.data import Dataset, Batch
 from cogdl.utils import download_url, accuracy, multilabel_f1, multiclass_f1, bce_with_logits_loss, cross_entropy_loss
 
 

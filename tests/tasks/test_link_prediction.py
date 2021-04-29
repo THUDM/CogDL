@@ -18,6 +18,9 @@ def get_default_args():
         "checkpoint": False,
         "save_dir": ".",
         "device_id": [0],
+        "activation": "relu",
+        "residual": False,
+        "norm": None,
     }
     return build_args_from_dict(default_dict)
 
@@ -25,7 +28,7 @@ def get_default_args():
 def test_prone_ppi():
     args = get_default_args()
     args.task = "link_prediction"
-    args.dataset = "ppi"
+    args.dataset = "ppi-ne"
     args.model = "prone"
     args.step = 3
     args.theta = 0.5
@@ -53,6 +56,9 @@ def get_kg_default_args():
         "checkpoint": False,
         "save_dir": ".",
         "device_id": [0],
+        "activation": "relu",
+        "residual": False,
+        "norm": None,
     }
     return build_args_from_dict(default_dict)
 
@@ -184,6 +190,9 @@ def get_gnn_link_prediction_args():
         "dropout": 0.5,
         "checkpoint": False,
         "save_dir": ".",
+        "activation": "relu",
+        "residual": False,
+        "norm": None,
     }
     return build_args_from_dict(args)
 

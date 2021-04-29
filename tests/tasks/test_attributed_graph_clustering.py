@@ -110,7 +110,33 @@ def test_daegc_cora():
     assert ret["NMI"] > 0
 
 
+def test_gae_cora():
+    args = get_default_args()
+    args.model = "gae"
+    args.num_layers = 2
+    args.model_type = "both"
+    args.dataset = "cora"
+    args.cluster_method = "kmeans"
+    task = build_task(args)
+    ret = task.train()
+    assert ret["NMI"] > 0
+
+
+def test_vgae_cora():
+    args = get_default_args()
+    args.model = "vgae"
+    args.model_type = "both"
+    args.dataset = "cora"
+    args.cluster_method = "kmeans"
+    task = build_task(args)
+    ret = task.train()
+    assert ret["NMI"] > 0
+
+
 if __name__ == "__main__":
+    test_gae_cora()
+    test_vgae_cora()
+
     test_kmeans_cora()
     test_spectral_cora()
 

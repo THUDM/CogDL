@@ -216,7 +216,6 @@ def spmm_adj(indices, values, x, num_nodes=None):
 
 
 fast_spmm = None
-_cache = dict()
 
 
 def initialize_spmm(args):
@@ -239,65 +238,12 @@ def spmm(graph, x):
         row_ptr, col_indices = graph.row_indptr, graph.col_indices
         csr_data = graph.edge_weight
         x = fast_spmm(row_ptr.int(), col_indices.int(), x, csr_data.contiguous(), graph.is_symmetric())
-    elif graph.edge_weight.requires_grad:
-        x = spmm_scatter(graph.edge_index, graph.edge_weight, x)
     else:
-        x = spmm_adj(graph.edge_index, graph.edge_weight, x)
+        x = spmm_scatter(graph.edge_index, graph.edge_weight, x)
 
     if graph.in_norm is not None:
         x = graph.in_norm * x
     return x
-
-
-def csc_from_csr(indptr, indices, data):
-    flag = str(indptr.shape) + str(indices.shape)
-    col_indptr, row_indices, data = csr2csc(indptr, indices, data)
-    _cache[flag] = {"col_indptr": indptr, "row_indices": row_indices, "csc_data": data}
-    cache = _cache[flag]
-    col_indptr = cache["col_indptr"]
-    row_indices = cache["row_indices"]
-    data = cache["csc_data"]
-    return col_indptr, row_indices, data
-
-
-def csr_csc_from_coo(edge_index, edge_weight=None, num_nodes=None):
-    if num_nodes is None:
-        num_nodes = torch.max(edge_index) + 1
-    if edge_weight is None:
-        edge_weight = torch.ones(edge_index.shape[1], device=edge_index.device)
-    cache = csr_csc_from_edge_index(edge_index, edge_weight, size=(num_nodes, num_nodes))
-    col_ptr = cache["col_ptr"]
-    row_indices = cache["row_indices"]
-    csr_data = cache["csr_data"]
-    row_ptr = cache["row_ptr"]
-    col_indices = cache["col_indices"]
-    csc_data = cache["csc_data"]
-    return row_ptr, col_indices, csr_data, col_ptr, row_indices, csc_data
-
-
-def csr_csc_from_edge_index(edge_index, edge_attr, size):
-    device = edge_index.device
-    _edge_index = edge_index.cpu().numpy()
-    _edge_attr = edge_attr.cpu().numpy()
-    num_nodes = size[0]
-
-    adj = sp.csr_matrix((_edge_attr, (_edge_index[0], _edge_index[1])), shape=(num_nodes, num_nodes))
-    row_ptr = torch.as_tensor(adj.indptr, dtype=torch.int32).to(device)
-    col_indices = torch.as_tensor(adj.indices, dtype=torch.int32).to(device)
-    csr_data = torch.as_tensor(adj.data, dtype=torch.float).to(device)
-    adj = adj.tocsc()
-    col_ptr = torch.as_tensor(adj.indptr, dtype=torch.int32).to(device)
-    row_indices = torch.as_tensor(adj.indices, dtype=torch.int32).to(device)
-    csc_data = torch.as_tensor(adj.data, dtype=torch.float).to(device)
-    cache = {
-        "row_ptr": row_ptr,
-        "col_indices": col_indices,
-        "csr_data": csr_data,
-        "col_ptr": col_ptr,
-        "row_indices": row_indices,
-        "csc_data": csc_data,
-    }
-    return cache
 
 
 def _coo2csr(edge_index, data, num_nodes=None, ordered=False, return_index=False):
@@ -492,14 +438,6 @@ def dropout_adj(
 
 
 def coalesce(row, col, value=None):
-    # bigger = ((row[1:] - row[:-1]) >= 0).all()
-    # if not bigger:
-    #     edge_index = torch.stack([row, col]).T
-    #     sort_value, sort_index = torch.sort(edge_index, dim=0)
-    #     sort_index = sort_index[:, 0]
-    #     edge_index = edge_index[sort_index].t()
-    #     row, col = edge_index
-
     row = row.numpy()
     col = col.numpy()
     indices = np.lexsort((col, row))
@@ -536,8 +474,7 @@ def to_undirected(edge_index, num_nodes=None):
 
     row, col = edge_index
     row, col = torch.cat([row, col], dim=0), torch.cat([col, row], dim=0)
-    edge_index = torch.stack([row, col], dim=0)
-    row, col, _ = coalesce(edge_index[0], edge_index[1], None)
+    row, col, _ = coalesce(row, col, None)
     edge_index = torch.stack([row, col])
     return edge_index
 

@@ -14,9 +14,8 @@ from cogdl.utils import (
     row_normalization,
     get_degrees,
 )
+from cogdl.utils import fast_spmm as indicator
 from cogdl.operators.sample import sample_adj_c, subgraph_c
-
-indicator = True
 
 
 class BaseGraph(object):
@@ -215,10 +214,12 @@ class Adjacency(BaseGraph):
         self.row_ptr, reindex = coo2csr_index(self.row, self.col, num_nodes=self.num_nodes)
         self.col = self.col[reindex]
         self.row = self.row[reindex]
-        if self.weight is None:
-            self.weight = torch.ones(self.row.shape[0]).to(self.row.device)
-        else:
-            self.weight = self.weight[reindex]
+        for key in self.__attr_keys__():
+            print(key)
+            if key == "weight" and self[key] is None:
+                self.weight = torch.ones(self.row.shape[0]).to(self.row.device)
+            if self[key] is not None:
+                self[key] = self[key][reindex]
 
     def is_symmetric(self):
         return self.__symmetric__
@@ -247,8 +248,7 @@ class Adjacency(BaseGraph):
         if self.row is not None and self.row.shape == row.shape:
             return
         self.row, self.col = row, col
-        if indicator is True:
-            self._to_csr()
+        self.convert_csr()
 
     @property
     def row_indptr(self):
@@ -287,22 +287,12 @@ class Adjacency(BaseGraph):
 
     def __out_repr__(self):
         if self.row is not None:
-            info = ["{}={}".format(key, list(self[key].size())) for key in ["edge_index"]]
+            info = ["{}={}".format("edge_index", [2] + list(self.row.size()))]
         else:
             info = ["{}={}".format(key, list(self[key].size())) for key in ["row", "col"] if self[key] is not None]
-        info += [
-            "edge_{}={}".format(key, list(self[key].size())) for key in ["weight", "attr"] if self[key] is not None
-        ]
+        attr_key = self.__attr_keys__()
+        info += ["edge_{}={}".format(key, list(self[key].size())) for key in attr_key if self[key] is not None]
         return info
-
-    # def __getitem__(self, item):
-    #     assert type(item) == str, f"{item} must be str"
-    #     if item[0] == "_" and item[1] != "_":
-    #         # item = re.search("[_]*(.*)", item).group(1)
-    #         item = item[1:]
-    #     if item.startswith("edge_") and item != "edge_index":
-    #         item = item[5:]
-    #     return getattr(self, item)
 
     def __getitem__(self, item):
         assert type(item) == str, f"{item} must be str"
@@ -339,6 +329,9 @@ class Adjacency(BaseGraph):
             if not key.startswith("__") and self[key] is not None
         ]
         return "{}({})".format(self.__class__.__name__, ", ".join(info))
+
+    def __attr_keys__(self):
+        return [x for x in self.keys if "row" not in x and "col" not in x]
 
     def clone(self):
         return Adjacency.from_dict({k: v.clone() for k, v in self})
@@ -483,11 +476,15 @@ class Graph(BaseGraph):
 
     @edge_index.setter
     def edge_index(self, edge_index):
-        row, col = edge_index
-        if self._adj.row is not None and row.shape[0] != self._adj.row.shape[0]:
-            self._adj.row_ptr = None
-        self._adj.row = row
-        self._adj.col = col
+        if edge_index is None:
+            self._adj.row = None
+            self._adj.col = None
+        else:
+            row, col = edge_index
+            if self._adj.row is not None and row.shape[0] != self._adj.row.shape[0]:
+                self._adj.row_ptr = None
+            self._adj.row = row
+            self._adj.col = col
 
     @edge_weight.setter
     def edge_weight(self, edge_weight):
@@ -675,11 +672,12 @@ class Graph(BaseGraph):
         return row_ptr, edge_cols
 
     def csr_subgraph(self, node_idx):
+        if self._adj.row_ptr is None:
+            self._adj._to_csr()
         indptr, indices, nodes, edges = subgraph_c(self._adj.row_ptr, self._adj.col, node_idx.cpu())
         nodes_idx = node_idx.to(self._adj.device)
-        edge_weight = self.edge_weight[edges]
 
-        data = Graph(row_ptr=indptr, col=indices, weight=edge_weight)
+        data = Graph(row_ptr=indptr, col=indices)
         for key in self.__keys__():
             data[key] = self[key][nodes_idx]
         for key in self._adj.keys:

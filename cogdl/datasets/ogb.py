@@ -9,6 +9,7 @@ from ogb.graphproppred import GraphPropPredDataset
 from . import register_dataset
 from cogdl.data import Dataset, Graph, DataLoader
 from cogdl.utils import cross_entropy_loss, accuracy, remove_self_loops
+from torch_geometric.utils import to_undirected
 
 
 def coalesce(row, col, edge_attr=None):
@@ -129,9 +130,30 @@ class MAGDataset(Dataset):
         data = torch.load(self.processed_paths[0])
         (self.data, self.node_type_dict, self.edge_type_dict, self.num_nodes_dict) = data
         self.paper_feat = torch.as_tensor(np.load(self.processed_paths[1]))
+
         self.other_feat = torch.as_tensor(np.load(self.processed_paths[2]))
         if self.other_feat.shape[0] == self.data.num_nodes:
             self.other_feat = self.other_feat[self.paper_feat.shape[0] :]
+
+        # -- plus --
+        dataset = NodePropPredDataset(name=self.name, root="./data")
+        edge_index_dict = dataset[0][0]["edge_index_dict"]
+
+        r, c = edge_index_dict[("author", "affiliated_with", "institution")]
+        edge_index_dict[("institution", "to", "author")] = torch.as_tensor([c, r], dtype=torch.long)
+
+        r, c = edge_index_dict[("author", "writes", "paper")]
+        edge_index_dict[("paper", "to", "author")] = torch.as_tensor([c, r], dtype=torch.long)
+
+        r, c = edge_index_dict[("paper", "has_topic", "field_of_study")]
+        edge_index_dict[("field_of_study", "to", "paper")] = torch.as_tensor([c, r], dtype=torch.long)
+
+        edge_index = to_undirected(torch.as_tensor(edge_index_dict[("paper", "cites", "paper")], dtype=torch.long))
+        edge_index_dict[("paper", "cites", "paper")] = edge_index
+
+        for k, v in edge_index_dict.items():
+            edge_index_dict[k] = torch.as_tensor(v)
+        self.edge_index_dict = edge_index_dict
 
     def __len__(self):
         return 1
@@ -146,7 +168,12 @@ class MAGDataset(Dataset):
     def process(self):
         dataset = NodePropPredDataset(name=self.name, root="./data")
         node_type_dict = {"paper": 0, "author": 1, "field_of_study": 2, "institution": 3}
-        edge_type_dict = {"cites": 0, "affiliated_with": 1, "writes": 2, "has_topic": 3}
+        edge_type_dict = {
+            ("paper", "cites", "paper"): 0,
+            ("author", "affiliated_with", "institution"): 1,
+            ("author", "writes", "paper"): 2,
+            ("paper", "has_topic", "field_of_study"): 3,
+        }
         num_nodes_dict = dataset[0][0]["num_nodes_dict"]
         num_nodes = torch.as_tensor(
             [0]
@@ -172,18 +199,26 @@ class MAGDataset(Dataset):
             tail_offset = cum_num_nodes[node_type_dict[tail]].item()
             src = v[0] + head_offset
             tgt = v[1] + tail_offset
-            edge_tps = np.full(src.shape, edge_type_dict[edge_type])
+            edge_tps = np.full(src.shape, edge_type_dict[k])
 
-            _src = np.concatenate([src, tgt])
-            _tgt = np.concatenate([tgt, src])
             if edge_type == "cites":
-                re_tps = np.full(src.shape, edge_type_dict[edge_type])
+                _edges = torch.as_tensor([src, tgt])
+                _src, _tgt = to_undirected(_edges).numpy()
+                edge_tps = np.full(_src.shape, edge_type_dict[k])
+                edge_idx = np.vstack([_src, _tgt])
             else:
+                _src = np.concatenate([src, tgt])
+                _tgt = np.concatenate([tgt, src])
                 re_tps = np.full(src.shape, len(edge_type_dict))
-                edge_type_dict[edge_type + "_re"] = len(edge_type_dict)
-            edge_index[i] = np.vstack([_src, _tgt])
-            edge_tps = np.concatenate([edge_tps, re_tps])
+
+                re_k = (tail, "to", head)
+                edge_type_dict[re_k] = len(edge_type_dict)
+                edge_tps = np.concatenate([edge_tps, re_tps])
+                edge_idx = np.vstack([_src, _tgt])
+
+            edge_index[i] = edge_idx
             edge_attr[i] = edge_tps
+            assert edge_index[i].shape[1] == edge_attr[i].shape[0]
             i += 1
         edge_index = np.concatenate(edge_index, axis=-1)
         edge_index = torch.from_numpy(edge_index)

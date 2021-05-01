@@ -2,18 +2,6 @@ import torch
 from sklearn.metrics import f1_score
 
 
-# def multilabel_f1(y_pred, y_true, sigmoid=False):
-#     if sigmoid:
-#         y_pred[y_pred > 0.5] = 1
-#         y_pred[y_pred <= 0.5] = 0
-#     else:
-#         y_pred[y_pred > 0] = 1
-#         y_pred[y_pred <= 0] = 0
-#     preds = y_pred.cpu().detach()
-#     labels = y_true.cpu().float()
-#     return f1_score(labels, preds, average="micro")
-
-
 def multilabel_f1(y_pred, y_true, sigmoid=False):
     if sigmoid:
         y_pred[y_pred > 0.5] = 1

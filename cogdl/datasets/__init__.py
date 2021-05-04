@@ -66,7 +66,13 @@ def build_dataset_from_name(dataset):
     return DATASET_REGISTRY[dataset]()
 
 
-def build_dataset_from_path(data_path, task):
+def build_dataset_from_path(data_path, task=None, dataset=None):
+    if dataset is not None and dataset in SUPPORTED_DATASETS:
+        if try_import_dataset(dataset):
+            return DATASET_REGISTRY[dataset](data_path=data_path)
+
+    if task is None:
+        return None
     if "node_classification" in task:
         return CustomizedNodeClassificationDataset(data_path)
     elif "graph_classification" in task:

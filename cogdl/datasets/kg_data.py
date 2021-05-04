@@ -310,47 +310,47 @@ class KnowledgeGraphDataset(Dataset):
 
 @register_dataset("fb13")
 class FB13Datset(KnowledgeGraphDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "FB13"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(FB13Datset, self).__init__(path, dataset)
 
 
 @register_dataset("fb15k")
 class FB15kDatset(KnowledgeGraphDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "FB15K"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(FB15kDatset, self).__init__(path, dataset)
 
 
 @register_dataset("fb15k237")
 class FB15k237Datset(KnowledgeGraphDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "FB15K237"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(FB15k237Datset, self).__init__(path, dataset)
 
 
 @register_dataset("wn18")
 class WN18Datset(KnowledgeGraphDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "WN18"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(WN18Datset, self).__init__(path, dataset)
 
 
 @register_dataset("wn18rr")
 class WN18RRDataset(KnowledgeGraphDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "WN18RR"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(WN18RRDataset, self).__init__(path, dataset)
 
 
 @register_dataset("fb13s")
 class FB13SDatset(KnowledgeGraphDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "FB13S"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(FB13SDatset, self).__init__(path, dataset)

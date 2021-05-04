@@ -161,31 +161,31 @@ class Edgelist(Dataset):
 
 @register_dataset("kdd_icdm")
 class KDD_ICDM_GCCDataset(GCCDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "kdd_icdm"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(KDD_ICDM_GCCDataset, self).__init__(path, dataset)
 
 
 @register_dataset("sigir_cikm")
 class SIGIR_CIKM_GCCDataset(GCCDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "sigir_cikm"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(SIGIR_CIKM_GCCDataset, self).__init__(path, dataset)
 
 
 @register_dataset("sigmod_icde")
 class SIGMOD_ICDE_GCCDataset(GCCDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "sigmod_icde"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(SIGMOD_ICDE_GCCDataset, self).__init__(path, dataset)
 
 
 @register_dataset("usa-airport")
 class USAAirportDataset(Edgelist):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "usa-airport"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(USAAirportDataset, self).__init__(path, dataset)

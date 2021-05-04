@@ -935,10 +935,18 @@ class TestChemDataset(MultiGraphDataset):
 
 @register_dataset("bio")
 class BioDataset(MultiGraphDataset):
-    def __init__(self, data_type="unsupervised", empty=False, transform=None, pre_transform=None, pre_filter=None):
+    def __init__(
+        self,
+        data_type="unsupervised",
+        empty=False,
+        transform=None,
+        pre_transform=None,
+        pre_filter=None,
+        data_path="data",
+    ):
         self.data_type = data_type
         self.url = "https://cloud.tsinghua.edu.cn/f/c865b1d61348489e86ac/?dl=1"
-        self.root = osp.join("data", "BIO")
+        self.root = osp.join(data_path, "BIO")
         super(BioDataset, self).__init__(self.root, transform, pre_transform, pre_filter)
         if not empty:
             if data_type == "unsupervised":
@@ -966,10 +974,18 @@ class BioDataset(MultiGraphDataset):
 
 @register_dataset("chem")
 class MoleculeDataset(MultiGraphDataset):
-    def __init__(self, data_type="unsupervised", transform=None, pre_transform=None, pre_filter=None, empty=False):
+    def __init__(
+        self,
+        data_type="unsupervised",
+        transform=None,
+        pre_transform=None,
+        pre_filter=None,
+        empty=False,
+        data_path="data",
+    ):
         self.data_type = data_type
         self.url = "https://cloud.tsinghua.edu.cn/f/2cac04ee904e4b54b4b2/?dl=1"
-        self.root = osp.join("data", "CHEM")
+        self.root = osp.join(data_path, "CHEM")
 
         super(MoleculeDataset, self).__init__(self.root, transform, pre_transform, pre_filter)
         self.transform, self.pre_transform, self.pre_filter = transform, pre_transform, pre_filter
@@ -1018,9 +1034,9 @@ def convert(data):
 
 @register_dataset("bace")
 class BACEDataset(MultiGraphDataset):
-    def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False):
+    def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False, data_path="data"):
         self.url = "https://cloud.tsinghua.edu.cn/d/c6bd3405569b4fab9c4a/files/?p=%2Fprocessed.zip&dl=1"
-        self.root = osp.join("data", "BACE")
+        self.root = osp.join(data_path, "BACE")
 
         super(BACEDataset, self).__init__(self.root, transform, pre_transform, pre_filter)
         self.transform, self.pre_transform, self.pre_filter = transform, pre_transform, pre_filter
@@ -1049,9 +1065,9 @@ class BACEDataset(MultiGraphDataset):
 
 @register_dataset("bbbp")
 class BBBPDataset(MultiGraphDataset):
-    def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False):
+    def __init__(self, transform=None, pre_transform=None, pre_filter=None, empty=False, data_path="data"):
         self.url = "https://cloud.tsinghua.edu.cn/d/9db9e16a949b4877bb4e/files/?p=%2Fprocessed.zip&dl=1"
-        self.root = osp.join("data", "BBBP")
+        self.root = osp.join(data_path, "BBBP")
 
         super(BBBPDataset, self).__init__(self.root, transform, pre_transform, pre_filter)
         self.transform, self.pre_transform, self.pre_filter = transform, pre_transform, pre_filter

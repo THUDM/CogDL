@@ -81,10 +81,9 @@ class OGBNDataset(Dataset):
 
 @register_dataset("ogbn-arxiv")
 class OGBArxivDataset(OGBNDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "ogbn-arxiv"
-        path = "data"
-        super(OGBArxivDataset, self).__init__(path, dataset)
+        super(OGBArxivDataset, self).__init__(data_path, dataset)
 
     def get_evaluator(self):
         evaluator = NodeEvaluator(name="ogbn-arxiv")
@@ -98,34 +97,31 @@ class OGBArxivDataset(OGBNDataset):
 
 @register_dataset("ogbn-products")
 class OGBProductsDataset(OGBNDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "ogbn-products"
-        path = "data"
-        super(OGBProductsDataset, self).__init__(path, dataset)
+        super(OGBProductsDataset, self).__init__(data_path, dataset)
 
 
 @register_dataset("ogbn-proteins")
 class OGBProteinsDataset(OGBNDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "ogbn-proteins"
-        path = "data"
-        super(OGBProteinsDataset, self).__init__(path, dataset)
+        super(OGBProteinsDataset, self).__init__(data_path, dataset)
 
 
 @register_dataset("ogbn-papers100M")
 class OGBPapers100MDataset(OGBNDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "ogbn-papers100M"
-        path = "data"
-        super(OGBPapers100MDataset, self).__init__(path, dataset)
+        super(OGBPapers100MDataset, self).__init__(data_path, dataset)
 
 
 @register_dataset("ogbn-mag")
 class MAGDataset(Dataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         self.name = "ogbn-mag"
         name = "_".join(self.name.split("-"))
-        self.root = "./data/" + name
+        self.root = f"./{data_path}/{name}"
         super(MAGDataset, self).__init__(self.root)
         data = torch.load(self.processed_paths[0])
         (self.data, self.node_type_dict, self.edge_type_dict, self.num_nodes_dict) = data
@@ -136,24 +132,24 @@ class MAGDataset(Dataset):
             self.other_feat = self.other_feat[self.paper_feat.shape[0] :]
 
         # -- plus --
-        dataset = NodePropPredDataset(name=self.name, root="./data")
-        edge_index_dict = dataset[0][0]["edge_index_dict"]
-
-        r, c = edge_index_dict[("author", "affiliated_with", "institution")]
-        edge_index_dict[("institution", "to", "author")] = torch.as_tensor([c, r], dtype=torch.long)
-
-        r, c = edge_index_dict[("author", "writes", "paper")]
-        edge_index_dict[("paper", "to", "author")] = torch.as_tensor([c, r], dtype=torch.long)
-
-        r, c = edge_index_dict[("paper", "has_topic", "field_of_study")]
-        edge_index_dict[("field_of_study", "to", "paper")] = torch.as_tensor([c, r], dtype=torch.long)
-
-        edge_index = to_undirected(torch.as_tensor(edge_index_dict[("paper", "cites", "paper")], dtype=torch.long))
-        edge_index_dict[("paper", "cites", "paper")] = edge_index
-
-        for k, v in edge_index_dict.items():
-            edge_index_dict[k] = torch.as_tensor(v)
-        self.edge_index_dict = edge_index_dict
+        # dataset = NodePropPredDataset(name=self.name, root="./data")
+        # edge_index_dict = dataset[0][0]["edge_index_dict"]
+        #
+        # r, c = edge_index_dict[("author", "affiliated_with", "institution")]
+        # edge_index_dict[("institution", "to", "author")] = torch.as_tensor([c, r], dtype=torch.long)
+        #
+        # r, c = edge_index_dict[("author", "writes", "paper")]
+        # edge_index_dict[("paper", "to", "author")] = torch.as_tensor([c, r], dtype=torch.long)
+        #
+        # r, c = edge_index_dict[("paper", "has_topic", "field_of_study")]
+        # edge_index_dict[("field_of_study", "to", "paper")] = torch.as_tensor([c, r], dtype=torch.long)
+        #
+        # edge_index = to_undirected(torch.as_tensor(edge_index_dict[("paper", "cites", "paper")], dtype=torch.long))
+        # edge_index_dict[("paper", "cites", "paper")] = edge_index
+        #
+        # for k, v in edge_index_dict.items():
+        #     edge_index_dict[k] = torch.as_tensor(v)
+        # self.edge_index_dict = edge_index_dict
 
     def __len__(self):
         return 1
@@ -285,37 +281,6 @@ class MAGDataset(Dataset):
     def num_field_of_study(self):
         return self.num_nodes_dict["field_of_study"]
 
-    def save_edges(self, data):
-        edge_index = data.edge_index.numpy().transpose()
-        edge_types = data.edge_types.numpy()
-        os.makedirs("./ogbn_mag_kg", exist_ok=True)
-        with open("./ogbn_mag_kg/train.txt", "w") as f:
-            for i in range(edge_index.shape[0]):
-                edge = edge_index[i]
-                tp = edge_types[i]
-                f.write(f"{edge[0]}\t{edge[1]}\t{tp}\n")
-
-        with open("./ogbn_mag_kg/valid.txt", "w") as f:
-            val_num = np.random.randint(0, edge_index.shape[0], (10000,))
-            for i in val_num:
-                edge = edge_index[i]
-                tp = edge_types[i]
-                f.write(f"{edge[0]}\t{edge[1]}\t{tp}\n")
-
-        with open("./ogbn_mag_kg/test.txt", "w") as f:
-            val_num = np.random.randint(0, edge_index.shape[0], (20000,))
-            for i in val_num:
-                edge = edge_index[i]
-                tp = edge_types[i]
-                f.write(f"{edge[0]}\t{edge[1]}\t{tp}\n")
-
-        with open("./ogbn_mag_kg/entities.dict", "w") as f:
-            for i in range(np.max(edge_index)):
-                f.write(f"{i}\t{i}\n")
-        with open("./ogbn_mag_kg/relations.dict", "w") as f:
-            for i in range(np.max(edge_types)):
-                f.write(f"{i}\t{i}\n")
-
 
 class OGBGDataset(Dataset):
     def __init__(self, root, name):
@@ -371,26 +336,23 @@ class OGBGDataset(Dataset):
 
 @register_dataset("ogbg-molbace")
 class OGBMolbaceDataset(OGBGDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "ogbg-molbace"
-        path = "data"
-        super(OGBMolbaceDataset, self).__init__(path, dataset)
+        super(OGBMolbaceDataset, self).__init__(data_path, dataset)
 
 
 @register_dataset("ogbg-molhiv")
 class OGBMolhivDataset(OGBGDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "ogbg-molhiv"
-        path = "data"
-        super(OGBMolhivDataset, self).__init__(path, dataset)
+        super(OGBMolhivDataset, self).__init__(data_path, dataset)
 
 
 @register_dataset("ogbg-molpcba")
 class OGBMolpcbaDataset(OGBGDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "ogbg-molpcba"
-        path = "data"
-        super(OGBMolpcbaDataset, self).__init__(path, dataset)
+        super(OGBMolpcbaDataset, self).__init__(data_path, dataset)
 
 
 @register_dataset("ogbg-ppa")
@@ -403,7 +365,6 @@ class OGBPpaDataset(OGBGDataset):
 
 @register_dataset("ogbg-code")
 class OGBCodeDataset(OGBGDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "ogbg-code"
-        path = "data"
-        super(OGBCodeDataset, self).__init__(path, dataset)
+        super(OGBCodeDataset, self).__init__(data_path, dataset)

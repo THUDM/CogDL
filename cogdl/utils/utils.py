@@ -342,7 +342,7 @@ def get_degrees(indices, num_nodes=None):
     device = indices.device
     values = torch.ones(indices.shape[1]).to(device)
     if num_nodes is None:
-        num_nodes = torch.max(values) + 1
+        num_nodes = torch.max(indices).item() + 1
     b = torch.ones((num_nodes, 1)).to(device)
     degrees = spmm_scatter(indices, values, b).view(-1)
     return degrees

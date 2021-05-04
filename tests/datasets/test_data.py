@@ -1,6 +1,7 @@
 import numpy as np
 
 from cogdl.datasets import build_dataset_from_name
+from cogdl.utils import get_degrees
 
 
 class Test_Data(object):
@@ -33,3 +34,11 @@ class Test_Data(object):
             node_idx, sampled_edge_index = self.data.sample_adj(sampled_nodes, size)
             node_idx = node_idx.cpu().numpy()
             assert (set(node_idx) & set(sampled_nodes)) == set(sampled_nodes)
+
+    def test_to_csr(self):
+        self.data._adj._to_csr()
+        symmetric = self.data.is_symmetric()
+        assert symmetric is True
+        degrees = self.data.degrees()
+        _degrees = get_degrees(self.data.edge_index)
+        assert (degrees == _degrees).all()

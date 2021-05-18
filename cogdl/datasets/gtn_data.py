@@ -131,23 +131,23 @@ class GTNDataset(Dataset):
 
 @register_dataset("gtn-acm")
 class ACM_GTNDataset(GTNDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "gtn-acm"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(ACM_GTNDataset, self).__init__(path, dataset)
 
 
 @register_dataset("gtn-dblp")
 class DBLP_GTNDataset(GTNDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "gtn-dblp"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(DBLP_GTNDataset, self).__init__(path, dataset)
 
 
 @register_dataset("gtn-imdb")
 class IMDB_GTNDataset(GTNDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "gtn-imdb"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(IMDB_GTNDataset, self).__init__(path, dataset)

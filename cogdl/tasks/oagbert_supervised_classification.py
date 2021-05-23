@@ -3,7 +3,6 @@ import argparse
 import random
 import os
 import json
-from tqdm import tqdm
 import torch
 from collections import namedtuple
 from cogdl.oag.oagbert import oagbert
@@ -194,7 +193,6 @@ class supervised_classification(BaseTask):
 
         size = len(dataset)
         correct, total, total_loss = 0, 0, 0
-        epoch_num = size // self.batch_size
         pbar = trange(0, size, self.batch_size, ncols=0, desc=desc)
         for i in pbar:
             if train:

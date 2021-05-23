@@ -231,3 +231,10 @@ attributed_graph_clustering:
     - citeseer
     - pubmed
     - test_small
+supervised_classification:
+  - model:
+    - oagbert
+    dataset:
+    - l0fos
+    - arxivvenue
+    - aff30

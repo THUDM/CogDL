@@ -364,7 +364,7 @@ def edge_softmax_(indices, values, shape):
     return softmax_values
 
 
-def edge_softmax(graph, edge_val):
+def edge_softmax_ori(graph, edge_val):
     edge_val_max = edge_val.max().item()
     while edge_val_max > 10:
         edge_val -= edge_val / 2
@@ -385,10 +385,15 @@ def mul_edge_softmax(graph, edge_val):
     Returns:
         Softmax values of multi-dimension edge values. shape: [d, E]
     """
-    val = []
-    for i in range(edge_val.shape[1]):
-        val.append(edge_softmax(graph, edge_val[:, i]))
-    return torch.stack(val)
+    # val = []
+    # for i in range(edge_val.shape[1]):
+    #     val.append(edge_softmax_ori(graph, edge_val[:, i]))
+    # return torch.stack(val)
+    from cogdl.operators.edge_softmax import csr_edge_softmax
+    # print("graph.row_indptr")
+    # print(graph.row_indptr)
+    val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
+    return(val.t())
 
 
 def mul_edge_softmax_(indices, values, shape):

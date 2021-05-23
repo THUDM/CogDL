@@ -3,7 +3,7 @@ import os.path as osp
 import numpy as np
 import scipy.io as sio
 import torch
-from cogdl.data import Data, Dataset
+from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url, untar
 
 from . import register_dataset
@@ -83,7 +83,7 @@ class HANDataset(Dataset):
         y_val = np.argmax(y[val_mask, :], axis=1)
         y_test = np.argmax(y[test_mask, :], axis=1)
 
-        data = Data()
+        data = Graph()
         A = []
         for i, edge in enumerate(rownetworks):
             edge_tmp = torch.from_numpy(np.vstack((edge.nonzero()[0], edge.nonzero()[1]))).type(torch.LongTensor)
@@ -139,23 +139,23 @@ class HANDataset(Dataset):
 
 @register_dataset("han-acm")
 class ACM_HANDataset(HANDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "han-acm"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(ACM_HANDataset, self).__init__(path, dataset)
 
 
 @register_dataset("han-dblp")
 class DBLP_HANDataset(HANDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "han-dblp"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(DBLP_HANDataset, self).__init__(path, dataset)
 
 
 @register_dataset("han-imdb")
 class IMDB_HANDataset(HANDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "han-imdb"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(IMDB_HANDataset, self).__init__(path, dataset)

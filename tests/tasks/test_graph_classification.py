@@ -23,6 +23,9 @@ def get_default_args():
         "sampler": "none",
         "degree_feature": False,
         "checkpoint": False,
+        "residual": False,
+        "activation": "relu",
+        "norm": None,
     }
     return build_args_from_dict(default_dict)
 
@@ -104,7 +107,7 @@ def test_gin_mutag():
     args = add_gin_args(args)
     args.dataset = "mutag"
     args.model = "gin"
-    args.batch_size = 5
+    args.batch_size = 20
     for kfold in [True, False]:
         args.kfold = kfold
         args.seed = 0

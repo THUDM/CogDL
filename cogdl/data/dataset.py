@@ -1,10 +1,10 @@
 import collections
-import copy
 import os.path as osp
-from itertools import repeat, product
+from itertools import repeat
 
 import torch.utils.data
 
+from cogdl.data import Adjacency, Graph
 from cogdl.utils import makedirs
 from cogdl.utils import accuracy, cross_entropy_loss
 
@@ -67,7 +67,7 @@ class Dataset(torch.utils.data.Dataset):
 
     def __len__(self):
         r"""The number of examples in the dataset."""
-        raise NotImplementedError
+        return 1
 
     def get(self, idx):
         r"""Gets the data object at index :obj:`idx`."""
@@ -167,7 +167,7 @@ class MultiGraphDataset(Dataset):
         if hasattr(self.data, "__num_nodes__"):
             data.num_nodes = self.data.__num_nodes__[idx]
 
-        for key in self.data.keys:
+        for key in self.data.__old_keys__():
             item, slices = self.data[key], self.slices[key]
             start, end = slices[idx].item(), slices[idx + 1].item()
             if torch.is_tensor(item):
@@ -181,52 +181,84 @@ class MultiGraphDataset(Dataset):
         return data
 
     def get(self, idx):
-        if isinstance(idx, int) or (len(idx) == 0):
-            return self._get(idx)
+        try:
+            idx = int(idx)
+        except Exception:
+            idx = idx
+        if torch.is_tensor(idx):
+            idx = idx.numpy().tolist()
+        if isinstance(idx, int):
+            if self.slices is not None:
+                return self._get(idx)
+            return self.data[idx]
         elif len(idx) > 1:
-            data_list = [self._get(i) for i in idx]
-            data, slices = self.from_data_list(data_list)
-            dataset = copy.copy(self)
-            dataset.data = data
-            dataset.slices = slices
-            return dataset
+            if self.slices is not None:
+                return [self._get(int(i)) for i in idx]
+            return [self.data[i] for i in idx]
 
     @staticmethod
     def from_data_list(data_list):
-        r""" Borrowed from PyG"""
+        keys = [set(data.keys) for data in data_list]
+        keys = list(set.union(*keys))
+        assert "batch" not in keys
 
-        keys = data_list[0].keys
-        data = data_list[0].__class__()
-
-        for key in keys:
-            data[key] = []
-        slices = {key: [0] for key in keys}
-
-        for item, key in product(data_list, keys):
-            data[key].append(item[key])
-            if torch.is_tensor(item[key]):
-                s = slices[key][-1] + item[key].size(item.__cat_dim__(key, item[key]))
-            else:
-                s = slices[key][-1] + 1
-            slices[key].append(s)
-
-        if hasattr(data_list[0], "__num_nodes__"):
-            data.__num_nodes__ = []
-            for item in data_list:
-                data.__num_nodes__.append(item.num_nodes)
+        batch = Graph()
+        batch.__slices__ = {key: [0] for key in keys}
 
         for key in keys:
-            item = data_list[0][key]
+            batch[key] = []
+
+        cumsum = {key: 0 for key in keys}
+        batch.batch = []
+        num_nodes_cum = [0]
+        for i, data in enumerate(data_list):
+            for key in data.keys:
+                item = data[key]
+                if torch.is_tensor(item) and item.dtype != torch.bool:
+                    item = item + cumsum[key]
+                if torch.is_tensor(item):
+                    size = item.size(data.cat_dim(key, data[key]))
+                else:
+                    size = 1
+                batch.__slices__[key].append(size + batch.__slices__[key][-1])
+                cumsum[key] = cumsum[key] + data.__inc__(key, item)
+                batch[key].append(item)
+
+                # if key in follow_batch:
+                #     item = torch.full((size,), i, dtype=torch.long)
+                #     batch["{}_batch".format(key)].append(item)
+
+            num_nodes = data.num_nodes
+            if num_nodes is not None:
+                num_nodes_cum.append(num_nodes + num_nodes_cum[-1])
+                item = torch.full((num_nodes,), i, dtype=torch.long)
+                batch.batch.append(item)
+        if num_nodes is None:
+            batch.batch = None
+        for key in batch.keys:
+            item = batch[key][0]
             if torch.is_tensor(item):
-                data[key] = torch.cat(data[key], dim=data.__cat_dim__(key, item))
+                batch[key] = torch.cat(batch[key], dim=data_list[0].cat_dim(key, item))
             elif isinstance(item, int) or isinstance(item, float):
-                data[key] = torch.tensor(data[key])
-
-            slices[key] = torch.tensor(slices[key], dtype=torch.long)
-
-        return data, slices
+                batch[key] = torch.tensor(batch[key])
+            elif isinstance(item, Adjacency):
+                target = Adjacency()
+                for k in item.keys:
+                    if k == "row" or k == "col":
+                        _item = torch.cat(
+                            [x[k] + num_nodes_cum[i] for i, x in enumerate(batch[key])], dim=item.cat_dim(k, None)
+                        )
+                    elif k == "row_ptr":
+                        _item = torch.cat(
+                            [x[k][:-1] + num_nodes_cum[i] for i, x in enumerate(batch[key][:-1])],
+                            dim=item.cat_dim(k, None),
+                        )
+                        _item = torch.cat([_item, batch[key][-1] + num_nodes_cum[-1]], dim=item.cat_dim(k, None))
+                    else:
+                        _item = torch.cat([x[k] for i, x in enumerate(batch[key])], dim=item.cat_dim(k, None))
+                    target[k] = _item
+                batch[key] = target.to(item.device)
+        return batch.contiguous()
 
     def __len__(self):
-        for item in self.slices.values():
-            return len(item) - 1
-        return 0
+        return len(self.data)

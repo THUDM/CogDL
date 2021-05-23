@@ -6,7 +6,7 @@ import scipy.io
 import torch
 import time
 
-from cogdl.data import Data, Dataset
+from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 
 from . import register_dataset
@@ -19,6 +19,9 @@ class MatlabMatrix(Dataset):
         root (string): Root directory where the dataset should be saved.
         name (string): The name of the dataset (:obj:`"Blogcatalog"`).
     """
+
+    def __len__(self):
+        return 1
 
     def __init__(self, root, name, url):
         self.name = name
@@ -63,44 +66,44 @@ class MatlabMatrix(Dataset):
         edge_index = torch.stack([torch.tensor(row_ind), torch.tensor(col_ind)], dim=0)
         edge_attr = torch.tensor(adj_matrix[row_ind, col_ind])
 
-        data = Data(edge_index=edge_index, edge_attr=edge_attr, x=None, y=y)
+        data = Graph(edge_index=edge_index, edge_attr=edge_attr, x=None, y=y)
 
         torch.save(data, self.processed_paths[0])
 
 
 @register_dataset("blogcatalog")
 class BlogcatalogDataset(MatlabMatrix):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset, filename = "blogcatalog", "blogcatalog"
         url = "http://leitang.net/code/social-dimension/data/"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(BlogcatalogDataset, self).__init__(path, filename, url)
 
 
 @register_dataset("flickr-ne")
 class FlickrDataset(MatlabMatrix):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset, filename = "flickr", "flickr"
         url = "http://leitang.net/code/social-dimension/data/"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(FlickrDataset, self).__init__(path, filename, url)
 
 
 @register_dataset("wikipedia")
 class WikipediaDataset(MatlabMatrix):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset, filename = "wikipedia", "POS"
         url = "http://snap.stanford.edu/node2vec/"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(WikipediaDataset, self).__init__(path, filename, url)
 
 
 @register_dataset("ppi-ne")
 class PPIDataset(MatlabMatrix):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset, filename = "ppi", "Homo_sapiens"
         url = "http://snap.stanford.edu/node2vec/"
-        path = osp.join("data", dataset + "-ne")
+        path = osp.join(data_path, dataset + "-ne")
         super(PPIDataset, self).__init__(path, filename, url)
 
 
@@ -161,7 +164,7 @@ class NetworkEmbeddingCMTYDataset(Dataset):
             labels[cls, i] = 1.0
 
         labels = torch.from_numpy(labels)
-        data = Data(x=None, y=labels, edge_index=edge_index)
+        data = Graph(x=None, y=labels, edge_index=edge_index)
         torch.save(data, self.processed_paths[0])
 
     def __repr__(self):
@@ -173,17 +176,17 @@ class NetworkEmbeddingCMTYDataset(Dataset):
 
 @register_dataset("dblp-ne")
 class DblpNEDataset(NetworkEmbeddingCMTYDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "dblp"
-        path = osp.join("data", dataset + "-ne")
+        path = osp.join(data_path, dataset + "-ne")
         url = "https://cloud.tsinghua.edu.cn/d/1da2ec50b08749f48033/files/?p=%2F{}&dl=1"
         super(DblpNEDataset, self).__init__(path, dataset, url)
 
 
 @register_dataset("youtube-ne")
 class YoutubeNEDataset(NetworkEmbeddingCMTYDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "youtube"
-        path = osp.join("data", dataset + "-ne")
+        path = osp.join(data_path, dataset + "-ne")
         url = "https://cloud.tsinghua.edu.cn/d/e338d719659b44e5ac9d/files/?p=%2F{}&dl=1"
         super(YoutubeNEDataset, self).__init__(path, dataset, url)

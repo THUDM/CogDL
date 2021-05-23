@@ -12,6 +12,7 @@ install:
   - pip install torch-geometric
   - pip install dgl==0.4.3
   - bash ./scripts/installation/metis.sh
+  - source ./scripts/installation/gcc.sh
   - pip install metis
   - pip install -r docs/requirements.txt
   - pip install -e .

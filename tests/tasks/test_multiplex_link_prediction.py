@@ -11,6 +11,9 @@ def get_default_args():
         "cpu": not cuda_available,
         "checkpoint": False,
         "device_id": [0],
+        "activation": "relu",
+        "residual": False,
+        "norm": None,
     }
     return build_args_from_dict(default_dict)
 

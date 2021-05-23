@@ -14,6 +14,8 @@ import torch
 import torch.nn.functional as F
 from tabulate import tabulate
 
+from cogdl.operators.sample import coo2csr_cpu, coo2csr_cpu_index
+
 
 class ArgClass(object):
     def __init__(self):
@@ -180,6 +182,7 @@ def row_normalization(num_nodes, edge_index, edge_weight=None):
         edge_weight = torch.ones(edge_index.shape[1]).to(device)
     row_sum = spmm_scatter(edge_index, edge_weight, torch.ones(num_nodes, 1).to(device))
     row_sum_inv = row_sum.pow(-1).view(-1)
+    row_sum_inv[torch.isinf(row_sum_inv)] = 0
     return edge_weight * row_sum_inv[edge_index[0]]
 
 
@@ -213,92 +216,45 @@ def spmm_adj(indices, values, x, num_nodes=None):
 
 
 fast_spmm = None
-_cache = dict()
 
 
 def initialize_spmm(args):
     if hasattr(args, "fast_spmm") and args.fast_spmm is True:
         try:
-            from cogdl.layers.spmm_layer import csrspmm
+            from cogdl.operators.spmm import csrspmm
 
             global fast_spmm
             fast_spmm = csrspmm
             print("Using fast-spmm to speed up training")
-        except Exception as e:
-            print(e)
+        except Exception:
+            print("Failed to load fast version of SpMM, use torch.spmm instead.")
 
 
-def spmm(edge_index, edge_weight, x, num_nodes=None):
-    r"""
-    Args:
-        edge_index : Tensor, shape=(2, E)
-        edge_weight : Tensor, shape=(E,)
-        x : Tensor, shape=(N, )
-        num_nodes : Optional[int]
-    """
+def spmm(graph, x):
+    if graph.out_norm is not None:
+        x = graph.out_norm * x
+
     if fast_spmm is not None and str(x.device) != "cpu":
-        (colptr, row_indices, csr_data, rowptr, col_indices, csc_data) = get_csr_ind(
-            edge_index, edge_weight, x.shape[0]
-        )
-        x = fast_spmm(rowptr, col_indices, colptr, row_indices, x, csr_data, csc_data)
-    elif edge_weight.requires_grad:
-        x = spmm_scatter(edge_index, edge_weight, x)
+        row_ptr, col_indices = graph.row_indptr, graph.col_indices
+        csr_data = graph.edge_weight
+        x = fast_spmm(row_ptr.int(), col_indices.int(), x, csr_data.contiguous(), graph.is_symmetric())
     else:
-        x = spmm_adj(edge_index, edge_weight, x, num_nodes)
+        x = spmm_scatter(graph.edge_index, graph.edge_weight, x)
+
+    if graph.in_norm is not None:
+        x = graph.in_norm * x
     return x
 
 
-def get_csr_ind(edge_index, edge_weight=None, num_nodes=None):
-    flag = str(edge_index.shape[1])
-    if flag not in _cache:
-        if num_nodes is None:
-            num_nodes = torch.max(edge_index) + 1
-        if edge_weight is None:
-            edge_weight = torch.ones(edge_index.shape[1], device=edge_index.device)
-        _cache[flag] = get_csr_from_edge_index(edge_index, edge_weight, size=(num_nodes, num_nodes))
-    cache = _cache[flag]
-    colptr = cache["colptr"]
-    row_indices = cache["row_indices"]
-    csr_data = cache["csr_data"]
-    rowptr = cache["rowptr"]
-    col_indices = cache["col_indices"]
-    csc_data = cache["csc_data"]
-    return colptr, row_indices, csr_data, rowptr, col_indices, csc_data
-
-
-def get_csr_from_edge_index(edge_index, edge_attr, size):
-    device = edge_index.device
-    _edge_index = edge_index.cpu().numpy()
-    _edge_attr = edge_attr.cpu().numpy()
-    num_nodes = size[0]
-
-    adj = sp.csr_matrix((_edge_attr, (_edge_index[0], _edge_index[1])), shape=(num_nodes, num_nodes))
-    colptr = torch.as_tensor(adj.indptr, dtype=torch.int32).to(device)
-    row_indices = torch.as_tensor(adj.indices, dtype=torch.int32).to(device)
-    csr_data = torch.as_tensor(adj.data, dtype=torch.float).to(device)
-    adj = adj.tocsc()
-    rowptr = torch.as_tensor(adj.indptr, dtype=torch.int32).to(device)
-    col_indices = torch.as_tensor(adj.indices, dtype=torch.int32).to(device)
-    csc_data = torch.as_tensor(adj.data, dtype=torch.float).to(device)
-    cache = {
-        "colptr": colptr,
-        "row_indices": row_indices,
-        "csr_data": csr_data,
-        "rowptr": rowptr,
-        "col_indices": col_indices,
-        "csc_data": csc_data,
-    }
-    return cache
-
-
-def coo2csr(edge_index, edge_attr, num_nodes=None):
+def _coo2csr(edge_index, data, num_nodes=None, ordered=False, return_index=False):
+    if ordered:
+        return sorted_coo2csr(edge_index[0], edge_index[1], data, return_index=return_index)
     if num_nodes is None:
         num_nodes = torch.max(edge_index) + 1
     device = edge_index[0].device
     sorted_index = torch.argsort(edge_index[0])
     sorted_index = sorted_index.long()
     edge_index = edge_index[:, sorted_index]
-    edge_attr = edge_attr[sorted_index]
     indices = edge_index[1]
 
     row = edge_index[0]
@@ -307,51 +263,92 @@ def coo2csr(edge_index, edge_attr, num_nodes=None):
     elements = elements.long() + 1
     indptr[elements] = counts.to(indptr.dtype)
     indptr = indptr.cumsum(dim=0)
-    return indptr.int(), indices.int(), edge_attr
+
+    if return_index:
+        return indptr, sorted_index
+    if data is not None:
+        data = data[sorted_index]
+    return indptr, indices, data
 
 
-def coo2csc(edge_index, edge_attr):
-    edge_index = torch.stack([edge_index[1], edge_index[0]])
-    return coo2csr(edge_index, edge_attr)
+def coo2csr(row, col, data, num_nodes=None, ordered=False):
+    if ordered:
+        indptr, indices, data = sorted_coo2csr(row, col, data)
+        return indptr, indices, data
+    if num_nodes is None:
+        num_nodes = torch.max(torch.stack(row, col)).item() + 1
+    if coo2csr_cpu is None:
+        return _coo2csr(torch.stack([row, col]), data, num_nodes)
+    device = row.device
+    row = row.long().cpu()
+    col = col.long().cpu()
+    data = data.float().cpu()
+    indptr, indices, data = coo2csr_cpu(row, col, data, num_nodes)
+    return indptr.to(device), indices.to(device), data.to(device)
 
 
-# def naive_spspmm(edge_index1, value1, edge_index2, value2, shape):
-#     if isinstance(edge_index1, torch.Tensor):
-#         row1, col1 = edge_index1.cpu().numpy()
-#         value1 = value1.cpu().numpy()
-#     else:
-#         row1, col1 = edge_index1
-#     if isinstance(edge_index2, torch.Tensor):
-#         row2, col2 = edge_index2.cpu().numpy()
-#         value2 = value2.cpu().numpy()
-#     else:
-#         row2, col2 = edge_index2
-#     adj1 = sp.csr_matrix((value1, (row1, col1)), shape=shape)
-#     adj2 = sp.csc_matrix((value2, (row2, col2)), shape=shape)
-#     indptr1 = adj1.indptr
-#     indices1 = adj1.indices
-#
-#     indptr2 = adj2.indptr
-#     indices2 = adj2.indices
-#
-#     result = _naive_spspmm(indptr1, indices1, indptr2, indices2)
-#
-#
-# @numba.njit
-# def _naive_spspmm(indptr_row, indices_row, indptr_col, indices_col):
+def coo2csr_index(row, col, num_nodes=None):
+    if num_nodes is None:
+        num_nodes = torch.max(torch.stack(row, col)).item() + 1
+    if coo2csr_cpu_index is None:
+        return _coo2csr(torch.stack([row, col]), None, num_nodes=num_nodes, return_index=True)
+    device = row.device
+    row = row.long().cpu()
+    col = col.long().cpu()
+    indptr, reindex = coo2csr_cpu_index(row, col, num_nodes)
+    return indptr.to(device), reindex.to(device)
+
+
+def sorted_coo2csr(row, col, data, num_nodes=None, return_index=False):
+    indptr = torch.bincount(row)
+    indptr = indptr.cumsum(dim=0)
+    zero = torch.zeros(1, device=indptr.device)
+    indptr = torch.cat([zero, indptr])
+    if return_index:
+        return indptr, torch.arange(0, row.shape[0])
+    return indptr, col, data
+
+
+def coo2csc(row, col, data, num_nodes=None, sorted=False):
+    return coo2csr(col, row, data, num_nodes, sorted)
+
+
+def csr2csc(indptr, indices, data=None):
+    device = indices.device
+    indptr = indptr.cpu().numpy()
+    indices = indices.cpu().numpy()
+    num_nodes = indptr.shape[0] - 1
+    if data is None:
+        data = np.ones(indices.shape[0])
+    else:
+        data = data.cpu().numpy()
+    adj = sp.csr_matrix((data, indices, indptr), shape=(num_nodes, num_nodes))
+    adj = adj.tocsc()
+    data = torch.as_tensor(adj.data, device=device)
+    col_indptr = torch.as_tensor(adj.indptr, device=device)
+    row_indices = torch.as_tensor(adj.indices, device=device)
+    return col_indptr, row_indices, data
+
+
+def csr2coo(indptr, indices, data):
+    num_nodes = indptr.size(0) - 1
+    row = torch.arange(num_nodes, device=indptr.device)
+    row_count = indptr[1:] - indptr[:-1]
+    row = row.repeat_interleave(row_count)
+    return row, indices, data
 
 
 def get_degrees(indices, num_nodes=None):
     device = indices.device
     values = torch.ones(indices.shape[1]).to(device)
     if num_nodes is None:
-        num_nodes = torch.max(values) + 1
+        num_nodes = torch.max(indices).item() + 1
     b = torch.ones((num_nodes, 1)).to(device)
     degrees = spmm_scatter(indices, values, b).view(-1)
     return degrees
 
 
-def edge_softmax(indices, values, shape):
+def edge_softmax_(indices, values, shape):
     """
     Args:
         indices: Tensor, shape=(2, E)
@@ -367,7 +364,34 @@ def edge_softmax(indices, values, shape):
     return softmax_values
 
 
-def mul_edge_softmax(indices, values, shape):
+def edge_softmax(graph, edge_val):
+    edge_val_max = edge_val.max().item()
+    while edge_val_max > 10:
+        edge_val -= edge_val / 2
+        edge_val_max = edge_val.max().item()
+
+    with graph.local_graph():
+        edge_val = torch.exp(edge_val)
+        graph.edge_weight = edge_val
+        x = torch.ones(graph.num_nodes, 1).to(edge_val.device)
+        node_sum = spmm(graph, x).squeeze()
+        row = graph.edge_index[0]
+        softmax_values = edge_val / node_sum[row]
+        return softmax_values
+
+
+def mul_edge_softmax(graph, edge_val):
+    """
+    Returns:
+        Softmax values of multi-dimension edge values. shape: [d, E]
+    """
+    val = []
+    for i in range(edge_val.shape[1]):
+        val.append(edge_softmax(graph, edge_val[:, i]))
+    return torch.stack(val)
+
+
+def mul_edge_softmax_(indices, values, shape):
     """
     Args:
         indices: Tensor, shape=(2, E)
@@ -414,20 +438,19 @@ def dropout_adj(
 
 
 def coalesce(row, col, value=None):
-    bigger = ((row[1:] - row[:-1]) >= 0).all()
-    if not bigger:
-        edge_index = torch.stack([row, col]).T
-        sort_value, sort_index = torch.sort(edge_index, dim=0)
-        sort_index = sort_index[:, 0]
-        edge_index = edge_index[sort_index].t()
-        row, col = edge_index
+    row = row.numpy()
+    col = col.numpy()
+    indices = np.lexsort((col, row))
+    row = torch.from_numpy(row[indices])
+    col = torch.from_numpy(col[indices])
+
     num = col.shape[0] + 1
     idx = torch.full((num,), -1, dtype=torch.float)
     idx[1:] = row * num + col
     mask = idx[1:] > idx[:-1]
 
     if mask.all():
-        return row, col.value
+        return row, col, value
     row = row[mask]
     if value is not None:
         _value = torch.zeros(row.shape[0], dtype=torch.float).to(row.device)
@@ -448,13 +471,10 @@ def to_undirected(edge_index, num_nodes=None):
 
     :rtype: :class:`LongTensor`
     """
-    if num_nodes is None:
-        num_nodes = int(torch.max(edge_index)) + 1
 
     row, col = edge_index
     row, col = torch.cat([row, col], dim=0), torch.cat([col, row], dim=0)
-    edge_index = torch.stack([row, col], dim=0)
-    row, col, _ = coalesce(edge_index[0], edge_index[1], None)
+    row, col, _ = coalesce(row, col, None)
     edge_index = torch.stack([row, col])
     return edge_index
 
@@ -560,6 +580,8 @@ def set_random_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.determinstic = True
 
 
 if __name__ == "__main__":

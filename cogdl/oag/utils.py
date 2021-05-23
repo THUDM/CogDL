@@ -1,3 +1,5 @@
+import unicodedata
+
 COLORCODES = {
     "black": "\x1b[30m",
     "red": "\x1b[31m",
@@ -15,4 +17,10 @@ def colored(text, color):
     return COLORCODES.get(color, "") + text + COLORCODES.get("reset", "")
 
 
-OAG_TOKEN_TYPE_NAMES = ["TEXT", "AUTHOR", "VENUE", "AFF", "FOS"]
+OAG_TOKEN_TYPE_NAMES = ["TEXT", "AUTHOR", "VENUE", "AFF", "FOS", "FUND"]
+
+def stringLenCJK(string):
+    return sum(1 + (unicodedata.east_asian_width(c) in "WF") for c in string)
+
+def stringRjustCJK(string, length):
+    return ' ' * (length - stringLenCJK(string)) + string

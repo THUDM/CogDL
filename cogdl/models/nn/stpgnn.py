@@ -1,10 +1,6 @@
-import torch
-from torch.nn.modules import activation
-
 from .. import BaseModel, register_model
 from cogdl.layers.strategies_layers import (
     ContextPredictTrainer,
-    Finetuner,
     MaskTrainer,
     InfoMaxTrainer,
     SupervisedTrainer,
@@ -32,7 +28,6 @@ class stpgnn(BaseModel):
         # fmt: on
         ContextPredictTrainer.add_args(parser)
         MaskTrainer.add_args(parser)
-        Finetuner.add_args(parser)
         SupervisedTrainer.add_args(parser)
 
     @classmethod
@@ -41,16 +36,13 @@ class stpgnn(BaseModel):
 
     def __init__(self, args):
         super(stpgnn, self).__init__()
-        if args.finetune:
-            self.trainer = Finetuner(args)
+        if args.pretrain_task == "infomax":
+            self.trainer = InfoMaxTrainer(args)
+        elif args.pretrain_task == "context":
+            self.trainer = ContextPredictTrainer(args)
+        elif args.pretrain_task == "mask":
+            self.trainer = MaskTrainer(args)
+        elif args.pretrain_task == "supervised":
+            self.trainer = SupervisedTrainer(args)
         else:
-            if args.pretrain_task == "infomax":
-                self.trainer = InfoMaxTrainer(args)
-            elif args.pretrain_task == "context":
-                self.trainer = ContextPredictTrainer(args)
-            elif args.pretrain_task == "mask":
-                self.trainer = MaskTrainer(args)
-            elif args.pretrain_task == "supervised":
-                self.trainer = SupervisedTrainer(args)
-            else:
-                raise NotImplementedError
+            raise NotImplementedError

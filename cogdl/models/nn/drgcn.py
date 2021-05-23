@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -7,7 +6,6 @@ from cogdl.layers import SELayer
 
 from .. import BaseModel, register_model
 from .gcn import GraphConvolution
-from cogdl.utils import add_remaining_self_loops, symmetric_normalization
 
 
 @register_model("drgcn")
@@ -47,16 +45,16 @@ class DrGCN(BaseModel):
             [SELayer(shapes[layer], se_channels=int(np.sqrt(shapes[layer]))) for layer in range(num_layers)]
         )
 
-    def forward(self, x, edge_index):
+    def forward(self, graph):
+        graph.sym_norm()
+        x = graph.x
         x = self.ses[0](x)
-        edge_index, edge_weight = add_remaining_self_loops(edge_index)
-        edge_weight = symmetric_normalization(x.shape[0], edge_index, edge_weight)
         for se, conv in zip(self.ses[1:], self.convs[:-1]):
-            x = F.relu(conv(x, edge_index, edge_weight))
+            x = F.relu(conv(graph, x))
             x = se(x)
             x = F.dropout(x, p=self.dropout, training=self.training)
-        x = self.convs[-1](x, edge_index, edge_weight)
+        x = self.convs[-1](graph, x)
         return x
 
-    def predict(self, data):
-        return self.forward(data.x, data.edge_index)
+    def predict(self, graph):
+        return self.forward(graph)

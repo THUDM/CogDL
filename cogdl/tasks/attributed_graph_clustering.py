@@ -2,13 +2,17 @@ import argparse
 from typing import Dict
 import numpy as np
 import networkx as nx
+
 from sklearn.cluster import KMeans, SpectralClustering
 from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.metrics import f1_score
+from scipy.optimize import linear_sum_assignment
+
 import torch
 import torch.nn.functional as F
+
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
-
 from . import BaseTask, register_task
 
 
@@ -45,6 +49,7 @@ class AttributedGraphClustering(BaseTask):
         self.dataset = dataset
         self.data = dataset[0]
         self.num_nodes = self.data.y.shape[0]
+        args.num_clusters = torch.max(self.data.y) + 1
 
         if args.model == "prone":
             self.hidden_size = args.hidden_size = args.num_features = 13
@@ -111,25 +116,14 @@ class AttributedGraphClustering(BaseTask):
         print("Evaluating...")
         truth = self.data.y.cpu().numpy()
         if full:
-            TP = 0
-            FP = 0
-            TN = 0
-            FN = 0
+            mat = np.zeros([self.num_clusters, self.num_clusters])
             for i in range(self.num_nodes):
-                for j in range(i + 1, self.num_nodes):
-                    if clusters[i] == clusters[j] and truth[i] == truth[j]:
-                        TP += 1
-                    if clusters[i] != clusters[j] and truth[i] == truth[j]:
-                        FP += 1
-                    if clusters[i] == clusters[j] and truth[i] != truth[j]:
-                        FN += 1
-                    if clusters[i] != clusters[j] and truth[i] != truth[j]:
-                        TN += 1
-            _ = (TP + TN) / (TP + FP + TN + FN)
-            precision = TP / (TP + FP)
-            recall = TP / (TP + FN)
-            print("TP", TP, "FP", FP, "TN", TN, "FN", FN)
-            micro_f1 = 2 * (precision * recall) / (precision + recall)
-            return dict(Accuracy=precision, NMI=normalized_mutual_info_score(clusters, truth), Micro_F1=micro_f1)
+                mat[clusters[i]][truth[i]] -= 1
+            _, row_idx = linear_sum_assignment(mat)
+            acc = - mat[_, row_idx].sum() / self.num_nodes
+            for i in range(self.num_nodes):
+                clusters[i] = row_idx[clusters[i]]
+            macro_f1 = f1_score(truth, clusters, average="macro")
+            return dict(Accuracy=acc, NMI=normalized_mutual_info_score(clusters, truth), Macro_F1=macro_f1)
         else:
             return dict(NMI=normalized_mutual_info_score(clusters, truth))

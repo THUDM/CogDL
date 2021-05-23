@@ -3,7 +3,7 @@ import pickle
 
 import numpy as np
 import torch
-from cogdl.data import Data, Dataset
+from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url, untar
 
 from . import register_dataset
@@ -46,7 +46,7 @@ class GTNDataset(Dataset):
         labels = pickle.load(open(osp.join(folder, "labels.pkl"), "rb"))
         node_features = pickle.load(open(osp.join(folder, "node_features.pkl"), "rb"))
 
-        data = Data()
+        data = Graph()
         data.x = torch.from_numpy(node_features).type(torch.FloatTensor)
 
         num_nodes = edges[0].shape[0]
@@ -131,23 +131,23 @@ class GTNDataset(Dataset):
 
 @register_dataset("gtn-acm")
 class ACM_GTNDataset(GTNDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "gtn-acm"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(ACM_GTNDataset, self).__init__(path, dataset)
 
 
 @register_dataset("gtn-dblp")
 class DBLP_GTNDataset(GTNDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "gtn-dblp"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(DBLP_GTNDataset, self).__init__(path, dataset)
 
 
 @register_dataset("gtn-imdb")
 class IMDB_GTNDataset(GTNDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "gtn-imdb"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(IMDB_GTNDataset, self).__init__(path, dataset)

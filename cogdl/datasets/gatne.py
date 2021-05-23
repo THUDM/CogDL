@@ -1,9 +1,8 @@
 import os.path as osp
-import sys
 
 import torch
 
-from cogdl.data import Data, Dataset
+from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 
 from . import register_dataset
@@ -34,7 +33,7 @@ def read_gatne_data(folder):
                 test_data[items[0]] = [[], []]
             test_data[items[0]][1 - int(items[3])].append([int(items[1]), int(items[2])])
 
-    data = Data()
+    data = Graph()
     data.train_data = train_data
     data.valid_data = valid_data
     data.test_data = test_data
@@ -89,23 +88,23 @@ class GatneDataset(Dataset):
 
 @register_dataset("amazon")
 class AmazonDataset(GatneDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "amazon"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(AmazonDataset, self).__init__(path, dataset)
 
 
 @register_dataset("twitter")
 class TwitterDataset(GatneDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "twitter"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(TwitterDataset, self).__init__(path, dataset)
 
 
 @register_dataset("youtube")
 class YouTubeDataset(GatneDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "youtube"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(YouTubeDataset, self).__init__(path, dataset)

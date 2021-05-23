@@ -66,7 +66,13 @@ def build_dataset_from_name(dataset):
     return DATASET_REGISTRY[dataset]()
 
 
-def build_dataset_from_path(data_path, task):
+def build_dataset_from_path(data_path, task=None, dataset=None):
+    if dataset is not None and dataset in SUPPORTED_DATASETS:
+        if try_import_dataset(dataset):
+            return DATASET_REGISTRY[dataset](data_path=data_path)
+
+    if task is None:
+        return None
     if "node_classification" in task:
         return CustomizedNodeClassificationDataset(data_path)
     elif "graph_classification" in task:
@@ -84,7 +90,7 @@ SUPPORTED_DATASETS = {
     "ogbn-arxiv": "cogdl.datasets.ogb",
     "ogbn-products": "cogdl.datasets.ogb",
     "ogbn-proteins": "cogdl.datasets.ogb",
-    "ogbn-mag": "cogdl.datasets.pyg_ogb",
+    "ogbn-mag": "cogdl.datasets.ogb",
     "ogbn-papers100M": "cogdl.datasets.ogb",
     "ogbg-molbace": "cogdl.datasets.ogb",
     "ogbg-molhiv": "cogdl.datasets.ogb",
@@ -133,8 +139,8 @@ SUPPORTED_DATASETS = {
     "reddit": "cogdl.datasets.saint_data",
     "ppi": "cogdl.datasets.saint_data",
     "ppi-large": "cogdl.datasets.saint_data",
-    "test_bio": "cogdl.datasets.pyg_strategies_data",
-    "test_chem": "cogdl.datasets.pyg_strategies_data",
+    "test_bio": "cogdl.datasets.strategies_data",
+    "test_chem": "cogdl.datasets.strategies_data",
     "bio": "cogdl.datasets.strategies_data",
     "chem": "cogdl.datasets.strategies_data",
     "bace": "cogdl.datasets.strategies_data",

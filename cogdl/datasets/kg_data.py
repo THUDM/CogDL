@@ -2,7 +2,7 @@ import os.path as osp
 
 import numpy as np
 import torch
-from cogdl.data import Data, Dataset
+from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 from cogdl.datasets import register_dataset
 
@@ -216,7 +216,7 @@ def read_triplet_data(folder):
 
     edge_index = torch.LongTensor(edge_index).t()
     edge_attr = torch.LongTensor(edge_attr)
-    data = Data()
+    data = Graph()
     data.edge_index = edge_index
     data.edge_attr = edge_attr
 
@@ -233,7 +233,8 @@ def read_triplet_data(folder):
 
 
 class KnowledgeGraphDataset(Dataset):
-    url = "https://raw.githubusercontent.com/thunlp/OpenKE/OpenKE-PyTorch/benchmarks"
+    # url = "https://raw.githubusercontent.com/thunlp/OpenKE/OpenKE-PyTorch/benchmarks"
+    url = "https://cloud.tsinghua.edu.cn/d/b567292338f2488699b7/files/?p=%2F{}%2F{}&dl=1"
 
     def __init__(self, root, name):
         self.name = name
@@ -282,7 +283,8 @@ class KnowledgeGraphDataset(Dataset):
 
     def download(self):
         for name in self.raw_file_names:
-            download_url("{}/{}/{}".format(self.url, self.name, name), self.raw_dir)
+            # download_url("{}/{}/{}".format(self.url, self.name, name), self.raw_dir)
+            download_url(self.url.format(self.name, name), self.raw_dir, name=name)
 
     def process(self):
         (
@@ -308,49 +310,47 @@ class KnowledgeGraphDataset(Dataset):
 
 @register_dataset("fb13")
 class FB13Datset(KnowledgeGraphDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "FB13"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(FB13Datset, self).__init__(path, dataset)
 
 
 @register_dataset("fb15k")
 class FB15kDatset(KnowledgeGraphDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "FB15K"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(FB15kDatset, self).__init__(path, dataset)
 
 
 @register_dataset("fb15k237")
 class FB15k237Datset(KnowledgeGraphDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "FB15K237"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(FB15k237Datset, self).__init__(path, dataset)
 
 
 @register_dataset("wn18")
 class WN18Datset(KnowledgeGraphDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "WN18"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(WN18Datset, self).__init__(path, dataset)
 
 
 @register_dataset("wn18rr")
 class WN18RRDataset(KnowledgeGraphDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "WN18RR"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(WN18RRDataset, self).__init__(path, dataset)
 
 
 @register_dataset("fb13s")
 class FB13SDatset(KnowledgeGraphDataset):
-    url = "https://raw.githubusercontent.com/cenyk1230/test-data/main"
-
-    def __init__(self):
-        dataset = "FB13-S"
-        path = osp.join("data", dataset)
+    def __init__(self, data_path="data"):
+        dataset = "FB13S"
+        path = osp.join(data_path, dataset)
         super(FB13SDatset, self).__init__(path, dataset)

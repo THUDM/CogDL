@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from .. import BaseModel, register_model
 from cogdl.data import DataLoader
 from .graphsage import GraphSAGELayer
+from .gin import split_dataset_general
 
 
 def scatter_sum(src, index, dim, dim_size):
@@ -89,17 +90,7 @@ class SortPool(BaseModel):
 
     @classmethod
     def split_dataset(cls, dataset, args):
-        random.shuffle(dataset)
-        train_size = int(len(dataset) * args.train_ratio)
-        test_size = int(len(dataset) * args.test_ratio)
-        bs = args.batch_size
-        train_loader = DataLoader(dataset[:train_size], batch_size=bs)
-        test_loader = DataLoader(dataset[-test_size:], batch_size=bs)
-        if args.train_ratio + args.test_ratio < 1:
-            valid_loader = DataLoader(dataset[train_size:-test_size], batch_size=bs)
-        else:
-            valid_loader = test_loader
-        return train_loader, valid_loader, test_loader
+        return split_dataset_general(dataset, args)
 
     def __init__(self, in_feats, hidden_dim, num_classes, num_layers, out_channel, kernel_size, k=30, dropout=0.5):
         super(SortPool, self).__init__()
@@ -117,7 +108,7 @@ class SortPool(BaseModel):
     def forward(self, batch):
         h = batch.x
         for i in range(self.num_layers):
-            h = self.gnn_convs[i](h, batch.edge_index)
+            h = self.gnn_convs[i](batch, h)
             h = F.relu(h)
 
         h, _ = h.sort(dim=-1)

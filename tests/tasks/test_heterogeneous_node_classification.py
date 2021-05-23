@@ -73,16 +73,16 @@ def test_han_han_acm():
     assert ret["f1"] >= 0 and ret["f1"] <= 1
 
 
-def test_han_han_dblp():
-    args = get_default_args()
-    args.task = "heterogeneous_node_classification"
-    args.dataset = "han-dblp"
-    args.model = "han"
-    args.cpu = True
-    args.num_layers = 2
-    task = build_task(args)
-    ret = task.train()
-    assert ret["f1"] >= 0 and ret["f1"] <= 1
+# def test_han_han_dblp():
+#     args = get_default_args()
+#     args.task = "heterogeneous_node_classification"
+#     args.dataset = "han-dblp"
+#     args.model = "han"
+#     args.cpu = True
+#     args.num_layers = 2
+#     task = build_task(args)
+#     ret = task.train()
+#     assert ret["f1"] >= 0 and ret["f1"] <= 1
 
 
 if __name__ == "__main__":
@@ -91,4 +91,4 @@ if __name__ == "__main__":
     test_han_gtn_dblp()
     test_han_han_imdb()
     test_han_han_acm()
-    test_han_han_dblp()
+    # test_han_han_dblp()

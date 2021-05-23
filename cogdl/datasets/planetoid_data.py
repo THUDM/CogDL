@@ -5,24 +5,9 @@ import sys
 import numpy as np
 import torch
 
-from cogdl.data import Dataset, Data
-from cogdl.utils import remove_self_loops, download_url, untar
+from cogdl.data import Dataset, Graph
+from cogdl.utils import remove_self_loops, download_url, untar, coalesce
 from . import register_dataset
-
-
-def coalesce(row, col, value=None):
-    num = col.shape[0] + 1
-    idx = torch.full((num,), -1, dtype=torch.float)
-    idx[1:] = row * num + col
-    mask = idx[1:] > idx[:-1]
-
-    if mask.all():
-        return row, col.value
-    row = row[mask]
-    col = col[mask]
-    if value is not None:
-        pass
-    return row, col, value
 
 
 def parse_index_file(filename):
@@ -59,11 +44,11 @@ def edge_index_from_dict(graph_dict, num_nodes=None):
 
     edge_index = torch.tensor(edge_index, dtype=torch.long)
     # There may be duplicated edges and self loops in the datasets.
-    row, col, _ = coalesce(edge_index[0], edge_index[1])
-    edge_index = torch.stack([row, col], dim=0)
     edge_index, _ = remove_self_loops(edge_index)
     row = torch.cat([edge_index[0], edge_index[1]])
     col = torch.cat([edge_index[1], edge_index[0]])
+
+    row, col, _ = coalesce(row, col)
     edge_index = torch.stack([row, col])
     return edge_index
 
@@ -114,7 +99,7 @@ def read_planetoid_data(folder, prefix):
 
     edge_index = edge_index_from_dict(graph, num_nodes=y.size(0))
 
-    data = Data(x=x, edge_index=edge_index, y=y)
+    data = Graph(x=x, edge_index=edge_index, y=y)
     data.train_mask = train_mask
     data.val_mask = val_mask
     data.test_mask = test_mask
@@ -177,6 +162,9 @@ class Planetoid(Dataset):
     def __repr__(self):
         return "{}()".format(self.name)
 
+    def __len__(self):
+        return 1
+
 
 def normalize_feature(data):
     x_sum = torch.sum(data.x, dim=1)
@@ -189,9 +177,9 @@ def normalize_feature(data):
 
 @register_dataset("cora")
 class CoraDataset(Planetoid):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "Cora"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         if not osp.exists(path):
             Planetoid(path, dataset)
         super(CoraDataset, self).__init__(path, dataset)
@@ -200,9 +188,9 @@ class CoraDataset(Planetoid):
 
 @register_dataset("citeseer")
 class CiteSeerDataset(Planetoid):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "CiteSeer"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         if not osp.exists(path):
             Planetoid(path, dataset)
         super(CiteSeerDataset, self).__init__(path, dataset)
@@ -211,9 +199,9 @@ class CiteSeerDataset(Planetoid):
 
 @register_dataset("pubmed")
 class PubMedDataset(Planetoid):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "PubMed"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         if not osp.exists(path):
             Planetoid(path, dataset)
         super(PubMedDataset, self).__init__(path, dataset)

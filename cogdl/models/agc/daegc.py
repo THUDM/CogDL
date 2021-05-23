@@ -60,13 +60,12 @@ class DAEGC(BaseModel):
     def get_trainer(self, task, args):
         return DAEGCTrainer
 
-    def forward(self, x, edge_index):
-        edge_index, _ = add_remaining_self_loops(edge_index)
-
+    def forward(self, graph):
+        x = graph.x
         x = F.dropout(x, p=self.dropout, training=self.training)
-        x = F.elu(self.att1(x, edge_index))
+        x = F.elu(self.att1(graph, x))
         x = F.dropout(x, p=self.dropout, training=self.training)
-        x = F.elu(self.att2(x, edge_index))
+        x = F.elu(self.att2(graph, x))
         return F.normalize(x, p=2, dim=1)
 
     def get_2hop(self, edge_index):
@@ -82,7 +81,7 @@ class DAEGC(BaseModel):
         return torch.tensor(list(H.edges())).t()
 
     def get_features(self, data):
-        return self.forward(data.x, data.edge_index).detach()
+        return self.forward(data).detach()
 
     def recon_loss(self, z, adj):
         # print(torch.mm(z, z.t()), adj)

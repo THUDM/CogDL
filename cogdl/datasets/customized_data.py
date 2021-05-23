@@ -1,7 +1,8 @@
 import torch
+from sklearn.preprocessing import StandardScaler
 
-from cogdl.data import Dataset, MultiGraphDataset, Batch
-from cogdl.utils import download_url, accuracy, multilabel_f1, multiclass_f1, bce_with_logits_loss, cross_entropy_loss
+from cogdl.data import Dataset, Batch
+from cogdl.utils import accuracy, multilabel_f1, multiclass_f1, bce_with_logits_loss, cross_entropy_loss
 
 
 def _get_evaluator(metric):
@@ -22,6 +23,15 @@ def _get_loss_fn(metric):
         return bce_with_logits_loss
     else:
         raise NotImplementedError
+
+
+def scale_feats(data):
+    scaler = StandardScaler()
+    feats = data.x.numpy()
+    scaler.fit(feats)
+    feats = torch.from_numpy(scaler.transform(feats)).float()
+    data.x = feats
+    return data
 
 
 class BaseDataset(Dataset):
@@ -55,10 +65,12 @@ class CustomizedNodeClassificationDataset(BaseDataset):
     metric: Accuracy, multi-label f1 or multi-class f1. Default: `accuracy`
     """
 
-    def __init__(self, data_path, metric="accuracy"):
+    def __init__(self, data_path, scale_feat=True, metric="accuracy"):
         super(CustomizedNodeClassificationDataset, self).__init__(root=data_path)
         try:
             self.data = torch.load(data_path)
+            if scale_feat:
+                self.data = scale_feats(self.data)
         except Exception as e:
             print(e)
             exit(1)
@@ -66,10 +78,11 @@ class CustomizedNodeClassificationDataset(BaseDataset):
         if hasattr(self.data, "y"):
             if len(self.data.y.shape) > 1:
                 self.metric = "multilabel_f1"
+            else:
+                self.metric = "accuracy"
 
     def download(self):
-        for name in self.raw_file_names:
-            download_url("{}{}&dl=1".format(self.url, name), self.raw_dir, name=name)
+        pass
 
     def process(self):
         pass

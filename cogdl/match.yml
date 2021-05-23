@@ -1,43 +1,3 @@
-node_classificationx:
-  - model:
-    - gdc_gcn
-    - gcn
-    - gat
-    - drgat
-    - drgcn
-    - grand
-    - gcnmix
-    - disengcn
-    - srgcn
-    - mixhop
-    - graphsage
-    - pairnorm
-    - gcnii
-    - chebyshev
-    - deepergcn
-    - gcnii
-    - gpt_gnn
-    - sign
-    - jknet
-    - ppnp
-    - sgcpn
-    - sgc
-    - dropedge_gcn
-    - unet
-    - pprgo
-    dataset:
-    - cora
-    - citeseer
-    - pubmed
-    - ogbn-arxiv
-    - ogbn-products
-    - ogbn-papers100M
-    - flickr
-    - amazon-s
-    - yelp
-    - ppi
-    - ppi-large
-    - reddit
 node_classification:
   - model:
     - gdc_gcn
@@ -66,6 +26,9 @@ node_classification:
     - unet
     - pprgo
     - graphsaint
+    - m3s
+    - supergat
+    - moe_gcn
     dataset:
     - cora
     - citeseer
@@ -106,6 +69,7 @@ unsupervised_node_classification:
   - model:
     - unsup_graphsage
     - dgi
+    - dgi_sampling
     - mvgrl
     - grace
     dataset:
@@ -258,6 +222,8 @@ attributed_graph_clustering:
     - prone
     - netmf
     - line
+    - gae
+    - vgae
     - agc
     - daegc
     dataset:

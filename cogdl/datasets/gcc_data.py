@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import torch
 
-from cogdl.data import Data, Dataset
+from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 
 from . import register_dataset
@@ -23,8 +23,8 @@ class GCCDataset(Dataset):
         edge_index_1, dict_1, self.node2id_1 = self.preprocess(root, name1)
         edge_index_2, dict_2, self.node2id_2 = self.preprocess(root, name2)
         self.data = [
-            Data(x=None, edge_index=edge_index_1, y=dict_1),
-            Data(x=None, edge_index=edge_index_2, y=dict_2),
+            Graph(x=None, edge_index=edge_index_1, y=dict_1),
+            Graph(x=None, edge_index=edge_index_2, y=dict_2),
         ]
         self.transform = None
 
@@ -154,38 +154,38 @@ class Edgelist(Dataset):
         y = torch.zeros(num_nodes, len(label2id))
         y[nodes, labels] = 1
 
-        data = Data(edge_index=torch.LongTensor(edge_list).t(), x=None, y=y)
+        data = Graph(edge_index=torch.LongTensor(edge_list).t(), x=None, y=y)
 
         torch.save(data, self.processed_paths[0])
 
 
 @register_dataset("kdd_icdm")
 class KDD_ICDM_GCCDataset(GCCDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "kdd_icdm"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(KDD_ICDM_GCCDataset, self).__init__(path, dataset)
 
 
 @register_dataset("sigir_cikm")
 class SIGIR_CIKM_GCCDataset(GCCDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "sigir_cikm"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(SIGIR_CIKM_GCCDataset, self).__init__(path, dataset)
 
 
 @register_dataset("sigmod_icde")
 class SIGMOD_ICDE_GCCDataset(GCCDataset):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "sigmod_icde"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(SIGMOD_ICDE_GCCDataset, self).__init__(path, dataset)
 
 
 @register_dataset("usa-airport")
 class USAAirportDataset(Edgelist):
-    def __init__(self):
+    def __init__(self, data_path="data"):
         dataset = "usa-airport"
-        path = osp.join("data", dataset)
+        path = osp.join(data_path, dataset)
         super(USAAirportDataset, self).__init__(path, dataset)

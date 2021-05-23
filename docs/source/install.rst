@@ -2,7 +2,7 @@ Install
 =======
 
 - Python version >= 3.6
-- PyTorch version >= 1.6.0
+- PyTorch version >= 1.7.1
 
 Please follow the instructions here to install PyTorch (https://github.com/pytorch/pytorch#installation).
 

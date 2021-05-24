@@ -16,6 +16,11 @@ from tabulate import tabulate
 
 from cogdl.operators.sample import coo2csr_cpu, coo2csr_cpu_index
 
+try:
+    from cogdl.operators.edge_softmax import csr_edge_softmax
+except Exception:
+    csr_edge_softmax = None
+
 
 class ArgClass(object):
     def __init__(self):
@@ -348,7 +353,7 @@ def get_degrees(indices, num_nodes=None):
     return degrees
 
 
-def edge_softmax_(indices, values, shape):
+def edge_softmax(graph, edge_val):
     """
     Args:
         indices: Tensor, shape=(2, E)
@@ -358,13 +363,6 @@ def edge_softmax_(indices, values, shape):
     Returns:
         Softmax values of edge values for nodes
     """
-    values = torch.exp(values)
-    node_sum = spmm_scatter(indices, values, torch.ones(shape[0], 1).to(values.device)).squeeze()
-    softmax_values = values / node_sum[indices[0]]
-    return softmax_values
-
-
-def edge_softmax_ori(graph, edge_val):
     edge_val_max = edge_val.max().item()
     while edge_val_max > 10:
         edge_val -= edge_val / 2
@@ -385,34 +383,14 @@ def mul_edge_softmax(graph, edge_val):
     Returns:
         Softmax values of multi-dimension edge values. shape: [d, E]
     """
-    # val = []
-    # for i in range(edge_val.shape[1]):
-    #     val.append(edge_softmax_ori(graph, edge_val[:, i]))
-    # return torch.stack(val)
-    from cogdl.operators.edge_softmax import csr_edge_softmax
-    # print("graph.row_indptr")
-    # print(graph.row_indptr)
-    val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
-    return(val.t())
-
-
-def mul_edge_softmax_(indices, values, shape):
-    """
-    Args:
-        indices: Tensor, shape=(2, E)
-        values: Tensor, shape=(E, d)
-        shape: tuple(int, int)
-
-    Returns:
-        Softmax values of multi-dimension edge values for nodes
-    """
-    device = values.device
-    values = torch.exp(values)
-    output = torch.zeros(shape[0], values.shape[1]).to(device)
-    output = output.scatter_add_(0, indices[0].unsqueeze(-1).expand_as(values), values)
-    softmax_values = values / (output[indices[0]] + 1e-8)
-    softmax_values[torch.isnan(softmax_values)] = 0
-    return softmax_values
+    if csr_edge_softmax is not None:
+        val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
+        return val.t()
+    else:
+        val = []
+        for i in range(edge_val.shape[1]):
+            val.append(edge_softmax(graph, edge_val[:, i]))
+        return torch.stack(val)
 
 
 def remove_self_loops(indices, values=None):

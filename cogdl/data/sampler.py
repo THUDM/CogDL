@@ -9,7 +9,7 @@ import torch.utils.data
 from cogdl.utils import remove_self_loops, row_normalization
 from cogdl.data import Graph
 
-from torch_geometric.data import Data, GraphSAINTRandomWalkSampler
+from torch_geometric.nn import GATConv
 
 
 def normalize(adj):
@@ -499,13 +499,13 @@ class ClusteredDataset(torch.utils.data.Dataset):
         if os.path.exists(save_name):
             return torch.load(save_name)
         print("Preprocessing...")
-        edges = self.data.edge_index
-        edges, _ = remove_self_loops(edges)
-        if str(edges.device) != "cpu":
-            edges = edges.cpu()
-        edges = edges.numpy()
-        num_nodes = np.max(edges) + 1
-        adj = sp.csr_matrix((np.ones(edges.shape[1]), (edges[0], edges[1])), shape=(num_nodes, num_nodes))
+        row, col = self.data.edge_index
+        (row, col), _ = remove_self_loops((row, col))
+        if str(row.device) != "cpu":
+            row = row.cpu().numpy()
+            col = col.cpu().numpy()
+        num_nodes = max(row.max(), col.max()) + 1
+        adj = sp.csr_matrix((np.ones(row.shape[0]), (row, col)), shape=(num_nodes, num_nodes))
         indptr = adj.indptr
         indptr = np.split(adj.indices, indptr[1:])[:-1]
         _, parts = ClusteredDataset.partition_tool.part_graph(indptr, n_cluster, seed=1)

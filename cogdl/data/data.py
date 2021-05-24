@@ -9,12 +9,11 @@ from cogdl.utils import (
     csr2coo,
     coo2csr_index,
     add_remaining_self_loops,
-    remove_self_loops,
     symmetric_normalization,
     row_normalization,
     get_degrees,
 )
-from cogdl.utils import fast_spmm as indicator
+from cogdl.utils import check_fast_spmm as check_indicator
 from cogdl.operators.sample import sample_adj_c, subgraph_c
 
 
@@ -93,7 +92,7 @@ class BaseGraph(object):
         """
         # Only `*index*` and `*face*` should be cumulatively summed up when
         # creating batches.
-        return self.num_nodes if bool(re.search("(index|face)", key)) else 0
+        return self.__num_nodes__ if bool(re.search("(index|face)", key)) else 0
 
     def __cat_dim__(self, key, value=None):
         return self.cat_dim(key, value)
@@ -145,18 +144,20 @@ class Adjacency(BaseGraph):
             self[key] = item
 
     def add_remaining_self_loops(self):
-        edge_index = torch.stack([self.row, self.col])
-        edge_index, self.weight = add_remaining_self_loops(edge_index, num_nodes=self.num_nodes)
+        edge_index, self.weight = add_remaining_self_loops((self.row, self.col), num_nodes=self.num_nodes)
         self.row, self.col = edge_index
-        if indicator is True:
-            self._to_csr()
+        self.row_ptr, reindex = coo2csr_index(self.row, self.col, num_nodes=self.num_nodes)
+        self.row = self.row[reindex]
+        self.col = self.col[reindex]
+        self.attr = None
 
     def remove_self_loops(self):
-        edge_index = torch.stack([self.row, self.col])
-        edge_index, self.weight = remove_self_loops(edge_index, self.weight)
-        self.row, self.col = edge_index
-        if indicator is True:
-            self._to_csr()
+        mask = self.row == self.col
+        inv_mask = ~mask
+        self.row = self.row[inv_mask]
+        self.col = self.col[inv_mask]
+
+        self.convert_csr()
 
     def sym_norm(self):
         if self.row is None:
@@ -191,14 +192,13 @@ class Adjacency(BaseGraph):
     def normalize_adj(self, norm="sym"):
         if self.__normed__:
             return
-        if self.weight is None or self.weight.shape[0] != self.edge_index.shape[1]:
+        if self.weight is None or self.weight.shape[0] != self.col.shape[0]:
             self.weight = torch.ones(self.num_edges, device=self.device)
 
-        edge_index = torch.stack([self.row, self.col])
         if norm == "sym":
-            self.weight = symmetric_normalization(self.num_nodes, edge_index, self.weight)
+            self.weight = symmetric_normalization(self.num_nodes, self.row, self.col, self.weight)
         elif norm == "row":
-            self.weight = row_normalization(self.num_nodes, edge_index, self.weight)
+            self.weight = row_normalization(self.num_nodes, self.row, self.col, self.weight)
         else:
             raise NotImplementedError
         self.__normed__ = norm
@@ -207,7 +207,7 @@ class Adjacency(BaseGraph):
         return self.row_ptr[1:] - self.row_ptr[:-1]
 
     def convert_csr(self):
-        if indicator is True:
+        if check_indicator():
             self._to_csr()
 
     def _to_csr(self):
@@ -215,7 +215,6 @@ class Adjacency(BaseGraph):
         self.col = self.col[reindex]
         self.row = self.row[reindex]
         for key in self.__attr_keys__():
-            print(key)
             if key == "weight" and self[key] is None:
                 self.weight = torch.ones(self.row.shape[0]).to(self.row.device)
             if self[key] is not None:
@@ -233,14 +232,14 @@ class Adjacency(BaseGraph):
         if self.row_ptr is not None:
             return self.row_ptr[1:] - self.row_ptr[:-1]
         else:
-            edge_index = torch.stack([self.row, self.col])
-            return get_degrees(edge_index, num_nodes=self.num_nodes)
+            return get_degrees(self.row, self.col, num_nodes=self.num_nodes)
 
     @property
     def edge_index(self):
         if self.row is None:
             self.row, _, _ = csr2coo(self.row_ptr, self.col, self.weight)
-        return torch.stack([self.row, self.col])
+        # return torch.stack([self.row, self.col])
+        return self.row, self.col
 
     @edge_index.setter
     def edge_index(self, edge_index):
@@ -272,7 +271,8 @@ class Adjacency(BaseGraph):
         elif self.row_ptr is not None:
             return self.row_ptr.shape[0] - 1
         else:
-            return torch.max(torch.stack([self.row, self.col])).item() + 1
+            self.__num_nodes__ = max(self.row.max().item(), self.col.max().item()) + 1
+            return self.__num_nodes__
 
     @property
     def device(self):
@@ -703,7 +703,8 @@ class Graph(BaseGraph):
             else:
                 key = "__mx__"
             if not hasattr(self, key):
-                row, col = self._adj.edge_index.numpy()
+                row = self._adj.row.numpy()
+                col = self._adj.col.numpy()
                 val = self.edge_weight.numpy()
                 N = self.num_nodes
                 self[key] = sp.csr_matrix((val, (row, col)), shape=(N, N))
@@ -717,8 +718,10 @@ class Graph(BaseGraph):
             return sub_g.to(self._adj.device)
 
     def edge_subgraph(self, edge_idx, require_idx=True):
-        edge_index = self._adj.edge_index
-        edge_index = edge_index[:, edge_idx]
+        row, col = self._adj.edge_index
+        row = row[edge_idx]
+        col = col[edge_idx]
+        edge_index = torch.stack([row, col])
         nodes, new_edge_index = torch.unique(edge_index, return_inverse=True)
         g = Graph(edge_index=new_edge_index)
         for key in self.__keys__():

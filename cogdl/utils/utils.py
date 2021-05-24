@@ -149,21 +149,25 @@ def add_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):
 
 
 def add_remaining_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):
-    device = edge_index.device
+    device = edge_index[0].device
+    row, col = edge_index[0], edge_index[1]
+
     if edge_weight is None:
-        edge_weight = torch.ones(edge_index.shape[1], device=device)
+        edge_weight = torch.ones(row.shape[0], device=device)
     if num_nodes is None:
-        num_nodes = torch.max(edge_index) + 1
+        num_nodes = max(row.max().item(), col.max().item()) + 1
     if fill_value is None:
         fill_value = 1
 
     N = num_nodes
-    row, col = edge_index[0], edge_index[1]
     mask = row != col
 
-    loop_index = torch.arange(0, N, dtype=edge_index.dtype, device=edge_index.device)
+    loop_index = torch.arange(0, N, dtype=row.dtype, device=row.device)
     loop_index = loop_index.unsqueeze(0).repeat(2, 1)
-    edge_index = torch.cat([edge_index[:, mask], loop_index], dim=1)
+
+    _row = torch.cat([row[mask], loop_index[0]])
+    _col = torch.cat([col[mask], loop_index[1]])
+    # edge_index = torch.cat([edge_index[:, mask], loop_index], dim=1)
 
     inv_mask = ~mask
 
@@ -173,38 +177,38 @@ def add_remaining_self_loops(edge_index, edge_weight=None, fill_value=1, num_nod
         loop_weight[row[inv_mask]] = remaining_edge_weight
     edge_weight = torch.cat([edge_weight[mask], loop_weight], dim=0)
 
-    return edge_index, edge_weight
+    return (_row, _col), edge_weight
 
 
-def row_normalization(num_nodes, edge_index, edge_weight=None):
-    device = edge_index.device
-    if edge_weight is None:
-        edge_weight = torch.ones(edge_index.shape[1]).to(device)
-    row_sum = spmm_scatter(edge_index, edge_weight, torch.ones(num_nodes, 1).to(device))
+def row_normalization(num_nodes, row, col, val=None):
+    device = row.device
+    if val is None:
+        val = torch.ones(row.shape[0]).to(device)
+    row_sum = spmm_scatter(row, col, val, torch.ones(num_nodes, 1).to(device))
     row_sum_inv = row_sum.pow(-1).view(-1)
     row_sum_inv[torch.isinf(row_sum_inv)] = 0
-    return edge_weight * row_sum_inv[edge_index[0]]
+    return val * row_sum_inv[row]
 
 
-def symmetric_normalization(num_nodes, edge_index, edge_weight=None):
-    device = edge_index.device
-    if edge_weight is None:
-        edge_weight = torch.ones(edge_index.shape[1]).to(device)
-    row_sum = spmm_scatter(edge_index, edge_weight, torch.ones(num_nodes, 1).to(device)).view(-1)
+def symmetric_normalization(num_nodes, row, col, val=None):
+    device = row.device
+    if val is None:
+        val = torch.ones(row.shape[0]).to(device)
+    row_sum = spmm_scatter(row, col, val, torch.ones(num_nodes, 1).to(device)).view(-1)
     row_sum_inv_sqrt = row_sum.pow(-0.5)
     row_sum_inv_sqrt[row_sum_inv_sqrt == float("inf")] = 0
-    return row_sum_inv_sqrt[edge_index[1]] * edge_weight * row_sum_inv_sqrt[edge_index[0]]
+    return row_sum_inv_sqrt[col] * val * row_sum_inv_sqrt[row]
 
 
-def spmm_scatter(indices, values, b):
+def spmm_scatter(row, col, values, b):
     r"""
     Args:
         indices : Tensor, shape=(2, E)
         values : Tensor, shape=(E,)
         b : Tensor, shape=(N, )
     """
-    output = b.index_select(0, indices[1]) * values.unsqueeze(-1)
-    output = torch.zeros_like(b).scatter_add_(0, indices[0].unsqueeze(-1).expand_as(output), output)
+    output = b.index_select(0, col) * values.unsqueeze(-1)
+    output = torch.zeros_like(b).scatter_add_(0, row.unsqueeze(-1).expand_as(output), output)
     return output
 
 
@@ -230,6 +234,10 @@ def initialize_spmm(args):
             print("Failed to load fast version of SpMM, use torch.spmm instead.")
 
 
+def check_fast_spmm():
+    return fast_spmm is not None
+
+
 def spmm(graph, x):
     if graph.out_norm is not None:
         x = graph.out_norm * x
@@ -239,7 +247,8 @@ def spmm(graph, x):
         csr_data = graph.edge_weight
         x = fast_spmm(row_ptr.int(), col_indices.int(), x, csr_data.contiguous(), graph.is_symmetric())
     else:
-        x = spmm_scatter(graph.edge_index, graph.edge_weight, x)
+        row, col = graph.edge_index
+        x = spmm_scatter(row, col, graph.edge_weight, x)
 
     if graph.in_norm is not None:
         x = graph.in_norm * x
@@ -338,13 +347,13 @@ def csr2coo(indptr, indices, data):
     return row, indices, data
 
 
-def get_degrees(indices, num_nodes=None):
-    device = indices.device
-    values = torch.ones(indices.shape[1]).to(device)
+def get_degrees(row, col, num_nodes=None):
+    device = row.device
+    values = torch.ones(row.shape[0]).to(device)
     if num_nodes is None:
-        num_nodes = torch.max(indices).item() + 1
+        num_nodes = max(row.max().item(), col.max().item()) + 1
     b = torch.ones((num_nodes, 1)).to(device)
-    degrees = spmm_scatter(indices, values, b).view(-1)
+    degrees = spmm_scatter(row, col, values, b).view(-1)
     return degrees
 
 
@@ -359,7 +368,8 @@ def edge_softmax_(indices, values, shape):
         Softmax values of edge values for nodes
     """
     values = torch.exp(values)
-    node_sum = spmm_scatter(indices, values, torch.ones(shape[0], 1).to(values.device)).squeeze()
+    row, col = indices
+    node_sum = spmm_scatter(row, col, values, torch.ones(shape[0], 1).to(values.device)).squeeze()
     softmax_values = values / node_sum[indices[0]]
     return softmax_values
 
@@ -411,11 +421,13 @@ def mul_edge_softmax_(indices, values, shape):
 
 
 def remove_self_loops(indices, values=None):
+    row, col = indices
     mask = indices[0] != indices[1]
-    indices = indices[:, mask]
+    row = row[mask]
+    col = col[mask]
     if values is not None:
         values = values[mask]
-    return indices, values
+    return (row, col), values
 
 
 def filter_adj(row, col, edge_attr, mask):

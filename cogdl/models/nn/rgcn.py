@@ -125,7 +125,7 @@ class RGCNLayer(nn.Module):
         else:
             weight = self.weight
 
-        edge_index = graph.edge_index
+        edge_index = torch.stack(graph.edge_index)
         edge_weight = graph.edge_weight
 
         with graph.local_graph():
@@ -143,7 +143,7 @@ class RGCNLayer(nn.Module):
 
     def bdd_forward(self, graph, x):
         edge_type = graph.edge_attr
-        edge_index = graph.edge_index
+        edge_index = torch.stack(graph.edge_index)
         _x = x.view(-1, self.num_bases, self.block_in_feats)
 
         edge_weight = torch.ones(edge_type.shape).to(x.device)

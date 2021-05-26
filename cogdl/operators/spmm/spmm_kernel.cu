@@ -3,21 +3,6 @@
 #include <cusparse.h>
 #include "computeUtil.h"
 
-#define checkCudaError( a ) do { \
-    if (cudaSuccess != (a)) { \
-    fprintf(stderr, "Cuda runTime error in line %d of file %s \
-    : %s \n", __LINE__, __FILE__, cudaGetErrorString(cudaGetLastError()) ); \
-    exit(EXIT_FAILURE); \
-    } \
-} while(0)
-
-#define checkCuSparseError( a ) do { \
-    if (CUSPARSE_STATUS_SUCCESS != (a)) { \
-    fprintf(stderr, "CuSparse runTime error in line %d of file %s \
-    : %s \n", __LINE__, __FILE__, cudaGetErrorString(cudaGetLastError()) ); \
-    exit(EXIT_FAILURE); \
-    } \
-} while (0)
 
 __global__ void topoCacheCoarsenSPMMKernel(
   int m, int k, const int* A_indptr, const int* A_indices, const float* B, float* C

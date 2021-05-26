@@ -349,8 +349,9 @@ def get_degrees(indices, num_nodes=None):
 
 
 def mh_spmm(graph, attention, h):
-    from cogdl.operators.spmm import csrmhspmm
-    csrmhspmm(graph.row_indptr, graph.row_indices, h, attention)
+    from cogdl.operators.mhspmm import csrmhspmm
+    return csrmhspmm(graph.row_indptr.int(), graph.col_indices.int(), h, attention)
+
 
 def edge_softmax_(indices, values, shape):
     """
@@ -397,7 +398,7 @@ def mul_edge_softmax(graph, edge_val):
     # print("graph.row_indptr")
     # print(graph.row_indptr)
     val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
-    return(val.t())
+    return val.contiguous()
 
 
 def mul_edge_softmax_(indices, values, shape):

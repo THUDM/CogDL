@@ -39,7 +39,7 @@ std::vector<torch::Tensor> csr2csc(
     assert(csr_data.is_contiguous());
     assert(rowptr.dtype() == torch::kInt32);
     assert(colind.dtype() == torch::kInt32);
-    assert(csr_data.dtype() == torch::kFloat32);
+    assert(csr_data.dtype() == torch::kInt32);
     return csr2csc_cuda(rowptr, colind, csr_data);
 }
 

@@ -25,6 +25,12 @@ else:
             verbose=True,
         )
 
+        spmm = load(
+            name="spmm",
+            sources=[os.path.join(path, "spmm/spmm.cpp"), os.path.join(path, "spmm/spmm_kernel.cu")],
+            verbose=False,
+        )
+
         def csrmhspmm(rowptr, colind, feat, attention):
             return MHSPMMFunction.apply(rowptr, colind, feat, attention)
 
@@ -43,9 +49,11 @@ class MHSPMMFunction(torch.autograd.Function):
     def backward(ctx, grad_out):
         rowptr, colind, feat, attention = ctx.backward_csc
         grad_out = grad_out.contiguous()
-        numlist = torch.arange(colind.size(0), device=cuda_)
-        colptr, rowind, permute = mhtranspose.csr2csc(rowptr, colind, numlist)
-        mhtranspose.mhtranspose(permute, attention)
+        numlist = torch.arange(colind.size(0), device=grad_out.device, dtype=torch.int32)
+        # colptr, rowind, permute = mhtranspose.csr2csc(rowptr, colind, numlist)
+        colptr, rowind, permute = spmm.csr2csc(rowptr, colind, numlist.float())
+        permute = permute.int()
+        attention_csc = mhtranspose.mhtranspose(permute, attention)
         grad_feat = mhspmm.mhspmm(colptr, rowind, attention_csc, grad_out)
         grad_edge_weight = mhsddmm.mhsddmm(rowptr, colind, grad_out, feat)
-        return None, None, grad_feat, grad_edge_weight, None
+        return None, None, grad_feat, grad_edge_weight

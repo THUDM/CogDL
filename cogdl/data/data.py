@@ -18,6 +18,8 @@ from cogdl.utils import fast_spmm as indicator
 from cogdl.operators.sample import sample_adj_c, subgraph_c
 
 
+indicator = True
+
 class BaseGraph(object):
     def __init__(self):
         pass

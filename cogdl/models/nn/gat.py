@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import math
 
 from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, mul_edge_softmax, spmm
+from cogdl.utils import add_remaining_self_loops, mul_edge_softmax, spmm, mh_spmm
 
 
 class GATLayer(nn.Module):
@@ -63,50 +63,47 @@ class GATLayer(nn.Module):
         edge_attention = self.leakyrelu(h_l + h_r)
         # edge_e: E * H
         edge_attention = mul_edge_softmax(graph, edge_attention)
-        h_prime = mh_spmm(graph, edge_attention, h) 
-        num_edges = graph.num_edges
-        num_nodes = graph.num_nodes
+        h_prime = mh_spmm(graph, edge_attention, h)  # (N, H, D)
+        # num_edges = graph.num_edges
+        # num_nodes = graph.num_nodes
 
-        with graph.local_graph():
-            if self.fast_mode:
-                edge_attention = edge_attention.view(-1)
-                edge_attention = self.dropout(edge_attention)
-
-                edge_index = edge_index.view(-1)
-                edge_index = edge_index.unsqueeze(0).repeat(self.nhead, 1)
-                add_num = torch.arange(0, self.nhead * num_nodes, num_nodes).view(-1, 1).to(edge_index.device)
-                edge_index = edge_index + add_num
-                edge_index = edge_index.split((num_edges, num_edges), dim=1)
-
-                row, col = edge_index
-                row = row.reshape(-1)
-                col = col.reshape(-1)
-                edge_index = torch.stack([row, col])
-
-                graph.edge_index = edge_index
-                graph.edge_weight = edge_attention
-                h_prime = spmm(graph, h.permute(1, 0, 2).reshape(num_nodes * self.nhead, -1))
-                assert not torch.isnan(h_prime).any()
-                h_prime = h_prime.split([num_nodes] * self.nhead)
-            else:
-                edge_attention = self.dropout(edge_attention)
-                h_prime = []
-                h = h.permute(1, 0, 2).contiguous()
-                for i in range(self.nhead):
-                    edge_weight = edge_attention[i]
-                    graph.edge_weight = edge_weight
-                    hidden = h[i]
-                    assert not torch.isnan(hidden).any()
-                    h_prime.append(spmm(graph, hidden))
+        # with graph.local_graph():
+        #     if self.fast_mode:
+        #         edge_attention = edge_attention.view(-1)
+        #         edge_attention = self.dropout(edge_attention)
+        #
+        #         edge_index = edge_index.view(-1)
+        #         edge_index = edge_index.unsqueeze(0).repeat(self.nhead, 1)
+        #         add_num = torch.arange(0, self.nhead * num_nodes, num_nodes).view(-1, 1).to(edge_index.device)
+        #         edge_index = edge_index + add_num
+        #         edge_index = edge_index.split((num_edges, num_edges), dim=1)
+        #
+        #         row, col = edge_index
+        #         row = row.reshape(-1)
+        #         col = col.reshape(-1)
+        #         edge_index = torch.stack([row, col])
+        #
+        #         graph.edge_index = edge_index
+        #         graph.edge_weight = edge_attention
+        #         h_prime = spmm(graph, h.permute(1, 0, 2).reshape(num_nodes * self.nhead, -1))
+        #         assert not torch.isnan(h_prime).any()
+        #         h_prime = h_prime.split([num_nodes] * self.nhead)
+        #     else:
+        #         edge_attention = self.dropout(edge_attention)
+        #         h_prime = []
+        #         h = h.permute(1, 0, 2).contiguous()
+        #         for i in range(self.nhead):
+        #             edge_weight = edge_attention[i]
+        #             graph.edge_weight = edge_weight
+        #             hidden = h[i]
+        #             assert not torch.isnan(hidden).any()
+        #             h_prime.append(spmm(graph, hidden))
         if self.residual:
             res = self.residual(x)
         else:
             res = 0
 
-        if self.concat:
-            out = torch.cat(h_prime, dim=1) + res
-        else:
-            out = sum(h_prime) / self.nhead + res
+        out = h_prime.view(h_prime.shape[0], -1) + res
         return out
 
     def __repr__(self):

@@ -3,13 +3,12 @@
 #include "computeUtil.h"
 
 
-__global__ void mhsddmm(const int v, const int f, const int nnz,
+__global__ void mhsddmm(const int v, const int f, const int h, const int nnz,
     int *rowptr, int *colind, float *grad,
     float *feature, float *out) // V * H * F
 {
     int eid = (blockIdx.x << 4) + (threadIdx.y << 2);
     int cid = threadIdx.x;
-    int h = blockDim.y;
     int hid = blockIdx.y;
 
     if (blockIdx.x < nnz / 16)
@@ -108,7 +107,7 @@ torch::Tensor mhsddmm_cuda(
     auto devid = feature.device().index();
     auto options = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCUDA, devid);
     auto out = torch::empty({nnz, h}, options);
-    mhsddmm<<<dim3(nnz / 16 + (nnz & 15), h, 1), dim3(32, 4, 1)>>>(v, f, nnz, 
+    mhsddmm<<<dim3(nnz / 16 + (nnz & 15), h, 1), dim3(32, 4, 1)>>>(v, f, h, nnz,
         rowptr.data_ptr<int>(), colind.data_ptr<int>(), grad.data_ptr<float>(), feature.data_ptr<float>(), out.data_ptr<float>());
     return out;
 }

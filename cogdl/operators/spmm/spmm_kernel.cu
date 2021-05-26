@@ -1,6 +1,7 @@
 #include <cuda.h>
 #include <torch/types.h>
 #include <cusparse.h>
+#include "computeUtil.h"
 
 #define checkCudaError( a ) do { \
     if (cudaSuccess != (a)) { \
@@ -17,16 +18,6 @@
     exit(EXIT_FAILURE); \
     } \
 } while (0)
-
-
-
-__device__ __forceinline__ float sum_reduce(float acc, float x) {
-  return acc + x;
-}
-
-__device__ __forceinline__ float sum_init() {
-  return 0;
-}
 
 __global__ void topoCacheCoarsenSPMMKernel(
   int m, int k, const int* A_indptr, const int* A_indices, const float* B, float* C

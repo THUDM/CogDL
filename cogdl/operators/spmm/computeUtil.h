@@ -10,6 +10,14 @@
 #define MIN(a, b) ((a < b) ? a : b)
 #define MAX(a, b) ((a < b) ? b : a)
 
+__device__ __forceinline__ float sum_reduce(float acc, float x) {
+  return acc + x;
+}
+
+__device__ __forceinline__ float sum_init() {
+  return 0;
+}
+
 __device__ __forceinline__ int findRow(const int *S_csrRowPtr, int eid, int start, int end)
 {
     int low = start, high = end;

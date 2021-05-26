@@ -63,7 +63,10 @@ class GATLayer(nn.Module):
         edge_attention = self.leakyrelu(h_l + h_r)
         # edge_e: E * H
         edge_attention = mul_edge_softmax(graph, edge_attention)
+        edge_attention = self.dropout(edge_attention)
         h_prime = mh_spmm(graph, edge_attention, h)  # (N, H, D)
+
+
         # num_edges = graph.num_edges
         # num_nodes = graph.num_nodes
 
@@ -98,12 +101,11 @@ class GATLayer(nn.Module):
         #             hidden = h[i]
         #             assert not torch.isnan(hidden).any()
         #             h_prime.append(spmm(graph, hidden))
+        out = h_prime.view(h_prime.shape[0], -1)
         if self.residual:
             res = self.residual(x)
-        else:
-            res = 0
+            out += res
 
-        out = h_prime.view(h_prime.shape[0], -1) + res
         return out
 
     def __repr__(self):

@@ -348,6 +348,10 @@ def get_degrees(indices, num_nodes=None):
     return degrees
 
 
+def mh_spmm(graph, attention, h):
+    from cogdl.operators.spmm import csrmhspmm
+    csrmhspmm(graph.row_indptr, graph.row_indices, h, attention)
+
 def edge_softmax_(indices, values, shape):
     """
     Args:

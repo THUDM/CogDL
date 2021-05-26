@@ -63,6 +63,7 @@ class GATLayer(nn.Module):
         edge_attention = self.leakyrelu(h_l + h_r)
         # edge_e: E * H
         edge_attention = mul_edge_softmax(graph, edge_attention)
+        h_prime = mh_spmm(graph, edge_attention, h) 
         num_edges = graph.num_edges
         num_nodes = graph.num_nodes
 

@@ -12,17 +12,17 @@ else:
         mhspmm = load(
             name="mhspmm",
             sources=[os.path.join(path, "spmm/multiheadSpmm.cpp"), os.path.join(path, "spmm/multiheadSpmm.cu")],
-            verbose=True,
+            verbose=False,
         )
         mhsddmm = load(
             name="mhsddmm",
             sources=[os.path.join(path, "spmm/multiheadSddmm.cpp"), os.path.join(path, "spmm/multiheadSddmm.cu")],
-            verbose=True,
+            verbose=False,
         )
         mhtranspose = load(
             name="mhtranspose",
             sources=[os.path.join(path, "spmm/mhTranspose.cpp"), os.path.join(path, "spmm/mhTranspose.cu")],
-            verbose=True,
+            verbose=False,
         )
 
         spmm = load(
@@ -36,6 +36,7 @@ else:
 
     except Exception:
         mhspmm = None
+        csrmhspmm = None
 
 
 class MHSPMMFunction(torch.autograd.Function):

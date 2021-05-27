@@ -15,11 +15,8 @@ import torch.nn.functional as F
 from tabulate import tabulate
 
 from cogdl.operators.sample import coo2csr_cpu, coo2csr_cpu_index
-
-try:
-    from cogdl.operators.edge_softmax import csr_edge_softmax
-except Exception:
-    csr_edge_softmax = None
+from cogdl.operators.edge_softmax import csr_edge_softmax
+from cogdl.operators.mhspmm import csrmhspmm
 
 
 class ArgClass(object):
@@ -393,12 +390,26 @@ def mul_edge_softmax(graph, edge_val):
     """
     if csr_edge_softmax is not None:
         val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
-        return val.t()
+        return val.contiguous()
     else:
         val = []
         for i in range(edge_val.shape[1]):
             val.append(edge_softmax(graph, edge_val[:, i]))
         return torch.stack(val)
+
+
+def mh_spmm(graph, attention, h):
+    """
+        Multi-head spmm
+    Args:
+        graph: Graph
+        attention: torch.Tensor([E, H])
+        h: torch.Tensor([N, d])
+
+    Returns:
+        torch.Tensor([N, H, d])
+    """
+    return csrmhspmm(graph.row_indptr.int(), graph.col_indices.int(), h, attention)
 
 
 def remove_self_loops(indices, values=None):

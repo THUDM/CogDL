@@ -238,7 +238,6 @@ class Adjacency(BaseGraph):
     def edge_index(self):
         if self.row is None:
             self.row, _, _ = csr2coo(self.row_ptr, self.col, self.weight)
-        # return torch.stack([self.row, self.col])
         return self.row, self.col
 
     @edge_index.setter

@@ -4,9 +4,8 @@ import torch.nn.functional as F
 import math
 
 from .. import BaseModel, register_model
-from cogdl.utils import mul_edge_softmax
-
-# from torch_geometric.utils import softmax
+from cogdl.utils import mul_edge_softmax, spmm, mh_spmm
+from cogdl.operators.mhspmm import csrmhspmm
 
 
 class GATLayer(nn.Module):
@@ -14,16 +13,13 @@ class GATLayer(nn.Module):
     Sparse version GAT layer, similar to https://arxiv.org/abs/1710.10903
     """
 
-    def __init__(
-        self, in_features, out_features, nhead=1, alpha=0.2, dropout=0.6, concat=True, residual=False, fast_mode=False
-    ):
+    def __init__(self, in_features, out_features, nhead=1, alpha=0.2, dropout=0.6, concat=True, residual=False):
         super(GATLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.alpha = alpha
         self.concat = concat
         self.nhead = nhead
-        self.fast_mode = fast_mode
 
         self.W = nn.Parameter(torch.FloatTensor(in_features, out_features * nhead))
 
@@ -55,39 +51,41 @@ class GATLayer(nn.Module):
 
     def forward(self, graph, x):
         h = torch.matmul(x, self.W).view(-1, self.nhead, self.out_features)
-        # h: N * H * d
         h[torch.isnan(h)] = 0.0
 
-        row, col = graph.edge_index
+        edge_index = graph.edge_index
         # Self-attention on the nodes - Shared attention mechanism
-        h_l = (self.a_l * h).sum(dim=-1)[row]
-        h_r = (self.a_r * h).sum(dim=-1)[col]
+        h_l = (self.a_l * h).sum(dim=-1)[edge_index[0, :]]
+        h_r = (self.a_r * h).sum(dim=-1)[edge_index[1, :]]
         edge_attention = self.leakyrelu(h_l + h_r)
         # edge_e: E * H
-
-        edge_attention = mul_edge_softmax(graph, edge_attention).T
-        # edge_attention = softmax(edge_attention, edge_index[0, :], num_nodes=h.shape[0], ptr=None)
-
+        edge_attention = mul_edge_softmax(graph, edge_attention)
         edge_attention = self.dropout(edge_attention)
-        edge_attention = edge_attention.unsqueeze(-1)  # (E, H, 1)
-        h_j = h[col]  # (E, H, d)
 
-        message = h_j * edge_attention
-        N, H, D = h.shape
-        index = row.view(-1, 1, 1).expand_as(message)
-        h_out = torch.zeros((N, H, D), device=x.device).scatter_add_(src=message, dim=0, index=index)
+        if csrmhspmm is not None:
+            if self.nhead > 1:
+                h_prime = mh_spmm(graph, edge_attention, h)
+                out = h_prime.view(h_prime.shape[0], -1)
+            else:
+                edge_weight = edge_attention[0]
+                with graph.local_graph():
+                    graph.edge_weight = edge_weight
+                    out = spmm(graph, h.squeeze(1))
+        else:
+            with graph.local_graph():
+                h_prime = []
+                h = h.permute(1, 0, 2).contiguous()
+                for i in range(self.nhead):
+                    edge_weight = edge_attention[i]
+                    graph.edge_weight = edge_weight
+                    hidden = h[i]
+                    assert not torch.isnan(hidden).any()
+                    h_prime.append(spmm(graph, hidden))
+            out = torch.cat(h_prime, dim=1)
 
         if self.residual:
             res = self.residual(x)
-        else:
-            res = 0
-
-        if self.concat:
-            h_out = h_out.view(N, H * D)
-            out = h_out + res
-        else:
-            h_out = h_out.permute(1, 0, 2)
-            out = torch.sum(h_out, dim=0) + res
+            out += res
         return out
 
     def __repr__(self):
@@ -121,7 +119,6 @@ class GAT(BaseModel):
         parser.add_argument("--alpha", type=float, default=0.2)
         parser.add_argument("--nhead", type=int, default=8)
         parser.add_argument("--last-nhead", type=int, default=1)
-        parser.add_argument("--fast-mode", action="store_true", default=False)
         # fmt: on
 
     @classmethod
@@ -136,7 +133,6 @@ class GAT(BaseModel):
             args.nhead,
             args.residual,
             args.last_nhead,
-            args.fast_mode,
         )
 
     def __init__(
@@ -150,7 +146,6 @@ class GAT(BaseModel):
         nhead,
         residual,
         last_nhead,
-        fast_mode=False,
     ):
         """Sparse version of GAT."""
         super(GAT, self).__init__()
@@ -165,7 +160,6 @@ class GAT(BaseModel):
                 alpha=alpha,
                 concat=True,
                 residual=residual,
-                fast_mode=fast_mode,
             )
         )
         for i in range(num_layers - 2):
@@ -178,7 +172,6 @@ class GAT(BaseModel):
                     alpha=alpha,
                     concat=True,
                     residual=residual,
-                    fast_mode=fast_mode,
                 )
             )
         self.attentions.append(
@@ -190,7 +183,6 @@ class GAT(BaseModel):
                 concat=False,
                 nhead=last_nhead,
                 residual=False,
-                fast_mode=fast_mode,
             )
         )
         self.num_layers = num_layers

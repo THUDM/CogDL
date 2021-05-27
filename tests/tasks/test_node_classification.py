@@ -84,12 +84,6 @@ def test_gat_cora():
     args.nhead = 8
     args.residual = False
     args.last_nhead = 2
-    args.num_layers = 2
-    for i in [True, False]:
-        args.fast_mode = i
-        task = build_task(args)
-        ret = task.train()
-        assert 0 <= ret["Acc"] <= 1
 
     args.num_layers = 3
     args.residual = True

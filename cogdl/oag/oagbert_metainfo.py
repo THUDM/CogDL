@@ -266,7 +266,7 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
             decode_span_length=0,
             max_seq_length=512,
             mask_propmt_text="",
-            reduction="cls",
+            reduction="first",
     ):
         """encode paper from text information and run forward to get sequence and pool output for each entity
 
@@ -301,50 +301,18 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
             mask_propmt_text=mask_propmt_text
         )
 
-        text_item = {
-            'originalText': title + abstract,
-            'inputText': "",
-            'type': "Text",
-            'tokens': [],
-            'token_ids': [],
-            'sequence_output': [],
-            'pooled_output': []
+        search = {
+            'text': [title + abstract],
+            'venue': [venue],
+            'authors': authors,
+            'concepts': concepts,
+            'affiliations': affiliations
         }
 
-        venue_item = {
-            'originalText': venue,
-            'inputText': "",
-            'type': 'Venue',
-            'tokens': [],
-            'token_ids': [],
-            'sequence_output': [],
-            'pooled_output': []
-        }
-
-        authors_item = {
+        item = {
             'originalText': "",
             'inputText': "",
-            'type': 'Authors',
-            'tokens': [],
-            'token_ids': [],
-            'sequence_output': [],
-            'pooled_output': []
-        }
-
-        concepts_item = {
-            'originalText': "",
-            'inputText': "",
-            'type': 'Concepts',
-            'tokens': [],
-            'token_ids': [],
-            'sequence_output': [],
-            'pooled_output': []
-        }
-
-        affiliations_item = {
-            'originalText': "",
-            'inputText': "",
-            'type': 'Affiliations',
+            'type': "",
             'tokens': [],
             'token_ids': [],
             'sequence_output': [],
@@ -377,95 +345,31 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
             position_ids_second=torch.LongTensor(position_ids_second).unsqueeze(0),
         )
 
-        if (title + abstract) != "":
-            split_index['text'].append(token_type_ids.index(0))
-            split_index['text'].append(len(token_type_ids) - 1 - list(reversed(token_type_ids)).index(0))
-            text_item['token_ids'] = input_ids[split_index['text'][0]:split_index['text'][1] + 1]
-            text_item['tokens'] = self._convert_ids_to_tokens(text_item['token_ids'])
-            text_item['inputText'] = self._convert_token_ids_to_text(text_item['token_ids'])
-            text_item['sequence_output'] = sequence_output[:, split_index['text'][0]:split_index['text'][1] + 1, :]
-            if reduction == "mean":
-                text_item['pooled_output'] = text_item['sequence_output'].mean(dim=1, keepdim=False)
-            elif reduction == "max":
-                text_item['pooled_output'], _ = text_item['sequence_output'].max(dim=1)
-            else:
-                text_item['pooled_output'] = pooled_output
-            output['text'].append(text_item)
-
-        if venue != "":
-            split_index['venue'].append(token_type_ids.index(2))
-            split_index['venue'].append(len(token_type_ids) - 1 - list(reversed(token_type_ids)).index(2))
-            venue_item['token_ids'] = input_ids[split_index['venue'][0]:split_index['venue'][1] + 1]
-            venue_item['tokens'] = self._convert_ids_to_tokens(venue_item['token_ids'])
-            venue_item['inputText'] = self._convert_token_ids_to_text(venue_item['token_ids'])
-            venue_item['sequence_output'] = sequence_output[:, split_index['venue'][0]:split_index['venue'][1] + 1, :]
-            if reduction == "mean":
-                venue_item['pooled_output'] = venue_item['sequence_output'].mean(dim=1, keepdim=False)
-            elif reduction == "max":
-                venue_item['pooled_output'], _ = venue_item['sequence_output'].max(dim=1)
-            else:
-                venue_item['pooled_output'] = pooled_output
-            output['venue'].append(venue_item)
-
-        if authors:
-            authors_start_index = position_ids[token_type_ids.index(1)]
-            split_index['authors'].append(position_ids.index(authors_start_index) - 1)
-            for i in range(0, len(authors)):
-                split_index['authors'].append(
-                    len(position_ids) - 1 - list(reversed(position_ids)).index(authors_start_index + i))
-                authors_item = authors_item.copy()
-                authors_item['originalText'] = authors[i]
-                authors_item['token_ids'] = input_ids[split_index['authors'][i] + 1:split_index['authors'][i + 1] + 1]
-                authors_item['tokens'] = self._convert_ids_to_tokens(authors_item['token_ids'])
-                authors_item['inputText'] = self._convert_token_ids_to_text(authors_item['token_ids'])
-                authors_item['sequence_output'] = sequence_output[:, split_index['authors'][i] + 1:split_index['authors'][i + 1] + 1, :]
-                if reduction == "mean":
-                    authors_item['pooled_output'] = authors_item['sequence_output'].mean(dim=1, keepdim=False)
-                elif reduction == "max":
-                    authors_item['pooled_output'], _ = authors_item['sequence_output'].max(dim=1)
-                else:
-                    authors_item['pooled_output'] = pooled_output
-                output['authors'].append(authors_item)
-
-        if concepts:
-            concepts_start_index = position_ids[token_type_ids.index(4)]
-            split_index['concepts'].append(position_ids.index(concepts_start_index) - 1)
-            for i in range(0, len(concepts)):
-                split_index['concepts'].append(
-                    len(position_ids) - 1 - list(reversed(position_ids)).index(concepts_start_index + i))
-                concepts_item = concepts_item.copy()
-                concepts_item['originalText'] = concepts[i]
-                concepts_item['token_ids'] = input_ids[split_index['concepts'][i] + 1:split_index['concepts'][i + 1] + 1]
-                concepts_item['tokens'] = self._convert_ids_to_tokens(concepts_item['token_ids'])
-                concepts_item['inputText'] = self._convert_token_ids_to_text(concepts_item['token_ids'])
-                concepts_item['sequence_output'] = sequence_output[:, split_index['concepts'][i] + 1:split_index['concepts'][i + 1] + 1, :]
-                if reduction == "mean":
-                    concepts_item['pooled_output'] = concepts_item['sequence_output'].mean(dim=1, keepdim=False)
-                elif reduction == "max":
-                    concepts_item['pooled_output'], _ = concepts_item['sequence_output'].max(dim=1)
-                else:
-                    concepts_item['pooled_output'] = pooled_output
-                output['concepts'].append(concepts_item)
-
-        if affiliations:
-            affiliations_start_index = position_ids[token_type_ids.index(3)]
-            split_index['affiliations'].append(position_ids.index(affiliations_start_index) - 1)
-            for i in range(0, len(affiliations)):
-                split_index['affiliations'].append(
-                    len(position_ids) - 1 - list(reversed(position_ids)).index(affiliations_start_index + i))
-                affiliations_item = affiliations_item.copy()
-                affiliations_item['originalText'] = affiliations[i]
-                affiliations_item['token_ids'] = input_ids[split_index['affiliations'][i] + 1:split_index['affiliations'][i + 1] + 1]
-                affiliations_item['tokens'] = self._convert_ids_to_tokens(affiliations_item['token_ids'])
-                affiliations_item['inputText'] = self._convert_token_ids_to_text(affiliations_item['token_ids'])
-                affiliations_item['sequence_output'] = sequence_output[:, split_index['affiliations'][i] + 1:split_index['affiliations'][i + 1] + 1, :]
-                if reduction == "mean":
-                    affiliations_item['pooled_output'] = affiliations_item['sequence_output'].mean(dim=1, keepdim=False)
-                elif reduction == "max":
-                    affiliations_item['pooled_output'], _ = affiliations_item['sequence_output'].max(dim=1)
-                else:
-                    affiliations_item['pooled_output'] = pooled_output
-                output['affiliations'].append(affiliations_item)
+        entities = {0: 'text', 2: 'venue', 1: 'authors', 4: 'concepts', 3: 'affiliations'}
+        for num, name in entities.items():
+            if num in token_type_ids:
+                start_index = position_ids[token_type_ids.index(num)]
+                split_index[name].append(position_ids.index(start_index) - 1)
+                for i in range(0, len(search[name])):
+                    split_index[name].append(
+                        len(position_ids) - 1 - list(reversed(position_ids)).index(start_index + i))
+                    item = item.copy()
+                    item['type'] = name.upper()
+                    item['originalText'] = search[name][i]
+                    item['token_ids'] = input_ids[
+                                        split_index[name][i] + 1:split_index[name][i + 1] + 1]
+                    item['tokens'] = self._convert_ids_to_tokens(item['token_ids'])
+                    item['inputText'] = self._convert_token_ids_to_text(item['token_ids'])
+                    item['sequence_output'] = sequence_output[:,
+                                              split_index[name][i] + 1:split_index[name][i + 1] + 1,
+                                             :].squeeze(0)
+                    if reduction == "mean":
+                        item['pooled_output'] = item['sequence_output'].mean(dim=0, keepdim=False)
+                    elif reduction == "max":
+                        item['pooled_output'], _ = item['sequence_output'].max(dim=0)
+                    else:
+                        item['pooled_output'] = pooled_output
+                    output[name].append(item)
 
         return output
 

@@ -7,6 +7,8 @@ path = os.path.join(os.path.dirname(__file__))
 # SPMM
 if not torch.cuda.is_available():
     spmm = None
+    mhspmm = None
+    csrmhspmm = None
 else:
     try:
         mhspmm = load(

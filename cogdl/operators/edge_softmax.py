@@ -7,6 +7,7 @@ path = os.path.join(os.path.dirname(__file__))
 # SPMM
 if not torch.cuda.is_available():
     edge_softmax = None
+    csr_edge_softmax = None
 else:
     try:
         edge_softmax = load(

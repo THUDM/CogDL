@@ -15,11 +15,11 @@ def test_encode_paper():
     )
 
     assert len(paper_info) == 5
-    assert paper_info['text'][0]['type'] == 'Text'
+    assert paper_info['text'][0]['type'] == 'TEXT'
     assert len(paper_info['authors']) == 4
     assert len(paper_info['venue'][0]['token_ids']) == 9
-    assert tuple(paper_info['text'][0]['sequence_output'].shape) == (1, 43, 768)
-    assert tuple(paper_info['text'][0]['pooled_output'].shape) == (1, 768)
+    assert tuple(paper_info['text'][0]['sequence_output'].shape) == (43, 768)
+    assert len(paper_info['text'][0]['pooled_output']) == 768
 
 
 if __name__ == "__main__":

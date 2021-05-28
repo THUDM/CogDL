@@ -31,12 +31,12 @@ class EdgeSoftmaxFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx, rowptr, h):
         out = edge_softmax.edge_softmax(rowptr, h)
-        ctx.backward_csc = (rowptr, out)
+        ctx.save_for_backward(rowptr, out)
         return out
 
     @staticmethod
     def backward(ctx, grad_out):
-        rowptr, out = ctx.backward_csc
+        rowptr, out = ctx.saved_tensors
         grad_out = grad_out.contiguous()
         grad_softmax = edge_softmax.edge_softmax_backward(rowptr, out, grad_out)
         return None, grad_softmax

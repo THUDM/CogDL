@@ -386,7 +386,7 @@ def edge_softmax(graph, edge_val):
 def mul_edge_softmax(graph, edge_val):
     """
     Returns:
-        Softmax values of multi-dimension edge values. shape: [d, E]
+        Softmax values of multi-dimension edge values. shape: [E, H]
     """
     if csr_edge_softmax is not None:
         val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
@@ -395,7 +395,7 @@ def mul_edge_softmax(graph, edge_val):
         val = []
         for i in range(edge_val.shape[1]):
             val.append(edge_softmax(graph, edge_val[:, i]))
-        return torch.stack(val)
+        return torch.stack(val).t()
 
 
 def mh_spmm(graph, attention, h):

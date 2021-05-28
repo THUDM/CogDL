@@ -26,7 +26,7 @@ class DAEGCTrainer(BaseTrainer):
         # edge_index_2hop = model.get_2hop(data.edge_index)
         data.add_remaining_self_loops()
         data.adj_mx = torch.sparse_coo_tensor(
-            data.edge_index, torch.ones(data.edge_index.shape[1]), torch.Size([data.x.shape[0], data.x.shape[0]])
+            data.edge_index, torch.ones(data.edge_index[0].shape[0]), torch.Size([data.x.shape[0], data.x.shape[0]])
         ).to_dense()
         data.apply(lambda x: x.to(self.device))
         edge_index_2hop = data.edge_index

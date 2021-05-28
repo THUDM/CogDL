@@ -132,7 +132,9 @@ class NodeClassificationDataset(object):
 
     def _create_dgl_graph(self, data):
         graph = dgl.DGLGraph()
-        src, dst = data.edge_index.tolist()
+        src, dst = data.edge_index
+        src = src.tolist()
+        dst = dst.tolist()
         num_nodes = data.edge_index.max() + 1
         graph.add_nodes(num_nodes)
         graph.add_edges(src, dst)

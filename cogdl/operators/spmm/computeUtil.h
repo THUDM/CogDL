@@ -10,6 +10,29 @@
 #define MIN(a, b) ((a < b) ? a : b)
 #define MAX(a, b) ((a < b) ? b : a)
 
+#define checkCudaError( a ) do { \
+    if (cudaSuccess != (a)) { \
+    fprintf(stderr, "Cuda runTime error in line %d of file %s \
+    : %s \n", __LINE__, __FILE__, cudaGetErrorString(cudaGetLastError()) ); \
+    exit(EXIT_FAILURE); \
+    } \
+} while(0)
+
+#define checkCuSparseError( a ) do { \
+    if (CUSPARSE_STATUS_SUCCESS != (a)) { \
+    fprintf(stderr, "CuSparse runTime error in line %d of file %s \
+    : %s \n", __LINE__, __FILE__, cudaGetErrorString(cudaGetLastError()) ); \
+    exit(EXIT_FAILURE); \
+    } \
+} while (0)
+__device__ __forceinline__ float sum_reduce(float acc, float x) {
+  return acc + x;
+}
+
+__device__ __forceinline__ float sum_init() {
+  return 0;
+}
+
 __device__ __forceinline__ int findRow(const int *S_csrRowPtr, int eid, int start, int end)
 {
     int low = start, high = end;
@@ -114,6 +137,15 @@ __device__ __forceinline__ void selfMulConst4(data *lhd, data Const)
 }
 
 template <typename data>
+__device__ __forceinline__ void selfAddConst4(data *lhd, data Const)
+{
+    lhd[0] += Const;
+    lhd[1] += Const;
+    lhd[2] += Const;
+    lhd[3] += Const;
+}
+
+template <typename data>
 __device__ __forceinline__ void AllReduce4(data *multi, int stride, int warpSize)
 {
     for (; stride > 0; stride >>= 1)
@@ -133,4 +165,4 @@ __device__ __forceinline__ void AllReduce(data multi, int stride, int warpSize)
         multi += shlf_xor_sync(0xffffffff, multi, stride, warpSize);
     }
 }
-#endif computeUtil_H
+#endif //computeUtil_H

@@ -2,7 +2,6 @@ import json
 import argparse
 import os
 from tqdm import tqdm
-from langdetect import detect
 import time
 import torch
 import numpy as np
@@ -166,7 +165,11 @@ class zero_shot_inference(BaseTask):
             positions = manager.dict()
 
             summary_pbar = MultiProcessTqdm(lock, positions, update_interval=1)
-            pool = multiprocessing.get_context('spawn').Pool(4 * self.n_gpu)
+            if self.n_gpu > 0:
+                processnum = 4 * self.n_gpu
+            else:
+                processnum = 8
+            pool = multiprocessing.get_context('spawn').Pool(processnum)
 
             os.makedirs(self.output_dir, exist_ok=True)
             results = []

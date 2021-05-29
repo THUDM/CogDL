@@ -170,14 +170,17 @@ class MultiGraphDataset(Dataset):
         for key in self.data.__old_keys__():
             item, slices = self.data[key], self.slices[key]
             start, end = slices[idx].item(), slices[idx + 1].item()
-            if torch.is_tensor(item):
-                s = list(repeat(slice(None), item.dim()))
-                s[self.data.__cat_dim__(key, item)] = slice(start, end)
-            elif start + 1 == end:
-                s = slices[start]
+            if key == "edge_index":
+                data[key] = (item[0][start:end], item[1][start:end])
             else:
-                s = slice(start, end)
-            data[key] = item[s]
+                if torch.is_tensor(item):
+                    s = list(repeat(slice(None), item.dim()))
+                    s[self.data.__cat_dim__(key, item)] = slice(start, end)
+                elif start + 1 == end:
+                    s = slices[start]
+                else:
+                    s = slice(start, end)
+                data[key] = item[s]
         return data
 
     def get(self, idx):

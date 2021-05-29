@@ -67,6 +67,7 @@ class DAEGC(BaseModel):
     def get_2hop(self, edge_index):
         r"""add 2-hop neighbors as new edges"""
         G = nx.Graph()
+        edge_index = torch.stack(edge_index)
         G.add_edges_from(edge_index.t().tolist())
         H = nx.Graph()
         for i in range(G.number_of_nodes()):

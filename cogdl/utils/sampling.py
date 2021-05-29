@@ -57,10 +57,11 @@ class RandomWalker(object):
     def build_up(self, adj, num_nodes):
         if self.indptr is not None:
             return
-        if isinstance(adj, torch.Tensor):
+        if isinstance(adj, torch.Tensor) or isinstance(adj, tuple):
+            row, col = adj
             if num_nodes is None:
-                num_nodes = int(torch.max(adj)) + 1
-            row, col = adj.cpu().numpy()
+                num_nodes = int(max(row.max(), col.max())) + 1
+            row, col = row.cpu().numpy(), col.cpu().numpy()
             data = np.ones(row.shape[0])
             adj = sp.csr_matrix((data, (row, col)), shape=(num_nodes, num_nodes))
         adj = adj.tocsr()

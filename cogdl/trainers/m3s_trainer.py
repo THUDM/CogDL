@@ -44,8 +44,9 @@ class M3STrainer(BaseTrainer):
             data.test_mask[masked] = True
 
         # Compute absorption probability
+        row, col = data.edge_index
         A = sp.coo_matrix(
-            (np.ones(data.edge_index.shape[1]), (data.edge_index[0], data.edge_index[1])),
+            (np.ones(row.shape[0]), (row.numpy(), col.numpy())),
             shape=(self.num_nodes, self.num_nodes),
         ).tocsr()
         D = A.sum(1).flat
@@ -101,7 +102,7 @@ class M3STrainer(BaseTrainer):
         min_loss = np.inf
 
         print("Training on original split...")
-        self.data = self.data.apply(lambda x: x.to(self.device))
+        self.data = self.data.to(self.device)
         self.model = self.model.to(self.device)
         epoch_iter = tqdm(range(self.epochs))
         for epoch in epoch_iter:
@@ -157,7 +158,7 @@ class M3STrainer(BaseTrainer):
                                 self.data.y[idx] = i
 
                 # Training
-                self.data = self.data.apply(lambda x: x.to(self.device))
+                self.data = self.data.to(self.device)
                 epoch_iter = tqdm(range(self.epochs))
                 for epoch in epoch_iter:
                     self._train_step()

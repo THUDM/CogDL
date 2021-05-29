@@ -24,8 +24,8 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 class SSLTask:
     def __init__(self, edge_index, features, device):
         self.edge_index = edge_index
-        self.num_nodes = int(torch.max(edge_index).cpu()) + 1
-        self.num_edges = edge_index.shape[1]
+        self.num_nodes = int(max(edge_index[0].max(), edge_index[1].max()).cpu()) + 1
+        self.num_edges = edge_index[0].shape[0]
         self.features = features
         self.device = device
         self.cached_edges = None
@@ -45,13 +45,14 @@ class EdgeMask(SSLTask):
 
     def transform_data(self):
         if self.cached_edges is None:
-            edges = self.edge_index.t()
+            row, col = self.edge_index
+            edges = torch.stack([row, col])
             perm = np.random.permutation(self.num_edges)
             preserve_nnz = int(self.num_edges * (1 - self.mask_ratio))
             masked = perm[preserve_nnz:]
             preserved = perm[:preserve_nnz]
-            self.masked_edges = edges[masked].t()
-            self.cached_edges = edges[preserved].t()
+            self.masked_edges = edges[:, masked]
+            self.cached_edges = edges[:, preserved]
             mask_num = len(masked)
             self.neg_edges = self.neg_sample(mask_num)
             self.pseudo_labels = torch.cat([torch.ones(mask_num), torch.zeros(mask_num)]).long().to(self.device)
@@ -65,7 +66,7 @@ class EdgeMask(SSLTask):
         return F.nll_loss(output, self.pseudo_labels)
 
     def neg_sample(self, edge_num):
-        edges = self.edge_index.t().cpu().numpy()
+        edges = torch.stack(self.edge_index).t().cpu().numpy()
         exclude = set([(_[0], _[1]) for _ in list(edges)])
         itr = self.sample(exclude)
         sampled = [next(itr) for _ in range(edge_num)]
@@ -172,10 +173,11 @@ class PairwiseDistance(SSLTask):
                         (self.dis_node_pairs[cur_class], np.array([[idx] * len(sampled), sampled]).transpose()), axis=0
                     )
             if self.class_split[0][1] == 2:
-                self.dis_node_pairs[0] = self.edge_index.cpu().numpy().transpose()
+                edge_index = torch.stack(self.edge_index).cpu().numpy().transpose()
+                self.dis_node_pairs[0] = edge_index
         else:
             G = nx.Graph()
-            G.add_edges_from(self.edge_index.cpu().t().numpy())
+            G.add_edges_from(torch.stack(self.edge_index).cpu().numpy().transpose())
 
             path_length = dict(nx.all_pairs_shortest_path_length(G, cutoff=self.max_distance))
             distance = -np.ones((self.num_nodes, self.num_nodes), dtype=np.int)
@@ -232,7 +234,7 @@ class Distance2Clusters(SSLTask):
 
     def gen_cluster_info(self, use_metis=False):
         G = nx.Graph()
-        G.add_edges_from(self.edge_index.cpu().t().numpy())
+        G.add_edges_from(torch.stack(self.edge_index).cpu().numpy().transpose())
         if use_metis:
             import metis
 
@@ -282,7 +284,7 @@ class PairwiseAttrSim(SSLTask):
 
     def get_avg_distance(self, idx_sorted, k, sampled):
         self.G = nx.Graph()
-        self.G.add_edges_from(self.edge_index.cpu().t().numpy())
+        self.G.add_edges_from(torch.stack(self.edge_index).cpu().numpy().transpose())
         avg_min = 0
         avg_max = 0
         avg_sampled = 0
@@ -366,7 +368,7 @@ class Distance2ClustersPP(SSLTask):
         self.linear = nn.Linear(hidden_size, 1).to(self.device)
 
     def build_graph(self):
-        edges = self.edge_index.detach().cpu().numpy()
+        edges = torch.stack(self.edge_index).cpu().numpy()
         edge_attr = np.ones(edges.shape[1])
         inter_label = np.where(self.labels[edges[0]] - self.labels[edges[1]] != 0)
         inter_cluster = np.where(self.clusters[edges[0]] - self.clusters[edges[1]] != 0)
@@ -510,7 +512,7 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
         # self.resplit_data(dataset.data)
         self.data = dataset.data
         self.original_data = dataset.data
-        self.data.apply(lambda x: x.to(self.device))
+        self.data.to(self.device)
         self.set_agent()
         self.model = model
         self.set_loss_eval(dataset)
@@ -540,7 +542,7 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
 
     def finetune(self):
         print("Fine-tuning")
-        self.original_data.apply(lambda x: x.to(self.device))
+        self.original_data.to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         self.model.to(self.device)
 
@@ -622,10 +624,10 @@ class SelfAuxiliaryTaskJointTrainer(SelfAuxiliaryTaskTrainer):
         # self.resplit_data(dataset.data)
         self.data = dataset.data
         self.original_data = dataset.data
-        self.data.apply(lambda x: x.to(self.device))
+        self.data.to(self.device)
         self.set_agent()
         self.data.edge_index, self.data.x = self.agent.transform_data()
-        self.original_data.apply(lambda x: x.to(self.device))
+        self.original_data = self.original_data.to(self.device)
         self.model = model
         self.set_loss_eval(dataset)
 

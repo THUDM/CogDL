@@ -186,6 +186,8 @@ class GCN(MessagePassing):
 
     def forward(self, x, edge_index, edge_weight=None):
         x = torch.matmul(x, self.weight)
+        if isinstance(edge_index, tuple):
+            edge_index = torch.stack(edge_index)
 
         if self.cached and self.cached_result is not None:
             if edge_index.size(1) != self.cached_num_edges:
@@ -245,6 +247,8 @@ class NodeInformationScore(MessagePassing):
         )
 
     def forward(self, x, edge_index, edge_weight):
+        if isinstance(edge_index, tuple):
+            edge_index = torch.stack(edge_index)
         if self.cached and self.cached_result is not None:
             if edge_index.size(1) != self.cached_num_edges:
                 raise RuntimeError(
@@ -477,6 +481,8 @@ class HGPSL(BaseModel):
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
+        if isinstance(edge_index, tuple):
+            edge_index = torch.stack(edge_index)
         edge_attr = None
 
         x = F.relu(self.conv1(x, edge_index, edge_attr))

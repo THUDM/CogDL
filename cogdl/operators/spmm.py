@@ -5,26 +5,25 @@ from torch.utils.cpp_extension import load
 path = os.path.join(os.path.dirname(__file__))
 
 # SPMM
-if not torch.cuda.is_available():
-    spmm = None
-else:
-    try:
-        spmm = load(
-            name="spmm",
-            sources=[os.path.join(path, "spmm/spmm.cpp"), os.path.join(path, "spmm/spmm_kernel.cu")],
-            verbose=False,
-        )
-        sddmm = load(
-            name="sddmm",
-            sources=[os.path.join(path, "spmm/sddmm.cpp"), os.path.join(path, "spmm/sddmm_kernel.cu")],
-            verbose=False,
-        )
 
-        def csrspmm(rowptr, colind, x, csr_data, sym=False):
-            return SPMMFunction.apply(rowptr, colind, x, csr_data, sym)
+try:
+    spmm = load(
+        name="spmm",
+        sources=[os.path.join(path, "spmm/spmm.cpp"), os.path.join(path, "spmm/spmm_kernel.cu")],
+        verbose=False,
+    )
+    sddmm = load(
+        name="sddmm",
+        sources=[os.path.join(path, "spmm/sddmm.cpp"), os.path.join(path, "spmm/sddmm_kernel.cu")],
+        verbose=False,
+    )
 
-    except Exception:
-        spmm = None
+    def csrspmm(rowptr, colind, x, csr_data, sym=False):
+        return SPMMFunction.apply(rowptr, colind, x, csr_data, sym)
+
+
+except Exception:
+    csrspmm = None
 
 
 class SPMMFunction(torch.autograd.Function):

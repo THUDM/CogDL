@@ -266,7 +266,7 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
         self.emb = nn.Embedding(num_entities, hidden_size)
 
     def forward(self, graph):
-        reindexed_nodes, reindexed_edges = torch.unique(graph.edge_index, sorted=True, return_inverse=True)
+        reindexed_nodes, reindexed_edges = torch.unique(torch.stack(graph.edge_index), sorted=True, return_inverse=True)
         x = self.emb(reindexed_nodes)
         self.cahce_index = reindexed_nodes
 

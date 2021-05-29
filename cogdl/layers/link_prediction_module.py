@@ -115,7 +115,7 @@ class GNNLinkPredict(nn.Module):
 
     def get_edge_set(self, edge_index, edge_types):
         if self.edge_set is None:
-            edge_list = torch.cat((edge_index[0], edge_index[1], edge_types)).T
+            edge_list = torch.stack((edge_index[0], edge_index[1], edge_types))
             edge_list = edge_list.cpu().T.numpy().tolist()
             torch.cuda.empty_cache()
             self.edge_set = set([tuple(x) for x in edge_list])  # tuple(h, t, r)

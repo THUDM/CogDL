@@ -51,8 +51,8 @@ class EdgeMask(SSLTask):
             preserve_nnz = int(self.num_edges * (1 - self.mask_ratio))
             masked = perm[preserve_nnz:]
             preserved = perm[:preserve_nnz]
-            self.masked_edges = edges[masked].t()
-            self.cached_edges = edges[preserved].t()
+            self.masked_edges = edges[:, masked]
+            self.cached_edges = edges[:, preserved]
             mask_num = len(masked)
             self.neg_edges = self.neg_sample(mask_num)
             self.pseudo_labels = torch.cat([torch.ones(mask_num), torch.zeros(mask_num)]).long().to(self.device)
@@ -368,7 +368,7 @@ class Distance2ClustersPP(SSLTask):
         self.linear = nn.Linear(hidden_size, 1).to(self.device)
 
     def build_graph(self):
-        edges = torch.stack(self.edge_index).cpu().numpy().transpose()
+        edges = torch.stack(self.edge_index).cpu().numpy()
         edge_attr = np.ones(edges.shape[1])
         inter_label = np.where(self.labels[edges[0]] - self.labels[edges[1]] != 0)
         inter_cluster = np.where(self.clusters[edges[0]] - self.clusters[edges[1]] != 0)

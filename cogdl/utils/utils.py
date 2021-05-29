@@ -15,6 +15,8 @@ import torch.nn.functional as F
 from tabulate import tabulate
 
 from cogdl.operators.sample import coo2csr_cpu, coo2csr_cpu_index
+from cogdl.operators.edge_softmax import csr_edge_softmax
+from cogdl.operators.mhspmm import csrmhspmm
 
 
 class ArgClass(object):
@@ -208,13 +210,6 @@ def spmm_scatter(indices, values, b):
     return output
 
 
-def spmm_adj(indices, values, x, num_nodes=None):
-    if num_nodes is None:
-        num_nodes = x.shape[0]
-    adj = torch.sparse_coo_tensor(indices=indices, values=values, size=(num_nodes, num_nodes))
-    return torch.spmm(adj, x)
-
-
 fast_spmm = None
 
 
@@ -348,23 +343,21 @@ def get_degrees(indices, num_nodes=None):
     return degrees
 
 
-def edge_softmax_(indices, values, shape):
+def mh_spmm(graph, attention, h):
     """
+        Multi-head spmm
     Args:
-        indices: Tensor, shape=(2, E)
-        values: Tensor, shape=(N,)
-        shape: tuple(int, int)
+        graph: Graph
+        attention: torch.Tensor([E, H])
+        h: torch.Tensor([N, d])
 
     Returns:
-        Softmax values of edge values for nodes
+        torch.Tensor([N, H, d])
     """
-    values = torch.exp(values)
-    node_sum = spmm_scatter(indices, values, torch.ones(shape[0], 1).to(values.device)).squeeze()
-    softmax_values = values / node_sum[indices[0]]
-    return softmax_values
+    return csrmhspmm(graph.row_indptr.int(), graph.col_indices.int(), h, attention)
 
 
-def edge_softmax(graph, edge_val):
+def edge_softmax_ori(graph, edge_val):
     edge_val_max = edge_val.max().item()
     while edge_val_max > 10:
         edge_val -= edge_val / 2
@@ -385,29 +378,14 @@ def mul_edge_softmax(graph, edge_val):
     Returns:
         Softmax values of multi-dimension edge values. shape: [d, E]
     """
-    val = []
-    for i in range(edge_val.shape[1]):
-        val.append(edge_softmax(graph, edge_val[:, i]))
-    return torch.stack(val)
-
-
-def mul_edge_softmax_(indices, values, shape):
-    """
-    Args:
-        indices: Tensor, shape=(2, E)
-        values: Tensor, shape=(E, d)
-        shape: tuple(int, int)
-
-    Returns:
-        Softmax values of multi-dimension edge values for nodes
-    """
-    device = values.device
-    values = torch.exp(values)
-    output = torch.zeros(shape[0], values.shape[1]).to(device)
-    output = output.scatter_add_(0, indices[0].unsqueeze(-1).expand_as(values), values)
-    softmax_values = values / (output[indices[0]] + 1e-8)
-    softmax_values[torch.isnan(softmax_values)] = 0
-    return softmax_values
+    if csr_edge_softmax is not None:
+        val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
+        return val.contiguous()
+    else:
+        val = []
+        for i in range(edge_val.shape[1]):
+            val.append(edge_softmax_ori(graph, edge_val[:, i]))
+        return torch.stack(val)
 
 
 def remove_self_loops(indices, values=None):

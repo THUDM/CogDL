@@ -110,10 +110,11 @@ class zero_shot_inference(BaseTask):
 
     def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""
-        parser.add_argument('--n_gpu', type=int, default=8)
+        parser.add_argument('--cuda', type=int, nargs='+', default=[-1])
         parser.add_argument('--wprop', action='store_true', dest='wprop', default=False)
         parser.add_argument('--wabs', action='store_true', dest='wabs', default=False)
         parser.add_argument('--token_type', type=str, default='FOS')
+        parser.add_argument('--testing', action='store_true', dest='testing', default=False)
 
     def __init__(self, args):
         super(zero_shot_inference, self).__init__(args)
@@ -125,21 +126,29 @@ class zero_shot_inference(BaseTask):
         
         self.tokenizer, self.model = oagbert('oagbert-v2', True)
 
-        self.n_gpu = args.n_gpu
+        self.cudalist = args.cuda
+        print(self.cudalist)
         self.model_name = args.model
         self.wprop = args.wprop # prompt
         self.wabs = args.wabs # with abstract
-        self.token_type = args.token_type   
+        self.token_type = args.token_type
 
-    def process_file(self, cuda_idx, filename, pbar):
+        self.testing = args.testing
+
+        os.makedirs(self.output_dir, exist_ok=True)
+        for filename in os.listdir(self.output_dir):
+            os.remove('%s/%s' % (self.output_dir, filename))
+
+
+    def process_file(self, device, filename, pbar):
         pbar.reset(1, name='preparing...')
         self.model.eval()
-        device = torch.device('cuda:%d' % cuda_idx if cuda_idx >= 0 else 'cpu')
         self.model.to(device)
 
         output_file = self.output_dir + '/' + filename
         candidates = self.dataset.get_candidates()
         
+        pbar.reset(len(self.sample[filename]), name=filename)
         pbar.set_description('[%s]' % (filename))
         fout = open(output_file, 'a')
         for paper in self.sample[filename]:
@@ -165,19 +174,23 @@ class zero_shot_inference(BaseTask):
             positions = manager.dict()
 
             summary_pbar = MultiProcessTqdm(lock, positions, update_interval=1)
-            if self.n_gpu > 0:
-                processnum = 4 * self.n_gpu
+            if -1 not in self.cudalist:
+                processnum = 4 * len(self.cudalist)
             else:
-                processnum = 8
+                processnum = 12
             pool = multiprocessing.get_context('spawn').Pool(processnum)
-
-            os.makedirs(self.output_dir, exist_ok=True)
             results = []
             idx = 0
             
             for filename in self.sample.keys():
+                if self.testing and idx % 3 != 0:
+                    continue
+                cuda_num = len(self.cudalist)
+                cuda_idx = self.cudalist[idx % cuda_num]
+                device = torch.device('cuda:%d' % cuda_idx if cuda_idx >= 0 else 'cpu')
+
                 pbar = MultiProcessTqdm(lock, positions, update_interval=1)
-                r = pool.apply_async(self.process_file, (idx % self.n_gpu if self.n_gpu > 0 else -1, filename, pbar))
+                r = pool.apply_async(self.process_file, (device, filename, pbar))
                 results.append((r, filename))
                 idx += 1
 
@@ -191,30 +204,23 @@ class zero_shot_inference(BaseTask):
                             finished.add(filename)
                             summary_pbar.update(1)
                 time.sleep(1)
-
             pool.close()
         return self.analysis_result()
 
     def analysis_result(self):
-        result_dir = 'saved/zero_shot_infer'
-        concepts = []
-        for filename in os.listdir(result_dir):
-            fos = filename.split('.')[0]
-            concepts.append(fos)
+        concepts = self.dataset.get_candidates()
         concepts.sort()
 
         result = {}
         T, F = 0, 0
-        for filename in os.listdir(result_dir):
+        for filename in os.listdir(self.output_dir):
             if not filename.endswith('.jsonl'):
                 continue
 
             fos = filename.split('.')[0]
-            if fos not in concepts:
-                continue
             t, f = 0, 0
             cnter = Counter()
-            for row in open('%s/%s' % (result_dir, filename)):
+            for row in open('%s/%s' % (self.output_dir, filename)):
                 try:
                     probs = json.loads(row.strip())['probs']
                     pred = [k for k, v in sorted([(k, v) for k, v in probs if k in concepts], key=lambda tup: -tup[1])[:2]]
@@ -222,12 +228,12 @@ class zero_shot_inference(BaseTask):
                 except Exception as e:
                     print('Err:%s' % e)
                     print('Row:%s' % row)
-                correct = pred[0] == fos #or pred[1] == fos
+                correct = pred[0] == fos
                 t += correct
                 f += not correct
                 cnter[pred[0]] += 1                        
             T += t
             F += f
+            os.remove('%s/%s' % (self.output_dir, filename))
         result['Accuracy'] = T * 100 / (T+F)
-        print('result: ' + str(result))
         return result

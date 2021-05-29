@@ -3,7 +3,7 @@ import os
 import sys
 import json
 import torch
-from cogdl.data import Data, Dataset
+from cogdl.data import Dataset
 from cogdl.utils import download_url, untar
 
 from . import register_dataset

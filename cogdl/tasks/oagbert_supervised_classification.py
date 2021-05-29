@@ -48,7 +48,7 @@ class ClassificationModel(torch.nn.Module):
         fos_input = [self._encode(fos) for fos in sample.get('fos', [])] if 'fos' in self.include_fields else []
         
         # scibert removed
-        token_type_str_lookup = ['TEXT', 'AUTHOR', 'VENUE', 'AFF', 'FOS']
+        
         input_ids, token_type_ids, position_ids, position_ids_second = [], [], [], []
         entities = [(text_input, 0), (venue_input, 2)] + [(_i, 4) for _i in fos_input] + [(_i, 3) for _i in aff_input] + [(_i, 1) for _i in author_input]
         for idx, (token_ids, token_type_id) in enumerate(entities):

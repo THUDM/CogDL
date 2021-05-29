@@ -1,4 +1,5 @@
 import unicodedata
+from tqdm import tqdm
 
 COLORCODES = {
     "black": "\x1b[30m",
@@ -25,7 +26,7 @@ def stringLenCJK(string):
 def stringRjustCJK(string, length):
     return ' ' * (length - stringLenCJK(string)) + string
 
-from tqdm import tqdm
+
 class MultiProcessTqdm(object):
 
     def __init__(self, lock, positions, max_pos=100, update_interval=1000000, leave=False, fixed_pos=False, pos=None):

@@ -63,7 +63,6 @@ def get_span_decode_prob(model, tokenizer, title='', abstract='', venue='', auth
         else:
             raise NotImplementedError
     prompt_token_ids = _encode(prompt_text)
-    prompt_length = len(prompt_token_ids)
 
     add_span(0, (_encode(title) + _encode(abstract if wabs else '') + prompt_token_ids)[:max_seq_length - span_length])
     add_span(2, _encode(venue)[:max_seq_length - len(input_ids) - span_length])
@@ -100,7 +99,6 @@ def get_span_decode_prob(model, tokenizer, title='', abstract='', venue='', auth
         logprobs += logprob.item()
         logproblist.append(logprob.item())
         real_pos = masked_positions[pos]
-        target_token = span_token_ids[pos]
         input_ids[real_pos] = span_token_ids[pos]
         masked_lm_labels[real_pos] = -1
         masked_positions.pop(pos)

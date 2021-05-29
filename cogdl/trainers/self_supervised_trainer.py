@@ -1,12 +1,15 @@
 import os
+import argparse
 from tqdm import tqdm
 import numpy as np
 
 import torch
 from torch import nn
 from .base_trainer import BaseTrainer
+from . import register_trainer
 
 
+@register_trainer("self_supervised")
 class SelfSupervisedTrainer(BaseTrainer):
     def __init__(self, args):
         super(SelfSupervisedTrainer, self).__init__()
@@ -18,20 +21,30 @@ class SelfSupervisedTrainer(BaseTrainer):
         self.save_dir = args.save_dir
         self.load_emb_path = args.load_emb_path
         self.lr = args.lr
+        self.sampling = args.sampling
+        self.sample_size = args.sample_size
+
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        """Add trainer-specific arguments to the parser."""
+        # fmt: off
+        parser.add_argument("--sampling", action="store_true")
+        parser.add_argument("--sample-size", type=int, default=20000)
+        # fmt: on
 
     @classmethod
     def build_trainer_from_args(cls, args):
         return cls(args)
 
-    def fit(self, model, data):
+    def fit(self, model, dataset):
+        data = dataset.data
+        data.add_remaining_self_loops()
         self.data = data
 
         if self.load_emb_path is not None:
             embeds = np.load(self.load_emb_path)
             embeds = torch.from_numpy(embeds).to(self.device)
             return self.evaluate(embeds)
-
-        self.data.to(self.device)
 
         best = 1e9
         cnt_wait = 0
@@ -42,31 +55,40 @@ class SelfSupervisedTrainer(BaseTrainer):
 
         model.train()
         for epoch in epoch_iter:
-            optimizer.zero_grad()
+            with self.data.local_graph():
+                if self.sampling:
+                    idx = np.random.choice(np.arange(self.data.num_nodes), self.sample_size, replace=False)
+                    self.data = data.subgraph(idx)
 
-            loss = model.node_classification_loss(data)
-            epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss.item(): .4f}")
+                self.data.to(self.device)
+                optimizer.zero_grad()
 
-            if loss < best:
-                best = loss
-                cnt_wait = 0
-            else:
-                cnt_wait += 1
+                loss = model.node_classification_loss(self.data)
+                epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss.item(): .4f}")
 
-            if cnt_wait == self.patience:
-                print("Early stopping!")
-                break
+                if loss < best:
+                    best = loss
+                    cnt_wait = 0
+                else:
+                    cnt_wait += 1
 
-            loss.backward()
-            optimizer.step()
+                if cnt_wait == self.patience:
+                    print("Early stopping!")
+                    break
 
+                loss.backward()
+                optimizer.step()
+
+        self.data = data
+        self.data.to(self.device)
+        print(data.num_nodes, data.edge_index.shape)
         with torch.no_grad():
-            embeds = model.embed(data)
+            embeds = model.embed(self.data)
         self.save_embed(embeds)
 
-        return self.evaluate(embeds)
+        return self.evaluate(embeds, dataset.get_loss_fn(), dataset.get_evaluator())
 
-    def evaluate(self, embeds):
+    def evaluate(self, embeds, loss_fn, evaluator):
         nclass = int(torch.max(self.data.y) + 1)
         opt = {
             "idx_train": self.data.train_mask.to(self.device),
@@ -74,7 +96,7 @@ class SelfSupervisedTrainer(BaseTrainer):
             "idx_test": self.data.test_mask.to(self.device),
             "num_classes": nclass,
         }
-        result = LogRegTrainer().train(embeds, self.data.y.to(self.device), opt)
+        result = LogRegTrainer().train(embeds, self.data.y.to(self.device), opt, loss_fn, evaluator)
         print(f"TestAcc: {result: .4f}")
         return dict(Acc=result)
 
@@ -105,7 +127,7 @@ class LogReg(nn.Module):
 
 
 class LogRegTrainer(object):
-    def train(self, data, labels, opt):
+    def train(self, data, labels, opt, loss_fn=None, evaluator=None):
         device = data.device
         idx_train = opt["idx_train"].to(device)
         idx_test = opt["idx_test"].to(device)
@@ -120,7 +142,7 @@ class LogRegTrainer(object):
         test_lbls = labels[idx_test]
         tot = 0
 
-        xent = nn.CrossEntropyLoss()
+        xent = nn.CrossEntropyLoss() if loss_fn is None else loss_fn
 
         for _ in range(50):
             log = LogReg(nhid, nclass).to(device)
@@ -138,7 +160,10 @@ class LogRegTrainer(object):
                 optimizer.step()
 
             logits = log(test_embs)
-            preds = torch.argmax(logits, dim=1)
-            acc = torch.sum(preds == test_lbls).float() / test_lbls.shape[0]
-            tot += acc.item()
+            if evaluator is None:
+                preds = torch.argmax(logits, dim=1)
+                acc = torch.sum(preds == test_lbls).float() / test_lbls.shape[0]
+            else:
+                acc = evaluator(logits, test_lbls)
+            tot += acc
         return tot / 50

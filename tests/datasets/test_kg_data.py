@@ -7,7 +7,7 @@ def test_fb13():
     assert args.dataset == "fb13"
     dataset = build_dataset(args)
     data = dataset.data
-    assert len(data.edge_index.shape) == 2
+    assert len(data.edge_index) == 2
     assert data.edge_index[0].shape[0] == 345873
     assert data.edge_attr.shape[0] == 345873
 

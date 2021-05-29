@@ -5,7 +5,7 @@ import os.path as osp
 import random
 import shutil
 from collections import defaultdict
-from typing import Optional
+from typing import Optional, Tuple
 from urllib import request
 
 import numpy as np
@@ -15,8 +15,6 @@ import torch.nn.functional as F
 from tabulate import tabulate
 
 from cogdl.operators.sample import coo2csr_cpu, coo2csr_cpu_index
-from cogdl.operators.edge_softmax import csr_edge_softmax
-from cogdl.operators.mhspmm import csrmhspmm
 
 
 class ArgClass(object):
@@ -133,9 +131,10 @@ def alias_draw(J, q):
 
 
 def add_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):
-    device = edge_index.device
+    row, col = edge_index
+    device = row.device
     if edge_weight is None:
-        edge_weight = torch.ones(edge_index.shape[1]).to(device)
+        edge_weight = torch.ones(edge_index[0].shape[0]).to(device)
     if num_nodes is None:
         num_nodes = torch.max(edge_index) + 1
     if fill_value is None:
@@ -143,9 +142,10 @@ def add_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):
 
     N = num_nodes
     self_weight = torch.full((num_nodes,), fill_value, dtype=edge_weight.dtype).to(edge_weight.device)
-    loop_index = torch.arange(0, N, dtype=edge_index.dtype, device=edge_index.device)
-    loop_index = loop_index.unsqueeze(0).repeat(2, 1)
-    edge_index = torch.cat([edge_index, loop_index], dim=1)
+    loop_index = torch.arange(0, N, dtype=row.dtype, device=device)
+    row = torch.cat([row, loop_index])
+    col = torch.cat([col, loop_index])
+    edge_index = torch.stack([row, col])
     edge_weight = torch.cat([edge_weight, self_weight])
     return edge_index, edge_weight
 
@@ -221,29 +221,63 @@ def spmm_adj(indices, values, x, num_nodes=None):
     return torch.spmm(adj, x)
 
 
-fast_spmm = None
+CONFIGS = {"fast_spmm": None, "csrmhspmm": None, "csr_edge_softmax": None, "spmm_flag": False, "mh_spmm_flag": False}
+
+
+def init_operator_configs(args=None):
+    if args is not None and args.cpu:
+        CONFIGS["fast_spmm"] = None
+        CONFIGS["csrmhspmm"] = None
+        CONFIGS["csr_edge_softmax"] = None
+        return
+
+    if CONFIGS["spmm_flag"] or CONFIGS["mh_spmm_flag"]:
+        return
+    if args is None:
+        args = build_args_from_dict({"fast-spmm": True, "cpu": not torch.cuda.is_available()})
+    initialize_spmm(args)
+    initialize_edge_softmax(args)
 
 
 def initialize_spmm(args):
-    if hasattr(args, "fast_spmm") and args.fast_spmm is True:
+    CONFIGS["spmm_flag"] = True
+    if hasattr(args, "fast_spmm") and args.fast_spmm is True and not args.cpu:
         try:
             from cogdl.operators.spmm import csrspmm
 
-            global fast_spmm
-            fast_spmm = csrspmm
+            CONFIGS["fast_spmm"] = csrspmm
             print("Using fast-spmm to speed up training")
         except Exception:
-            print("Failed to load fast version of SpMM, use torch.spmm instead.")
+            print("Failed to load fast version of SpMM, use torch.scatter_add instead.")
+
+
+def initialize_edge_softmax(args):
+    CONFIGS["mh_spmm_flag"] = True
+    if torch.cuda.is_available() and not args.cpu:
+        from cogdl.operators.edge_softmax import csr_edge_softmax
+        from cogdl.operators.mhspmm import csrmhspmm
+
+        CONFIGS["csrmhspmm"] = csrmhspmm
+        CONFIGS["csr_edge_softmax"] = csr_edge_softmax
 
 
 def check_fast_spmm():
-    return fast_spmm is not None
+    return CONFIGS["fast_spmm"] is not None
+
+
+def check_mh_spmm():
+    return CONFIGS["csrmhspmm"] is not None
+
+
+def check_edge_softmax():
+    return CONFIGS["csr_edge_softmax"] is not None
 
 
 def spmm(graph, x):
     if graph.out_norm is not None:
         x = graph.out_norm * x
 
+    fast_spmm = CONFIGS["fast_spmm"]
     if fast_spmm is not None and str(x.device) != "cpu":
         row_ptr, col_indices = graph.row_indptr, graph.col_indices
         csr_data = graph.edge_weight
@@ -388,9 +422,10 @@ def mul_edge_softmax(graph, edge_val):
     Returns:
         Softmax values of multi-dimension edge values. shape: [E, H]
     """
-    if csr_edge_softmax is not None:
+    csr_edge_softmax = CONFIGS["csr_edge_softmax"]
+    if csr_edge_softmax is not None and edge_val.device.type != "cpu":
         val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
-        return val.contiguous()
+        return val
     else:
         val = []
         for i in range(edge_val.shape[1]):
@@ -409,6 +444,7 @@ def mh_spmm(graph, attention, h):
     Returns:
         torch.Tensor([N, H, d])
     """
+    csrmhspmm = CONFIGS["csrmhspmm"]
     return csrmhspmm(graph.row_indptr.int(), graph.col_indices.int(), h, attention)
 
 
@@ -423,21 +459,22 @@ def remove_self_loops(indices, values=None):
 
 
 def filter_adj(row, col, edge_attr, mask):
-    return torch.stack([row[mask], col[mask]]), None if edge_attr is None else edge_attr[mask]
+    return (row[mask], col[mask]), None if edge_attr is None else edge_attr[mask]
 
 
 def dropout_adj(
-    edge_index: torch.Tensor, edge_weight: Optional[torch.Tensor] = None, drop_rate: float = 0.5, renorm: bool = True
+    edge_index: Tuple, edge_weight: Optional[torch.Tensor] = None, drop_rate: float = 0.5, renorm: bool = True
 ):
     if drop_rate < 0.0 or drop_rate > 1.0:
         raise ValueError("Dropout probability has to be between 0 and 1, " "but got {}".format(drop_rate))
 
-    num_nodes = int(torch.max(edge_index)) + 1
-    mask = edge_index.new_full((edge_index.size(1),), 1 - drop_rate, dtype=torch.float)
+    row, col = edge_index
+    num_nodes = int(max(row.max(), col.max())) + 1
+    mask = torch.full((row.shape[0],), 1 - drop_rate, dtype=torch.float)
     mask = torch.bernoulli(mask).to(torch.bool)
-    edge_index, edge_weight = filter_adj(edge_index[0], edge_index[1], edge_weight, mask)
+    edge_index, edge_weight = filter_adj(row, col, edge_weight, mask)
     if renorm:
-        edge_weight = symmetric_normalization(num_nodes, edge_index)
+        edge_weight = symmetric_normalization(num_nodes, edge_index[0], edge_index[1])
     return edge_index, edge_weight
 
 

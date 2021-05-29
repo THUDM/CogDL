@@ -65,7 +65,7 @@ def get_kg_default_args():
 
 def get_nums(dataset, args):
     data = dataset[0]
-    args.num_entities = len(torch.unique(data.edge_index))
+    args.num_entities = len(torch.unique(torch.stack(data.edge_index)))
     args.num_rels = len(torch.unique(data.edge_attr))
     return args
 

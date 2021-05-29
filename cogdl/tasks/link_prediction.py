@@ -188,8 +188,8 @@ class HomoLinkPrediction(nn.Module):
         self.patience = args.patience
         self.max_epoch = args.max_epoch
 
-        edge_list = self.data.edge_index.numpy()
-        edge_list = list(zip(edge_list[0], edge_list[1]))
+        row, col = self.data.edge_index
+        edge_list = list(zip(row.numpy(), col.numpy()))
         edge_set = set()
         for edge in edge_list:
             if (edge[0], edge[1]) not in edge_set and (edge[1], edge[0]) not in edge_set:
@@ -368,7 +368,9 @@ class KGLinkPrediction(nn.Module):
         dataset = build_dataset(args) if dataset is None else dataset
         self.data = dataset[0]
         self.data.apply(lambda x: x.to(self.device))
-        args.num_entities = len(torch.unique(self.data.edge_index))
+        row, col = self.data.edge_index
+        args.num_entities = max(row.max(), col.max()) + 1
+        # args.num_entities = len(torch.unique(self.data.edge_index))
         args.num_rels = len(torch.unique(self.data.edge_attr))
         model = build_model(args) if model is None else model
 
@@ -426,10 +428,12 @@ class KGLinkPrediction(nn.Module):
             mask = self.data.val_mask
         else:
             mask = self.data.test_mask
-        edge_index = self.data.edge_index[:, mask]
+        row, col = self.data.edge_index
+        row = row[mask]
+        col = col[mask]
         edge_attr = self.data.edge_attr[mask]
         with self.data.local_graph():
-            self.data.edge_index = edge_index
+            self.data.edge_index = (row, col)
             self.data.edge_attr = edge_attr
             mrr, hits = self.model.predict(self.data)
         return mrr, hits
@@ -583,7 +587,7 @@ class GNNHomoLinkPrediction(nn.Module):
         col_false = col_false[mask]
 
         edge_index_false = np.stack([row_false, col_false])
-        if edge_index.shape[1] < num_false:
+        if edge_index[0].shape[0] < num_false:
             ratio = edge_index_false.shape[1] / num_false
             num_val = int(ratio * num_val)
             num_test = int(ratio * num_test)

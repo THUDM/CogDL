@@ -23,7 +23,9 @@ class GAETrainer(BaseTrainer):
         self.num_nodes = data.x.shape[0]
         adj_mx = (
             torch.sparse_coo_tensor(
-                data.edge_index, torch.ones(data.edge_index.shape[1]), torch.Size([data.x.shape[0], data.x.shape[0]])
+                torch.stack(data.edge_index),
+                torch.ones(data.edge_index[0].shape[0]),
+                torch.Size([data.x.shape[0], data.x.shape[0]]),
             )
             .to_dense()
             .to(self.device)

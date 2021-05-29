@@ -41,9 +41,9 @@ class Sampler:
         self.full_graph = data.clone()
         self.num_nodes = self.data.x.size()[0]
         self.num_edges = (
-            self.data.edge_index_train.size()[1]
+            self.data.edge_index_train[0].shape[0]
             if hasattr(self.data, "edge_index_train")
-            else self.data.edge_index.size()[1]
+            else self.data.edge_index[0].shape[0]
         )
 
     def sample(self):
@@ -164,7 +164,7 @@ class SAINTSampler(Sampler):
                 data.norm_aggr = torch.FloatTensor(self.norm_aggr_train[edge_idx][:])
                 data.norm_loss = self.norm_loss_train[node_idx]
 
-        edge_weight = row_normalization(data.x.shape[0], data.edge_index)
+        edge_weight = row_normalization(data.x.shape[0], data.edge_index[0], data.edge_index[1])
         data.edge_weight = edge_weight
         return data
 

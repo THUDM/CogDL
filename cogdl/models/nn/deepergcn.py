@@ -70,10 +70,10 @@ class GENConv(nn.Module):
         edge_msg = self.act(edge_msg) + self.eps
 
         if self.aggr == "softmax_sg":
-            h = mul_edge_softmax(graph, self.beta * edge_msg).T
+            h = mul_edge_softmax(graph, self.beta * edge_msg)
             h = edge_msg * h
         elif self.aggr == "softmax":
-            h = mul_edge_softmax(graph, edge_msg).T
+            h = mul_edge_softmax(graph, edge_msg)
             h = edge_msg * h
         elif self.aggr == "powermean":
             deg = graph.degrees()

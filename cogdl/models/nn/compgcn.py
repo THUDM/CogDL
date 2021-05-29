@@ -109,19 +109,22 @@ class CompGCNLayer(nn.Module):
         edge_index = graph.edge_index
         edge_type = graph.edge_attr
         rel_embed = torch.cat((rel_embed, self.loop_rel), dim=0)
-        num_edges = edge_index.shape[1] // 2
+        num_edges = edge_index[0].shape[0] // 2
         num_entities = x.shape[0]
 
-        index, rev_index = edge_index[:, :num_edges], edge_index[:, num_edges:]
+        row, col = edge_index
+        i_row, i_col = row[:num_edges], col[:num_edges]
+        rev_row, rev_col = row[num_edges:], col[num_edges:]
+        # index, rev_index = edge_index[:, :num_edges], edge_index[:, num_edges:]
         loop_index = torch.stack((torch.arange(num_entities), torch.arange(num_entities))).to(device)
         types, rev_types = edge_type[:num_edges], edge_type[num_edges:]
         loop_types = torch.full((num_entities,), rel_embed.shape[0] - 1, dtype=torch.long).to(device)
 
-        in_norm = row_normalization(num_entities, index)
-        rev_norm = row_normalization(num_entities, rev_index)
+        in_norm = row_normalization(num_entities, i_row, i_col)
+        rev_norm = row_normalization(num_entities, rev_row, rev_col)
 
-        emb = self.message_passing(x, rel_embed, index, types, "in", in_norm)
-        rev_emb = self.message_passing(x, rel_embed, rev_index, rev_types, "out", rev_norm)
+        emb = self.message_passing(x, rel_embed, (i_row, i_col), types, "in", in_norm)
+        rev_emb = self.message_passing(x, rel_embed, (rev_row, rev_col), rev_types, "out", rev_norm)
         loop_emb = self.message_passing(x, rel_embed, loop_index, loop_types, "loop")
 
         out = 1 / 3 * (emb + rev_emb + loop_emb)
@@ -277,14 +280,16 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
         self.lbl_smooth = lbl_smooth
 
     def add_reverse_edges(self, edge_index, edge_types):
-        edge_index_rev = torch.stack([edge_index[1], edge_index[0]])
-        edge_index = torch.cat([edge_index, edge_index_rev], dim=1)
+        row, col = edge_index
+        _row = torch.cat([row, col])
+        _col = torch.cat([col, row])
+        edge_index = torch.cat((_row, _col), dim=1)
         edge_types_rev = edge_types + self.num_rels
         edge_types = torch.cat([edge_types, edge_types_rev])
         return edge_index, edge_types
 
     def forward(self, graph):
-        edge_index = graph.edge_index
+        edge_index = torch.stack(graph.edge_index)
         # edge_index, edge_types = self.add_reverse_edges(edge_index, edge_types)
         reindexed_node, reindexed_edge_index = torch.unique(edge_index, return_inverse=True, sorted=True)
         self.cache_index = reindexed_node
@@ -301,11 +306,14 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
             mask = data.val_mask
         else:
             mask = data.test_mask
-        edge_index, edge_types = data.edge_index[:, mask], data.edge_attr[mask]
+        edge_index, edge_types = data.edge_index[:, mask]
+        row, col = data.edge_index
+        row, col = row[mask], col[mask]
+        edge_types = data.edge_attr[mask]
 
         self.get_edge_set(edge_index, edge_types)
         batch_edges, batch_attr, samples, rels, labels = sampling_edge_uniform(
-            edge_index,
+            (row, col),
             edge_types,
             self.edge_set,
             self.sampling_rate,

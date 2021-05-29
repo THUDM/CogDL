@@ -35,8 +35,8 @@ class Pool(nn.Module):
         values, indices = torch.topk(scores, max(2, num))
 
         if self.aug_adj:
-            edge_index = graph.edge_index.cpu()
-            edge_attr = torch.ones(edge_index.shape[1])
+            edge_attr = torch.ones(graph.edge_index[0].shape[0])
+            edge_index = torch.stack(graph.edge_index).cpu()
             edge_index, _ = spspmm(edge_index, edge_attr, edge_index, edge_attr, org_n_nodes, org_n_nodes, org_n_nodes)
             edge_index = edge_index.to(x.device)
             batch = Graph(x=x, edge_index=edge_index)
@@ -189,8 +189,10 @@ class GraphUnet(BaseModel):
     def forward(self, graph: Graph) -> torch.Tensor:
         x = graph.x
         if self.improved and not hasattr(graph, "unet_improved"):
-            self_loop = torch.stack([torch.arange(0, x.shape[0])] * 2, dim=0).to(x.device)
-            graph.edge_index = torch.cat([graph.edge_index, self_loop], dim=1)
+            row, col = graph.edge_index
+            row = torch.cat([row, torch.arange(0, x.shape[0], device=x.device)], dim=0)
+            col = torch.cat([col, torch.arange(0, x.shape[0], device=x.device)], dim=0)
+            graph.edge_index = (row, col)
             graph["unet_improved"] = True
         graph.row_norm()
 

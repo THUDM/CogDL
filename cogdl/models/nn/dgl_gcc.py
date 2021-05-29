@@ -135,7 +135,7 @@ class NodeClassificationDataset(object):
         src, dst = data.edge_index
         src = src.tolist()
         dst = dst.tolist()
-        num_nodes = data.edge_index.max() + 1
+        num_nodes = max(src.max(), dst.max()) + 1
         graph.add_nodes(num_nodes)
         graph.add_edges(src, dst)
         graph.add_edges(dst, src)

@@ -4,8 +4,7 @@ import torch.nn.functional as F
 import math
 
 from .. import BaseModel, register_model
-from cogdl.utils import mul_edge_softmax, spmm, mh_spmm
-from cogdl.operators.mhspmm import csrmhspmm
+from cogdl.utils import mul_edge_softmax, spmm, mh_spmm, check_mh_spmm
 
 
 class GATLayer(nn.Module):
@@ -62,7 +61,7 @@ class GATLayer(nn.Module):
         edge_attention = mul_edge_softmax(graph, edge_attention)
         edge_attention = self.dropout(edge_attention)
 
-        if csrmhspmm is not None:
+        if check_mh_spmm() and next(self.parameters()).device.type != "cpu":
             if self.nhead > 1:
                 h_prime = mh_spmm(graph, edge_attention, h)
                 out = h_prime.view(h_prime.shape[0], -1)

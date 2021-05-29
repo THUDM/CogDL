@@ -1,30 +1,28 @@
 import os
 import torch
 from torch.utils.cpp_extension import load
+import time
 
 path = os.path.join(os.path.dirname(__file__))
 
 # SPMM
-if not torch.cuda.is_available():
+try:
+    edge_softmax = load(
+        name="edge_softmax",
+        sources=[
+            os.path.join(path, "edge_softmax/edge_softmax.cc"),
+            os.path.join(path, "edge_softmax/edge_softmax.cu"),
+        ],
+        verbose=False,
+    )
+
+    def csr_edge_softmax(rowptr, h):
+        return EdgeSoftmaxFunction.apply(rowptr, h)
+
+
+except Exception:
     edge_softmax = None
     csr_edge_softmax = None
-else:
-    try:
-        edge_softmax = load(
-            name="edge_softmax",
-            sources=[
-                os.path.join(path, "edge_softmax/edge_softmax.cc"),
-                os.path.join(path, "edge_softmax/edge_softmax.cu"),
-            ],
-            verbose=False,
-        )
-
-        def csr_edge_softmax(rowptr, h):
-            return EdgeSoftmaxFunction.apply(rowptr, h)
-
-    except Exception:
-        edge_softmax = None
-        csr_edge_softmax = None
 
 
 class EdgeSoftmaxFunction(torch.autograd.Function):

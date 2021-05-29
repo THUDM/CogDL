@@ -10,7 +10,7 @@ from tabulate import tabulate
 
 from cogdl.options import get_default_args
 from cogdl.tasks import build_task
-from cogdl.utils import set_random_seed, tabulate_results, initialize_spmm
+from cogdl.utils import set_random_seed, tabulate_results, init_operator_configs
 from cogdl.configs import BEST_CONFIGS
 from cogdl.datasets import SUPPORTED_DATASETS
 from cogdl.models import SUPPORTED_MODELS
@@ -149,7 +149,7 @@ def raw_experiment(task: str, dataset, model, **kwargs):
     else:
         args = kwargs["args"]
 
-    initialize_spmm(args)
+    init_operator_configs(args)
 
     variants = list(gen_variants(dataset=args.dataset, model=args.model, seed=args.seed))
     variants = check_task_dataset_model_match(task, variants)

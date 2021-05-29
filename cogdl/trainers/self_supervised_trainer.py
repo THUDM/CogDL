@@ -81,14 +81,13 @@ class SelfSupervisedTrainer(BaseTrainer):
 
         self.data = data
         self.data.to(self.device)
-        print(data.num_nodes, data.edge_index.shape)
         with torch.no_grad():
             embeds = model.embed(self.data)
         self.save_embed(embeds)
 
         return self.evaluate(embeds, dataset.get_loss_fn(), dataset.get_evaluator())
 
-    def evaluate(self, embeds, loss_fn, evaluator):
+    def evaluate(self, embeds, loss_fn=None, evaluator=None):
         nclass = int(torch.max(self.data.y) + 1)
         opt = {
             "idx_train": self.data.train_mask.to(self.device),

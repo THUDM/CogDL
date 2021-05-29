@@ -209,7 +209,7 @@ class PairwiseDistance(SSLTask):
         self.graph.edge_index, _ = dropout_adj(edge_index=self.edge_index, drop_rate=self.dropedge_rate)
         return self.graph.to(self.device)
 
-    def make_loss(self, embeddings, sample=True, k=40000):
+    def make_loss(self, embeddings, sample=True, k=4000):
         node_pairs, pseudo_labels = self.sample(sample, k)
         # print(node_pairs, pseudo_labels)
         embeddings = self.linear(torch.abs(embeddings[node_pairs[0]] - embeddings[node_pairs[1]]))

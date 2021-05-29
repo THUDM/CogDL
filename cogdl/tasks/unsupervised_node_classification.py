@@ -40,6 +40,7 @@ class UnsupervisedNodeClassification(BaseTask):
         super(UnsupervisedNodeClassification, self).__init__(args)
         dataset = build_dataset(args) if dataset is None else dataset
 
+        self.dataset = dataset
         self.data = dataset[0]
 
         self.num_nodes = self.data.y.shape[0]
@@ -103,7 +104,7 @@ class UnsupervisedNodeClassification(BaseTask):
 
     def train(self):
         if self.trainer is not None:
-            return self.trainer.fit(self.model, self.data)
+            return self.trainer.fit(self.model, self.dataset)
         if self.load_emb_path is None:
             if "gcc" in self.model_name:
                 features_matrix = self.model.train(self.data)

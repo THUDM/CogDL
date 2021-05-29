@@ -9,7 +9,7 @@ import torch.utils.data
 from cogdl.utils import remove_self_loops, row_normalization
 from cogdl.data import Graph
 
-from torch_geometric.data import Data, GraphSAINTRandomWalkSampler
+# from torch_geometric.data import Data, GraphSAINTRandomWalkSampler
 
 
 def normalize(adj):

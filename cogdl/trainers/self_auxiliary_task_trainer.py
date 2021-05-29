@@ -66,7 +66,7 @@ class EdgeMask(SSLTask):
         return F.nll_loss(output, self.pseudo_labels)
 
     def neg_sample(self, edge_num):
-        edges = self.edge_index.t().cpu().numpy()
+        edges = torch.stack(self.edge_index).t().cpu().numpy()
         exclude = set([(_[0], _[1]) for _ in list(edges)])
         itr = self.sample(exclude)
         sampled = [next(itr) for _ in range(edge_num)]
@@ -512,7 +512,7 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
         # self.resplit_data(dataset.data)
         self.data = dataset.data
         self.original_data = dataset.data
-        self.data.apply(lambda x: x.to(self.device))
+        self.data.to(self.device)
         self.set_agent()
         self.model = model
         self.set_loss_eval(dataset)
@@ -542,7 +542,7 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
 
     def finetune(self):
         print("Fine-tuning")
-        self.original_data.apply(lambda x: x.to(self.device))
+        self.original_data.to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         self.model.to(self.device)
 
@@ -624,10 +624,10 @@ class SelfAuxiliaryTaskJointTrainer(SelfAuxiliaryTaskTrainer):
         # self.resplit_data(dataset.data)
         self.data = dataset.data
         self.original_data = dataset.data
-        self.data.apply(lambda x: x.to(self.device))
+        self.data.to(self.device)
         self.set_agent()
         self.data.edge_index, self.data.x = self.agent.transform_data()
-        self.original_data.apply(lambda x: x.to(self.device))
+        self.original_data = self.original_data.to(self.device)
         self.model = model
         self.set_loss_eval(dataset)
 

@@ -102,7 +102,7 @@ class M3STrainer(BaseTrainer):
         min_loss = np.inf
 
         print("Training on original split...")
-        self.data = self.data.apply(lambda x: x.to(self.device))
+        self.data = self.data.to(self.device)
         self.model = self.model.to(self.device)
         epoch_iter = tqdm(range(self.epochs))
         for epoch in epoch_iter:
@@ -158,7 +158,7 @@ class M3STrainer(BaseTrainer):
                                 self.data.y[idx] = i
 
                 # Training
-                self.data = self.data.apply(lambda x: x.to(self.device))
+                self.data = self.data.to(self.device)
                 epoch_iter = tqdm(range(self.epochs))
                 for epoch in epoch_iter:
                     self._train_step()

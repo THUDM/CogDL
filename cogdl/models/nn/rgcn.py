@@ -135,6 +135,7 @@ class RGCNLayer(nn.Module):
             h_list = []
             for edge_t in range(self.num_edge_types):
                 edge_mask = edge_type == edge_t
+
                 graph.edge_index = edge_index[:, edge_mask]
                 graph.edge_weight = edge_weight[edge_mask]
                 temp = spmm(graph, h[edge_t])
@@ -281,7 +282,8 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
             mask = graph.val_mask
         else:
             mask = graph.test_mask
-        edge_index, edge_types = graph.edge_index[:, mask], graph.edge_attr[mask]
+        edge_index = torch.stack(graph.edge_index)
+        edge_index, edge_types = edge_index[:, mask], graph.edge_attr[mask]
 
         self.get_edge_set(edge_index, edge_types)
         batch_edges, batch_attr, samples, rels, labels = sampling_edge_uniform(

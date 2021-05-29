@@ -30,7 +30,7 @@ class GAETrainer(BaseTrainer):
             .to_dense()
             .to(self.device)
         )
-        data = data.apply(lambda x: x.to(self.device))
+        data = data.to(self.device)
 
         print("Training initial embedding...")
         epoch_iter = tqdm(range(self.max_epoch))

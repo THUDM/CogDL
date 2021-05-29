@@ -172,7 +172,7 @@ class GTN(BaseModel):
             for i in range(self.num_channels):
                 if i == 0:
                     edge_index, edge_weight = H[i][0], H[i][1]
-                    graph.edge_index = torch.stack(edge_index).detach()
+                    graph.edge_index = edge_index.detach()
                     graph.edge_weight = edge_weight
                     X_ = self.gcn(graph, X)
                     X_ = F.relu(X_)

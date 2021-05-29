@@ -306,10 +306,10 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
             mask = data.val_mask
         else:
             mask = data.test_mask
-        edge_index, edge_types = data.edge_index[:, mask]
         row, col = data.edge_index
         row, col = row[mask], col[mask]
         edge_types = data.edge_attr[mask]
+        edge_index = torch.stack([row, col])
 
         self.get_edge_set(edge_index, edge_types)
         batch_edges, batch_attr, samples, rels, labels = sampling_edge_uniform(

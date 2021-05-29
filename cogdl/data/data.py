@@ -627,7 +627,7 @@ class Graph(BaseGraph):
             else:
                 key = "__mx__"
             if not hasattr(self, key):
-                row, col = self._adj.edge_index.numpy()
+                row, col = self._adj.row.numpy(), self._adj.col.numpy()
                 val = self.edge_weight.numpy()
                 N = self.num_nodes
                 self[key] = sp.csr_matrix((val, (row, col)), shape=(N, N))

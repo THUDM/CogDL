@@ -15,18 +15,21 @@ from cogdl.models.supervised_model import (
     SupervisedHomogeneousNodeClassificationModel,
 )
 from cogdl.trainers.supervised_model_trainer import SupervisedHomogeneousNodeClassificationTrainer
+from cogdl.utils import dropout_adj
 from . import register_trainer
 from .self_supervised_trainer import LogRegTrainer
 
 from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.cluster import KMeans
 
 
 class SSLTask:
-    def __init__(self, edge_index, features, device):
-        self.edge_index = edge_index
-        self.num_nodes = int(max(edge_index[0].max(), edge_index[1].max()).cpu()) + 1
-        self.num_edges = edge_index[0].shape[0]
-        self.features = features
+    def __init__(self, graph, device):
+        self.graph = graph
+        self.edge_index = graph.edge_index_train if hasattr(graph, "edge_index_train") else graph.edge_index
+        self.num_nodes = graph.num_nodes
+        self.num_edges = graph.num_edges
+        self.features = graph.x
         self.device = device
         self.cached_edges = None
 
@@ -38,8 +41,8 @@ class SSLTask:
 
 
 class EdgeMask(SSLTask):
-    def __init__(self, edge_index, features, hidden_size, mask_ratio, device):
-        super().__init__(edge_index, features, device)
+    def __init__(self, graph, hidden_size, mask_ratio, device):
+        super().__init__(graph, device)
         self.linear = nn.Linear(hidden_size, 2).to(device)
         self.mask_ratio = mask_ratio
 
@@ -56,9 +59,10 @@ class EdgeMask(SSLTask):
             mask_num = len(masked)
             self.neg_edges = self.neg_sample(mask_num)
             self.pseudo_labels = torch.cat([torch.ones(mask_num), torch.zeros(mask_num)]).long().to(self.device)
-            self.node_pairs = torch.cat([self.masked_edges, self.neg_edges], 1)
+            self.node_pairs = torch.cat([self.masked_edges, self.neg_edges], 1).to(self.device)
+            self.graph.edge_index = self.cached_edges
 
-        return self.cached_edges, self.features
+        return self.graph.to(self.device)
 
     def make_loss(self, embeddings):
         embeddings = self.linear(torch.abs(embeddings[self.node_pairs[0]] - embeddings[self.node_pairs[1]]))
@@ -70,7 +74,7 @@ class EdgeMask(SSLTask):
         exclude = set([(_[0], _[1]) for _ in list(edges)])
         itr = self.sample(exclude)
         sampled = [next(itr) for _ in range(edge_num)]
-        return torch.tensor(sampled).t().to(self.device)
+        return torch.tensor(sampled).t()
 
     def sample(self, exclude):
         while True:
@@ -82,9 +86,9 @@ class EdgeMask(SSLTask):
 
 
 class AttributeMask(SSLTask):
-    def __init__(self, edge_index, features, hidden_size, train_mask, mask_ratio, device):
-        super().__init__(edge_index, features, device)
-        self.linear = nn.Linear(hidden_size, features.shape[1]).to(device)
+    def __init__(self, graph, hidden_size, train_mask, mask_ratio, device):
+        super().__init__(graph, device)
+        self.linear = nn.Linear(hidden_size, graph.x.shape[1]).to(device)
         self.unlabeled = np.array([i for i in range(self.num_nodes) if not train_mask[i]])
         self.cached_features = None
         self.mask_ratio = mask_ratio
@@ -95,10 +99,11 @@ class AttributeMask(SSLTask):
             mask_nnz = int(self.num_nodes * self.mask_ratio)
             self.masked_nodes = perm[:mask_nnz]
             self.cached_features = self.features.clone()
-            self.cached_features[self.masked_nodes] = torch.zeros(self.features.shape[1]).to(self.device)
-            self.pseudo_labels = self.features[self.masked_nodes]
+            self.cached_features[self.masked_nodes] = torch.zeros(self.features.shape[1])
+            self.pseudo_labels = self.features[self.masked_nodes].to(self.device)
+            self.graph.features = self.cached_features
 
-        return self.edge_index, self.cached_features
+        return self.graph.to(self.device)
 
     def make_loss(self, embeddings):
         embeddings = self.linear(embeddings[self.masked_nodes])
@@ -107,26 +112,27 @@ class AttributeMask(SSLTask):
 
 
 class PairwiseDistance(SSLTask):
-    def __init__(self, edge_index, features, hidden_size, class_split, sampling, device):
-        super().__init__(edge_index, features, device)
+    def __init__(self, graph, hidden_size, class_split, sampling, dropedge_rate, num_centers, device):
+        super().__init__(graph, device)
         self.nclass = len(class_split) + 1
         self.class_split = class_split
         self.max_distance = self.class_split[self.nclass - 2][1]
         self.sampling = sampling
-        self.batch_size = 256
+        self.dropedge_rate = dropedge_rate
+        self.num_centers = num_centers
         self.linear = nn.Linear(hidden_size, self.nclass).to(device)
         self.get_distance()
 
     def get_distance(self):
         if self.sampling:
             self.dis_node_pairs = [[] for i in range(self.nclass)]
-            node_idx = random.sample(range(self.num_nodes), self.batch_size)
+            node_idx = random.sample(range(self.num_nodes), self.num_centers)
             adj = sp.coo_matrix(
                 (np.ones(self.num_edges), (self.edge_index[0].cpu().numpy(), self.edge_index[1].cpu().numpy())),
                 shape=(self.num_nodes, self.num_nodes),
             ).tocsr()
 
-            num_samples = tqdm(range(self.batch_size))
+            num_samples = tqdm(range(self.num_centers))
             for i in num_samples:
                 num_samples.set_description(f"Generating node pairs {i:03d}")
                 idx = node_idx[i]
@@ -173,8 +179,11 @@ class PairwiseDistance(SSLTask):
                         (self.dis_node_pairs[cur_class], np.array([[idx] * len(sampled), sampled]).transpose()), axis=0
                     )
             if self.class_split[0][1] == 2:
-                edge_index = torch.stack(self.edge_index).cpu().numpy().transpose()
-                self.dis_node_pairs[0] = edge_index
+                self.dis_node_pairs[0] = torch.stack(self.edge_index).cpu().numpy().transpose()
+            num_per_class = np.min(np.array([len(dis) for dis in self.dis_node_pairs]))
+            for i in range(self.nclass):
+                sampled = np.random.choice(np.arange(len(self.dis_node_pairs[i])), num_per_class, replace=False)
+                self.dis_node_pairs[i] = self.dis_node_pairs[i][sampled]
         else:
             G = nx.Graph()
             G.add_edges_from(torch.stack(self.edge_index).cpu().numpy().transpose())
@@ -198,39 +207,44 @@ class PairwiseDistance(SSLTask):
             self.dis_node_pairs.append(tmp)
 
     def transform_data(self):
-        return self.edge_index, self.features
+        self.graph.edge_index, _ = dropout_adj(edge_index=self.edge_index, drop_rate=self.dropedge_rate)
+        return self.graph.to(self.device)
 
-    def make_loss(self, embeddings, k=4000):
-        node_pairs, pseudo_labels = self.sample(k)
+    def make_loss(self, embeddings, sample=True, k=4000):
+        node_pairs, pseudo_labels = self.sample(sample, k)
         # print(node_pairs, pseudo_labels)
         embeddings = self.linear(torch.abs(embeddings[node_pairs[0]] - embeddings[node_pairs[1]]))
         output = F.log_softmax(embeddings, dim=1)
         return F.nll_loss(output, pseudo_labels)
 
-    def sample(self, k):
+    def sample(self, sample, k):
         sampled = torch.tensor([]).long()
         pseudo_labels = torch.tensor([]).long()
         for i in range(self.nclass):
             tmp = self.dis_node_pairs[i]
-            x = int(random.random() * (len(tmp) - k))
-            sampled = torch.cat([sampled, torch.tensor(tmp[x : x + k]).long().t()], 1)
-            """
-            indices = np.random.choice(np.arange(len(tmp)), k, replace=False)
-            sampled = torch.cat([sampled, torch.tensor(tmp[indices]).long().t()], 1)
-            """
-            pseudo_labels = torch.cat([pseudo_labels, torch.ones(k).long() * i])
+            if sample:
+                x = int(random.random() * (len(tmp) - k))
+                sampled = torch.cat([sampled, torch.tensor(tmp[x : x + k]).long().t()], 1)
+                """
+                indices = np.random.choice(np.arange(len(tmp)), k, replace=False)
+                sampled = torch.cat([sampled, torch.tensor(tmp[indices]).long().t()], 1)
+                """
+                pseudo_labels = torch.cat([pseudo_labels, torch.ones(k).long() * i])
+            else:
+                sampled = torch.cat([sampled, torch.tensor(tmp).long().t()], 1)
+                pseudo_labels = torch.cat([pseudo_labels, torch.ones(len(tmp)).long() * i])
         return sampled.to(self.device), pseudo_labels.to(self.device)
 
 
 class Distance2Clusters(SSLTask):
-    def __init__(self, edge_index, features, hidden_size, num_clusters, device):
-        super().__init__(edge_index, features, device)
+    def __init__(self, graph, hidden_size, num_clusters, device):
+        super().__init__(graph, device)
         self.num_clusters = num_clusters
         self.linear = nn.Linear(hidden_size, num_clusters).to(device)
         self.gen_cluster_info()
 
     def transform_data(self):
-        return self.edge_index, self.features
+        return self.graph.to(self.device)
 
     def gen_cluster_info(self, use_metis=False):
         G = nx.Graph()
@@ -240,14 +254,6 @@ class Distance2Clusters(SSLTask):
 
             _, parts = metis.part_graph(G, self.num_clusters)
         else:
-            """
-            from sklearn.cluster import SpectralClustering
-
-            clustering = SpectralClustering(
-                n_clusters=self.num_clusters, assign_labels="discretize", random_state=0
-            ).fit(self.features.cpu())
-            parts = clustering.labels_
-            """
             from sklearn.cluster import KMeans
 
             clustering = KMeans(n_clusters=self.num_clusters, random_state=0).fit(self.features.cpu())
@@ -276,8 +282,8 @@ class Distance2Clusters(SSLTask):
 
 
 class PairwiseAttrSim(SSLTask):
-    def __init__(self, edge_index, features, hidden_size, k, device):
-        super().__init__(edge_index, features, device)
+    def __init__(self, graph, hidden_size, k, device):
+        super().__init__(graph, device)
         self.k = k
         self.linear = nn.Linear(hidden_size, 1).to(self.device)
         self.get_attr_sim()
@@ -319,7 +325,7 @@ class PairwiseAttrSim(SSLTask):
     def get_attr_sim(self):
         from sklearn.metrics.pairwise import cosine_similarity
 
-        sims = cosine_similarity(self.features.detach().cpu().numpy())
+        sims = cosine_similarity(self.features.numpy())
         idx_sorted = sims.argsort(1)
         self.node_pairs = None
         self.pseudo_labels = None
@@ -345,7 +351,7 @@ class PairwiseAttrSim(SSLTask):
         return np.array(sampled)
 
     def transform_data(self):
-        return self.edge_index, self.features
+        return self.graph.to(self.device)
 
     def make_loss(self, embeddings):
         """
@@ -359,9 +365,9 @@ class PairwiseAttrSim(SSLTask):
 
 
 class Distance2ClustersPP(SSLTask):
-    def __init__(self, edge_index, features, labels, hidden_size, num_clusters, k, device):
-        super().__init__(edge_index, features, device)
-        self.labels = labels.cpu().numpy()
+    def __init__(self, graph, labels, hidden_size, num_clusters, k, device):
+        super().__init__(graph, device)
+        self.labels = labels.numpy()
         self.k = k
         self.num_clusters = num_clusters
         self.clusters = None
@@ -408,7 +414,7 @@ class Distance2ClustersPP(SSLTask):
         self.pseudo_labels = self.pseudo_labels.float().to(self.device)
 
     def transform_data(self):
-        return self.edge_index, self.features
+        return self.graph.to(self.device)
 
     def make_loss(self, embeddings):
         embeddings = self.linear(embeddings)
@@ -431,6 +437,7 @@ class SelfAuxiliaryTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         self.hidden_size = args.hidden_size
         self.label_mask = args.label_mask
         self.sampling = args.sampling
+        self.dropedge_rate = args.dropedge_rate
         self.mask_ratio = args.mask_ratio
 
     def resplit_data(self, data):
@@ -449,28 +456,25 @@ class SelfAuxiliaryTaskTrainer(SupervisedHomogeneousNodeClassificationTrainer):
 
     def set_agent(self):
         if self.auxiliary_task == "edgemask":
-            self.agent = EdgeMask(self.data.edge_index, self.data.x, self.hidden_size, self.mask_ratio, self.device)
+            self.agent = EdgeMask(self.data, self.hidden_size, self.mask_ratio, self.device)
         elif self.auxiliary_task == "attributemask":
-            self.agent = AttributeMask(
-                self.data.edge_index, self.data.x, self.hidden_size, self.data.train_mask, self.mask_ratio, self.device
-            )
+            self.agent = AttributeMask(self.data, self.hidden_size, self.data.train_mask, self.mask_ratio, self.device)
         elif self.auxiliary_task == "pairwise-distance":
             self.agent = PairwiseDistance(
-                self.data.edge_index,
-                self.data.x,
+                self.data,
                 self.hidden_size,
                 [(1, 2), (2, 3), (3, 5)],
                 self.sampling,
+                self.dropedge_rate,
+                256,
                 self.device,
             )
         elif self.auxiliary_task == "distance2clusters":
-            self.agent = Distance2Clusters(self.data.edge_index, self.data.x, self.hidden_size, 30, self.device)
+            self.agent = Distance2Clusters(self.data, self.hidden_size, 30, self.device)
         elif self.auxiliary_task == "pairwise-attr-sim":
-            self.agent = PairwiseAttrSim(self.data.edge_index, self.data.x, self.hidden_size, 5, self.device)
+            self.agent = PairwiseAttrSim(self.data, self.hidden_size, 5, self.device)
         elif self.auxiliary_task == "distance2clusters++":
-            self.agent = Distance2ClustersPP(
-                self.data.edge_index, self.data.x, self.data.y, self.hidden_size, 5, 1, self.device
-            )
+            self.agent = Distance2ClustersPP(self.data, self.data.y, self.hidden_size, 5, 1, self.device)
         else:
             raise Exception(
                 "auxiliary task must be edgemask, pairwise-distance, distance2clusters, distance2clusters++ or pairwise-attr-sim"
@@ -500,20 +504,25 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
         parser.add_argument('--auxiliary-task', default="none", type=str)
         parser.add_argument('--label-mask', default=0, type=float)
         parser.add_argument("--mask-ratio", default=0.1, type=float)
+        parser.add_argument("--dropedge-rate", default=0, type=float)
+        parser.add_argument('--alpha', default=10, type=float)
         parser.add_argument('--sampling', action="store_true")
         parser.add_argument("--freeze", action="store_true")
+        parser.add_argument("--agc-eval", action="store_true")
         # fmt: on
 
     def __init__(self, args):
         super().__init__(args)
+        self.alpha = args.alpha
         self.freeze = args.freeze
+        self.agc_eval = args.agc_eval
 
     def fit(self, model: SupervisedHomogeneousNodeClassificationModel, dataset: Dataset):
-        # self.resplit_data(dataset.data)
         self.data = dataset.data
-        self.original_data = dataset.data
-        self.data.to(self.device)
+        self.data.add_remaining_self_loops()
         self.set_agent()
+        self.original_data = dataset.data
+        self.original_data.add_remaining_self_loops()
         self.model = model
         self.set_loss_eval(dataset)
 
@@ -548,11 +557,12 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
 
         embeddings = self.best_model.get_embeddings(self.original_data).detach()
         nclass = int(torch.max(self.data.y) + 1)
-        """
-        kmeans = KMeans(n_clusters=nclass, random_state=0).fit(embeddings.cpu().numpy())
-        clusters = kmeans.labels_
-        print("cluster NMI: %.4lf" % (normalized_mutual_info_score(clusters, self.data.y)))
-        """
+
+        if self.agc_eval:
+            kmeans = KMeans(n_clusters=nclass, random_state=0).fit(embeddings.cpu().numpy())
+            clusters = kmeans.labels_
+            print("cluster NMI: %.4lf" % (normalized_mutual_info_score(clusters, self.data.y.cpu())))
+
         if self.freeze:
             opt = {
                 "idx_train": self.original_data.train_mask,
@@ -560,7 +570,7 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
                 "idx_test": self.original_data.test_mask,
                 "num_classes": nclass,
             }
-            result = LogRegTrainer().train(embeddings, self.original_data.y, opt)
+            result = LogRegTrainer().train(embeddings, self.original_data.y, opt, self.loss_fn, self.evaluator)
             print(f"TestAcc: {result: .4f}")
             return dict(Acc=result)
         else:
@@ -586,14 +596,14 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
 
     def _pretrain_step(self):
         with self.data.local_graph():
-            self.data.edge_index, self.data.x = self.agent.transform_data()
+            self.data = self.agent.transform_data()
             self.model.train()
             self.optimizer.zero_grad()
             embeddings = self.model.get_embeddings(self.data)
-            loss = self.agent.make_loss(embeddings)
+            loss = self.alpha * self.agent.make_loss(embeddings)
         loss.backward()
         self.optimizer.step()
-        return loss.item()
+        return loss.item() / self.alpha
 
     def _train_step(self):
         self.model.train()
@@ -613,6 +623,7 @@ class SelfAuxiliaryTaskJointTrainer(SelfAuxiliaryTaskTrainer):
         parser.add_argument('--alpha', default=10, type=float)
         parser.add_argument('--label-mask', default=0, type=float)
         parser.add_argument("--mask-ratio", default=0.1, type=float)
+        parser.add_argument("--dropedge-rate", default=0, type=float)
         parser.add_argument('--sampling', action="store_true")
         # fmt: on
 
@@ -626,8 +637,8 @@ class SelfAuxiliaryTaskJointTrainer(SelfAuxiliaryTaskTrainer):
         self.original_data = dataset.data
         self.data.to(self.device)
         self.set_agent()
-        self.data.edge_index, self.data.x = self.agent.transform_data()
-        self.original_data = self.original_data.to(self.device)
+        self.data = self.agent.transform_data()
+        self.original_data.apply(lambda x: x.to(self.device))
         self.model = model
         self.set_loss_eval(dataset)
 
@@ -645,12 +656,12 @@ class SelfAuxiliaryTaskJointTrainer(SelfAuxiliaryTaskTrainer):
         for epoch in epoch_iter:
             if self.auxiliary_task == "distance2clusters++" and epoch % 40 == 0:
                 self.agent.update_cluster()
-            self._train_step()
+            aux_loss = self._train_step()
             train_acc, _ = self._test_step(split="train")
             val_acc, val_loss = self._test_step(split="val")
             test_acc, test_loss = self._test_step(split="test")
             epoch_iter.set_description(
-                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, Test: {test_acc:.4f}"
+                f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, Test: {test_acc:.4f}, Aux loss: {aux_loss:.4f}"
             )
             if val_loss <= min_loss or val_acc >= max_score:
                 if val_loss <= best_loss:  # and val_acc >= best_score:
@@ -665,10 +676,13 @@ class SelfAuxiliaryTaskJointTrainer(SelfAuxiliaryTaskTrainer):
 
     def _train_step(self):
         with self.data.local_graph():
-            self.data.edge_index, self.data.x = self.agent.transform_data()
+            self.data = self.agent.transform_data()
             self.model.train()
             self.optimizer.zero_grad()
             embeddings = self.model.get_embeddings(self.data)
             loss = self.model.node_classification_loss(self.data) + self.alpha * self.agent.make_loss(embeddings)
+            aux_loss = self.agent.make_loss(embeddings)
         loss.backward()
         self.optimizer.step()
+
+        return aux_loss

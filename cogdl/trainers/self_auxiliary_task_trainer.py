@@ -27,8 +27,8 @@ class SSLTask:
     def __init__(self, graph, device):
         self.graph = graph
         self.edge_index = graph.edge_index_train if hasattr(graph, "edge_index_train") else graph.edge_index
-        self.num_nodes = int(torch.max(self.edge_index).cpu()) + 1
-        self.num_edges = self.edge_index.shape[1]
+        self.num_nodes = graph.num_nodes
+        self.num_edges = graph.num_edges
         self.features = graph.x
         self.device = device
         self.cached_edges = None
@@ -179,14 +179,14 @@ class PairwiseDistance(SSLTask):
                         (self.dis_node_pairs[cur_class], np.array([[idx] * len(sampled), sampled]).transpose()), axis=0
                     )
             if self.class_split[0][1] == 2:
-                self.dis_node_pairs[0] = self.edge_index.cpu().numpy().transpose()
+                self.dis_node_pairs[0] = torch.stack(self.edge_index).cpu().numpy().transpose()
             num_per_class = np.min(np.array([len(dis) for dis in self.dis_node_pairs]))
             for i in range(self.nclass):
                 sampled = np.random.choice(np.arange(len(self.dis_node_pairs[i])), num_per_class, replace=False)
                 self.dis_node_pairs[i] = self.dis_node_pairs[i][sampled]
         else:
             G = nx.Graph()
-            G.add_edges_from(self.edge_index.t().numpy())
+            G.add_edges_from(torch.stack(self.edge_index).cpu().numpy().transpose())
 
             path_length = dict(nx.all_pairs_shortest_path_length(G, cutoff=self.max_distance))
             distance = -np.ones((self.num_nodes, self.num_nodes), dtype=np.int)
@@ -248,7 +248,7 @@ class Distance2Clusters(SSLTask):
 
     def gen_cluster_info(self, use_metis=False):
         G = nx.Graph()
-        G.add_edges_from(self.edge_index.t().numpy())
+        G.add_edges_from(torch.stack(self.edge_index).cpu().numpy().transpose())
         if use_metis:
             import metis
 
@@ -290,7 +290,7 @@ class PairwiseAttrSim(SSLTask):
 
     def get_avg_distance(self, idx_sorted, k, sampled):
         self.G = nx.Graph()
-        self.G.add_edges_from(self.edge_index.t().numpy())
+        self.G.add_edges_from(torch.stack(self.edge_index).cpu().numpy().transpose())
         avg_min = 0
         avg_max = 0
         avg_sampled = 0
@@ -374,7 +374,7 @@ class Distance2ClustersPP(SSLTask):
         self.linear = nn.Linear(hidden_size, 1).to(self.device)
 
     def build_graph(self):
-        edges = self.edge_index.detach().numpy()
+        edges = torch.stack(self.edge_index).cpu().numpy()
         edge_attr = np.ones(edges.shape[1])
         inter_label = np.where(self.labels[edges[0]] - self.labels[edges[1]] != 0)
         inter_cluster = np.where(self.clusters[edges[0]] - self.clusters[edges[1]] != 0)

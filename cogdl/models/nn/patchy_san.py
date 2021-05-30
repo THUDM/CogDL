@@ -234,7 +234,8 @@ def get_single_feature(data, num_features, num_classes, num_sample, num_neighbor
     for i in range(len(data_list)):
         edge_index, features = data_list[i].edge_index, data_list[i].x
         G = nx.Graph()
-        G.add_edges_from(edge_index.t().tolist())
+        row, col = edge_index[0].numpy(), edge_index[1].numpy()
+        G.add_edges_from(list(zip(row, col)))
         # print("graph", i, "number of node", G.number_of_nodes(), "edge", G.number_of_edges())
         if G.number_of_nodes() > num_neighbor:
             X[i] = node_selection_with_1d_wl(G, features.cpu().numpy(), num_features, num_sample, num_neighbor, stride)

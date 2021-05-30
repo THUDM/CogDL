@@ -156,12 +156,13 @@ class JKNetTrainer(SupervisedHomogeneousNodeClassificationTrainer):
         data.apply(lambda x: x.to(device))
         self.max_epoch = self.args.max_epoch
 
-        edge_index = np.array(data.edge_index.to("cpu"))
-        num_edge = edge_index.shape[1]
+        row, col = data.edge_index
+        row, col = row.cpu().numpy(), col.cpu().numpy()
+        num_edge = row.shape[0]
         num_node = data.x.to("cpu").shape[0]
         self.graph.add_nodes(num_node)
         for i in range(num_edge):
-            src, dst = edge_index[:, i]
+            src, dst = row[i], col[i]
             self.graph.add_edge(src, dst)
         self.graph = self.graph.to(device)
         model.set_graph(self.graph)

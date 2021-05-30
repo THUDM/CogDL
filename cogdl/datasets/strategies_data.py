@@ -249,7 +249,7 @@ class MaskEdge:
         if masked_edge_indices is None:
             # sample x distinct edges to be masked, based on mask rate. But
             # will sample at least 1 edge
-            num_edges = int(data.edge_index.size()[1] / 2)  # num unique edges
+            num_edges = int(data.edge_index[0].shape[0] / 2)  # num unique edges
             sample_size = int(num_edges * self.mask_rate + 1)
             # during sampling, we only pick the 1st direction of a particular
             # edge pair
@@ -618,9 +618,9 @@ class BatchMasking(Graph):
                 batch[key].append(item)
 
             cumsum_node += num_nodes
-            cumsum_edge += data.edge_index.shape[1]
+            cumsum_edge += data.edge_index[0].shape[0]
             num_nodes_cum.append(num_nodes)
-            num_edges_cum.append(data.edge_index.shape[1])
+            num_edges_cum.append(data.edge_index[0].shape[0])
 
         # for key in keys:
         #     batch[key] = torch.cat(batch[key], dim=data_list[0].__cat_dim__(key, batch[key][0]))

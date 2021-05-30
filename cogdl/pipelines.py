@@ -6,6 +6,7 @@ import networkx as nx
 import numpy as np
 from grave import plot_network, use_attributes
 from tabulate import tabulate
+import torch
 
 from cogdl import oagbert
 from cogdl.datasets import build_dataset_from_name
@@ -55,7 +56,7 @@ class DatasetStatsPipeline(DatasetPipeline):
                 [
                     name,
                     data.x.shape[0],
-                    data.edge_index.shape[1],
+                    data.edge_index[0].shape[0],
                     data.x.shape[1],
                     len(set(data.y.numpy())),
                     sum(data.train_mask.numpy()),
@@ -78,7 +79,8 @@ class DatasetVisualPipeline(DatasetPipeline):
         data = dataset[0]
 
         G = nx.Graph()
-        G.add_edges_from([tuple(data.edge_index[:, i].numpy()) for i in range(data.edge_index.shape[1])])
+        edge_index = torch.stack(data.edge_index)
+        G.add_edges_from([tuple(edge_index[:, i].numpy()) for i in range(edge_index.shape[1])])
 
         if seed == -1:
             seed = random.choice(list(G.nodes()))

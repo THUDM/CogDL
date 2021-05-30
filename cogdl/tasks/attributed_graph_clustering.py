@@ -75,14 +75,16 @@ class AttributedGraphClustering(BaseTask):
             features_matrix = self.data.x
         elif self.model_type == "spectral":
             G = nx.Graph()
+            edge_index = torch.stack(self.data.edge_index).t().tolist()
             if self.is_weighted:
                 edges, weight = (
-                    self.data.edge_index.t().tolist(),
+                    edge_index,
                     self.data.edge_attr.tolist(),
                 )
+
                 G.add_weighted_edges_from([(edges[i][0], edges[i][1], weight[i][0]) for i in range(len(edges))])
             else:
-                G.add_edges_from(self.data.edge_index.t().tolist())
+                G.add_edges_from(edge_index)
             embeddings = self.model.train(G)
             if self.enhance is not None:
                 embeddings = self.enhance_emb(G, embeddings)
@@ -120,7 +122,7 @@ class AttributedGraphClustering(BaseTask):
             for i in range(self.num_nodes):
                 mat[clusters[i]][truth[i]] -= 1
             _, row_idx = linear_sum_assignment(mat)
-            acc = - mat[_, row_idx].sum() / self.num_nodes
+            acc = -mat[_, row_idx].sum() / self.num_nodes
             for i in range(self.num_nodes):
                 clusters[i] = row_idx[clusters[i]]
             macro_f1 = f1_score(truth, clusters, average="macro")

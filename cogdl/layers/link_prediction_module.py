@@ -115,7 +115,7 @@ class GNNLinkPredict(nn.Module):
 
     def get_edge_set(self, edge_index, edge_types):
         if self.edge_set is None:
-            edge_list = torch.cat((edge_index, edge_types.unsqueeze(0)), dim=0).T
+            edge_list = torch.stack((edge_index[0], edge_index[1], edge_types))
             edge_list = edge_list.cpu().T.numpy().tolist()
             torch.cuda.empty_cache()
             self.edge_set = set([tuple(x) for x in edge_list])  # tuple(h, t, r)
@@ -152,11 +152,13 @@ def sampling_edge_uniform(
         sampled_types_all: types of existing and corrupted edges
         labels: 0/1
     """
-    num_edges = edge_index.shape[1]
+    num_edges = edge_index[0].shape[0]
+    row, col = edge_index
     num_sampled_edges = int(num_edges * sampling_rate)
 
     selected_edges = np.random.choice(range(num_edges), num_sampled_edges, replace=False)
-    sampled_edges = edge_index.t()[selected_edges].t()
+    row, col = row[selected_edges], col[selected_edges]
+    sampled_edges = torch.stack([row, col])
 
     sampled_nodes = torch.unique(sampled_edges).cpu().numpy()
 
@@ -179,14 +181,14 @@ def sampling_edge_uniform(
 
     corrupt_triplets = corrupt_heads.union(corrupt_tails).union(corrupt_rels)
     corrupt_triplets = corrupt_triplets.difference(edge_set)
-    corrupt_triplets = torch.tensor(list(corrupt_triplets)).to(edge_index.device).T
+    corrupt_triplets = torch.tensor(list(corrupt_triplets)).to(row.device).T
 
     _edge_index = corrupt_triplets[0:2]
     _edge_types = corrupt_triplets[2]
 
     sampled_edges_all = torch.cat((sampled_edges, _edge_index), dim=-1)
     edge_types_all = torch.cat((edge_types[selected_edges], _edge_types), dim=-1)
-    labels = torch.tensor([1] * num_sampled_edges + [0] * _edge_index.shape[1]).to(edge_index.device)
+    labels = torch.tensor([1] * num_sampled_edges + [0] * _edge_index.shape[1]).to(row.device)
     if label_smoothing > 0:
         labels = (1.0 - label_smoothing) * labels + 1.0 / num_entities
     return sampled_edges, torch.from_numpy(rels), sampled_edges_all, edge_types_all, labels

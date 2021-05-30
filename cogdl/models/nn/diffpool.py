@@ -168,7 +168,7 @@ class BatchedDiffPoolLayer(nn.Module):
         # result = masked_softmax(pooled, masked, memory_efficient=False)
 
         h = torch.matmul(result.t(), embed)
-        adj = torch.sparse_coo_tensor(graph.edge_index, graph.edge_weight)
+        adj = torch.sparse_coo_tensor(torch.stack(graph.edge_index), graph.edge_weight)
         adj_new = torch.sparse.mm(adj, result)
         adj_new = torch.mm(result.t(), adj_new)
 

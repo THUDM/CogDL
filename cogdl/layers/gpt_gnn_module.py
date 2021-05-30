@@ -934,7 +934,8 @@ class RNNModel(nn.Module):
 def preprocess_dataset(dataset) -> Graph:
     graph_reddit = Graph()
     el = defaultdict(lambda: defaultdict(lambda: int))  # target_id  # source_id(  # time
-    for i, j in tqdm(dataset.data.edge_index.t()):
+    edge_index = torch.stack(dataset.data.edge_index)
+    for i, j in tqdm(edge_index.t()):
         el[i.item()][j.item()] = 1
 
     target_type = "def"

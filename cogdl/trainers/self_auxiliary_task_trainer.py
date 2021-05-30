@@ -48,13 +48,14 @@ class EdgeMask(SSLTask):
 
     def transform_data(self):
         if self.cached_edges is None:
-            edges = self.edge_index.t()
+            row, col = self.edge_index
+            edges = torch.stack([row, col])
             perm = np.random.permutation(self.num_edges)
             preserve_nnz = int(self.num_edges * (1 - self.mask_ratio))
             masked = perm[preserve_nnz:]
             preserved = perm[:preserve_nnz]
-            self.masked_edges = edges[masked].t()
-            self.cached_edges = edges[preserved].t()
+            self.masked_edges = edges[:, masked]
+            self.cached_edges = edges[:, preserved]
             mask_num = len(masked)
             self.neg_edges = self.neg_sample(mask_num)
             self.pseudo_labels = torch.cat([torch.ones(mask_num), torch.zeros(mask_num)]).long().to(self.device)
@@ -69,7 +70,7 @@ class EdgeMask(SSLTask):
         return F.nll_loss(output, self.pseudo_labels)
 
     def neg_sample(self, edge_num):
-        edges = self.edge_index.t().cpu().numpy()
+        edges = torch.stack(self.edge_index).t().cpu().numpy()
         exclude = set([(_[0], _[1]) for _ in list(edges)])
         itr = self.sample(exclude)
         sampled = [next(itr) for _ in range(edge_num)]
@@ -550,7 +551,7 @@ class SelfAuxiliaryTaskPretrainer(SelfAuxiliaryTaskTrainer):
 
     def finetune(self):
         print("Fine-tuning")
-        self.original_data.apply(lambda x: x.to(self.device))
+        self.original_data.to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         self.model.to(self.device)
 
@@ -634,7 +635,7 @@ class SelfAuxiliaryTaskJointTrainer(SelfAuxiliaryTaskTrainer):
         # self.resplit_data(dataset.data)
         self.data = dataset.data
         self.original_data = dataset.data
-        self.data.apply(lambda x: x.to(self.device))
+        self.data.to(self.device)
         self.set_agent()
         self.data = self.agent.transform_data()
         self.original_data.apply(lambda x: x.to(self.device))

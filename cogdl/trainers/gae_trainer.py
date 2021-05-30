@@ -23,12 +23,14 @@ class GAETrainer(BaseTrainer):
         self.num_nodes = data.x.shape[0]
         adj_mx = (
             torch.sparse_coo_tensor(
-                data.edge_index, torch.ones(data.edge_index.shape[1]), torch.Size([data.x.shape[0], data.x.shape[0]])
+                torch.stack(data.edge_index),
+                torch.ones(data.edge_index[0].shape[0]),
+                torch.Size([data.x.shape[0], data.x.shape[0]]),
             )
             .to_dense()
             .to(self.device)
         )
-        data = data.apply(lambda x: x.to(self.device))
+        data = data.to(self.device)
 
         print("Training initial embedding...")
         epoch_iter = tqdm(range(self.max_epoch))

@@ -104,7 +104,7 @@ class SAGE(BaseModel):
         self.walk_res = torch.as_tensor(walk_res)[:, 1:]
 
         if not self.num_nodes:
-            self.num_nodes = torch.max(data.edge_index).item() + 1
+            self.num_nodes = max(data.edge_index[0].max(), data.edge_index[1].max()).item() + 1
 
         # if self.negative_samples is None:
         self.negative_samples = torch.from_numpy(

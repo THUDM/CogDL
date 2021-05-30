@@ -83,7 +83,7 @@ class SuperGATTrainer(BaseTrainer):
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
 
-        self.data.apply(lambda x: x.to(self.device))
+        self.data.to(self.device)
         self.model = self.model.to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         epoch_iter = tqdm(range(self.epochs))

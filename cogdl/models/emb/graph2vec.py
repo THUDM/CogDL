@@ -1,4 +1,6 @@
 import hashlib
+
+import torch
 from joblib import Parallel, delayed
 import networkx as nx
 import numpy as np
@@ -50,7 +52,8 @@ class Graph2Vec(BaseModel):
 
     @staticmethod
     def feature_extractor(data, rounds, name):
-        graph = nx.from_edgelist(np.array(data.edge_index.T.cpu(), dtype=int))
+        edge_index = torch.stack(data.edge_index)
+        graph = nx.from_edgelist(np.array(edge_index.T.cpu(), dtype=int))
         if data.x is not None:
             feature = {int(key): str(val) for key, val in enumerate(np.array(data.x.cpu()))}
         else:

@@ -32,7 +32,7 @@ try:
     def csrmhspmm(rowptr, colind, feat, attention):
         return MHSPMMFunction.apply(rowptr, colind, feat, attention)
 
-    print("Use fast Multi-head attention...")
+
 except Exception:
     mhspmm = None
     csrmhspmm = None

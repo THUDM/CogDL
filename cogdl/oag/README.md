@@ -45,6 +45,22 @@ sequence_output, pooled_output = model.bert.forward(
     position_ids_second=torch.LongTensor(position_ids_second).unsqueeze(0)
 )
 ```
+If you want to encode various type of entities separately, you can use the following code instead
+```python
+from cogdl import oagbert
+
+tokenizer, model = oagbert("oagbert-v2")
+title = 'BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding'
+abstract = 'We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers. Unlike recent language representation...'
+authors = ['Jacob Devlin', 'Ming-Wei Chang', 'Kenton Lee', 'Kristina Toutanova']
+venue = 'north american chapter of the association for computational linguistics'
+affiliations = ['Google']
+concepts = ['language model', 'natural language inference', 'question answering']
+# encode paper
+paper_info = model.encode_paper(
+    title=title, abstract=abstract, venue=venue, authors=authors, concepts=concepts, affiliations=affiliations, reduction="max"
+)
+```
 You can also use some integrated functions to use OAG-BERT v2 directly, such as using `decode_beamsearch` to generate entities based on existing context. For example, to generate concepts with 2 tokens for the BERT paper, run the following code
 ```python
 model.eval()

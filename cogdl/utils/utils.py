@@ -234,7 +234,7 @@ def init_operator_configs(args=None):
     if CONFIGS["spmm_flag"] or CONFIGS["mh_spmm_flag"]:
         return
     if args is None:
-        args = build_args_from_dict({"fast-spmm": True, "cpu": not torch.cuda.is_available()})
+        args = build_args_from_dict({"fast_spmm": True, "cpu": not torch.cuda.is_available()})
     initialize_spmm(args)
     initialize_edge_softmax(args)
 

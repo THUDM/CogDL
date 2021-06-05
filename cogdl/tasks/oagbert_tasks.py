@@ -231,7 +231,7 @@ class zero_shot_inference(BaseTask):
                 r = pool.apply_async(self.process_file, (device, filename, pbar))
                 results.append((r, filename))
                 idx += 1
-            
+
             if self.testing:
                 cuda_num = len(self.cudalist)
                 cuda_idx = self.cudalist[idx % cuda_num]

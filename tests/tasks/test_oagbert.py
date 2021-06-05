@@ -1,6 +1,7 @@
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
 from cogdl.utils import build_args_from_dict
+import torch
 
 def get_default_args():
     default_dict = {
@@ -23,7 +24,7 @@ def zero_shot_infer_arxiv():
     args.task = 'zero_shot_infer'
     args.dataset = 'arxivvenue'
     args.model = 'oagbert'
-    args.cuda = [5,6,7]
+    args.cuda = [i for i in range(torch.cuda.device_count())]
     task = build_task(args)
     ret = task.train()
     assert ret['Accuracy'] < 1

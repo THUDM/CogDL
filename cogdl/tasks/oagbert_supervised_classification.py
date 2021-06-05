@@ -230,6 +230,8 @@ class supervised_classification(BaseTask):
         correct, total, total_loss = 0, 0, 0
         pbar = trange(0, size, self.batch_size, ncols=0, desc=desc)
         for i in pbar:
+            if self.testing and i % 500 != 0:
+                continue
             if train:
                 self.optimizer.zero_grad()
             bs = dataset[i : i + self.batch_size]

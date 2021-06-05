@@ -95,7 +95,7 @@ def get_span_decode_prob(
     logprobs = 0.0
     logproblist = []
     for i in range(span_length):
-        if testing and i%10 != 0:
+        if testing and i % 10 != 0:
             continue
         # scibert deleted
         batch = [None] + [
@@ -151,7 +151,6 @@ class zero_shot_inference(BaseTask):
         self.tokenizer, self.model = oagbert("oagbert-v2", True)
 
         self.cudalist = args.cuda
-        print(self.cudalist)
         self.model_name = args.model
         self.wprop = args.wprop  # prompt
         self.wabs = args.wabs  # with abstract
@@ -174,8 +173,12 @@ class zero_shot_inference(BaseTask):
         pbar.reset(len(self.sample[filename]), name=filename)
         pbar.set_description("[%s]" % (filename))
         fout = open(output_file, "a")
+        i = 0
         for paper in self.sample[filename]:
             pbar.update(1)
+            i = i + 1
+            if self.testing and i % 20 != 0:
+                continue
             title = paper["title"]
             abstract = "".join(paper["abstracts"])
             obj, probs, problists = {}, {}, {}

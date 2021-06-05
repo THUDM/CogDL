@@ -19,7 +19,7 @@ def get_default_args():
     }
     return build_args_from_dict(default_dict)
 
-def zero_shot_infer_arxiv():
+def test_zero_shot_infer_arxiv():
     args = get_default_args()
     args.task = 'zero_shot_infer'
     args.dataset = 'arxivvenue'
@@ -29,7 +29,7 @@ def zero_shot_infer_arxiv():
     ret = task.train()
     assert ret['Accuracy'] < 1
 
-def finetune_arxiv():
+def test_finetune_arxiv():
     args = get_default_args()
     args.task = 'supervised_classification'
     args.dataset = 'arxivvenue'
@@ -41,5 +41,5 @@ def finetune_arxiv():
 
 
 if __name__ == '__main__':
-    zero_shot_infer_arxiv()
-    finetune_arxiv()
+    test_zero_shot_infer_arxiv()
+    test_finetune_arxiv()

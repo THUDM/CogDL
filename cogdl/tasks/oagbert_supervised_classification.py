@@ -123,13 +123,15 @@ class supervised_classification(BaseTask):
         parser.add_argument("--include_fields", type=str, nargs="+", default=["title"])
         parser.add_argument("--freeze", action="store_true", default=False)
         parser.add_argument("--cuda", type=int, default=-1)
+        parser.add_argument("--testing", action="store_true", default=False)
 
     def __init__(self, args):
         super().__init__(args)
         self.dataset = args.dataset
 
         # teporarily fixed constant
-        self.epochs = 2
+        self.testing = args.testing
+        self.epochs = 1 if self.testing else 2
         self.batch_size = 16
         self.num_class = 19 if self.dataset == "l0fos" else 30
         self.write_dir = "saved"

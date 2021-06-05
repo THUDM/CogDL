@@ -32,6 +32,7 @@ def get_span_decode_prob(
     device=None,
     wprop=False,
     wabs=False,
+    testing=False,
 ):
     token_type_str_lookup = ["TEXT", "AUTHOR", "VENUE", "AFF", "FOS"]
     input_ids = []
@@ -94,6 +95,8 @@ def get_span_decode_prob(
     logprobs = 0.0
     logproblist = []
     for i in range(span_length):
+        if testing and i%10 != 0:
+            continue
         # scibert deleted
         batch = [None] + [
             torch.LongTensor(t[:max_seq_length]).unsqueeze(0).to(device or "cpu")
@@ -188,6 +191,7 @@ class zero_shot_inference(BaseTask):
                     debug=False,
                     wprop=self.wprop,
                     wabs=self.wabs,
+                    testing=self.testing,
                 )
                 probs[candidate] = prob
                 problists[candidate] = problist

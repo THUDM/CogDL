@@ -177,7 +177,7 @@ class zero_shot_inference(BaseTask):
         for paper in self.sample[filename]:
             pbar.update(1)
             i = i + 1
-            if self.testing and i % 20 != 0:
+            if self.testing and i % 50 != 0:
                 continue
             title = paper["title"]
             abstract = "".join(paper["abstracts"])
@@ -231,6 +231,16 @@ class zero_shot_inference(BaseTask):
                 r = pool.apply_async(self.process_file, (device, filename, pbar))
                 results.append((r, filename))
                 idx += 1
+            
+            if self.testing:
+                cuda_num = len(self.cudalist)
+                cuda_idx = self.cudalist[idx % cuda_num]
+                device = torch.device("cuda:%d" % cuda_idx if cuda_idx >= 0 else "cpu")
+
+                pbar = MultiProcessTqdm(lock, positions, update_interval=1)
+                for filename in self.sample.keys():
+                    self.process_file(device, filename, pbar)
+                    break
 
             summary_pbar.reset(total=len(results), name="Total")
             finished = set()

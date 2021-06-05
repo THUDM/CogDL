@@ -19,6 +19,8 @@ def get_default_args():
         "training_percents": [0.1],
         "activation": "relu",
         "residual": False,
+        "sampling": False,
+        "sample_size": 20,
         "norm": None,
     }
     return build_args_from_dict(default_dict)
@@ -43,6 +45,8 @@ def get_unsupervised_nn_args():
         "task": "unsupervised_node_classification",
         "checkpoint": False,
         "load_emb_path": None,
+        "sampling": False,
+        "sample_size": 20,
         "training_percents": [0.1],
     }
     return build_args_from_dict(default_dict)

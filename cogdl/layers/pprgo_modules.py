@@ -96,12 +96,13 @@ def topk_ppr_matrix(adj_matrix, alpha, eps, idx, topk, normalization="row"):
 
 
 def build_topk_ppr_matrix_from_data(edge_index, *args, **kwargs):
-    if isinstance(edge_index, torch.Tensor):
-        num_node = int(torch.max(edge_index)) + 1
-        edge_index = edge_index.cpu().numpy()
+    if isinstance(edge_index, torch.Tensor) or isinstance(edge_index, tuple):
+        row, col = edge_index
+        row, col = row.numpy(), col.numpy()
+        num_node = int(max(row.max(), col.max())) + 1
 
-        val = np.ones(edge_index.shape[1])
-        adj_matrix = sp.csr_matrix((val, (edge_index[0], edge_index[1])), shape=(num_node, num_node))
+        val = np.ones(row.shape[0])
+        adj_matrix = sp.csr_matrix((val, (row, col)), shape=(num_node, num_node))
     else:
         adj_matrix = edge_index
     return topk_ppr_matrix(adj_matrix, *args, **kwargs)

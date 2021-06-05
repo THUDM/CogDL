@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn.conv import ChebConv
@@ -46,7 +47,7 @@ class Chebyshev(BaseModel):
 
     def forward(self, graph):
         x = graph.x
-        edge_index = graph.edge_index
+        edge_index = torch.stack(graph.edge_index)
         for conv in self.convs[:-1]:
             x = F.relu(conv(x, edge_index))
             x = F.dropout(x, p=self.dropout, training=self.training)

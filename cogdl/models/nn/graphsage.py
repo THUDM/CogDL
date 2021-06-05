@@ -14,8 +14,10 @@ from cogdl.data import Graph
 
 def sage_sampler(adjlist, edge_index, num_sample):
     if adjlist == {}:
-        edge_index = edge_index.t().cpu().tolist()
-        for i in edge_index:
+        row, col = edge_index
+        row = row.cpu().numpy()
+        col = col.cpu().numpy()
+        for i in zip(row, col):
             if not (i[0] in adjlist):
                 adjlist[i[0]] = [i[1]]
             else:

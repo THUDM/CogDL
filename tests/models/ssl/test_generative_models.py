@@ -31,6 +31,8 @@ def get_default_args():
         "checkpoint": False,
         "num_layers": 2,
         "activation": "relu",
+        "dropedge_rate": 0,
+        "agc_eval": False,
         "residual": False,
         "norm": None,
     }
@@ -188,7 +190,7 @@ def test_m3s():
 
 
 if __name__ == "__main__":
-    test_supergat()
+    # test_supergat()
     test_m3s()
     test_edgemask()
     test_edgemask_pt_ft()

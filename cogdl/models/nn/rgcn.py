@@ -125,7 +125,7 @@ class RGCNLayer(nn.Module):
         else:
             weight = self.weight
 
-        edge_index = graph.edge_index
+        edge_index = torch.stack(graph.edge_index)
         edge_weight = graph.edge_weight
 
         with graph.local_graph():
@@ -135,6 +135,7 @@ class RGCNLayer(nn.Module):
             h_list = []
             for edge_t in range(self.num_edge_types):
                 edge_mask = edge_type == edge_t
+
                 graph.edge_index = edge_index[:, edge_mask]
                 graph.edge_weight = edge_weight[edge_mask]
                 temp = spmm(graph, h[edge_t])
@@ -143,7 +144,7 @@ class RGCNLayer(nn.Module):
 
     def bdd_forward(self, graph, x):
         edge_type = graph.edge_attr
-        edge_index = graph.edge_index
+        edge_index = torch.stack(graph.edge_index)
         _x = x.view(-1, self.num_bases, self.block_in_feats)
 
         edge_weight = torch.ones(edge_type.shape).to(x.device)
@@ -265,7 +266,7 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
         self.emb = nn.Embedding(num_entities, hidden_size)
 
     def forward(self, graph):
-        reindexed_nodes, reindexed_edges = torch.unique(graph.edge_index, sorted=True, return_inverse=True)
+        reindexed_nodes, reindexed_edges = torch.unique(torch.stack(graph.edge_index), sorted=True, return_inverse=True)
         x = self.emb(reindexed_nodes)
         self.cahce_index = reindexed_nodes
 
@@ -281,7 +282,8 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
             mask = graph.val_mask
         else:
             mask = graph.test_mask
-        edge_index, edge_types = graph.edge_index[:, mask], graph.edge_attr[mask]
+        edge_index = torch.stack(graph.edge_index)
+        edge_index, edge_types = edge_index[:, mask], graph.edge_attr[mask]
 
         self.get_edge_set(edge_index, edge_types)
         batch_edges, batch_attr, samples, rels, labels = sampling_edge_uniform(

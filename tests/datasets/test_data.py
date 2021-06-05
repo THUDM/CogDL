@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 from cogdl.datasets import build_dataset_from_name
 from cogdl.utils import get_degrees
@@ -23,11 +24,13 @@ class Test_Data(object):
     def test_edge_subgraph_sampling(self):
         sampled_edges = np.random.randint(0, self.num_edges, (200,))
         subgraph = self.data.edge_subgraph(sampled_edges, require_idx=False)
-        assert subgraph.edge_index.shape == (2, len(sampled_edges))
+        row, col = subgraph.edge_index
+        assert row.shape[0] == col.shape[0]
+        assert row.shape[0] == len(sampled_edges)
 
     def test_adj_sampling(self):
         sampled_nodes = np.arange(0, 10)
-        edge_index = self.data.edge_index.t().cpu().numpy()
+        edge_index = torch.stack(self.data.edge_index).t().cpu().numpy()
         edge_index = [tuple(x) for x in edge_index]
         print(np.array(edge_index).shape)
         for size in [5, -1]:
@@ -40,5 +43,6 @@ class Test_Data(object):
         symmetric = self.data.is_symmetric()
         assert symmetric is True
         degrees = self.data.degrees()
-        _degrees = get_degrees(self.data.edge_index)
+        row, col = self.data.edge_index
+        _degrees = get_degrees(row, col)
         assert (degrees == _degrees).all()

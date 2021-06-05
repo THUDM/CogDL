@@ -59,7 +59,9 @@ class SimilaritySearch(BaseTask):
 
     def _train_wrap(self, data):
         G = nx.MultiGraph()
-        G.add_edges_from(data.edge_index.t().tolist())
+        row, col = data.edge_index
+        row, col = row.numpy(), col.numpy()
+        G.add_edges_from(list(zip(row, col)))
         embeddings = self.model.train(data)
         # Map node2id
         features_matrix = np.zeros((G.number_of_nodes(), self.hidden_size))

@@ -139,6 +139,8 @@ class SuperGATLayer(MessagePassing):
         :param attention_edge_index: [2, E'], Use for link prediction
         :return:
         """
+        if isinstance(edge_index, tuple):
+            edge_index = torch.stack(edge_index)
         if self.pretraining and self.pretraining_noise_ratio > 0.0:
             edge_index, _ = dropout_adj(
                 edge_index,

@@ -41,7 +41,9 @@ class MultiplexNodeClassification(BaseTask):
 
     def train(self):
         G = nx.DiGraph()
-        G.add_edges_from(self.data.edge_index.t().tolist())
+        row, col = self.data.edge_index
+        G.add_edges_from(list(zip(row.numpy(), col.numpy())))
+        # G.add_edges_from(self.data.edge_index.t().tolist())
         if self.args.model != "gcc":
             embeddings = self.model.train(G, self.data.pos.tolist())
         else:

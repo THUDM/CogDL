@@ -60,11 +60,6 @@ class GINLayer(nn.Module):
         self.apply_func = apply_func
 
     def forward(self, graph, x):
-        # edge_index, _ = remove_self_loops()
-        # edge_weight = torch.ones(edge_index.shape[1]).to(x.device) if edge_weight is None else edge_weight
-        # adj = torch.sparse_coo_tensor(edge_index, edge_weight, (x.shape[0], x.shape[0]))
-        # adj = adj.to(x.device)
-        # out = (1 + self.eps) * x + torch.spmm(adj, x)
         out = (1 + self.eps) * x + spmm(graph, x)
         if self.apply_func is not None:
             out = self.apply_func(out)
@@ -175,8 +170,6 @@ class GIN(BaseModel):
         final_score = 0
 
         for i in range(self.num_layers):
-            # pooled = self.pooling(layer_rep[i], batch, dim=0)
-            # pooled = scatter_add(layer_rep[i], batch.batch, dim=0)
             hsize = layer_rep[i].shape[1]
             output = torch.zeros(batchsize, layer_rep[i].shape[1]).to(device)
             pooled = output.scatter_add_(dim=0, index=batch.batch.view(-1, 1).repeat(1, hsize), src=layer_rep[i])

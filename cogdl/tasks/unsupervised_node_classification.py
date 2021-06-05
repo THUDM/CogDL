@@ -40,6 +40,7 @@ class UnsupervisedNodeClassification(BaseTask):
         super(UnsupervisedNodeClassification, self).__init__(args)
         dataset = build_dataset(args) if dataset is None else dataset
 
+        self.dataset = dataset
         self.data = dataset[0]
 
         self.num_nodes = self.data.y.shape[0]
@@ -103,20 +104,21 @@ class UnsupervisedNodeClassification(BaseTask):
 
     def train(self):
         if self.trainer is not None:
-            return self.trainer.fit(self.model, self.data)
+            return self.trainer.fit(self.model, self.dataset)
         if self.load_emb_path is None:
             if "gcc" in self.model_name:
                 features_matrix = self.model.train(self.data)
             else:
                 G = nx.Graph()
+                edge_index = torch.stack(self.data.edge_index)
                 if self.is_weighted:
                     edges, weight = (
-                        self.data.edge_index.t().tolist(),
+                        edge_index.t().tolist(),
                         self.data.edge_attr.tolist(),
                     )
                     G.add_weighted_edges_from([(edges[i][0], edges[i][1], weight[0][i]) for i in range(len(edges))])
                 else:
-                    G.add_edges_from(self.data.edge_index.t().tolist())
+                    G.add_edges_from(edge_index.t().tolist())
                 embeddings = self.model.train(G)
                 if self.enhance is not None:
                     embeddings = self.enhance_emb(G, embeddings)

@@ -75,6 +75,7 @@ class SrgcnHead(nn.Module):
 
         # nl_adj_mat_ind, nl_adj_mat_val = add_self_loops(edge_index, num_nodes=N)[0], edge_attr.squeeze()
         nl_adj_mat_ind = add_remaining_self_loops(edge_index, num_nodes=N)[0]
+        nl_adj_mat_ind = torch.stack(nl_adj_mat_ind)
         nl_adj_mat_val = torch.ones(nl_adj_mat_ind.shape[1]).to(x.device)
 
         for _ in range(self.nhop - 1):
@@ -149,6 +150,7 @@ class SrgcnSoftmaxHead(nn.Module):
         edge_index = graph.edge_index
         # adj_mat_ind, adj_mat_val = add_self_loops(edge_index, num_nodes=N)[0], edge_attr.squeeze()
         adj_mat_ind = add_remaining_self_loops(edge_index, num_nodes=N)[0]
+        adj_mat_ind = torch.stack(adj_mat_ind)
         adj_mat_val = torch.ones(adj_mat_ind.shape[1]).to(x.device)
 
         h = torch.mm(x, self.weight)

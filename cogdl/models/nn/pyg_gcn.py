@@ -47,7 +47,7 @@ class GCN(BaseModel):
 
     def forward(self, graph):
         x = graph.x
-        edge_index, edge_weight = graph.edge_index, graph.edge_weight
+        edge_index, edge_weight = torch.stack(graph.edge_index), graph.edge_weight
         for conv in self.convs[:-1]:
             x = F.relu(conv(x, edge_index, edge_weight))
             x = F.dropout(x, p=self.dropout, training=self.training)

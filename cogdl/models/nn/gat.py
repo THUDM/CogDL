@@ -4,8 +4,7 @@ import torch.nn.functional as F
 import math
 
 from .. import BaseModel, register_model
-from cogdl.utils import mul_edge_softmax, spmm, mh_spmm
-from cogdl.operators.mhspmm import csrmhspmm
+from cogdl.utils import mul_edge_softmax, spmm, mh_spmm, check_mh_spmm
 
 
 class GATLayer(nn.Module):
@@ -53,21 +52,21 @@ class GATLayer(nn.Module):
         h = torch.matmul(x, self.W).view(-1, self.nhead, self.out_features)
         h[torch.isnan(h)] = 0.0
 
-        edge_index = graph.edge_index
+        row, col = graph.edge_index
         # Self-attention on the nodes - Shared attention mechanism
-        h_l = (self.a_l * h).sum(dim=-1)[edge_index[0, :]]
-        h_r = (self.a_r * h).sum(dim=-1)[edge_index[1, :]]
+        h_l = (self.a_l * h).sum(dim=-1)[row]
+        h_r = (self.a_r * h).sum(dim=-1)[col]
         edge_attention = self.leakyrelu(h_l + h_r)
-        # edge_e: E * H
+        # edge_attention: E * H
         edge_attention = mul_edge_softmax(graph, edge_attention)
         edge_attention = self.dropout(edge_attention)
 
-        if csrmhspmm is not None:
+        if check_mh_spmm() and next(self.parameters()).device.type != "cpu":
             if self.nhead > 1:
                 h_prime = mh_spmm(graph, edge_attention, h)
                 out = h_prime.view(h_prime.shape[0], -1)
             else:
-                edge_weight = edge_attention[0]
+                edge_weight = edge_attention.view(-1)
                 with graph.local_graph():
                     graph.edge_weight = edge_weight
                     out = spmm(graph, h.squeeze(1))
@@ -76,7 +75,7 @@ class GATLayer(nn.Module):
                 h_prime = []
                 h = h.permute(1, 0, 2).contiguous()
                 for i in range(self.nhead):
-                    edge_weight = edge_attention[i]
+                    edge_weight = edge_attention[:, i]
                     graph.edge_weight = edge_weight
                     hidden = h[i]
                     assert not torch.isnan(hidden).any()

@@ -630,7 +630,9 @@ class MaskTrainer(Pretrainer):
                 self_loop_type=self.self_loop_type,
             )
             if "bio" in self.dataset_name:
-                masked_edges = batch.edge_index[:, batch.masked_edge_idx]
+                edge_index = torch.stack(batch.edge_index)
+                masked_edges = edge_index[:, batch.masked_edge_idx]
+
                 masked_edges_rep = hidden[masked_edges[0]] + hidden[masked_edges[1]]
                 pred = self.linear(masked_edges_rep)
                 labels = torch.argmax(batch.mask_edge_label, dim=1)

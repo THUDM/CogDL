@@ -53,6 +53,8 @@ class PPNP(BaseModel):
 
     def forward(self, graph):
         def get_ready_format(input, edge_index, edge_attr=None):
+            if isinstance(edge_index, tuple):
+                edge_index = torch.stack(edge_index)
             if edge_attr is None:
                 edge_attr = torch.ones(edge_index.shape[1]).float().to(input.device)
             adj = torch.sparse_coo_tensor(

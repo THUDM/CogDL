@@ -23,13 +23,12 @@ def node_degree_as_feature(data):
     max_degree = 0
     degrees = []
     for graph in data:
-        edge_index = graph.edge_index
-        edge_weight = torch.ones((edge_index.size(1),), device=edge_index.device)
+        row, col = graph.edge_index
+        edge_weight = torch.ones((row.shape[0],), device=row.device)
         fill_value = 1
         num_nodes = graph.num_nodes
-        edge_index, edge_weight = add_remaining_self_loops(edge_index, edge_weight, fill_value, num_nodes)
-        row, col = edge_index
-        deg = torch.zeros(num_nodes).to(edge_index.device).scatter_add_(0, row, edge_weight).long()
+        (row, col), edge_weight = add_remaining_self_loops((row, col), edge_weight, fill_value, num_nodes)
+        deg = torch.zeros(num_nodes).to(row.device).scatter_add_(0, row, edge_weight).long()
         degrees.append(deg.cpu() - 1)
         max_degree = max(torch.max(deg), max_degree)
     max_degree = int(max_degree)

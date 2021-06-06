@@ -145,4 +145,7 @@ SUPPORTED_DATASETS = {
     "chem": "cogdl.datasets.strategies_data",
     "bace": "cogdl.datasets.strategies_data",
     "bbbp": "cogdl.datasets.strategies_data",
+    "l0fos": "cogdl.datasets.oagbert_data",
+    "aff30": "cogdl.datasets.oagbert_data",
+    "arxivvenue": "cogdl.datasets.oagbert_data"
 }

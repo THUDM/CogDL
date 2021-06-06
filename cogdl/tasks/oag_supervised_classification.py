@@ -17,7 +17,7 @@ dataset_url_dict = {
     "aff30": "https://cloud.tsinghua.edu.cn/f/949c20ff61df469b86d1/?dl=1",
     "arxivvenue": "https://cloud.tsinghua.edu.cn/f/fac19b2aa6a34e9bb176/?dl=1",
 }
-# python scripts/train.py --task supervised_classification --model oagbert --dataset aff30
+# python scripts/train.py --task oag_supervised_classification --model oagbert --dataset aff30
 
 
 class ClassificationModel(torch.nn.Module):
@@ -116,7 +116,7 @@ class ClassificationModel(torch.nn.Module):
             return self.softmax(outputs), outputs.argmax(dim=1)
 
 
-@register_task("supervised_classification")
+@register_task("oag_supervised_classification")
 class supervised_classification(BaseTask):
     def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""

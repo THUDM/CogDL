@@ -23,7 +23,7 @@ def get_default_args():
 
 def test_zero_shot_infer_arxiv():
     args = get_default_args()
-    args.task = "zero_shot_infer"
+    args.task = "oag_zero_shot_infer"
     args.dataset = "arxivvenue"
     args.model = "oagbert"
     args.cuda = [-1]
@@ -34,7 +34,7 @@ def test_zero_shot_infer_arxiv():
 
 def test_finetune_arxiv():
     args = get_default_args()
-    args.task = "supervised_classification"
+    args.task = "oag_supervised_classification"
     args.dataset = "arxivvenue"
     args.model = "oagbert"
     args.cuda = -1

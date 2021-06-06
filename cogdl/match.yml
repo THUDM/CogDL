@@ -231,14 +231,14 @@ attributed_graph_clustering:
     - citeseer
     - pubmed
     - test_small
-zero_shot_infer:
+oag_zero_shot_infer:
   - model:
     - oagbert
     dataset:
     - l0fos
     - arxivvenue
     - aff30
-supervised_classification:
+oag_supervised_classification:
   - model:
     - oagbert
     dataset:

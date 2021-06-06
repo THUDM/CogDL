@@ -13,7 +13,7 @@ from cogdl.datasets import build_dataset
 from collections import Counter
 from . import BaseTask, register_task
 
-# python scripts/train.py --task zero_shot_infer --model oagbert --dataset l0fos
+# python scripts/train.py --task oag_zero_shot_infer --model oagbert --dataset l0fos
 
 
 def get_span_decode_prob(
@@ -130,7 +130,7 @@ def get_span_decode_prob(
     return np.exp(logprobs), logproblist
 
 
-@register_task("zero_shot_infer")
+@register_task("oag_zero_shot_infer")
 class zero_shot_inference(BaseTask):
     def add_args(parser: argparse.ArgumentParser):
         """Add task-specific arguments to the parser."""

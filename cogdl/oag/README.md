@@ -196,7 +196,7 @@ This fine-tuning was conducted on [whoiswho](https://www.aminer.cn/whoiswho) nam
 |              Title              |       0.349 |          0.725 |
 | Title+Abstract+Author+Aff+Venue |       0.355 |          0.789 |
 
-For more details, refer to [examples/oagbert_metainfo.py](https://github.com/THUDM/cogdl/blob/master/examples/oagbert_metainfo.py) in CogDL.
+For more details, refer to [examples/oagbert/oagbert_metainfo.py](https://github.com/THUDM/cogdl/blob/master/examples/oagbert/oagbert_metainfo.py) in CogDL.
 
 
 ## Chinese Version

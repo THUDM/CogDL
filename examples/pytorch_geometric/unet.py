@@ -38,7 +38,9 @@ class UNet(BaseModel):
             self.in_feats, self.hidden_size, self.out_feats, depth=3, pool_ratios=[2000 / num_nodes, 0.5], act=F.elu
         )
 
-    def forward(self, x, edge_index):
+    def forward(self, graph):
+        x = graph.x
+        edge_index = torch.stack(graph.edge_index)
         edge_index, _ = dropout_adj(
             edge_index, p=0.2, force_undirected=True, num_nodes=x.shape[0], training=self.training
         )
@@ -46,9 +48,6 @@ class UNet(BaseModel):
 
         x = self.unet(x, edge_index)
         return x
-
-    def predict(self, data):
-        return self.forward(data.x, data.edge_index)
 
 
 if __name__ == "__main__":

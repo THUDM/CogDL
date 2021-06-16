@@ -93,6 +93,7 @@ def test_compgcn_wn18rr():
     args.model = "compgcn"
     args.task = "link_prediction"
     args.regularizer = "basis"
+    args.opn = "sub"
     dataset = build_dataset(args)
     args = get_nums(dataset, args)
     task = build_task(args)
@@ -117,14 +118,13 @@ def get_kge_default_args():
         "batch_size": 64,
         "test_batch_size": 100,
         "uni_weight": False,
-        "learning_rate": 0.0001,
+        "lr": 0.0001,
         "warm_up_steps": None,
         "max_epoch": 10,
         "log_steps": 100,
         "test_log_steps": 100,
         "gamma": 12,
         "regularization": 0.0,
-        "cuda": False,
         "cpu": True,
         "checkpoint": False,
         "save_dir": ".",

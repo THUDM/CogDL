@@ -109,15 +109,15 @@ For multiplex link prediction, we adopt Area Under the Receiver Operating Charac
 
 #### Knowledge graph completion
 
-For knowledge graph completion, we adopt Mean Reciprocal Rank (MRR) as the evaluation metric. Every triplet-based embedding algorithm is trained with 80000 steps, negative sample size 128 and learning rate 0.001. Every GNN-based embedding algorithm is trained with 3000 steps with patience 20.
+For knowledge graph completion, we adopt Mean Reciprocal Rank (MRR) as the evaluation metric. Every triplet-based embedding algorithm is trained with negative sample size 128 and learning rate 0.001. Every GNN-based embedding algorithm is trained with 3000 steps with patience 20.
 
 | Rank | Method                                                                                                                      | FB15k-237 |   WN18    |  WN18RR   |
 | ---- | --------------------------------------------------------------------------------------------------------------------------- | :-------: | :-------: | :-------: |
 | 1    | RotatE [(Sun et al, ICLR'19)](https://arxiv.org/pdf/1902.10197.pdf)                                                         | **31.10** | **93.99** | **46.05** |
-| 2    | ComplEx [(Trouillon et al, ICML'18)](https://arxiv.org/abs/1606.06357)                                                      |   15.38   |   86.40   |   40.77   |
+| 2    | ComplEx [(Trouillon et al, ICML'18)](https://arxiv.org/abs/1606.06357)                                                      |   28.85   |   86.40   |   40.77   |
 | 3    | TransE [(Bordes et al, NIPS'13)](https://proceedings.neurips.cc/paper/2013/file/1cecc7a77928ca8133fa24680a88d2f9-Paper.pdf) |   30.50   |   71.55   |   21.85   |
-| 4    | DistMult [(Yang et al, ICLR'15)](https://arxiv.org/pdf/1412.6575.pdf)                                                       |   15.91   |   75.60   |   39.06   |
-| 5    | CompGCN [(Vashishth et al, ICLR'20)](https://arxiv.org/abs/1911.03082)                                                      |   12.66   |   36.34   |   27.20   |
+| 4    | DistMult [(Yang et al, ICLR'15)](https://arxiv.org/pdf/1412.6575.pdf)                                                       |   24.93   |   78.77   |   41.64   |
+| 5    | CompGCN [(Vashishth et al, ICLR'20)](https://arxiv.org/abs/1911.03082)                                                      |   21.94   |   39.48   |   44.80   |
 
 ### Graph Classification
 

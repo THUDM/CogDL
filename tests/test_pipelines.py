@@ -1,3 +1,4 @@
+import numpy as np
 from cogdl import pipeline
 
 
@@ -25,8 +26,20 @@ def test_oagbert():
     assert tuple(outputs[0].shape) == (1, 14, 32)
     assert tuple(outputs[1].shape) == (1, 32)
 
+def test_gen_emb():
+    generator = pipeline("generate-emb", model="prone")
+
+    edge_index = np.array([[0, 1], [0, 2], [0, 3], [1, 2], [2, 3]])
+    outputs = generator(edge_index)
+    assert tuple(outputs.shape) == (4, 4)
+
+    edge_weight = np.array([0.1, 0.3, 1.0, 0.8, 0.5])
+    outputs = generator(edge_index, edge_weight)
+    assert tuple(outputs.shape) == (4, 4)
+
 
 if __name__ == "__main__":
     test_dataset_stats()
     test_dataset_visual()
     test_oagbert()
+    test_gen_emb()

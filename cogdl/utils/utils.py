@@ -246,7 +246,7 @@ def initialize_spmm(args):
             from cogdl.operators.spmm import csrspmm
 
             CONFIGS["fast_spmm"] = csrspmm
-            print("Using fast-spmm to speed up training")
+            # print("Using fast-spmm to speed up training")
         except Exception:
             print("Failed to load fast version of SpMM, use torch.scatter_add instead.")
 

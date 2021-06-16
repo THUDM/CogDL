@@ -214,13 +214,6 @@ def spmm_scatter(row, col, values, b):
     return output
 
 
-def spmm_adj(indices, values, x, num_nodes=None):
-    if num_nodes is None:
-        num_nodes = x.shape[0]
-    adj = torch.sparse_coo_tensor(indices=indices, values=values, size=(num_nodes, num_nodes))
-    return torch.spmm(adj, x)
-
-
 CONFIGS = {"fast_spmm": None, "csrmhspmm": None, "csr_edge_softmax": None, "spmm_flag": False, "mh_spmm_flag": False}
 
 

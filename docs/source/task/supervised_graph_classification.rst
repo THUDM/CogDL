@@ -57,7 +57,8 @@ In this section, we will introduce the implementation "Graph classification task
                datalist = node_degree_as_feature(datalist)
                args.num_features = datalist[0].num_features
            return datalist
-   ```
+
+
 
 3. Then we build model and can run `train` to train the model.
 

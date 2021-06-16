@@ -214,6 +214,7 @@ class MultiGraphDataset(Dataset):
         cumsum = {key: 0 for key in keys}
         batch.batch = []
         num_nodes_cum = [0]
+        num_nodes = None
         for i, data in enumerate(data_list):
             for key in data.keys:
                 item = data[key]

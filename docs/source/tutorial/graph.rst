@@ -108,7 +108,8 @@ We also implement commonly used operations in ``Graph``:
 
 
 Mini-batch Graphs
-=================
+--------------------
+
 In node classification, all operations are in one single graph. But in tasks like graph classification, we need to deal with
 many graphs with mini-batch. Datasets for graph classification contains graphs which can be accessed with index, e.x. ``data[2]``.
 To support mini-batch training/inference, CogDL combines graphs in a batch into one whole graph, where adjacency matrices form sparse block diagnal matrices

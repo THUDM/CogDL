@@ -69,7 +69,7 @@ class NodeDataset(Dataset):
     metric: Accuracy, multi-label f1 or multi-class f1. Default: `accuracy`
     """
 
-    def __init__(self, path, scale_feat=True, metric="accuracy"):
+    def __init__(self, path="cus_data.pt", scale_feat=True, metric="accuracy"):
         self.path = path
         super(NodeDataset, self).__init__(root=path)
         try:
@@ -116,29 +116,30 @@ class NodeDataset(Dataset):
 
 
 class GraphDataset(MultiGraphDataset):
-    def __init__(self, path, metric="accuracy"):
-        super(GraphDataset, self).__init__(root=path)
+    def __init__(self, path="cus_graph_data.pt", metric="accuracy"):
         self.path = path
-        try:
-            data = torch.load(path)
-            if hasattr(data, "y"):
-                self.y = torch.cat([idata.y for idata in data])
-            if isinstance(data, list):
-                batch = Batch.from_data_list(data)
-                self.data = batch
-                self.slices = batch.__slices__
-                del self.data.batch
-            else:
-                assert len(data) == 0
-                self.data = data[0]
-                self.slices = data[1]
-        except Exception as e:
-            print(e)
-            exit(1)
+        super(GraphDataset, self).__init__(root=path)
+        # try:
+        data = torch.load(path)
+        if hasattr(data[0], "y"):
+            self.y = torch.cat([idata.y for idata in data])
+        self.data = data
+        # if isinstance(data, list):
+        #     batch = Batch.from_data_list(data)
+        #     self.data = batch
+        #     self.slices = batch.__slices__
+        #     del self.data.batch
+        # else:
+        #     assert len(data) == 0
+        #     self.data = data[0]
+        #     self.slices = data[1]
+        # except Exception as e:
+        #     print(e)
+        #     exit(1)
 
         self.metric = metric
-        if hasattr(self.data, "y"):
-            if len(self.data.y.shape) > 1:
+        if hasattr(self, "y"):
+            if len(self.y.shape) > 1:
                 self.metric = "multilabel_f1"
 
     def _download(self):

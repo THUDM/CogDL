@@ -22,6 +22,7 @@ JKNet collects the output of all layers and concatenate them together to get the
     \end{gather*}
 
 
+
 .. code-block:: python
 
     import torch

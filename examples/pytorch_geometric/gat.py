@@ -1,3 +1,4 @@
+import torch
 import torch.nn.functional as F
 from torch_geometric.nn.conv import GATConv
 
@@ -39,15 +40,14 @@ class GAT(BaseModel):
         self.conv1 = GATConv(in_feats, hidden_size, heads=num_heads, dropout=dropout)
         self.conv2 = GATConv(hidden_size * num_heads, out_feats, dropout=dropout)
 
-    def forward(self, x, edge_index):
+    def forward(self, graph):
+        x = graph.x
+        edge_index = torch.stack(graph.edge_index)
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = F.elu(self.conv1(x, edge_index))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = F.elu(self.conv2(x, edge_index))
         return x
-
-    def predict(self, data):
-        return self.forward(data.x, data.edge_index)
 
 
 if __name__ == "__main__":

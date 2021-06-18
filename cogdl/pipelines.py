@@ -10,7 +10,8 @@ import torch
 
 from cogdl import oagbert
 from cogdl.datasets import build_dataset_from_name
-
+from cogdl.models import build_model
+from cogdl.options import get_default_args
 
 class Pipeline(object):
     def __init__(self, app: str, **kwargs):
@@ -129,10 +130,41 @@ class OAGBertInferencePipepline(Pipeline):
         return outputs
 
 
+class GenerateEmbeddingPipeline(Pipeline):
+    def __init__(self, app: str, model: str, **kwargs):
+        super(GenerateEmbeddingPipeline, self).__init__(app, model=model, **kwargs)
+
+        args = get_default_args(task="unsupervised_node_classification", dataset="blogcatalog", model=model, **kwargs)
+
+        args.model = args.model[0]
+        self.model = build_model(args)
+
+    def __call__(self, edge_index, edge_weight=None):
+        G = nx.Graph()
+        if edge_weight is not None:
+            if isinstance(edge_index, np.ndarray):
+                edges = np.concatenate([edge_index, np.expand_dims(edge_weight, -1)], -1)
+            elif isinstance(edge_index, torch.Tensor):
+                edges = torch.cat([edge_index, edge_weight.unsqueeze(-1)], -1)
+            else:
+                print("Please provide edges via np.ndarray or torch.Tensor.")
+                return
+            G.add_weighted_edges_from(edges.tolist())
+        else:
+            if not isinstance(edge_index, np.ndarray) and not isinstance(edge_index, torch.Tensor):
+                print("Please provide edges via np.ndarray or torch.Tensor.")
+                return
+            G.add_edges_from(edge_index.tolist())
+
+        embeddings = self.model.train(G)
+
+        return embeddings
+
 SUPPORTED_APPS = {
     "dataset-stats": {"impl": DatasetStatsPipeline, "default": {"dataset": "cora"}},
     "dataset-visual": {"impl": DatasetVisualPipeline, "default": {"dataset": "cora"}},
     "oagbert": {"impl": OAGBertInferencePipepline, "default": {"model": "oagbert-v1"}},
+    "generate-emb": {"impl": GenerateEmbeddingPipeline, "default": {"model": "prone"}},
 }
 
 

@@ -93,17 +93,14 @@ class SAINTTrainer(SampledTrainer):
         """Add trainer-specific arguments to the parser."""
         # fmt: off
         SampledTrainer.add_args(parser)
-        parser.add_argument("--eval-cpu")
-        args = parser.parse_args()
-        if hasattr(args, "sampler"):
-            parser.add_argument("--method", default=args.sampler, type=str, help="graph samplers")
-        else:
-            parser.add_argument("--method", default="node", type=str, help="graph samplers")
+        parser.add_argument("--eval-cpu", action="store_true")
+        parser.add_argument("--method", type=str, default="node", help="graph samplers")
+
         parser.add_argument("--sample-coverage", default=20, type=float, help="sample coverage ratio")
         parser.add_argument("--size-subgraph", default=1200, type=int, help="subgraph size")
 
         args = parser.parse_args()
-        if args.sampler == "rw" or args.sampler == "mrw":
+        if args.method == "rw" or args.method == "mrw":
             parser.add_argument("--num-walks", default=50, type=int, help="number of random walks")
             parser.add_argument("--walk-length", default=20, type=int, help="random walk length")
             parser.add_argument("--size-frontier", default=20, type=int, help="frontier size in multidimensional random walks")
@@ -119,7 +116,7 @@ class SAINTTrainer(SampledTrainer):
         if args.method == "rw" or args.method == "mrw":
             args4sampler["num_walks"] = args.num_walks
             args4sampler["walk_length"] = args.walk_length
-            if args.sampler == "mrw":
+            if args.method == "mrw":
                 args4sampler["size_frontier"] = args.size_frontier
         return args4sampler
 
@@ -165,7 +162,7 @@ class SAINTTrainer(SampledTrainer):
             weight = self.data.norm_loss[mask].unsqueeze(1)
             loss = torch.nn.BCEWithLogitsLoss(reduction="sum", weight=weight)(logits[mask], self.data.y[mask].float())
         else:
-            logits = torch.nn.functional.log_softmax(self.model.predict(self.data))
+            logits = torch.nn.functional.log_softmax(self.model.predict(self.data), dim=-1)
             loss = (
                 torch.nn.NLLLoss(reduction="none")(logits[mask], self.data.y[mask]) * self.data.norm_loss[mask]
             ).sum()

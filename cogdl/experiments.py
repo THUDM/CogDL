@@ -112,7 +112,7 @@ def variant_args_generator(args, variants):
 def check_task_dataset_model_match(task, variants):
     match_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "match.yml")
     with open(match_path, "r", encoding="utf8") as f:
-        match = yaml.load(f)
+        match = yaml.load(f, Loader=yaml.FullLoader)
     objective = match.get(task, None)
     if objective is None:
         raise NotImplementedError

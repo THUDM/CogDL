@@ -67,11 +67,7 @@ class UnsupervisedNodeClassification(BaseTask):
         self.is_weighted = self.data.edge_attr is not None
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
 
-        self.trainer = (
-            self.model.get_trainer(UnsupervisedNodeClassification, args)(args)
-            if self.model.get_trainer(UnsupervisedNodeClassification, args)
-            else None
-        )
+        self.trainer = self.get_trainer(self.model, args)
 
     def enhance_emb(self, G, embs):
         A = sp.csr_matrix(nx.adjacency_matrix(G))

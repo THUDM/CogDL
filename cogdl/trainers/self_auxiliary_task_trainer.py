@@ -74,7 +74,7 @@ class EdgeMask(SSLTask):
         exclude = set([(_[0], _[1]) for _ in list(edges)])
         itr = self.sample(exclude)
         sampled = [next(itr) for _ in range(edge_num)]
-        return torch.tensor(sampled).t()
+        return torch.tensor(sampled, device=self.edge_index[0].device).t()
 
     def sample(self, exclude):
         while True:
@@ -99,7 +99,7 @@ class AttributeMask(SSLTask):
             mask_nnz = int(self.num_nodes * self.mask_ratio)
             self.masked_nodes = perm[:mask_nnz]
             self.cached_features = self.features.clone()
-            self.cached_features[self.masked_nodes] = torch.zeros(self.features.shape[1])
+            self.cached_features[self.masked_nodes] = torch.zeros(self.features.shape[1], device=self.features.device)
             self.pseudo_labels = self.features[self.masked_nodes].to(self.device)
             self.graph.features = self.cached_features
 
@@ -325,7 +325,7 @@ class PairwiseAttrSim(SSLTask):
     def get_attr_sim(self):
         from sklearn.metrics.pairwise import cosine_similarity
 
-        sims = cosine_similarity(self.features.numpy())
+        sims = cosine_similarity(self.features.cpu().numpy())
         idx_sorted = sims.argsort(1)
         self.node_pairs = None
         self.pseudo_labels = None
@@ -367,7 +367,7 @@ class PairwiseAttrSim(SSLTask):
 class Distance2ClustersPP(SSLTask):
     def __init__(self, graph, labels, hidden_size, num_clusters, k, device):
         super().__init__(graph, device)
-        self.labels = labels.numpy()
+        self.labels = labels.cpu().numpy()
         self.k = k
         self.num_clusters = num_clusters
         self.clusters = None

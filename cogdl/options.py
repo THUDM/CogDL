@@ -122,10 +122,16 @@ def parse_args_and_arch(parser, args):
         if try_import_dataset(dataset):
             if hasattr(DATASET_REGISTRY[dataset], "add_args"):
                 DATASET_REGISTRY[dataset].add_args(parser)
+
     if "trainer" in args and args.trainer is not None:
         if try_import_trainer(args.trainer):
             if hasattr(TRAINER_REGISTRY[args.trainer], "add_args"):
                 TRAINER_REGISTRY[args.trainer].add_args(parser)
+    else:
+        for model in args.model:
+            tr = MODEL_REGISTRY[model].get_trainer(None, None)
+            if tr is not None:
+                tr.add_args(parser)
     # Parse a second time.
     args = parser.parse_args()
     return args

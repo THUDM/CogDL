@@ -79,6 +79,8 @@ class Batch(Graph):
             elif isinstance(item, Adjacency):
                 target = Adjacency()
                 for k in item.keys:
+                    if item[k] is None:
+                        continue
                     if k == "row" or k == "col":
                         _item = torch.cat(
                             [x[k] + num_nodes_cum[i] for i, x in enumerate(batch[key])], dim=item.cat_dim(k, None)

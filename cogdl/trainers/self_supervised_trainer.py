@@ -5,12 +5,53 @@ import numpy as np
 
 import torch
 from torch import nn
+
+from cogdl.data.sampler import get_sampler
+from cogdl.trainers.sampled_trainer import SAINTTrainer
 from .base_trainer import BaseTrainer
-from . import register_trainer
+from . import register_trainer, TRAINER_REGISTRY
+
+
+def batch_iterator(sampler, dataset, ops):
+    loader = get_sampler(sampler, dataset, ops)
+    while True:
+        if sampler in ["node", "edge", "rw", "mrw"]:
+            yield sampler.one_batch()
+        else:
+            loader.shuffle()
+            for batch in loader:
+                yield batch
+
+
+def get_args4sampler(args):
+    trainer = TRAINER_REGISTRY[args.sampler]
+    settings = dict(batch_size=args.batch_size, num_workers=args.num_workers, persistent_workers=True, pin_memory=True)
+    args4sampler = trainer.get_args4sampler(args)
+    args4sampler.update(settings)
+    return args4sampler
 
 
 @register_trainer("self_supervised")
 class SelfSupervisedTrainer(BaseTrainer):
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        """Add trainer-specific arguments to the parser."""
+        # fmt: off
+        parser.add_argument("--sampling", action="store_true")
+        args = parser.parse_args()
+        if args.sampling:
+            parser.add_argument("--sampler", type=str, default="node")
+            args = parser.parse_args()
+            if args.sampler in ["node", "edge", "rw", "mrw"]:
+                SAINTTrainer.add_args(parser)
+            else:
+                TRAINER_REGISTRY[args.sampler].add_args(parser)
+        # fmt: on
+
+    @classmethod
+    def build_trainer_from_args(cls, args):
+        return cls(args)
+
     def __init__(self, args):
         super(SelfSupervisedTrainer, self).__init__()
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
@@ -21,31 +62,26 @@ class SelfSupervisedTrainer(BaseTrainer):
         self.save_dir = args.save_dir
         self.load_emb_path = args.load_emb_path
         self.lr = args.lr
-        self.sampling = args.sampling
-        self.sample_size = args.sample_size
-
-    @staticmethod
-    def add_args(parser: argparse.ArgumentParser):
-        """Add trainer-specific arguments to the parser."""
-        # fmt: off
-        parser.add_argument("--sampling", action="store_true")
-        parser.add_argument("--sample-size", type=int, default=20000)
-        # fmt: on
-
-    @classmethod
-    def build_trainer_from_args(cls, args):
-        return cls(args)
+        if args.sampling:
+            self.args4sampler = get_args4sampler(args)
+            self.sampler = args.sampler
+        else:
+            self.args4sampler = None
 
     def fit(self, model, dataset):
         data = dataset.data
         data.add_remaining_self_loops()
         self.data = data
-
         if self.load_emb_path is not None:
             embeds = np.load(self.load_emb_path)
             embeds = torch.from_numpy(embeds).to(self.device)
             return self.evaluate(embeds)
 
+        if self.args4sampler:
+            batch_iter = get_sampler(self.sampler, dataset, self.args4sampler)
+        else:
+            batch_iter = None
+            data = data.to(self.device)
         best = 1e9
         cnt_wait = 0
         optimizer = torch.optim.Adam(model.parameters(), lr=self.lr, weight_decay=0.0)
@@ -55,32 +91,30 @@ class SelfSupervisedTrainer(BaseTrainer):
 
         model.train()
         for epoch in epoch_iter:
-            with self.data.local_graph():
-                if self.sampling:
-                    idx = np.random.choice(np.arange(self.data.num_nodes), self.sample_size, replace=False)
-                    self.data = data.subgraph(idx)
+            if batch_iter is None:
+                batch = data
+            else:
+                batch = next(batch_iter).to(self.device)
 
-                self.data.to(self.device)
-                optimizer.zero_grad()
+            optimizer.zero_grad()
 
-                loss = model.node_classification_loss(self.data)
-                epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss.item(): .4f}")
+            loss = model.node_classification_loss(batch)
+            epoch_iter.set_description(f"Epoch: {epoch:03d}, Loss: {loss.item(): .4f}")
 
-                if loss < best:
-                    best = loss
-                    cnt_wait = 0
-                else:
-                    cnt_wait += 1
+            if loss < best:
+                best = loss
+                cnt_wait = 0
+            else:
+                cnt_wait += 1
 
-                if cnt_wait == self.patience:
-                    print("Early stopping!")
-                    break
+            if cnt_wait == self.patience:
+                print("Early stopping!")
+                break
 
-                loss.backward()
-                optimizer.step()
+            loss.backward()
+            optimizer.step()
 
-        self.data = data
-        self.data.to(self.device)
+        self.data = data.to(self.device)
         with torch.no_grad():
             embeds = model.embed(self.data)
         self.save_embed(embeds)

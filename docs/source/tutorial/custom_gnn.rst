@@ -13,10 +13,13 @@ Here is how we implement `Jumping Knowledge Network <https://arxiv.org/abs/1806.
 JKNet collects the output of all layers and concatenate them together to get the result:
 
 .. math::
+    :nowrap:
 
+    \begin{gather*}
     H^{(0)} = X \\
     H^{(i+1)} = \sigma(\hat{A} H^{(i)} W^{(i)} \\
     OUT = CONCAT([H^{(0)},...,H^{(L)})
+    \end{gather*}
 
 
 

@@ -245,3 +245,8 @@ oag_supervised_classification:
     - l0fos
     - arxivvenue
     - aff30
+recommendation:
+  - model:
+    - lightgcn
+    dataset:
+    - yelp2018

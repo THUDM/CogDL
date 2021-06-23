@@ -147,5 +147,8 @@ SUPPORTED_DATASETS = {
     "bbbp": "cogdl.datasets.strategies_data",
     "l0fos": "cogdl.datasets.oagbert_data",
     "aff30": "cogdl.datasets.oagbert_data",
-    "arxivvenue": "cogdl.datasets.oagbert_data"
+    "arxivvenue": "cogdl.datasets.oagbert_data",
+    "yelp2018": "cogdl.datasets.rec_data",
+    "ali": "cogdl.datasets.rec_data",
+    "amazon-rec": "cogdl.datasets.rec_data",
 }

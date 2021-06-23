@@ -128,4 +128,5 @@ SUPPORTED_MODELS = {
     "m3s": "cogdl.models.nn.m3s",
     "supergat": "cogdl.models.nn.pyg_supergat",
     "moe_gcn": "cogdl.models.nn.moe_gcn",
+    "lightgcn": "cogdl.models.nn.lightgcn",
 }

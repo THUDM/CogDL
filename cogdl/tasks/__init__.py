@@ -68,4 +68,5 @@ SUPPORTED_TASKS = {
     "similarity_search": "cogdl.tasks.similarity_search",
     "unsupervised_graph_classification": "cogdl.tasks.unsupervised_graph_classification",
     "unsupervised_node_classification": "cogdl.tasks.unsupervised_node_classification",
+    "recommendation": "cogdl.tasks.recommendation",
 }

@@ -140,6 +140,7 @@ class GraphClassification(BaseTask):
                     epoch_iter.close()
                     break
         self.model = best_model
+        print(len(self.test_loader), len(self.train_loader))
         test_acc, _ = self._test_step(split="test")
         val_acc, _ = self._test_step(split="valid")
         print(f"Test accuracy = {test_acc}")

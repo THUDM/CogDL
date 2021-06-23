@@ -29,28 +29,26 @@ def _coo_scipy2torch(adj):
     return torch.sparse.FloatTensor(i, v, torch.Size(adj.shape))
 
 
-class Sampler:
-    r"""
-    Base sampler class.
-    Constructs a sampler with data (`torch_geometric.data.Data`), which indicates Graph to be sampled,
-    and args_params (Dictionary) which represents args parameters needed by the sampler.
-    """
-
-    def __init__(self, data, args_params):
-        self.data = data.clone()
-        self.full_graph = data.clone()
-        self.num_nodes = self.data.x.size()[0]
-        self.num_edges = (
-            self.data.edge_index_train[0].shape[0]
-            if hasattr(self.data, "edge_index_train")
-            else self.data.edge_index[0].shape[0]
-        )
-
-    def sample(self):
-        pass
+def get_sampler(sampler, dataset, ops):
+    assert isinstance(sampler, str)
+    if sampler == "clustergcn":
+        n_cluster = ops.get("n_cluster", 1000)
+        method = ops.get("method", "metis")
+        if "n_cluster" in ops:
+            ops.pop("n_cluster")
+        if "method" in ops:
+            ops.pop("method")
+        loader = ClusteredLoader(dataset, n_cluster=n_cluster, method=method, **ops)
+    elif sampler in ["node", "edge", "rw", "mrw"]:
+        args4sampler = ops["args4sampler"]
+        args4sampler["method"] = sampler
+        loader = SAINTSampler(dataset.data, args4sampler)()
+    else:
+        raise NotImplementedError
+    return loader
 
 
-class SAINTSampler(Sampler):
+class SAINTBaseSampler(object):
     r"""
     The sampler super-class referenced from GraphSAINT (https://arxiv.org/abs/1907.04931). Any graph sampler is supposed to perform
     the following meta-steps:
@@ -65,7 +63,14 @@ class SAINTSampler(Sampler):
     """
 
     def __init__(self, data, args_params):
-        super().__init__(data, args_params)
+        self.data = data.clone()
+        self.full_graph = data.clone()
+        self.num_nodes = self.data.x.size()[0]
+        self.num_edges = (
+            self.data.edge_index_train[0].shape[0]
+            if hasattr(self.data, "edge_index_train")
+            else self.data.edge_index[0].shape[0]
+        )
 
         self.gen_adj()
 
@@ -238,7 +243,8 @@ class SAINTDataset(torch.utils.data.Dataset):
             data.norm_aggr = torch.FloatTensor(self.sampler.norm_aggr_train[edge_idx][:])
             data.norm_loss = self.sampler.norm_loss_train[node_idx]
 
-        edge_weight = row_normalization(data.x.shape[0], data.edge_index)
+        row, col = data.edge_index
+        edge_weight = row_normalization(data.x.shape[0], row, col)
         data.edge_weight = edge_weight
 
         return data
@@ -257,7 +263,7 @@ class SAINTDataLoader(torch.utils.data.DataLoader):
         return data[0]
 
 
-class NodeSampler(SAINTSampler):
+class NodeSampler(SAINTBaseSampler):
     r"""
     randomly select nodes, then adding edges connecting these nodes
     Args:
@@ -274,7 +280,7 @@ class NodeSampler(SAINTSampler):
         return self.node_induction(node_idx)
 
 
-class EdgeSampler(SAINTSampler):
+class EdgeSampler(SAINTBaseSampler):
     r"""
     randomly select edges, then adding nodes connected by these edges
     Args:
@@ -291,7 +297,7 @@ class EdgeSampler(SAINTSampler):
         return self.edge_induction(edge_idx)
 
 
-class RWSampler(SAINTSampler):
+class RWSampler(SAINTBaseSampler):
     r"""
     The sampler performs unbiased random walk, by following the steps:
      1. Randomly pick `size_root` number of root nodes from all training nodes;
@@ -327,7 +333,7 @@ class RWSampler(SAINTSampler):
         return self.node_induction(node_idx)
 
 
-class MRWSampler(SAINTSampler):
+class MRWSampler(SAINTBaseSampler):
     r"""multidimentional random walk, similar to https://arxiv.org/abs/1002.1751"""
 
     def __init__(self, data, args_params):
@@ -361,22 +367,22 @@ class MRWSampler(SAINTSampler):
         return self.edge_induction(np.array(edge_idx))
 
 
-class LayerSampler(Sampler):
-    def __init__(self, data, model, params_args):
-        super().__init__(data, params_args)
-        self.model = model
-        self.sample_one_layer = self.model._sample_one_layer
-        self.sample = self.model.sampling
+class SAINTSampler(object):
+    def __init__(self, dataset, args4sampler):
+        data = dataset.data
+        if args4sampler["method"] == "node":
+            self.sampler = NodeSampler(data, args4sampler)
+        elif args4sampler["method"] == "edge":
+            self.sampler = EdgeSampler(data, args4sampler)
+        elif args4sampler["method"] == "rw":
+            self.sampler = RWSampler(data, args4sampler)
+        elif args4sampler["method"] == "mrw":
+            self.sampler = MRWSampler(data, args4sampler)
+        else:
+            raise NotImplementedError
 
-    def get_batches(self, train_nodes, train_labels, batch_size=64, shuffle=True):
-        if shuffle:
-            random.shuffle(train_nodes)
-        total = train_nodes.shape[0]
-        for i in range(0, total, batch_size):
-            if i + batch_size <= total:
-                cur_nodes = train_nodes[i : i + batch_size]
-                cur_labels = train_labels[cur_nodes]
-                yield cur_nodes, cur_labels
+    def __call__(self, *args, **kwargs):
+        return self.sampler
 
 
 class NeighborSampler(torch.utils.data.DataLoader):

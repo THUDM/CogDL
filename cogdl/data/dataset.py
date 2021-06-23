@@ -153,13 +153,21 @@ class MultiGraphDataset(Dataset):
     @property
     def num_classes(self):
         r"""The number of classes in the dataset."""
-        y = self.data.y
+        if not (hasattr(self, "y") or hasattr(self.data, "y")):
+            return 0
+        if hasattr(self, "y"):
+            y = self.y
+        else:
+            y = self.data.y
         return y.max().item() + 1 if y.dim() == 1 else y.size(1)
 
     def len(self):
-        for item in self.slices.values():
-            return len(item) - 1
-        return 0
+        if isinstance(self.data, list):
+            return len(self.data)
+        else:
+            for item in self.slices.values():
+                return len(item) - 1
+            return 0
 
     def _get(self, idx):
         data = self.data.__class__()
@@ -169,7 +177,8 @@ class MultiGraphDataset(Dataset):
 
         for key in self.data.__old_keys__():
             item, slices = self.data[key], self.slices[key]
-            start, end = slices[idx].item(), slices[idx + 1].item()
+            # start, end = slices[idx].item(), slices[idx + 1].item()
+            start, end = int(slices[idx]), int(slices[idx + 1])
             if key == "edge_index":
                 data[key] = (item[0][start:end], item[1][start:end])
             else:
@@ -214,6 +223,7 @@ class MultiGraphDataset(Dataset):
         cumsum = {key: 0 for key in keys}
         batch.batch = []
         num_nodes_cum = [0]
+        num_nodes = None
         for i, data in enumerate(data_list):
             for key in data.keys:
                 item = data[key]

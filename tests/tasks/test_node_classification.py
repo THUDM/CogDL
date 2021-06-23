@@ -183,7 +183,6 @@ def test_gcn_cora_sampler():
     args.trainer = "graphsaint"
     args.batch_size = 10
     args.model = "gcn"
-    args.valid_cpu = True
     args.cpu = True
     args.num_layers = 2
     args.sample_coverage = 20
@@ -194,7 +193,7 @@ def test_gcn_cora_sampler():
     sampler_list = ["node", "edge", "rw", "mrw"]
 
     for sampler in sampler_list:
-        args.sampler = sampler
+        args.method = sampler
         task = build_task(args)
         ret = task.train()
         assert 0 <= ret["Acc"] <= 1
@@ -206,7 +205,7 @@ def test_graphsaint_cora():
     args.dataset = "cora"
     args.trainer = "graphsaint"
     args.model = "graphsaint"
-    args.valid_cpu = True
+    args.eval_cpu = True
     args.batch_size = 10
     args.cpu = True
     args.architecture = "1-1-0"
@@ -218,7 +217,7 @@ def test_graphsaint_cora():
     args.num_walks = 20
     args.walk_length = 10
     args.size_frontier = 20
-    args.sampler = "node"
+    args.method = "node"
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1

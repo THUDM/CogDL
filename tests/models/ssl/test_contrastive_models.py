@@ -70,6 +70,7 @@ def test_unsupervised_graphsage():
     args.max_epochs = 2
     args.save_model = "graphsage.pt"
     args.model = "unsup_graphsage"
+    args.trainer = "self_supervised"
     args, dataset = build_nn_dataset(args)
     task = build_task(args)
     ret = task.train()

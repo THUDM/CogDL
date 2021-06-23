@@ -1,7 +1,7 @@
 import importlib
 
 from cogdl.data.dataset import Dataset
-from .customized_data import CustomizedGraphClassificationDataset, CustomizedNodeClassificationDataset, BaseDataset
+from .customized_data import NodeDataset, GraphDataset
 
 try:
     import torch_geometric
@@ -74,9 +74,9 @@ def build_dataset_from_path(data_path, task=None, dataset=None):
     if task is None:
         return None
     if "node_classification" in task:
-        return CustomizedNodeClassificationDataset(data_path)
+        return NodeDataset(data_path)
     elif "graph_classification" in task:
-        return CustomizedGraphClassificationDataset(data_path)
+        return GraphDataset(data_path)
     else:
         return None
 

@@ -3,7 +3,7 @@ import argparse
 
 from cogdl.datasets import DATASET_REGISTRY, try_import_dataset
 from cogdl.models import MODEL_REGISTRY, try_import_model
-from cogdl.tasks import TASK_REGISTRY
+from cogdl.tasks import TASK_REGISTRY, try_import_task
 from cogdl.trainers import TRAINER_REGISTRY, try_import_trainer
 
 
@@ -37,7 +37,6 @@ def add_task_args(parser):
     group = parser.add_argument_group("Task configuration")
     # fmt: off
     group.add_argument('--task', '-t', default='node_classification', metavar='TASK', required=True,
-                       choices=TASK_REGISTRY.keys(),
                        help='Task')
     # fmt: on
     return group
@@ -102,6 +101,8 @@ def get_default_args(task: str, dataset, model, **kwargs):
     if not isinstance(model, list):
         model = [model]
     sys.argv = [sys.argv[0], "-t", task, "-m"] + model + ["-dt"] + dataset
+
+    # The parser doesn't know about specific args, so we parse twice.
     parser = get_training_parser()
     args, _ = parser.parse_known_args()
     args = parse_args_and_arch(parser, args)
@@ -111,10 +112,8 @@ def get_default_args(task: str, dataset, model, **kwargs):
 
 
 def parse_args_and_arch(parser, args):
-    """The parser doesn't know about model-specific args, so we parse twice."""
-    # args, _ = parser.parse_known_args()
-
     # Add *-specific args to parser.
+    try_import_task(args.task)
     TASK_REGISTRY[args.task].add_args(parser)
     for model in args.model:
         if try_import_model(model):
@@ -123,11 +122,16 @@ def parse_args_and_arch(parser, args):
         if try_import_dataset(dataset):
             if hasattr(DATASET_REGISTRY[dataset], "add_args"):
                 DATASET_REGISTRY[dataset].add_args(parser)
+
     if "trainer" in args and args.trainer is not None:
-        # for trainer in args.trainer:
         if try_import_trainer(args.trainer):
             if hasattr(TRAINER_REGISTRY[args.trainer], "add_args"):
                 TRAINER_REGISTRY[args.trainer].add_args(parser)
+    else:
+        for model in args.model:
+            tr = MODEL_REGISTRY[model].get_trainer(None, None)
+            if tr is not None:
+                tr.add_args(parser)
     # Parse a second time.
     args = parser.parse_args()
     return args
@@ -136,6 +140,7 @@ def parse_args_and_arch(parser, args):
 def get_task_model_args(task, model=None):
     sys.argv = [sys.argv[0], "-t", task, "-m"] + ["gcn"] + ["-dt"] + ["cora"]
     parser = get_training_parser()
+    try_import_task(task)
     TASK_REGISTRY[task].add_args(parser)
     if model is not None:
         if try_import_model(model):

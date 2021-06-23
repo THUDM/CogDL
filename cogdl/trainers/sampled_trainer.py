@@ -8,10 +8,7 @@ from tqdm import tqdm
 
 from cogdl.data import Dataset
 from cogdl.data.sampler import (
-    NodeSampler,
-    EdgeSampler,
-    RWSampler,
-    MRWSampler,
+    SAINTSampler,
     NeighborSampler,
     ClusteredLoader,
 )
@@ -96,14 +93,32 @@ class SAINTTrainer(SampledTrainer):
         """Add trainer-specific arguments to the parser."""
         # fmt: off
         SampledTrainer.add_args(parser)
-        parser.add_argument("--sampler", default="node", type=str, help="graph samplers")
+        parser.add_argument("--eval-cpu", action="store_true")
+        parser.add_argument("--method", type=str, default="node", help="graph samplers")
+
         parser.add_argument("--sample-coverage", default=20, type=float, help="sample coverage ratio")
         parser.add_argument("--size-subgraph", default=1200, type=int, help="subgraph size")
-        parser.add_argument("--num-walks", default=50, type=int, help="number of random walks")
-        parser.add_argument("--walk-length", default=20, type=int, help="random walk length")
-        parser.add_argument("--size-frontier", default=20, type=int, help="frontier size in multidimensional random walks")
-        parser.add_argument("--valid-cpu", action="store_true", help="run validation on cpu")
+
+        args = parser.parse_args()
+        if args.method == "rw" or args.method == "mrw":
+            parser.add_argument("--num-walks", default=50, type=int, help="number of random walks")
+            parser.add_argument("--walk-length", default=20, type=int, help="random walk length")
+            parser.add_argument("--size-frontier", default=20, type=int, help="frontier size in multidimensional random walks")
         # fmt: on
+
+    @staticmethod
+    def get_args4sampler(args):
+        args4sampler = {
+            "method": args.method,
+            "sample_coverage": args.sample_coverage,
+            "size_subgraph": args.size_subgraph,
+        }
+        if args.method == "rw" or args.method == "mrw":
+            args4sampler["num_walks"] = args.num_walks
+            args4sampler["walk_length"] = args.walk_length
+            if args.method == "mrw":
+                args4sampler["size_frontier"] = args.size_frontier
+        return args4sampler
 
     @classmethod
     def build_trainer_from_args(cls, args):
@@ -111,19 +126,8 @@ class SAINTTrainer(SampledTrainer):
 
     def __init__(self, args):
         super(SAINTTrainer, self).__init__(args)
-        self.valid_cpu = args.valid_cpu
-        self.args_sampler = self.sampler_from_args(args)
-
-    def sampler_from_args(self, args):
-        args_sampler = {
-            "sampler": args.sampler,
-            "sample_coverage": args.sample_coverage,
-            "size_subgraph": args.size_subgraph,
-            "num_walks": args.num_walks,
-            "walk_length": args.walk_length,
-            "size_frontier": args.size_frontier,
-        }
-        return args_sampler
+        self.args4sampler = self.get_args4sampler(args)
+        self.eval_cpu = args.eval_cpu if hasattr(args, "eval_cpu") else False
 
     def fit(self, model: SupervisedModel, dataset: Dataset):
         self.dataset = dataset
@@ -131,17 +135,7 @@ class SAINTTrainer(SampledTrainer):
         self.model = model.to(self.device)
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
-
-        if self.args_sampler["sampler"] == "node":
-            self.sampler = NodeSampler(self.data, self.args_sampler)
-        elif self.args_sampler["sampler"] == "edge":
-            self.sampler = EdgeSampler(self.data, self.args_sampler)
-        elif self.args_sampler["sampler"] == "rw":
-            self.sampler = RWSampler(self.data, self.args_sampler)
-        elif self.args_sampler["sampler"] == "mrw":
-            self.sampler = MRWSampler(self.data, self.args_sampler)
-        else:
-            raise NotImplementedError
+        self.sampler = SAINTSampler(dataset, self.args4sampler)()
 
         # self.train_dataset = SAINTDataset(dataset, self.args_sampler)
         # self.train_loader = SAINTDataLoader(
@@ -168,7 +162,7 @@ class SAINTTrainer(SampledTrainer):
             weight = self.data.norm_loss[mask].unsqueeze(1)
             loss = torch.nn.BCEWithLogitsLoss(reduction="sum", weight=weight)(logits[mask], self.data.y[mask].float())
         else:
-            logits = torch.nn.functional.log_softmax(self.model.predict(self.data))
+            logits = torch.nn.functional.log_softmax(self.model.predict(self.data), dim=-1)
             loss = (
                 torch.nn.NLLLoss(reduction="none")(logits[mask], self.data.y[mask]) * self.data.norm_loss[mask]
             ).sum()
@@ -177,7 +171,7 @@ class SAINTTrainer(SampledTrainer):
 
     def _test_step(self, split="val"):
         self.data = self.sampler.one_batch(split)
-        if split != "train" and self.valid_cpu:
+        if split != "train" and self.eval_cpu:
             self.model = self.model.cpu()
         else:
             self.data.apply(lambda x: x.to(self.device))
@@ -185,18 +179,6 @@ class SAINTTrainer(SampledTrainer):
         masks = {"train": self.data.train_mask, "val": self.data.val_mask, "test": self.data.test_mask}
         with torch.no_grad():
             logits = self.model.predict(self.data)
-
-        # if isinstance(self.dataset, SAINTDataset):
-        #     weight = self.data.norm_loss.unsqueeze(1)
-        #     loss = torch.nn.BCEWithLogitsLoss(reduction="sum", weight=weight)(logits, self.data.y.float())
-        #     metric = multilabel_f1(logits[mask], self.data.y[mask])
-        # else:
-        #     loss = (
-        #         torch.nn.NLLLoss(reduction="none")(F.log_softmax(logits[mask]), self.data.y[mask])
-        #         * self.data.norm_loss[mask]
-        #     ).sum()
-        #     pred = logits[mask].max(1)[1]
-        #     metric = pred.eq(self.data.y[mask]).sum().item() / mask.sum().item()
 
         loss = {key: self.loss_fn(logits[val], self.data.y[val]) for key, val in masks.items()}
         metric = {key: self.evaluator(logits[val], self.data.y[val]) for key, val in masks.items()}
@@ -305,6 +287,14 @@ class ClusterGCNTrainer(SampledTrainer):
         parser.add_argument("--n-cluster", type=int, default=1000)
         parser.add_argument("--batch-size", type=int, default=20)
         # fmt: on
+
+    @staticmethod
+    def get_args4sampler(args):
+        args4sampler = {
+            "method": "metis",
+            "n_cluster": args.n_cluster,
+        }
+        return args4sampler
 
     def __init__(self, args):
         super(ClusterGCNTrainer, self).__init__(args)

@@ -143,6 +143,30 @@ class Adjacency(BaseGraph):
         for key, item in kwargs.items():
             self[key] = item
 
+    def set_weight(self, weight):
+        self.weight = weight
+        self.__normed__ = None
+        self.__in_norm__ = self.__out_norm__ = None
+        self.__symmetric__ = False
+
+    def get_weight(self, indicator=None):
+        if self.weight is None or self.weight.shape[0] != self.col.shape[0]:
+            self.weight = torch.ones(self.num_edges, device=self.device)
+        weight = self.weight
+        if indicator is not None:
+            return weight
+
+        if self.__in_norm__ is not None:
+            if self.row is None:
+                num_nodes = self.row_ptr.size(0) - 1
+                row = torch.arange(num_nodes, device=self.device)
+                row_count = self.row_ptr[1:] - self.row_ptr[:-1]
+                self.row = row.repeat_interleave(row_count)
+            weight = self.__in_norm__[self.row].view(-1)
+        if self.__out_norm__ is not None:
+            weight = self.__out_norm__[self.col].view(-1)
+        return weight
+
     def add_remaining_self_loops(self):
         edge_index, self.weight = add_remaining_self_loops((self.row, self.col), num_nodes=self.num_nodes)
         self.row, self.col = edge_index
@@ -202,9 +226,6 @@ class Adjacency(BaseGraph):
         else:
             raise NotImplementedError
         self.__normed__ = norm
-
-    def in_degrees(self):
-        return self.row_ptr[1:] - self.row_ptr[:-1]
 
     def convert_csr(self):
         if check_indicator():
@@ -461,9 +482,13 @@ class Graph(BaseGraph):
 
     @property
     def edge_weight(self):
-        if self._adj.weight is None or self._adj.weight.shape[0] != self._adj.col.shape[0]:
-            self._adj.weight = torch.ones(self._adj.num_edges, device=self._adj.device)
-        return self._adj.weight
+        """Return actual edge_weight"""
+        return self._adj.get_weight()
+
+    @property
+    def raw_edge_weight(self):
+        """Return edge_weight without __in_norm__ and __out_norm__, only used for SpMM"""
+        return self._adj.get_weight("raw")
 
     @property
     def edge_attr(self):
@@ -487,8 +512,7 @@ class Graph(BaseGraph):
 
     @edge_weight.setter
     def edge_weight(self, edge_weight):
-        self._adj.weight = edge_weight
-        self._adj.set_symmetric(False)
+        self._adj.set_weight(edge_weight)
 
     @edge_attr.setter
     def edge_attr(self, edge_attr):
@@ -682,7 +706,10 @@ class Graph(BaseGraph):
         for key in self._adj.keys:
             if "row" in key or "col" in key:
                 continue
+            if key.startswith("__"):
+                continue
             data._adj[key] = self._adj[key][edges]
+        data.num_nodes = node_idx.shape[0]
         return data
 
     def subgraph(self, node_idx):

@@ -186,7 +186,7 @@ def row_normalization(num_nodes, row, col, val=None):
     device = row.device
     if val is None:
         val = torch.ones(row.shape[0]).to(device)
-    row_sum = spmm_scatter(row, col, val, torch.ones(num_nodes, 1).to(device))
+    row_sum = get_degrees(row, col, num_nodes)
     row_sum_inv = row_sum.pow(-1).view(-1)
     row_sum_inv[torch.isinf(row_sum_inv)] = 0
     return val * row_sum_inv[row]
@@ -196,7 +196,7 @@ def symmetric_normalization(num_nodes, row, col, val=None):
     device = row.device
     if val is None:
         val = torch.ones(row.shape[0]).to(device)
-    row_sum = spmm_scatter(row, col, val, torch.ones(num_nodes, 1).to(device)).view(-1)
+    row_sum = get_degrees(row, col, num_nodes)
     row_sum_inv_sqrt = row_sum.pow(-0.5)
     row_sum_inv_sqrt[row_sum_inv_sqrt == float("inf")] = 0
     return row_sum_inv_sqrt[col] * val * row_sum_inv_sqrt[row]
@@ -212,13 +212,6 @@ def spmm_scatter(row, col, values, b):
     output = b.index_select(0, col) * values.unsqueeze(-1)
     output = torch.zeros_like(b).scatter_add_(0, row.unsqueeze(-1).expand_as(output), output)
     return output
-
-
-def spmm_adj(indices, values, x, num_nodes=None):
-    if num_nodes is None:
-        num_nodes = x.shape[0]
-    adj = torch.sparse_coo_tensor(indices=indices, values=values, size=(num_nodes, num_nodes))
-    return torch.spmm(adj, x)
 
 
 CONFIGS = {"fast_spmm": None, "csrmhspmm": None, "csr_edge_softmax": None, "spmm_flag": False, "mh_spmm_flag": False}
@@ -246,7 +239,7 @@ def initialize_spmm(args):
             from cogdl.operators.spmm import csrspmm
 
             CONFIGS["fast_spmm"] = csrspmm
-            print("Using fast-spmm to speed up training")
+            # print("Using fast-spmm to speed up training")
         except Exception:
             print("Failed to load fast version of SpMM, use torch.scatter_add instead.")
 
@@ -274,19 +267,20 @@ def check_edge_softmax():
 
 
 def spmm(graph, x):
-    if graph.out_norm is not None:
-        x = graph.out_norm * x
-
     fast_spmm = CONFIGS["fast_spmm"]
     if fast_spmm is not None and str(x.device) != "cpu":
+        if graph.out_norm is not None:
+            x = graph.out_norm * x
+
         row_ptr, col_indices = graph.row_indptr, graph.col_indices
-        csr_data = graph.edge_weight
+        csr_data = graph.raw_edge_weight
         x = fast_spmm(row_ptr.int(), col_indices.int(), x, csr_data.contiguous(), graph.is_symmetric())
+
+        if graph.in_norm is not None:
+            x = graph.in_norm * x
     else:
         row, col = graph.edge_index
         x = spmm_scatter(row, col, graph.edge_weight, x)
-    if graph.in_norm is not None:
-        x = graph.in_norm * x
     return x
 
 
@@ -384,11 +378,11 @@ def csr2coo(indptr, indices, data):
 
 def get_degrees(row, col, num_nodes=None):
     device = row.device
-    values = torch.ones(row.shape[0]).to(device)
     if num_nodes is None:
         num_nodes = max(row.max().item(), col.max().item()) + 1
-    b = torch.ones((num_nodes, 1)).to(device)
-    degrees = spmm_scatter(row, col, values, b).view(-1)
+    b = torch.ones(col.shape[0], device=device)
+    out = torch.zeros(num_nodes, device=device)
+    degrees = out.scatter_add_(dim=0, index=row, src=b)
     return degrees
 
 

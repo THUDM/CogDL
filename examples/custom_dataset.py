@@ -2,15 +2,14 @@ import torch
 
 from cogdl import experiment
 from cogdl.data import Graph
-from cogdl.datasets import BaseDataset, register_dataset
+from cogdl.datasets import NodeDataset, register_dataset
 
 
 @register_dataset("mydataset")
-class MyNodeClassificationDataset(BaseDataset):
+class MyNodeClassificationDataset(NodeDataset):
     def __init__(self):
-        super(MyNodeClassificationDataset, self).__init__()
-        self.process()
-        self.data = torch.load("mydata.pt")
+        self.path = "mydata.pt"
+        super(MyNodeClassificationDataset, self).__init__(self.path)
 
     def process(self):
         num_nodes = 100
@@ -30,7 +29,7 @@ class MyNodeClassificationDataset(BaseDataset):
         test_mask = torch.zeros(num_nodes).bool()
         test_mask[int(0.7 * num_nodes) :] = True
         data = Graph(x=x, edge_index=edge_index, y=y, train_mask=train_mask, val_mask=val_mask, test_mask=test_mask)
-        torch.save(data, "mydata.pt")
+        torch.save(data, self.path)
         return data
 
 

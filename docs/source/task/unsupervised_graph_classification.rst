@@ -80,6 +80,8 @@ In this section, we will introduce the implementation "Unsupervised graph classi
            prediction, loss = self.model(self.data)
            label = self.label
 
+
+
 4. When graph representation is obtained, we evaluate the embedding with `SVM` via running `num_shuffle` times under different training ratio. You can also call `save_emb` to save the embedding.
 
 .. code-block:: python
@@ -94,13 +96,15 @@ In this section, we will introduce the implementation "Unsupervised graph classi
                clf.fit(X_train, y_train)
                preds = clf.predict(X_test)
                # ...
-   ```
+
+
+
 
 The overall implementation of UnsupervisedGraphClassification is at (https://github.com/THUDM/cogdl/blob/master/cogdl/tasks/unsupervised_graph_classification.py).
 
 **Create a model**
 
-​To create a model for task unsupervised graph classification, the following functions have to be implemented.
+To create a model for task unsupervised graph classification, the following functions have to be implemented.
 
 1. `add_args(parser)`: add necessary hyper-parameters used in model.
 

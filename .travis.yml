@@ -11,6 +11,7 @@ install:
   - pip install https://pytorch-geometric.com/whl/torch-1.6.0+cpu/torch_spline_conv-1.2.0-cp36-cp36m-linux_x86_64.whl
   - pip install torch-geometric
   - pip install dgl==0.4.3
+  - pip install packaging==20.9
   - bash ./scripts/installation/metis.sh
   - source ./scripts/installation/gcc.sh
   - pip install metis

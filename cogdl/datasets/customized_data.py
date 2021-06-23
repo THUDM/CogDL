@@ -1,7 +1,9 @@
+import os
+
 import torch
 from sklearn.preprocessing import StandardScaler
 
-from cogdl.data import Dataset, Batch
+from cogdl.data import Dataset, Batch, MultiGraphDataset
 from cogdl.utils import accuracy, multilabel_f1, multiclass_f1, bce_with_logits_loss, cross_entropy_loss
 
 
@@ -34,41 +36,17 @@ def scale_feats(data):
     return data
 
 
-class BaseDataset(Dataset):
-    def __init__(self, root=None):
-        super(BaseDataset, self).__init__("custom")
-
-    def process(self):
-        pass
-
-    def _download(self):
-        pass
-
-    def _process(self):
-        pass
-
-    def get(self, idx):
-        return self.data
-
-    def __len__(self):
-        if hasattr(self, "y"):
-            return len(self.y)
-        elif hasattr(self, "x"):
-            return self.x.shape[0]
-        else:
-            raise NotImplementedError
-
-
-class CustomizedNodeClassificationDataset(BaseDataset):
+class NodeDataset(Dataset):
     """
     data_path : path to load dataset. The dataset must be processed to specific format
     metric: Accuracy, multi-label f1 or multi-class f1. Default: `accuracy`
     """
 
-    def __init__(self, data_path, scale_feat=True, metric="accuracy"):
-        super(CustomizedNodeClassificationDataset, self).__init__(root=data_path)
+    def __init__(self, path="cus_data.pt", scale_feat=True, metric="accuracy"):
+        self.path = path
+        super(NodeDataset, self).__init__(root=path)
         try:
-            self.data = torch.load(data_path)
+            self.data = torch.load(path)
             if scale_feat:
                 self.data = scale_feats(self.data)
         except Exception as e:
@@ -85,7 +63,7 @@ class CustomizedNodeClassificationDataset(BaseDataset):
         pass
 
     def process(self):
-        pass
+        raise NotImplementedError
 
     def get(self, idx):
         assert idx == 0
@@ -97,32 +75,45 @@ class CustomizedNodeClassificationDataset(BaseDataset):
     def get_loss_fn(self):
         return _get_loss_fn(self.metric)
 
+    def _download(self):
+        pass
+
+    def _process(self):
+        if not os.path.exists(self.path):
+            data = self.process()
+            if not os.path.exists(self.path):
+                torch.save(data, self.path)
+
     def __repr__(self):
         return "{}()".format(self.name)
 
 
-class CustomizedGraphClassificationDataset(BaseDataset):
-    def __init__(self, data_path, metric="accuracy"):
-        super(CustomizedGraphClassificationDataset, self).__init__(root=data_path)
-        try:
-            data = torch.load(data_path)
-            if isinstance(data, list):
-                batch = Batch.from_data_list(data)
-                self.data = batch
-                self.slices = batch.__slices__
-                del self.data.batch
-            else:
-                assert len(data) == 0
-                self.data = data[0]
-                self.slices = data[1]
-        except Exception as e:
-            print(e)
-            exit(1)
+class GraphDataset(MultiGraphDataset):
+    def __init__(self, path="cus_graph_data.pt", metric="accuracy"):
+        self.path = path
+        super(GraphDataset, self).__init__(root=path)
+        # try:
+        data = torch.load(path)
+        if hasattr(data[0], "y"):
+            self.y = torch.cat([idata.y for idata in data])
+        self.data = data
 
         self.metric = metric
-        if hasattr(self.data, "y"):
-            if len(self.data.y.shape) > 1:
+        if hasattr(self, "y"):
+            if len(self.y.shape) > 1:
                 self.metric = "multilabel_f1"
+
+    def _download(self):
+        pass
+
+    def process(self):
+        raise NotImplementedError
+
+    def _process(self):
+        if not os.path.exists(self.path):
+            data = self.process()
+            if not os.path.exists(self.path):
+                torch.save(data, self.path)
 
     def get_evaluator(self):
         return _get_evaluator(self.metric)

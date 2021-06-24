@@ -1,4 +1,6 @@
 import torch
+
+# import torch.fft
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -8,22 +10,10 @@ from cogdl.layers.link_prediction_module import GNNLinkPredict, sampling_edge_un
 from .. import BaseModel, register_model
 
 
-def com_mult(a, b):
-    """Borrowed from https://github.com/malllabiisc/CompGCN"""
-    r1, i1 = a[..., 0], a[..., 1]
-    r2, i2 = b[..., 0], b[..., 1]
-    return torch.stack([r1 * r2 - i1 * i2, r1 * i2 + i1 * r2], dim=-1)
-
-
-def conj(a):
-    """Borrowed from https://github.com/malllabiisc/CompGCN"""
-    a[..., 1] = -a[..., 1]
-    return a
-
-
-def ccorr(a, b):
-    """Borrowed from https://github.com/malllabiisc/CompGCN"""
-    return torch.fft.irfft(com_mult(conj(torch.fft.rfft(a, 1)), torch.fft.rfft(b, 1)), 1, signal_sizes=(a.shape[-1],))
+# def ccorr(a, b):
+#     return torch.fft.irfft(
+#         torch.multiply(torch.fft.rfft(a, dim=1).conj(), torch.fft.rfft(b, dim=1)), n=a.shape[-1], dim=1
+#     )
 
 
 class BasesRelEmbLayer(nn.Module):
@@ -101,7 +91,6 @@ class CompGCNLayer(nn.Module):
         nn.init.xavier_normal_(weight.data)
         return weight
 
-    # def forward(self, x, edge_index, edge_type, rel_embed=None):
     def forward(self, graph, x, rel_embed):
         device = x.device
         if self.use_bases:
@@ -115,7 +104,6 @@ class CompGCNLayer(nn.Module):
         row, col = edge_index
         i_row, i_col = row[:num_edges], col[:num_edges]
         rev_row, rev_col = row[num_edges:], col[num_edges:]
-        # index, rev_index = edge_index[:, :num_edges], edge_index[:, num_edges:]
         loop_index = torch.stack((torch.arange(num_entities), torch.arange(num_entities))).to(device)
         types, rev_types = edge_type[:num_edges], edge_type[num_edges:]
         loop_types = torch.full((num_entities,), rel_embed.shape[0] - 1, dtype=torch.long).to(device)
@@ -159,16 +147,16 @@ class CompGCNLayer(nn.Module):
         elif self.opn == "mult":
             trans_embed = ent_embed * rel_embed
         else:
-            raise NotImplementedError
+            raise NotImplementedError(f"{self.opn}")
         return trans_embed
 
 
 class CompGCN(nn.Module):
     def __init__(
-        self, num_entities, num_rels, num_bases, in_feats, hidden_size, out_feats, layers, dropout, activation
+        self, num_entities, num_rels, num_bases, in_feats, hidden_size, out_feats, layers, dropout, activation, opn
     ):
         super(CompGCN, self).__init__()
-        self.opn = "sub"
+        self.opn = opn
         self.num_rels = num_rels
         self.num_entities = num_entities
         if num_bases is not None and num_bases > 0:
@@ -233,6 +221,7 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
         parser.add_argument("--sampling-rate", type=float, default=0.01)
         parser.add_argument("--score-func", type=str, default="conve")
         parser.add_argument("--lbl_smooth", type=float, default=0.1)
+        parser.add_argument("--opn", type=str, default="sub")
         # fmt: on
 
     @classmethod
@@ -248,6 +237,7 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
             layers=args.num_layers,
             dropout=args.dropout,
             lbl_smooth=args.lbl_smooth,
+            opn=args.opn,
         )
 
     def __init__(
@@ -262,15 +252,23 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
         penalty=0.001,
         dropout=0.0,
         lbl_smooth=0.1,
+        opn="sub",
     ):
         BaseModel.__init__(self)
         GNNLinkPredict.__init__(self, score_func, hidden_size)
         activation = F.tanh
         self.model = CompGCN(
-            num_entities, num_rels, num_bases, hidden_size // 2, hidden_size, hidden_size, layers, dropout, activation
+            num_entities,
+            num_rels,
+            num_bases,
+            hidden_size // 2,
+            hidden_size,
+            hidden_size,
+            layers,
+            dropout,
+            activation,
+            opn,
         )
-        # self.emb = nn.Parameter(torch.Tensor(num_entities, hidden_size))
-        # nn.init.xavier_uniform_(self.emb)
         self.emb = nn.Embedding(num_entities, hidden_size // 2)
         self.sampling_rate = sampling_rate
         self.penalty = penalty
@@ -332,18 +330,10 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
         loss_r = self.penalty * self._regularization([self.emb(sampled_nodes), rel_embed])
         return loss_n + loss_r
 
-        # Full graph as input
-        # sampled_nodes = torch.unique(samples)
-        # node_embed, rel_embed = self.forward(edge_index, edge_types)
-        # loss_n = self._loss(node_embed[samples[0]], node_embed[samples[1]], rel_embed[rels], labels)
-        # loss_r = self.penalty * self._regularization([self.emb(sampled_nodes), rel_embed])
-        # return loss_n + loss_r
-
     def predict(self, graph):
         device = next(self.parameters()).device
         indices = torch.arange(0, self.num_entities).to(device)
         x = self.emb(indices)
-        # edge_index, edge_types = self.add_reverse_edges(edge_index, edge_types)
         node_embed, rel_embed = self.model(graph, x)
         edge_index, edge_types = graph.edge_index, graph.edge_attr
         mrr, hits = cal_mrr(

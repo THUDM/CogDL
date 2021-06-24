@@ -141,6 +141,7 @@ link_prediction:
     - complex
     dataset:
     - fb13
+    - fb15k
     - fb15k237
     - wn18
     - wn18rr

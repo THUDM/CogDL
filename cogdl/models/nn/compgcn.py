@@ -1,5 +1,6 @@
 import torch
-import torch.fft
+
+# import torch.fft
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -9,10 +10,10 @@ from cogdl.layers.link_prediction_module import GNNLinkPredict, sampling_edge_un
 from .. import BaseModel, register_model
 
 
-def ccorr(a, b):
-    return torch.fft.irfft(
-        torch.multiply(torch.fft.rfft(a, dim=1).conj(), torch.fft.rfft(b, dim=1)), n=a.shape[-1], dim=1
-    )
+# def ccorr(a, b):
+#     return torch.fft.irfft(
+#         torch.multiply(torch.fft.rfft(a, dim=1).conj(), torch.fft.rfft(b, dim=1)), n=a.shape[-1], dim=1
+#     )
 
 
 class BasesRelEmbLayer(nn.Module):
@@ -139,9 +140,9 @@ class CompGCNLayer(nn.Module):
         return F.dropout(embed, p=self.dropout, training=self.training)
 
     def rel_transform(self, ent_embed, rel_embed):
-        if self.opn == "corr":
-            trans_embed = ccorr(ent_embed, rel_embed)
-        elif self.opn == "sub":
+        # if self.opn == "corr":
+        #     trans_embed = ccorr(ent_embed, rel_embed)
+        if self.opn == "sub":
             trans_embed = ent_embed - rel_embed
         elif self.opn == "mult":
             trans_embed = ent_embed * rel_embed

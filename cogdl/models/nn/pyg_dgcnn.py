@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 from torch_geometric.nn import DynamicEdgeConv, global_max_pool
 
+from cogdl.utils import split_dataset_general
+
 from .. import BaseModel, register_model
 from .mlp import MLP
-from .gin import split_dataset_general
 
 
 @register_model("dgcnn")

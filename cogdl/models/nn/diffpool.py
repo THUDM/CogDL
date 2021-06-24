@@ -1,14 +1,13 @@
 import numpy as np
-import random
-
-from scipy.linalg import block_diag
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from scipy.linalg import block_diag
+
+from cogdl.layers import SAGELayer
+from cogdl.utils import split_dataset_general
 
 from .. import BaseModel, register_model
-from .gin import split_dataset_general
-from .graphsage import GraphSAGELayer
 
 
 class EntropyLoss(nn.Module):
@@ -56,16 +55,16 @@ class GraphSAGE(nn.Module):
         self.use_bn = use_bn
         aggr = "concat" if concat else "mean"
         if num_layers == 1:
-            self.convlist.append(GraphSAGELayer(in_feats, out_feats, normalize, aggr))
+            self.convlist.append(SAGELayer(in_feats, out_feats, normalize, aggr))
         else:
-            self.convlist.append(GraphSAGELayer(in_feats, hidden_dim, normalize, aggr))
+            self.convlist.append(SAGELayer(in_feats, hidden_dim, normalize, aggr))
             if use_bn:
                 self.bn_list.append(nn.BatchNorm1d(hidden_dim))
             for _ in range(num_layers - 2):
-                self.convlist.append(GraphSAGELayer(hidden_dim, hidden_dim, normalize, aggr))
+                self.convlist.append(SAGELayer(hidden_dim, hidden_dim, normalize, aggr))
                 if use_bn:
                     self.bn_list.append(nn.BatchNorm1d(hidden_dim))
-            self.convlist.append(GraphSAGELayer(hidden_dim, out_feats, normalize, aggr))
+            self.convlist.append(SAGELayer(hidden_dim, out_feats, normalize, aggr))
 
     def forward(self, graph, x):
         h = x
@@ -145,8 +144,8 @@ class BatchedDiffPoolLayer(nn.Module):
         self.dropout = dropout
         self.use_link_pred = link_pred_loss
         self.batch_size = batch_size
-        self.embd_gnn = GraphSAGELayer(in_feats, out_feats, normalize=False)
-        self.pool_gnn = GraphSAGELayer(in_feats, assign_dim, normalize=False)
+        self.embd_gnn = SAGELayer(in_feats, out_feats, normalize=False)
+        self.pool_gnn = SAGELayer(in_feats, assign_dim, normalize=False)
 
         self.loss_dict = dict()
 

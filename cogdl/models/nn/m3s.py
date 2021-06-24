@@ -1,13 +1,8 @@
-import numpy as np
-import scipy.sparse as sp
-import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from cogdl.layers import GCNLayer
+from cogdl.trainers.m3s_trainer import M3STrainer
 
 from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, symmetric_normalization
-from cogdl.trainers.m3s_trainer import M3STrainer
-from .gcn import GraphConvolution
 
 
 @register_model("m3s")
@@ -41,8 +36,8 @@ class M3S(BaseModel):
     def __init__(self, num_features, hidden_size, num_classes, dropout):
         super(M3S, self).__init__()
         self.dropout = dropout
-        self.gcn1 = GraphConvolution(num_features, hidden_size)
-        self.gcn2 = GraphConvolution(hidden_size, num_classes)
+        self.gcn1 = GCNLayer(num_features, hidden_size)
+        self.gcn2 = GCNLayer(hidden_size, num_classes)
 
     def get_embeddings(self, graph):
         graph.sym_norm()

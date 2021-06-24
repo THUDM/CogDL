@@ -3,18 +3,14 @@ import scipy.sparse as sp
 import torch
 import torch.nn as nn
 import dgl
-from dgl.nn.pytorch import GraphConv
 
-import dgl.function as fn
-from dgl.nn.pytorch import edge_softmax, GATConv
 from conv import myGATConv
 
 import torch.nn.functional as F
 
 from cogdl import experiment, options
 from cogdl.models import BaseModel, register_model
-from cogdl.models.nn.gcn import GraphConvolution
-from cogdl.utils import add_remaining_self_loops, symmetric_normalization, accuracy
+from cogdl.utils import accuracy
 
 
 @register_model("simple_hgn")

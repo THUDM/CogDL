@@ -1,19 +1,18 @@
-import random
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn.pool.topk_pool import topk, filter_adj
-from torch_geometric.nn import global_mean_pool as gap, global_max_pool as gmp
+from torch_geometric.nn import global_max_pool as gmp
+from torch_geometric.nn import global_mean_pool as gap
+from torch_geometric.nn.pool.topk_pool import filter_adj, topk
+
+from cogdl.layers import GCNLayer
+from cogdl.utils import split_dataset_general
 
 from .. import BaseModel, register_model
-from cogdl.data import DataLoader
-from .gcn import GraphConvolution
-from .gin import split_dataset_general
 
 
 class SAGPoolLayers(nn.Module):
-    def __init__(self, nhid, ratio=0.8, Conv=GraphConvolution, non_linearity=torch.tanh):
+    def __init__(self, nhid, ratio=0.8, Conv=GCNLayer, non_linearity=torch.tanh):
         super(SAGPoolLayers, self).__init__()
         self.nhid = nhid
         self.ratio = ratio
@@ -64,8 +63,8 @@ class SAGPoolNetwork(BaseModel):
     def __init__(self, nfeat, nhid, nclass, dropout, pooling_ratio, pooling_layer_type):
         def __get_layer_from_str__(str):
             if str == "gcnconv":
-                return GraphConvolution
-            return GraphConvolution
+                return GCNLayer
+            return GCNLayer
 
         super(SAGPoolNetwork, self).__init__()
 
@@ -75,9 +74,9 @@ class SAGPoolNetwork(BaseModel):
         self.dropout = dropout
         self.pooling_ratio = pooling_ratio
 
-        self.conv_layer_1 = GraphConvolution(self.nfeat, self.nhid)
-        self.conv_layer_2 = GraphConvolution(self.nhid, self.nhid)
-        self.conv_layer_3 = GraphConvolution(self.nhid, self.nhid)
+        self.conv_layer_1 = GCNLayer(self.nfeat, self.nhid)
+        self.conv_layer_2 = GCNLayer(self.nhid, self.nhid)
+        self.conv_layer_3 = GCNLayer(self.nhid, self.nhid)
 
         self.pool_layer_1 = SAGPoolLayers(
             self.nhid, Conv=__get_layer_from_str__(pooling_layer_type), ratio=self.pooling_ratio

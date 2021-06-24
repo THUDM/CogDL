@@ -6,7 +6,7 @@ import torch
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
-from cogdl.data import Graph, DataLoader
+from cogdl.data import DataLoader
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
 from cogdl.utils import add_remaining_self_loops
@@ -88,10 +88,13 @@ class GraphClassification(BaseTask):
                 args.num_features = self.data.num_features
             model = build_model(args) if model is None else model
             (
-                self.train_loader,
-                self.val_loader,
-                self.test_loader,
+                self.train_dataset,
+                self.val_dataset,
+                self.test_dataset,
             ) = model.split_dataset(self.data, args)
+            self.train_loader = DataLoader(**self.train_dataset)
+            self.val_loader = DataLoader(**self.val_dataset)
+            self.test_loader = DataLoader(**self.test_dataset)
 
         self.model = model.to(self.device)
 

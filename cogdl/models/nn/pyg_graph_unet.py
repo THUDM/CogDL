@@ -1,15 +1,14 @@
-from typing import Tuple, List
+from typing import List, Tuple
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from cogdl.data import Graph
+from cogdl.layers import GCNLayer
+from cogdl.utils import dropout_adj, get_activation
+from torch_sparse import spspmm
 
 from .. import BaseModel, register_model
-from .gcn import GraphConvolution
-from cogdl.data import Graph
-
-from cogdl.utils import get_activation, dropout_adj
-from torch_sparse import spspmm
 
 
 class Pool(nn.Module):
@@ -72,11 +71,11 @@ class GraphUnetLayer(nn.Module):
         self.dropout = dropout
         self.activation = activation
         self.pooling_layer = pooling_layer
-        self.gcn = GraphConvolution(hidden_size, hidden_size)
+        self.gcn = GCNLayer(hidden_size, hidden_size)
         self.act = get_activation(activation)
 
-        self.down_gnns = nn.ModuleList([GraphConvolution(hidden_size, hidden_size) for _ in range(pooling_layer)])
-        self.up_gnns = nn.ModuleList([GraphConvolution(hidden_size, hidden_size) for _ in range(pooling_layer)])
+        self.down_gnns = nn.ModuleList([GCNLayer(hidden_size, hidden_size) for _ in range(pooling_layer)])
+        self.up_gnns = nn.ModuleList([GCNLayer(hidden_size, hidden_size) for _ in range(pooling_layer)])
         self.poolings = nn.ModuleList(
             [Pool(hidden_size, pooling_rates[i], aug_adj, dropout) for i in range(pooling_layer)]
         )
@@ -183,8 +182,8 @@ class GraphUnet(BaseModel):
         pooling_rates = [float(x) for x in pooling_rates]
         self.unet = GraphUnetLayer(hidden_size, pooling_layer, pooling_rates, activation, n_dropout, aug_adj)
 
-        self.in_gcn = GraphConvolution(in_feats, hidden_size)
-        self.out_gcn = GraphConvolution(hidden_size, out_feats)
+        self.in_gcn = GCNLayer(in_feats, hidden_size)
+        self.out_gcn = GCNLayer(hidden_size, out_feats)
 
     def forward(self, graph: Graph) -> torch.Tensor:
         x = graph.x

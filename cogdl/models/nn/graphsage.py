@@ -5,11 +5,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from cogdl.layers import MeanAggregator, SumAggregator
+from cogdl.data import Graph
+from cogdl.layers import SAGELayer
 from cogdl.trainers.sampled_trainer import NeighborSamplingTrainer
 
 from .. import BaseModel, register_model
-from cogdl.data import Graph
 
 
 def sage_sampler(adjlist, edge_index, num_sample):
@@ -32,26 +32,6 @@ def sage_sampler(adjlist, edge_index, num_sample):
 
     edge_idx = torch.as_tensor(sample_list, dtype=torch.long).t()
     return edge_idx
-
-
-class GraphSAGELayer(nn.Module):
-    def __init__(self, in_feats, out_feats, normalize=False, aggr="mean"):
-        super(GraphSAGELayer, self).__init__()
-        self.in_feats = in_feats
-        self.out_feats = out_feats
-        self.normalize = normalize
-        if aggr == "mean":
-            self.aggr = MeanAggregator(in_feats, out_feats)
-        elif aggr == "sum":
-            self.aggr = SumAggregator(in_feats, out_feats)
-        else:
-            raise NotImplementedError
-
-    def forward(self, graph, x):
-        out = self.aggr(graph, x)
-        if self.normalize:
-            out = F.normalize(out, p=2.0, dim=-1)
-        return out
 
 
 @register_model("graphsage")
@@ -95,7 +75,7 @@ class Graphsage(BaseModel):
         self.dropout = dropout
         shapes = [num_features] + hidden_size + [num_classes]
         self.convs = nn.ModuleList(
-            [GraphSAGELayer(shapes[layer], shapes[layer + 1], aggr=aggr) for layer in range(num_layers)]
+            [SAGELayer(shapes[layer], shapes[layer + 1], aggr=aggr) for layer in range(num_layers)]
         )
 
     def mini_forward(self, graph):

@@ -6,8 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .mlp import MLP
-from .gin import GINLayer, split_dataset_general
-from cogdl.utils import batch_mean_pooling, batch_sum_pooling
+from cogdl.layers import GINLayer
+from cogdl.utils import batch_mean_pooling, batch_sum_pooling, split_dataset_general
 from .. import BaseModel, register_model
 
 

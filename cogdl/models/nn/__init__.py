@@ -1,17 +1,17 @@
-from .compgcn import CompGCN, CompGCNLayer
+from .compgcn import CompGCN
 from .dgi import DGIModel
-from .disengcn import DisenGCN, DisenGCNLayer
+from .disengcn import DisenGCN
 from .gat import GATLayer
-from .gcn import GraphConvolution, TKipfGCN
-from .gcnii import GCNIILayer, GCNII
+from .gcn import TKipfGCN
+from .gcnii import GCNII
 from .gdc_gcn import GDC_GCN
-from .grace import GRACE, GraceEncoder
-from .graphsage import Graphsage, GraphSAGELayer
+from .grace import GRACE
+from .graphsage import Graphsage
 from .mvgrl import MVGRL
 from .patchy_san import PatchySAN
 from .ppnp import PPNP
-from .rgcn import RGCNLayer, LinkPredictRGCN, RGCN
-from .sgc import SimpleGraphConvolution, sgc
+from .rgcn import RGCN
+from .sgc import sgc
 
 __all__ = [
     "CompGCN",

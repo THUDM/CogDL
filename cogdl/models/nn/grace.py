@@ -1,11 +1,11 @@
-from typing import Optional, Any, List
+from typing import List
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from .. import register_model, BaseModel
-from cogdl.models.nn.gcn import GraphConvolution
-from cogdl.utils import get_activation, filter_adj
+from cogdl.layers import GCNLayer
+from cogdl.utils import get_activation
 from cogdl.trainers.self_supervised_trainer import SelfSupervisedTrainer
 from cogdl.data import Graph
 
@@ -20,7 +20,7 @@ class GraceEncoder(nn.Module):
     ):
         super(GraceEncoder, self).__init__()
         shapes = [in_feats] + [2 * out_feats] * (num_layers - 1) + [out_feats]
-        self.layers = nn.ModuleList([GraphConvolution(shapes[i], shapes[i + 1]) for i in range(num_layers)])
+        self.layers = nn.ModuleList([GCNLayer(shapes[i], shapes[i + 1]) for i in range(num_layers)])
         self.activation = get_activation(activation)
 
     def forward(self, graph: Graph, x: torch.Tensor):

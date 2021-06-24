@@ -14,8 +14,9 @@ from torch_geometric.utils import add_remaining_self_loops, dense_to_sparse, sof
 from torch_scatter import scatter_add, scatter_max
 from torch_sparse import coalesce, spspmm
 
+from cogdl.utils import split_dataset_general
+
 from .. import BaseModel, register_model
-from .gin import split_dataset_general
 
 
 def scatter_sort(x, batch, fill_value=-1e16):

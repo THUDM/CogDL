@@ -12,9 +12,8 @@ import numpy as np
 import scipy.sparse as sp
 import torch
 import torch.nn.functional as F
-from tabulate import tabulate
-
 from cogdl.operators.sample import coo2csr_cpu, coo2csr_cpu_index
+from tabulate import tabulate
 
 
 class ArgClass(object):
@@ -617,6 +616,28 @@ def set_random_seed(seed):
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.determinstic = True
+
+
+def split_dataset_general(dataset, args):
+    droplast = args.model == "diffpool"
+
+    train_size = int(len(dataset) * args.train_ratio)
+    test_size = int(len(dataset) * args.test_ratio)
+    index = list(range(len(dataset)))
+    random.shuffle(index)
+
+    train_index = index[:train_size]
+    test_index = index[-test_size:]
+
+    bs = args.batch_size
+    train_dataset = dict(dataset=[dataset[i] for i in train_index], batch_size=bs, drop_last=droplast)
+    test_dataset = dict(dataset=[dataset[i] for i in test_index], batch_size=bs, drop_last=droplast)
+    if args.train_ratio + args.test_ratio < 1:
+        val_index = index[train_size:-test_size]
+        valid_dataset = dict(dataset=[dataset[i] for i in val_index], batch_size=bs, drop_last=droplast)
+    else:
+        valid_dataset = test_dataset
+    return train_dataset, valid_dataset, test_dataset
 
 
 if __name__ == "__main__":

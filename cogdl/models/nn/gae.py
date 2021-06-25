@@ -1,9 +1,10 @@
 import torch
 import torch.nn.functional as F
-
-from .gcn import TKipfGCN, GraphConvolution
-from .. import register_model, BaseModel
+from cogdl.layers import GCNLayer
 from cogdl.trainers.gae_trainer import GAETrainer
+
+from .. import BaseModel, register_model
+from .gcn import TKipfGCN
 
 
 @register_model("gae")
@@ -47,9 +48,9 @@ class VGAE(BaseModel):
         super(VGAE, self).__init__()
         self.num_features = num_features
         self.hidden_size = hidden_size
-        self.conv1 = GraphConvolution(self.num_features, self.hidden_size)
-        self.conv2_mean = GraphConvolution(self.hidden_size, self.hidden_size)
-        self.conv2_var = GraphConvolution(self.hidden_size, self.hidden_size)
+        self.conv1 = GCNLayer(self.num_features, self.hidden_size)
+        self.conv2_mean = GCNLayer(self.hidden_size, self.hidden_size)
+        self.conv2_var = GCNLayer(self.hidden_size, self.hidden_size)
 
     def reparameterize(self, mean, log_var):
         sigma = torch.exp(log_var)

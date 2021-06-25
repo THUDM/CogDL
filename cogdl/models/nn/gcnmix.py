@@ -5,8 +5,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from cogdl.utils import spmm
 from .. import BaseModel, register_model
-from cogdl.utils import spmm, symmetric_normalization
 
 
 def mix_hidden_state(feat, target, train_index, alpha):

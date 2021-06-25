@@ -6,7 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .. import register_model, BaseModel
-from cogdl.models.nn.graphsage import sage_sampler, GraphSAGELayer
+from cogdl.layers import SAGELayer
+from cogdl.models.nn.graphsage import sage_sampler
 from cogdl.trainers.self_supervised_trainer import SelfSupervisedTrainer
 from cogdl.utils import RandomWalker
 
@@ -75,7 +76,7 @@ class SAGE(BaseModel):
 
         shapes = [num_features] + [hidden_size] * num_layers
 
-        self.convs = nn.ModuleList([GraphSAGELayer(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
+        self.convs = nn.ModuleList([SAGELayer(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
         self.random_walker = RandomWalker()
 
     def forward(self, graph):

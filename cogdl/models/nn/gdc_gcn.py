@@ -1,12 +1,10 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from cogdl.data import Graph
-from cogdl.utils import add_remaining_self_loops, symmetric_normalization
 from scipy.linalg import expm
+from cogdl.layers import GCNLayer
 
 from .. import BaseModel, register_model
-from .gcn import GraphConvolution
 
 
 @register_model("gdc_gcn")
@@ -74,8 +72,8 @@ class GDC_GCN(BaseModel):
 
         # GCN init
         self.nfeat = nfeat
-        self.gc1 = GraphConvolution(nfeat, nhid)
-        self.gc2 = GraphConvolution(nhid, nclass)
+        self.gc1 = GCNLayer(nfeat, nhid)
+        self.gc2 = GCNLayer(nhid, nclass)
         self.dropout = dropout
 
     def forward(self, graph):

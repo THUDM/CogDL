@@ -1,13 +1,14 @@
+import functools
 import random
 
+import networkx as nx
+import numpy as np
 import torch
 import torch.nn as nn
-from .. import BaseModel, register_model
-from .gin import split_dataset_general
 
-import numpy as np
-import networkx as nx
-import functools
+from cogdl.utils import split_dataset_general
+
+from .. import BaseModel, register_model
 
 
 @register_model("patchy_san")

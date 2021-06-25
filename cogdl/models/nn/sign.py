@@ -3,11 +3,6 @@ import torch.nn.functional as F
 
 from .. import BaseModel, register_model
 from cogdl.utils import (
-    add_remaining_self_loops,
-    remove_self_loops,
-    row_normalization,
-    symmetric_normalization,
-    to_undirected,
     spmm,
     dropout_adj,
 )

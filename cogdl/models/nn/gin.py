@@ -1,69 +1,11 @@
-import random
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from .. import BaseModel, register_model
 from .mlp import MLP
-from cogdl.data import DataLoader
-from cogdl.utils import spmm
-
-
-def split_dataset_general(dataset, args):
-    droplast = args.model == "diffpool"
-
-    train_size = int(len(dataset) * args.train_ratio)
-    test_size = int(len(dataset) * args.test_ratio)
-    index = list(range(len(dataset)))
-    random.shuffle(index)
-
-    train_index = index[:train_size]
-    test_index = index[-test_size:]
-
-    bs = args.batch_size
-    train_loader = DataLoader([dataset[i] for i in train_index], batch_size=bs, drop_last=droplast)
-    test_loader = DataLoader([dataset[i] for i in test_index], batch_size=bs, drop_last=droplast)
-    if args.train_ratio + args.test_ratio < 1:
-        val_index = index[train_size:-test_size]
-        valid_loader = DataLoader([dataset[i] for i in val_index], batch_size=bs, drop_last=droplast)
-    else:
-        valid_loader = test_loader
-    return train_loader, valid_loader, test_loader
-
-
-class GINLayer(nn.Module):
-    r"""Graph Isomorphism Network layer from paper `"How Powerful are Graph
-    Neural Networks?" <https://arxiv.org/pdf/1810.00826.pdf>`__.
-
-    .. math::
-        h_i^{(l+1)} = f_\Theta \left((1 + \epsilon) h_i^{l} +
-        \mathrm{sum}\left(\left\{h_j^{l}, j\in\mathcal{N}(i)
-        \right\}\right)\right)
-
-    Parameters
-    ----------
-    apply_func : callable layer function)
-        layer or function applied to update node feature
-    eps : float32, optional
-        Initial `\epsilon` value.
-    train_eps : bool, optional
-        If True, `\epsilon` will be a learnable parameter.
-    """
-
-    def __init__(self, apply_func=None, eps=0, train_eps=True):
-        super(GINLayer, self).__init__()
-        if train_eps:
-            self.eps = torch.nn.Parameter(torch.FloatTensor([eps]))
-        else:
-            self.register_buffer("eps", torch.FloatTensor([eps]))
-        self.apply_func = apply_func
-
-    def forward(self, graph, x):
-        out = (1 + self.eps) * x + spmm(graph, x)
-        if self.apply_func is not None:
-            out = self.apply_func(out)
-        return out
+from cogdl.layers import GINLayer
+from cogdl.utils import split_dataset_general
 
 
 @register_model("gin")

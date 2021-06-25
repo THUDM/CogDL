@@ -1,11 +1,9 @@
 import networkx as nx
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from .. import BaseModel, register_model
-from cogdl.models.nn import GATLayer
-from cogdl.utils import add_remaining_self_loops
+from cogdl.layers import GATLayer
 from cogdl.trainers.daegc_trainer import DAEGCTrainer
 
 

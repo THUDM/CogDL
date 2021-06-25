@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch_sparse import spspmm
 
 from .. import BaseModel, register_model
-from .gcn import GraphConvolution
+from cogdl.layers import GCNLayer
 from cogdl.utils import remove_self_loops, coalesce, accuracy
 
 
@@ -128,7 +128,7 @@ class GTN(BaseModel):
                 layers.append(GTLayer(num_edge, num_channels, num_nodes, first=False))
         self.layers = nn.ModuleList(layers)
         self.cross_entropy_loss = nn.CrossEntropyLoss()
-        self.gcn = GraphConvolution(in_features=self.w_in, out_features=w_out)
+        self.gcn = GCNLayer(in_features=self.w_in, out_features=w_out)
         self.linear1 = nn.Linear(self.w_out * self.num_channels, self.w_out)
         self.linear2 = nn.Linear(self.w_out, self.num_class)
 

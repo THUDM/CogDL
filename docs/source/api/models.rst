@@ -336,11 +336,6 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pairnorm.PairNorm
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: cogdl.models.nn.unsup_graphsage.SAGE
     :members:
     :undoc-members:

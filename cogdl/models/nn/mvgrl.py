@@ -167,6 +167,8 @@ class MVGRL(BaseModel):
         return torch.stack(logits)
 
     def loss(self, data):
+        if self.sample_size > data.num_nodes:
+            self.sample_size = data.num_nodes
         if self.cache is None:
             self.device = next(self.gcn1.parameters()).device
             lbl_1 = torch.ones(self.batch_size, self.sample_size * 2)

@@ -68,7 +68,7 @@ class SelfSupervisedTrainer(BaseTrainer):
         else:
             self.args4sampler = None
 
-    def fit(self, model, dataset):
+    def fit(self, model, dataset, evaluate=True):
         data = dataset.data
         data.add_remaining_self_loops()
         self.data = data
@@ -118,6 +118,9 @@ class SelfSupervisedTrainer(BaseTrainer):
         with torch.no_grad():
             embeds = model.embed(self.data)
         self.save_embed(embeds)
+
+        if not evaluate:
+            return embeds
 
         return self.evaluate(embeds, dataset.get_loss_fn(), dataset.get_evaluator())
 

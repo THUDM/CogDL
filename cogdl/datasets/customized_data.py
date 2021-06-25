@@ -53,7 +53,7 @@ class NodeDataset(Dataset):
             print(e)
             exit(1)
         self.metric = metric
-        if hasattr(self.data, "y"):
+        if hasattr(self.data, "y") and self.data.y is not None:
             if len(self.data.y.shape) > 1:
                 self.metric = "multilabel_f1"
             else:
@@ -99,7 +99,7 @@ class GraphDataset(MultiGraphDataset):
         self.data = data
 
         self.metric = metric
-        if hasattr(self, "y"):
+        if hasattr(self, "y") and self.y is not None:
             if len(self.y.shape) > 1:
                 self.metric = "multilabel_f1"
 

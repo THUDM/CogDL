@@ -69,7 +69,6 @@ unsupervised_node_classification:
   - model:
     - unsup_graphsage
     - dgi
-    - dgi_sampling
     - mvgrl
     - grace
     dataset:

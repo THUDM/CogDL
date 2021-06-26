@@ -1,11 +1,9 @@
 import optuna
 import numpy as np
-import math
 import random
-import scipy.sparse as sp
 
 from .. import register_model, BaseModel
-from cogdl.layers.prone_module import propagate, get_embedding_dense
+from cogdl.utils.prone_utils import propagate, get_embedding_dense
 
 
 class PlainFilter(object):

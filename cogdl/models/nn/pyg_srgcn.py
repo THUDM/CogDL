@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from cogdl.layers.srgcn_module import act_attention, act_map, act_normalization
+from cogdl.utils.srgcn_utils import act_attention, act_map, act_normalization
 from cogdl.utils import add_remaining_self_loops
 from torch_sparse import spspmm
 

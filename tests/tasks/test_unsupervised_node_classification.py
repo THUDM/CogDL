@@ -84,7 +84,7 @@ def test_hope_ppi():
 
 
 def test_prone_module():
-    from cogdl.layers.prone_module import propagate
+    from cogdl.utils.prone_utils import propagate
     import scipy.sparse as sp
 
     data = np.ones(400)

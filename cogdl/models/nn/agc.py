@@ -1,7 +1,3 @@
-import torch
-import torch.nn
-import torch.nn.functional as F
-
 from .. import BaseModel, register_model
 from cogdl.trainers.agc_trainer import AGCTrainer
 

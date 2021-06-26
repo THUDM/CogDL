@@ -108,3 +108,11 @@ data/
 checkpoints/
 saved/
 *.png
+*.cluster
+*.tar
+docs/source/_build/
+metis*
+*.dict
+*.csv
+*.sql
+*.pt

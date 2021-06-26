@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 from cogdl.data import Graph
 from cogdl.utils import row_normalization
-from cogdl.layers.link_prediction_module import GNNLinkPredict, sampling_edge_uniform, cal_mrr
+from cogdl.utils.link_prediction_utils import GNNLinkPredict, sampling_edge_uniform, cal_mrr
 from .. import BaseModel, register_model
 
 

@@ -5,9 +5,6 @@ import torch.nn as nn
 from .. import BaseModel, register_model
 from cogdl.utils import get_activation, spmm
 from cogdl.trainers.self_supervised_trainer import SelfSupervisedTrainer
-from cogdl.data.sampler import NeighborSampler
-from cogdl.models.nn.graphsage import Graphsage
-from cogdl.utils.evaluator import cross_entropy_loss
 
 
 # Borrowed from https://github.com/PetarV-/DGI

@@ -1,16 +1,13 @@
-import networkx as nx
 import numpy as np
 import scipy.sparse as sp
 import torch
 import torch.nn as nn
-from scipy.linalg import fractional_matrix_power, inv
-from sklearn.preprocessing import MinMaxScaler
 
 from .. import BaseModel, register_model
 from .dgi import GCN, AvgReadout
-from cogdl.layers.pprgo_modules import build_topk_ppr_matrix_from_data
+from cogdl.utils.ppr_utils import build_topk_ppr_matrix_from_data
 from cogdl.trainers.self_supervised_trainer import SelfSupervisedTrainer
-from cogdl.data import Graph, Batch
+from cogdl.data import Graph
 
 
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):

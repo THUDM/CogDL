@@ -1,13 +1,11 @@
-import time
-
 import networkx as nx
 import numpy as np
 import scipy.sparse as sp
-from scipy import linalg
 from scipy.special import iv
 from sklearn import preprocessing
 from sklearn.utils.extmath import randomized_svd
 
+from cogdl.utils.prone_utils import get_embedding_dense
 from .. import BaseModel, register_model
 
 
@@ -62,17 +60,6 @@ class ProNE(BaseModel):
         smat = sp.csc_matrix(matrix)  # convert to sparse CSC format
         U, Sigma, VT = randomized_svd(smat, n_components=self.dimension, n_iter=5, random_state=None)
         U = U * np.sqrt(Sigma)
-        U = preprocessing.normalize(U, "l2")
-        return U
-
-    def _get_embedding_dense(self, matrix, dimension):
-        # get dense embedding via SVD
-        U, s, Vh = linalg.svd(matrix, full_matrices=False, check_finite=False, overwrite_a=True)
-        U = np.array(U)
-        U = U[:, :dimension]
-        s = s[:dimension]
-        s = np.sqrt(s)
-        U = U * s
         U = preprocessing.normalize(U, "l2")
         return U
 
@@ -132,5 +119,5 @@ class ProNE(BaseModel):
         if not plus:
             mm = A.dot(a - conv)
         if not nn:
-            emb = self._get_embedding_dense(mm, self.dimension)
+            emb = get_embedding_dense(mm, self.dimension)
         return emb

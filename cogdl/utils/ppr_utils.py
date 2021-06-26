@@ -106,34 +106,3 @@ def build_topk_ppr_matrix_from_data(edge_index, *args, **kwargs):
     else:
         adj_matrix = edge_index
     return topk_ppr_matrix(adj_matrix, *args, **kwargs)
-
-
-class PPRGoDataset(torch.utils.data.Dataset):
-    def __init__(
-        self,
-        features: torch.Tensor,
-        ppr_matrix: sp.csr_matrix,
-        node_indices: torch.Tensor,
-        labels_all: torch.Tensor = None,
-    ):
-        self.features = features
-        self.matrix = ppr_matrix
-        self.node_indices = node_indices
-        self.labels_all = labels_all
-        self.cache = dict()
-
-    def __len__(self):
-        return self.node_indices.shape[0]
-
-    def __getitem__(self, items):
-        key = str(items)
-        if key not in self.cache:
-            sample_matrix = self.matrix[items]
-            source, neighbor = sample_matrix.nonzero()
-            ppr_scores = torch.from_numpy(sample_matrix.data).float()
-
-            features = self.features[neighbor].float()
-            targets = torch.from_numpy(source).long()
-            labels = self.labels_all[self.node_indices[items]]
-            self.cache[key] = (features, targets, ppr_scores, labels)
-        return self.cache[key]

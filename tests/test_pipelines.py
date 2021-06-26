@@ -26,6 +26,7 @@ def test_oagbert():
     assert tuple(outputs[0].shape) == (1, 14, 32)
     assert tuple(outputs[1].shape) == (1, 32)
 
+
 def test_gen_emb():
     generator = pipeline("generate-emb", model="prone")
 
@@ -36,6 +37,10 @@ def test_gen_emb():
     edge_weight = np.array([0.1, 0.3, 1.0, 0.8, 0.5])
     outputs = generator(edge_index, edge_weight)
     assert tuple(outputs.shape) == (4, 4)
+
+    generator = pipeline("generate-emb", model="dgi", num_features=8, hidden_size=10)
+    outputs = generator(edge_index, x=np.random.randn(4, 8))
+    assert tuple(outputs.shape) == (4, 10)
 
 
 if __name__ == "__main__":

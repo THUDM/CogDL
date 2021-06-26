@@ -14,3 +14,9 @@ print(outputs)
 edge_weight = np.array([0.1, 0.3, 1.0, 0.8, 0.5])
 outputs = generator(edge_index, edge_weight)
 print(outputs)
+
+# build a pipeline for generating embeddings using unsupervised GNNs
+# pass model name and num_features with its hyper-parameters to this API
+generator = pipeline("generate-emb", model="dgi", num_features=8, hidden_size=4)
+outputs = generator(edge_index, x=np.random.randn(4, 8))
+print(outputs)

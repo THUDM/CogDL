@@ -13,9 +13,11 @@ from tabulate import tabulate
 
 from cogdl import oagbert
 from cogdl.data import Graph
+from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset_from_name, NodeDataset
 from cogdl.models import build_model
 from cogdl.options import get_default_args
+from cogdl.datasets.rec_data import build_recommendation_data
 
 
 class Pipeline(object):
@@ -214,11 +216,77 @@ class GenerateEmbeddingPipeline(Pipeline):
         return embeddings
 
 
+class RecommendationPipepline(Pipeline):
+    def __init__(self, app: str, model: str, **kwargs):
+        super(RecommendationPipepline, self).__init__(app, model=model, **kwargs)
+
+        if "data" in kwargs:
+            data = kwargs["data"]
+            val_data = test_data = data[-100:, :]
+            data = build_recommendation_data("custom", data, val_data, test_data)
+            self.data_path = kwargs.get("data_path", "tmp_data.pt")
+            self.batch_size = kwargs.get("batch_size", 128)
+            torch.save(data, self.data_path)
+            self.dataset = NodeDataset(path=self.data_path, scale_feat=False)
+        elif "dataset" in kwargs:
+            dataset = kwargs.pop("dataset")
+            self.dataset = build_dataset_from_name(dataset)
+        else:
+            print("Please provide recommendation data!")
+            exit(0)
+
+        self.batch_size = kwargs.get("batch_size", 2048)
+        self.n_items = self.dataset[0].n_params["n_items"]
+
+        args = get_default_args(task="recommendation", dataset="ali", model=model, **kwargs)
+        args.model = args.model[0]
+
+        task = build_task(args, dataset=self.dataset)
+        task.train()
+
+        self.model = task.model
+        self.model.eval()
+
+        self.user_emb, self.item_emb = self.model.generate()
+
+    def __call__(self, user_batch, **kwargs):
+        user_batch = np.array(user_batch)
+        user_batch = torch.from_numpy(user_batch).to(self.model.device)
+        u_g_embeddings = self.user_emb[user_batch]
+
+        # batch-item test
+        n_item_batchs = self.n_items // self.batch_size + 1
+        rate_batch = np.zeros(shape=(len(user_batch), self.n_items))
+
+        i_count = 0
+        for i_batch_id in range(n_item_batchs):
+            i_start = i_batch_id * self.batch_size
+            i_end = min((i_batch_id + 1) * self.batch_size, self.n_items)
+
+            item_batch = torch.LongTensor(np.array(range(i_start, i_end))).view(i_end - i_start).to(self.model.device)
+            i_g_embddings = self.item_emb[item_batch]
+
+            i_rate_batch = self.model.rating(u_g_embeddings, i_g_embddings).detach().cpu()
+
+            rate_batch[:, i_start:i_end] = i_rate_batch
+            i_count += i_rate_batch.shape[1]
+
+        topk = kwargs.get("topk", 10)
+        results = {}
+        for i in range(len(user_batch)):
+            rate = list(zip(range(self.n_items), rate_batch[i]))
+            rate.sort(key=lambda x: x[1], reverse=True)
+            results[user_batch[i].item()] = [rate[j] for j in range(min(topk, len(rate)))]
+
+        return results
+
+
 SUPPORTED_APPS = {
     "dataset-stats": {"impl": DatasetStatsPipeline, "default": {"dataset": "cora"}},
     "dataset-visual": {"impl": DatasetVisualPipeline, "default": {"dataset": "cora"}},
     "oagbert": {"impl": OAGBertInferencePipepline, "default": {"model": "oagbert-v1"}},
     "generate-emb": {"impl": GenerateEmbeddingPipeline, "default": {"model": "prone"}},
+    "recommendation": {"impl": RecommendationPipepline, "default": {"model": "lightgcn"}},
 }
 
 
@@ -233,7 +301,7 @@ def check_app(app: str):
 def pipeline(app: str, **kwargs) -> Pipeline:
     targeted_app = check_app(app)
     task_class = targeted_app["impl"]
-    default_args = targeted_app["default"]
+    default_args = targeted_app["default"].copy()
     default_args.update(kwargs)
 
     return task_class(app=app, **default_args)

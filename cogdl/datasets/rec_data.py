@@ -32,7 +32,7 @@ def statistics(dataset, train_data, valid_data, test_data):
     n_users = max(max(train_data[:, 0]), max(valid_data[:, 0]), max(test_data[:, 0])) + 1
     n_items = max(max(train_data[:, 1]), max(valid_data[:, 1]), max(test_data[:, 1])) + 1
 
-    if dataset != "yelp2018":
+    if dataset in ["ali", "amazon-rec"]:
         n_items -= n_users
         # remap [n_users, n_users+n_items] to [0, n_items]
         train_data[:, 1] -= n_users
@@ -88,21 +88,7 @@ def build_sparse_graph(data_cf, n_users, n_items):
     return _bi_norm_lap(mat)
 
 
-def read_recommendation_data(data_path, dataset):
-    directory = data_path + "/"
-
-    if dataset == "yelp2018":
-        read_cf = read_cf_yelp2018
-    else:
-        read_cf = read_cf_amazon
-
-    print("reading train and test user-item set ...")
-    train_cf = read_cf(directory + "train.txt")
-    test_cf = read_cf(directory + "test.txt")
-    if dataset != "yelp2018":
-        valid_cf = read_cf(directory + "valid.txt")
-    else:
-        valid_cf = test_cf
+def build_recommendation_data(dataset, train_cf, valid_cf, test_cf):
     n_users, n_items, train_user_set, valid_user_set, test_user_set = statistics(dataset, train_cf, valid_cf, test_cf)
 
     print("building the adj mat ...")
@@ -124,6 +110,26 @@ def read_recommendation_data(data_path, dataset):
     data.user_dict = user_dict
     data.n_params = n_params
     data.norm_mat = norm_mat
+
+    return data
+
+
+def read_recommendation_data(data_path, dataset):
+    directory = data_path + "/"
+
+    if dataset == "yelp2018":
+        read_cf = read_cf_yelp2018
+    else:
+        read_cf = read_cf_amazon
+
+    print("reading train and test user-item set ...")
+    train_cf = read_cf(directory + "train.txt")
+    test_cf = read_cf(directory + "test.txt")
+    if dataset != "yelp2018":
+        valid_cf = read_cf(directory + "valid.txt")
+    else:
+        valid_cf = test_cf
+    data = build_recommendation_data(dataset, train_cf, valid_cf, test_cf)
 
     return data
 

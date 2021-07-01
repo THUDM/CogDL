@@ -257,7 +257,7 @@ class Recommendation(BaseTask):
         parser.add_argument("--lr", type=float, default=0.001)
         parser.add_argument("--weight-decay", type=float, default=0)
         parser.add_argument("--num-workers", type=int, default=4)
-        parser.add_argument('--Ks', default=[20, 40, 60], type=int, nargs='+', metavar='N',
+        parser.add_argument('--Ks', default=[20], type=int, nargs='+', metavar='N',
                             help='Output sizes of every layer')
         # fmt: on
 
@@ -289,7 +289,7 @@ class Recommendation(BaseTask):
 
     def train(self, unittest=False):
         stopping_step = 0
-        best_value = -1e8
+        best_value = 0
         should_stop = False
         best_ret = None
 
@@ -297,7 +297,7 @@ class Recommendation(BaseTask):
         for epoch in range(self.max_epoch):
             loss = self._train_step()
 
-            if epoch % self.evaluate_interval == 0:
+            if (epoch + 1) % self.evaluate_interval == 0:
                 self.model.eval()
                 test_ret = self._test_step(split="test", unittest=unittest)
                 test_ret = [
@@ -345,9 +345,13 @@ class Recommendation(BaseTask):
                 # logging.info('training loss at epoch %d: %f' % (epoch, loss.item()))
                 print("raining loss at epoch %d: %.4f" % (epoch, loss))
 
-        print("early stopping at %d, recall@20:%.4f" % (epoch, best_value))
+        print("Stopping at %d, recall@20:%.4f" % (epoch, best_value))
 
-        return dict(Recall=best_ret[2], NDCG=test_ret[3])
+        if best_ret is not None:
+            Recall, NDCG = best_ret[2], best_ret[3]
+        else:
+            Recall = NDCG = 0.0
+        return dict(Recall=Recall, NDCG=NDCG)
 
     def _train_step(self):
         # shuffle training data

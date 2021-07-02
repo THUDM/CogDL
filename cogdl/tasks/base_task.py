@@ -65,8 +65,8 @@ class BaseTask(ABC, metaclass=LoadFrom):
 
     def get_trainer(self, model, args):
         if hasattr(args, "trainer") and args.trainer is not None:
-            if "self_auxiliary_task" in args.trainer and not hasattr(model, "get_embeddings"):
-                raise ValueError("Model ({}) must implement get_embeddings method".format(args.model))
+            if "self_auxiliary_task" in args.trainer and not hasattr(model, "embed"):
+                raise ValueError("Model ({}) must implement embed method".format(args.model))
             return build_trainer(args)
         elif model.get_trainer(None, args) is not None:
             return model.get_trainer(None, args)(args)

@@ -6,8 +6,9 @@ import torch.nn.functional as F
 from .. import register_model, BaseModel
 from cogdl.layers import GCNLayer
 from cogdl.utils import get_activation
-from cogdl.trainers.self_supervised_trainer import SelfSupervisedTrainer
+from cogdl.trainers.self_supervised_trainer import SelfSupervisedPretrainer
 from cogdl.data import Graph
+from cogdl.models.self_supervised_model import SelfSupervisedContrastiveModel
 
 
 class GraceEncoder(nn.Module):
@@ -32,7 +33,7 @@ class GraceEncoder(nn.Module):
 
 
 @register_model("grace")
-class GRACE(BaseModel):
+class GRACE(SelfSupervisedContrastiveModel):
     @staticmethod
     def add_args(parser):
         # fmt : off
@@ -83,6 +84,9 @@ class GRACE(BaseModel):
             nn.Linear(hidden_size, proj_hidden_size), nn.ELU(), nn.Linear(proj_hidden_size, hidden_size)
         )
         self.encoder = GraceEncoder(in_feats, hidden_size, num_layers, activation)
+
+    def augment(self, graph):
+        pass
 
     def forward(
         self,
@@ -136,7 +140,7 @@ class GRACE(BaseModel):
             losses.append(_loss)
         return sum(losses) / len(losses)
 
-    def node_classification_loss(self, graph):
+    def self_supervised_loss(self, graph):
         z1 = self.prop(graph, graph.x, self.drop_feature_rates[0], self.drop_edge_rates[0])
         z2 = self.prop(graph, graph.x, self.drop_feature_rates[1], self.drop_edge_rates[1])
 
@@ -180,4 +184,4 @@ class GRACE(BaseModel):
 
     @staticmethod
     def get_trainer(task, args):
-        return SelfSupervisedTrainer
+        return SelfSupervisedPretrainer

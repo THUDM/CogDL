@@ -6,8 +6,9 @@ import torch.nn as nn
 from .. import BaseModel, register_model
 from .dgi import GCN, AvgReadout
 from cogdl.utils.ppr_utils import build_topk_ppr_matrix_from_data
-from cogdl.trainers.self_supervised_trainer import SelfSupervisedTrainer
+from cogdl.trainers.self_supervised_trainer import SelfSupervisedPretrainer
 from cogdl.data import Graph
+from cogdl.models.self_supervised_model import SelfSupervisedContrastiveModel
 
 
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
@@ -58,7 +59,7 @@ class Discriminator(nn.Module):
 
 # Mainly borrowed from https://github.com/kavehhassani/mvgrl
 @register_model("mvgrl")
-class MVGRL(BaseModel):
+class MVGRL(SelfSupervisedContrastiveModel):
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -118,17 +119,20 @@ class MVGRL(BaseModel):
 
         return ret, h_1, h_2
 
-    def preprocess(self, graph):
+    def augment(self, graph):
         num_nodes = graph.num_nodes
-        graph.add_remaining_self_loops()
-        graph.sym_norm()
-
         adj = sp.coo_matrix(
             (graph.edge_weight.cpu().numpy(), (graph.edge_index[0].cpu().numpy(), graph.edge_index[1].cpu().numpy())),
             shape=(graph.num_nodes, graph.num_nodes),
         )
-
         diff = compute_ppr(adj.tocsr(), np.arange(num_nodes), self.alpha).tocoo()
+        return adj, diff
+
+    def preprocess(self, graph):
+        graph.add_remaining_self_loops()
+        graph.sym_norm()
+
+        adj, diff = self.augment(graph)
 
         if self.cache is None:
             self.cache = dict()
@@ -178,7 +182,7 @@ class MVGRL(BaseModel):
         loss = self.loss_f(logits, lbl)
         return loss
 
-    def node_classification_loss(self, data):
+    def self_supervised_loss(self, data):
         return self.loss(data)
 
     def embed(self, data, msk=None):
@@ -191,4 +195,4 @@ class MVGRL(BaseModel):
 
     @staticmethod
     def get_trainer(taskType, args):
-        return SelfSupervisedTrainer
+        return SelfSupervisedPretrainer

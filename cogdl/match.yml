@@ -240,3 +240,5 @@ recommendation:
     - lightgcn
     dataset:
     - yelp2018
+    - ali
+    - amazon-rec

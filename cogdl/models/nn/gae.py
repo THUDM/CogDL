@@ -24,7 +24,7 @@ class GAE(TKipfGCN):
         )
 
     def get_features(self, data):
-        return self.get_embeddings(data).detach()
+        return self.embed(data).detach()
 
     def get_trainer(self, task, args):
         return GAETrainer

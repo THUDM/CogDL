@@ -17,11 +17,12 @@ def get_default_args():
         "checkpoint": False,
         "load_emb_path": None,
         "training_percents": [0.1],
-        "activation": "relu",
-        "residual": False,
-        "sampling": False,
-        "sample_size": 20,
-        "norm": None,
+        "subgraph_sampling": False,
+        "do_train": True,
+        "do_eval": True,
+        "eval_agc": False,
+        "save_dir": "./embedding",
+        "load_dir": "./embedding",
     }
     return build_args_from_dict(default_dict)
 
@@ -45,9 +46,15 @@ def get_unsupervised_nn_args():
         "task": "unsupervised_node_classification",
         "checkpoint": False,
         "load_emb_path": None,
-        "sampling": False,
-        "sample_size": 20,
         "training_percents": [0.1],
+        "subgraph_sampling": False,
+        "sample_size": 128,
+        "do_train": True,
+        "do_eval": True,
+        "eval_agc": False,
+        "save_dir": "./embedding",
+        "load_dir": "./embedding",
+        "alpha": 1,
     }
     return build_args_from_dict(default_dict)
 
@@ -70,7 +77,6 @@ def test_unsupervised_graphsage():
     args.max_epochs = 2
     args.save_model = "graphsage.pt"
     args.model = "unsup_graphsage"
-    args.trainer = "self_supervised"
     args, dataset = build_nn_dataset(args)
     task = build_task(args)
     ret = task.train()

@@ -29,6 +29,11 @@ node_classification:
     - m3s
     - supergat
     - moe_gcn
+    - unsup_graphsage
+    - dgi
+    - mvgrl
+    - grace
+    - self_auxiliary_task
     dataset:
     - cora
     - citeseer
@@ -66,21 +71,6 @@ unsupervised_node_classification:
     - youtube-ne
     - dblp-ne
     - flickr-ne
-  - model:
-    - unsup_graphsage
-    - dgi
-    - mvgrl
-    - grace
-    dataset:
-    - cora
-    - citeseer
-    - pubmed
-    - reddit
-    - ppi
-    - ppi-large
-    - flickr
-    - yelp
-    - amazon-s
 graph_classification:
   - model:
     - gin

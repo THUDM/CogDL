@@ -17,14 +17,14 @@ class GAE(TKipfGCN):
         super(GAE, self).__init__(in_feats, hidden_size, 1, num_layers, dropout)
 
     def make_loss(self, data, adj):
-        embeddings = self.get_embeddings(data)
+        embeddings = self.embed(data)
         return (
             F.binary_cross_entropy(F.softmax(torch.mm(embeddings, embeddings.t())), adj, reduction="sum")
             / data.x.shape[0]
         )
 
     def get_features(self, data):
-        return self.get_embeddings(data).detach()
+        return self.embed(data).detach()
 
     def get_trainer(self, task, args):
         return GAETrainer

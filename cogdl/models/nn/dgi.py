@@ -4,7 +4,8 @@ import torch.nn as nn
 
 from .. import BaseModel, register_model
 from cogdl.utils import get_activation, spmm
-from cogdl.trainers.self_supervised_trainer import SelfSupervisedTrainer
+from cogdl.trainers.self_supervised_trainer import SelfSupervisedPretrainer
+from cogdl.models.self_supervised_model import SelfSupervisedContrastiveModel
 
 
 # Borrowed from https://github.com/PetarV-/DGI
@@ -94,15 +95,13 @@ class Discriminator(nn.Module):
 
 
 @register_model("dgi")
-class DGIModel(BaseModel):
+class DGIModel(SelfSupervisedContrastiveModel):
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--hidden-size", type=int, default=512)
-        parser.add_argument("--max-epoch", type=int, default=1000)
         parser.add_argument("--activation", type=str, default="prelu")
-        parser.add_argument("--patience", type=int, default=20)
         # fmt: on
 
     @classmethod
@@ -132,12 +131,16 @@ class DGIModel(BaseModel):
 
         return ret
 
+    def augment(self, graph):
+        idx = np.random.permutation(graph.num_nodes)
+        augmented_graph = graph.clone()
+        augmented_graph.x = augmented_graph.x[idx, :]
+        return augmented_graph
+
     def forward(self, graph):
         graph.sym_norm()
         x = graph.x
-
-        idx = np.random.permutation(graph.num_nodes)
-        shuf_fts = x[idx, :]
+        shuf_fts = self.augment(graph).x
 
         logits = self._forward(graph, x, shuf_fts, True, None)
         return logits
@@ -155,7 +158,7 @@ class DGIModel(BaseModel):
         loss = self.loss_f(logits, labels)
         return loss
 
-    def node_classification_loss(self, data):
+    def self_supervised_loss(self, data):
         return self.loss(data)
 
     # Detach the return variables
@@ -166,4 +169,4 @@ class DGIModel(BaseModel):
 
     @staticmethod
     def get_trainer(task, args):
-        return SelfSupervisedTrainer
+        return SelfSupervisedPretrainer

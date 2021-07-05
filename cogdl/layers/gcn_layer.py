@@ -53,18 +53,19 @@ class GCNLayer(nn.Module):
         if self.bias is not None:
             self.bias.data.zero_()
 
-    def forward(self, graph, x):
+    def forward(self, graph, x, flag=True):
         support = torch.mm(x, self.weight)
         out = spmm(graph, support)
-        if self.bias is not None:
-            out = out + self.bias
-        if self.norm is not None:
-            out = self.norm(out)
-        if self.act is not None:
-            out = self.act(out)
+        if flag:
+            if self.bias is not None:
+                out = out + self.bias
+            if self.norm is not None:
+                out = self.norm(out)
+            if self.act is not None:
+                out = self.act(out)
 
-        if self.residual is not None:
-            out = out + self.residual(x)
-        if self.dropout is not None:
-            out = self.dropout(out)
+            if self.residual is not None:
+                out = out + self.residual(x)
+            if self.dropout is not None:
+                out = self.dropout(out)
         return out

@@ -12,11 +12,15 @@ def get_default_args():
     cuda_available = torch.cuda.is_available()
     args = {
         "dataset": "cora",
-        "trainer": "self_auxiliary_task_joint",
-        "model": "gcn",
+        "trainer": "self_supervised_joint",
+        "model": "self_auxiliary_task",
         "hidden_size": 64,
         "label_mask": 0,
         "mask_ratio": 0.1,
+        "dropedge_rate": 0,
+        "activation": "relu",
+        "norm": None,
+        "residual": False,
         "dropout": 0.5,
         "patience": 2,
         "device_id": [0],
@@ -29,12 +33,15 @@ def get_default_args():
         "missing_rate": -1,
         "task": "node_classification",
         "checkpoint": False,
+        "label_mask": 0,
         "num_layers": 2,
-        "activation": "relu",
-        "dropedge_rate": 0,
-        "agc_eval": False,
-        "residual": False,
-        "norm": None,
+        "do_train": True,
+        "do_eval": True,
+        "save_dir": "./embedding",
+        "load_dir": "./embedding",
+        "eval_agc": False,
+        "subgraph_sampling": False,
+        "sample_size": 128,
     }
     args = build_args_from_dict(args)
     dataset = build_dataset(args)
@@ -57,22 +64,9 @@ def test_edgemask():
 def test_edgemask_pt_ft():
     args = get_default_args()
     args.auxiliary_task = "edgemask"
-    args.trainer = "self_auxiliary_task_pretrain"
+    args.trainer = "self_supervised_pt_ft"
     args.alpha = 1
-    args.freeze = False
-    dataset = build_dataset(args)
-    model = build_model(args)
-    task = build_task(args, dataset=dataset, model=model)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-
-def test_edgemask_pt_ft_freeze():
-    args = get_default_args()
-    args.auxiliary_task = "edgemask"
-    args.trainer = "self_auxiliary_task_pretrain"
-    args.alpha = 1
-    args.freeze = True
+    args.eval_agc = True
     dataset = build_dataset(args)
     model = build_model(args)
     task = build_task(args, dataset=dataset, model=model)
@@ -136,17 +130,6 @@ def test_pairwise_attr_sim():
     assert 0 <= ret["Acc"] <= 1
 
 
-def test_distance_to_clustersPP():
-    args = get_default_args()
-    args.auxiliary_task = "distance2clusters++"
-    args.alpha = 1
-    dataset = build_dataset(args)
-    model = build_model(args)
-    task = build_task(args, dataset=dataset, model=model)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-
 def test_supergat():
     args = get_default_args()
     args.model = "supergat"
@@ -190,13 +173,11 @@ def test_m3s():
 
 
 if __name__ == "__main__":
-    # test_supergat()
+    test_supergat()
     test_m3s()
     test_edgemask()
     test_edgemask_pt_ft()
-    test_edgemask_pt_ft_freeze()
     test_pairwise_distance()
     test_pairwise_distance_sampling()
     test_distance_to_clusters()
     test_pairwise_attr_sim()
-    test_distance_to_clustersPP()

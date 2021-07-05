@@ -127,6 +127,7 @@ SUPPORTED_MODELS = {
     "graphsaint": "cogdl.models.nn.graphsaint",
     "m3s": "cogdl.models.nn.m3s",
     "supergat": "cogdl.models.nn.pyg_supergat",
+    "self_auxiliary_task": "cogdl.models.nn.self_auxiliary_task",
     "moe_gcn": "cogdl.models.nn.moe_gcn",
     "lightgcn": "cogdl.models.nn.lightgcn",
 }

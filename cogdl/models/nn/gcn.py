@@ -65,11 +65,11 @@ class TKipfGCN(BaseModel):
         self.num_layers = num_layers
         self.dropout = dropout
 
-    def get_embeddings(self, graph):
+    def embed(self, graph):
+        graph.sym_norm()
         h = graph.x
         for i in range(self.num_layers - 1):
-            h = F.dropout(h, self.dropout, training=self.training)
-            h = self.layers[i](graph, h)
+            h = self.layers[i](graph, h, False)
         return h
 
     def forward(self, graph):
@@ -77,7 +77,6 @@ class TKipfGCN(BaseModel):
         h = graph.x
         for i in range(self.num_layers):
             h = self.layers[i](graph, h)
-            # h = F.dropout(h, self.dropout, training=self.training)
         return h
 
     def predict(self, data):

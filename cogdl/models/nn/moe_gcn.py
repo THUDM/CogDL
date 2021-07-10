@@ -119,7 +119,9 @@ class GraphConvBlock(nn.Module):
             res = self.res_connection
             new_feats = new_feats + res
             new_feats = F.dropout(new_feats, p=self.dropout, training=self.training)
+
         new_feats = self.pos_ff(new_feats)
+        new_feats = self.act(new_feats)
 
         return new_feats
 

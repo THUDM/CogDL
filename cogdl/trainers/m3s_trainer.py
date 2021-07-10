@@ -7,7 +7,6 @@ import scipy.sparse.linalg as slinalg
 from sklearn.cluster import KMeans
 
 import torch
-import torch.nn.functional as F
 from .base_trainer import BaseTrainer
 
 

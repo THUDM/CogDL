@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+from cogdl.utils import spmm
 
 from . import BaseLayer
 
@@ -27,8 +28,9 @@ class GINELayer(BaseLayer):
         self.apply_func = apply_func
 
     def forward(self, graph, x):
-        m = self.message(x[graph.edge_index[0]], graph.edge_attr)
-        out = self.aggregate(graph, m)
+        # m = self.message(x[graph.edge_index[0]], graph.edge_attr)
+        # out = self.aggregate(graph, m)
+        out = spmm(graph, x)
         out += (1 + self.eps) * x
         if self.apply_func is not None:
             out = self.apply_func(out)

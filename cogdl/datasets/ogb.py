@@ -89,8 +89,10 @@ class OGBArxivDataset(OGBNDataset):
         evaluator = NodeEvaluator(name="ogbn-arxiv")
 
         def wrap(y_pred, y_true):
+            y_pred = y_pred.argmax(dim=-1, keepdim=True)
+            y_true = y_true.view(-1, 1)
             input_dict = {"y_true": y_true, "y_pred": y_pred}
-            return evaluator.eval(input_dict)
+            return evaluator.eval(input_dict)["acc"]
 
         return wrap
 

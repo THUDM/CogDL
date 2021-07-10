@@ -149,7 +149,7 @@ def get_activation(act: str):
     elif act == "identity":
         return lambda x: x
     else:
-        return F.relu
+        return lambda x: x
 
 
 def cycle_index(num, shift):

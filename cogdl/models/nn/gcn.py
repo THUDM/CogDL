@@ -69,7 +69,7 @@ class TKipfGCN(BaseModel):
         graph.sym_norm()
         h = graph.x
         for i in range(self.num_layers - 1):
-            h = self.layers[i](graph, h, False)
+            h = self.layers[i](graph, h)
         return h
 
     def forward(self, graph):

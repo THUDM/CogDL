@@ -264,5 +264,5 @@ class JKNet(SupervisedHomogeneousNodeClassificationModel):
         self.graph = graph
 
     @staticmethod
-    def get_trainer(taskType, args):
+    def get_trainer(args):
         return JKNetTrainer

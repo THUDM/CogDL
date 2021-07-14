@@ -84,7 +84,7 @@ class MLP(BaseModel):
     def reset_parameters(self):
         for layer in self.mlp:
             layer.reset_parameters()
-        if self.norm:
+        if hasattr(self, "norm_list"):
             for n in self.norm_list:
                 n.reset_parameters()
 

@@ -200,9 +200,7 @@ class GPT_GNN(
         pass
 
     @staticmethod
-    def get_trainer(
-        taskType: Any, args
-    ) -> Optional[Type[Union[GPT_GNNHomogeneousTrainer, GPT_GNNHeterogeneousTrainer]]]:
+    def get_trainer(args) -> Optional[Type[Union[GPT_GNNHomogeneousTrainer, GPT_GNNHeterogeneousTrainer]]]:
         # if taskType == NodeClassification:
         return GPT_GNNHomogeneousTrainer
         # elif taskType == HeterogeneousNodeClassification:

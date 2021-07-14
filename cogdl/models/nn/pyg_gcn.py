@@ -29,9 +29,6 @@ class GCN(BaseModel):
             args.dropout,
         )
 
-    def get_trainer(self, task, args):
-        return None
-
     def __init__(self, num_features, num_classes, hidden_size, num_layers, dropout):
         super(GCN, self).__init__()
 

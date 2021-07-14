@@ -437,5 +437,5 @@ class SelfAuxiliaryTask(SelfSupervisedGenerativeModel):
         return list(self.gcn.parameters()) + list(self.agent.linear.parameters())
 
     @staticmethod
-    def get_trainer(task, args):
+    def get_trainer(args):
         return SelfSupervisedJointTrainer

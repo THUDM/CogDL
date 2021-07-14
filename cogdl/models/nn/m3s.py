@@ -58,5 +58,5 @@ class M3S(BaseModel):
         return self.forward(data)
 
     @staticmethod
-    def get_trainer(taskType, args):
+    def get_trainer(args):
         return M3STrainer

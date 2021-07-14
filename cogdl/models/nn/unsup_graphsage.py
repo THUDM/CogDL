@@ -133,5 +133,5 @@ class SAGE(BaseModel):
         return sage_sampler(self.adjlist, edge_index, num_sample)
 
     @staticmethod
-    def get_trainer():
+    def get_trainer(args):
         return SelfSupervisedPretrainer

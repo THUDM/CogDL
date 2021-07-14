@@ -86,5 +86,5 @@ class PPRGo(BaseModel):
         return predictions
 
     @staticmethod
-    def get_trainer(taskType: Any, args: Any):
+    def get_trainer(args: Any):
         return PPRGoTrainer

@@ -52,7 +52,7 @@ class DAEGC(BaseModel):
         self.cluster_center = None
 
     @staticmethod
-    def get_trainer():
+    def get_trainer(args=None):
         return DAEGCTrainer
 
     def forward(self, graph):

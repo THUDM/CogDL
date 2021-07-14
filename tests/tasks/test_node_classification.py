@@ -444,8 +444,9 @@ def test_sign_cora():
         "sym",
     ]
     args.remove_diag = False
-    task = build_task(args)
     args.diffusion = "ppr"
+
+    task = build_task(args)
     ret = task.train()
     assert 0 < ret["Acc"] < 1
     args.diffusion = "sgc"
@@ -650,7 +651,7 @@ def test_sagn_cora():
     args = get_default_args()
     dataset = build_custom_dataset()
     args.model = "sagn"
-    args.nhtop = args.label_nhtop = 2
+    args.nhop = args.label_nhop = 2
     args.threshold = 0.5
     args.use_labels = True
     args.nstage = [2, 2]
@@ -670,8 +671,8 @@ def test_c_s_cora():
     args.use_embeddings = True
     args.correct_alpha = 0.5
     args.smooth_alpha = 0.5
-    args.num_correct_hop = 2
-    args.num_smooth_hop = 2
+    args.num_correct_prop = 2
+    args.num_smooth_prop = 2
     args.correct_norm = "sym"
     args.smooth_norm = "sym"
     args.scale = 1.0

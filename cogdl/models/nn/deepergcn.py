@@ -120,5 +120,5 @@ class DeeperGCN(BaseModel):
         return self.forward(graph)
 
     @staticmethod
-    def get_trainer():
+    def get_trainer(args):
         return RandomClusterTrainer

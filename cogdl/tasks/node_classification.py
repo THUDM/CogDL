@@ -51,7 +51,7 @@ class NodeClassification(BaseTask):
         self.set_loss_fn(dataset)
         self.set_evaluator(dataset)
 
-        self.trainer = self.get_trainer(self.model, self.args)
+        self.trainer = self.get_trainer(self.args)
         if not self.trainer:
             self.optimizer = (
                 torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
@@ -110,8 +110,9 @@ class NodeClassification(BaseTask):
                         break
             print(f"Valid accurracy = {best_score: .4f}")
             self.model = best_model
-        test_acc, _ = self._test_step(split="test")
-        val_acc, _ = self._test_step(split="val")
+        acc, _ = self._test_step(post=True)
+        val_acc, test_acc = acc["val"], acc["test"]
+
         print(f"Test accuracy = {test_acc:.4f}")
         return dict(Acc=test_acc, ValAcc=val_acc)
 
@@ -123,11 +124,13 @@ class NodeClassification(BaseTask):
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
         self.optimizer.step()
 
-    def _test_step(self, split=None, logits=None):
+    def _test_step(self, split=None, post=False):
         self.data.eval()
         self.model.eval()
         with torch.no_grad():
-            logits = logits if logits else self.model.predict(self.data)
+            logits = self.model.predict(self.data)
+            if post and hasattr(self.model, "postprocess"):
+                logits = self.model.postprocess(self.data, logits)
         if split == "train":
             mask = self.data.train_mask
         elif split == "val":
@@ -142,7 +145,6 @@ class NodeClassification(BaseTask):
             metric = self.evaluator(logits[mask], self.data.y[mask])
             return metric, loss
         else:
-
             masks = {x: self.data[x + "_mask"] for x in ["train", "val", "test"]}
             metrics = {key: self.evaluator(logits[mask], self.data.y[mask]) for key, mask in masks.items()}
             losses = {key: self.loss_fn(logits[mask], self.data.y[mask]) for key, mask in masks.items()}

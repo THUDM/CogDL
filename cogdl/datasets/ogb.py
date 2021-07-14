@@ -84,6 +84,12 @@ class OGBArxivDataset(OGBNDataset):
     def __init__(self, data_path="data"):
         dataset = "ogbn-arxiv"
         super(OGBArxivDataset, self).__init__(data_path, dataset)
+        self.preprocessing()
+
+    def preprocessing(self):
+        row, col = self.data.edge_index
+        edge_index = to_undirected(torch.stack([row, col]))
+        self.data.edge_index = edge_index
 
     def get_evaluator(self):
         evaluator = NodeEvaluator(name="ogbn-arxiv")

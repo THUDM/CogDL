@@ -183,5 +183,5 @@ class GRACE(SelfSupervisedContrastiveModel):
         return x
 
     @staticmethod
-    def get_trainer(task, args):
+    def get_trainer():
         return SelfSupervisedPretrainer

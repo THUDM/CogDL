@@ -51,7 +51,8 @@ class DAEGC(BaseModel):
         self.att2 = GATLayer(hidden_size * num_heads, embedding_size, dropout=dropout, alpha=0.2, nhead=1, concat=False)
         self.cluster_center = None
 
-    def get_trainer(self, task, args):
+    @staticmethod
+    def get_trainer():
         return DAEGCTrainer
 
     def forward(self, graph):

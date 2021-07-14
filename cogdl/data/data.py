@@ -196,6 +196,13 @@ class Adjacency(BaseGraph):
             self.normalize_adj("row")
             self.__symmetric__ = False
 
+    def col_norm(self):
+        if self.row is None:
+            self.generate_normalization("col")
+        else:
+            self.normalize_adj("col")
+            self.__symmetric__ = False
+
     def generate_normalization(self, norm="sym"):
         if self.__normed__:
             return
@@ -209,6 +216,9 @@ class Adjacency(BaseGraph):
             edge_norm[torch.isinf(edge_norm)] = 0
             self.__out_norm__ = None
             self.__in_norm__ = edge_norm.view(-1, 1)
+        elif norm == "col":
+            self.row, _, _ = csr2coo(self.row_ptr, self.col, self.weight)
+            self.weight = row_normalization(self.num_nodes, self.col, self.row, self.weight)
         else:
             raise NotImplementedError
         self.__normed__ = norm
@@ -223,6 +233,8 @@ class Adjacency(BaseGraph):
             self.weight = symmetric_normalization(self.num_nodes, self.row, self.col, self.weight)
         elif norm == "row":
             self.weight = row_normalization(self.num_nodes, self.row, self.col, self.weight)
+        elif norm == "col":
+            self.weight = row_normalization(self.num_nodes, self.col, self.row, self.weight)
         else:
             raise NotImplementedError
         self.__normed__ = norm
@@ -450,8 +462,15 @@ class Graph(BaseGraph):
     def row_norm(self):
         self._adj.row_norm()
 
+    def col_norm(self):
+        self._adj.col_norm()
+
     def sym_norm(self):
         self._adj.sym_norm()
+
+    def normalize(self, key="sym"):
+        assert key in ["row", "sym", "col"], "Support row/col/sym normalization"
+        getattr(self, f"{key}_norm")()
 
     def is_symmetric(self):
         return self._adj.is_symmetric()
@@ -461,6 +480,28 @@ class Graph(BaseGraph):
 
     def set_asymmetric(self):
         self._adj.set_symmetric(False)
+
+    def is_inductive(self):
+        return self._adj_train is not None
+
+    def mask2nid(self, split):
+        mask = getattr(self, f"{split}_mask")
+        if mask is not None:
+            if mask.dtype is torch.bool:
+                return torch.where(mask)[0]
+            return mask
+
+    @property
+    def train_nid(self):
+        return self.mask2nid("train")
+
+    @property
+    def val_nid(self):
+        return self.mask2nid("val")
+
+    @property
+    def test_nid(self):
+        return self.mask2nid("test")
 
     @contextmanager
     def local_graph(self, key=None):

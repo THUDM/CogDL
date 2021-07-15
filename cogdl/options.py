@@ -129,7 +129,7 @@ def parse_args_and_arch(parser, args):
                 TRAINER_REGISTRY[args.trainer].add_args(parser)
     else:
         for model in args.model:
-            tr = MODEL_REGISTRY[model].get_trainer(None, None)
+            tr = MODEL_REGISTRY[model].get_trainer(args)
             if tr is not None:
                 tr.add_args(parser)
     # Parse a second time.

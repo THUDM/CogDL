@@ -27,7 +27,7 @@ class SupervisedHeterogeneousNodeClassificationModel(BaseModel, ABC):
         raise NotImplementedError
 
     @staticmethod
-    def get_trainer(taskType: Any, args: Any) -> "Optional[Type[SupervisedHeterogeneousNodeClassificationTrainer]]":
+    def get_trainer(args: Any = None) -> "Optional[Type[SupervisedHeterogeneousNodeClassificationTrainer]]":
         return None
 
 
@@ -41,8 +41,5 @@ class SupervisedHomogeneousNodeClassificationModel(BaseModel, ABC):
         raise NotImplementedError
 
     @staticmethod
-    def get_trainer(
-        taskType: Any,
-        args: Any,
-    ) -> "Optional[Type[SupervisedHomogeneousNodeClassificationTrainer]]":
+    def get_trainer(args: Any = None) -> "Optional[Type[SupervisedHomogeneousNodeClassificationTrainer]]":
         return None

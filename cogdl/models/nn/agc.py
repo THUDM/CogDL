@@ -28,7 +28,8 @@ class AGC(BaseModel):
         self.k = 0
         self.features_matrix = None
 
-    def get_trainer(self, task, args):
+    @staticmethod
+    def get_trainer(args):
         return AGCTrainer
 
     def get_features(self, data):

@@ -8,7 +8,7 @@ class SelfSupervisedModel(BaseModel):
         raise NotImplementedError
 
     @staticmethod
-    def get_trainer(task, args):
+    def get_trainer(args):
         return None
 
 

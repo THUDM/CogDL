@@ -1,60 +1,68 @@
+import os
+
 import torch
-import torch.nn.functional as F
 
 from .. import BaseModel, register_model
-from cogdl.utils import (
-    spmm,
-    dropout_adj,
-)
+from .mlp import MLP
+from cogdl.utils import spmm, dropout_adj, to_undirected
 
 
-def get_adj(graph, asymm_norm=False, set_diag=True, remove_diag=False):
-    if set_diag:
-        graph.add_remaining_self_loops()
-    elif remove_diag:
+def get_adj(graph, remove_diag=False):
+    if remove_diag:
         graph.remove_self_loops()
-    if asymm_norm:
-        graph.row_norm()
     else:
-        graph.sym_norm()
+        graph.add_remaining_self_loops()
     return graph
 
 
+def multi_hop_sgc(graph, x, nhop):
+    results = []
+    for _ in range(nhop):
+        x = spmm(graph, x)
+        results.append(x)
+    return results
+
+
+def multi_hop_ppr_diffusion(graph, x, nhop, alpha=0.5):
+    results = []
+    for _ in range(nhop):
+        x = (1 - alpha) * x + spmm(graph, x)
+        results.append(x)
+    return results
+
+
 @register_model("sign")
-class MLP(BaseModel):
+class SIGN(BaseModel):
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument('--num-features', type=int)
-        parser.add_argument("--num-classes", type=int)
-        parser.add_argument('--hidden-size', type=int, default=512)
-        parser.add_argument('--num-layers', type=int, default=3)
-        parser.add_argument('--dropout', type=float, default=0.3)
-        parser.add_argument('--dropedge-rate', type=float, default=0.2)
-
-        parser.add_argument('--directed', action='store_true')
-        parser.add_argument('--num-propagations', type=int, default=1)
-        parser.add_argument('--asymm-norm', action='store_true')
-        parser.add_argument('--set-diag', action='store_true')
-        parser.add_argument('--remove-diag', action='store_true')
-
+        MLP.add_args(parser)
+        parser.add_argument("--dropedge-rate", type=float, default=0.2)
+        parser.add_argument("--directed", action="store_true")
+        parser.add_argument("--nhop", type=int, default=3)
+        parser.add_argument("--adj-norm", type=str, default=["sym"], nargs="+")
+        parser.add_argument("--remove-diag", action="store_true")
+        parser.add_argument("--diffusion", type=str, default="ppr")
         # fmt: on
 
     @classmethod
     def build_model_from_args(cls, args):
+        cls.dataset_name = args.dataset if hasattr(args, "dataset") else None
         return cls(
             args.num_features,
             args.hidden_size,
             args.num_classes,
             args.num_layers,
             args.dropout,
-            args.directed,
             args.dropedge_rate,
-            args.num_propagations,
-            args.asymm_norm,
-            args.set_diag,
+            args.nhop,
+            args.adj_norm,
+            args.diffusion,
             args.remove_diag,
+            not args.directed,
+            args.norm,
+            args.activation,
         )
 
     def __init__(
@@ -65,76 +73,94 @@ class MLP(BaseModel):
         num_layers,
         dropout,
         dropedge_rate,
-        undirected,
-        num_propagations,
-        asymm_norm,
-        set_diag,
-        remove_diag,
+        nhop,
+        adj_norm,
+        diffusion="ppr",
+        remove_diag=False,
+        undirected=True,
+        norm="batchnorm",
+        activation="relu",
     ):
-
-        super(MLP, self).__init__()
-
-        self.dropout = dropout
+        super(SIGN, self).__init__()
         self.dropedge_rate = dropedge_rate
 
         self.undirected = undirected
-        self.num_propagations = num_propagations
-        self.asymm_norm = asymm_norm
-        self.set_diag = set_diag
+        self.num_propagations = nhop
+        self.adj_norm = adj_norm
         self.remove_diag = remove_diag
+        self.diffusion = diffusion
 
-        self.lins = torch.nn.ModuleList()
-        self.lins.append(torch.nn.Linear((1 + 2 * self.num_propagations) * num_features, hidden_size))
-        self.bns = torch.nn.ModuleList()
-        self.bns.append(torch.nn.BatchNorm1d(hidden_size))
-        for _ in range(num_layers - 2):
-            self.lins.append(torch.nn.Linear(hidden_size, hidden_size))
-            self.bns.append(torch.nn.BatchNorm1d(hidden_size))
-        self.lins.append(torch.nn.Linear(hidden_size, num_classes))
+        num_features = num_features * (1 + nhop * len(adj_norm))
+        self.mlp = MLP(
+            in_feats=num_features,
+            out_feats=num_classes,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            dropout=dropout,
+            activation=activation,
+            norm=norm,
+        )
 
         self.cache_x = None
 
-    def reset_parameters(self):
-        for lin in self.lins:
-            lin.reset_parameters()
-        for bn in self.bns:
-            bn.reset_parameters()
+    def _preprocessing(self, graph, x, drop_edge=False):
+        device = x.device
+        graph.to("cpu")
+        x = x.to("cpu")
 
-    def _preprocessing(self, graph, x):
-        op_embedding = []
-        op_embedding.append(x)
+        graph.eval()
+
+        op_embedding = [x]
 
         edge_index = graph.edge_index
+        if self.undirected:
+            edge_index = to_undirected(edge_index)
 
-        # Convert to numpy arrays on cpu
-        edge_index, _ = dropout_adj(edge_index, drop_rate=self.dropedge_rate)
+        if drop_edge:
+            edge_index, _ = dropout_adj(edge_index, drop_rate=self.dropedge_rate)
 
-        # if self.undirected:
-        #     edge_index = to_undirected(edge_index, num_nodes)
+        graph = get_adj(graph, remove_diag=self.remove_diag)
 
-        graph = get_adj(graph, asymm_norm=self.asymm_norm, set_diag=self.set_diag, remove_diag=self.remove_diag)
+        for norm in self.adj_norm:
+            with graph.local_graph():
+                graph.edge_index = edge_index
+                graph.normalize(norm)
+                if self.diffusion == "ppr":
+                    results = multi_hop_ppr_diffusion(graph, graph.x, self.num_propagations)
+                else:
+                    results = multi_hop_sgc(graph, graph.x, self.num_propagations)
+                op_embedding.extend(results)
 
-        with graph.local_graph():
-            graph.edge_index = edge_index
-            for _ in range(self.num_propagations):
-                x = spmm(graph, x)
-                op_embedding.append(x)
+        graph.to(device)
+        return torch.cat(op_embedding, dim=1).to(device)
 
-        for _ in range(self.num_propagations):
-            nx = spmm(graph, x)
-            op_embedding.append(nx)
+    def preprocessing(self, graph, x):
+        print("Preprocessing...")
+        dataset_name = None
+        if self.dataset_name is not None:
+            adj_norm = ",".join(self.adj_norm)
+            dataset_name = f"{self.dataset_name}_{self.num_propagations}_{self.diffusion}_{adj_norm}.pt"
+            if os.path.exists(dataset_name):
+                return torch.load(dataset_name).to(x.device)
+        if graph.is_inductive():
+            graph.train()
+            x_train = self._preprocessing(graph, x, drop_edge=True)
+            graph.eval()
+            x_all = self._preprocessing(graph, x, drop_edge=False)
+            train_nid = graph.train_nid
+            x_all[train_nid] = x_train[train_nid]
+        else:
+            x_all = self._preprocessing(graph, x, drop_edge=False)
 
-        return torch.cat(op_embedding, dim=1)
+        if dataset_name is not None:
+            torch.save(x_all.cpu(), dataset_name)
+        print("Preprocessing Done...")
+        return x_all
 
     def forward(self, graph):
         if self.cache_x is None:
-            x = graph.x
-            self.cache_x = self._preprocessing(graph, x)
+            x = graph.x.contiguous()
+            self.cache_x = self.preprocessing(graph, x)
         x = self.cache_x
-        for i, lin in enumerate(self.lins[:-1]):
-            x = lin(x)
-            x = self.bns[i](x)
-            x = F.relu(x)
-            x = F.dropout(x, p=self.dropout, training=self.training)
-        x = self.lins[-1](x)
+        x = self.mlp(x)
         return x

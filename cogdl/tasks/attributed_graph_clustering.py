@@ -95,7 +95,7 @@ class AttributedGraphClustering(BaseTask):
             features_matrix = torch.tensor(features_matrix)
             features_matrix = F.normalize(features_matrix, p=2, dim=1)
         else:
-            trainer = self.model.get_trainer(AttributedGraphClustering, self.args)(self.args)
+            trainer = self.model.get_trainer(self.args)(self.args)
             self.model = trainer.fit(self.model, self.data)
             features_matrix = self.model.get_features(self.data)
 

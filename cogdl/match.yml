@@ -34,6 +34,8 @@ node_classification:
     - mvgrl
     - grace
     - self_auxiliary_task
+    - correct_smooth_mlp
+    - sagn
     dataset:
     - cora
     - citeseer

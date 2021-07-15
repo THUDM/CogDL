@@ -42,7 +42,7 @@ class BaseModel(nn.Module):
         return self.loss_fn(pred, batch.y)
 
     @staticmethod
-    def get_trainer(task: Any, args: Any) -> Optional[Type[BaseTrainer]]:
+    def get_trainer(args=None) -> Optional[Type[BaseTrainer]]:
         return None
 
     def set_device(self, device):

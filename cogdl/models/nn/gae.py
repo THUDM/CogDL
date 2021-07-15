@@ -26,7 +26,8 @@ class GAE(TKipfGCN):
     def get_features(self, data):
         return self.embed(data).detach()
 
-    def get_trainer(self, task, args):
+    @staticmethod
+    def get_trainer(args=None):
         return GAETrainer
 
 
@@ -88,5 +89,6 @@ class VGAE(BaseModel):
         print("recon_loss = %.3f, kl_loss = %.3f" % (recon_loss, kl_loss))
         return recon_loss + kl_loss
 
-    def get_trainer(self, task, args):
+    @staticmethod
+    def get_trainer(args):
         return GAETrainer

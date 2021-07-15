@@ -122,7 +122,7 @@ def test_graphsage_cora():
     args.batch_size = 128
     args.num_layers = 2
     args.patience = 1
-    args.max_epoch = 5
+    args.max_epoch = 2
     args.hidden_size = [32, 32]
     args.sample_size = [3, 5]
     args.num_workers = 1
@@ -283,7 +283,7 @@ def test_graph_mix():
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "gcnmix"
-    args.max_epoch = 10
+    args.max_epoch = 2
     args.rampup_starts = 1
     args.rampup_ends = 100
     args.mixup_consistency = 5.0
@@ -362,7 +362,7 @@ def test_deepergcn_cora():
     args.num_layers = 2
     args.connection = "res+"
     args.cluster_number = 3
-    args.max_epoch = 10
+    args.max_epoch = 2
     args.patience = 1
     args.learn_beta = True
     args.learn_msg_scale = True
@@ -436,14 +436,20 @@ def test_sign_cora():
     args.lr = 0.00005
     args.hidden_size = 2048
     args.num_layers = 3
-    args.num_propagations = 3
+    args.nhop = 3
     args.dropout = 0.3
     args.directed = False
     args.dropedge_rate = 0.2
-    args.asymm_norm = False
-    args.set_diag = False
+    args.adj_norm = [
+        "sym",
+    ]
     args.remove_diag = False
+    args.diffusion = "ppr"
+
     task = build_task(args)
+    ret = task.train()
+    assert 0 < ret["Acc"] < 1
+    args.diffusion = "sgc"
     ret = task.train()
     assert 0 < ret["Acc"] < 1
 
@@ -630,6 +636,52 @@ def test_gcn_ppi():
     args.model = "gcn"
     args.cpu = True
     task = build_task(args)
+    assert 0 <= task.train()["Acc"] <= 1
+
+
+def build_custom_dataset():
+    args = get_default_args()
+    args.dataset = "cora"
+    dataset = build_dataset(args)
+    dataset.data._adj_train = dataset.data._adj_full
+    return dataset
+
+
+def test_sagn_cora():
+    args = get_default_args()
+    dataset = build_custom_dataset()
+    args.model = "sagn"
+    args.nhop = args.label_nhop = 2
+    args.threshold = 0.5
+    args.use_labels = True
+    args.nstage = [2, 2]
+    args.batch_size = 32
+    args.data_gpu = False
+    args.attn_drop = 0.0
+    args.input_drop = 0.0
+    args.nhead = 2
+    args.negative_slope = 0.2
+    args.mlp_layer = 2
+    task = build_task(args, dataset=dataset)
+    assert 0 <= task.train()["Acc"] <= 1
+
+
+def test_c_s_cora():
+    args = get_default_args()
+    args.use_embeddings = True
+    args.correct_alpha = 0.5
+    args.smooth_alpha = 0.5
+    args.num_correct_prop = 2
+    args.num_smooth_prop = 2
+    args.correct_norm = "sym"
+    args.smooth_norm = "sym"
+    args.scale = 1.0
+    args.autoscale = True
+    args.dataset = "cora"
+    args.model = "correct_smooth_mlp"
+    task = build_task(args)
+    assert 0 <= task.train()["Acc"] <= 1
+    args.autoscale = False
     assert 0 <= task.train()["Acc"] <= 1
 
 

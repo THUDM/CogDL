@@ -130,4 +130,7 @@ SUPPORTED_MODELS = {
     "self_auxiliary_task": "cogdl.models.nn.self_auxiliary_task",
     "moe_gcn": "cogdl.models.nn.moe_gcn",
     "lightgcn": "cogdl.models.nn.lightgcn",
+    "correct_smooth": "cogdl.models.nn.correct_smooth",
+    "correct_smooth_mlp": "cogdl.models.nn.correct_smooth",
+    "sagn": "cogdl.models.nn.sagn",
 }

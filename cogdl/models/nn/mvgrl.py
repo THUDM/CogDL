@@ -194,5 +194,5 @@ class MVGRL(SelfSupervisedContrastiveModel):
         return (h_1 + h_2).detach()  # , c.detach()
 
     @staticmethod
-    def get_trainer(taskType, args):
+    def get_trainer(args):
         return SelfSupervisedPretrainer

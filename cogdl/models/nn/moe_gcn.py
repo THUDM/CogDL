@@ -38,11 +38,12 @@ class GraphConv(nn.Module):
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
 
-    def __init__(self, in_features, out_features, dropout=0.0, residual=False, norm=None, bias=True):
+    def __init__(self, in_features, out_features, dropout=0.0, residual=False, activation=None, norm=None, bias=True):
         super(GraphConv, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.weight = Parameter(torch.FloatTensor(in_features, out_features))
+        self.act = get_activation(activation)
         if dropout > 0:
             self.dropout = nn.Dropout(dropout)
         else:
@@ -111,7 +112,8 @@ class GraphConvBlock(nn.Module):
     def reset_parameters(self):
         """Reinitialize model parameters."""
         # self.graph_conv.reset_parameters()
-        self.res_connection.reset_parameters()
+        if self.res_connection is not None:
+            self.res_connection.reset_parameters()
 
     def forward(self, graph, feats):
         new_feats = self.graph_conv(graph, feats)
@@ -121,7 +123,6 @@ class GraphConvBlock(nn.Module):
             new_feats = F.dropout(new_feats, p=self.dropout, training=self.training)
 
         new_feats = self.pos_ff(new_feats)
-        new_feats = self.act(new_feats)
 
         return new_feats
 

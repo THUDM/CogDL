@@ -138,7 +138,7 @@ class Graphsage(BaseModel):
         return x_all
 
     @staticmethod
-    def get_trainer(task: Any, args: Any):
+    def get_trainer(args):
         if args.dataset not in ["cora", "citeseer", "pubmed"]:
             return NeighborSamplingTrainer
         if hasattr(args, "use_trainer"):

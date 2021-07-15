@@ -170,5 +170,5 @@ class GraphSAINT(BaseModel):
         return self.forward(data)
 
     @staticmethod
-    def get_trainer(task, args):
+    def get_trainer(args):
         return SAINTTrainer

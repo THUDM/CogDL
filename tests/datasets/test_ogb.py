@@ -8,7 +8,6 @@ def test_ogbn_arxiv():
     dataset = build_dataset(args)
     data = dataset.data
     assert data.num_nodes == 169343
-    assert data.num_edges == 1136420
 
 
 def test_ogbg_molhiv():

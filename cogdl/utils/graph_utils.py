@@ -72,7 +72,7 @@ def add_remaining_self_loops(edge_index, edge_weight=None, fill_value=1, num_nod
 def row_normalization(num_nodes, row, col, val=None):
     device = row.device
     if val is None:
-        val = torch.ones(row.shape[0]).to(device)
+        val = torch.ones(row.shape[0], device=device)
     row_sum = get_degrees(row, col, num_nodes)
     row_sum_inv = row_sum.pow(-1).view(-1)
     row_sum_inv[torch.isinf(row_sum_inv)] = 0

@@ -41,11 +41,7 @@ class HeterogeneousNodeClassification(BaseTask):
         model = build_model(args) if model is None else model
         self.model: SupervisedHeterogeneousNodeClassificationModel = model.to(self.device)
 
-        self.trainer = (
-            self.model.get_trainer(HeterogeneousNodeClassification, args)(self.args)
-            if self.model.get_trainer(HeterogeneousNodeClassification, args)
-            else None
-        )
+        self.trainer = self.model.get_trainer(args)(args) if self.model.get_trainer(args) else None
 
         self.patience = args.patience
         self.max_epoch = args.max_epoch

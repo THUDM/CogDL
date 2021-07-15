@@ -1,5 +1,3 @@
-from typing import Any
-
 import torch.nn as nn
 import torch.nn.functional as F
 from cogdl.trainers.sampled_trainer import RandomClusterTrainer
@@ -29,14 +27,6 @@ class DeeperGCN(BaseModel):
         parser.add_argument("--learn-msg-scale", action="store_true")
         parser.add_argument("--use-msg-norm", action="store_true")
         # fmt: on
-
-        """
-            ogbn-products:
-                num_layers: 14
-                self_loop:
-                aggr: softmax_sg
-                beta: 0.1
-        """
 
     @classmethod
     def build_model_from_args(cls, args):

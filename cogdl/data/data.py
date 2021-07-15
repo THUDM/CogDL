@@ -806,3 +806,11 @@ class Graph(BaseGraph):
         for key, item in dictionary.items():
             data[key] = item
         return data
+
+    # @property
+    # def requires_grad(self):
+    #     return False
+    #
+    # @requires_grad.setter
+    # def requires_grad(self, x):
+    #     print(f"Set `requires_grad` to {x}")

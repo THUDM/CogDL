@@ -47,8 +47,8 @@ class DAEGC(BaseModel):
         self.embedding_size = embedding_size
         self.dropout = dropout
         self.num_clusters = num_clusters
-        self.att1 = GATLayer(num_features, hidden_size, dropout=dropout, alpha=0.2, nhead=num_heads, concat=True)
-        self.att2 = GATLayer(hidden_size * num_heads, embedding_size, dropout=dropout, alpha=0.2, nhead=1, concat=False)
+        self.att1 = GATLayer(num_features, hidden_size, attn_drop=dropout, alpha=0.2, nhead=num_heads)
+        self.att2 = GATLayer(hidden_size * num_heads, embedding_size, attn_drop=dropout, alpha=0.2, nhead=1)
         self.cluster_center = None
 
     @staticmethod

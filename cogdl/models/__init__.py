@@ -133,4 +133,6 @@ SUPPORTED_MODELS = {
     "correct_smooth": "cogdl.models.nn.correct_smooth",
     "correct_smooth_mlp": "cogdl.models.nn.correct_smooth",
     "sagn": "cogdl.models.nn.sagn",
+    "revgcn": "cogdl.models.nn.revgcn",
+    "revgat": "cogdl.models.nn.revgcn",
 }

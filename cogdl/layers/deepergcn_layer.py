@@ -49,7 +49,7 @@ class GENConv(nn.Module):
             self.register_buffer("p", None)
         self.eps = 1e-7
 
-        self.s = torch.nn.Parameter(torch.Tensor([1.0]), requires_grad=learn_msg_scale)
+        self.s = torch.nn.Parameter(torch.Tensor([1.0]), requires_grad=learn_msg_scale and use_msg_norm)
         self.act = nn.ReLU()
 
     def message_norm(self, x, msg):
@@ -65,14 +65,16 @@ class GENConv(nn.Module):
         edge_msg = self.act(edge_msg) + self.eps
 
         if self.aggr == "softmax_sg":
-            h = mul_edge_softmax(graph, self.beta * edge_msg)
+            h = mul_edge_softmax(graph, self.beta * edge_msg.contiguous())
+            # print(h.device, edge_msg.device, h.shape, edge_msg.shape)
+            # print(h, edge_msg)
             h = edge_msg * h
         elif self.aggr == "softmax":
             h = mul_edge_softmax(graph, edge_msg)
             h = edge_msg * h
         elif self.aggr == "powermean":
             deg = graph.degrees()
-            h = edge_msg.pow(self.t) / deg[edge_index[0]].unsqueeze(-1)
+            h = edge_msg.pow(self.p) / deg[edge_index[0]].unsqueeze(-1)
         else:
             raise NotImplementedError
 

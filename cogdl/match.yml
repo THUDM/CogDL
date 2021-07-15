@@ -36,6 +36,8 @@ node_classification:
     - self_auxiliary_task
     - correct_smooth_mlp
     - sagn
+    - revgcn
+    - revgat
     dataset:
     - cora
     - citeseer

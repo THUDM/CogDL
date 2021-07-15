@@ -37,8 +37,8 @@ class DrGAT(BaseModel):
         self.hidden_size = hidden_size
         self.num_heads = num_heads
         self.dropout = dropout
-        self.conv1 = GATLayer(num_features, hidden_size, nhead=num_heads, dropout=dropout)
-        self.conv2 = GATLayer(hidden_size * num_heads, num_classes, nhead=1, dropout=dropout)
+        self.conv1 = GATLayer(num_features, hidden_size, nhead=num_heads, attn_drop=dropout)
+        self.conv2 = GATLayer(hidden_size * num_heads, num_classes, nhead=1, attn_drop=dropout)
         self.se1 = SELayer(num_features, se_channels=int(np.sqrt(num_features)))
         self.se2 = SELayer(hidden_size * num_heads, se_channels=int(np.sqrt(hidden_size * num_heads)))
 

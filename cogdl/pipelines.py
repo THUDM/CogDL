@@ -174,7 +174,7 @@ class GenerateEmbeddingPipeline(Pipeline):
         args.model = args.model[0]
         self.model = build_model(args)
 
-        self.trainer = self.model.get_trainer(self.model, args)
+        self.trainer = self.model.get_trainer(args)
         if self.trainer is not None:
             self.trainer = self.trainer(args)
 

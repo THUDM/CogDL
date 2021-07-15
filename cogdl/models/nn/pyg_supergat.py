@@ -471,7 +471,7 @@ class SuperGAT(BaseModel):
         return [self.conv1, self.conv2]
 
     @staticmethod
-    def get_trainer(task, args):
+    def get_trainer(args):
         return SuperGATTrainer
 
 
@@ -579,5 +579,5 @@ class LargeSuperGAT(BaseModel):
         return self.conv_list
 
     @staticmethod
-    def get_trainer(task, args):
+    def get_trainer(args):
         return SuperGATTrainer

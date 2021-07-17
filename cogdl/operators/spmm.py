@@ -9,8 +9,9 @@ path = os.path.join(os.path.dirname(__file__))
 try:
     spmm = load(
         name="spmm",
+        extra_cflags=['-lcusparse'],
         sources=[os.path.join(path, "spmm/spmm.cpp"), os.path.join(path, "spmm/spmm_kernel.cu")],
-        verbose=False,
+        verbose=True,
     )
     sddmm = load(
         name="sddmm",

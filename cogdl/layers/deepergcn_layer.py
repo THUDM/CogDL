@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint
 
-from cogdl.models.nn.mlp import MLP
+from .mlp import MLP
 from cogdl.utils import get_activation, mul_edge_softmax, get_norm_layer
 
 

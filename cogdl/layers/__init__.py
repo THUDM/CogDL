@@ -15,6 +15,8 @@ from .pprgo_layer import PPRGoLayer
 from .rgcn_layer import RGCNLayer
 from .sgc_layer import SGCLayer
 from .mixhop_layer import MixHopLayer
+from .mlp import MLP
+
 
 __all__ = [
     "BaseLayer",
@@ -37,4 +39,5 @@ __all__ = [
     "RGCNLayer",
     "SGCLayer",
     "MixHopLayer",
+    "MLP",
 ]

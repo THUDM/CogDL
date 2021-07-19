@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 
 from .. import BaseModel, register_model
-from .mlp import MLP
+from cogdl.layers import MLP
 from cogdl.data import Graph
 from cogdl.utils import spmm
 

@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from cogdl.trainers.sampled_trainer import RandomClusterTrainer
 from cogdl.utils import get_activation
-from cogdl.layers import DeepGCNLayer, GENConv
+from cogdl.layers import ResGNNLayer, GENConv
 
 from .. import BaseModel, register_model
 
@@ -72,12 +72,10 @@ class DeeperGCN(BaseModel):
         self.layers.append(GENConv(hidden_size, hidden_size))
         for i in range(num_layers - 1):
             self.layers.append(
-                DeepGCNLayer(
-                    in_feat=hidden_size,
-                    out_feat=hidden_size,
+                ResGNNLayer(
                     conv=GENConv(
-                        in_feat=hidden_size,
-                        out_feat=hidden_size,
+                        in_feats=hidden_size,
+                        out_feats=hidden_size,
                         aggr=aggr,
                         beta=beta,
                         p=p,
@@ -86,6 +84,7 @@ class DeeperGCN(BaseModel):
                         use_msg_norm=use_msg_norm,
                         learn_msg_scale=learn_msg_scale,
                     ),
+                    n_channels=hidden_size,
                     connection=connection,
                     activation=activation,
                     dropout=dropout,

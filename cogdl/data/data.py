@@ -263,7 +263,7 @@ class Adjacency(BaseGraph):
     @property
     def degrees(self):
         if self.row_ptr is not None:
-            return self.row_ptr[1:] - self.row_ptr[:-1]
+            return (self.row_ptr[1:] - self.row_ptr[:-1]).float()
         else:
             return get_degrees(self.row, self.col, num_nodes=self.num_nodes)
 

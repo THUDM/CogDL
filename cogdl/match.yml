@@ -38,6 +38,7 @@ node_classification:
     - sagn
     - revgcn
     - revgat
+    - sage
     dataset:
     - cora
     - citeseer

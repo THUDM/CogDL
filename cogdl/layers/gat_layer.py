@@ -3,6 +3,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from cogdl.utils import check_mh_spmm, mh_spmm, mul_edge_softmax, spmm, get_activation, get_norm_layer
 
 
@@ -28,11 +29,10 @@ class GATLayer(nn.Module):
         self.dropout = nn.Dropout(attn_drop)
         self.leakyrelu = nn.LeakyReLU(self.alpha)
         self.act = None if activation is None else get_activation(activation)
-        self.norm = None if norm is None else get_norm_layer(norm, out_features)
+        self.norm = None if norm is None else get_norm_layer(norm, out_features * nhead)
 
         if residual:
-            out_features = out_features * nhead
-            self.residual = nn.Linear(in_features, out_features)
+            self.residual = nn.Linear(in_features, out_features * nhead)
         else:
             self.register_buffer("residual", None)
         self.reset_parameters()

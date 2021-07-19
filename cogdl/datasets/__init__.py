@@ -57,7 +57,13 @@ def build_dataset(args):
         if dataset is not None:
             return dataset
         exit(1)
-    return DATASET_REGISTRY[args.dataset]()
+    else:
+        dataset = DATASET_REGISTRY[args.dataset]()
+    if dataset.num_classes > 0:
+        args.num_classes = dataset.num_classes
+    if dataset.num_features > 0:
+        args.num_features = dataset.num_features
+    return dataset
 
 
 def build_dataset_from_name(dataset):

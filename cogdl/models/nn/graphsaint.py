@@ -32,7 +32,6 @@ class GraphSAINT(BaseModel):
         parser.add_argument("--act", type=str, default="relu")
         parser.add_argument("--bias", type=str, default="norm")
         parser.add_argument("--dropout", type=float, default=0.1)
-        parser.add_argument("--weight-decay", type=int, default=0)
         # fmt: on
 
     @classmethod
@@ -44,12 +43,11 @@ class GraphSAINT(BaseModel):
             args.aggr,
             args.act,
             args.bias,
-            args.weight_decay,
             args.dropout,
             args.hidden_size,
         )
 
-    def __init__(self, num_features, num_classes, architecture, aggr, act, bias, weight_decay, dropout, hidden_size):
+    def __init__(self, num_features, num_classes, architecture, aggr, act, bias, dropout, hidden_size):
         """
         Build the multi-layer GNN architecture.
 
@@ -70,7 +68,6 @@ class GraphSAINT(BaseModel):
         super(GraphSAINT, self).__init__()
         self.aggregator_cls = SAINTLayer
         self.mulhead = 1
-        self.weight_decay = weight_decay
         self.dropout = dropout
         self.sigmoid_loss = True
         self.num_classes = num_classes

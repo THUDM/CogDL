@@ -138,6 +138,8 @@ class Dataset(torch.utils.data.Dataset):
     @property
     def num_classes(self):
         r"""The number of classes in the dataset."""
+        if not hasattr(self.data, "y") or self.data.y is None:
+            return 0
         y = self.data.y
         return y.max().item() + 1 if y.dim() == 1 else y.size(1)
 

@@ -6,16 +6,9 @@ from .. import BaseModel, register_model
 from .deepergcn import DeeperGCN
 from .gat import GAT
 from cogdl.layers.reversible_layer import RevGNNLayer
-from cogdl.layers.deepergcn_layer import GENConv
+from cogdl.layers.deepergcn_layer import GENConv, ResGNNLayer
 from cogdl.layers.gat_layer import GATLayer
 from cogdl.utils import get_activation, get_norm_layer
-
-
-def shared_dropout(x, mask, training):
-    if training:
-        return x * mask
-    else:
-        return x
 
 
 @register_model("revgcn")
@@ -24,7 +17,8 @@ class RevGEN(BaseModel):
     def add_args(parser):
         DeeperGCN.add_args(parser)
         parser.add_argument("--group", type=int, default=2)
-        parser.add_argument("--norm", type=str, default="batchnorm")
+        parser.add_argument("--norm", type=str, default=None)
+        parser.add_argument("--last-norm", type=str, default="batchnorm")
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -36,6 +30,7 @@ class RevGEN(BaseModel):
             args.group,
             args.activation,
             args.norm,
+            args.last_norm,
             args.dropout,
             args.aggr,
             args.beta,
@@ -54,7 +49,8 @@ class RevGEN(BaseModel):
         num_layers,
         group=2,
         activation="relu",
-        norm="batchnorm",
+        norm=None,
+        last_norm="batchnorm",
         dropout=0.0,
         aggr="softmax_sg",
         beta=1.0,
@@ -79,10 +75,12 @@ class RevGEN(BaseModel):
                 learn_p,
                 use_msg_norm,
                 learn_msg_scale,
+                residual=True,
             )
-            self.layers.append(RevGNNLayer(conv, group))
+            res_conv = ResGNNLayer(conv, hidden_size // group, norm=norm, activation=activation)
+            self.layers.append(RevGNNLayer(res_conv, group))
         self.activation = get_activation(activation)
-        self.norm = get_norm_layer(norm, hidden_size)
+        self.norm = get_norm_layer(last_norm, hidden_size)
         self.dropout = dropout
 
     def forward(self, graph):
@@ -94,8 +92,7 @@ class RevGEN(BaseModel):
         mask = m.requires_grad_(False) / (1 - self.dropout)
 
         for layer in self.layers:
-            h = shared_dropout(h, mask, self.training)
-            h = layer(graph, h)
+            h = layer(graph, h, mask)
 
         h = self.activation(self.norm(h))
         h = F.dropout(h, p=self.dropout, training=self.training)
@@ -122,67 +119,74 @@ class RevGAT(BaseModel):
             args.group,
             args.alpha,
             args.nhead,
-            args.last_nhead,
             args.dropout,
             args.attn_drop,
             args.activation,
             args.norm,
-            args.residual,
         )
 
     def __init__(
         self,
         in_feats,
         hidden_size,
-        out_feat,
+        out_feats,
         num_layers,
         group=2,
         alpha=0.2,
         nhead=1,
-        last_nhead=1,
         dropout=0.5,
         attn_drop=0.5,
         activation="relu",
         norm="batchnorm",
-        residual=True,
     ):
         super(RevGAT, self).__init__()
         self.dropout = dropout
         self.num_layers = num_layers
         self.layers = nn.ModuleList()
+        self.norm = get_norm_layer(norm, hidden_size * nhead)
+        self.act = get_activation(activation)
         for i in range(num_layers):
             if i == 0:
                 self.layers.append(
                     GATLayer(
-                        in_feats, hidden_size, nhead, alpha, attn_drop, residual=True, activation=activation, norm=norm
+                        in_feats,
+                        hidden_size,
+                        nhead,
+                        alpha,
+                        attn_drop,
+                        residual=True,
                     )
                 )
             elif i == num_layers - 1:
-                self.layers.append(GATLayer(hidden_size, out_feat, last_nhead, alpha, attn_drop, residual=residual))
+                self.layers.append(GATLayer(hidden_size * nhead, out_feats, 1, alpha, attn_drop, residual=True))
             else:
                 conv = GATLayer(
-                    hidden_size,
-                    hidden_size,
+                    hidden_size * nhead // group,
+                    hidden_size // group,
                     nhead=nhead,
                     alpha=alpha,
                     attn_drop=attn_drop,
-                    residual=residual,
+                    residual=True,
                     activation=activation,
                     norm=norm,
                 )
-                self.layers.append(RevGNNLayer(conv, group))
+                res_conv = ResGNNLayer(conv, hidden_size * nhead // group, activation=activation, norm=norm)
+                self.layers.append(RevGNNLayer(res_conv, group))
 
     def forward(self, graph):
         graph.requires_grad = False
         h = graph.x
         h = F.dropout(h, self.dropout, training=self.training)
+        h = self.layers[0](graph, h)
+
         m = torch.zeros_like(h).bernoulli_(1 - self.dropout)
         mask = m.requires_grad_(False) / (1 - self.dropout)
 
-        for i, layer in enumerate(self.layers):
-            h = self.layers[i](graph, h)
-            if i < self.num_layers - 2:
-                h = shared_dropout(h, mask, training=self.training)
-            elif i == self.num_layers - 2:
-                h = F.dropout(h, self.dropout, training=self.training)
+        for i in range(1, len(self.layers) - 1):
+            h = self.layers[i](graph, h, mask)
+
+        h = self.norm(h)
+        h = self.act(h)
+        h = F.dropout(h, p=self.dropout, training=self.training)
+        h = self.layers[-1](graph, h)
         return h

@@ -16,7 +16,7 @@ class DrGAT(BaseModel):
         parser.add_argument("--num-features", type=int)
         parser.add_argument("--num-classes", type=int)
         parser.add_argument("--hidden-size", type=int, default=8)
-        parser.add_argument("--num-heads", type=int, default=8)
+        parser.add_argument("--nhead", type=int, default=8)
         parser.add_argument("--dropout", type=float, default=0.6)
         # fmt: on
 
@@ -26,7 +26,7 @@ class DrGAT(BaseModel):
             args.num_features,
             args.num_classes,
             args.hidden_size,
-            args.num_heads,
+            args.nhead,
             args.dropout,
         )
 

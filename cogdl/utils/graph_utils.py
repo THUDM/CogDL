@@ -14,7 +14,7 @@ def get_degrees(row, col, num_nodes=None):
     b = torch.ones(col.shape[0], device=device)
     out = torch.zeros(num_nodes, device=device)
     degrees = out.scatter_add_(dim=0, index=row, src=b)
-    return degrees
+    return degrees.float()
 
 
 def add_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):

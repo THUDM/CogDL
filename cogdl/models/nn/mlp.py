@@ -4,7 +4,7 @@ from cogdl.data import Graph
 
 
 @register_model("mlp")
-class MLPModel(BaseModel):
+class MLP(BaseModel):
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -43,7 +43,7 @@ class MLPModel(BaseModel):
         act_first=False,
         bias=True,
     ):
-        super(MLPModel, self).__init__()
+        super(MLP, self).__init__()
         self.nn = MLPLayer(in_feats, out_feats, hidden_size, num_layers, dropout, activation, norm, act_first, bias)
 
     def forward(self, x):

@@ -18,6 +18,9 @@ BEST_CONFIGS = {
                 # 78.04
             },
         },
+        "sage": {
+            "general": {},
+        },
         "gcnii": {
             "general": {
                 "max_epoch": 1000,

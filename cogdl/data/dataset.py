@@ -89,7 +89,7 @@ class Dataset(torch.utils.data.Dataset):
     @property
     def num_features(self):
         r"""Returns the number of features per node in the graph."""
-        if isinstance(self.data, Graph):
+        if hasattr(self, "data") and isinstance(self.data, Graph):
             return self.data.num_features
         else:
             return 0
@@ -134,16 +134,20 @@ class Dataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):  # pragma: no cover
         r"""Gets the data object at index :obj:`idx` and transforms it (in case
         a :obj:`self.transform` is given)."""
-        data = self.get(idx)
+        assert idx == 0
+        data = self.data
         data = data if self.transform is None else self.transform(data)
         return data
 
     @property
     def num_classes(self):
         r"""The number of classes in the dataset."""
-        if not hasattr(self.data, "y") or self.data.y is None:
+        if hasattr(self, "y") and self.y is not None:
+            y = self.y
+        elif hasattr(self, "data") and hasattr(self.data, "y") and self.data.y is not None:
+            y = self.data.y
+        else:
             return 0
-        y = self.data.y
         return y.max().item() + 1 if y.dim() == 1 else y.size(1)
 
     def __repr__(self):  # pragma: no cover
@@ -157,14 +161,20 @@ class MultiGraphDataset(Dataset):
 
     @property
     def num_classes(self):
-        r"""The number of classes in the dataset."""
         if hasattr(self, "y"):
             y = self.y
-        elif hasattr(self, "data") and hasattr(self.data, "y"):
-            y = self.data.y
+        elif hasattr(self, "data") and hasattr(self.data[0], "y"):
+            y = torch.cat([x.y for x in self.data], dim=0)
         else:
             return 0
         return y.max().item() + 1 if y.dim() == 1 else y.size(1)
+
+    @property
+    def num_features(self):
+        if isinstance(self[0], Graph):
+            return self[0].num_features
+        else:
+            return 0
 
     def len(self):
         if isinstance(self.data, list):
@@ -212,6 +222,9 @@ class MultiGraphDataset(Dataset):
             if self.slices is not None:
                 return [self._get(int(i)) for i in idx]
             return [self.data[i] for i in idx]
+
+    def __getitem__(self, item):
+        return self.get(item)
 
     @staticmethod
     def from_data_list(data_list):

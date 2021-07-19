@@ -1,5 +1,6 @@
 from .. import BaseModel, register_model
-from cogdl.layers import MLP
+from cogdl.layers import MLP as MLPLayer
+from cogdl.data import Graph
 
 
 @register_model("mlp")
@@ -43,9 +44,11 @@ class MLPModel(BaseModel):
         bias=True,
     ):
         super(MLPModel, self).__init__()
-        self.nn = MLP(in_feats, out_feats, hidden_size, num_layers, dropout, activation, norm, activation, bias)
+        self.nn = MLPLayer(in_feats, out_feats, hidden_size, num_layers, dropout, activation, norm, act_first, bias)
 
     def forward(self, x):
+        if isinstance(x, Graph):
+            x = x.x
         return self.nn(x)
 
     def predict(self, data):

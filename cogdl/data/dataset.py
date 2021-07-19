@@ -89,7 +89,10 @@ class Dataset(torch.utils.data.Dataset):
     @property
     def num_features(self):
         r"""Returns the number of features per node in the graph."""
-        return self[0].num_features
+        if isinstance(self.data, Graph):
+            return self.data.num_features
+        else:
+            return 0
 
     @property
     def raw_paths(self):
@@ -155,12 +158,12 @@ class MultiGraphDataset(Dataset):
     @property
     def num_classes(self):
         r"""The number of classes in the dataset."""
-        if not (hasattr(self, "y") or hasattr(self.data, "y")):
-            return 0
         if hasattr(self, "y"):
             y = self.y
-        else:
+        elif hasattr(self, "data") and hasattr(self.data, "y"):
             y = self.data.y
+        else:
+            return 0
         return y.max().item() + 1 if y.dim() == 1 else y.size(1)
 
     def len(self):

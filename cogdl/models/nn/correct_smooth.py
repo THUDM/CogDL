@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 
 from .. import BaseModel, register_model
-from cogdl.layers import MLP
+from .mlp import MLPModel
 from cogdl.data import Graph
 from cogdl.utils import spmm
 
@@ -170,7 +170,7 @@ class CorrectSmoothMLP(BaseModel):
     @staticmethod
     def add_args(parser):
         CorrectSmooth.add_args(parser)
-        MLP.add_args(parser)
+        MLPModel.add_args(parser)
         parser.add_argument("--use-embeddings", action="store_true")
 
     @classmethod
@@ -183,7 +183,7 @@ class CorrectSmoothMLP(BaseModel):
             args.num_features = args.num_features * 2
         args.act_first = True if args.dataset == "ogbn-products" else False
         self.use_embeddings = args.use_embeddings
-        self.mlp = MLP.build_model_from_args(args)
+        self.mlp = MLPModel.build_model_from_args(args)
         self.c_s = CorrectSmooth.build_model_from_args(args)
         self.rescale_feats = args.rescale_feats if hasattr(args, "rescale_feats") else args.dataset == "ogbn-arxiv"
         self.cache_x = None

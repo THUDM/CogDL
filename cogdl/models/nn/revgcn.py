@@ -5,19 +5,88 @@ import torch.nn.functional as F
 from .. import BaseModel, register_model
 from .deepergcn import DeeperGCN
 from .gat import GAT
+from .gcn import TKipfGCN
 from cogdl.layers.reversible_layer import RevGNNLayer
-from cogdl.layers.deepergcn_layer import GENConv, ResGNNLayer
-from cogdl.layers.gat_layer import GATLayer
+from cogdl.layers import GCNLayer, GATLayer, GENConv, ResGNNLayer
 from cogdl.utils import get_activation, get_norm_layer
 
 
+def shared_dropout(x, dropout):
+    m = torch.zeros_like(x).bernoulli_(1 - dropout)
+    mask = m.requires_grad_(False) / (1 - dropout)
+    return mask
+
+
 @register_model("revgcn")
+class RevGCN(BaseModel):
+    @staticmethod
+    def add_args(parser):
+        parser.add_argument("--group", type=int, default=2)
+        TKipfGCN.add_args(parser)
+
+    @classmethod
+    def build_model_from_args(cls, args):
+        return cls(
+            args.num_features,
+            args.num_classes,
+            args.hidden_size,
+            args.num_layers,
+            args.dropout,
+            args.activation,
+            args.residual,
+            args.norm,
+            args.group,
+        )
+
+    def __init__(
+        self,
+        in_feats,
+        out_feats,
+        hidden_size,
+        num_layers,
+        dropout=0.5,
+        activation="relu",
+        residual=False,
+        norm=None,
+        group=2,
+    ):
+        super(RevGCN, self).__init__()
+        self.input_fc = nn.Linear(in_feats, hidden_size)
+        self.output_fc = nn.Linear(hidden_size, out_feats)
+        self.layers = nn.ModuleList()
+        for _ in range(num_layers):
+            conv = GCNLayer(
+                hidden_size // group,
+                hidden_size // group,
+            )
+            res_conv = ResGNNLayer(conv, hidden_size // group, norm=norm, activation=activation)
+            self.layers.append(RevGNNLayer(res_conv, group))
+        self.activation = get_activation(activation)
+        self.norm = get_norm_layer(norm, hidden_size)
+        self.dropout = dropout
+
+    def forward(self, graph):
+        graph.requires_grad = False
+        h = self.input_fc(graph.x)
+
+        mask = shared_dropout(h, self.dropout)
+
+        for layer in self.layers:
+            h = layer(graph, h, mask)
+
+        h = self.activation(self.norm(h))
+        h = F.dropout(h, p=self.dropout, training=self.training)
+        h = self.output_fc(h)
+        return h
+
+
+@register_model("revgen")
 class RevGEN(BaseModel):
     @staticmethod
     def add_args(parser):
         DeeperGCN.add_args(parser)
         parser.add_argument("--group", type=int, default=2)
-        parser.add_argument("--norm", type=str, default=None)
+        parser.add_argument("--norm", type=str, default="batchnorm")
         parser.add_argument("--last-norm", type=str, default="batchnorm")
 
     @classmethod
@@ -43,13 +112,13 @@ class RevGEN(BaseModel):
 
     def __init__(
         self,
-        in_feat,
+        in_feats,
         hidden_size,
-        out_feat,
+        out_feats,
         num_layers,
         group=2,
         activation="relu",
-        norm=None,
+        norm="batchnorm",
         last_norm="batchnorm",
         dropout=0.0,
         aggr="softmax_sg",
@@ -61,8 +130,8 @@ class RevGEN(BaseModel):
         use_msg_norm=False,
     ):
         super(RevGEN, self).__init__()
-        self.input_fc = nn.Linear(in_feat, hidden_size)
-        self.output_fc = nn.Linear(hidden_size, out_feat)
+        self.input_fc = nn.Linear(in_feats, hidden_size)
+        self.output_fc = nn.Linear(hidden_size, out_feats)
         self.layers = nn.ModuleList()
         for _ in range(num_layers):
             conv = GENConv(
@@ -88,8 +157,7 @@ class RevGEN(BaseModel):
         x = graph.x
         h = self.input_fc(x)
 
-        m = torch.zeros_like(h).bernoulli_(1 - self.dropout)
-        mask = m.requires_grad_(False) / (1 - self.dropout)
+        mask = shared_dropout(h, self.dropout)
 
         for layer in self.layers:
             h = layer(graph, h, mask)
@@ -179,9 +247,7 @@ class RevGAT(BaseModel):
         h = F.dropout(h, self.dropout, training=self.training)
         h = self.layers[0](graph, h)
 
-        m = torch.zeros_like(h).bernoulli_(1 - self.dropout)
-        mask = m.requires_grad_(False) / (1 - self.dropout)
-
+        mask = shared_dropout(h, self.dropout)
         for i in range(1, len(self.layers) - 1):
             h = self.layers[i](graph, h, mask)
 

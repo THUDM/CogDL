@@ -699,6 +699,7 @@ def test_sage_cora():
 def test_revnets_cora():
     args = get_default_args()
     args.group = 2
+    args.num_layers = 3
     args.last_norm = "batchnorm"
     args.p = args.beta = 1.0
     args.learn_p = args.learn_beta = True
@@ -706,7 +707,7 @@ def test_revnets_cora():
     args.learn_msg_scale = False
     args.aggr = "mean"
     args.dataset = "pubmed"
-    args.model = "revgcn"
+    args.model = "revgen"
     task = build_task(args)
     assert 0 <= task.train()["Acc"] <= 1
 
@@ -717,6 +718,9 @@ def test_revnets_cora():
     args.residual = True
     args.attn_drop = 0.2
     args.last_nhead = 1
+    assert 0 <= task.train()["Acc"] <= 1
+
+    args.model = "revgcn"
     assert 0 <= task.train()["Acc"] <= 1
 
 

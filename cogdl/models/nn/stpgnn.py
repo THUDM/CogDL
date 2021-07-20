@@ -11,11 +11,8 @@ from cogdl.datasets import build_dataset_from_name
 from cogdl.datasets.strategies_data import (
     BioDataset,
     ChemExtractSubstructureContextPair,
-    DataLoaderMasking,
     DataLoaderSubstructContext,
     ExtractSubstructureContextPair,
-    MaskAtom,
-    MaskEdge,
     MoleculeDataset,
     TestBioDataset,
     TestChemDataset,
@@ -28,7 +25,6 @@ from .. import BaseModel, register_model
 class GINConv(nn.Module):
     """
     Implementation of Graph isomorphism network used in paper `"Strategies for Pre-training Graph Neural Networks"`. <https://arxiv.org/abs/1905.12265>
-
     Parameters
     ----------
     hidden_size : int
@@ -251,7 +247,6 @@ class GNNPred(nn.Module):
 class Pretrainer(nn.Module):
     """
     Base class for Pre-training Models of paper `"Strategies for Pre-training Graph Neural Networks"`. <https://arxiv.org/abs/1905.12265>
-
     """
 
     def __init__(self, args, transform=None):
@@ -570,109 +565,6 @@ class ContextPredictTrainer(Pretrainer):
         return pos_scores, neg_scores
 
 
-class MaskTrainer(Pretrainer):
-    @staticmethod
-    def add_args(parser):
-        parser.add_argument("--mask-rate", type=float, default=0.15)
-
-    def __init__(self, args):
-        if "bio" in args.dataset:
-            transform = MaskEdge(mask_rate=args.mask_rate)
-        elif "chem" in args.dataset:
-            transform = MaskAtom(mask_rate=args.mask_rate, num_atom_type=119, num_edge_type=5)
-        else:
-            transform = None
-        args.data_type = "unsupervised"
-        super(MaskTrainer, self).__init__(args, transform)
-        self.dataloader = DataLoaderMasking(self.dataset, args.batch_size, shuffle=True, num_workers=args.num_workers)
-        self.model = GNN(
-            num_layers=args.num_layers,
-            hidden_size=args.hidden_size,
-            JK=args.JK,
-            dropout=args.dropout,
-            input_layer=self.opt.get("input_layer", None),
-            edge_encode=self.opt.get("edge_encode", None),
-            edge_emb=self.opt.get("edge_emb", None),
-            num_atom_type=self.opt.get("num_atom_type", None),
-            num_chirality_tag=self.opt.get("num_chirality_tag", None),
-            concat=self.opt["concat"],
-        )
-
-        edge_attr_dim = self.dataset[0].edge_attr.size(1)
-        if "bio" in args.dataset:
-            self.linear = nn.Linear(args.hidden_size, edge_attr_dim)
-        elif "chem" in args.dataset:
-            self.linear = nn.Linear(args.hidden_size, 120)
-        else:
-            raise NotImplementedError
-        self.optmizer_gnn = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-        self.optmizer_linear = torch.optim.Adam(self.linear.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-
-        if "chem" in args.dataset:
-            self.linear_bonds = torch.nn.Linear(args.hidden_size, 6)
-            self.optmizer_linear_bonds = torch.optim.Adam(
-                self.linear_bonds.parameters(), lr=args.lr, weight_decay=args.weight_decay
-            )
-
-        self.loss_fn = nn.CrossEntropyLoss()
-
-    def _train_step(self):
-        loss_items = []
-        acc_items = []
-
-        for batch in self.dataloader:
-            batch = batch.to(self.device)
-            hidden = self.model(
-                x=batch.x,
-                edge_index=batch.edge_index,
-                edge_attr=batch.edge_attr,
-                self_loop_index=self.self_loop_index,
-                self_loop_type=self.self_loop_type,
-            )
-            if "bio" in self.dataset_name:
-                edge_index = torch.stack(batch.edge_index)
-                masked_edges = edge_index[:, batch.masked_edge_idx]
-
-                masked_edges_rep = hidden[masked_edges[0]] + hidden[masked_edges[1]]
-                pred = self.linear(masked_edges_rep)
-                labels = torch.argmax(batch.mask_edge_label, dim=1)
-
-                self.optmizer_gnn.zero_grad()
-                self.optmizer_linear.zero_grad()
-
-                loss = self.loss_fn(pred, labels)
-                loss.backward()
-                self.optmizer_gnn.step()
-                self.optmizer_linear.step()
-                loss_items.append(loss.item())
-                acc_items.append((torch.max(pred, dim=1)[1] == labels).float().sum().cpu().numpy() / len(pred))
-            elif "chem" in self.dataset_name:
-
-                def compute_accuracy(pred, target):
-                    return float(torch.sum(torch.max(pred.detach(), dim=1)[1] == target).cpu().item()) / len(pred)
-
-                pred_node = self.linear(hidden[batch.masked_atom_indices])
-                loss = self.loss_fn(pred_node.double(), batch.mask_node_label[:, 0])
-                acc_node = compute_accuracy(pred_node, batch.mask_node_label[:, 0])
-                masked_edge_index = batch.edge_index[:, batch.connected_edge_indices]
-                edge_rep = hidden[masked_edge_index[0]] + hidden[masked_edge_index[1]]
-                pred_edge = self.linear_bonds(edge_rep)
-                loss += self.loss_fn(pred_edge.double(), batch.mask_edge_label[:, 0])
-                acc_edge = compute_accuracy(pred_edge, batch.mask_edge_label[:, 0])
-                self.optmizer_gnn.zero_grad()
-                self.optmizer_linear.zero_grad()
-                self.optmizer_linear_bonds.zero_grad()
-                loss.backward()
-                self.optmizer_gnn.step()
-                self.optmizer_linear.step()
-                self.optmizer_linear_bonds.step()
-                loss_items.append(loss.item())
-                acc_items.extend([acc_node, acc_edge])
-            else:
-                raise NotImplementedError
-        return np.mean(loss_items), np.mean(acc_items)
-
-
 class SupervisedTrainer(Pretrainer):
     @staticmethod
     def add_args(parser):
@@ -787,7 +679,6 @@ class stpgnn(BaseModel):
         parser.add_argument("--dropout", type=float, default=0.5)
         # fmt: on
         ContextPredictTrainer.add_args(parser)
-        MaskTrainer.add_args(parser)
         SupervisedTrainer.add_args(parser)
 
     @classmethod
@@ -800,8 +691,6 @@ class stpgnn(BaseModel):
             self.trainer = InfoMaxTrainer(args)
         elif args.pretrain_task == "context":
             self.trainer = ContextPredictTrainer(args)
-        elif args.pretrain_task == "mask":
-            self.trainer = MaskTrainer(args)
         elif args.pretrain_task == "supervised":
             self.trainer = SupervisedTrainer(args)
         else:

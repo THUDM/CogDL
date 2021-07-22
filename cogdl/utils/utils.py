@@ -226,6 +226,16 @@ def split_dataset_general(dataset, args):
     return train_dataset, valid_dataset, test_dataset
 
 
+def get_memory_usage(print_info=False):
+    """Get accurate gpu memory usage by querying torch runtime"""
+    allocated = torch.cuda.memory_allocated(0)
+    reserved = torch.cuda.memory_reserved(0)
+    if print_info:
+        print("allocated: %.2f MB" % (allocated / 1024 / 1024), flush=True)
+        print("reserved:  %.2f MB" % (reserved / 1024 / 1024), flush=True)
+    return allocated
+
+
 if __name__ == "__main__":
     args = build_args_from_dict({"a": 1, "b": 2})
     print(args.a, args.b)

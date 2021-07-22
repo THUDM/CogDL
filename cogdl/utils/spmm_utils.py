@@ -66,7 +66,7 @@ def check_edge_softmax():
     return CONFIGS["csr_edge_softmax"] is not None
 
 
-def spmm(graph, x):
+def spmm(graph, x, actnn=False):
     fast_spmm = CONFIGS["fast_spmm"]
     if fast_spmm is not None and str(x.device) != "cpu":
         if graph.out_norm is not None:
@@ -74,7 +74,7 @@ def spmm(graph, x):
 
         row_ptr, col_indices = graph.row_indptr, graph.col_indices
         csr_data = graph.raw_edge_weight
-        x = fast_spmm(row_ptr.int(), col_indices.int(), x, csr_data.contiguous(), graph.is_symmetric())
+        x = fast_spmm(row_ptr.int(), col_indices.int(), x, csr_data, graph.is_symmetric(), actnn=actnn)
 
         if graph.in_norm is not None:
             x = graph.in_norm * x

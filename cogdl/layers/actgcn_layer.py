@@ -2,22 +2,25 @@ import math
 
 import torch
 import torch.nn as nn
+from torch.nn.parameter import Parameter
+from actnn.layers import QLinear, QReLU
 
-from cogdl.utils import spmm, get_activation
+from .qdropout import QDropout
+from cogdl.utils import spmm
 
 
-class GCNLayer(nn.Module):
+class ActGCNLayer(nn.Module):
     """
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
 
     def __init__(self, in_features, out_features, dropout=0.0, activation=None, residual=False, norm=None, bias=True):
-        super(GCNLayer, self).__init__()
+        super(ActGCNLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.linear = nn.Linear(in_features, out_features)
+        self.linear = QLinear(in_features, out_features)
         if dropout > 0:
-            self.dropout = nn.Dropout(dropout)
+            self.dropout = QDropout(dropout, inplace=True)
         else:
             self.dropout = None
         if residual:
@@ -26,7 +29,7 @@ class GCNLayer(nn.Module):
             self.residual = None
 
         if activation is not None:
-            self.act = get_activation(activation)
+            self.act = QReLU()
         else:
             self.act = None
 
@@ -40,6 +43,10 @@ class GCNLayer(nn.Module):
         else:
             self.norm = None
 
+        if bias:
+            self.bias = Parameter(torch.FloatTensor(out_features))
+        else:
+            self.register_parameter("bias", None)
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -48,7 +55,7 @@ class GCNLayer(nn.Module):
 
     def forward(self, graph, x):
         support = self.linear(x)
-        out = spmm(graph, support)
+        out = spmm(graph, support, actnn=True)
 
         if self.norm is not None:
             out = self.norm(out)

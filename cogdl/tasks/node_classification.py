@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
-from cogdl.utils import add_remaining_self_loops
+from cogdl.utils import get_memory_usage
 
 from . import BaseTask, register_task
 
@@ -59,7 +59,11 @@ class NodeClassification(BaseTask):
                 else self.model.get_optimizer(args)
             )
             self.data.apply(lambda x: x.to(self.device))
+            # print('Loading dataset: ')
+            # get_memory_usage(True)
             self.model = self.model.to(self.device)
+            # print('Loading Model: ')
+            # get_memory_usage(True)
             self.patience = args.patience
             self.max_epoch = args.max_epoch
 
@@ -120,7 +124,10 @@ class NodeClassification(BaseTask):
         self.data.train()
         self.model.train()
         self.optimizer.zero_grad()
-        self.model.node_classification_loss(self.data).backward()
+        loss = self.model.node_classification_loss(self.data)
+        # print('Before backward: ')
+        # get_memory_usage(True)
+        loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
         self.optimizer.step()
 

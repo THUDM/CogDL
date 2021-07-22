@@ -1,6 +1,7 @@
 import torch.nn as nn
-import torch.nn.functional as F
-from cogdl.layers import GCNLayer
+
+# from cogdl.layers import GCNLayer
+from cogdl.layers import ActGCNLayer as GCNLayer
 
 from .. import BaseModel, register_model
 

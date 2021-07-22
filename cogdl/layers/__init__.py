@@ -14,6 +14,7 @@ from .han_layer import HANLayer
 from .pprgo_layer import PPRGoLayer
 from .rgcn_layer import RGCNLayer
 from .sgc_layer import SGCLayer
+from .actgcn_layer import ActGCNLayer
 from .mixhop_layer import MixHopLayer
 
 __all__ = [
@@ -36,5 +37,6 @@ __all__ = [
     "PPRGoLayer",
     "RGCNLayer",
     "SGCLayer",
+    "ActGCNLayer",
     "MixHopLayer",
 ]

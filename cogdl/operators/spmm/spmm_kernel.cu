@@ -360,6 +360,7 @@ void csr2cscKernel(int m, int n, int nnz,
 )
 {
     cusparseHandle_t handle;
+    checkCuSparseError(cusparseCreate(&handle));
     size_t bufferSize = 0;
     void* buffer = NULL;
     checkCuSparseError(cusparseCsr2cscEx2_bufferSize(handle,

@@ -19,14 +19,16 @@ try:
     )
     mhtranspose = load(
         name="mhtranspose",
+        extra_cflags=['-lcusparse'],
         sources=[os.path.join(path, "spmm/mhTranspose.cpp"), os.path.join(path, "spmm/mhTranspose.cu")],
-        verbose=False,
+        verbose=True,
     )
 
     spmm = load(
         name="spmm",
+        extra_cflags=['-lcusparse'],
         sources=[os.path.join(path, "spmm/spmm.cpp"), os.path.join(path, "spmm/spmm_kernel.cu")],
-        verbose=False,
+        verbose=True,
     )
 
     def csrmhspmm(rowptr, colind, feat, attention):

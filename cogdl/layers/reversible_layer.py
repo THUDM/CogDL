@@ -129,16 +129,13 @@ from torch.utils.checkpoint import get_device_states, set_device_states
     https://github.com/silvandeleemput/memcnn/blob/master/memcnn/models/revop.py
 """
 
+
 import numpy as np
 import torch
 import torch.nn as nn
 
-use_context_mans = True
 
-try:
-    pytorch_version_one_and_above = int(torch.__version__[0]) > 0
-except TypeError:
-    pytorch_version_one_and_above = True
+use_context_mans = True
 
 
 class InvertibleCheckpointFunction(torch.autograd.Function):
@@ -186,10 +183,6 @@ class InvertibleCheckpointFunction(torch.autograd.Function):
         # clear memory from inputs
         # only clear memory of node features
         if not ctx.keep_input:
-            # if not pytorch_version_one_and_above:
-            # PyTorch 0.4 way to clear storage for node features
-            # inputs[0].data.set_()
-            # else:
             # PyTorch 1.0+ way to clear storage for node features
             inputs[0].storage().resize_(0)
 
@@ -232,24 +225,15 @@ class InvertibleCheckpointFunction(torch.autograd.Function):
                     # edge_index and edge_emb
                     inputs_inverted = ctx.fn_inverse(*(outputs + inputs[1:]))
                     # clear memory from outputs
-                    # if not pytorch_version_one_and_above:
-                    #     # PyTorch 0.4 way to clear storage
-                    #     for element in outputs:
-                    #         element.data.set_()
-                    # else:
                     # PyTorch 1.0+ way to clear storage
                     for element in outputs:
                         element.storage().resize_(0)
 
                     if not isinstance(inputs_inverted, tuple):
                         inputs_inverted = (inputs_inverted,)
-                    # if pytorch_version_one_and_above:
                     for element_original, element_inverted in zip(inputs, inputs_inverted):
                         element_original.storage().resize_(int(np.prod(element_original.size())))
                         element_original.set_(element_inverted)
-                    # else:
-                    #     for element_original, element_inverted in zip(inputs, inputs_inverted):
-                    #         element_original.set_(element_inverted)
 
         # compute gradients
         with torch.set_grad_enabled(True):
@@ -272,7 +256,6 @@ class InvertibleCheckpointFunction(torch.autograd.Function):
         )
 
         # Setting the gradients manually on the inputs and outputs (mimic backwards)
-        # filtered_inputs = list(filter(lambda x: x.requires_grad, inputs))
 
         input_gradients = []
         i = 0
@@ -284,8 +267,6 @@ class InvertibleCheckpointFunction(torch.autograd.Function):
                 input_gradients.append(None)
 
         gradients = tuple(input_gradients) + gradients[-len(ctx.weights) :]
-        # for item in gradients:
-        #     print(item)
 
         return (None, None, None, None, None, None) + gradients
 
@@ -434,22 +415,22 @@ class AdditiveCoupling(nn.Module):
         self.fm = fm
         self.split_dim = split_dim
 
-    def forward(self, x):
+    def forward(self, x, graph):
         x1, x2 = torch.chunk(x, 2, dim=self.split_dim)
         x1, x2 = x1.contiguous(), x2.contiguous()
-        fmd = self.fm.forward(x2)
+        fmd = self.fm.forward(graph, x2)
         y1 = x1 + fmd
-        gmd = self.gm.forward(y1)
+        gmd = self.gm.forward(graph, y1)
         y2 = x2 + gmd
         out = torch.cat([y1, y2], dim=self.split_dim)
         return out
 
-    def inverse(self, y):
+    def inverse(self, y, graph):
         y1, y2 = torch.chunk(y, 2, dim=self.split_dim)
         y1, y2 = y1.contiguous(), y2.contiguous()
-        gmd = self.gm.forward(y1)
+        gmd = self.gm.forward(graph, y1)
         x2 = y2 - gmd
-        fmd = self.fm.forward(x2)
+        fmd = self.fm.forward(graph, x2)
         x1 = y1 - fmd
         x = torch.cat([x1, x2], dim=self.split_dim)
         return x

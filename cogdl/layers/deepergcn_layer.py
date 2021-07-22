@@ -125,15 +125,13 @@ class ResGNNLayer(nn.Module):
 
     Parameters
     -----------
-    in_feat : int
-        Size of each input sample
-    out_feat : int
-        Size of each output sample
-    conv : class
-        Base convolution layer.
-    connection : str
-        Residual connection type, `res` or `res+`.
+    conv : nn.Module
+        An instance of GNN Layer, recieving (graph, x) as inputs
+    n_channels : int
+        size of input features
     activation : str
+    norm: str
+        type of normalization, ``batchnorm`` as default
     dropout : float
     checkpoint_grad : bool
     """
@@ -142,7 +140,6 @@ class ResGNNLayer(nn.Module):
         self,
         conv,
         n_channels,
-        connection="res+",
         activation="relu",
         norm="batchnorm",
         dropout=0.0,
@@ -152,29 +149,22 @@ class ResGNNLayer(nn.Module):
         self.conv = conv
         self.activation = get_activation(activation)
         self.dropout = dropout
-        self.connection = connection
         self.norm = get_norm_layer(norm, n_channels)
         self.checkpoint_grad = checkpoint_grad
 
     def forward(self, graph, x, dropout=None):
-        if self.connection == "res+":
-            h = self.norm(x)
-            h = self.activation(h)
-            if isinstance(dropout, float) or dropout is None:
-                h = F.dropout(h, p=self.dropout, training=self.training)
-            else:
-                if self.training:
-                    h = h * dropout
-            if self.checkpoint_grad:
-                h = checkpoint(self.conv, graph, h)
-            else:
-                h = self.conv(graph, h)
-        elif self.connection == "res":
-            h = self.conv(graph, x)
-            h = self.norm(h)
-            h = self.activation(h)
+        h = self.norm(x)
+        h = self.activation(h)
+        if isinstance(dropout, float) or dropout is None:
+            h = F.dropout(h, p=self.dropout, training=self.training)
         else:
-            raise NotImplementedError
+            if self.training:
+                h = h * dropout
+        if self.checkpoint_grad:
+            h = checkpoint(self.conv, graph, h)
+        else:
+            h = self.conv(graph, h)
+
         return x + h
 
 

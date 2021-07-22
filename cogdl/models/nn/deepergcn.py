@@ -17,7 +17,6 @@ class DeeperGCN(BaseModel):
         parser.add_argument("--num-layers", type=int, default=14)
         parser.add_argument("--hidden-size", type=int, default=128)
         parser.add_argument("--dropout", type=float, default=0.5)
-        parser.add_argument("--connection", type=str, default="res+")
         parser.add_argument("--activation", type=str, default="relu")
         parser.add_argument("--aggr", type=str, default="softmax_sg")
         parser.add_argument("--beta", type=float, default=1.0)
@@ -35,7 +34,6 @@ class DeeperGCN(BaseModel):
             hidden_size=args.hidden_size,
             out_feat=args.num_classes,
             num_layers=args.num_layers,
-            connection=args.connection,
             activation=args.connection,
             dropout=args.dropout,
             aggr=args.aggr,
@@ -53,7 +51,6 @@ class DeeperGCN(BaseModel):
         hidden_size,
         out_feat,
         num_layers,
-        connection="res+",
         activation="relu",
         dropout=0.0,
         aggr="max",
@@ -85,7 +82,6 @@ class DeeperGCN(BaseModel):
                         learn_msg_scale=learn_msg_scale,
                     ),
                     n_channels=hidden_size,
-                    connection=connection,
                     activation=activation,
                     dropout=dropout,
                     checkpoint_grad=(num_layers > 3) and ((i + 1) == num_layers // 2),

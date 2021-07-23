@@ -54,15 +54,6 @@ def test_stpgnn_infomax():
 #         assert 0 <= ret["Acc"] <= 1
 
 
-def test_stpgnn_mask():
-    args = get_strategies_for_pretrain_args()
-    args.pretrain_task = "mask"
-    args.mask_rate = 0.15
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-
 def test_stpgnn_supervised():
     args = get_strategies_for_pretrain_args()
     args.pretrain_task = "supervised"
@@ -82,16 +73,6 @@ def test_chem_infomax():
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
-
-
-# def test_chem_mask():
-#     args = get_strategies_for_pretrain_args()
-#     args.dataset = "test_chem"
-#     args.pretrain_task = "mask"
-#     args.mask_rate = 0.15
-#     task = build_task(args)
-#     ret = task.train()
-#     assert 0 <= ret["Acc"] <= 1
 
 
 def test_chem_supervised():

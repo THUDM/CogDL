@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .. import BaseModel, register_model
-from .mlp import MLP
+from cogdl.layers import MLP
 from cogdl.layers import GINLayer
 from cogdl.utils import split_dataset_general
 

@@ -9,7 +9,7 @@ path = os.path.join(os.path.dirname(__file__))
 try:
     spmm = load(
         name="spmm",
-        extra_cflags=['-lcusparse'],
+        extra_cflags=["-lcusparse"],
         sources=[os.path.join(path, "spmm/spmm.cpp"), os.path.join(path, "spmm/spmm_kernel.cu")],
         verbose=True,
     )
@@ -47,7 +47,10 @@ class SPMMFunction(torch.autograd.Function):
             else:
                 colptr, rowind, edge_weight_csc = spmm.csr2csc(rowptr, colind, edge_weight_csr)
             grad_feat = spmm.csr_spmm(colptr, rowind, edge_weight_csc, grad_out)
-            grad_edge_weight = sddmm.csr_sddmm(rowptr, colind, grad_out, feat)
+            if edge_weight_csr.requires_grad:
+                grad_edge_weight = sddmm.csr_sddmm(rowptr, colind, grad_out, feat)
+            else:
+                grad_edge_weight = None
         else:
             if sym is False:
                 colptr, rowind, edge_weight_csc = spmm.csr2csc(rowptr, colind, edge_weight_csr)

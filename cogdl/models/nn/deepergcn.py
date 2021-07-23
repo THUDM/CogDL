@@ -1,10 +1,8 @@
-from typing import Any
-
 import torch.nn as nn
 import torch.nn.functional as F
 from cogdl.trainers.sampled_trainer import RandomClusterTrainer
 from cogdl.utils import get_activation
-from cogdl.layers import DeepGCNLayer, GENConv
+from cogdl.layers import ResGNNLayer, GENConv
 
 from .. import BaseModel, register_model
 
@@ -19,7 +17,6 @@ class DeeperGCN(BaseModel):
         parser.add_argument("--num-layers", type=int, default=14)
         parser.add_argument("--hidden-size", type=int, default=128)
         parser.add_argument("--dropout", type=float, default=0.5)
-        parser.add_argument("--connection", type=str, default="res+")
         parser.add_argument("--activation", type=str, default="relu")
         parser.add_argument("--aggr", type=str, default="softmax_sg")
         parser.add_argument("--beta", type=float, default=1.0)
@@ -30,14 +27,6 @@ class DeeperGCN(BaseModel):
         parser.add_argument("--use-msg-norm", action="store_true")
         # fmt: on
 
-        """
-            ogbn-products:
-                num_layers: 14
-                self_loop:
-                aggr: softmax_sg
-                beta: 0.1
-        """
-
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
@@ -45,7 +34,6 @@ class DeeperGCN(BaseModel):
             hidden_size=args.hidden_size,
             out_feat=args.num_classes,
             num_layers=args.num_layers,
-            connection=args.connection,
             activation=args.connection,
             dropout=args.dropout,
             aggr=args.aggr,
@@ -63,7 +51,6 @@ class DeeperGCN(BaseModel):
         hidden_size,
         out_feat,
         num_layers,
-        connection="res+",
         activation="relu",
         dropout=0.0,
         aggr="max",
@@ -82,12 +69,10 @@ class DeeperGCN(BaseModel):
         self.layers.append(GENConv(hidden_size, hidden_size))
         for i in range(num_layers - 1):
             self.layers.append(
-                DeepGCNLayer(
-                    in_feat=hidden_size,
-                    out_feat=hidden_size,
+                ResGNNLayer(
                     conv=GENConv(
-                        in_feat=hidden_size,
-                        out_feat=hidden_size,
+                        in_feats=hidden_size,
+                        out_feats=hidden_size,
                         aggr=aggr,
                         beta=beta,
                         p=p,
@@ -96,7 +81,7 @@ class DeeperGCN(BaseModel):
                         use_msg_norm=use_msg_norm,
                         learn_msg_scale=learn_msg_scale,
                     ),
-                    connection=connection,
+                    in_channels=hidden_size,
                     activation=activation,
                     dropout=dropout,
                     checkpoint_grad=(num_layers > 3) and ((i + 1) == num_layers // 2),

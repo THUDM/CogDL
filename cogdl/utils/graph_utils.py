@@ -202,7 +202,7 @@ def dropout_adj(
     renorm: Optional[str] = "sym",
     training: bool = False,
 ):
-    if not training:
+    if not training or drop_rate == 0:
         if edge_weight is None:
             edge_weight = torch.ones(edge_index[0].shape[0], device=edge_index[0].device)
         return edge_index, edge_weight

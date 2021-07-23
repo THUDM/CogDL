@@ -12,6 +12,8 @@ from .patchy_san import PatchySAN
 from .ppnp import PPNP
 from .rgcn import RGCN
 from .sgc import sgc
+from .revgcn import RevGCN, RevGEN, RevGAT
+from .deepergcn import DeeperGCN, ResGNNLayer
 
 __all__ = [
     "CompGCN",
@@ -28,4 +30,9 @@ __all__ = [
     "PPNP",
     "RGCN",
     "sgc",
+    "RevGCN",
+    "RevGAT",
+    "RevGEN",
+    "DeeperGCN",
+    "ResGNNLayer",
 ]

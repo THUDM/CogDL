@@ -5,16 +5,18 @@ from .gat_layer import GATLayer
 from .gin_layer import GINLayer
 from .gine_layer import GINELayer
 from .se_layer import SELayer
-from .deepergcn_layer import GENConv, DeepGCNLayer
+from .deepergcn_layer import GENConv, ResGNNLayer
 from .disengcn_layer import DisenGCNLayer
 from .gcnii_layer import GCNIILayer
-from .mlp_layer import MLPLayer
+from .mlp_layer import MLP
 from .saint_layer import SAINTLayer
 from .han_layer import HANLayer
 from .pprgo_layer import PPRGoLayer
 from .rgcn_layer import RGCNLayer
 from .sgc_layer import SGCLayer
 from .mixhop_layer import MixHopLayer
+from .reversible_layer import RevGNNLayer
+
 
 __all__ = [
     "BaseLayer",
@@ -27,14 +29,15 @@ __all__ = [
     "GINELayer",
     "SELayer",
     "GENConv",
-    "DeepGCNLayer",
+    "ResGNNLayer",
     "DisenGCNLayer",
     "GCNIILayer",
-    "MLPLayer",
     "SAINTLayer",
     "HANLayer",
     "PPRGoLayer",
     "RGCNLayer",
     "SGCLayer",
     "MixHopLayer",
+    "MLP",
+    "RevGNNLayer",
 ]

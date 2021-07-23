@@ -263,7 +263,7 @@ class Adjacency(BaseGraph):
     @property
     def degrees(self):
         if self.row_ptr is not None:
-            return self.row_ptr[1:] - self.row_ptr[:-1]
+            return (self.row_ptr[1:] - self.row_ptr[:-1]).float()
         else:
             return get_degrees(self.row, self.col, num_nodes=self.num_nodes)
 
@@ -806,3 +806,11 @@ class Graph(BaseGraph):
         for key, item in dictionary.items():
             data[key] = item
         return data
+
+    # @property
+    # def requires_grad(self):
+    #     return False
+    #
+    # @requires_grad.setter
+    # def requires_grad(self, x):
+    #     print(f"Set `requires_grad` to {x}")

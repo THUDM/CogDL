@@ -33,7 +33,6 @@ class NodeClassification(BaseTask):
         super(NodeClassification, self).__init__(args)
 
         self.args = args
-        self.model_name = args.model
         self.infer = hasattr(args, "inference") and args.inference
 
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
@@ -47,6 +46,7 @@ class NodeClassification(BaseTask):
 
         self.model = build_model(args) if model is None else model
         self.model.set_device(self.device)
+        self.model_name = self.model.__class__.__name__
 
         self.set_loss_fn(dataset)
         self.set_evaluator(dataset)
@@ -86,6 +86,7 @@ class NodeClassification(BaseTask):
             max_score = 0
             min_loss = np.inf
             best_model = copy.deepcopy(self.model)
+
             for epoch in epoch_iter:
                 self._train_step()
                 acc, losses = self._test_step()

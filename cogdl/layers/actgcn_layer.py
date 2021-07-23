@@ -3,7 +3,7 @@ import math
 import torch
 import torch.nn as nn
 from torch.nn.parameter import Parameter
-from actnn.layers import QLinear, QReLU
+from actnn.layers import QLinear, QReLU, QBatchNorm1d
 
 from .qdropout import QDropout
 from cogdl.utils import spmm
@@ -24,7 +24,7 @@ class ActGCNLayer(nn.Module):
         else:
             self.dropout = None
         if residual:
-            self.residual = nn.Linear(in_features, out_features)
+            self.residual = QLinear(in_features, out_features)
         else:
             self.residual = None
 
@@ -35,7 +35,7 @@ class ActGCNLayer(nn.Module):
 
         if norm is not None:
             if norm == "batchnorm":
-                self.norm = nn.BatchNorm1d(out_features)
+                self.norm = QBatchNorm1d(out_features)
             elif norm == "layernorm":
                 self.norm = nn.LayerNorm(out_features)
             else:

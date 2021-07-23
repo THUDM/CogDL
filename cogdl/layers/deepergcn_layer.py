@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -10,22 +12,20 @@ from cogdl.utils import get_activation, mul_edge_softmax, get_norm_layer
 class GENConv(nn.Module):
     def __init__(
         self,
-        in_feats,
-        out_feats,
-        aggr="softmax_sg",
-        beta=1.0,
-        p=1.0,
-        learn_beta=False,
-        learn_p=False,
-        use_msg_norm=False,
-        learn_msg_scale=True,
-        norm=None,
-        residual=False,
-        activation=None,
-        num_mlp_layers=2,
-        edge_attr_size=[
-            -1,
-        ],
+        in_feats: int,
+        out_feats: int,
+        aggr: str = "softmax_sg",
+        beta: float = 1.0,
+        p: float = 1.0,
+        learn_beta: bool = False,
+        learn_p: bool = False,
+        use_msg_norm: bool = False,
+        learn_msg_scale: bool = True,
+        norm: Optional[str] = None,
+        residual: bool = False,
+        activation: Optional[str] = None,
+        num_mlp_layers: int = 2,
+        edge_attr_size: Optional[list] = None,
     ):
         super(GENConv, self).__init__()
         self.use_msg_norm = use_msg_norm
@@ -63,8 +63,8 @@ class GENConv(nn.Module):
         self.norm = None if norm is None else get_norm_layer(norm, in_feats)
         self.residual = residual
 
-        if edge_attr_size[0] > 0:
-            if len(edge_attr_size) > 0:
+        if edge_attr_size is not None and edge_attr_size[0] > 0:
+            if len(edge_attr_size) > 1:
                 self.edge_encoder = BondEncoder(edge_attr_size, in_feats)
             else:
                 self.edge_encoder = EdgeEncoder(edge_attr_size[0], in_feats)

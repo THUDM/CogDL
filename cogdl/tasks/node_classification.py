@@ -7,7 +7,6 @@ from tqdm import tqdm
 
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
-from cogdl.utils import add_remaining_self_loops
 
 from . import BaseTask, register_task
 
@@ -43,6 +42,7 @@ class NodeClassification(BaseTask):
         args.num_features = dataset.num_features
         args.num_classes = dataset.num_classes
         args.num_nodes = dataset.data.x.shape[0]
+        args.edge_attr_size = dataset.edge_attr_size
 
         self.model = build_model(args) if model is None else model
         self.model.set_device(self.device)

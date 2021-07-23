@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -141,6 +143,7 @@ class RevGEN(BaseModel):
             args.learn_p,
             args.learn_msg_scale,
             args.use_msg_norm,
+            edge_attr_size=args.edge_attr_size,
         )
 
     def __init__(
@@ -161,6 +164,7 @@ class RevGEN(BaseModel):
         learn_p=False,
         learn_msg_scale=True,
         use_msg_norm=False,
+        edge_attr_size: Optional[list] = None,
     ):
         super(RevGEN, self).__init__()
         self.input_fc = nn.Linear(in_feats, hidden_size)
@@ -177,7 +181,7 @@ class RevGEN(BaseModel):
                 learn_p,
                 use_msg_norm,
                 learn_msg_scale,
-                residual=True,
+                edge_attr_size=edge_attr_size,
             )
             res_conv = ResGNNLayer(conv, hidden_size // group, norm=norm, activation=activation)
             self.layers.append(RevGNNLayer(res_conv, group))

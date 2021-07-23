@@ -28,8 +28,8 @@ def edge_index_from_dict(graph_dict, num_nodes=None):
     for key, value in graph_dict.items():
         row.append(np.repeat(key, len(value)))
         col.append(value)
-    _row = np.concatenate(np.array(row))
-    _col = np.concatenate(np.array(col))
+    _row = np.concatenate(np.array(row, dtype=np.int64))
+    _col = np.concatenate(np.array(col, dtype=np.int64))
     edge_index = np.stack([_row, _col], axis=0)
 
     row_dom = edge_index[:, _row > _col]

@@ -150,6 +150,10 @@ class Dataset(torch.utils.data.Dataset):
             return 0
         return y.max().item() + 1 if y.dim() == 1 else y.size(1)
 
+    @property
+    def edge_attr_size(self):
+        return None
+
     def __repr__(self):  # pragma: no cover
         return "{}({})".format(self.__class__.__name__, len(self))
 

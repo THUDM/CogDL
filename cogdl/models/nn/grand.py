@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .. import BaseModel, register_model
-from cogdl.layers import MLPLayer
+from cogdl.layers import MLP
 from cogdl.utils import spmm
 
 
@@ -92,8 +92,8 @@ class Grand(BaseModel):
         alpha,
     ):
         super(Grand, self).__init__()
-        self.layer1 = MLPLayer(nfeat, nhid)
-        self.layer2 = MLPLayer(nhid, nclass)
+        self.layer1 = nn.Linear(nfeat, nhid)
+        self.layer2 = nn.Linear(nhid, nclass)
         self.input_droprate = input_droprate
         self.hidden_droprate = hidden_droprate
         self.bn1 = nn.BatchNorm1d(nfeat)

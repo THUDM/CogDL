@@ -1,5 +1,4 @@
 import torch.nn as nn
-
 from cogdl.layers import GCNLayer
 
 from .. import BaseModel, register_model

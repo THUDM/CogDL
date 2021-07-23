@@ -152,6 +152,17 @@ def get_activation(act: str):
         return lambda x: x
 
 
+def get_norm_layer(norm: str, channels: int):
+    if norm == "layernorm":
+        return torch.nn.LayerNorm(channels)
+    elif norm == "batchnorm":
+        return torch.nn.BatchNorm1d(channels)
+    elif norm == "instancenorm":
+        return torch.nn.InstanceNorm1d(channels)
+    else:
+        return torch.nn.Identity()
+
+
 def cycle_index(num, shift):
     arr = torch.arange(num) + shift
     arr[-shift:] = torch.arange(shift)

@@ -8,27 +8,8 @@ from ogb.graphproppred import GraphPropPredDataset
 
 from . import register_dataset
 from cogdl.data import Dataset, Graph, DataLoader
-from cogdl.utils import cross_entropy_loss, accuracy, remove_self_loops
+from cogdl.utils import cross_entropy_loss, accuracy, remove_self_loops, coalesce
 from torch_geometric.utils import to_undirected
-
-
-def coalesce(row, col, edge_attr=None):
-    row = torch.tensor(row)
-    col = torch.tensor(col)
-    if edge_attr is not None:
-        edge_attr = torch.tensor(edge_attr)
-    num = col.shape[0] + 1
-    idx = torch.full((num,), -1, dtype=torch.float)
-    idx[1:] = row * num + col
-    mask = idx[1:] > idx[:-1]
-
-    if mask.all():
-        return row, col, edge_attr
-    row = row[mask]
-    col = col[mask]
-    if edge_attr is not None:
-        edge_attr = edge_attr[mask]
-    return row, col, edge_attr
 
 
 class OGBNDataset(Dataset):
@@ -38,16 +19,21 @@ class OGBNDataset(Dataset):
         graph, y = dataset[0]
         x = torch.tensor(graph["node_feat"])
         y = torch.tensor(y.squeeze())
-        row, col, edge_attr = coalesce(graph["edge_index"][0], graph["edge_index"][1], graph["edge_feat"])
+        row, col = graph["edge_index"][0], graph["edge_index"][1]
+        row = torch.from_numpy(row)
+        col = torch.from_numpy(col)
         edge_index = torch.stack([row, col], dim=0)
+        edge_attr = None
         edge_index, edge_attr = remove_self_loops(edge_index, edge_attr)
         row = torch.cat([edge_index[0], edge_index[1]])
         col = torch.cat([edge_index[1], edge_index[0]])
+
+        row, col, _ = coalesce(row, col)
         edge_index = torch.stack([row, col], dim=0)
         if edge_attr is not None:
             edge_attr = torch.cat([edge_attr, edge_attr], dim=0)
 
-        self.data = Graph(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y)
+        self.data = Graph(x=x, edge_index=edge_index, edge_weight=edge_attr, y=y)
         self.data.num_nodes = graph["num_nodes"]
         assert self.data.num_nodes == self.data.x.shape[0]
 
@@ -84,12 +70,6 @@ class OGBArxivDataset(OGBNDataset):
     def __init__(self, data_path="data"):
         dataset = "ogbn-arxiv"
         super(OGBArxivDataset, self).__init__(data_path, dataset)
-        self.preprocessing()
-
-    def preprocessing(self):
-        row, col = self.data.edge_index
-        edge_index = to_undirected(torch.stack([row, col]))
-        self.data.edge_index = edge_index
 
     def get_evaluator(self):
         evaluator = NodeEvaluator(name="ogbn-arxiv")

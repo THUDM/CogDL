@@ -8,7 +8,7 @@ def test_dataset_stats():
     outputs = outputs[0]
 
     assert len(outputs) == 6
-    assert tuple(outputs) == ("cora", 2708, 10184, 1433, 7, 140)
+    assert tuple(outputs) == ("cora", 2708, 10556, 1433, 7, 140)
 
 
 def test_dataset_visual():

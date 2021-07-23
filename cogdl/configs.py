@@ -6,6 +6,16 @@ BEST_CONFIGS = {
             "general": {"lr": 0.005, "max_epoch": 1000},
             "citeseer": {"weight_decay": 0.001},
             "pubmed": {"weight_decay": 0.001},
+            "ppi-large": {
+                "nhead": 4,
+                "hidden_size": 256,
+                "lr": 0.005,
+                "residual": True,
+                "num_layers": 3,
+                "weight_decay": 0.0,
+                "attn_drop": 0,
+                "dropout": 0,
+            },
         },
         "gcn": {
             "general": {},
@@ -17,6 +27,15 @@ BEST_CONFIGS = {
                 "max_epoch": 7000,
                 # 78.04
             },
+            "flickr": {
+                "lr": 0.01,
+                "dropout": 0.5,
+                "weight_decay": 0.0,
+                "hidden_size": 256,
+            },
+        },
+        "sage": {
+            "general": {},
         },
         "gcnii": {
             "general": {

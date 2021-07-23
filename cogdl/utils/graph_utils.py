@@ -14,7 +14,7 @@ def get_degrees(row, col, num_nodes=None):
     b = torch.ones(col.shape[0], device=device)
     out = torch.zeros(num_nodes, device=device)
     degrees = out.scatter_add_(dim=0, index=row, src=b)
-    return degrees
+    return degrees.float()
 
 
 def add_self_loops(edge_index, edge_weight=None, fill_value=1, num_nodes=None):
@@ -196,31 +196,47 @@ def filter_adj(row, col, edge_attr, mask):
 
 
 def dropout_adj(
-    edge_index: Tuple, edge_weight: Optional[torch.Tensor] = None, drop_rate: float = 0.5, renorm: bool = True
+    edge_index: Tuple,
+    edge_weight: Optional[torch.Tensor] = None,
+    drop_rate: float = 0.5,
+    renorm: Optional[str] = "sym",
+    training: bool = False,
 ):
+    if not training or drop_rate == 0:
+        if edge_weight is None:
+            edge_weight = torch.ones(edge_index[0].shape[0], device=edge_index[0].device)
+        return edge_index, edge_weight
+
     if drop_rate < 0.0 or drop_rate > 1.0:
         raise ValueError("Dropout probability has to be between 0 and 1, " "but got {}".format(drop_rate))
 
     row, col = edge_index
     num_nodes = int(max(row.max(), col.max())) + 1
-    mask = torch.full((row.shape[0],), 1 - drop_rate, dtype=torch.float)
+    self_loop = row == col
+    mask = torch.full((row.shape[0],), 1 - drop_rate, dtype=torch.float, device=row.device)
     mask = torch.bernoulli(mask).to(torch.bool)
+    mask = self_loop | mask
     edge_index, edge_weight = filter_adj(row, col, edge_weight, mask)
-    if renorm:
+    if renorm == "sym":
         edge_weight = symmetric_normalization(num_nodes, edge_index[0], edge_index[1])
+    elif renorm == "row":
+        edge_weight = row_normalization(num_nodes, edge_index[0], edge_index[1])
     return edge_index, edge_weight
 
 
 def coalesce(row, col, value=None):
-    row = row.numpy()
-    col = col.numpy()
+    if torch.is_tensor(row):
+        row = row.numpy()
+    if torch.is_tensor(col):
+        col = col.numpy()
     indices = np.lexsort((col, row))
-    row = torch.from_numpy(row[indices])
-    col = torch.from_numpy(col[indices])
+    row = torch.from_numpy(row[indices]).long()
+    col = torch.from_numpy(col[indices]).long()
 
     num = col.shape[0] + 1
-    idx = torch.full((num,), -1, dtype=torch.float)
-    idx[1:] = row * num + col
+    idx = torch.full((num,), -1, dtype=torch.long)
+    max_num = max(row.max(), col.max()) + 100
+    idx[1:] = (row + 1) * max_num + col
     mask = idx[1:] > idx[:-1]
 
     if mask.all():

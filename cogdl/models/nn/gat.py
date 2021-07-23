@@ -29,6 +29,7 @@ class GAT(BaseModel):
         parser.add_argument("--num-classes", type=int)
         parser.add_argument("--hidden-size", type=int, default=8)
         parser.add_argument("--dropout", type=float, default=0.6)
+        parser.add_argument("--attn-drop", type=float, default=0.5)
         parser.add_argument("--alpha", type=float, default=0.2)
         parser.add_argument("--nhead", type=int, default=8)
         parser.add_argument("--last-nhead", type=int, default=1)
@@ -42,6 +43,7 @@ class GAT(BaseModel):
             args.num_classes,
             args.num_layers,
             args.dropout,
+            args.attn_drop,
             args.alpha,
             args.nhead,
             args.residual,
@@ -55,6 +57,7 @@ class GAT(BaseModel):
         out_features,
         num_layers,
         dropout,
+        attn_drop,
         alpha,
         nhead,
         residual,
@@ -69,9 +72,8 @@ class GAT(BaseModel):
                 in_feats,
                 hidden_size,
                 nhead=nhead,
-                dropout=dropout,
+                attn_drop=attn_drop,
                 alpha=alpha,
-                concat=True,
                 residual=residual,
             )
         )
@@ -81,9 +83,8 @@ class GAT(BaseModel):
                     hidden_size * nhead,
                     hidden_size,
                     nhead=nhead,
-                    dropout=dropout,
+                    attn_drop=attn_drop,
                     alpha=alpha,
-                    concat=True,
                     residual=residual,
                 )
             )
@@ -91,9 +92,8 @@ class GAT(BaseModel):
             GATLayer(
                 hidden_size * nhead,
                 out_features,
-                dropout=dropout,
+                attn_drop=attn_drop,
                 alpha=alpha,
-                concat=False,
                 nhead=last_nhead,
                 residual=False,
             )

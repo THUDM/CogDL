@@ -81,6 +81,7 @@ def test_gat_cora():
     args.dataset = "cora"
     args.model = "gat"
     args.alpha = 0.2
+    args.attn_drop = 0.2
     args.nhead = 8
     args.last_nhead = 2
 
@@ -258,7 +259,7 @@ def test_drgat_cora():
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "drgat"
-    args.num_heads = 8
+    args.nhead = 8
     task = build_task(args)
     ret = task.train()
     assert 0 <= ret["Acc"] <= 1
@@ -685,6 +686,44 @@ def test_c_s_cora():
     assert 0 <= task.train()["Acc"] <= 1
 
 
+def test_sage_cora():
+    args = get_default_args()
+    args.aggr = "mean"
+    args.normalize = True
+    args.norm = "layernorm"
+    args.model = "sage"
+    task = build_task(args)
+    assert 0 <= task.train()["Acc"] <= 1
+
+
+def test_revnets_cora():
+    args = get_default_args()
+    args.group = 2
+    args.num_layers = 3
+    args.last_norm = "batchnorm"
+    args.p = args.beta = 1.0
+    args.learn_p = args.learn_beta = True
+    args.use_msg_norm = False
+    args.learn_msg_scale = False
+    args.aggr = "mean"
+    args.dataset = "pubmed"
+    args.model = "revgen"
+    task = build_task(args)
+    assert 0 <= task.train()["Acc"] <= 1
+
+    args.model = "revgat"
+    args.nhead = 2
+    args.alpha = 0.2
+    args.norm = "batchnorm"
+    args.residual = True
+    args.attn_drop = 0.2
+    args.last_nhead = 1
+    assert 0 <= task.train()["Acc"] <= 1
+
+    args.model = "revgcn"
+    assert 0 <= task.train()["Acc"] <= 1
+
+
 if __name__ == "__main__":
     test_gdc_gcn_cora()
     test_gcn_cora()
@@ -713,3 +752,4 @@ if __name__ == "__main__":
     test_dropedge_inceptiongcn_cora()
     test_dropedge_densegcn_cora()
     test_clustergcn_cora()
+    test_revnets_cora()

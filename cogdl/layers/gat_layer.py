@@ -2,7 +2,9 @@ import math
 
 import torch
 import torch.nn as nn
-from cogdl.utils import check_mh_spmm, mh_spmm, mul_edge_softmax, spmm
+import torch.nn.functional as F
+
+from cogdl.utils import check_mh_spmm, mh_spmm, mul_edge_softmax, spmm, get_activation, get_norm_layer
 
 
 class GATLayer(nn.Module):
@@ -10,12 +12,13 @@ class GATLayer(nn.Module):
     Sparse version GAT layer, similar to https://arxiv.org/abs/1710.10903
     """
 
-    def __init__(self, in_features, out_features, nhead=1, alpha=0.2, dropout=0.6, concat=True, residual=False):
+    def __init__(
+        self, in_features, out_features, nhead=1, alpha=0.2, attn_drop=0.5, activation=None, residual=False, norm=None
+    ):
         super(GATLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.alpha = alpha
-        self.concat = concat
         self.nhead = nhead
 
         self.W = nn.Parameter(torch.FloatTensor(in_features, out_features * nhead))
@@ -23,12 +26,13 @@ class GATLayer(nn.Module):
         self.a_l = nn.Parameter(torch.zeros(size=(1, nhead, out_features)))
         self.a_r = nn.Parameter(torch.zeros(size=(1, nhead, out_features)))
 
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(attn_drop)
         self.leakyrelu = nn.LeakyReLU(self.alpha)
+        self.act = None if activation is None else get_activation(activation)
+        self.norm = None if norm is None else get_norm_layer(norm, out_features * nhead)
 
         if residual:
-            out_features = out_features * nhead if concat else out_features
-            self.residual = nn.Linear(in_features, out_features)
+            self.residual = nn.Linear(in_features, out_features * nhead)
         else:
             self.register_buffer("residual", None)
         self.reset_parameters()
@@ -41,10 +45,6 @@ class GATLayer(nn.Module):
         reset(self.a_l)
         reset(self.a_r)
         reset(self.W)
-
-        # nn.init.xavier_uniform_(self.W.data, gain=1.414)
-        # nn.init.xavier_uniform_(self.a_r.data, gain=1.414)
-        # nn.init.xavier_uniform_(self.a_l.data, gain=1.414)
 
     def forward(self, graph, x):
         h = torch.matmul(x, self.W).view(-1, self.nhead, self.out_features)
@@ -83,6 +83,10 @@ class GATLayer(nn.Module):
         if self.residual:
             res = self.residual(x)
             out += res
+        if self.norm is not None:
+            out = self.norm(out)
+        if self.act is not None:
+            out = self.act(out)
         return out
 
     def __repr__(self):

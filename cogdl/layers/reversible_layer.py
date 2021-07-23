@@ -492,7 +492,7 @@ class GroupAdditiveCoupling(torch.nn.Module):
 
 # RevGNN BaseBlock
 class RevGNNLayer(nn.Module):
-    def __init__(self, conv, group):
+    def __init__(self, conv, group, norm=None):
         super(RevGNNLayer, self).__init__()
         self.groups = nn.ModuleList()
         for i in range(group):

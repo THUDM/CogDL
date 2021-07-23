@@ -139,18 +139,24 @@ class ResGNNLayer(nn.Module):
     def __init__(
         self,
         conv,
-        n_channels,
+        in_channels,
         activation="relu",
         norm="batchnorm",
         dropout=0.0,
+        out_norm=None,
+        out_channels=-1,
         checkpoint_grad=False,
     ):
         super(ResGNNLayer, self).__init__()
         self.conv = conv
         self.activation = get_activation(activation)
         self.dropout = dropout
-        self.norm = get_norm_layer(norm, n_channels)
+        self.norm = get_norm_layer(norm, in_channels)
         self.checkpoint_grad = checkpoint_grad
+        if out_norm:
+            self.out_norm = get_norm_layer(norm, out_channels)
+        else:
+            self.out_norm = None
 
     def forward(self, graph, x, dropout=None):
         h = self.norm(x)
@@ -164,14 +170,16 @@ class ResGNNLayer(nn.Module):
             h = checkpoint(self.conv, graph, h)
         else:
             h = self.conv(graph, h)
-
-        return x + h
+        if self.out_norm:
+            return self.out_norm(x + h)
+        else:
+            return x + h
 
 
 class EdgeEncoder(nn.Module):
     def __init__(self, in_feats, out_feats, bias=False):
         super(EdgeEncoder, self).__init__()
-        self.nn = nn.Linear(in_feats, out_feats)
+        self.nn = nn.Linear(in_feats, out_feats, bias=bias)
 
     def forward(self, edge_attr):
         return self.nn(edge_attr)

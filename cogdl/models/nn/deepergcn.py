@@ -81,7 +81,7 @@ class DeeperGCN(BaseModel):
                         use_msg_norm=use_msg_norm,
                         learn_msg_scale=learn_msg_scale,
                     ),
-                    n_channels=hidden_size,
+                    in_channels=hidden_size,
                     activation=activation,
                     dropout=dropout,
                     checkpoint_grad=(num_layers > 3) and ((i + 1) == num_layers // 2),

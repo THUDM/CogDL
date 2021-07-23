@@ -78,7 +78,14 @@ class RevGCN(BaseModel):
                     hidden_size // group,
                     hidden_size // group,
                 )
-                res_conv = ResGNNLayer(conv, hidden_size // group, activation=activation, norm=norm)
+                res_conv = ResGNNLayer(
+                    conv,
+                    hidden_size // group,
+                    activation=activation,
+                    norm=norm,
+                    out_norm=norm,
+                    out_channels=hidden_size // group,
+                )
                 self.layers.append(RevGNNLayer(res_conv, group))
 
     def forward(self, graph):
@@ -261,7 +268,14 @@ class RevGAT(BaseModel):
                     alpha=alpha,
                     attn_drop=attn_drop,
                 )
-                res_conv = ResGNNLayer(conv, hidden_size * nhead // group, activation=activation, norm=norm)
+                res_conv = ResGNNLayer(
+                    conv,
+                    hidden_size * nhead // group,
+                    activation=activation,
+                    norm=norm,
+                    out_norm=norm,
+                    out_channels=hidden_size * nhead // group,
+                )
                 self.layers.append(RevGNNLayer(res_conv, group))
 
     def forward(self, graph):

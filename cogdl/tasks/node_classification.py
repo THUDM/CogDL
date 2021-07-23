@@ -86,6 +86,7 @@ class NodeClassification(BaseTask):
             max_score = 0
             min_loss = np.inf
             best_model = copy.deepcopy(self.model)
+
             for epoch in epoch_iter:
                 self._train_step()
                 acc, losses = self._test_step()

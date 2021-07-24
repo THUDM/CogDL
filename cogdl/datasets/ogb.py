@@ -48,7 +48,7 @@ class OGBNDataset(Dataset):
         row = torch.from_numpy(row)
         col = torch.from_numpy(col)
         edge_index = torch.stack([row, col], dim=0)
-        edge_attr = torch.as_tensor(graph["edge_attr"]) if graph["edge_attr"] is not None else graph["edge_attr"]
+        edge_attr = torch.as_tensor(graph["edge_feat"]) if graph["edge_feat"] is not None else graph["edge_feat"]
         edge_index, edge_attr = remove_self_loops(edge_index, edge_attr)
         row = torch.cat([edge_index[0], edge_index[1]])
         col = torch.cat([edge_index[1], edge_index[0]])

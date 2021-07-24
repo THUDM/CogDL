@@ -145,20 +145,20 @@ class ResGNNLayer(nn.Module):
         dropout=0.0,
         out_norm=None,
         out_channels=-1,
-        checkpoint_grad=False,
+        residual=True,
     ):
         super(ResGNNLayer, self).__init__()
         self.conv = conv
         self.activation = get_activation(activation)
         self.dropout = dropout
         self.norm = get_norm_layer(norm, in_channels)
-        self.checkpoint_grad = checkpoint_grad
+        self.residual = residual
         if out_norm:
             self.out_norm = get_norm_layer(norm, out_channels)
         else:
             self.out_norm = None
 
-    def forward(self, graph, x, dropout=None):
+    def forward(self, graph, x, dropout=None, *args, **kwargs):
         h = self.norm(x)
         h = self.activation(h)
         if isinstance(dropout, float) or dropout is None:
@@ -166,14 +166,14 @@ class ResGNNLayer(nn.Module):
         else:
             if self.training:
                 h = h * dropout
-        if self.checkpoint_grad:
-            h = checkpoint(self.conv, graph, h)
-        else:
-            h = self.conv(graph, h)
+        h = self.conv(graph, h, *args, **kwargs)
+        if self.residual:
+            h = h + x
+
         if self.out_norm:
-            return self.out_norm(x + h)
+            return self.out_norm(h)
         else:
-            return x + h
+            return h
 
 
 class EdgeEncoder(nn.Module):

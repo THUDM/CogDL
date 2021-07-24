@@ -173,7 +173,7 @@ class Adjacency(BaseGraph):
         self.row_ptr, reindex = coo2csr_index(self.row, self.col, num_nodes=self.num_nodes)
         self.row = self.row[reindex]
         self.col = self.col[reindex]
-        self.attr = None
+        # if self.attr is not None:
 
     def remove_self_loops(self):
         mask = self.row == self.col
@@ -276,10 +276,11 @@ class Adjacency(BaseGraph):
     @edge_index.setter
     def edge_index(self, edge_index):
         row, col = edge_index
-        if self.row is not None and self.row.shape == row.shape:
-            return
+        # if self.row is not None and self.row.shape == row.shape:
+        #     return
         self.row, self.col = row, col
-        self.convert_csr()
+        # self.convert_csr()
+        self.row_ptr = None
 
     @property
     def row_indptr(self):

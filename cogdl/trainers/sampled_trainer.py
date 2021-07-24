@@ -24,6 +24,7 @@ class SampledTrainer(BaseTrainer):
         parser.add_argument("--num-workers", type=int, default=4)
         parser.add_argument("--eval-step", type=int, default=3)
         parser.add_argument("--batch-size", type=int, default=128)
+        parser.add_argument("--no-self-loop", action="store_true")
         # fmt: on
 
     @abstractmethod
@@ -50,6 +51,7 @@ class SampledTrainer(BaseTrainer):
         self.eval_step = args.eval_step if hasattr(args, "eval_step") else 1
         self.num_workers = args.num_workers if hasattr(args, "num_workers") else 0
         self.batch_size = args.batch_size
+        self.self_loop = not (hasattr(args, "no_self_loop") and args.no_self_loop)
 
     @classmethod
     def build_trainer_from_args(cls, args):
@@ -133,6 +135,9 @@ class SAINTTrainer(SampledTrainer):
     def fit(self, model: SupervisedModel, dataset: Dataset):
         self.dataset = dataset
         self.data = dataset.data
+        if self.self_loop:
+            self.data.add_remaining_self_loops()
+
         self.model = model.to(self.device)
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
@@ -204,7 +209,8 @@ class NeighborSamplingTrainer(SampledTrainer):
 
     def fit(self, model, dataset):
         self.data = dataset[0]
-        self.data.add_remaining_self_loops()
+        if self.self_loop:
+            self.data.add_remaining_self_loops()
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
 
@@ -304,7 +310,8 @@ class ClusterGCNTrainer(SampledTrainer):
 
     def fit(self, model, dataset):
         self.data = dataset[0]
-        self.data.add_remaining_self_loops()
+        if self.self_loop:
+            self.data.add_remaining_self_loops()
         self.model = model.to(self.device)
         self.evaluator = dataset.get_evaluator()
         self.loss_fn = dataset.get_loss_fn()
@@ -363,20 +370,22 @@ class RandomClusterTrainer(SampledTrainer):
         # fmt: off
         SampledTrainer.add_args(parser)
         parser.add_argument("--n-cluster", type=int, default=10)
+        parser.add_argument("--val-n-cluster", type=int, default=-1)
         # fmt: on
 
     def __init__(self, args):
         super(RandomClusterTrainer, self).__init__(args)
         self.patience = args.patience // args.eval_step
         self.n_cluster = args.n_cluster
+        self.val_n_cluster = args.val_n_cluster if hasattr(args, "val_n_cluster") else -1
         self.eval_step = args.eval_step
         self.data, self.optimizer, self.evaluator, self.loss_fn = None, None, None, None
 
     def fit(self, model, dataset):
         self.model = model.to(self.device)
         self.data = dataset[0]
-        self.data.add_remaining_self_loops()
-
+        if self.self_loop:
+            self.data.add_remaining_self_loops()
         self.loss_fn = dataset.get_loss_fn()
         self.evaluator = dataset.get_evaluator()
 
@@ -386,6 +395,15 @@ class RandomClusterTrainer(SampledTrainer):
             settings.pop("persistent_workers")
 
         self.train_loader = ClusteredLoader(dataset=dataset, n_cluster=self.n_cluster, method="random", **settings)
+        if self.val_n_cluster > 0:
+            self.test_loader = ClusteredLoader(
+                dataset=dataset,
+                n_cluster=self.val_n_cluster,
+                method="random",
+                num_workers=self.num_workers,
+                persistent_workers=True,
+                shuffle=False,
+            )
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         best_model = self.train()
@@ -408,6 +426,8 @@ class RandomClusterTrainer(SampledTrainer):
     def _test_step(self, split="val"):
         self.model.eval()
         self.data.eval()
+        if self.val_n_cluster > 0:
+            return self.batch_eval(split)
         self.model = self.model.to("cpu")
         data = self.data
         self.model = self.model.cpu()
@@ -416,4 +436,25 @@ class RandomClusterTrainer(SampledTrainer):
             logits = self.model.predict(data)
         loss = {key: self.loss_fn(logits[val], self.data.y[val]) for key, val in masks.items()}
         metric = {key: self.evaluator(logits[val], self.data.y[val]) for key, val in masks.items()}
+        return metric, loss
+
+    def batch_eval(self, split="val"):
+        preds = {"train": [], "val": [], "test": []}
+        ys = {"train": [], "val": [], "test": []}
+        with torch.no_grad():
+            for batch in self.test_loader:
+                batch = batch.to(self.device)
+                pred = self.model.predict(batch)
+                for item in ["train", "val", "test"]:
+                    preds[item].append(pred[batch[f"{item}_mask"]])
+                    ys[item].append(batch.y[batch[f"{item}_mask"]])
+        metric = dict()
+        loss = dict()
+        for key in preds.keys():
+            pred = torch.cat(preds[key], dim=0)
+            y = torch.cat(ys[key], dim=0)
+            _metric = self.evaluator(pred, y)
+            _loss = self.loss_fn(pred, y)
+            metric[key] = _metric
+            loss[key] = _loss
         return metric, loss

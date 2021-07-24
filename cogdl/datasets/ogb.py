@@ -8,45 +8,18 @@ from ogb.graphproppred import GraphPropPredDataset
 
 from . import register_dataset
 from cogdl.data import Dataset, Graph, DataLoader
-from cogdl.utils import cross_entropy_loss, accuracy, remove_self_loops, coalesce
+from cogdl.utils import cross_entropy_loss, accuracy, remove_self_loops, coalesce, bce_with_logits_loss
 from torch_geometric.utils import to_undirected
 
 
 class OGBNDataset(Dataset):
-    def __init__(self, root, name):
+    def __init__(self, root, name, transform=None):
+        name = name.replace("-", "_")
+        self.name = name
+        root = os.path.join(root, name)
         super(OGBNDataset, self).__init__(root)
-        dataset = NodePropPredDataset(name, root)
-        graph, y = dataset[0]
-        x = torch.tensor(graph["node_feat"])
-        y = torch.tensor(y.squeeze())
-        row, col = graph["edge_index"][0], graph["edge_index"][1]
-        row = torch.from_numpy(row)
-        col = torch.from_numpy(col)
-        edge_index = torch.stack([row, col], dim=0)
-        edge_attr = None
-        edge_index, edge_attr = remove_self_loops(edge_index, edge_attr)
-        row = torch.cat([edge_index[0], edge_index[1]])
-        col = torch.cat([edge_index[1], edge_index[0]])
-
-        row, col, _ = coalesce(row, col)
-        edge_index = torch.stack([row, col], dim=0)
-        if edge_attr is not None:
-            edge_attr = torch.cat([edge_attr, edge_attr], dim=0)
-
-        self.data = Graph(x=x, edge_index=edge_index, edge_weight=edge_attr, y=y)
-        self.data.num_nodes = graph["num_nodes"]
-        assert self.data.num_nodes == self.data.x.shape[0]
-
-        # split
-        split_index = dataset.get_idx_split()
-        self.data.train_mask = torch.zeros(self.data.num_nodes, dtype=torch.bool)
-        self.data.test_mask = torch.zeros(self.data.num_nodes, dtype=torch.bool)
-        self.data.val_mask = torch.zeros(self.data.num_nodes, dtype=torch.bool)
-        self.data.train_mask[split_index["train"]] = True
-        self.data.test_mask[split_index["test"]] = True
-        self.data.val_mask[split_index["valid"]] = True
-
         self.transform = None
+        self.data = torch.load(self.processed_paths[0])
 
     def get(self, idx):
         assert idx == 0
@@ -61,8 +34,43 @@ class OGBNDataset(Dataset):
     def _download(self):
         pass
 
-    def _process(self):
-        pass
+    @property
+    def processed_file_names(self):
+        return "data_cogdl.pt"
+
+    def process(self):
+        name = self.name.replace("_", "-")
+        dataset = NodePropPredDataset(name, self.root)
+        graph, y = dataset[0]
+        x = torch.tensor(graph["node_feat"]) if graph["node_feat"] is not None else None
+        y = torch.tensor(y.squeeze())
+        row, col = graph["edge_index"][0], graph["edge_index"][1]
+        row = torch.from_numpy(row)
+        col = torch.from_numpy(col)
+        edge_index = torch.stack([row, col], dim=0)
+        edge_attr = torch.as_tensor(graph["edge_feat"]) if graph["edge_feat"] is not None else graph["edge_feat"]
+        edge_index, edge_attr = remove_self_loops(edge_index, edge_attr)
+        row = torch.cat([edge_index[0], edge_index[1]])
+        col = torch.cat([edge_index[1], edge_index[0]])
+
+        row, col, _ = coalesce(row, col)
+        edge_index = torch.stack([row, col], dim=0)
+
+        data = Graph(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y)
+        data.num_nodes = graph["num_nodes"]
+
+        # split
+        split_index = dataset.get_idx_split()
+        data.train_mask = torch.full((data.num_nodes,), False, dtype=torch.bool)
+        data.val_mask = torch.full((data.num_nodes,), False, dtype=torch.bool)
+        data.test_mask = torch.full((data.num_nodes,), False, dtype=torch.bool)
+
+        data.train_mask[split_index["train"]] = True
+        data.test_mask[split_index["test"]] = True
+        data.val_mask[split_index["valid"]] = True
+
+        torch.save(data, self.processed_paths[0])
+        return data
 
 
 @register_dataset("ogbn-arxiv")
@@ -95,6 +103,62 @@ class OGBProteinsDataset(OGBNDataset):
     def __init__(self, data_path="data"):
         dataset = "ogbn-proteins"
         super(OGBProteinsDataset, self).__init__(data_path, dataset)
+
+    @property
+    def edge_attr_size(self):
+        return [
+            self.data.edge_attr.shape[1],
+        ]
+
+    def get_loss_fn(self):
+        return bce_with_logits_loss
+
+    def get_evaluator(self):
+        evaluator = NodeEvaluator(name="ogbn-proteins")
+
+        def wrap(y_pred, y_true):
+            input_dict = {"y_true": y_true, "y_pred": y_pred}
+            return evaluator.eval(input_dict)["rocauc"]
+
+        return wrap
+
+    def process(self):
+        name = self.name.replace("_", "-")
+        dataset = NodePropPredDataset(name, self.root)
+        graph, y = dataset[0]
+        y = torch.tensor(y.squeeze())
+        row, col = graph["edge_index"][0], graph["edge_index"][1]
+        row = torch.from_numpy(row)
+        col = torch.from_numpy(col)
+        edge_attr = torch.as_tensor(graph["edge_feat"]) if "edge_feat" in graph else None
+
+        data = Graph(x=None, edge_index=(row, col), edge_attr=edge_attr, y=y)
+        data.num_nodes = graph["num_nodes"]
+
+        # split
+        split_index = dataset.get_idx_split()
+        data.train_mask = torch.full((data.num_nodes,), False, dtype=torch.bool)
+        data.val_mask = torch.full((data.num_nodes,), False, dtype=torch.bool)
+        data.test_mask = torch.full((data.num_nodes,), False, dtype=torch.bool)
+
+        data.train_mask[split_index["train"]] = True
+        data.test_mask[split_index["test"]] = True
+        data.val_mask[split_index["valid"]] = True
+
+        edge_attr = data.edge_attr
+        deg = data.degrees()
+        dst, _ = data.edge_index
+        dst = dst.view(-1, 1).expand(dst.shape[0], edge_attr.shape[1])
+        x = torch.zeros((data.num_nodes, edge_attr.shape[1]), dtype=torch.float32)
+        x = x.scatter_add_(dim=0, index=dst, src=edge_attr)
+        deg = torch.clamp(deg, min=1)
+        x = x / deg.view(-1, 1)
+        data.x = x
+
+        data.node_species = torch.as_tensor(graph["node_species"])
+
+        torch.save(data, self.processed_paths[0])
+        return data
 
 
 @register_dataset("ogbn-papers100M")

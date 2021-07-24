@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -10,22 +12,20 @@ from cogdl.utils import get_activation, mul_edge_softmax, get_norm_layer
 class GENConv(nn.Module):
     def __init__(
         self,
-        in_feats,
-        out_feats,
-        aggr="softmax_sg",
-        beta=1.0,
-        p=1.0,
-        learn_beta=False,
-        learn_p=False,
-        use_msg_norm=False,
-        learn_msg_scale=True,
-        norm=None,
-        residual=False,
-        activation=None,
-        num_mlp_layers=2,
-        edge_attr_size=[
-            -1,
-        ],
+        in_feats: int,
+        out_feats: int,
+        aggr: str = "softmax_sg",
+        beta: float = 1.0,
+        p: float = 1.0,
+        learn_beta: bool = False,
+        learn_p: bool = False,
+        use_msg_norm: bool = False,
+        learn_msg_scale: bool = True,
+        norm: Optional[str] = None,
+        residual: bool = False,
+        activation: Optional[str] = None,
+        num_mlp_layers: int = 2,
+        edge_attr_size: Optional[list] = None,
     ):
         super(GENConv, self).__init__()
         self.use_msg_norm = use_msg_norm
@@ -63,8 +63,8 @@ class GENConv(nn.Module):
         self.norm = None if norm is None else get_norm_layer(norm, in_feats)
         self.residual = residual
 
-        if edge_attr_size[0] > 0:
-            if len(edge_attr_size) > 0:
+        if edge_attr_size is not None and edge_attr_size[0] > 0:
+            if len(edge_attr_size) > 1:
                 self.edge_encoder = BondEncoder(edge_attr_size, in_feats)
             else:
                 self.edge_encoder = EdgeEncoder(edge_attr_size[0], in_feats)
@@ -145,6 +145,7 @@ class ResGNNLayer(nn.Module):
         dropout=0.0,
         out_norm=None,
         out_channels=-1,
+        residual=True,
         checkpoint_grad=False,
     ):
         super(ResGNNLayer, self).__init__()
@@ -152,13 +153,14 @@ class ResGNNLayer(nn.Module):
         self.activation = get_activation(activation)
         self.dropout = dropout
         self.norm = get_norm_layer(norm, in_channels)
-        self.checkpoint_grad = checkpoint_grad
+        self.residual = residual
         if out_norm:
             self.out_norm = get_norm_layer(norm, out_channels)
         else:
             self.out_norm = None
+        self.checkpoint_grad = False
 
-    def forward(self, graph, x, dropout=None):
+    def forward(self, graph, x, dropout=None, *args, **kwargs):
         h = self.norm(x)
         h = self.activation(h)
         if isinstance(dropout, float) or dropout is None:
@@ -166,14 +168,18 @@ class ResGNNLayer(nn.Module):
         else:
             if self.training:
                 h = h * dropout
+
         if self.checkpoint_grad:
-            h = checkpoint(self.conv, graph, h)
+            h = checkpoint(self.conv, graph, h, *args, **kwargs)
         else:
-            h = self.conv(graph, h)
+            h = self.conv(graph, h, *args, **kwargs)
+        if self.residual:
+            h = h + x
+
         if self.out_norm:
-            return self.out_norm(x + h)
+            return self.out_norm(h)
         else:
-            return x + h
+            return h
 
 
 class EdgeEncoder(nn.Module):

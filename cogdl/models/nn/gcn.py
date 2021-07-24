@@ -62,7 +62,6 @@ class TKipfGCN(BaseModel):
             ]
         )
         self.num_layers = num_layers
-        self.dropout = dropout
 
     def embed(self, graph):
         graph.sym_norm()

@@ -46,6 +46,7 @@ node_classification:
     - pubmed
     - ogbn-arxiv
     - ogbn-products
+    - ogbn-proteins
     - ogbn-papers100M
     - flickr
     - amazon-s

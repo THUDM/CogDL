@@ -496,6 +496,7 @@ class ClusteredDataset(torch.utils.data.Dataset):
         batch = self.batch_idx[idx * self.batch_size : (idx + 1) * self.batch_size]
         nodes = np.concatenate([self.clusters[i] for i in batch])
         subgraph = self.data.subgraph(nodes)
+        subgraph.batch = torch.from_numpy(nodes)
         return subgraph
 
     def preprocess(self, n_cluster):
@@ -557,12 +558,13 @@ class RandomPartitionDataset(torch.utils.data.Dataset):
     def __init__(self, dataset, n_cluster):
         self.data = dataset.data
         self.n_cluster = n_cluster
-        self.num_nodes = dataset.data.x.shape[0]
+        self.num_nodes = dataset.data.num_nodes
         self.parts = torch.randint(0, self.n_cluster, size=(self.num_nodes,))
 
     def __getitem__(self, idx):
         node_cluster = torch.where(self.parts == idx)[0]
         subgraph = self.data.subgraph(node_cluster)
+        subgraph.batch = node_cluster
         return subgraph
 
     def __len__(self):

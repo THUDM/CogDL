@@ -146,6 +146,7 @@ class ResGNNLayer(nn.Module):
         out_norm=None,
         out_channels=-1,
         residual=True,
+        checkpoint_grad=False,
     ):
         super(ResGNNLayer, self).__init__()
         self.conv = conv
@@ -157,6 +158,7 @@ class ResGNNLayer(nn.Module):
             self.out_norm = get_norm_layer(norm, out_channels)
         else:
             self.out_norm = None
+        self.checkpoint_grad = False
 
     def forward(self, graph, x, dropout=None, *args, **kwargs):
         h = self.norm(x)
@@ -166,7 +168,11 @@ class ResGNNLayer(nn.Module):
         else:
             if self.training:
                 h = h * dropout
-        h = self.conv(graph, h, *args, **kwargs)
+
+        if self.checkpoint_grad:
+            h = checkpoint(self.conv, graph, h, *args, **kwargs)
+        else:
+            h = self.conv(graph, h, *args, **kwargs)
         if self.residual:
             h = h + x
 

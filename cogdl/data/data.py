@@ -173,6 +173,7 @@ class Adjacency(BaseGraph):
         self.row_ptr, reindex = coo2csr_index(self.row, self.col, num_nodes=self.num_nodes)
         self.row = self.row[reindex]
         self.col = self.col[reindex]
+        self.attr = None
         # if self.attr is not None:
 
     def remove_self_loops(self):

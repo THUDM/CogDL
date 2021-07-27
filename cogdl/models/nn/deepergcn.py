@@ -34,7 +34,7 @@ class DeeperGCN(BaseModel):
             hidden_size=args.hidden_size,
             out_feat=args.num_classes,
             num_layers=args.num_layers,
-            activation=args.connection,
+            activation=args.activation,
             dropout=args.dropout,
             aggr=args.aggr,
             beta=args.beta,

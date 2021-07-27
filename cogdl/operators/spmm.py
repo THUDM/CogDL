@@ -13,7 +13,7 @@ try:
         name="spmm",
         extra_cflags=["-lcusparse"],
         sources=[os.path.join(path, "spmm/spmm.cpp"), os.path.join(path, "spmm/spmm_kernel.cu")],
-        verbose=True,
+        verbose=False,
     )
     sddmm = load(
         name="sddmm",

@@ -2,11 +2,10 @@ import math
 
 import torch
 import torch.nn as nn
-from torch.nn.parameter import Parameter
 from actnn.layers import QLinear, QReLU, QBatchNorm1d
 
-from .qdropout import QDropout
 from cogdl.utils import spmm
+from cogdl.operators.actnn import QDropout
 
 
 class ActGCNLayer(nn.Module):
@@ -18,9 +17,9 @@ class ActGCNLayer(nn.Module):
         super(ActGCNLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.linear = QLinear(in_features, out_features)
+        self.linear = QLinear(in_features, out_features, bias=bias)
         if dropout > 0:
-            self.dropout = QDropout(dropout, inplace=True)
+            self.dropout = QDropout(dropout)
         else:
             self.dropout = None
         if residual:
@@ -36,17 +35,11 @@ class ActGCNLayer(nn.Module):
         if norm is not None:
             if norm == "batchnorm":
                 self.norm = QBatchNorm1d(out_features)
-            elif norm == "layernorm":
-                self.norm = nn.LayerNorm(out_features)
             else:
                 raise NotImplementedError
         else:
             self.norm = None
 
-        if bias:
-            self.bias = Parameter(torch.FloatTensor(out_features))
-        else:
-            self.register_parameter("bias", None)
         self.reset_parameters()
 
     def reset_parameters(self):

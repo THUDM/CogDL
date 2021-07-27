@@ -15,7 +15,7 @@ class GCNLayer(nn.Module):
         super(GCNLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.linear = nn.Linear(in_features, out_features)
+        self.linear = nn.Linear(in_features, out_features, bias=bias)
         if dropout > 0:
             self.dropout = nn.Dropout(dropout)
         else:
@@ -53,7 +53,7 @@ class GCNLayer(nn.Module):
         if self.norm is not None:
             out = self.norm(out)
         if self.act is not None:
-            out = self.act(out)
+            out = self.act(out, inplace=True)
 
         if self.residual is not None:
             out = out + self.residual(x)

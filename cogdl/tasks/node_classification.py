@@ -50,7 +50,7 @@ class NodeClassification(BaseTask):
             except Exception:
                 print("Please install the actnn library first.")
                 exit(1)
-            config.group_size = 64
+            config.group_size = 256 if args.hidden_size >= 256 else 64
             config.adaptive_conv_scheme = False
             config.adaptive_bn_scheme = False
 
@@ -69,11 +69,7 @@ class NodeClassification(BaseTask):
                 else self.model.get_optimizer(args)
             )
             self.data.apply(lambda x: x.to(self.device))
-            # print('Loading dataset: ')
-            # get_memory_usage(True)
             self.model = self.model.to(self.device)
-            # print('Loading Model: ')
-            # get_memory_usage(True)
             self.patience = args.patience
             self.max_epoch = args.max_epoch
 
@@ -135,10 +131,7 @@ class NodeClassification(BaseTask):
         self.data.train()
         self.model.train()
         self.optimizer.zero_grad()
-        loss = self.model.node_classification_loss(self.data)
-        # print('Before backward: ')
-        # get_memory_usage(True)
-        loss.backward()
+        self.model.node_classification_loss(self.data).backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
         self.optimizer.step()
 

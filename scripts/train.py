@@ -1,5 +1,4 @@
 from cogdl import options, experiment
-from actnn.conf import config
 
 
 if __name__ == "__main__":

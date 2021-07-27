@@ -41,16 +41,34 @@ class TKipfGCN(BaseModel):
             args.activation,
             args.residual,
             args.norm,
+            args.actnn,
         )
 
     def __init__(
-        self, in_feats, hidden_size, out_feats, num_layers, dropout, activation="relu", residual=False, norm=None
+        self,
+        in_feats,
+        hidden_size,
+        out_feats,
+        num_layers,
+        dropout,
+        activation="relu",
+        residual=False,
+        norm=None,
+        actnn=False,
     ):
         super(TKipfGCN, self).__init__()
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
+        Layer = GCNLayer
+        if actnn:
+            try:
+                from cogdl.layers.actgcn_layer import ActGCNLayer
+            except Exception:
+                print("Please install the actnn library first.")
+                exit(1)
+            Layer = ActGCNLayer
         self.layers = nn.ModuleList(
             [
-                GCNLayer(
+                Layer(
                     shapes[i],
                     shapes[i + 1],
                     dropout=dropout if i != num_layers - 1 else 0,

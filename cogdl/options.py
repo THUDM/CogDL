@@ -28,6 +28,7 @@ def get_parser():
     parser.add_argument('--checkpoint', type=str, default=None, help='load pre-trained model')
     parser.add_argument('--save-model', type=str, default=None, help='save trained model')
     parser.add_argument('--use-best-config', action='store_true', help='use best config')
+    parser.add_argument("--actnn", action="store_true")
 
     # fmt: on
     return parser

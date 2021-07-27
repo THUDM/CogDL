@@ -2,39 +2,39 @@ import math
 
 import torch
 import torch.nn as nn
+from actnn.layers import QLinear, QReLU, QBatchNorm1d
 
-from cogdl.utils import spmm, get_activation
+from cogdl.utils import spmm
+from cogdl.operators.actnn import QDropout
 
 
-class GCNLayer(nn.Module):
+class ActGCNLayer(nn.Module):
     """
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
 
     def __init__(self, in_features, out_features, dropout=0.0, activation=None, residual=False, norm=None, bias=True):
-        super(GCNLayer, self).__init__()
+        super(ActGCNLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.linear = nn.Linear(in_features, out_features, bias=bias)
+        self.linear = QLinear(in_features, out_features, bias=bias)
         if dropout > 0:
-            self.dropout = nn.Dropout(dropout)
+            self.dropout = QDropout(dropout)
         else:
             self.dropout = None
         if residual:
-            self.residual = nn.Linear(in_features, out_features)
+            self.residual = QLinear(in_features, out_features)
         else:
             self.residual = None
 
         if activation is not None:
-            self.act = get_activation(activation)
+            self.act = QReLU()
         else:
             self.act = None
 
         if norm is not None:
             if norm == "batchnorm":
-                self.norm = nn.BatchNorm1d(out_features)
-            elif norm == "layernorm":
-                self.norm = nn.LayerNorm(out_features)
+                self.norm = QBatchNorm1d(out_features)
             else:
                 raise NotImplementedError
         else:
@@ -48,12 +48,12 @@ class GCNLayer(nn.Module):
 
     def forward(self, graph, x):
         support = self.linear(x)
-        out = spmm(graph, support)
+        out = spmm(graph, support, actnn=True)
 
         if self.norm is not None:
             out = self.norm(out)
         if self.act is not None:
-            out = self.act(out, inplace=True)
+            out = self.act(out)
 
         if self.residual is not None:
             out = out + self.residual(x)

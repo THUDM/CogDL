@@ -1,10 +1,7 @@
 import torch
 
-from torch import argsort
-from cogdl import options
-from cogdl.tasks import build_task, register_task
+from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
-from cogdl.models import build_model
 from cogdl.utils import build_args_from_dict
 
 
@@ -21,6 +18,7 @@ def get_default_args():
         "activation": "relu",
         "residual": False,
         "norm": None,
+        "actnn": False,
     }
     return build_args_from_dict(default_dict)
 

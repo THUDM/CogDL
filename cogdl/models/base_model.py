@@ -33,7 +33,6 @@ class BaseModel(nn.Module):
     def node_classification_loss(self, data, mask=None):
         if mask is None:
             mask = data.train_mask
-        assert mask.shape[0] == data.y.shape[0]
         pred = self.forward(data)
         return self.loss_fn(pred[mask], data.y[mask])
 

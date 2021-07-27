@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -7,6 +9,7 @@ from .deepergcn import DeeperGCN
 from .gat import GAT
 from cogdl.layers.reversible_layer import RevGNNLayer
 from cogdl.layers import GCNLayer, GATLayer, GENConv, ResGNNLayer
+from cogdl.layers.deepergcn_layer import EdgeEncoder
 from cogdl.utils import get_activation, get_norm_layer, dropout_adj
 
 
@@ -141,6 +144,7 @@ class RevGEN(BaseModel):
             args.learn_p,
             args.learn_msg_scale,
             args.use_msg_norm,
+            edge_attr_size=args.edge_attr_size,
         )
 
     def __init__(
@@ -161,11 +165,13 @@ class RevGEN(BaseModel):
         learn_p=False,
         learn_msg_scale=True,
         use_msg_norm=False,
+        edge_attr_size: Optional[list] = None,
     ):
         super(RevGEN, self).__init__()
         self.input_fc = nn.Linear(in_feats, hidden_size)
         self.output_fc = nn.Linear(hidden_size, out_feats)
         self.layers = nn.ModuleList()
+
         for _ in range(num_layers):
             conv = GENConv(
                 hidden_size // group,
@@ -178,8 +184,9 @@ class RevGEN(BaseModel):
                 use_msg_norm,
                 learn_msg_scale,
                 residual=True,
+                edge_attr_size=edge_attr_size,
             )
-            res_conv = ResGNNLayer(conv, hidden_size // group, norm=norm, activation=activation)
+            res_conv = ResGNNLayer(conv, hidden_size // group, norm=norm, activation=activation, residual=False)
             self.layers.append(RevGNNLayer(res_conv, group))
         self.activation = get_activation(activation)
         self.norm = get_norm_layer(last_norm, hidden_size)

@@ -43,6 +43,7 @@ class DeeperGCN(BaseModel):
             learn_p=args.learn_p,
             learn_msg_scale=args.learn_msg_scale,
             use_msg_norm=args.use_msg_norm,
+            edge_attr_size=args.edge_attr_size,
         )
 
     def __init__(
@@ -60,6 +61,7 @@ class DeeperGCN(BaseModel):
         learn_p=False,
         learn_msg_scale=True,
         use_msg_norm=False,
+        edge_attr_size=None,
     ):
         super(DeeperGCN, self).__init__()
         self.dropout = dropout
@@ -80,6 +82,7 @@ class DeeperGCN(BaseModel):
                         learn_p=learn_p,
                         use_msg_norm=use_msg_norm,
                         learn_msg_scale=learn_msg_scale,
+                        edge_attr_size=edge_attr_size,
                     ),
                     in_channels=hidden_size,
                     activation=activation,

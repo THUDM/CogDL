@@ -57,6 +57,7 @@ def get_kg_default_args():
         "activation": "relu",
         "residual": False,
         "norm": None,
+        "actnn": False,
     }
     return build_args_from_dict(default_dict)
 
@@ -127,6 +128,7 @@ def get_kge_default_args():
         "checkpoint": False,
         "save_dir": ".",
         "device_id": [0],
+        "actnn": False,
     }
     return build_args_from_dict(default_dict)
 
@@ -191,6 +193,7 @@ def get_gnn_link_prediction_args():
         "activation": "relu",
         "residual": False,
         "norm": None,
+        "actnn": False,
     }
     return build_args_from_dict(args)
 

@@ -25,6 +25,12 @@ def build_args_from_dict(dic):
     return args
 
 
+def update_args_from_dict(args, dic):
+    for key, value in dic.items():
+        args.__setattr__(key, value)
+    return args
+
+
 def set_random_seed(seed):
     random.seed(seed)
     np.random.seed(seed)

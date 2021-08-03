@@ -31,7 +31,7 @@ class myGATConv(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.nhead = nhead
-        self.edge_emb = nn.Parameter(torch.zeros(size=(num_etypes, edge_feats)))  # nn.Embedding(num_etypes, edge_feats)
+        self.edge_emb = nn.Parameter(torch.zeros(size=(num_etypes, edge_feats))) # nn.Embedding(num_etypes, edge_feats)
 
         self.W = nn.Parameter(torch.FloatTensor(in_features, out_features * nhead))
         self.W_e = nn.Parameter(torch.FloatTensor(edge_feats, edge_feats * nhead))

@@ -153,6 +153,13 @@ def get_activation(act: str):
 
 
 def get_norm_layer(norm: str, channels: int):
+    """
+    Args:
+        norm: str
+            type of normalization: `layernorm`, `batchnorm`, `instancenorm`
+        channels: int
+            size of features for normalization
+    """
     if norm == "layernorm":
         return torch.nn.LayerNorm(channels)
     elif norm == "batchnorm":
@@ -181,6 +188,13 @@ def batch_mean_pooling(x, batch):
     res = torch.zeros(len(values), x.size(1)).to(x.device)
     res = res.scatter_add_(dim=0, index=batch.unsqueeze(-1).expand_as(x), src=x)
     return res / counts.unsqueeze(-1)
+
+
+def batch_max_pooling(x, batch):
+    from torch_scatter import scatter_max
+
+    x, _ = scatter_max(x, batch, dim=0)
+    return x
 
 
 def tabulate_results(results_dict):

@@ -80,7 +80,7 @@ class PPNP(BaseModel):
             final_preds = F.dropout(self.vals) @ local_preds
         else:  # appnp
             preds = local_preds
-            with graph.local_graph("edge_weight"):
+            with graph.local_graph():
                 graph.edge_weight = F.dropout(graph.edge_weight, p=self.dropout, training=self.training)
                 graph.set_symmetric()
                 for _ in range(self.niter):

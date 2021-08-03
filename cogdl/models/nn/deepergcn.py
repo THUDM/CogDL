@@ -34,7 +34,7 @@ class DeeperGCN(BaseModel):
             hidden_size=args.hidden_size,
             out_feat=args.num_classes,
             num_layers=args.num_layers,
-            activation=args.connection,
+            activation=args.activation,
             dropout=args.dropout,
             aggr=args.aggr,
             beta=args.beta,
@@ -68,7 +68,6 @@ class DeeperGCN(BaseModel):
         self.feat_encoder = nn.Linear(in_feat, hidden_size)
 
         self.layers = nn.ModuleList()
-        self.layers.append(GENConv(hidden_size, hidden_size))
         for i in range(num_layers - 1):
             self.layers.append(
                 ResGNNLayer(
@@ -87,7 +86,7 @@ class DeeperGCN(BaseModel):
                     in_channels=hidden_size,
                     activation=activation,
                     dropout=dropout,
-                    checkpoint_grad=(num_layers > 3) and ((i + 1) == num_layers // 2),
+                    checkpoint_grad=False,
                 )
             )
         self.norm = nn.BatchNorm1d(hidden_size, affine=True)
@@ -106,7 +105,3 @@ class DeeperGCN(BaseModel):
 
     def predict(self, graph):
         return self.forward(graph)
-
-    @staticmethod
-    def get_trainer(args):
-        return RandomClusterTrainer

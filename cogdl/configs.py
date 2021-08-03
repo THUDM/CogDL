@@ -380,6 +380,18 @@ BEST_CONFIGS = {
             "weight_decay": 0,
             "max_epoch": 3000,
         },
+        "revgcn": {
+            "general": {},
+            "cora": {
+                "hidden_size": 128,
+                "lr": 0.001,
+                "dropout": 0.4706458854,
+                "weight_decay": 0.0008907,
+                "norm": "layernorm",
+                "num_layers": 10,
+                # 81.40
+            },
+        },
     },
     "graph_classification": {
         "gin": {

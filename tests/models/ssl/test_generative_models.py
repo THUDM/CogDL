@@ -42,6 +42,7 @@ def get_default_args():
         "eval_agc": False,
         "subgraph_sampling": False,
         "sample_size": 128,
+        "actnn": False,
     }
     args = build_args_from_dict(args)
     dataset = build_dataset(args)

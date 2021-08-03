@@ -44,6 +44,16 @@ class NodeClassification(BaseTask):
         args.num_nodes = dataset.data.x.shape[0]
         args.edge_attr_size = dataset.edge_attr_size
 
+        if args.actnn:
+            try:
+                from actnn import config
+            except Exception:
+                print("Please install the actnn library first.")
+                exit(1)
+            config.group_size = 256 if args.hidden_size >= 256 else 64
+            config.adaptive_conv_scheme = False
+            config.adaptive_bn_scheme = False
+
         self.model = build_model(args) if model is None else model
         self.model.set_device(self.device)
         self.model_name = self.model.__class__.__name__

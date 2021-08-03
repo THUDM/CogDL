@@ -2,21 +2,20 @@ import torch.nn.functional as F
 from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset
 from cogdl.models import build_model
-from cogdl.utils import build_args_from_dict
+from cogdl.utils import update_args_from_dict
+from cogdl.options import get_default_args
 
 
-def get_default_args():
+def get_default_args_for_nc():
+    args = get_default_args(task="node_classification", dataset="cora", model="gcn")
     default_dict = {
         "hidden_size": 16,
         "dropout": 0.5,
         "patience": 2,
-        "device_id": [0],
         "max_epoch": 3,
         "sampler": "none",
         "num_layers": 2,
         "cpu": True,
-        "lr": 0.01,
-        "weight_decay": 5e-4,
         "missing_rate": -1,
         "task": "node_classification",
         "dataset": "cora",
@@ -28,11 +27,11 @@ def get_default_args():
         "norm": None,
         "num_workers": 1,
     }
-    return build_args_from_dict(default_dict)
+    return update_args_from_dict(args, default_dict)
 
 
 def test_gdc_gcn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "gdc_gcn"
@@ -54,7 +53,7 @@ def test_gdc_gcn_cora():
 
 
 def test_gcn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.num_layers = 2
     args.dataset = "cora"
@@ -76,7 +75,7 @@ def test_gcn_cora():
 
 
 def test_gat_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "gat"
@@ -93,7 +92,7 @@ def test_gat_cora():
 
 
 def test_mlp_pubmed():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "pubmed"
     args.model = "mlp"
@@ -104,7 +103,7 @@ def test_mlp_pubmed():
 
 
 def test_mixhop_citeseer():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "citeseer"
     args.model = "mixhop"
@@ -116,7 +115,7 @@ def test_mixhop_citeseer():
 
 
 def test_graphsage_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.model = "graphsage"
     args.aggr = "mean"
@@ -141,7 +140,7 @@ def test_graphsage_cora():
 
 
 def test_pyg_cheb_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "chebyshev"
@@ -153,7 +152,7 @@ def test_pyg_cheb_cora():
 
 
 def test_pyg_gcn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "pyg_gcn"
@@ -165,7 +164,7 @@ def test_pyg_gcn_cora():
 
 
 def test_clustergcn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.dataset = "pubmed"
     args.model = "gcn"
     args.trainer = "clustergcn"
@@ -178,7 +177,7 @@ def test_clustergcn_cora():
 
 
 def test_gcn_cora_sampler():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.trainer = "graphsaint"
@@ -201,7 +200,7 @@ def test_gcn_cora_sampler():
 
 
 def test_graphsaint_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.trainer = "graphsaint"
@@ -225,7 +224,7 @@ def test_graphsaint_cora():
 
 
 def test_unet_citeseer():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.cpu = True
     args.model = "unet"
     args.dataset = "citeseer"
@@ -244,7 +243,7 @@ def test_unet_citeseer():
 
 
 def test_drgcn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "drgcn"
@@ -255,7 +254,7 @@ def test_drgcn_cora():
 
 
 def test_drgat_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "drgat"
@@ -266,7 +265,7 @@ def test_drgat_cora():
 
 
 def test_disengcn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "disengcn"
@@ -280,7 +279,7 @@ def test_disengcn_cora():
 
 
 def test_graph_mix():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "gcnmix"
@@ -298,7 +297,7 @@ def test_graph_mix():
 
 
 def test_srgcn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "srgcn"
@@ -338,7 +337,7 @@ def test_srgcn_cora():
 
 
 def test_gcnii_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.dataset = "cora"
     args.task = "node_classification"
     args.model = "gcnii"
@@ -355,7 +354,7 @@ def test_gcnii_cora():
 
 
 def test_deepergcn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.dataset = "cora"
     args.task = "node_classification"
     args.model = "deepergcn"
@@ -382,7 +381,7 @@ def test_deepergcn_cora():
 
 
 def test_grand_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.model = "grand"
     args.dataset = "cora"
     args.task = "node_classification"
@@ -401,7 +400,7 @@ def test_grand_cora():
 
 
 def test_gpt_gnn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "gpt_gnn"
@@ -430,7 +429,7 @@ def test_gpt_gnn_cora():
 
 
 def test_sign_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.model = "sign"
     args.dataset = "cora"
@@ -456,7 +455,7 @@ def test_sign_cora():
 
 
 def test_jknet_jknet_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "jknet"
@@ -477,7 +476,7 @@ def test_jknet_jknet_cora():
 
 
 def test_ppnp_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.model = "ppnp"
     args.dataset = "cora"
@@ -491,7 +490,7 @@ def test_ppnp_cora():
 
 
 def test_appnp_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.model = "ppnp"
     args.dataset = "cora"
@@ -505,7 +504,7 @@ def test_appnp_cora():
 
 
 def test_sgc_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "sgc"
@@ -515,7 +514,7 @@ def test_sgc_cora():
 
 
 def test_dropedge_gcn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "dropedge_gcn"
@@ -538,7 +537,7 @@ def test_dropedge_gcn_cora():
 
 
 def test_dropedge_resgcn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "dropedge_gcn"
@@ -561,7 +560,7 @@ def test_dropedge_resgcn_cora():
 
 
 def test_dropedge_densegcn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "dropedge_gcn"
@@ -584,7 +583,7 @@ def test_dropedge_densegcn_cora():
 
 
 def test_dropedge_inceptiongcn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.task = "node_classification"
     args.dataset = "cora"
     args.model = "dropedge_gcn"
@@ -607,7 +606,7 @@ def test_dropedge_inceptiongcn_cora():
 
 
 def test_pprgo_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.cpu = True
     args.task = "node_classification"
     args.dataset = "cora"
@@ -632,7 +631,7 @@ def test_pprgo_cora():
 
 
 def test_gcn_ppi():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.dataset = "ppi"
     args.model = "gcn"
     args.cpu = True
@@ -641,7 +640,7 @@ def test_gcn_ppi():
 
 
 def build_custom_dataset():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.dataset = "cora"
     dataset = build_dataset(args)
     dataset.data._adj_train = dataset.data._adj_full
@@ -649,7 +648,7 @@ def build_custom_dataset():
 
 
 def test_sagn_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     dataset = build_custom_dataset()
     args.model = "sagn"
     args.nhop = args.label_nhop = 2
@@ -668,7 +667,7 @@ def test_sagn_cora():
 
 
 def test_c_s_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.use_embeddings = True
     args.correct_alpha = 0.5
     args.smooth_alpha = 0.5
@@ -687,7 +686,7 @@ def test_c_s_cora():
 
 
 def test_sage_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.aggr = "mean"
     args.normalize = True
     args.norm = "layernorm"
@@ -697,7 +696,7 @@ def test_sage_cora():
 
 
 def test_revnets_cora():
-    args = get_default_args()
+    args = get_default_args_for_nc()
     args.group = 2
     args.num_layers = 3
     args.last_norm = "batchnorm"

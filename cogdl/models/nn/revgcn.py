@@ -146,7 +146,7 @@ class RevGEN(BaseModel):
             args.learn_msg_scale,
             args.use_msg_norm,
             edge_attr_size=args.edge_attr_size,
-            one_hot_emb=args.use_one_hot_emb,
+            one_hot_emb=args.use_one_hot_emb if hasattr(args, "use_one_hot_emb") else False,
         )
 
     def __init__(

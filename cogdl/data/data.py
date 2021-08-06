@@ -14,6 +14,7 @@ from cogdl.utils import (
     get_degrees,
 )
 from cogdl.utils import check_fast_spmm as check_indicator
+from cogdl.utils import RandomWalker
 from cogdl.operators.sample import sample_adj_c, subgraph_c
 
 
@@ -150,6 +151,7 @@ class Adjacency(BaseGraph):
         self.__symmetric__ = False
 
     def get_weight(self, indicator=None):
+        """If `indicator` is not None, the normalization will not be implemented"""
         if self.weight is None or self.weight.shape[0] != self.col.shape[0]:
             self.weight = torch.ones(self.num_edges, device=self.device)
         weight = self.weight
@@ -168,19 +170,31 @@ class Adjacency(BaseGraph):
         return weight
 
     def add_remaining_self_loops(self):
-        edge_index, self.weight = add_remaining_self_loops((self.row, self.col), num_nodes=self.num_nodes)
-        self.row, self.col = edge_index
+        if self.attr is not None:
+            edge_index, weight_attr = add_remaining_self_loops(
+                (self.row, self.col), edge_weight=self.attr, fill_value=0, num_nodes=self.num_nodes
+            )
+            self.row, self.col = edge_index
+            self.attr = weight_attr
+            self.weight = torch.ones_like(self.row).float()
+        else:
+            edge_index, self.weight = add_remaining_self_loops(
+                (self.row, self.col), fill_value=1, num_nodes=self.num_nodes
+            )
+            self.row, self.col = edge_index
+            self.attr = None
         self.row_ptr, reindex = coo2csr_index(self.row, self.col, num_nodes=self.num_nodes)
         self.row = self.row[reindex]
         self.col = self.col[reindex]
-        self.attr = None
-        # if self.attr is not None:
 
     def remove_self_loops(self):
         mask = self.row == self.col
         inv_mask = ~mask
         self.row = self.row[inv_mask]
         self.col = self.col[inv_mask]
+        for item in self.__attr_keys__():
+            if self[item] is not None:
+                self[item] = self[item][inv_mask]
 
         self.convert_csr()
 
@@ -370,6 +384,28 @@ class Adjacency(BaseGraph):
     def clone(self):
         return Adjacency.from_dict({k: v.clone() for k, v in self})
 
+    def to_scipy_csr(self):
+        data = self.get_weight().cpu().numpy()
+        num_nodes = int(self.num_nodes)
+        if self.row_ptr is None:
+            row = self.row.cpu().numpy()
+            col = self.col.cpu().numpy()
+            mx = sp.csr_matrix((data, (row, col)), shape=(num_nodes, num_nodes))
+        else:
+            row_ptr = self.row_ptr.cpu().numpy()
+            col_ind = self.col.cpu().numpy()
+            mx = sp.csr_matrix((data, col_ind, row_ptr), shape=(num_nodes, num_nodes))
+        return mx
+
+    def random_walk(self, start, length=1, restart_p=0.0):
+        if not hasattr(self, "__walker__"):
+            scipy_adj = self.to_scipy_csr()
+            self.__walker__ = RandomWalker(scipy_adj)
+        return self.__walker__.walk(start, length, restart_p=restart_p)
+
+    def random_walk_with_restart(self, start, length, restart_p):
+        return self.random_walk(start, length, restart_p)
+
     @staticmethod
     def from_dict(dictionary):
         r"""Creates a data object from a python dictionary."""
@@ -402,6 +438,9 @@ def is_read_adj_key(key):
 class Graph(BaseGraph):
     def __init__(self, x=None, y=None, **kwargs):
         super(Graph, self).__init__()
+        if x is not None:
+            if not torch.is_tensor(x):
+                raise ValueError("Node features must be Tensor")
         self.x = x
         self.y = y
 
@@ -506,18 +545,16 @@ class Graph(BaseGraph):
         return self.mask2nid("test")
 
     @contextmanager
-    def local_graph(self, key=None):
+    def local_graph(self):
         self.__temp_adj_stack__.append(self._adj)
-        if key is None:
-            adj = copy.copy(self._adj)
-        else:
-            adj = copy.copy(self._adj)
-            key = KEY_MAP.get(key, key)
-            adj[key] = self._adj[key].clone()
+        adj = copy.copy(self._adj)
+        others = [(key, val) for key, val in self.__dict__.items() if not key.startswith("__") and "adj" not in key]
         self._adj = adj
         yield
         del adj
         self._adj = self.__temp_adj_stack__.pop()
+        for key, val in others:
+            self[key] = val
 
     @property
     def edge_index(self):
@@ -800,6 +837,9 @@ class Graph(BaseGraph):
             return g, nodes, edge_idx
         else:
             return g
+
+    def to_scipy_csr(self):
+        return self._adj.to_scipy_csr()
 
     @staticmethod
     def from_dict(dictionary):

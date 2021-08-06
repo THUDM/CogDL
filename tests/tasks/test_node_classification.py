@@ -5,6 +5,7 @@ from cogdl.models import build_model
 from cogdl.utils import update_args_from_dict
 from cogdl.options import get_default_args
 
+
 def get_default_args_for_nc():
     args = get_default_args(task="node_classification", dataset="cora", model="gcn")
     default_dict = {

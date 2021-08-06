@@ -14,6 +14,15 @@ In this method, you are expected to read in your data and preprocess raw data to
 Afterwards, we suggest you to save the processed data (we will also help you do it as you return the data) to avoid doing
 the preprocessing again. Next time you run the code, CogDL will directly load it.
 
+The running process of the module is as follows:
+
+1. Specify the path to save processed data with `self.path`
+2. Function `process` is called to load and preprocess data and your data is saved as `Graph` in `self.path`. This step
+will be implemented the first time you use your dataset. And then every time you use your dataset, the dataset will be
+loaded from `self.path` for convenience.
+3. For dataset, for example, named `MyNodeDataset` in node-level tasks, You can access the data/Graph via
+`MyNodeDataset.data` or `MyDataset[0]`.
+
 In addition, evaluation metric for your dataset should be specified. CogDL provides ``accuracy`` and ``multiclass_f1``
 for multi-class classification, ``multilabel_f1`` for multi-label classification.
 
@@ -44,11 +53,12 @@ Here is an example:
             edge_index = torch.tensor([[0, 1], [0, 2], [1, 2], [1, 3]).t()
             x = torch.randn(4, 10)
             mask = torch.bool(4)
-            # provide attributes as you need
+            # Provide attributes as you need and save the data into `Graph`
             data = Graph(x=x, edge_index=edge_index)
             torch.save(data, self.path)
             return data
 
+    dataset = MyNodeDataset("data.pt")
 
 
 

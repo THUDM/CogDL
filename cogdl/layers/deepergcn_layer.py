@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint
 
 from .mlp_layer import MLP
-from cogdl.utils import get_activation, mul_edge_softmax, get_norm_layer
+from cogdl.utils import get_activation, mul_edge_softmax, get_norm_layer, batch_max_pooling
 
 
 class GENConv(nn.Module):
@@ -59,8 +59,6 @@ class GENConv(nn.Module):
         self.eps = 1e-7
 
         self.s = torch.nn.Parameter(torch.Tensor([1.0]), requires_grad=learn_msg_scale and use_msg_norm)
-        self.act = None if activation is None else get_activation(activation)
-        self.norm = None if norm is None else get_norm_layer(norm, in_feats)
         self.residual = residual
 
         if edge_attr_size is not None and edge_attr_size[0] > 0:
@@ -78,10 +76,6 @@ class GENConv(nn.Module):
         return x + self.s * msg_norm
 
     def forward(self, graph, x):
-        if self.norm is not None:
-            x = self.norm(x)
-        if self.act is not None:
-            x = self.act(x)
         edge_index = graph.edge_index
         dim = x.shape[1]
         edge_msg = x[edge_index[1]]
@@ -105,9 +99,12 @@ class GENConv(nn.Module):
             deg_rev[torch.isinf(deg_rev)] = 0
             h = edge_msg * deg_rev[edge_index[0]].unsqueeze(-1)
         else:
-            raise NotImplementedError
+            h = edge_msg
 
-        h = torch.zeros_like(x).scatter_add_(dim=0, index=edge_index[0].unsqueeze(-1).repeat(1, dim), src=h)
+        if self.aggr == "max":
+            h = batch_max_pooling(h, edge_index[0])
+        else:
+            h = torch.zeros_like(x).scatter_add_(dim=0, index=edge_index[0].unsqueeze(-1).repeat(1, dim), src=h)
         if self.aggr == "powermean":
             h = h.pow(1.0 / self.p)
         if self.use_msg_norm:
@@ -158,7 +155,7 @@ class ResGNNLayer(nn.Module):
             self.out_norm = get_norm_layer(norm, out_channels)
         else:
             self.out_norm = None
-        self.checkpoint_grad = False
+        self.checkpoint_grad = checkpoint_grad
 
     def forward(self, graph, x, dropout=None, *args, **kwargs):
         h = self.norm(x)

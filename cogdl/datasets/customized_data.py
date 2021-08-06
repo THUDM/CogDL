@@ -94,7 +94,7 @@ class GraphDataset(MultiGraphDataset):
         super(GraphDataset, self).__init__(root=path)
         # try:
         data = torch.load(path)
-        if hasattr(data[0], "y"):
+        if hasattr(data[0], "y") and data[0].y is None:
             self.y = torch.cat([idata.y for idata in data])
         self.data = data
 

@@ -33,6 +33,7 @@ class GAT(BaseModel):
         parser.add_argument("--alpha", type=float, default=0.2)
         parser.add_argument("--nhead", type=int, default=8)
         parser.add_argument("--last-nhead", type=int, default=1)
+        parser.add_argument("--norm", type=str, default=None)
         # fmt: on
 
     @classmethod
@@ -48,6 +49,7 @@ class GAT(BaseModel):
             args.nhead,
             args.residual,
             args.last_nhead,
+            args.norm,
         )
 
     def __init__(
@@ -62,20 +64,14 @@ class GAT(BaseModel):
         nhead,
         residual,
         last_nhead,
+        norm=None,
     ):
         """Sparse version of GAT."""
         super(GAT, self).__init__()
         self.dropout = dropout
         self.attentions = nn.ModuleList()
         self.attentions.append(
-            GATLayer(
-                in_feats,
-                hidden_size,
-                nhead=nhead,
-                attn_drop=attn_drop,
-                alpha=alpha,
-                residual=residual,
-            )
+            GATLayer(in_feats, hidden_size, nhead=nhead, attn_drop=attn_drop, alpha=alpha, residual=residual, norm=norm)
         )
         for i in range(num_layers - 2):
             self.attentions.append(
@@ -86,6 +82,7 @@ class GAT(BaseModel):
                     attn_drop=attn_drop,
                     alpha=alpha,
                     residual=residual,
+                    norm=norm,
                 )
             )
         self.attentions.append(

@@ -13,7 +13,18 @@ class myGATConv(nn.Module):
     """
 
     def __init__(
-        self, edge_feats, num_etypes, in_features, out_features, nhead, feat_drop=0.0, attn_drop=0.5, negative_slope=0.2, residual=False, activation=None, alpha=0.0
+        self,
+        edge_feats,
+        num_etypes,
+        in_features,
+        out_features,
+        nhead,
+        feat_drop=0.0,
+        attn_drop=0.5,
+        negative_slope=0.2,
+        residual=False,
+        activation=None,
+        alpha=0.0,
     ):
         super(myGATConv, self).__init__()
         self.edge_feats = edge_feats
@@ -33,7 +44,7 @@ class myGATConv(nn.Module):
         self.dropout = nn.Dropout(attn_drop)
         self.leakyrelu = nn.LeakyReLU(negative_slope)
         self.act = None if activation is None else get_activation(activation)
-        
+
         if residual:
             self.residual = nn.Linear(in_features, out_features * nhead)
         else:
@@ -102,4 +113,3 @@ class myGATConv(nn.Module):
 
     def __repr__(self):
         return self.__class__.__name__ + " (" + str(self.in_features) + " -> " + str(self.out_features) + ")"
-

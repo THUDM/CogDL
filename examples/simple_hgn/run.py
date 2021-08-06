@@ -150,7 +150,7 @@ class SimpleHGN(BaseModel):
         weights = np.concatenate(weights)
         edges = torch.tensor(edges).to(self.device)
         weights = torch.tensor(weights).to(self.device)
-        
+
         g = Graph(edge_index=edges, edge_weight=weights)
         g = g.to(self.device)
         e_feat = []

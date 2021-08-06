@@ -92,7 +92,7 @@ class NodeClassification(BaseTask):
             epoch_iter = tqdm(range(self.max_epoch))
             patience = 0
             best_score = 0
-            best_loss = np.inf
+            # best_loss = np.inf
             max_score = 0
             min_loss = np.inf
             best_model = copy.deepcopy(self.model)
@@ -106,9 +106,11 @@ class NodeClassification(BaseTask):
                 epoch_iter.set_description(
                     f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, ValLoss:{val_loss: .4f}"
                 )
-                if val_loss <= min_loss or val_acc >= max_score:
-                    if val_loss <= best_loss:  # and val_acc >= best_score:
-                        best_loss = val_loss
+                # if val_loss <= min_loss or val_acc >= max_score:
+                #     if val_loss <= best_loss:  # and val_acc >= best_score:
+                if val_loss <= min_loss or val_acc >= best_score:
+                    if val_acc >= best_score:
+                        # best_loss = val_loss
                         best_score = val_acc
                         best_model = copy.deepcopy(self.model)
                     min_loss = np.min((min_loss, val_loss.cpu()))
@@ -125,6 +127,7 @@ class NodeClassification(BaseTask):
         val_acc, test_acc = acc["val"], acc["test"]
 
         print(f"Test accuracy = {test_acc:.4f}")
+
         return dict(Acc=test_acc, ValAcc=val_acc)
 
     def _train_step(self):

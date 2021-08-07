@@ -19,8 +19,9 @@ class GraRep(BaseModel):
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument('--step', type=int, default=5,
-                            help='Number of matrix step in GraRep. Default is 5.')
+        parser.add_argument("--step", type=int, default=5,
+                            help="Number of matrix step in GraRep. Default is 5.")
+        parser.add_argument("--hidden-size", type=int, default=128)
         # fmt: on
 
     @classmethod
@@ -32,9 +33,12 @@ class GraRep(BaseModel):
         self.dimension = dimension
         self.step = step
 
-    def train(self, G):
-        self.G = G
-        self.num_node = G.number_of_nodes()
+    def train(self, graph):
+        return self.forward(graph)
+
+    def forward(self, graph):
+        self.G = graph.to_networkx()
+        self.num_node = self.G.number_of_nodes()
         A = np.asarray(nx.adjacency_matrix(self.G).todense(), dtype=float)
         A = preprocessing.normalize(A, "l1")
 
@@ -62,8 +66,11 @@ class GraRep(BaseModel):
                 W = self._get_embedding(A_list[k], self.dimension / self.step)
                 final_emb = np.hstack((final_emb, W))
 
-        self.embeddings = final_emb
-        return self.embeddings
+        embeddings = final_emb
+        features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+        nx_nodes = self.G.nodes()
+        features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        return features_matrix
 
     def _get_embedding(self, matrix, dimension):
         # get embedding from svd and process normalization for ut

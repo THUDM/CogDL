@@ -64,7 +64,7 @@ class UnsupervisedNodeClassification(BaseTask):
         self.enhance = args.enhance
         self.training_percents = args.training_percents
         self.args = args
-        self.is_weighted = self.data.edge_attr is not None
+        self.is_weighted = self.data.edge_weight is not None
         self.device = "cpu" if not torch.cuda.is_available() or args.cpu else args.device_id[0]
 
         self.trainer = self.get_trainer(args)
@@ -110,12 +110,12 @@ class UnsupervisedNodeClassification(BaseTask):
                 if self.is_weighted:
                     edges, weight = (
                         edge_index.t().tolist(),
-                        self.data.edge_attr.tolist(),
+                        self.data.edge_weight.tolist(),
                     )
-                    G.add_weighted_edges_from([(edges[i][0], edges[i][1], weight[0][i]) for i in range(len(edges))])
+                    G.add_weighted_edges_from([(edges[i][0], edges[i][1], weight[i]) for i in range(len(edges))])
                 else:
                     G.add_edges_from(edge_index.t().tolist())
-                embeddings = self.model.train(G)
+                embeddings = self.model(G)
                 if self.enhance is not None:
                     embeddings = self.enhance_emb(G, embeddings)
                 # Map node2id

@@ -141,6 +141,10 @@ def alias_draw(J, q):
         return J[kk]
 
 
+def identity_act(input, inplace=True):
+    return input
+
+
 def get_activation(act: str):
     if act == "relu":
         return F.relu
@@ -153,9 +157,9 @@ def get_activation(act: str):
     elif act == "prelu":
         return F.prelu
     elif act == "identity":
-        return lambda x: x
+        return identity_act
     else:
-        return lambda x: x
+        return identity_act
 
 
 def get_norm_layer(norm: str, channels: int):

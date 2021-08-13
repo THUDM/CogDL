@@ -44,7 +44,7 @@ class SAGELayer(nn.Module):
             self.act = None
 
         if norm is not None:
-            norm = get_norm_layer(norm, out_feats)
+            self.norm = get_norm_layer(norm, out_feats)
         else:
             self.norm = None
 

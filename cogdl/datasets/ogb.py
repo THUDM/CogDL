@@ -155,8 +155,11 @@ class OGBProteinsDataset(OGBNDataset):
         x = x / deg.view(-1, 1)
         data.x = x
 
-        data.node_species = torch.as_tensor(graph["node_species"])
-
+        node_species = torch.as_tensor(graph["node_species"])
+        n_species, new_index = torch.unique(node_species, return_inverse=True)
+        one_hot_x = torch.nn.functional.one_hot(new_index, num_classes=torch.max(new_index).int().item())
+        data.species = node_species
+        data.x = torch.cat([data.x, one_hot_x], dim=1)
         torch.save(data, self.processed_paths[0])
         return data
 

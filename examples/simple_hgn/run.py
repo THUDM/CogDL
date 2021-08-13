@@ -2,7 +2,6 @@ import numpy as np
 import scipy.sparse as sp
 import torch
 import torch.nn as nn
-import dgl
 
 from conv import myGATConv
 
@@ -11,6 +10,7 @@ import torch.nn.functional as F
 from cogdl import experiment, options
 from cogdl.models import BaseModel, register_model
 from cogdl.utils import accuracy
+from cogdl.data import Graph
 
 
 @register_model("simple_hgn")
@@ -137,13 +137,6 @@ class SimpleHGN(BaseModel):
         )
         self.epsilon = torch.FloatTensor([1e-12]).to(self.device)
 
-    def list_to_sp_mat(self, edges, weights):
-        data = [x for x in weights]
-        i = [x for x in edges[0]]
-        j = [x for x in edges[1]]
-        total = max(max(i), max(j)) + 1
-        return sp.coo_matrix((data, (i, j)), shape=(total, total)).tocsr()
-
     def build_g_feat(self, A):
         edge2type = {}
         edges = []
@@ -155,21 +148,21 @@ class SimpleHGN(BaseModel):
                 edge2type[(u, v)] = k
         edges = np.concatenate(edges, axis=1)
         weights = np.concatenate(weights)
-        adjM = self.list_to_sp_mat(edges, weights)
-        g = dgl.DGLGraph(adjM)
-        g = dgl.remove_self_loop(g)
-        g = dgl.add_self_loop(g)
+        edges = torch.tensor(edges).to(self.device)
+        weights = torch.tensor(weights).to(self.device)
+
+        g = Graph(edge_index=edges, edge_weight=weights)
         g = g.to(self.device)
         e_feat = []
-        for u, v in zip(*g.edges()):
+        for u, v in zip(*g.edge_index):
             u = u.cpu().item()
             v = v.cpu().item()
             e_feat.append(edge2type[(u, v)])
         e_feat = torch.tensor(e_feat, dtype=torch.long).to(self.device)
+        g.edge_type = e_feat
         self.g = g
-        self.e_feat = e_feat
 
-    def forward(self, A, X, target_x, target):  # features_list, e_feat):
+    def forward(self, A, X, target_x, target):
         # h = []
         # for fc, feature in zip(self.fc_list, [X]):
         #    h.append(fc(feature))
@@ -178,11 +171,11 @@ class SimpleHGN(BaseModel):
             self.build_g_feat(A)
         res_attn = None
         for l in range(self.num_layers):  # noqa E741
-            h, res_attn = self.gat_layers[l](self.g, h, self.e_feat, res_attn=res_attn)
+            h, res_attn = self.gat_layers[l](self.g, h, res_attn=res_attn)
             h = h.flatten(1)
         # output projection
-        logits, _ = self.gat_layers[-1](self.g, h, self.e_feat, res_attn=None)
-        logits = logits.mean(1)
+        logits, _ = self.gat_layers[-1](self.g, h, res_attn=None)
+        # logits = logits.mean(1)
         # This is an equivalent replacement for tf.l2_normalize, see https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/math/l2_normalize for more information.
         logits = logits / (torch.max(torch.norm(logits, dim=1, keepdim=True), self.epsilon))
         y = logits[target_x]
@@ -200,9 +193,7 @@ class SimpleHGN(BaseModel):
 
 
 if __name__ == "__main__":
-    # CUDA_VISIBLE_DEVICES=0 python custom_gcn.py --seed 0 1 2 3 4 -t heterogeneous_node_classification -dt gtn-acm -m simple_hgn --lr 0.001
     parser = options.get_training_parser()
     args, _ = parser.parse_known_args()
     args = options.parse_args_and_arch(parser, args)
     experiment(task="heterogeneous_node_classification", dataset="gtn-acm", model="simple_hgn", args=args)
-    # experiment(task="node_classification", dataset="cora", model="mygcn")

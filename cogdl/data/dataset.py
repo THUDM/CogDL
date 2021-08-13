@@ -222,7 +222,14 @@ class MultiGraphDataset(Dataset):
             if self.slices is not None:
                 return self._get(idx)
             return self.data[idx]
-        elif len(idx) > 1:
+        if isinstance(idx, slice):
+            start = idx.start
+            end = idx.stop
+            step = idx.step
+            idx = list(range(start, end, step))
+
+        if len(idx) > 1:
+            # unsupport `slice`
             if self.slices is not None:
                 return [self._get(int(i)) for i in idx]
             return [self.data[i] for i in idx]

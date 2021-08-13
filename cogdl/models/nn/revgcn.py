@@ -124,6 +124,7 @@ class RevGEN(BaseModel):
         parser.add_argument("--group", type=int, default=2)
         parser.add_argument("--norm", type=str, default="batchnorm")
         parser.add_argument("--last-norm", type=str, default="batchnorm")
+        parser.add_argument("--use-one-hot-emb", action="store_true")
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -145,6 +146,7 @@ class RevGEN(BaseModel):
             args.learn_msg_scale,
             args.use_msg_norm,
             edge_attr_size=args.edge_attr_size,
+            one_hot_emb=args.use_one_hot_emb if hasattr(args, "use_one_hot_emb") else False,
         )
 
     def __init__(
@@ -166,6 +168,7 @@ class RevGEN(BaseModel):
         learn_msg_scale=True,
         use_msg_norm=False,
         edge_attr_size: Optional[list] = None,
+        one_hot_emb: bool = False,
     ):
         super(RevGEN, self).__init__()
         self.input_fc = nn.Linear(in_feats, hidden_size)
@@ -191,10 +194,17 @@ class RevGEN(BaseModel):
         self.activation = get_activation(activation)
         self.norm = get_norm_layer(last_norm, hidden_size)
         self.dropout = dropout
+        if one_hot_emb:
+            self.one_hot_encoder = nn.Linear(in_feats // 2, in_feats // 2)
+        self.use_one_hot_emb = one_hot_emb
 
     def forward(self, graph):
         graph.requires_grad = False
         x = graph.x
+        if self.use_one_hot_emb:
+            x = x.split(2, dim=-1)
+            x[1] = self.one_hot_encoder(x[1])
+            x = torch.cat((x[0], x[1]), dim=1)
         h = self.input_fc(x)
 
         mask = shared_dropout(h, self.dropout)

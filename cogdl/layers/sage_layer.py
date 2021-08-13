@@ -25,7 +25,10 @@ class SAGELayer(nn.Module):
         self.out_feats = out_feats
         self.fc = nn.Linear(2 * in_feats, out_feats)
         self.normalize = normalize
-        self.dropout = dropout
+        if dropout > 0:
+            self.dropout = nn.Dropout(dropout)
+        else:
+            self.dropout = None
         if aggr == "mean":
             self.aggr = MeanAggregator()
         elif aggr == "sum":

@@ -1,10 +1,9 @@
 import torch.nn as nn
-import torch.nn.functional as F
 
-from cogdl.utils import get_activation
+from actnn.layers import QLinear, QReLU, QBatchNorm1d, QDropout
 
 
-class MLP(nn.Module):
+class ActMLP(nn.Module):
     r"""Multilayer perception with normalization
 
     .. math::
@@ -34,20 +33,22 @@ class MLP(nn.Module):
         act_first=False,
         bias=True,
     ):
-        super(MLP, self).__init__()
+        super(ActMLP, self).__init__()
         self.norm = norm
-        self.activation = get_activation(activation)
+        if activation == "relu":
+            self.activation = QReLU()
+        else:
+            self.activation = lambda x: x
         self.act_first = act_first
-        self.dropout = dropout
+        if dropout > 0.0:
+            self.dropout = QDropout(dropout)
+        else:
+            self.dropout = None
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
-        self.mlp = nn.ModuleList(
-            [nn.Linear(shapes[layer], shapes[layer + 1], bias=bias) for layer in range(num_layers)]
-        )
+        self.mlp = nn.ModuleList([QLinear(shapes[layer], shapes[layer + 1], bias=bias) for layer in range(num_layers)])
         if norm is not None and num_layers > 1:
-            if norm == "layernorm":
-                self.norm_list = nn.ModuleList(nn.LayerNorm(x) for x in shapes[1:-1])
-            elif norm == "batchnorm":
-                self.norm_list = nn.ModuleList(nn.BatchNorm1d(x) for x in shapes[1:-1])
+            if norm == "batchnorm":
+                self.norm_list = nn.ModuleList(QBatchNorm1d(x) for x in shapes[1:-1])
             else:
                 raise NotImplementedError(f"{norm} is not implemented in CogDL.")
         self.reset_parameters()
@@ -63,12 +64,13 @@ class MLP(nn.Module):
         for i, fc in enumerate(self.mlp[:-1]):
             x = fc(x)
             if self.act_first:
-                x = self.activation(x, inplace=True)
+                x = self.activation(x)
             if self.norm:
                 x = self.norm_list[i](x)
 
             if not self.act_first:
-                x = self.activation(x, inplace=True)
-            x = F.dropout(x, p=self.dropout, training=self.training)
+                x = self.activation(x)
+            if self.dropout is not None:
+                x = self.dropout(x)
         x = self.mlp[-1](x)
         return x

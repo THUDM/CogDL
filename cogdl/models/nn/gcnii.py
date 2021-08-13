@@ -40,7 +40,7 @@ class GCNII(BaseModel):
         parser.add_argument("--lambda", dest="lmbda", type=float, default=0.5)
         parser.add_argument("--alpha", type=float, default=0.1)
         parser.add_argument("--dropout", type=float, default=0.6)
-        parser.add_argument("--wd1", type=float, default=0.01)
+        parser.add_argument("--wd1", type=float, default=5e-4)
         parser.add_argument("--wd2", type=float, default=5e-4)
         parser.add_argument("--residual", action="store_true")
 
@@ -57,6 +57,7 @@ class GCNII(BaseModel):
             wd1=args.wd1,
             wd2=args.wd2,
             residual=args.residual,
+            actnn=args.actnn,
         )
 
     def __init__(
@@ -71,22 +72,40 @@ class GCNII(BaseModel):
         wd1=0.0,
         wd2=0.0,
         residual=False,
+        actnn=False,
     ):
         super(GCNII, self).__init__()
-        self.fc_layers = nn.ModuleList()
-        self.fc_layers.append(nn.Linear(in_features=in_feats, out_features=hidden_size))
-        self.fc_layers.append(nn.Linear(in_features=hidden_size, out_features=out_feats))
+        Layer = GCNIILayer
+        Linear = nn.Linear
+        Dropout = nn.Dropout
+        ReLU = nn.ReLU(inplace=True)
+        if actnn:
+            try:
+                from cogdl.layers.actgcnii_layer import ActGCNIILayer
+                from actnn.layers import QLinear, QReLU
+                from cogdl.operators.actnn import QDropout
+            except Exception:
+                print("Please install the actnn library first.")
+                exit(1)
+            Layer = ActGCNIILayer
+            Linear = QLinear
+            Dropout = QDropout
+            ReLU = QReLU()
 
-        self.dropout = dropout
+        self.fc_layers = nn.ModuleList()
+        self.fc_layers.append(Linear(in_feats, hidden_size))
+        self.fc_layers.append(Linear(hidden_size, out_feats))
+
+        self.dropout = Dropout(dropout)
+        self.activation = ReLU
         self.alpha = alpha
         self.lmbda = lmbda
         self.wd1 = wd1
         self.wd2 = wd2
 
         self.layers = nn.ModuleList(
-            GCNIILayer(hidden_size, self.alpha, math.log(self.lmbda / (i + 1) + 1), residual) for i in range(num_layers)
+            Layer(hidden_size, self.alpha, math.log(self.lmbda / (i + 1) + 1), residual) for i in range(num_layers)
         )
-        self.activation = F.relu
 
         self.fc_parameters = list(self.fc_layers.parameters())
         self.conv_parameters = list(self.layers.parameters())
@@ -94,16 +113,16 @@ class GCNII(BaseModel):
     def forward(self, graph):
         graph.sym_norm()
         x = graph.x
-        init_h = F.dropout(x, p=self.dropout, training=self.training)
-        init_h = F.relu(self.fc_layers[0](init_h))
+        init_h = self.dropout(x)
+        init_h = self.activation(self.fc_layers[0](init_h))
 
         h = init_h
 
         for layer in self.layers:
-            h = F.dropout(h, p=self.dropout, training=self.training)
+            h = self.dropout(h)
             h = layer(graph, h, init_h)
             h = self.activation(h)
-        h = F.dropout(h, p=self.dropout, training=self.training)
+        h = self.dropout(h)
         out = self.fc_layers[1](h)
         return out
 

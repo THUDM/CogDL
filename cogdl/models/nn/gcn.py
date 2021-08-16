@@ -28,6 +28,7 @@ class TKipfGCN(BaseModel):
         parser.add_argument("--residual", action="store_true")
         parser.add_argument("--norm", type=str, default=None)
         parser.add_argument("--activation", type=str, default="relu")
+        parser.add_argument("--actnn", action="store_true")
         # fmt: on
 
     @classmethod
@@ -41,7 +42,7 @@ class TKipfGCN(BaseModel):
             args.activation,
             args.residual,
             args.norm,
-            args.actnn,
+            args.actnn if hasattr(args, "actnn") else False,
         )
 
     def __init__(

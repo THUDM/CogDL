@@ -8,7 +8,7 @@ import torch.multiprocessing as mp
 
 from cogdl.wrappers.data_wrapper.base_data_wrapper import DataWrapper
 from cogdl.wrappers.model_wrapper.base_model_wrapper import ModelWrapper, EmbeddingModelWrapper
-from cogdl.runner.trainer_utils import merge_batch_indexes, evaluation_comp
+from cogdl.runner.trainer_utils import evaluation_comp
 from cogdl.runner.embed_trainer import EmbeddingTrainer
 from cogdl.data import Graph
 
@@ -18,10 +18,12 @@ def move_to_device(batch, device):
         if isinstance(batch, tuple):
             batch = list(batch)
         for i, x in enumerate(batch):
-            if torch.is_tensor(x) or isinstance(x, Graph):
+            if torch.is_tensor(x):
+                batch[i] = x.to(device)
+            elif isinstance(x, Graph):
                 x.to(device)
     elif torch.is_tensor(batch) or isinstance(batch, Graph):
-        batch.to(device)
+        batch = batch.to(device)
     return batch
 
 
@@ -29,7 +31,9 @@ class Trainer(object):
     def __init__(
         self,
         max_epoch: int,
-        device_ids: list,
+        nstage: int = 1,
+        cpu: bool = False,
+        device_ids: Optional[list] = None,
         distributed_training: bool = False,
         distributed_inference: bool = False,
         hooks: Optional[list] = None,
@@ -37,24 +41,23 @@ class Trainer(object):
         early_stopping: bool = True,
         patience: int = 100,
         eval_step: int = 1,
-        eval_model_cpu: bool = False,
-        eval_data_cpu: bool = False,
         save_embedding_path: Optional[str] = None,
+        cpu_inference: bool = False,
     ):
         self.max_epoch = max_epoch
+        self.nstage = nstage
         self.patience = patience
         self.early_stopping = early_stopping
         self.eval_step = eval_step
         self.monitor = monitor
 
+        self.cpu = cpu
         self.devices, self.world_size = self.set_device(device_ids)
 
         self.distributed_training = distributed_training
         self.distributed_inference = distributed_inference
 
-        self.eval_model_cpu = eval_model_cpu
-        self.eval_data_cpu = eval_data_cpu
-        self.device_cpu = "cpu"
+        self.cpu_inference = cpu_inference
 
         self.on_train_batch_transform = None
         self.on_eval_batch_transform = None
@@ -66,11 +69,13 @@ class Trainer(object):
         else:
             self.custom_hooks = hooks
 
-    @staticmethod
-    def set_device(device_ids: list):
+    def set_device(self, device_ids: Optional[list]):
         """
         Return: devices, world_size
         """
+        if device_ids is None or self.cpu:
+            return [torch.device("cpu")], 0
+
         if isinstance(device_ids, int) and device_ids > 0:
             device_ids = [device_ids]
         elif isinstance(device_ids, list):
@@ -97,6 +102,7 @@ class Trainer(object):
             best_model_w = self.dist_train(model_w, dataset_w)
         else:
             best_model_w = self.train(model_w, dataset_w, self.devices[0])
+
         final = self.test(best_model_w, dataset_w, self.devices[0])
         return final
 
@@ -127,99 +133,151 @@ class Trainer(object):
         # self.dataset = dataset
         return model_w
 
-    def train(self, model_w, dataset_w, rank):
-        self.on_train_batch_transform = dataset_w.on_transform
-        self.on_eval_batch_transform = dataset_w.on_transform
+    def prepare_data_wrapper(self, dataset_w, rank):
         dataset_w.pre_transform()
+        dataset_w.prepare_training_data(self.distributed_training, rank, self.world_size)
+        dataset_w.prepare_val_data(False, rank, self.world_size)
+        dataset_w.prepare_test_data(False, rank, self.world_size)
+
+    def build_optimizer(self, model_w):
+        opt_wrap = model_w.setup_optimizer()
+        if isinstance(opt_wrap, list) or isinstance(opt_wrap, tuple):
+            assert len(opt_wrap) == 2
+            optimizers, lr_schedulars = opt_wrap
+        else:
+            optimizers = opt_wrap
+            lr_schedulars = None
+
+        if not isinstance(optimizers, list):
+            optimizers = [optimizers]
+        if lr_schedulars and not isinstance(lr_schedulars, list):
+            lr_schedulars = [lr_schedulars]
+        return optimizers, lr_schedulars
+
+    def train(self, model_w, dataset_w, rank):
+        self.prepare_data_wrapper(dataset_w, rank)
 
         model_w.to(rank)
-        optimizer = model_w.setup_optimizer()
-        train_loader = dataset_w.on_training_wrapper()
-        val_loader = dataset_w.on_val_wrapper()
-        test_loader = dataset_w.on_test_wrapper()
 
+        optimizers, lr_schedulars = self.build_optimizer(model_w)
         best_index, compare_fn = evaluation_comp(self.monitor)
         best_model_w = None
 
         patience = 0
-        epoch_iter = tqdm(range(self.max_epoch))
-        for epoch in epoch_iter:
-            # inductive setting ..
-            dataset_w.train()
-            training_loss = self.training_step(model_w, train_loader, optimizer, rank)
-            if val_loader is not None and (epoch % self.eval_step) == 0:
-                # inductive setting ..
-                dataset_w.eval()
-                monitoring = self.validate(model_w, val_loader, rank)
-                if compare_fn(monitoring, best_index):
-                    best_index = monitoring
-                    patience = 0
-                    best_model_w = model_w
-                else:
-                    patience += 1
-                    if self.early_stopping and patience >= self.patience:
-                        break
-                epoch_iter.set_description(
-                    f"Epoch {epoch}, TrainLoss: {training_loss: .4f}, ValMetric: {monitoring: .4f}"
-                )
-            else:
-                epoch_iter.set_description(f"Epoch {epoch}, TrainLoss: {training_loss: .4f}")
+        for stage in range(self.nstage):
+            with torch.no_grad():
+                pre_stage_out = model_w.pre_stage(stage, dataset_w)
+                dataset_w.pre_stage(stage, pre_stage_out)
 
-        if best_model_w is None:
-            best_model_w = model_w
+            epoch_iter = tqdm(range(self.max_epoch))
+            for epoch in epoch_iter:
+                # inductive setting ..
+                dataset_w.train()
+                train_loader = dataset_w.on_training_wrapper()
+                training_loss = self.training_step(model_w, train_loader, optimizers, lr_schedulars, rank)
+
+                val_loader = dataset_w.on_val_wrapper()
+                if val_loader is not None and (epoch % self.eval_step) == 0:
+                    # inductive setting ..
+                    dataset_w.eval()
+                    # do validation in inference device
+                    val_result = self.val_step(model_w, val_loader, rank)
+                    if val_result is None:
+                        epoch_iter.set_description(f"Epoch {epoch}, TrainLoss: {training_loss: .4f}")
+                        continue
+
+                    monitoring = val_result[self.monitor]
+                    if compare_fn(monitoring, best_index):
+                        best_index = monitoring
+                        patience = 0
+                        best_model_w = model_w
+                    else:
+                        patience += 1
+                        if self.early_stopping and patience >= self.patience:
+                            break
+                    epoch_iter.set_description(
+                        f"Epoch {epoch}, TrainLoss: {training_loss: .4f}, ValMetric: {monitoring: .4f}"
+                    )
+                else:
+                    epoch_iter.set_description(f"Epoch {epoch}, TrainLoss: {training_loss: .4f}")
+
+            with torch.no_grad():
+                post_stage_out = model_w.post_stage(stage, dataset_w)
+                dataset_w.post_stage(stage, post_stage_out)
+
+            if best_model_w is None:
+                best_model_w = model_w
         return best_model_w
 
-    @torch.no_grad()
-    def validate(self, model_w, val_loader, rank):
-        result = self.val_step(model_w, val_loader, rank)
-        return result[self.monitor]
+    def validate(self, model_w, val_loader, device):
+        if self.cpu_inference:
+            model_w.to("cpu")
+            _device = "cpu"
+        else:
+            _device = device
+        result = self.val_step(model_w, val_loader, _device)
+        model_w.to(device)
+        return result
 
-    def training_step(self, model_w, train_loader, optimizer, device):
+    def training_step(self, model_w, train_loader, optimizers, lr_schedulars, device):
         model_w.train()
         losses = []
         for batch in train_loader:
-            if self.on_train_batch_transform is not None:
-                batch = self.on_train_batch_transform(batch)
             # batch = batch.to(device)
             batch = move_to_device(batch, device)
-            loss = model_w.train_step(batch)
+            loss = model_w.on_train_step(batch)
 
-            optimizer.zero_grad()
+            for optimizer in optimizers:
+                optimizer.zero_grad()
             loss.backward()
-            optimizer.step()
+            torch.nn.utils.clip_grad_norm_(model_w.parameters(), 5)
+
+            for optimizer in optimizers:
+                optimizer.step()
+
             losses.append(loss.item())
+        if lr_schedulars is not None:
+            for lr_schedular in lr_schedulars:
+                lr_schedular.step()
         return np.mean(losses)
 
     def test(self, model_w: ModelWrapper, dataset_w: DataWrapper, device):
+        model_w.eval()
+        if self.cpu_inference:
+            model_w.to("cpu")
+            _device = device
+        else:
+            _device = device
+
         test_loader = dataset_w.on_test_wrapper()
-        result = self.test_step(model_w, test_loader, device)
-        return result
+        result = self.test_step(model_w, test_loader, _device)
+
+        model_w.on_evaluate(dataset_w.evaluation_wrapper())
+        result_eval = model_w.collect_notes()
+
+        model_w.to(device)
+        if result is not None:
+            return result
+        else:
+            return result_eval
 
     @torch.no_grad()
     def val_step(self, model_w, val_loader, device):
-        outputs = []
         model_w.eval()
         for batch in val_loader:
-            if self.on_eval_batch_transform is not None:
-                batch = self.on_eval_batch_transform(batch)
             # batch = batch.to(device)
             batch = move_to_device(batch, device)
-            out = model_w.val_step(batch)
-            outputs.append(out)
-        return merge_batch_indexes(outputs)
+            model_w.on_val_step(batch)
+        return model_w.collect_notes()
 
     @torch.no_grad()
     def test_step(self, model_w, test_loader, device):
-        outputs = []
         model_w.eval()
         for batch in test_loader:
-            if self.on_eval_batch_transform is not None:
-                batch = self.on_eval_batch_transform(batch)
             # batch = batch.to(device)
             batch = move_to_device(batch, device)
-            out = model_w.test_step(batch)
-            outputs.append(out)
-        return merge_batch_indexes(outputs)
+            model_w.on_test_step(batch)
+        return model_w.collect_notes()
 
     def distributed_dataloader_proc(self, dataset_w: DataWrapper, rank):
         # TODO: just a toy implementation

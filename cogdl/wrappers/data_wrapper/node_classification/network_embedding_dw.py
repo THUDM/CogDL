@@ -23,4 +23,4 @@ class NetworkEmbeddingDataWrapper(DataWrapper):
         return self.dataset.data
 
     def test_wrapper(self):
-        return self.dataset.data, self.label_matrix
+        return self.label_matrix

@@ -9,6 +9,7 @@ from urllib import request
 
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from tabulate import tabulate
 
@@ -143,19 +144,19 @@ def alias_draw(J, q):
 
 def get_activation(act: str):
     if act == "relu":
-        return F.relu
+        return nn.ReLU()
     elif act == "sigmoid":
-        return torch.sigmoid
+        return nn.Sigmoid()
     elif act == "tanh":
-        return torch.tanh
+        return nn.Tanh()
     elif act == "gelu":
-        return F.gelu
+        return nn.GELU()
     elif act == "prelu":
-        return F.prelu
+        return nn.PReLU()
     elif act == "identity":
-        return lambda x: x
+        return nn.Identity()
     else:
-        return lambda x: x
+        return nn.Identity()
 
 
 def get_norm_layer(norm: str, channels: int):

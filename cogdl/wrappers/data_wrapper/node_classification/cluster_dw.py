@@ -9,19 +9,21 @@ class ClusterWrapper(DataWrapper):
         # fmt: off
         parser.add_argument("--batch-size", type=int, default=20)
         parser.add_argument("--n-cluster", type=int, default=100)
+        parser.add_argument("--method", type=str, default="metis")
         # fmt: on
 
-    def __init__(self, dataset, batch_size=20, n_cluster=100):
-        super(ClusterWrapper, self).__init__()
+    def __init__(self, dataset, method="metis", batch_size=20, n_cluster=100):
+        super(ClusterWrapper, self).__init__(dataset)
         self.dataset = dataset
         self.batch_size = batch_size
         self.n_cluster = n_cluster
-        self.cluster_datastet = ClusteredDataset(dataset, n_cluster=n_cluster, batch_size=batch_size)
+        self.method = method
 
     def training_wrapper(self):
         self.dataset.data.train()
         return ClusteredLoader(
-            self.cluster_datastet,
+            self.dataset,
+            method=self.method,
             batch_size=self.batch_size,
             shuffle=True,
             n_cluster=self.n_cluster,

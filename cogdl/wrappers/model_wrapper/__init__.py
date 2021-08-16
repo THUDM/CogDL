@@ -5,7 +5,7 @@ from .base_model_wrapper import ModelWrapper, EmbeddingModelWrapper
 
 
 MODELMODULE_REGISTRY = {}
-SUPPORTED_MODELDULES = {}
+SUPPORTED_MODELMODULES = {}
 
 
 def register_model_wrapper(name):
@@ -30,15 +30,17 @@ def register_model_wrapper(name):
 
 
 def scan_model_wrappers():
-    global SUPPORTED_MODELDULES
+    global SUPPORTED_MODELMODULES
     dirname = os.path.dirname(__file__)
     dir_names = [x for x in os.listdir(dirname) if not x.startswith("__")]
     dirs = [os.path.join(dirname, x) for x in dir_names]
     dirs_names = [(x, y) for x, y in zip(dirs, dir_names) if os.path.isdir(x)]
-    dw_dict = SUPPORTED_MODELDULES
+    dw_dict = SUPPORTED_MODELMODULES
     for _dir, _name in dirs_names:
         files = os.listdir(_dir)
+        # files = [x for x in os.listdir(_dir) if os.path.isfile(x)]
         dw = [x.split(".")[0] for x in files]
+        dw = [x for x in dw if not x.startswith("__")]
         path = [f"cogdl.wrappers.model_wrapper.{_name}.{x}" for x in dw]
         for x, y in zip(dw, path):
             dw_dict[x] = y
@@ -47,8 +49,8 @@ def scan_model_wrappers():
 def try_import_model_wrapper(name):
     if name in MODELMODULE_REGISTRY:
         return
-    if name in SUPPORTED_MODELDULES:
-        importlib.import_module(SUPPORTED_MODELDULES[name])
+    if name in SUPPORTED_MODELMODULES:
+        importlib.import_module(SUPPORTED_MODELMODULES[name])
     else:
         raise NotImplementedError(f"`{name}` model_wrapper is not implemented.")
 

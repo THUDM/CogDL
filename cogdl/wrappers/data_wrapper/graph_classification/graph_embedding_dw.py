@@ -1,7 +1,7 @@
-from torch.utils.data import DataLoader
+import numpy as np
 
 from .. import register_data_wrapper, DataWrapper
-from cogdl.wrappers.wrapper_utils import node_degree_as_feature
+from cogdl.wrappers.tools.wrapper_utils import node_degree_as_feature
 
 
 @register_data_wrapper("graph_embedding_dw")
@@ -19,10 +19,13 @@ class GraphEmbeddingDataWrapper(DataWrapper):
         self.degree_node_features = degree_node_features
 
     def training_wrapper(self):
-        return DataLoader(self.dataset, batch_size=1, shuffle=False)
+        return self.dataset
 
     def test_wrapper(self):
-        return self.dataset, [g.y for g in self.dataset]
+        if self.dataset[0].y.shape[0] > 1:
+            return np.array([g.y.numpy() for g in self.dataset])
+        else:
+            return np.array([g.y.item() for g in self.dataset])
 
     def pre_transform(self):
         if self.degree_node_features:

@@ -41,10 +41,6 @@ class GIN(BaseModel):
         parser.add_argument("--dropout", type=float, default=0.5)
         parser.add_argument("--train-epsilon", dest="train_epsilon", action="store_false")
         parser.add_argument("--pooling", type=str, default="sum")
-        parser.add_argument("--batch-size", type=int, default=128)
-        parser.add_argument("--lr", type=float, default=0.001)
-        parser.add_argument("--train-ratio", type=float, default=0.7)
-        parser.add_argument("--test-ratio", type=float, default=0.1)
 
     @classmethod
     def build_model_from_args(cls, args):

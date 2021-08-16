@@ -191,39 +191,6 @@ def remove_self_loops(indices, values=None):
     return (row, col), values
 
 
-def filter_adj(row, col, edge_attr, mask):
-    return (row[mask], col[mask]), None if edge_attr is None else edge_attr[mask]
-
-
-def dropout_adj(
-    edge_index: Tuple,
-    edge_weight: Optional[torch.Tensor] = None,
-    drop_rate: float = 0.5,
-    renorm: Optional[str] = "sym",
-    training: bool = False,
-):
-    if not training or drop_rate == 0:
-        if edge_weight is None:
-            edge_weight = torch.ones(edge_index[0].shape[0], device=edge_index[0].device)
-        return edge_index, edge_weight
-
-    if drop_rate < 0.0 or drop_rate > 1.0:
-        raise ValueError("Dropout probability has to be between 0 and 1, " "but got {}".format(drop_rate))
-
-    row, col = edge_index
-    num_nodes = int(max(row.max(), col.max())) + 1
-    self_loop = row == col
-    mask = torch.full((row.shape[0],), 1 - drop_rate, dtype=torch.float, device=row.device)
-    mask = torch.bernoulli(mask).to(torch.bool)
-    mask = self_loop | mask
-    edge_index, edge_weight = filter_adj(row, col, edge_weight, mask)
-    if renorm == "sym":
-        edge_weight = symmetric_normalization(num_nodes, edge_index[0], edge_index[1])
-    elif renorm == "row":
-        edge_weight = row_normalization(num_nodes, edge_index[0], edge_index[1])
-    return edge_index, edge_weight
-
-
 def coalesce(row, col, value=None):
     if torch.is_tensor(row):
         row = row.numpy()

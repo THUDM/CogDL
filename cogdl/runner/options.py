@@ -1,11 +1,13 @@
 import sys
 import argparse
 import copy
+from typing import Optional
 
 from cogdl.datasets import try_import_dataset
 from cogdl.models import MODEL_REGISTRY, try_import_model
 from cogdl.wrappers import fetch_data_wrapper, fetch_model_wrapper
 from cogdl.utils import build_args_from_dict
+from cogdl.wrappers.default_match import get_wrappers_name
 
 
 def get_parser():
@@ -29,6 +31,8 @@ def get_parser():
     parser.add_argument("--checkpoint", type=str, default=None, help="load pre-trained model")
     parser.add_argument("--save-model", type=str, default=None, help="save trained model")
     parser.add_argument("--use-best-config", action="store_true", help="use best config")
+    parser.add_argument("--unsup", action="store_true")
+    parser.add_argument("--cpu-inference", action="store_true", help="do validation and test in cpu")
 
     # fmt: on
     return parser
@@ -37,7 +41,7 @@ def get_parser():
 def add_data_wrapper_args(parser):
     group = parser.add_argument_group("Data warpper configuration")
     # fmt: off
-    group.add_argument("--dw", "-t", default="node_classification_dw", metavar="DWRAPPER", required=True,
+    group.add_argument("--dw", "-t", type=str, default=None, metavar="DWRAPPER", required=False,
                        help="Data Wrapper")
     # fmt: on
     return group
@@ -46,7 +50,7 @@ def add_data_wrapper_args(parser):
 def add_model_wrapper_args(parser):
     group = parser.add_argument_group("Trainer configuration")
     # fmt: off
-    group.add_argument("--mw", default="node_classification_mw", metavar="MWRAPPER", required=True,
+    group.add_argument("--mw", type=str, default=None, metavar="MWRAPPER", required=False,
                        help="Model Wrapper")
     # fmt: on
     return group
@@ -131,18 +135,32 @@ def parse_args_and_arch(parser, args):
         # if hasattr(DATASET_REGISTRY[dataset], "add_args"):
         #     DATASET_REGISTRY[dataset].add_args(parser)
 
-    if hasattr(fetch_data_wrapper(args.dw), "add_args"):
-        fetch_data_wrapper(args.dw).add_args(parser)
+    default_wrappers = get_wrappers_name(args.model)
+    if default_wrappers is not None:
+        mw, dw = default_wrappers
+    else:
+        mw, dw = None, None
+
+    if args.dw is not None:
+        dw = args.dw
+    if hasattr(fetch_data_wrapper(dw), "add_args"):
+        fetch_data_wrapper(dw).add_args(parser)
+
     args_dw, _ = parser.parse_known_args()
+
     data_wrapper_args = get_diff_args(args_dw, args_m)
 
-    if hasattr(fetch_model_wrapper(args.mw), "add_args"):
-        fetch_model_wrapper(args.mw).add_args(parser)
+    if args.mw is not None:
+        mw = args.mw
+    if hasattr(fetch_model_wrapper(mw), "add_args"):
+        fetch_model_wrapper(mw).add_args(parser)
     args_mw, _ = parser.parse_known_args()
     model_wrapper_args = get_diff_args(args_mw, args_dw)
 
     # Parse a second time.
     args = parser.parse_args()
+    args.mw = mw
+    args.dw = dw
     # return args
     return args, model_wrapper_args, data_wrapper_args
 

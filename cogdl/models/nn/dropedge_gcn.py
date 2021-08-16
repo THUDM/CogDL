@@ -551,7 +551,7 @@ class DropEdge_GCN(BaseModel):
                             help="The input layer of the model.")
         parser.add_argument('--outputlayer', default='gcn',
                             help="The output layer of the model.")
-        parser.add_argument('--hidden_size', type=int, default=64,
+        parser.add_argument('--hidden-size', type=int, default=64,
                             help='Number of hidden units.')
         parser.add_argument('--dropout', type=float, default=0.5,
                             help='Dropout rate (1 - keep probability).')

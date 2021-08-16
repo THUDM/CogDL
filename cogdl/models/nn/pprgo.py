@@ -16,15 +16,7 @@ class PPRGo(BaseModel):
         parser.add_argument("--dropout", type=float, default=0.1)
         parser.add_argument("--activation", type=str, default="relu")
         parser.add_argument("--nprop-inference", type=int, default=2)
-
         parser.add_argument("--alpha", type=float, default=0.5)
-        parser.add_argument("--k", type=int, default=32)
-        parser.add_argument("--norm", type=str, default="sym")
-        parser.add_argument("--eps", type=float, default=1e-4)
-
-        parser.add_argument("--eval-step", type=int, default=4)
-        parser.add_argument("--batch-size", type=int, default=512)
-        parser.add_argument("--test-batch-size", type=int, default=10000)
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -37,11 +29,15 @@ class PPRGo(BaseModel):
             dropout=args.dropout,
             activation=args.activation,
             nprop=args.nprop_inference,
+            norm=args.norm if hasattr(args, "norm") else "sym",
         )
 
-    def __init__(self, in_feats, hidden_size, out_feats, num_layers, alpha, dropout, activation="relu", nprop=2):
+    def __init__(
+        self, in_feats, hidden_size, out_feats, num_layers, alpha, dropout, activation="relu", nprop=2, norm="sym"
+    ):
         super(PPRGo, self).__init__()
         self.alpha = alpha
+        self.norm = norm
         self.nprop = nprop
         self.fc = PPRGoLayer(in_feats, hidden_size, out_feats, num_layers, dropout, activation)
 
@@ -58,7 +54,7 @@ class PPRGo(BaseModel):
         loss = self.loss_fn(pred, y)
         return loss
 
-    def predict(self, graph, batch_size, norm):
+    def predict(self, graph, batch_size=10000):
         device = next(self.fc.parameters()).device
         x = graph.x
         num_nodes = x.shape[0]
@@ -71,9 +67,9 @@ class PPRGo(BaseModel):
         pred_logits = torch.cat(pred_logits, dim=0)
 
         with graph.local_graph():
-            if norm == "sym":
+            if self.norm == "sym":
                 graph.sym_norm()
-            elif norm == "row":
+            elif self.norm == "row":
                 graph.row_norm()
             else:
                 raise NotImplementedError

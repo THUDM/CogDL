@@ -123,7 +123,11 @@ class DNGR(BaseModel):
         emb_matrix = preprocessing.normalize(emb_matrix, "l2")
         return emb_matrix
 
-    def train(self, G):
+    def train(self, graph):
+        return self.forward(graph)
+
+    def forward(self, graph):
+        G = graph.to_networkx()
         self.num_node = G.number_of_nodes()
         A = nx.adjacency_matrix(G).todense()
         PPMI = self.get_ppmi_matrix(A)
@@ -147,5 +151,10 @@ class DNGR(BaseModel):
             Loss.backward()
             epoch_iter.set_description(f"Epoch: {epoch:03d},  Loss: {Loss:.8f}")
             opt.step()
-        embedding, _ = model.forward(input_mat)
-        return embedding.detach().cpu().numpy()
+        embeddings, _ = model.forward(input_mat)
+        embeddings = embeddings.detach().cpu().numpy()
+
+        features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+        nx_nodes = G.nodes()
+        features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        return features_matrix

@@ -2,6 +2,7 @@ import re
 import copy
 from contextlib import contextmanager
 import scipy.sparse as sp
+import networkx as nx
 
 import torch
 import numpy as np
@@ -396,6 +397,23 @@ class Adjacency(BaseGraph):
             col_ind = self.col.cpu().numpy()
             mx = sp.csr_matrix((data, col_ind, row_ptr), shape=(num_nodes, num_nodes))
         return mx
+
+    def to_networkx(self, weighted=True):
+        gnx = nx.Graph()
+        row, col = self.edge_index
+        row = row.tolist()
+        col = col.tolist()
+
+        if weighted:
+            weight = self.get_weight().tolist()
+            gnx.add_weighted_edges_from([(row[i], col[i], weight[i]) for i in range(len(row))])
+            print(len(row))
+            print(gnx.number_of_edges())
+            print(gnx.number_of_nodes())
+        else:
+            edges = torch.stack((row, col)).cpu().numpy().transpose()
+            gnx.add_edges_from(edges)
+        return gnx
 
     def random_walk(self, start, length=1, restart_p=0.0):
         if not hasattr(self, "__walker__"):
@@ -840,6 +858,9 @@ class Graph(BaseGraph):
 
     def to_scipy_csr(self):
         return self._adj.to_scipy_csr()
+
+    def to_networkx(self):
+        return self._adj.to_networkx()
 
     @staticmethod
     def from_dict(dictionary):

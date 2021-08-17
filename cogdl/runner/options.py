@@ -33,6 +33,7 @@ def get_parser():
     parser.add_argument("--use-best-config", action="store_true", help="use best config")
     parser.add_argument("--unsup", action="store_true")
     parser.add_argument("--cpu-inference", action="store_true", help="do validation and test in cpu")
+    parser.add_argument("--monitor", type=str, default="val_acc")
 
     # fmt: on
     return parser

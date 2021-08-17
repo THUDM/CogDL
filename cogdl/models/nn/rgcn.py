@@ -84,7 +84,7 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
         self_dropout=0.0,
     ):
         BaseModel.__init__(self)
-        GNNLinkPredict.__init__(self, "distmult", hidden_size)
+        GNNLinkPredict.__init__(self)
         self.penalty = penalty
         self.num_nodes = num_entities
         self.num_rels = num_rels
@@ -120,15 +120,9 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
         # output = self.model(x, reindexed_indices, graph.edge_type)
         return output
 
-    def loss(self, graph, split="train"):
-        if split == "train":
-            mask = graph.train_mask
-        elif split == "val":
-            mask = graph.val_mask
-        else:
-            mask = graph.test_mask
-        edge_index = torch.stack(graph.edge_index)
-        edge_index, edge_types = edge_index[:, mask], graph.edge_attr[mask]
+    def loss(self, graph):
+        edge_index = graph.edge_index
+        edge_types = graph.edge_attr
 
         self.get_edge_set(edge_index, edge_types)
         batch_edges, batch_attr, samples, rels, labels = sampling_edge_uniform(
@@ -153,14 +147,5 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
         indices = torch.arange(0, self.num_nodes).to(device)
         x = self.emb(indices)
         output = self.model(graph, x)
-        mrr, hits = cal_mrr(
-            output,
-            self.rel_weight.weight,
-            graph.edge_index,
-            graph.edge_attr,
-            scoring=self.scoring,
-            protocol="raw",
-            batch_size=500,
-            hits=[1, 3, 10],
-        )
-        return mrr, hits
+
+        return output, self.rel_weight.weight

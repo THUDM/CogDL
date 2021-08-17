@@ -36,7 +36,11 @@ class DataWrapper(object):
 
     def training_wrapper(self):
         """
-        Return: DataLoader or cogdl.Graph
+        Return:
+            1. DataLoader
+            2. cogdl.Graph
+            3. list of DataLoader or Graph
+        Any other data formats other than DataLoader will not be traversed
         """
         pass
 
@@ -131,8 +135,8 @@ class DataWrapper(object):
         if inputs is None:
             return None
 
-        if isinstance(inputs, tuple):
-            inputs = list(inputs)
+        # if isinstance(inputs, tuple):
+        #     inputs = list(inputs)
         if isinstance(inputs, list):
             outputs = [0] * len(inputs)
             for i, item in enumerate(inputs):

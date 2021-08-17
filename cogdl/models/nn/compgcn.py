@@ -219,7 +219,6 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
         parser.add_argument("--num-bases", type=int, default=10)
         parser.add_argument("--num-layers", type=int, default=1)
         parser.add_argument("--sampling-rate", type=float, default=0.01)
-        parser.add_argument("--score-func", type=str, default="conve")
         parser.add_argument("--lbl_smooth", type=float, default=0.1)
         parser.add_argument("--opn", type=str, default="sub")
         # fmt: on
@@ -232,7 +231,6 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
             hidden_size=args.hidden_size,
             num_bases=args.num_bases,
             sampling_rate=args.sampling_rate,
-            score_func=args.score_func,
             penalty=args.penalty,
             layers=args.num_layers,
             dropout=args.dropout,
@@ -248,14 +246,13 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
         num_bases=0,
         layers=1,
         sampling_rate=0.01,
-        score_func="conve",
         penalty=0.001,
         dropout=0.0,
         lbl_smooth=0.1,
         opn="sub",
     ):
         BaseModel.__init__(self)
-        GNNLinkPredict.__init__(self, score_func, hidden_size)
+        GNNLinkPredict.__init__(self)
         activation = F.tanh
         self.model = CompGCN(
             num_entities,
@@ -335,15 +332,4 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
         indices = torch.arange(0, self.num_entities).to(device)
         x = self.emb(indices)
         node_embed, rel_embed = self.model(graph, x)
-        edge_index, edge_types = graph.edge_index, graph.edge_attr
-        mrr, hits = cal_mrr(
-            node_embed,
-            rel_embed,
-            edge_index,
-            edge_types,
-            scoring=self.scoring,
-            protocol="raw",
-            batch_size=500,
-            hits=[1, 3, 10],
-        )
-        return mrr, hits
+        return node_embed, rel_embed

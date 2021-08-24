@@ -225,7 +225,7 @@ class MultiGraphDataset(Dataset):
         if isinstance(idx, slice):
             start = idx.start
             end = idx.stop
-            step = idx.step
+            step = idx.step if idx.step else 1
             idx = list(range(start, end, step))
 
         if len(idx) > 1:

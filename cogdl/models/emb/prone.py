@@ -1,4 +1,3 @@
-import networkx as nx
 import numpy as np
 import scipy.sparse as sp
 from scipy.special import iv
@@ -6,6 +5,7 @@ from sklearn import preprocessing
 from sklearn.utils.extmath import randomized_svd
 
 from cogdl.utils.prone_utils import get_embedding_dense
+from cogdl.data import Graph
 from .. import BaseModel, register_model
 
 
@@ -29,6 +29,7 @@ class ProNE(BaseModel):
                             help="Number of items in the chebyshev expansion")
         parser.add_argument("--mu", type=float, default=0.2)
         parser.add_argument("--theta", type=float, default=0.5)
+        parser.add_argument("--hidden-size", type=int, default=128)
         # fmt: on
 
     @classmethod
@@ -42,18 +43,23 @@ class ProNE(BaseModel):
         self.mu = mu
         self.theta = theta
 
-    def train(self, G):
-        self.num_node = G.number_of_nodes()
+    def train(self, graph):
+        return self.forward(graph)
 
-        self.matrix0 = sp.csr_matrix(nx.adjacency_matrix(G))
+    def forward(self, graph: Graph):
+        self.num_node = graph.num_nodes
+        self.matrix0 = graph.to_scipy_csr()
+        # self.matrix0 = sp.csr_matrix(nx.adjacency_matrix(G))
 
         features_matrix = self._pre_factorization(self.matrix0, self.matrix0)
 
         embeddings_matrix = self._chebyshev_gaussian(self.matrix0, features_matrix, self.step, self.mu, self.theta)
 
-        self.embeddings = embeddings_matrix
-
-        return self.embeddings
+        embeddings = embeddings_matrix
+        # features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+        # nx_nodes = self.G.nodes()
+        # features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        return embeddings
 
     def _get_embedding_rand(self, matrix):
         # Sparse randomized tSVD for fast embedding

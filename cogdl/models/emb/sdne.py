@@ -108,7 +108,11 @@ class SDNE(BaseModel):
         self.lr = lr
         self.cpu = cpu
 
-    def train(self, G):
+    def train(self, graph, return_dict=False):
+        return self.forward(graph, return_dict)
+
+    def forward(self, graph, return_dict=False):
+        G = graph.to_networkx()
         num_node = G.number_of_nodes()
         model = SDNE_layer(
             num_node, self.hidden_size1, self.hidden_size2, self.droput, self.alpha, self.beta, self.nu1, self.nu2
@@ -131,5 +135,15 @@ class SDNE(BaseModel):
                 f"Epoch: {epoch:03d}, L_1st: {L_1st:.4f}, L_2nd: {L_2nd:.4f}, L_reg: {L_reg:.4f}"
             )
             opt.step()
-        embedding = model.get_emb(A)
-        return embedding.detach().cpu().numpy()
+        embeddings = model.get_emb(A)
+        embeddings = embeddings.detach().cpu().numpy()
+
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(nx_g.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = nx_g.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        return features_matrix

@@ -66,10 +66,10 @@ class LINE(BaseModel):
         self.init_alpha = alpha
         self.order = order
 
-    def train(self, graph):
-        return self.train(graph)
+    def train(self, graph, return_dict=False):
+        return self.train(graph, return_dict)
 
-    def forward(self, graph):
+    def forward(self, graph, return_dict=False):
         # run LINE algorithm, 1-order, 2-order or 3(1-order + 2-order)
         nx_g = graph.to_networkx()
         self.G = nx_g
@@ -117,9 +117,14 @@ class LINE(BaseModel):
             print("concatenate two embedding...")
             embeddings = np.hstack((embedding1, embedding2))
 
-        features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
-        nx_nodes = nx_g.nodes()
-        features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(nx_g.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = nx_g.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
         return features_matrix
 
     def _update(self, vec_u, vec_v, vec_error, label):

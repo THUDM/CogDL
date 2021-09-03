@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 from scipy.special import iv
+import networkx as nx
 from sklearn import preprocessing
 from sklearn.utils.extmath import randomized_svd
 
@@ -43,23 +44,28 @@ class ProNE(BaseModel):
         self.mu = mu
         self.theta = theta
 
-    def train(self, graph):
-        return self.forward(graph)
+    def train(self, graph, return_dict=False):
+        return self.forward(graph, return_dict)
 
-    def forward(self, graph: Graph):
-        self.num_node = graph.num_nodes
-        self.matrix0 = graph.to_scipy_csr()
-        # self.matrix0 = sp.csr_matrix(nx.adjacency_matrix(G))
+    def forward(self, graph: Graph, return_dict=False):
+        nx_g = graph.to_networkx()
+        self.matrix0 = sp.csr_matrix(nx.adjacency_matrix(nx_g))
 
         features_matrix = self._pre_factorization(self.matrix0, self.matrix0)
 
         embeddings_matrix = self._chebyshev_gaussian(self.matrix0, features_matrix, self.step, self.mu, self.theta)
 
         embeddings = embeddings_matrix
-        # features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
-        # nx_nodes = self.G.nodes()
-        # features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
-        return embeddings
+
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(nx_g.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = nx_g.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        return features_matrix
 
     def _get_embedding_rand(self, matrix):
         # Sparse randomized tSVD for fast embedding

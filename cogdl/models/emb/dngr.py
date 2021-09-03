@@ -123,10 +123,10 @@ class DNGR(BaseModel):
         emb_matrix = preprocessing.normalize(emb_matrix, "l2")
         return emb_matrix
 
-    def train(self, graph):
-        return self.forward(graph)
+    def train(self, graph, return_dict=False):
+        return self.forward(graph, return_dict=False)
 
-    def forward(self, graph):
+    def forward(self, graph, return_dict=False):
         G = graph.to_networkx()
         self.num_node = G.number_of_nodes()
         A = nx.adjacency_matrix(G).todense()
@@ -154,7 +154,12 @@ class DNGR(BaseModel):
         embeddings, _ = model.forward(input_mat)
         embeddings = embeddings.detach().cpu().numpy()
 
-        features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
-        nx_nodes = G.nodes()
-        features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(G.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = G.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
         return features_matrix

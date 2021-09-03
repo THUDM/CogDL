@@ -41,10 +41,10 @@ class NetMF(BaseModel):
         self.negative = negative
         self.is_large = is_large
 
-    def train(self, graph):
-        return self.forward(graph)
+    def train(self, graph, return_dict=False):
+        return self.forward(graph, return_dict)
 
-    def forward(self, graph):
+    def forward(self, graph, return_dict=False):
         nx_g = graph.to_networkx()
         A = sp.csr_matrix(nx.adjacency_matrix(nx_g))
         if not self.is_large:
@@ -62,9 +62,14 @@ class NetMF(BaseModel):
         u, s, _ = sp.linalg.svds(deepwalk_matrix, self.dimension)
         embeddings = sp.diags(np.sqrt(s)).dot(u.T).T
 
-        features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
-        nx_nodes = nx_g.nodes()
-        features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(nx_g.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = nx_g.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
         return features_matrix
 
     def _compute_deepwalk_matrix(self, A, window, b):

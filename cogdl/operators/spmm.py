@@ -2,7 +2,6 @@ import os
 import numpy as np
 import torch
 from torch.utils.cpp_extension import load
-from actnn.ops import quantize_activation, dequantize_activation
 
 path = os.path.join(os.path.dirname(__file__))
 
@@ -64,6 +63,11 @@ class SPMMFunction(torch.autograd.Function):
             grad_edge_weight = None
         return None, None, grad_feat, grad_edge_weight, None
 
+
+try:
+    from actnn.ops import quantize_activation, dequantize_activation
+except Exception:
+    pass
 
 class ActSPMMFunction(torch.autograd.Function):
     @staticmethod

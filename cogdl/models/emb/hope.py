@@ -33,10 +33,10 @@ class HOPE(BaseModel):
         self.dimension = dimension
         self.beta = beta
 
-    def train(self, graph):
-        return self.forward(graph)
+    def train(self, graph, return_dict=False):
+        return self.forward(graph, return_dict)
 
-    def forward(self, graph):
+    def forward(self, graph, return_dict=False):
         r"""The author claim that Katz has superior performance in related tasks
         S_katz = (M_g)^-1 * M_l = (I - beta*A)^-1 * beta*A = (I - beta*A)^-1 * (I - (I -beta*A))
         = (I - beta*A)^-1 - I
@@ -47,9 +47,14 @@ class HOPE(BaseModel):
         katz_matrix = np.asarray((np.eye(n) - self.beta * np.mat(adj)).I - np.eye(n))
         embeddings = self._get_embedding(katz_matrix, self.dimension)
 
-        features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
-        nx_nodes = nx_g.nodes()
-        features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(nx_g.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = nx_g.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
         return features_matrix
 
     def _get_embedding(self, matrix, dimension):

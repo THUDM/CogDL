@@ -29,7 +29,7 @@ class DAEGC(BaseModel):
         parser.add_argument("--dropout", type=float, default=0)
         parser.add_argument("--max-epoch", type=int, default=100)
         parser.add_argument("--lr", type=float, default=0.001)
-        parser.add_argument("--T", type=int, default=5)
+        # parser.add_argument("--T", type=int, default=5)
         parser.add_argument("--gamma", type=float, default=10)
         # fmt: on
 
@@ -49,11 +49,17 @@ class DAEGC(BaseModel):
         self.num_clusters = num_clusters
         self.att1 = GATLayer(num_features, hidden_size, attn_drop=dropout, alpha=0.2, nhead=num_heads)
         self.att2 = GATLayer(hidden_size * num_heads, embedding_size, attn_drop=dropout, alpha=0.2, nhead=1)
-        self.cluster_center = None
+        self.cluster_center = torch.nn.Parameter(torch.FloatTensor(self.num_clusters))
 
     @staticmethod
     def get_trainer(args=None):
         return DAEGCTrainer
+
+    def set_cluster_center(self, center):
+        self.cluster_center.data = torch.tensor(center, device=self.device)
+
+    def get_cluster_center(self):
+        return self.cluster_center.data.detach()
 
     def forward(self, graph):
         x = graph.x

@@ -713,7 +713,7 @@ class GraphClassificationDataset(NodeClassificationDataset):
         return graph_idx, node_idx
 
 
-@register_model("gcc")
+@register_model("dgl_gcc")
 class GCC(BaseModel):
     @staticmethod
     def add_args(parser):

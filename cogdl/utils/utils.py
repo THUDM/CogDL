@@ -9,6 +9,7 @@ from urllib import request
 
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from tabulate import tabulate
 
@@ -147,15 +148,15 @@ def identity_act(input, inplace=True):
 
 def get_activation(act: str):
     if act == "relu":
-        return F.relu
+        return nn.ReLU()
     elif act == "sigmoid":
-        return torch.sigmoid
+        return nn.Sigmoid()
     elif act == "tanh":
-        return torch.tanh
+        return nn.Tanh()
     elif act == "gelu":
-        return F.gelu
+        return nn.GELU()
     elif act == "prelu":
-        return F.prelu
+        return nn.PReLU()
     elif act == "identity":
         return identity_act
     else:
@@ -209,6 +210,7 @@ def batch_max_pooling(x, batch):
 
 def tabulate_results(results_dict):
     # Average for different seeds
+    # {"model1_dataset": [dict(acc=1), dict(acc=2)], "model2_dataset": [dict(acc=1),...]}
     tab_data = []
     for variant in results_dict:
         results = np.array([list(res.values()) for res in results_dict[variant]])

@@ -1,6 +1,6 @@
 import torch
 from cogdl.wrappers.model_wrapper import ModelWrapper, register_model_wrapper
-from cogdl.wrappers.wrapper_utils import pre_evaluation_index
+from cogdl.wrappers.tools.wrapper_utils import pre_evaluation_index
 
 
 @register_model_wrapper("pprgo_mw")
@@ -24,7 +24,11 @@ class PPRGoModelWrapper(ModelWrapper):
         pred = pred[graph.val_mask]
 
         loss = self.default_loss_fn(pred, y)
-        return dict(val_loss=loss, val_eval_index=pre_evaluation_index(pred, y))
+
+        metric = self.evaluate(pred, y, metric="auto")
+
+        self.note("val_loss", loss.item())
+        self.note("val_metric", metric)
 
     def test_step(self, batch):
         graph = batch
@@ -33,7 +37,9 @@ class PPRGoModelWrapper(ModelWrapper):
         pred = pred[test_mask]
         y = graph.y[test_mask]
         loss = self.default_loss_fn(pred, y)
-        return dict(test_loss=loss, test_eval_index=pre_evaluation_index(pred, y))
+
+        self.note("test_loss", loss.item())
+        self.note("test_eval_index", pre_evaluation_index(pred, y))
 
     def setup_optimizer(self):
         cfg = self.optimizer_config

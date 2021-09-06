@@ -157,7 +157,7 @@ class SAGE(BaseModel):
         parser.add_argument("--num-layers", type=int, default=2)
         parser.add_argument("--dropout", type=float, default=0.5)
         parser.add_argument("--aggr", type=str, default="mean")
-        parser.add_argument("--norm", type=str, default="layernorm")
+        parser.add_argument("--norm", type=str, default=None)
         parser.add_argument("--activation", type=str, default="relu")
         parser.add_argument("--normalize", action="store_true")
 
@@ -173,6 +173,7 @@ class SAGE(BaseModel):
             args.norm,
             args.activation,
             args.normalize if hasattr(args, "normalize") else False,
+            args.actnn,
         )
 
     def __init__(
@@ -186,36 +187,45 @@ class SAGE(BaseModel):
         norm=None,
         activation=None,
         normalize=False,
+        actnn=False,
     ):
         super(SAGE, self).__init__()
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
         self.num_layers = num_layers
+        Layer = SAGELayer
+        if actnn:
+            try:
+                from cogdl.layers.actsage_layer import ActSAGELayer
+            except Exception:
+                print("Please install the actnn library first.")
+                exit(1)
+            Layer = ActSAGELayer
         self.layers = nn.ModuleList(
             [
-                SAGELayer(
+                Layer(
                     shapes[i],
                     shapes[i + 1],
                     aggr=aggr,
                     normalize=normalize if i != num_layers - 1 else False,
                     dropout=dropout,
+                    norm=norm if i != num_layers - 1 else None,
+                    activation=activation if i != num_layers - 1 else None,
                 )
                 for i in range(num_layers)
             ]
         )
-        if norm is not None:
-            self.norm_list = nn.ModuleList([get_norm_layer(norm, hidden_size) for _ in range(num_layers - 1)])
-        else:
-            self.norm_list = None
-        self.dropout = dropout
-        self.act = get_activation(activation)
+        # if norm is not None:
+        #     self.norm_list = nn.ModuleList([get_norm_layer(norm, hidden_size) for _ in range(num_layers - 1)])
+        # else:
+        #     self.norm_list = None
+        # self.act = get_activation(activation)
 
     def forward(self, graph):
         x = graph.x
         for i, layer in enumerate(self.layers):
             x = layer(graph, x)
-            if i != self.num_layers - 1:
-                # x = F.dropout(x, self.dropout, training=self.training)
-                if self.norm_list is not None:
-                    x = self.norm_list[i](x)
-                x = self.act(x)
+            # if i != self.num_layers - 1:
+            #     if self.norm_list is not None:
+            #         x = self.norm_list[i](x)
+            #     x = self.act(x)
         return x

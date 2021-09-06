@@ -33,10 +33,10 @@ class GraRep(BaseModel):
         self.dimension = dimension
         self.step = step
 
-    def train(self, graph):
-        return self.forward(graph)
+    def train(self, graph, return_dict=False):
+        return self.forward(graph, return_dict)
 
-    def forward(self, graph):
+    def forward(self, graph, return_dict=False):
         self.G = graph.to_networkx()
         self.num_node = self.G.number_of_nodes()
         A = np.asarray(nx.adjacency_matrix(self.G).todense(), dtype=float)
@@ -67,9 +67,14 @@ class GraRep(BaseModel):
                 final_emb = np.hstack((final_emb, W))
 
         embeddings = final_emb
-        features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
-        nx_nodes = self.G.nodes()
-        features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(self.G.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = self.G.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
         return features_matrix
 
     def _get_embedding(self, matrix, dimension):

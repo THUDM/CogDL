@@ -59,10 +59,10 @@ class DeepWalk(BaseModel):
         self.worker = worker
         self.iteration = iteration
 
-    def train(self, graph, embedding_model_creator=Word2Vec):
-        return self.forward(graph, embedding_model_creator)
+    def train(self, graph, embedding_model_creator=Word2Vec, return_dict=False):
+        return self.forward(graph, embedding_model_creator, return_dict)
 
-    def forward(self, graph, embedding_model_creator=Word2Vec):
+    def forward(self, graph, embedding_model_creator=Word2Vec, return_dict=False):
         nx_g = graph.to_networkx()
         self.G = nx_g
         walks = self._simulate_walks(self.walk_length, self.walk_num)
@@ -80,10 +80,15 @@ class DeepWalk(BaseModel):
         id2node = dict([(vid, node) for vid, node in enumerate(nx_g.nodes())])
         embeddings = np.asarray([model.wv[str(id2node[i])] for i in range(len(id2node))])
 
-        features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
-        nx_nodes = nx_g.nodes()
-        features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
-        return embeddings
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(nx_g.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = nx_g.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        return features_matrix
 
     def _walk(self, start_node, walk_length):
         # Simulate a random walk starting from start node.

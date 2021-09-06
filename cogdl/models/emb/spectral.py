@@ -29,10 +29,10 @@ class Spectral(BaseModel):
         super(Spectral, self).__init__()
         self.dimension = hidden_size
 
-    def train(self, graph):
-        return self.forward(graph)
+    def train(self, graph, return_dict=False):
+        return self.forward(graph, return_dict)
 
-    def forward(self, graph):
+    def forward(self, graph, return_dict=False):
         nx_g = graph.to_networkx()
         matrix = nx.normalized_laplacian_matrix(nx_g).todense()
         matrix = np.eye(matrix.shape[0]) - np.asarray(matrix)
@@ -40,7 +40,12 @@ class Spectral(BaseModel):
         emb_matrix = ut * np.sqrt(s)
         embeddings = preprocessing.normalize(emb_matrix, "l2")
 
-        features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
-        nx_nodes = self.G.nodes()
-        features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(nx_g.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = nx_g.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
         return features_matrix

@@ -90,7 +90,8 @@ template <typename scalar_t>
 __global__ void act_quantized_dropout_backward_kernel(const scalar_t* __restrict__ grad_output,
                                                    int32_t* __restrict__ mask,
                                                    scalar_t* __restrict__ grad_input,
-                                                   int N) {
+                                                   int N,
+                                                   float dropout_p) {
   int64_t id = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
   const int64_t global_offset = (int64_t)blockIdx.x * blockDim.x / (sizeof(int32_t) * 8);
   const int shared_len = ACT_QUANTIZED_DROPOUT_NUM_THREADS / (sizeof(int32_t) * 8);
@@ -98,7 +99,7 @@ __global__ void act_quantized_dropout_backward_kernel(const scalar_t* __restrict
   if (id < N) {
     bool bit =  (mask[global_offset + threadIdx.x % shared_len] >> (threadIdx.x / shared_len)) & 1;
     if (bit) {
-      grad_input[id] = grad_output[id];
+      grad_input[id] = grad_output[id] / (1.0 - dropout_p);
     } else {
       grad_input[id] = 0.0;
     }
@@ -106,7 +107,7 @@ __global__ void act_quantized_dropout_backward_kernel(const scalar_t* __restrict
 }
 
 
-Tensor act_quantized_dropout_backward_cuda(Tensor grad_output, Tensor mask) {
+Tensor act_quantized_dropout_backward_cuda(Tensor grad_output, Tensor mask, float dropout_p) {
   int64_t n_elements = 1;
   for (size_t i = 0; i < grad_output.dim(); ++i) {
     n_elements *= grad_output.size(i);
@@ -120,7 +121,7 @@ Tensor act_quantized_dropout_backward_cuda(Tensor grad_output, Tensor mask) {
   AT_DISPATCH_FLOATING_TYPES_AND_HALF(grad_output.scalar_type(), "act_quantized_dropout_backward", ([&] {
       act_quantized_dropout_backward_kernel<scalar_t><<<blocks, threads>>>(
         grad_output.data_ptr<scalar_t>(), mask.data_ptr<int32_t>(), grad_input.data_ptr<scalar_t>(),
-        n_elements);
+        n_elements, dropout_p);
   }));
 
   return grad_input;

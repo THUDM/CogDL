@@ -43,6 +43,7 @@ class Node2vec(BaseModel):
                             help='Parameter in node2vec. Default is 1.0.')
         parser.add_argument('--q', type=float, default=1.0,
                             help='Parameter in node2vec. Default is 1.0.')
+        parser.add_argument("--hidden-size", type=int, default=128)
         # fmt: on
 
     @classmethod
@@ -69,7 +70,11 @@ class Node2vec(BaseModel):
         self.p = p
         self.q = q
 
-    def train(self, G):
+    def train(self, graph, return_dict=False):
+        return self.forward(graph, return_dict)
+
+    def forward(self, graph, return_dict=False):
+        G = graph.to_networkx()
         self.G = G
         is_directed = nx.is_directed(self.G)
         for i, j in G.edges():
@@ -89,8 +94,17 @@ class Node2vec(BaseModel):
             iter=self.iteration,
         )
         id2node = dict([(vid, node) for vid, node in enumerate(G.nodes())])
-        self.embeddings = np.asarray([model.wv[str(id2node[i])] for i in range(len(id2node))])
-        return self.embeddings
+        embeddings = np.asarray([model.wv[str(id2node[i])] for i in range(len(id2node))])
+
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(G.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = G.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        return features_matrix
 
     def _node2vec_walk(self, walk_length, start_node):
         # Simulate a random walk starting from start node.

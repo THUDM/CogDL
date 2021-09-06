@@ -24,9 +24,10 @@ class NodeClfModelWrapper(ModelWrapper):
         val_mask = graph.val_mask
         loss = self.default_loss_fn(pred[val_mask], y[val_mask])
 
+        metric = self.evaluate(pred[val_mask], graph.y[val_mask], metric="auto")
+
         self.note("val_loss", loss.item())
-        self.note("val_eval_index", pre_evaluation_index(pred[val_mask], y[val_mask]))
-        # return dict(val_loss=loss.item(), val_eval_index=pre_evaluation_index)
+        self.note("val_metric", metric)
 
     def test_step(self, batch):
         graph = batch
@@ -34,13 +35,15 @@ class NodeClfModelWrapper(ModelWrapper):
         test_mask = batch.test_mask
         loss = self.default_loss_fn(pred[test_mask], batch.y[test_mask])
 
+        metric = self.evaluate(pred[test_mask], batch.y[test_mask], metric="auto")
+
         self.note("test_loss", loss.item())
-        self.note("test_eval_index", pre_evaluation_index(pred[test_mask], batch.y[test_mask]))
+        self.note("test_metric", metric)
 
     def setup_optimizer(self):
         cfg = self.optimizer_config
-        if hasattr(self.model, "get_optimizer"):
-            model_spec_optim = self.model.get_optimizer(cfg)
+        if hasattr(self.model, "setup_optimizer"):
+            model_spec_optim = self.model.setup_optimizer(cfg)
             if model_spec_optim is not None:
                 return model_spec_optim
         return torch.optim.Adam(self.model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])

@@ -28,7 +28,7 @@ class GraphClassificationDataWrapper(DataWrapper):
         self.batch_size = batch_size
         self.split_idx = None
 
-    def training_wrapper(self):
+    def train_wrapper(self):
         return DataLoader(self.dataset[self.split_idx[0]], batch_size=self.batch_size, shuffle=True, num_workers=4)
 
     def val_wrapper(self):

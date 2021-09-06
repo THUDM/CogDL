@@ -8,7 +8,7 @@ class GNNKGLinkPredictionModelWrapper(DataWrapper):
         self.dataset = dataset
         self.edge_set = None
 
-    def training_wrapper(self):
+    def train_wrapper(self):
         return self.dataset.data
 
     def val_wrapper(self):

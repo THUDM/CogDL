@@ -19,7 +19,7 @@ def random_walk(start, length, indptr, indices, p=0.0):
     """
     result = [np.zeros(length, dtype=np.int32)] * len(start)
     for i in numba.prange(len(start)):
-        result[start[i]] = _random_walk(start[i], length, indptr, indices, p)
+        result[i] = _random_walk(start[i], length, indptr, indices, p)
     return result
 
 

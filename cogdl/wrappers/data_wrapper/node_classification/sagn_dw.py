@@ -29,7 +29,7 @@ class SAGEDataWrapper(DataWrapper):
 
         self.refresh_per_epoch("train")
 
-    def training_wrapper(self):
+    def train_wrapper(self):
         return DataLoader(self.train_nid_with_pseudos, batch_size=self.batch_size, shuffle=False)
 
     def val_wrapper(self):

@@ -8,8 +8,8 @@ import torch.multiprocessing as mp
 
 from cogdl.wrappers.data_wrapper.base_data_wrapper import DataWrapper
 from cogdl.wrappers.model_wrapper.base_model_wrapper import ModelWrapper, EmbeddingModelWrapper
-from cogdl.runner.trainer_utils import evaluation_comp
-from cogdl.runner.embed_trainer import EmbeddingTrainer
+from cogdl.runner.runner_utils import evaluation_comp
+from cogdl.runner.embed_runner import EmbeddingTrainer
 from cogdl.data import Graph
 
 
@@ -25,6 +25,14 @@ def move_to_device(batch, device):
     elif torch.is_tensor(batch) or isinstance(batch, Graph):
         batch = batch.to(device)
     return batch
+
+
+def clip_grad_norm(params, max_norm):
+    """Clips gradient norm."""
+    if max_norm > 0:
+        return torch.nn.utils.clip_grad_norm_(params, max_norm)
+    else:
+        return torch.sqrt(sum(p.grad.data.norm() ** 2 for p in params if p.grad is not None))
 
 
 class Trainer(object):
@@ -43,6 +51,8 @@ class Trainer(object):
         eval_step: int = 1,
         save_embedding_path: Optional[str] = None,
         cpu_inference: bool = False,
+        progress_bar: str = "epoch",
+        clip_grad_norm: float = 5.0,
     ):
         self.max_epoch = max_epoch
         self.nstage = nstage
@@ -50,6 +60,7 @@ class Trainer(object):
         self.early_stopping = early_stopping
         self.eval_step = eval_step
         self.monitor = monitor
+        self.progress_bar = progress_bar
 
         self.cpu = cpu
         self.devices, self.world_size = self.set_device(device_ids)
@@ -61,6 +72,7 @@ class Trainer(object):
 
         self.on_train_batch_transform = None
         self.on_eval_batch_transform = None
+        self.clip_grad_norm = clip_grad_norm
 
         self.save_embedding_path = save_embedding_path
 
@@ -169,7 +181,13 @@ class Trainer(object):
                 pre_stage_out = model_w.pre_stage(stage, dataset_w)
                 dataset_w.pre_stage(stage, pre_stage_out)
 
-            epoch_iter = tqdm(range(self.max_epoch))
+            if self.progress_bar == "epoch":
+                epoch_iter = tqdm(range(self.max_epoch))
+                epoch_printer = epoch_iter.set_description
+            else:
+                epoch_iter = range(self.max_epoch)
+                epoch_printer = print
+
             for epoch in epoch_iter:
                 # inductive setting ..
                 dataset_w.train()
@@ -183,7 +201,7 @@ class Trainer(object):
                     # do validation in inference device
                     val_result = self.val_step(model_w, val_loader, rank)
                     if val_result is None:
-                        epoch_iter.set_description(f"Epoch {epoch}, TrainLoss: {training_loss: .4f}")
+                        epoch_printer(f"Epoch {epoch}, TrainLoss: {training_loss: .4f}")
                         continue
 
                     monitoring = val_result[self.monitor]
@@ -195,11 +213,9 @@ class Trainer(object):
                         patience += 1
                         if self.early_stopping and patience >= self.patience:
                             break
-                    epoch_iter.set_description(
-                        f"Epoch {epoch}, TrainLoss: {training_loss: .4f}, ValMetric: {monitoring: .4f}"
-                    )
+                    epoch_printer(f"Epoch {epoch}, TrainLoss: {training_loss: .4f}, ValMetric: {monitoring: .4f}")
                 else:
-                    epoch_iter.set_description(f"Epoch {epoch}, TrainLoss: {training_loss: .4f}")
+                    epoch_printer(f"Epoch {epoch}, TrainLoss: {training_loss: .4f}")
 
             with torch.no_grad():
                 post_stage_out = model_w.post_stage(stage, dataset_w)
@@ -222,6 +238,10 @@ class Trainer(object):
     def training_step(self, model_w, train_loader, optimizers, lr_schedulars, device):
         model_w.train()
         losses = []
+
+        if self.progress_bar == "iteration":
+            train_loader = tqdm(train_loader)
+
         for batch in train_loader:
             # batch = batch.to(device)
             batch = move_to_device(batch, device)
@@ -230,7 +250,8 @@ class Trainer(object):
             for optimizer in optimizers:
                 optimizer.zero_grad()
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model_w.parameters(), 5)
+
+            torch.nn.utils.clip_grad_norm_(model_w.parameters(), self.clip_grad_norm)
 
             for optimizer in optimizers:
                 optimizer.step()
@@ -252,14 +273,16 @@ class Trainer(object):
         test_loader = dataset_w.on_test_wrapper()
         result = self.test_step(model_w, test_loader, _device)
 
-        model_w.on_evaluate(dataset_w.evaluation_wrapper())
-        result_eval = model_w.collect_notes()
+        # model_w.on_evaluate(dataset_w.evaluation_wrapper())
+        # result_eval = model_w.collect_notes()
 
         model_w.to(device)
-        if result is not None:
-            return result
-        else:
-            return result_eval
+        return result
+        #
+        # if result is not None:
+        #     return result
+        # else:
+        #     return result_eval
 
     @torch.no_grad()
     def val_step(self, model_w, val_loader, device):
@@ -278,13 +301,6 @@ class Trainer(object):
             batch = move_to_device(batch, device)
             model_w.on_test_step(batch)
         return model_w.collect_notes()
-
-    def distributed_dataloader_proc(self, dataset_w: DataWrapper, rank):
-        # TODO: just a toy implementation
-        train_loader = dataset_w.on_training_wrapper()
-        dataset = train_loader.dataset
-        sampler = torch.utils.data.distributed.DistributedSampler(dataset, num_replicas=self.world_size, rank=rank)
-        train_loader.sampler = sampler
 
     def distributed_model_proc(self, model_w: ModelWrapper, rank):
         _model = model_w.wrapped_model

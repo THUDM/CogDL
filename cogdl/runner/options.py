@@ -10,6 +10,22 @@ from cogdl.utils import build_args_from_dict
 from cogdl.wrappers.default_match import get_wrappers_name
 
 
+def add_args(args: list):
+    parser = argparse.ArgumentParser()
+    if "lr" in args:
+        parser.add_argument("--lr", default=0.01, type=float)
+    if "max_epoch" in args:
+        parser.add_argument("--max-epoch", default=500, type=int)
+
+
+def add_arguments(args: list):
+    parser = argparse.ArgumentParser()
+    for item in args:
+        name, _type, default = item
+        parser.add_argument(f"--{name}", default=default, type=_type)
+    return parser
+
+
 def get_parser():
     parser = argparse.ArgumentParser(conflict_handler="resolve")
     # fmt: off
@@ -34,6 +50,8 @@ def get_parser():
     parser.add_argument("--unsup", action="store_true")
     parser.add_argument("--cpu-inference", action="store_true", help="do validation and test in cpu")
     parser.add_argument("--monitor", type=str, default="val_acc")
+    parser.add_argument("--progress-bar", type=str, default="epoch")
+    parser.add_argument("--n-warmup-steps", type=int, default=10000)
 
     # fmt: on
     return parser

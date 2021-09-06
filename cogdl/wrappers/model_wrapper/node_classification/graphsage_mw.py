@@ -22,8 +22,10 @@ class GraphSAGEModelWrapper(ModelWrapper):
         pred = self.model(x_src, adjs)
         loss = self.default_loss_fn(pred, y)
 
+        metric = self.evaluate(pred, y, metric="auto")
+
         self.note("val_loss", loss.item())
-        self.note("val_eval_index", pre_evaluation_index(pred, y))
+        self.note("val_metric", metric)
 
     def test_step(self, batch):
         dataset, test_loader = batch
@@ -35,8 +37,9 @@ class GraphSAGEModelWrapper(ModelWrapper):
         pred = pred[graph.test_mask]
         y = graph.y[graph.test_mask]
 
+        metric = self.evaluate(pred, y, metric="auto")
         self.note("test_loss", self.default_loss_fn(pred, y))
-        self.note("test_eval_index", pre_evaluation_index(pred, y))
+        self.note("test_metric", metric)
 
     def setup_optimizer(self):
         cfg = self.optimizer_cfg

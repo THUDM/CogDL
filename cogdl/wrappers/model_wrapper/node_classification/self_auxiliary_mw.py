@@ -42,13 +42,15 @@ class SelfAuxiliaryTask(ModelWrapper):
         ssl_loss = self.agent.make_loss(pred)
         return sup_loss + ssl_loss
 
-    def evaluate(self, dataset):
-        graph = dataset.data.to(self.device)
+    # def evaluate(self, dataset):
+    #     graph = dataset.data.to(self.device)
+
+    def test_step(self, graph):
         with torch.no_grad():
             pred = self.model(graph)
         y = graph.y
         result = evaluate_node_embeddings_using_logreg(pred, y, graph.train_mask, graph.test_mask)
-        self.note("acc", result)
+        self.note("test_acc", result)
 
     def generate_virtual_labels(self, data):
         if self.auxiliary_task == "edge_mask":

@@ -121,7 +121,7 @@ SUPPORTED_MODELS = {
     "sortpool": "cogdl.models.nn.sortpool",
     "srgcn": "cogdl.models.nn.pyg_srgcn",
     "asgcn": "cogdl.models.nn.asgcn",
-    "gcc": "cogdl.models.nn.dgl_gcc",
+    "gcc": "cogdl.models.nn.gcc_model",
     "unsup_graphsage": "cogdl.models.nn.unsup_graphsage",
     "sagpool": "cogdl.models.nn.pyg_sagpool",
     "graphsaint": "cogdl.models.nn.graphsaint",

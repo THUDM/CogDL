@@ -19,7 +19,7 @@ class SAGEDataWrapper(DataWrapper):
         self.batch_size = batch_size
         self.sample_size = sample_size
 
-    def training_wrapper(self):
+    def train_wrapper(self):
         self.dataset.data.train()
         return NeighborSampler(
             dataset=self.dataset,

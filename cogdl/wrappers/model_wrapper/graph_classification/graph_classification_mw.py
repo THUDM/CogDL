@@ -22,16 +22,20 @@ class GraphClassificationModelWrapper(ModelWrapper):
         y = batch.y
         val_loss = self.default_loss_fn(pred, y)
 
+        metric = self.evaluate(pred, y, metric="auto")
+
         self.note("val_loss", val_loss)
-        self.note("val_eval_index", pre_evaluation_index(pred, y))
+        self.note("val_metric", metric)
 
     def test_step(self, batch):
         pred = self.model(batch)
         y = batch.y
         test_loss = self.default_loss_fn(pred, y)
 
+        metric = self.evaluate(pred, y, metric="auto")
+
         self.note("test_loss", test_loss)
-        self.note("test_eval_index", pre_evaluation_index(pred, y))
+        self.note("test_metric", metric)
 
     def setup_optimizer(self):
         cfg = self.optimizer_cfg

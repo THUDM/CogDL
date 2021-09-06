@@ -19,7 +19,7 @@ class ClusterWrapper(DataWrapper):
         self.n_cluster = n_cluster
         self.method = method
 
-    def training_wrapper(self):
+    def train_wrapper(self):
         self.dataset.data.train()
         return ClusteredLoader(
             self.dataset,

@@ -50,14 +50,16 @@ class DGIModelWrapper(ModelWrapper):
         loss = self.loss_fn(logits, labels)
         return loss
 
-    def evaluate(self, dataset):
-        device = self.device
-        graph = dataset.data.to(device)
+    # def evaluate(self, dataset):
+    #     device = self.device
+    #     graph = dataset.data.to(device)
+
+    def test_step(self, graph):
         with torch.no_grad():
             pred = self.act(self.model(graph))
         y = graph.y
         result = evaluate_node_embeddings_using_logreg(pred, y, graph.train_mask, graph.test_mask)
-        self.note("acc", result)
+        self.note("test_microf1", result)
 
     @staticmethod
     def augment(graph):

@@ -20,7 +20,7 @@ class M3SModelWrapper(NodeClfModelWrapper):
         # fmt: on
 
     def __init__(self, model, optimizer_cfg, n_cluster, num_new_labels):
-        super(M3SModelWrapper, self).__init__(model)
+        super(M3SModelWrapper, self).__init__(model, optimizer_cfg)
         self.model = model
         self.num_clusters = n_cluster
         self.hidden_size = optimizer_cfg["hidden_size"]

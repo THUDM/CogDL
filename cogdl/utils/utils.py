@@ -206,6 +206,7 @@ def batch_max_pooling(x, batch):
 
 def tabulate_results(results_dict):
     # Average for different seeds
+    # {"model1_dataset": [dict(acc=1), dict(acc=2)], "model2_dataset": [dict(acc=1),...]}
     tab_data = []
     for variant in results_dict:
         results = np.array([list(res.values()) for res in results_dict[variant]])

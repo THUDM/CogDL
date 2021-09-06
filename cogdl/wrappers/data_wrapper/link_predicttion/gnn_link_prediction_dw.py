@@ -10,7 +10,7 @@ class GNNLinkPredictionDataWrapper(DataWrapper):
         super(GNNLinkPredictionDataWrapper, self).__init__(dataset)
         self.dataset = dataset
 
-    def training_wrapper(self):
+    def train_wrapper(self):
         return self.dataset.data
 
     def val_wrapper(self):

@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from torch.utils.data import DataLoader
 from cogdl.data import Graph
 
@@ -22,19 +23,7 @@ class DataWrapper(object):
         self.__num_training_data, self.__num_val_data, self.__num_test_data = 0, 0, 0
         self.__prepare_dataloader_per_epoch__ = False
 
-    def refresh_per_epoch(self, name="train"):
-        self.__prepare_dataloader_per_epoch__ = True
-
-    def get_default_loss_fn(self):
-        return self.__loss_fn__
-
-    def get_default_evaluator(self):
-        return self.__evaluator__
-
-    def get_dataset(self):
-        return self.__dataset__
-
-    def training_wrapper(self):
+    def train_wrapper(self):
         """
         Return:
             1. DataLoader
@@ -64,16 +53,133 @@ class DataWrapper(object):
         return batch
 
     def pre_transform(self):
+        """Data Preprocessing before all runs"""
         pass
 
-    @staticmethod
-    def __batch_wrapper__(loader):
-        if loader is None:
-            return None
-        elif isinstance(loader, DataLoader):
-            return loader
+    def pre_stage(self, stage, model_w_out):
+        """Processing before each run"""
+        pass
+
+    def post_stage(self, stage, model_w_out):
+        """Processing after each run"""
+        pass
+
+    def refresh_per_epoch(self, name="train"):
+        self.__prepare_dataloader_per_epoch__ = True
+
+    def get_default_loss_fn(self):
+        return self.__loss_fn__
+
+    def get_default_evaluator(self):
+        return self.__evaluator__
+
+    def get_dataset(self):
+        return self.__dataset__
+
+    def distributed_dataloader_proc(self, world_size, rank):
+        # TODO: just a toy implementation
+        train_loader = self.train_wrapper()
+        assert isinstance(train_loader, DataLoader)
+
+        dataset = train_loader.dataset
+        sampler = torch.utils.data.distributed.DistributedSampler(dataset, num_replicas=world_size, rank=rank)
+        train_loader.sampler = sampler
+
+    def prepare_dataloader(self, name, distributed=False, rank=0, world_size=0):
+        pass
+
+    def prepare_training_data(self, distributed=False, rank=0, world_size=0):
+        train_data = self.train_wrapper()
+        if train_data is None:
+            self.__training_data = None
         else:
-            return [loader]
+            self.__training_data = OnLoadingWrapper(train_data, self.train_transform)
+
+    def prepare_val_data(self, distributed=False, rank=0, world_size=0):
+        val_data = self.val_wrapper()
+        if val_data is None:
+            self.__val_data = None
+        else:
+            self.__val_data = OnLoadingWrapper(val_data, self.val_transform)
+
+    def prepare_test_data(self, distributed=False, rank=0, world_size=0):
+        test_data = self.test_wrapper()
+        if test_data is None:
+            self.__test_data = None
+        else:
+            self.__test_data = OnLoadingWrapper(test_data, self.test_transform)
+
+    def on_training_wrapper(self):
+        if self.__training_data is None:
+            return None
+
+        if self.__prepare_dataloader_per_epoch__:
+            # TODO: reserve parameters for `prepare training data`
+            self.prepare_training_data()
+        return self.__training_data
+
+    def on_val_wrapper(self):
+        return self.__val_data
+
+    def on_test_wrapper(self):
+        return self.__test_data
+
+    def train(self):
+        if self.__dataset__ is not None and isinstance(self.__dataset__.data, Graph):
+            self.__dataset__.data.train()
+
+    def eval(self):
+        if self.__dataset__ is not None and isinstance(self.__dataset__.data, Graph):
+            self.__dataset__.data.eval()
+
+
+class OnLoadingWrapper(object):
+    def __init__(self, data, transform):
+        self.data = self.__process_iterative_data__(data)
+        self.__num_training_data = self.__get_min_len__(self.data)
+        self.wrapped_data = self.__wrap_iteration__(self.data)
+        self.ptr = 0
+        self.transform = transform
+
+    def __next__(self):
+        if self.ptr < self.__num_training_data:
+            self.ptr += 1
+            batch = self.__next_batch__(self.wrapped_data)
+            return self.transform(batch)
+        else:
+            self.ptr = 0
+            # re-wrap the dataset per epoch
+            self.wrapped_data = self.__wrap_iteration__(self.data)
+            raise StopIteration
+
+    def __iter__(self):
+        return self
+
+    def __len__(self):
+        return self.__num_training_data
+
+    def __wrap_iteration__(self, inputs):
+        # if isinstance(inputs, tuple):
+        #     inputs = list(inputs)
+        def iter_func(in_x):
+            if isinstance(in_x, list) or isinstance(in_x, DataLoader):
+                for item in in_x:
+                    yield item
+            else:
+                yield in_x
+
+        if isinstance(inputs, list):
+            outputs = [None] * len(inputs)
+            for i, item in enumerate(inputs):
+                outputs[i] = self.__wrap_iteration__(item)
+        elif isinstance(inputs, dict):
+            outputs = {key: None for key in inputs.keys()}
+            for key, val in inputs.items():
+                outputs[key] = self.__wrap_iteration__(val)
+        else:
+            # return LoaderWrapper(inputs)
+            return iter_func(inputs)
+        return outputs
 
     def __process_iterative_data__(self, inputs):
         if inputs is None:
@@ -108,29 +214,6 @@ class DataWrapper(object):
             return next(inputs)
         return outputs
 
-    def __wrap_iteration__(self, inputs):
-        def iterative_func(in_x):
-            if isinstance(in_x, list) or isinstance(in_x, DataLoader):  # or isinstance(in_x, tuple)
-                for x in in_x:
-                    yield x
-            else:
-                yield in_x
-
-        # if isinstance(inputs, tuple):
-        #     inputs = list(inputs)
-
-        if isinstance(inputs, list):
-            outputs = [None] * len(inputs)
-            for i, item in enumerate(inputs):
-                outputs[i] = self.__wrap_iteration__(item)
-        elif isinstance(inputs, dict):
-            outputs = {key: None for key in inputs.keys()}
-            for key, val in inputs.items():
-                outputs[key] = self.__wrap_iteration__(val)
-        else:
-            return iterative_func(inputs)
-        return outputs
-
     def __get_min_len__(self, inputs):
         if inputs is None:
             return None
@@ -152,63 +235,3 @@ class DataWrapper(object):
                 return len(inputs)
             else:
                 return 1
-
-    def prepare_dataloader(self, name, distributed=False, rank=0, world_size=0):
-        pass
-
-    def prepare_training_data(self, distributed=False, rank=0, world_size=0):
-        self.__training_data = self.__process_iterative_data__(self.training_wrapper())
-        self.__num_training_data = self.__get_min_len__(self.__training_data)
-
-    def prepare_val_data(self, distributed=False, rank=0, world_size=0):
-        self.__val_data = self.__process_iterative_data__(self.val_wrapper())
-        self.__num_val_data = self.__get_min_len__(self.__val_data)
-
-    def prepare_test_data(self, distributed=False, rank=0, world_size=0):
-        self.__test_data = self.__process_iterative_data__(self.test_wrapper())
-        self.__num_test_data = self.__get_min_len__(self.__test_data)
-
-    def on_training_wrapper(self):
-        if self.__training_data is None:
-            return None
-
-        if self.__prepare_dataloader_per_epoch__:
-            # TODO: reserve parameters for `prepare training data`
-            self.prepare_training_data()
-
-        train_loader = self.__wrap_iteration__(self.__training_data)
-        for _ in range(self.__num_training_data):
-            batch = self.__next_batch__(train_loader)
-            yield self.train_transform(batch)
-
-    def on_val_wrapper(self):
-        if self.__val_data is None:
-            return None
-
-        val_loader = self.__wrap_iteration__(self.__val_data)
-        for _ in range(self.__num_val_data):
-            batch = self.__next_batch__(val_loader)
-            yield self.val_transform(batch)
-
-    def on_test_wrapper(self):
-        if self.__test_data is None:
-            return None
-
-        test_loader = self.__wrap_iteration__(self.__test_data)
-        for _ in range(self.__num_test_data):
-            batch = self.__next_batch__(test_loader)
-            yield self.test_transform(batch)
-
-    def pre_stage(self, stage, model_w_out):
-        pass
-
-    def post_stage(self, stage, model_w_out):
-        pass
-
-    def train(self):
-        if self.__dataset__ is not None and isinstance(self.__dataset__.data, Graph):
-            self.__dataset__.data.train()
-
-    def eval(self):
-        if self.__dataset__ is not None and isinstance(self.__dataset__.data, Graph):
-            self.__dataset__.data.eval()

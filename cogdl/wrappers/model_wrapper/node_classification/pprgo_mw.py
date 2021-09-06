@@ -25,8 +25,10 @@ class PPRGoModelWrapper(ModelWrapper):
 
         loss = self.default_loss_fn(pred, y)
 
+        metric = self.evaluate(pred, y, metric="auto")
+
         self.note("val_loss", loss.item())
-        self.note("val_eval_index", pre_evaluation_index(pred, y))
+        self.note("val_metric", metric)
 
     def test_step(self, batch):
         graph = batch

@@ -1,5 +1,6 @@
 import copy
 import math
+from typing import Tuple
 
 from scipy.sparse import linalg
 
@@ -12,7 +13,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from .. import register_data_wrapper, DataWrapper
-from cogdl.data import batch_graphs
+from cogdl.data import batch_graphs, Graph
 
 
 @register_data_wrapper("gcc_dw")
@@ -20,13 +21,15 @@ class GCCDataWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):
         # random walk
-        parser.add_argument("--rw-hops", type=int, default=256)
+        parser.add_argument("--batch-size", type=int, default=128)
+        parser.add_argument("--rw-hops", type=int, default=64)
         parser.add_argument("--subgraph-size", type=int, default=128)
         parser.add_argument("--restart-prob", type=float, default=0.8)
         parser.add_argument("--positional-embedding-size", type=int, default=128)
         parser.add_argument(
             "--task", type=str, default="node_classification", choices=["node_classification, graph_classification"]
         )
+        parser.add_argument("--num-workers", type=int, default=4)
 
     def __init__(
         self,
@@ -34,23 +37,24 @@ class GCCDataWrapper(DataWrapper):
         batch_size,
         finetune=False,
         num_workers=4,
-        rw_htops=4,
+        rw_hops=64,
         subgraph_size=128,
         restart_prob=0.8,
-        position_embedding_size=128,
+        positional_embedding_size=128,
         task="node_classification",
     ):
         super(GCCDataWrapper, self).__init__(dataset)
 
         data = dataset.data
+        data.add_remaining_self_loops()
         if task == "node_classification":
             if finetune:
                 self.train_dataset = NodeClassificationDatasetLabeled(
-                    data, rw_htops, subgraph_size, restart_prob, position_embedding_size
+                    data, rw_hops, subgraph_size, restart_prob, positional_embedding_size
                 )
             else:
                 self.train_dataset = NodeClassificationDataset(
-                    data, rw_htops, subgraph_size, restart_prob, position_embedding_size
+                    data, rw_hops, subgraph_size, restart_prob, positional_embedding_size
                 )
         elif task == "graph_classification":
             if finetune:
@@ -61,11 +65,11 @@ class GCCDataWrapper(DataWrapper):
         self.num_workers = num_workers
         self.finetune = finetune
 
-        self.rw_hops = rw_htops
+        self.rw_hops = rw_hops
         self.subgraph_size = subgraph_size
         self.restart_prob = restart_prob
 
-    def training_wrapper(self):
+    def train_wrapper(self):
         train_loader = DataLoader(
             dataset=self.train_dataset,
             batch_size=self.batch_size,
@@ -88,8 +92,9 @@ def labeled_batcher():
 
 def batcher():
     def batcher_dev(batch):
-        graph_q, graph_k = zip(*batch)
-        graph_q, graph_k = batch_graphs(graph_q), batch_graphs(graph_k)
+        graph_q_, graph_k_ = zip(*batch)
+        graph_q, graph_k = batch_graphs(graph_q_), batch_graphs(graph_k_)
+        graph_q.batch_size = len(graph_q_)
         return graph_q, graph_k
 
     return batcher_dev
@@ -119,16 +124,16 @@ def eigen_decomposision(n, k, laplacian, hidden_size, retry):
     return x
 
 
-def _add_undirected_graph_positional_embedding(g, hidden_size, retry=10):
+def _add_undirected_graph_positional_embedding(g: Graph, hidden_size, retry=10):
     # We use eigenvectors of normalized graph laplacian as vertex features.
     # It could be viewed as a generalization of positional embedding in the
     # attention is all you need paper.
     # Recall that the eignvectors of normalized laplacian of a line graph are cos/sin functions.
     # See section 2.4 of http://www.cs.yale.edu/homes/spielman/561/2009/lect02-09.pdf
-    n = g.number_of_nodes()
+    n = g.num_nodes
     with g.local_graph():
         g.sym_norm()
-        adj = g.to_scipy_adj()
+        adj = g.to_scipy_csr()
     laplacian = adj
 
     # adj = g.adjacency_matrix_scipy(transpose=False, return_edge_ids=False).astype(float)
@@ -142,8 +147,10 @@ def _add_undirected_graph_positional_embedding(g, hidden_size, retry=10):
     return g
 
 
-def _rwr_trace_to_cogdl_graph(g, seed, trace, positional_embedding_size, entire_graph=False):
-    subv = torch.unique(torch.cat(trace)).tolist()
+def _rwr_trace_to_cogdl_graph(
+    g: Graph, seed: int, trace: torch.Tensor, positional_embedding_size: int, entire_graph: bool = False
+):
+    subv = torch.unique(trace).tolist()
     try:
         subv.remove(seed)
     except ValueError:
@@ -156,7 +163,7 @@ def _rwr_trace_to_cogdl_graph(g, seed, trace, positional_embedding_size, entire_
 
     subg = _add_undirected_graph_positional_embedding(subg, positional_embedding_size)
 
-    subg.seed = torch.zeros(subg.number_of_nodes(), dtype=torch.long)
+    subg.seed = torch.zeros(subg.num_nodes, dtype=torch.long)
     if entire_graph:
         subg.seed[seed] = 1
     else:
@@ -167,12 +174,12 @@ def _rwr_trace_to_cogdl_graph(g, seed, trace, positional_embedding_size, entire_
 class NodeClassificationDataset(object):
     def __init__(
         self,
-        data,
-        rw_hops=64,
-        subgraph_size=64,
-        restart_prob=0.8,
-        positional_embedding_size=32,
-        step_dist=[1.0, 0.0, 0.0],
+        data: Graph,
+        rw_hops: int = 64,
+        subgraph_size: int = 64,
+        restart_prob: float = 0.8,
+        positional_embedding_size: int = 32,
+        step_dist: list = [1.0, 0.0, 0.0],
     ):
         self.rw_hops = rw_hops
         self.subgraph_size = subgraph_size
@@ -189,7 +196,7 @@ class NodeClassificationDataset(object):
     def __len__(self):
         return self.length
 
-    def _convert_idx(self, idx):
+    def _convert_idx(self, idx) -> Tuple[int, int]:
         graph_idx = 0
         node_idx = idx
         for i in range(len(self.graphs)):
@@ -209,13 +216,16 @@ class NodeClassificationDataset(object):
         if step == 0:
             other_node_idx = node_idx
         else:
-            other_node_idx = g.random_walk(start=[node_idx], length=step)[-1]
+            other_node_idx = g.random_walk([node_idx], step)[-1]
 
         max_nodes_per_seed = max(
             self.rw_hops,
-            int((self.graphs[graph_idx].out_degree(node_idx) * math.e / (math.e - 1) / self.restart_prob) + 0.5),
+            int((self.graphs[graph_idx].degrees()[node_idx] * math.e / (math.e - 1) / self.restart_prob) + 0.5),
         )
+        # TODO: `num_workers > 0` is not compatible with `numba`
         traces = g.random_walk_with_restart([node_idx, other_node_idx], max_nodes_per_seed, self.restart_prob)
+
+        # traces = [[0,1,2,3], [1,2,3,4]]
 
         graph_q = _rwr_trace_to_cogdl_graph(
             g=g,
@@ -237,7 +247,7 @@ class NodeClassificationDataset(object):
 class NodeClassificationDatasetLabeled(NodeClassificationDataset):
     def __init__(
         self,
-        dataset,
+        data,
         rw_hops=64,
         subgraph_size=64,
         restart_prob=0.8,
@@ -245,7 +255,7 @@ class NodeClassificationDatasetLabeled(NodeClassificationDataset):
         step_dist=[1.0, 0.0, 0.0],
     ):
         super(NodeClassificationDatasetLabeled, self).__init__(
-            dataset,
+            data,
             rw_hops,
             subgraph_size,
             restart_prob,
@@ -253,17 +263,17 @@ class NodeClassificationDatasetLabeled(NodeClassificationDataset):
             step_dist,
         )
         assert len(self.graphs) == 1
-        self.num_classes = self.data.y.shape[1]
+        self.num_classes = self.data.num_classes
 
     def __getitem__(self, idx):
         graph_idx = 0
         node_idx = idx
         for i in range(len(self.graphs)):
-            if node_idx < self.graphs[i].number_of_nodes():
+            if node_idx < self.graphs[i].num_nodes:
                 graph_idx = i
                 break
             else:
-                node_idx -= self.graphs[i].number_of_nodes()
+                node_idx -= self.graphs[i].num_nodes
 
         g = self.graphs[graph_idx]
         traces = g.random_walk_with_restart([node_idx], self.rw_hops, self.restart_prob)

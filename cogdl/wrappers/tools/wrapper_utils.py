@@ -48,34 +48,37 @@ def pre_evaluation_index(y_pred, y_true, sigmoid=False):
         return torch.tensor((tp, fp, fn))
 
 
-def merge_batch_indexes(key: str, values: list):
-    out_key = key
-    if key.endswith("loss"):
-        result = sum(values)
-        if torch.is_tensor(result):
-            result = result.item()
-        result = result / len(values)
-    elif key.endswith("eval_index"):
-        if len(values) > 1:
-            val = torch.stack(values)
-            val = val.sum(0)
-        else:
-            val = values[0]
-        fp = val[0]
-        all_ = val.sum()
+def merge_batch_indexes(values: list, method="mean"):
+    # if key.endswith("loss"):
+    #     result = sum(values)
+    #     if torch.is_tensor(result):
+    #         result = result.item()
+    #     result = result / len(values)
+    # elif key.endswith("eval_index"):
+    #     if len(values) > 1:
+    #         val = torch.stack(values)
+    #         val = val.sum(0)
+    #     else:
+    #         val = values[0]
+    #     fp = val[0]
+    #     all_ = val.sum()
+    #
+    #     prefix = key[: key.find("eval_index")]
+    #     if val.shape[0] == 2:
+    #         _key = prefix + "acc"
+    #     else:
+    #         _key = prefix + "f1"
+    #     result = (fp / all_).item()
+    #     out_key = _key
 
-        prefix = key[: key.find("eval_index")]
-        if val.shape[0] == 2:
-            _key = prefix + "acc"
-        else:
-            _key = prefix + "f1"
-        result = (fp / all_).item()
-        out_key = _key
-    elif isinstance(values[0], dict) or isinstance(values[0], tuple):
+    if isinstance(values[0], dict) or isinstance(values[0], tuple):
         return values
+    elif method == "mean":
+        return sum(values) / len(values)
+    elif method == "sum":
+        return sum(values)
     else:
-        result = sum(values)
-    return out_key, result
+        return sum(values)
 
 
 def node_degree_as_feature(data):

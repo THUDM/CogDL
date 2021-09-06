@@ -277,10 +277,12 @@ class Adjacency(BaseGraph):
         assert val in [True, False]
         self.__symmetric__ = val
 
-    @property
-    def degrees(self):
+    def degrees(self, node_idx=None):
         if self.row_ptr is not None:
-            return (self.row_ptr[1:] - self.row_ptr[:-1]).float()
+            degs = (self.row_ptr[1:] - self.row_ptr[:-1]).float()
+            if node_idx is not None:
+                return degs[node_idx]
+            return degs
         else:
             return get_degrees(self.row, self.col, num_nodes=self.num_nodes)
 
@@ -408,9 +410,6 @@ class Adjacency(BaseGraph):
         if weighted:
             weight = self.get_weight().tolist()
             gnx.add_weighted_edges_from([(row[i], col[i], weight[i]) for i in range(len(row))])
-            print(len(row))
-            print(gnx.number_of_edges())
-            print(gnx.number_of_nodes())
         else:
             edges = torch.stack((row, col)).cpu().numpy().transpose()
             gnx.add_edges_from(edges)
@@ -651,7 +650,7 @@ class Graph(BaseGraph):
         keys = [key for key in keys if key[:2] != "__" and key[-2:] != "__"]
         return keys
 
-    def degrees(self):
+    def degrees(self, node_idx=None):
         return self._adj.degrees
 
     def __keys__(self):

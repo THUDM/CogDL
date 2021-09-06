@@ -20,8 +20,10 @@ class SagnModelWrapper(ModelWrapper):
         batch_x, batch_y_emb, y = batch
         pred = self.model(batch_x, batch_y_emb)
 
+        metric = self.evaluate(pred, y, metric="auto")
+
         self.note("val_loss", self.default_loss_fn(pred, y))
-        self.note("val_eval_index", pre_evaluation_index(pred, y))
+        self.note("val_metric", metric)
 
     def test_step(self, batch):
         pass

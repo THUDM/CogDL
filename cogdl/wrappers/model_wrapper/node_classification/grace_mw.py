@@ -18,7 +18,7 @@ class GRACEModelWrapper(ModelWrapper):
         parser.add_argument("--drop-edge-rates", type=float, nargs="+", default=[0.2, 0.4])
         parser.add_argument("--batch-fwd", type=int, default=-1)
         parser.add_argument("--proj-hidden-size", type=int, default=128)
-        # fmt: off
+        # fmt: on
 
     def __init__(self, model, optimizer_cfg, tau, drop_feature_rates, drop_edge_rates, batch_fwd, proj_hidden_size):
         super(GRACEModelWrapper, self).__init__()
@@ -47,9 +47,7 @@ class GRACEModelWrapper(ModelWrapper):
         else:
             return 0.5 * (self.contrastive_loss(z1, z2) + self.contrastive_loss(z2, z1))
 
-    def evaluate(self, dataset):
-        device = self.device
-        graph = dataset.data.to(device)
+    def test_step(self, graph):
         with torch.no_grad():
             pred = self.model(graph)
         y = graph.y
@@ -95,7 +93,7 @@ class GRACEModelWrapper(ModelWrapper):
         losses = []
         indices = torch.arange(num_nodes).to(z1.device)
         for i in range(num_batches):
-            train_indices = indices[i * batch_size: (i + 1) * batch_size]
+            train_indices = indices[i * batch_size : (i + 1) * batch_size]
             _loss = self.contrastive_loss(z1[train_indices], z2)
             losses.append(_loss)
         return sum(losses) / len(losses)

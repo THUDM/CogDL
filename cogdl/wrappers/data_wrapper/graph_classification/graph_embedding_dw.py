@@ -18,7 +18,7 @@ class GraphEmbeddingDataWrapper(DataWrapper):
         self.dataset = dataset
         self.degree_node_features = degree_node_features
 
-    def training_wrapper(self):
+    def train_wrapper(self):
         return self.dataset
 
     def test_wrapper(self):

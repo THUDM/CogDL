@@ -21,7 +21,7 @@ class EmbeddingLinkPredictionDataWrapper(DataWrapper):
         self.negative_ratio = negative_ratio
         self.train_data, self.test_data = None, None
 
-    def training_wrapper(self):
+    def train_wrapper(self):
         return self.train_data
 
     def test_wrapper(self):

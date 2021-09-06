@@ -77,18 +77,25 @@ class GCNMixModelWrapper(ModelWrapper):
         return loss
 
     def val_step(self, subgraph):
-        pred = self.model_ema(subgraph)
-        loss = self.default_loss_fn(pred, subgraph.y)
+        graph = subgraph
+        val_mask = graph.val_mask
+        pred = self.model_ema(graph)
+        loss = self.default_loss_fn(pred[val_mask], graph.y[val_mask])
+
+        metric = self.evaluate(pred[val_mask], graph.y[val_mask], metric="auto")
 
         self.note("val_loss", loss.item())
-        self.note("val_eval_index", pre_evaluation_index(pred, subgraph.y))
+        self.note("val_metric", metric)
 
     def test_step(self, subgraph):
+        test_mask = subgraph.test_mask
         pred = self.model_ema(subgraph)
-        loss = self.default_loss_fn(pred, subgraph.y)
+        loss = self.default_loss_fn(pred[test_mask], subgraph.y[test_mask])
+
+        metric = self.evaluate(pred[test_mask], subgraph.y[test_mask], metric="auto")
 
         self.note("test_loss", loss.item())
-        self.note("test_eval_index", pre_evaluation_index(pred, subgraph.y))
+        self.note("test_metric", metric)
 
     def update_soft(self, graph):
         out = self.model(graph)

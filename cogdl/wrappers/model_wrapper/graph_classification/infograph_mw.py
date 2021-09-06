@@ -40,9 +40,8 @@ class InfoGraphModelWrapper(ModelWrapper):
             loss = self.unsup_loss(graph_feat, node_feat, batch.batch)
         return loss
 
-    def evaluate(self, data_wrapper):
+    def test_step(self, dataset):
         device = self.device
-        dataset = data_wrapper.get_dataset()
         dataloader = DataLoader(dataset, batch_size=32, shuffle=False)
         preds = []
         with torch.no_grad():
@@ -52,7 +51,7 @@ class InfoGraphModelWrapper(ModelWrapper):
         labels = np.array([g.y.item() for g in dataset])
         result = evaluate_graph_embeddings_using_svm(preds, labels)
 
-        self.note("acc", result["acc"])
+        self.note("test_acc", result["acc"])
         self.note("std", result["std"])
 
     def setup_optimizer(self):

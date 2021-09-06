@@ -3,11 +3,12 @@ import inspect
 import torch
 
 import cogdl.runner.options as options
-from cogdl.runner.trainer import Trainer
+from cogdl.runner.runner import Trainer
 from cogdl.models import build_model
 from cogdl.datasets import build_dataset
 from cogdl.wrappers import fetch_model_wrapper, fetch_data_wrapper
-from cogdl.utils import set_random_seed
+from cogdl.utils import set_random_seed, tabulate_results
+from tabulate import tabulate
 
 
 def examine_link_prediction(args, dataset):
@@ -55,7 +56,14 @@ def raw_experiment(args, model_wrapper_args, data_wrapper_args):
     # setup model
     model = build_model(args)
     # specify configs for optimizer
-    optimizer_cfg = dict(lr=args.lr, weight_decay=args.weight_decay)
+    optimizer_cfg = dict(
+        lr=args.lr,
+        weight_decay=args.weight_decay,
+        n_warmup_steps=args.n_warmup_steps,
+        max_epoch=args.max_epoch,
+        batch_size=args.batch_size if hasattr(args, "batch_size") else 0,
+    )
+
     if hasattr(args, "hidden_size"):
         optimizer_cfg["hidden_size"] = args.hidden_size
 
@@ -76,10 +84,26 @@ def raw_experiment(args, model_wrapper_args, data_wrapper_args):
         save_embedding_path=save_embedding_path,
         cpu_inference=args.cpu_inference,
         monitor=args.monitor,
+        progress_bar=args.progress_bar,
     )
     # Go!!!
     result = trainer.run(model_wrapper, dataset_wrapper)
-    print(result)
+    return result
+
+
+def run(args, model_wrapper_args, data_wrapper_args):
+    print(
+        f""" 
+    |---------------------------------------------------{'-' * (len(args.mw) + len(args.dw))}|
+     *** Using `{args.mw}` ModelWrapper and `{args.dw}` DataWrapper 
+    |---------------------------------------------------{'-' * (len(args.mw) + len(args.dw))}|"""
+    )
+    results = []
+    for seed in args.seed:
+        set_random_seed(seed)
+        out = raw_experiment(args, model_wrapper_args, data_wrapper_args)
+        results.append(out)
+    return results
 
 
 def main():
@@ -88,14 +112,11 @@ def main():
     args, model_wrapper_args, data_wrapper_args = options.parse_args_and_arch(parser, args)
     args.dataset = args.dataset[0]
     print(args)
-    print(
-        f""" 
-   |----------------------------------------------------------------------------------|
-    *** Using `{args.mw}` ModelWrapper and `{args.dw}` DataWrapper 
-   |----------------------------------------------------------------------------------|"""
-    )
-    set_random_seed(args.seed[0])
-    raw_experiment(args, model_wrapper_args, data_wrapper_args)
+    results = run(args, model_wrapper_args, data_wrapper_args)
+    column_names = ["Variant"] + list(results[-1].keys())
+    result_dict = {(args.model, args.dataset): results}
+    result = tabulate_results(result_dict)
+    print(tabulate(result, headers=column_names, tablefmt="github"))
 
 
 if __name__ == "__main__":

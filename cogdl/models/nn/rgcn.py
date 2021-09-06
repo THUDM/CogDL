@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from cogdl.utils.link_prediction_utils import GNNLinkPredict, cal_mrr, sampling_edge_uniform
+from cogdl.utils.link_prediction_utils import GNNLinkPredict, sampling_edge_uniform
 from cogdl.layers import RGCNLayer
 from .. import register_model, BaseModel
 

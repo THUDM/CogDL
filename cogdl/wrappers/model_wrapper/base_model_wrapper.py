@@ -1,7 +1,9 @@
+from typing import Union, Callable
 from abc import abstractmethod
 import torch
 from cogdl.wrappers.tools.wrapper_utils import merge_batch_indexes
 from cogdl.data import Dataset
+from cogdl.utils.evaluator import setup_evaluator
 
 
 class ModelWrapper(torch.nn.Module):
@@ -14,11 +16,10 @@ class ModelWrapper(torch.nn.Module):
         self.__model_keys__ = None
         self._loss_fn = None
         self._evaluator = None
+        self._evaluator_metric = None
         self.__record__ = dict()
 
-    def forward(
-        self,
-    ):
+    def forward(self):
         pass
 
     def pre_stage(self, stage, data_w):
@@ -36,8 +37,26 @@ class ModelWrapper(torch.nn.Module):
     def test_step(self, subgraph):
         pass
 
-    def evaluate(self, dataset: Dataset):
-        pass
+    def evaluate(self, pred: torch.Tensor, labels: torch.Tensor, metric: Union[str, Callable] = "auto"):
+        """
+        method: str or callable function,
+        """
+        pred = pred.cpu()
+        labels = labels.cpu()
+        if self._evaluator is None:
+            if metric == "auto":
+                if len(labels.shape) > 1:
+                    metric = "multilabel_microf1"
+                else:
+                    metric = "accuracy"
+
+            self._evaluator = setup_evaluator(metric)
+            self._evaluator_metric = metric
+        return self._evaluator(pred, labels)
+
+    @abstractmethod
+    def setup_optimizer(self):
+        raise NotImplementedError
 
     def on_train_step(self, *args, **kwargs):
         return self.train_step(*args, **kwargs)
@@ -50,9 +69,9 @@ class ModelWrapper(torch.nn.Module):
         out = self.test_step(*args, **kwargs)
         self.set_notes(out, "test")
 
-    def on_evaluate(self, *args, **kwargs):
-        out = self.evaluate(*args, **kwargs)
-        self.set_notes(out, "evaluate")
+    # def on_evaluate(self, *args, **kwargs):
+    #     out = self.evaluate(*args, **kwargs)
+    #     self.set_notes(out, "evaluate")
 
     def set_notes(self, out, prefix="val"):
         if isinstance(out, dict):
@@ -62,10 +81,15 @@ class ModelWrapper(torch.nn.Module):
             for i, val in enumerate(out):
                 self.note(f"{prefix}_{i}", val)
 
-    def note(self, name: str, data):
+    def note(self, name: str, data, merge="mean"):
+        """
+        name: str
+        data: Any
+        """
         if name not in self.__record__:
             name = name.lower()
             self.__record__[name] = [data]
+            self.__record_merge__[name] = merge
         else:
             self.__record__[name].append(data)
 
@@ -74,8 +98,15 @@ class ModelWrapper(torch.nn.Module):
             return None
         out = dict()
         for key, val in self.__record__.items():
-            _key, _val = merge_batch_indexes(key, val)
-            out[_key] = _val
+            if key.endswith("metric") or ():
+                _val = self._evaluator.evaluate()
+                if isinstance(self._evaluator_metric, str):
+                    key = key.replace("metric", self._evaluator_metric)
+            elif isinstance(self._evaluator_metric, str) and key.endswith(self._evaluator_metric):
+                _val = self._evaluator.evaluate()
+            else:
+                _val = merge_batch_indexes(key, val)
+            out[key] = _val
         self.__record__ = dict()
         return out
 
@@ -85,25 +116,9 @@ class ModelWrapper(torch.nn.Module):
             raise RuntimeError("`loss_fn` must be set for your ModelWrapper using `mw.default_loss_fn = your_loss_fn`.")
         return self._loss_fn
 
-    @property
-    def default_evaluator(self):
-        if self._evaluator is None:
-            raise RuntimeError(
-                "`evaluator` must be set for your ModelWrapper using " "`mw.default_evaluator = your_evaluator`."
-            )
-        return self._evaluator
-
-    @abstractmethod
-    def setup_optimizer(self):
-        raise NotImplementedError
-
     @default_loss_fn.setter
     def default_loss_fn(self, loss_fn):
         self._loss_fn = loss_fn
-
-    @default_evaluator.setter
-    def default_evaluator(self, evaluator):
-        self._evaluator = evaluator
 
     @property
     def device(self):

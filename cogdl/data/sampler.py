@@ -59,7 +59,7 @@ class SAINTBaseSampler(object):
             ==> Need to override the `preproc()` in sub-class
      2. Post-processing: upon getting the sampled subgraphs, we need to prepare the
             appropriate information (e.g., subgraph adj with renamed indices) to
-            enable the PyTorch trainer.
+            enable the PyTorch controller.
     """
 
     def __init__(self, data, args_params):

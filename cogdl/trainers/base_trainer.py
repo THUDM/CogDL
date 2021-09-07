@@ -20,7 +20,7 @@ class BaseTrainer(ABC):
     @classmethod
     @abstractmethod
     def build_trainer_from_args(cls, args):
-        """Build a new trainer instance."""
+        """Build a new controller instance."""
         raise NotImplementedError("Trainers must implement the build_trainer_from_args method")
 
     @abstractmethod

@@ -18,13 +18,16 @@ class DataLoader(torch.utils.data.DataLoader):
 
     def __init__(self, dataset, batch_size=1, shuffle=True, **kwargs):
         super(DataLoader, self).__init__(
-            # dataset, batch_size, shuffle, collate_fn=lambda data_list: Batch.from_data_list(data_list), **kwargs
             dataset,
             batch_size,
             shuffle,
             collate_fn=self.collate_fn,
             **kwargs,
         )
+        self.kwargs = kwargs
+        self.kwargs["dataset"] = dataset
+        self.kwargs["batch_size"] = batch_size
+        self.kwargs["shuffle"] = shuffle
 
     @staticmethod
     def collate_fn(batch):
@@ -37,3 +40,6 @@ class DataLoader(torch.utils.data.DataLoader):
             return torch.tensor(batch, dtype=torch.float)
 
         raise TypeError("DataLoader found invalid type: {}".format(type(item)))
+
+    def get_parameters(self):
+        return self.kwargs

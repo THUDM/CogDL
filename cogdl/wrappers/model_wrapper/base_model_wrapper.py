@@ -2,7 +2,6 @@ from typing import Union, Callable
 from abc import abstractmethod
 import torch
 from cogdl.wrappers.tools.wrapper_utils import merge_batch_indexes
-from cogdl.data import Dataset
 from cogdl.utils.evaluator import setup_evaluator
 
 
@@ -47,11 +46,13 @@ class ModelWrapper(torch.nn.Module):
             if metric == "auto":
                 if len(labels.shape) > 1:
                     metric = "multilabel_microf1"
+                    self._evaluator_metric = "micro_f1"
                 else:
                     metric = "accuracy"
+                    self._evaluator_metric = "acc"
 
             self._evaluator = setup_evaluator(metric)
-            self._evaluator_metric = metric
+            # self._evaluator_metric = metric
         return self._evaluator(pred, labels)
 
     @abstractmethod
@@ -89,7 +90,7 @@ class ModelWrapper(torch.nn.Module):
         if name not in self.__record__:
             name = name.lower()
             self.__record__[name] = [data]
-            self.__record_merge__[name] = merge
+            # self.__record_merge__[name] = merge
         else:
             self.__record__[name].append(data)
 
@@ -98,14 +99,14 @@ class ModelWrapper(torch.nn.Module):
             return None
         out = dict()
         for key, val in self.__record__.items():
-            if key.endswith("metric") or ():
+            if key.endswith("metric"):
                 _val = self._evaluator.evaluate()
                 if isinstance(self._evaluator_metric, str):
                     key = key.replace("metric", self._evaluator_metric)
             elif isinstance(self._evaluator_metric, str) and key.endswith(self._evaluator_metric):
                 _val = self._evaluator.evaluate()
             else:
-                _val = merge_batch_indexes(key, val)
+                _val = merge_batch_indexes(val)
             out[key] = _val
         self.__record__ = dict()
         return out

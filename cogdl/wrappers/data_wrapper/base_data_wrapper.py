@@ -40,6 +40,8 @@ class DataWrapper(object):
         pass
 
     def evaluation_wrapper(self):
+        if self.__dataset__ is None:
+            self.__dataset__ = getattr(self, "dataset", None)
         if self.__dataset__ is not None:
             return self.__dataset__
 
@@ -67,6 +69,9 @@ class DataWrapper(object):
     def refresh_per_epoch(self, name="train"):
         self.__prepare_dataloader_per_epoch__ = True
 
+    def __refresh_per_epoch__(self):
+        return self.__prepare_dataloader_per_epoch__
+
     def get_default_loss_fn(self):
         return self.__loss_fn__
 
@@ -74,42 +79,26 @@ class DataWrapper(object):
         return self.__evaluator__
 
     def get_dataset(self):
+        if self.__dataset__ is None:
+            self.__dataset__ = getattr(self, "dataset", None)
         return self.__dataset__
 
-    def distributed_dataloader_proc(self, world_size, rank):
-        # TODO: just a toy implementation
-        train_loader = self.train_wrapper()
-        assert isinstance(train_loader, DataLoader)
-
-        dataset = train_loader.dataset
-        sampler = torch.utils.data.distributed.DistributedSampler(dataset, num_replicas=world_size, rank=rank)
-        train_loader.sampler = sampler
-
-    def prepare_dataloader(self, name, distributed=False, rank=0, world_size=0):
-        pass
-
-    def prepare_training_data(self, distributed=False, rank=0, world_size=0):
+    def prepare_training_data(self):
         train_data = self.train_wrapper()
-        if train_data is None:
-            self.__training_data = None
-        else:
+        if train_data is not None:
             self.__training_data = OnLoadingWrapper(train_data, self.train_transform)
 
-    def prepare_val_data(self, distributed=False, rank=0, world_size=0):
+    def prepare_val_data(self):
         val_data = self.val_wrapper()
-        if val_data is None:
-            self.__val_data = None
-        else:
+        if val_data is not None:
             self.__val_data = OnLoadingWrapper(val_data, self.val_transform)
 
-    def prepare_test_data(self, distributed=False, rank=0, world_size=0):
+    def prepare_test_data(self):
         test_data = self.test_wrapper()
-        if test_data is None:
-            self.__test_data = None
-        else:
+        if test_data is not None:
             self.__test_data = OnLoadingWrapper(test_data, self.test_transform)
 
-    def on_training_wrapper(self):
+    def on_train_wrapper(self):
         if self.__training_data is None:
             return None
 
@@ -125,16 +114,25 @@ class DataWrapper(object):
         return self.__test_data
 
     def train(self):
+        if self.__dataset__ is None:
+            self.__dataset__ = getattr(self, "dataset", None)
         if self.__dataset__ is not None and isinstance(self.__dataset__.data, Graph):
             self.__dataset__.data.train()
 
     def eval(self):
+        if self.__dataset__ is None:
+            self.__dataset__ = getattr(self, "dataset", None)
         if self.__dataset__ is not None and isinstance(self.__dataset__.data, Graph):
             self.__dataset__.data.eval()
 
 
 class OnLoadingWrapper(object):
     def __init__(self, data, transform):
+        """
+        Args:
+            data: `data` or `dataset`, that it, `cogdl.Graph` or `DataLoader`
+        """
+        self.raw_data = data
         self.data = self.__process_iterative_data__(data)
         self.__num_training_data = self.__get_min_len__(self.data)
         self.wrapped_data = self.__wrap_iteration__(self.data)
@@ -157,6 +155,9 @@ class OnLoadingWrapper(object):
 
     def __len__(self):
         return self.__num_training_data
+
+    def get_dataset_from_loader(self):
+        return self.raw_data
 
     def __wrap_iteration__(self, inputs):
         # if isinstance(inputs, tuple):

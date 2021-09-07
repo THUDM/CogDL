@@ -16,7 +16,7 @@ from sklearn.cluster import KMeans
 class SelfSupervisedBaseTrainer(BaseTrainer):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        """Add trainer-specific arguments to the parser."""
+        """Add controller-specific arguments to the parser."""
         # fmt: off
         parser.add_argument('--subgraph-sampling', action='store_true')
         parser.add_argument('--sample-size', type=int, default=8192)
@@ -46,7 +46,7 @@ class SelfSupervisedBaseTrainer(BaseTrainer):
 class SelfSupervisedJointTrainer(SelfSupervisedBaseTrainer):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        """Add trainer-specific arguments to the parser."""
+        """Add controller-specific arguments to the parser."""
         # fmt: off
         SelfSupervisedBaseTrainer.add_args(parser)
         parser.add_argument('--alpha', default=10, type=float)
@@ -131,7 +131,7 @@ class SelfSupervisedJointTrainer(SelfSupervisedBaseTrainer):
 class SelfSupervisedPretrainer(SelfSupervisedBaseTrainer):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        """Add trainer-specific arguments to the parser."""
+        """Add controller-specific arguments to the parser."""
         # fmt: off
         SelfSupervisedBaseTrainer.add_args(parser)
         parser.add_argument('--alpha', default=1, type=float)

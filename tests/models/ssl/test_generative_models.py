@@ -12,7 +12,7 @@ def get_default_args():
     cuda_available = torch.cuda.is_available()
     args = {
         "dataset": "cora",
-        "trainer": "self_supervised_joint",
+        "controller": "self_supervised_joint",
         "model": "self_auxiliary_task",
         "hidden_size": 64,
         "label_mask": 0,

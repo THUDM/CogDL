@@ -1,4 +1,5 @@
 import inspect
+import os
 
 import torch
 
@@ -76,16 +77,22 @@ def raw_experiment(args, model_wrapper_args, data_wrapper_args):
     dataset_wrapper = dw_class(dataset, **data_wrapper_args.__dict__)
 
     save_embedding_path = args.emb_path if hasattr(args, "emb_path") else None
-    # setup trainer
+    os.makedirs("./checkpoints", exist_ok=True)
+    os.makedirs("./checkpoints", exist_ok=True)
+
+    # setup controller
     trainer = Trainer(
         max_epoch=args.max_epoch,
-        device_ids=args.device_id,
+        device_ids=args.devices,
         cpu=args.cpu,
         save_embedding_path=save_embedding_path,
         cpu_inference=args.cpu_inference,
         monitor=args.monitor,
         progress_bar=args.progress_bar,
+        distributed_training=args.distributed,
+        checkpoint_path=args.checkpoint_path,
     )
+
     # Go!!!
     result = trainer.run(model_wrapper, dataset_wrapper)
     return result

@@ -93,7 +93,7 @@ class SampledTrainer(BaseTrainer):
 class SAINTTrainer(SampledTrainer):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        """Add trainer-specific arguments to the parser."""
+        """Add controller-specific arguments to the parser."""
         # fmt: off
         SampledTrainer.add_args(parser)
         parser.add_argument("--eval-cpu", action="store_true")
@@ -197,7 +197,7 @@ class NeighborSamplingTrainer(SampledTrainer):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        """Add trainer-specific arguments to the parser."""
+        """Add controller-specific arguments to the parser."""
         # fmt: off
         SampledTrainer.add_args(parser)
         # fmt: on
@@ -288,7 +288,7 @@ class NeighborSamplingTrainer(SampledTrainer):
 class ClusterGCNTrainer(SampledTrainer):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        """Add trainer-specific arguments to the parser."""
+        """Add controller-specific arguments to the parser."""
         # fmt: off
         SampledTrainer.add_args(parser)
         parser.add_argument("--n-cluster", type=int, default=1000)

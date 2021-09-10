@@ -56,9 +56,9 @@ class Accuracy(object):
         tp = pred.sum().int()
         total = pred.shape[0]
 
-        if self.mini_batch:
-            self.tp.append(tp)
-            self.total.append(total)
+        # if self.mini_batch:
+        self.tp.append(tp)
+        self.total.append(total)
 
         return tp / total
 

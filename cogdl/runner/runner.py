@@ -1,15 +1,19 @@
+import copy
 from typing import Optional
 import numpy as np
 from tqdm import tqdm
+import os
 
 import torch
+import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel
 import torch.multiprocessing as mp
 
 from cogdl.wrappers.data_wrapper.base_data_wrapper import DataWrapper
 from cogdl.wrappers.model_wrapper.base_model_wrapper import ModelWrapper, EmbeddingModelWrapper
-from cogdl.runner.runner_utils import evaluation_comp
+from cogdl.runner.runner_utils import evaluation_comp, load_model, save_model, ddp_end, ddp_after_epoch, Printer
 from cogdl.runner.embed_runner import EmbeddingTrainer
+from cogdl.runner.controller import DataController
 from cogdl.data import Graph
 
 
@@ -41,10 +45,12 @@ class Trainer(object):
         max_epoch: int,
         nstage: int = 1,
         cpu: bool = False,
+        checkpoint_path: str = "./checkpoints/checkpoint.pt",
         device_ids: Optional[list] = None,
         distributed_training: bool = False,
         distributed_inference: bool = False,
-        hooks: Optional[list] = None,
+        master_addr: str = "localhost",
+        master_port: int = 10086,
         monitor: str = "val_acc",
         early_stopping: bool = True,
         patience: int = 100,
@@ -64,9 +70,12 @@ class Trainer(object):
 
         self.cpu = cpu
         self.devices, self.world_size = self.set_device(device_ids)
+        self.checkpoint_path = checkpoint_path
 
         self.distributed_training = distributed_training
         self.distributed_inference = distributed_inference
+        self.master_addr = master_addr
+        self.master_port = master_port
 
         self.cpu_inference = cpu_inference
 
@@ -76,10 +85,24 @@ class Trainer(object):
 
         self.save_embedding_path = save_embedding_path
 
-        if hooks is None:
-            self.custom_hooks = []
-        else:
-            self.custom_hooks = hooks
+        self.data_controller = DataController(world_size=self.world_size, distributed=self.distributed_training)
+
+        self.after_epoch_hooks = []
+        self.pre_epoch_hooks = []
+        self.training_end_hooks = []
+
+        if distributed_training:
+            self.register_training_end_hook(ddp_end)
+            self.register_out_epoch_hook(ddp_after_epoch)
+
+    def register_in_epoch_hook(self, hook):
+        self.pre_epoch_hooks.append(hook)
+
+    def register_out_epoch_hook(self, hook):
+        self.after_epoch_hooks.append(hook)
+
+    def register_training_end_hook(self, hook):
+        self.training_end_hooks.append(hook)
 
     def set_device(self, device_ids: Optional[list]):
         """
@@ -97,29 +120,30 @@ class Trainer(object):
         if len(device_ids) == 0:
             return torch.device("cpu"), 0
         else:
-            return [torch.device(i) for i in device_ids], len(device_ids)
+            return [i for i in device_ids], len(device_ids)
 
     def run(self, model_w: ModelWrapper, dataset_w: DataWrapper):
-        # set default loss_fn and evaluator for model_wrapper
-        # mainly for in-cogdl setting
-
         # for network/graph embedding models
         if isinstance(model_w, EmbeddingModelWrapper):
             return EmbeddingTrainer(self.save_embedding_path).run(model_w, dataset_w)
 
         # for deep learning models
+        # set default loss_fn and evaluator for model_wrapper
+        # mainly for in-cogdl setting
         model_w.default_loss_fn = dataset_w.get_default_loss_fn()
         model_w.default_evaluator = dataset_w.get_default_evaluator()
         if self.distributed_training and self.world_size > 1:
-            best_model_w = self.dist_train(model_w, dataset_w)
+            self.dist_train(model_w, dataset_w)
         else:
-            best_model_w = self.train(model_w, dataset_w, self.devices[0])
+            self.train(model_w, dataset_w, self.devices[0])
 
+        best_model_w = load_model(model_w, self.checkpoint_path).to(self.devices[0])
+        # disable `distributed` to inference once only
         final = self.test(best_model_w, dataset_w, self.devices[0])
         return final
 
     def dist_train(self, model_w: ModelWrapper, dataset_w: DataWrapper):
-        mp.set_start_method("spawn")
+        mp.set_start_method("spawn", force=True)
 
         device_count = torch.cuda.device_count()
         if device_count < self.world_size:
@@ -139,18 +163,6 @@ class Trainer(object):
         for p in processes:
             p.join()
 
-        # model.load_state_dict(torch.load(os.path.join("./checkpoints", f"{self.args.model}_{self.args.dataset}.pt")))
-        # self.model = model
-        # self.data = dataset[0]
-        # self.dataset = dataset
-        return model_w
-
-    def prepare_data_wrapper(self, dataset_w, rank):
-        dataset_w.pre_transform()
-        dataset_w.prepare_training_data(self.distributed_training, rank, self.world_size)
-        dataset_w.prepare_val_data(False, rank, self.world_size)
-        dataset_w.prepare_test_data(False, rank, self.world_size)
-
     def build_optimizer(self, model_w):
         opt_wrap = model_w.setup_optimizer()
         if isinstance(opt_wrap, list) or isinstance(opt_wrap, tuple):
@@ -166,10 +178,25 @@ class Trainer(object):
             lr_schedulars = [lr_schedulars]
         return optimizers, lr_schedulars
 
-    def train(self, model_w, dataset_w, rank):
-        self.prepare_data_wrapper(dataset_w, rank)
+    def initialize(self, model_w, rank=0, master_addr: str = "localhost", master_port: int = 10008):
+        if self.distributed_training:
+            os.environ["MASTER_ADDR"] = master_addr
+            os.environ["MASTER_PORT"] = str(master_port)
+            dist.init_process_group("nccl", rank=rank, world_size=self.world_size)
+            model_w = copy.deepcopy(model_w).to(rank)
+            model_w = DistributedDataParallel(model_w, device_ids=[rank])
 
-        model_w.to(rank)
+            module = model_w.module
+            model_w, model_ddp = module, model_w
+            return model_w, model_ddp
+        else:
+            return model_w.to(rank), None
+
+    def train(self, model_w, dataset_w, rank):
+        model_w, model_aux = self.initialize(
+            model_w, rank=rank, master_addr=self.master_addr, master_port=self.master_port
+        )
+        self.data_controller.prepare_data_wrapper(dataset_w, rank)
 
         optimizers, lr_schedulars = self.build_optimizer(model_w)
         best_index, compare_fn = evaluation_comp(self.monitor)
@@ -180,42 +207,50 @@ class Trainer(object):
             with torch.no_grad():
                 pre_stage_out = model_w.pre_stage(stage, dataset_w)
                 dataset_w.pre_stage(stage, pre_stage_out)
+                self.data_controller.training_proc_per_stage(dataset_w, rank)
 
             if self.progress_bar == "epoch":
                 epoch_iter = tqdm(range(self.max_epoch))
-                epoch_printer = epoch_iter.set_description
+                epoch_printer = Printer(epoch_iter.set_description, rank=rank, world_size=self.world_size)
             else:
                 epoch_iter = range(self.max_epoch)
-                epoch_printer = print
+                epoch_printer = Printer(print, rank=rank, world_size=self.world_size)
 
             for epoch in epoch_iter:
+                print_str_dict = dict()
+                for hook in self.pre_epoch_hooks:
+                    hook(self)
+
                 # inductive setting ..
                 dataset_w.train()
-                train_loader = dataset_w.on_training_wrapper()
+                train_loader = dataset_w.on_train_wrapper()
                 training_loss = self.training_step(model_w, train_loader, optimizers, lr_schedulars, rank)
+
+                print_str_dict["Epoch"] = epoch
+                print_str_dict["TrainLoss"] = training_loss
 
                 val_loader = dataset_w.on_val_wrapper()
                 if val_loader is not None and (epoch % self.eval_step) == 0:
                     # inductive setting ..
                     dataset_w.eval()
                     # do validation in inference device
-                    val_result = self.val_step(model_w, val_loader, rank)
-                    if val_result is None:
-                        epoch_printer(f"Epoch {epoch}, TrainLoss: {training_loss: .4f}")
-                        continue
+                    val_result = self.validate(model_w, dataset_w, rank)
+                    if val_result is not None:
+                        monitoring = val_result[self.monitor]
+                        if compare_fn(monitoring, best_index):
+                            best_index = monitoring
+                            patience = 0
+                            best_model_w = model_w
+                        else:
+                            patience += 1
+                            if self.early_stopping and patience >= self.patience:
+                                break
+                        print_str_dict["ValMetric"] = monitoring
 
-                    monitoring = val_result[self.monitor]
-                    if compare_fn(monitoring, best_index):
-                        best_index = monitoring
-                        patience = 0
-                        best_model_w = model_w
-                    else:
-                        patience += 1
-                        if self.early_stopping and patience >= self.patience:
-                            break
-                    epoch_printer(f"Epoch {epoch}, TrainLoss: {training_loss: .4f}, ValMetric: {monitoring: .4f}")
-                else:
-                    epoch_printer(f"Epoch {epoch}, TrainLoss: {training_loss: .4f}")
+                epoch_printer(print_str_dict)
+
+                for hook in self.after_epoch_hooks:
+                    hook(self)
 
             with torch.no_grad():
                 post_stage_out = model_w.post_stage(stage, dataset_w)
@@ -223,16 +258,60 @@ class Trainer(object):
 
             if best_model_w is None:
                 best_model_w = model_w
-        return best_model_w
 
-    def validate(self, model_w, val_loader, device):
+        save_model(best_model_w.to("cpu"), self.checkpoint_path)
+        for hook in self.training_end_hooks:
+            hook(self)
+
+    def validate(self, model_w: ModelWrapper, dataset_w: DataWrapper, device):
+        # ------- distributed training ---------
+        if self.distributed_training:
+            return self.distributed_test(model_w, dataset_w, device)
+        # ------- distributed training ---------
+
+        model_w.eval()
         if self.cpu_inference:
             model_w.to("cpu")
-            _device = "cpu"
+            _device = device
         else:
             _device = device
+
+        val_loader = dataset_w.on_val_wrapper()
         result = self.val_step(model_w, val_loader, _device)
+
         model_w.to(device)
+        return result
+
+    def test(self, model_w: ModelWrapper, dataset_w: DataWrapper, device):
+        model_w.eval()
+        if self.cpu_inference:
+            model_w.to("cpu")
+            _device = device
+        else:
+            _device = device
+
+        test_loader = dataset_w.on_test_wrapper()
+        result = self.test_step(model_w, test_loader, _device)
+
+        model_w.to(device)
+        return result
+
+    def distributed_test(self, model_w: ModelWrapper, dataset_w: DataWrapper, rank):
+        model_w.eval()
+        if rank == 0:
+            if self.cpu_inference:
+                model_w.to("cpu")
+                _device = rank
+            else:
+                _device = rank
+            test_loader = dataset_w.on_test_wrapper()
+            result = self.test_step(model_w, test_loader, _device)
+            object_list = [result]
+            model_w.to(rank)
+        else:
+            object_list = [None, None]
+        dist.broadcast_object_list(object_list, src=0)
+        result = object_list[0]
         return result
 
     def training_step(self, model_w, train_loader, optimizers, lr_schedulars, device):
@@ -261,28 +340,6 @@ class Trainer(object):
             for lr_schedular in lr_schedulars:
                 lr_schedular.step()
         return np.mean(losses)
-
-    def test(self, model_w: ModelWrapper, dataset_w: DataWrapper, device):
-        model_w.eval()
-        if self.cpu_inference:
-            model_w.to("cpu")
-            _device = device
-        else:
-            _device = device
-
-        test_loader = dataset_w.on_test_wrapper()
-        result = self.test_step(model_w, test_loader, _device)
-
-        # model_w.on_evaluate(dataset_w.evaluation_wrapper())
-        # result_eval = model_w.collect_notes()
-
-        model_w.to(device)
-        return result
-        #
-        # if result is not None:
-        #     return result
-        # else:
-        #     return result_eval
 
     @torch.no_grad()
     def val_step(self, model_w, val_loader, device):

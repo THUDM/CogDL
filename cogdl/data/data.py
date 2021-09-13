@@ -407,9 +407,6 @@ class Adjacency(BaseGraph):
         if weighted:
             weight = self.get_weight().tolist()
             gnx.add_weighted_edges_from([(row[i], col[i], weight[i]) for i in range(len(row))])
-            print(len(row))
-            print(gnx.number_of_edges())
-            print(gnx.number_of_nodes())
         else:
             edges = torch.stack((row, col)).cpu().numpy().transpose()
             gnx.add_edges_from(edges)

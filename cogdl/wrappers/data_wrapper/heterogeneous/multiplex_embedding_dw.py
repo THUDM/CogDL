@@ -12,4 +12,4 @@ class MultiplexEmbeddingDataWrapper(DataWrapper):
         return self.dataset.data.train_data
 
     def test_wrapper(self):
-        return self.dataset.data, self.dataset.data.test_data
+        return self.dataset.data.test_data

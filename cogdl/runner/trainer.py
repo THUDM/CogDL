@@ -22,6 +22,8 @@ def move_to_device(batch, device):
                 x.to(device)
     elif torch.is_tensor(batch) or isinstance(batch, Graph):
         batch.to(device)
+    elif hasattr(batch, "apply_to_device"):
+        batch.apply_to_device(device)
     return batch
 
 
@@ -136,7 +138,7 @@ class Trainer(object):
         optimizer = model_w.setup_optimizer()
         train_loader = dataset_w.on_training_wrapper()
         val_loader = dataset_w.on_val_wrapper()
-        test_loader = dataset_w.on_test_wrapper()
+        # test_loader = dataset_w.on_test_wrapper()
 
         best_index, compare_fn = evaluation_comp(self.monitor)
         best_model_w = None

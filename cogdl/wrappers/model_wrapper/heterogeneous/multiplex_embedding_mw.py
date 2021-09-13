@@ -1,5 +1,4 @@
 import argparse
-import networkx as nx
 import numpy as np
 import torch
 from sklearn.metrics import auc, f1_score, precision_recall_curve, roc_auc_score
@@ -39,6 +38,7 @@ def evaluate(embs, true_edges, false_edges):
     ps, rs, _ = precision_recall_curve(y_true, y_scores)
     return roc_auc_score(y_true, y_scores), f1_score(y_true, y_pred), auc(rs, ps)
 
+
 def evaluate_multiplex(all_embs, test_data):
     total_roc_auc, total_f1_score, total_pr_auc = [], [], []
     for key in test_data.keys():
@@ -66,8 +66,8 @@ class MultiplexEmbeddingModelWrapper(EmbeddingModelWrapper):
         parser.add_argument("--hidden-size", type=int, default=200)
         parser.add_argument("--eval-type", type=str, default='all', nargs='+')
         # fmt: on
-    
-    def __init__(self, model, hidden_size=200, eval_type='all'):
+
+    def __init__(self, model, hidden_size=200, eval_type="all"):
         super(MultiplexEmbeddingModelWrapper, self).__init__()
         self.model = model
         self.hidden_size = hidden_size
@@ -80,14 +80,8 @@ class MultiplexEmbeddingModelWrapper(EmbeddingModelWrapper):
             all_embs = dict()
             for key in batch.keys():
                 if self.eval_type == "all" or key in self.eval_type:
-                    # embs = dict()
-                    # G = nx.Graph()
-                    # G.add_edges_from(batch[key])
                     G = Graph(edge_index=torch.LongTensor(batch[key]).transpose(0, 1))
                     embs = self.model(G, return_dict=True)
-
-                    # for vid, node in enumerate(G.nodes()):
-                    #     embs[node] = embeddings[vid]
                 all_embs[key] = embs
         return all_embs
 

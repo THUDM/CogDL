@@ -40,10 +40,10 @@ class EmbeddingTrainer(object):
         return embeddings
 
     def test(self, model_w, dataset_w, embeddings):
-        _, labels = dataset_w.on_test_wrapper()[0]
-        if torch.is_tensor(labels):
-            labels = labels.cpu().numpy()
-        result = model_w.test_step((embeddings, labels))
+        test_data = dataset_w.on_test_wrapper()[0]
+        if torch.is_tensor(test_data):
+            test_data = test_data.cpu().numpy()
+        result = model_w.test_step((embeddings, test_data))
         return result
 
     def save_embedding(self, embeddings):

@@ -186,13 +186,11 @@ multiplex_node_classification:
 heterogeneous_node_classification:
   - model:
     - gtn
+    - han
     dataset:
     - gtn-dblp
     - gtn-acm
     - gtn-imdb
-  - model:
-    - han
-    dataset:
     - han-dblp
     - han-acm
     - han-imdb

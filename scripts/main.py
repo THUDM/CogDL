@@ -12,6 +12,10 @@ def raw_experiment(args, model_wrapper_args, data_wrapper_args):
     dataset = build_dataset(args)
     args.num_features = dataset.num_features
     args.num_classes = dataset.num_classes
+    if hasattr(dataset, "num_nodes"):
+        args.num_nodes = dataset.num_nodes
+    if hasattr(dataset, "num_edge"):
+        args.num_edge = dataset.num_edge
     # setup model
     model = build_model(args)
     # specify configs for optimizer

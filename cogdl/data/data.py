@@ -46,7 +46,8 @@ class BaseGraph(object):
 
     def __len__(self):
         r"""Returns the number of all present attributes."""
-        return len(self.keys)
+        # return len(self.keys)
+        return 1
 
     def __contains__(self, key):
         r"""Returns :obj:`True`, if the attribute :obj:`key` is present in the
@@ -276,10 +277,12 @@ class Adjacency(BaseGraph):
         assert val in [True, False]
         self.__symmetric__ = val
 
-    @property
-    def degrees(self):
+    def degrees(self, node_idx=None):
         if self.row_ptr is not None:
-            return (self.row_ptr[1:] - self.row_ptr[:-1]).float()
+            degs = (self.row_ptr[1:] - self.row_ptr[:-1]).float()
+            if node_idx is not None:
+                return degs[node_idx]
+            return degs
         else:
             return get_degrees(self.row, self.col, num_nodes=self.num_nodes)
 
@@ -412,14 +415,11 @@ class Adjacency(BaseGraph):
             gnx.add_edges_from(edges)
         return gnx
 
-    def random_walk(self, start, length=1, restart_p=0.0):
+    def random_walk(self, seeds, length=1, restart_p=0.0):
         if not hasattr(self, "__walker__"):
             scipy_adj = self.to_scipy_csr()
             self.__walker__ = RandomWalker(scipy_adj)
-        return self.__walker__.walk(start, length, restart_p=restart_p)
-
-    def random_walk_with_restart(self, start, length, restart_p):
-        return self.random_walk(start, length, restart_p)
+        return self.__walker__.walk(seeds, length, restart_p=restart_p)
 
     @staticmethod
     def from_dict(dictionary):
@@ -493,6 +493,7 @@ class Graph(BaseGraph):
         self._adj = self._adj_full
         self.__is_train__ = False
         self.__temp_adj_stack__ = list()
+        self.__temp_storage__ = dict()
 
     def train(self):
         self.__is_train__ = True
@@ -619,14 +620,12 @@ class Graph(BaseGraph):
 
     @property
     def row_indptr(self):
-        if self._adj.row_ptr is None:
-            self._adj.convert_csr()
-        return self._adj.row_ptr
+        return self._adj.row_indptr
 
     @property
     def col_indices(self):
         if self._adj.row_ptr is None:
-            self._adj.convert_csr()
+            self._adj._to_csr()
         return self._adj.col
 
     @row_indptr.setter
@@ -651,7 +650,7 @@ class Graph(BaseGraph):
         keys = [key for key in keys if key[:2] != "__" and key[-2:] != "__"]
         return keys
 
-    def degrees(self):
+    def degrees(self, node_idx=None):
         return self._adj.degrees
 
     def __keys__(self):
@@ -722,6 +721,20 @@ class Graph(BaseGraph):
     def clone(self):
         return Graph.from_dict({k: v.clone() for k, v in self})
 
+    def store(self, key):
+        if hasattr(self, key) and not callable(getattr(self, key)):
+            self.__temp_storage__[key] = copy.deepcopy(getattr(self, key))
+        if hasattr(self._adj, key) and not callable(getattr(self._adj, key)):
+            self.__temp_storage__[key] = copy.deepcopy(getattr(self._adj, key))
+
+    def restore(self, key):
+        if key in self.__temp_storage__:
+            if hasattr(self, key) and not callable(getattr(self, key)):
+                setattr(self, key, self.__temp_storage__[key])
+            elif hasattr(self._adj, key) and not callable(getattr(self._adj, key)):
+                self(self._adj, key, self.__temp_storage__[key])
+            self.__temp_storage__.pop(key)
+
     def __delitem__(self, key):
         if hasattr(self, key):
             self[key] = None
@@ -735,7 +748,10 @@ class Graph(BaseGraph):
         if sample_adj_c is not None:
             if not torch.is_tensor(batch):
                 batch = torch.tensor(batch, dtype=torch.long)
-            (row_ptr, col_indices, nodes, edges) = sample_adj_c(self._adj.row_ptr, self._adj.col, batch, size, replace)
+            # (row_ptr, col_indices, nodes, edges) = sample_adj_c(self._adj.row_ptr, self._adj.col, batch, size, replace)
+            (row_ptr, col_indices, nodes, edges) = sample_adj_c(
+                self._adj.row_indptr, self.col_indices, batch, size, replace
+            )
         else:
             if not (batch[1:] > batch[:-1]).all():
                 batch = batch.sort()[0]
@@ -852,6 +868,12 @@ class Graph(BaseGraph):
             return g, nodes, edge_idx
         else:
             return g
+
+    def random_walk(self, seeds, max_nodes_per_seed, restart_p=0.0):
+        return self._adj.random_walk(seeds, max_nodes_per_seed, restart_p)
+
+    def random_walk_with_restart(self, seeds, max_nodes_per_seed, restart_p=0.0):
+        return self._adj.random_walk(seeds, max_nodes_per_seed, restart_p)
 
     def to_scipy_csr(self):
         return self._adj.to_scipy_csr()

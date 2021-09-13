@@ -8,7 +8,7 @@ class HeterogeneousEmbeddingDataWrapper(DataWrapper):
 
         self.dataset = dataset
 
-    def training_wrapper(self):
+    def train_wrapper(self):
         return self.dataset.data
 
     def test_wrapper(self):

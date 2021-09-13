@@ -26,48 +26,44 @@ class PatchySAN(BaseModel):
 
     @staticmethod
     def add_args(parser):
-        parser.add_argument("--batch-size", type=int, default=20)
-        parser.add_argument("--sample", default=30, type=int, help="Number of chosen vertexes")
-        parser.add_argument("--stride", default=1, type=int, help="Stride of chosen vertexes")
-        parser.add_argument("--neighbor", default=10, type=int, help="Number of neighbor in constructing features")
+        parser.add_argument("--num-sample", default=30, type=int, help="Number of chosen vertexes")
+        # parser.add_argument("--stride", default=1, type=int, help="Stride of chosen vertexes")
+        parser.add_argument("--num-neighbor", default=10, type=int, help="Number of neighbor in constructing features")
         parser.add_argument("--iteration", default=5, type=int, help="Number of iteration")
-        parser.add_argument("--train-ratio", type=float, default=0.7)
-        parser.add_argument("--test-ratio", type=float, default=0.1)
 
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            args.batch_size,
             args.num_features,
             args.num_classes,
             args.sample,
-            args.stride,
+            # args.stride,
             args.neighbor,
             args.iteration,
         )
 
     @classmethod
-    def split_dataset(self, dataset, args):
-        # process each graph and add it into Data() as attribute tx
+    def split_dataset(cls, dataset, args):
+        # process each graph and add it into Data() as attribute x
         for i, data in enumerate(dataset):
             new_feature = get_single_feature(
                 dataset[i], args.num_features, args.num_classes, args.sample, args.neighbor, args.stride
             )
-            dataset[i].tx = torch.from_numpy(new_feature)
+            dataset[i].x = torch.from_numpy(new_feature)
 
         return split_dataset_general(dataset, args)
 
-    def __init__(self, batch_size, num_features, num_classes, num_sample, stride, num_neighbor, iteration):
+    # def __init__(self, batch_size, num_features, num_classes, num_sample, stride, num_neighbor, iteration):
+    def __init__(self, num_features, num_classes, num_sample, num_neighbor, iteration):
         super(PatchySAN, self).__init__()
 
-        self.batch_size = batch_size
         self.num_features = num_features
         self.num_classes = num_classes
         self.num_sample = num_sample
-        self.stride = stride
         self.num_neighbor = num_neighbor
         self.iteration = iteration
 
+        # self.build_model(self.num_features, self.num_sample, self.num_neighbor, self.num_classes)
         self.build_model(self.num_features, self.num_sample, self.num_neighbor, self.num_classes)
 
     def build_model(self, num_channel, num_sample, num_neighbor, num_class):
@@ -94,7 +90,7 @@ class PatchySAN(BaseModel):
         )
 
     def forward(self, batch):
-        logits = self.nn(batch.tx)
+        logits = self.nn(batch.x)
         return logits
 
 

@@ -26,7 +26,7 @@ class PPRDataWrapper(DataWrapper):
         self.topk, self.alpha, self.norm, self.eps = topk, alpha, norm, eps
         self.dataset = dataset
 
-    def training_wrapper(self):
+    def train_wrapper(self):
         """
         batch: tuple(x, targets, ppr_scores, y)
             x: shape=(b, num_features)

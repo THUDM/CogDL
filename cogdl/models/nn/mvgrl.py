@@ -129,6 +129,7 @@ class MVGRL(SelfSupervisedContrastiveModel):
         return adj, diff
 
     def preprocess(self, graph):
+        print("MVGRL preprocessing...")
         graph.add_remaining_self_loops()
         graph.sym_norm()
 
@@ -147,8 +148,12 @@ class MVGRL(SelfSupervisedContrastiveModel):
         self.cache["diff"] = graphs[1]
         self.cache["adj"] = graphs[0]
         self.device = next(self.gcn1.parameters()).device
+        print("Preprocessing Done...")
 
     def forward(self, graph):
+        if not self.training:
+            return self.embed(graph)
+
         x = graph.x
         if self.cache is None or "diff" not in self.cache:
             self.preprocess(graph)
@@ -181,9 +186,6 @@ class MVGRL(SelfSupervisedContrastiveModel):
         logits = self.forward(data)
         loss = self.loss_f(logits, lbl)
         return loss
-
-    def self_supervised_loss(self, data):
-        return self.loss(data)
 
     def embed(self, data, msk=None):
         adj = self.cache["adj"].to(self.device)

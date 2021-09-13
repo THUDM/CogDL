@@ -164,7 +164,7 @@ def train(model, dataset, args, rank, evaluator, loss_fn):
 class DistributedClusterGCNTrainer(BaseTrainer):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        """Add trainer-specific arguments to the parser."""
+        """Add controller-specific arguments to the parser."""
         # fmt: off
         parser.add_argument("--n-cluster", type=int, default=1000)
         parser.add_argument("--batch-size", type=int, default=20)

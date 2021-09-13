@@ -1,6 +1,5 @@
 import torch
 from cogdl.wrappers.model_wrapper import ModelWrapper, register_model_wrapper
-from cogdl.wrappers.wrapper_utils import pre_evaluation_index
 
 
 @register_model_wrapper("heterogeneous_gnn_mw")
@@ -22,14 +21,18 @@ class HeterogeneousGNNModelWrapper(ModelWrapper):
         pred = self.model(graph)
         val_mask = graph.valid_node
         loss = self.default_loss_fn(pred[val_mask], graph.y[val_mask])
-        return dict(val_loss=loss, val_eval_index=pre_evaluation_index(pred[val_mask], graph.y[val_mask]))
+        metric = self.evaluate(pred[val_mask], graph.y[val_mask], metric="auto")
+        self.note("val_loss", loss.item())
+        self.note("val_acc", metric)
 
     def test_step(self, batch):
         graph = batch.data
         pred = self.model(graph)
         test_mask = graph.test_node
         loss = self.default_loss_fn(pred[test_mask], graph.y[test_mask])
-        return dict(test_loss=loss, test_eval_index=pre_evaluation_index(pred[test_mask], graph.y[test_mask]))
+        metric = self.evaluate(pred[test_mask], graph.y[test_mask], metric="auto")
+        self.note("test_loss", loss.item())
+        self.note("test_acc", metric)
 
     def setup_optimizer(self):
         cfg = self.optimizer_config

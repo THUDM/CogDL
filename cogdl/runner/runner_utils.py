@@ -1,6 +1,9 @@
+from typing import Dict
+
 import numpy as np
 
 import torch
+import torch.distributed as dist
 
 
 def merge_batch_indexes(outputs: list):
@@ -45,3 +48,42 @@ def evaluation_comp(monitor):
         return np.inf, smaller_than
     else:
         return 0, bigger_than
+
+
+def save_model(model, path):
+    print(f"Saving model to {path} ...")
+    torch.save(model.state_dict(), path)
+
+
+def load_model(model, path):
+    print(f"Loading model from {path} ...")
+    model.load_state_dict(torch.load(path))
+    return model
+
+
+def ddp_after_epoch(*args):
+    dist.barrier()
+
+
+def ddp_end(*args):
+    dist.barrier()
+    dist.destroy_process_group()
+
+
+class Printer(object):
+    def __init__(self, print_fn, rank=0, world_size=1):
+        self.printer = print_fn
+        self.to_print = (world_size <= 1) or rank == 0 or rank == "cpu"
+
+    def __call__(self, k_v: Dict):
+        if self.to_print:
+            assert "Epoch" in k_v
+            out = f"Epoch: {k_v['Epoch']}"
+            k_v.pop("Epoch")
+
+            for k, v in k_v.items():
+                if isinstance(v, float):
+                    out += f", {k}: {v: .4f}"
+                else:
+                    out += f", {k}: {v}"
+            self.printer(out)

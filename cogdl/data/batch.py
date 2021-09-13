@@ -4,6 +4,10 @@ import torch
 from cogdl.data import Graph, Adjacency
 
 
+def batch_graphs(graphs):
+    return Batch.from_data_list(graphs, class_type=Graph)
+
+
 class Batch(Graph):
     r"""A plain old python object modeling a batch of graphs as one big
     (dicconnected) graph. With :class:`cogdl.data.Data` being the
@@ -19,7 +23,7 @@ class Batch(Graph):
         self.__slices__ = None
 
     @staticmethod
-    def from_data_list(data_list):
+    def from_data_list(data_list, class_type=None):
         r"""Constructs a batch object from a python list holding
         :class:`cogdl.data.Data` objects.
         The assignment vector :obj:`batch` is created on the fly.
@@ -31,8 +35,11 @@ class Batch(Graph):
         keys = list(set.union(*keys))
         assert "batch" not in keys
 
-        batch = Batch()
-        batch.__data_class__ = data_list[0].__class__
+        if class_type is not None:
+            batch = class_type()
+        else:
+            batch = Batch()
+            batch.__data_class__ = data_list[0].__class__
         batch.__slices__ = {key: [0] for key in keys}
 
         for key in keys:

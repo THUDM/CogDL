@@ -16,6 +16,7 @@ from .rgcn_layer import RGCNLayer
 from .sgc_layer import SGCLayer
 from .mixhop_layer import MixHopLayer
 from .reversible_layer import RevGNNLayer
+from .set2set import Set2Set
 
 
 __all__ = [
@@ -40,4 +41,5 @@ __all__ = [
     "MixHopLayer",
     "MLP",
     "RevGNNLayer",
+    "Set2Set",
 ]

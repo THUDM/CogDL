@@ -38,6 +38,7 @@ def scan_data_wrappers():
     for _dir, _name in dirs_names:
         files = os.listdir(_dir)
         dw = [x.split(".")[0] for x in files]
+        dw = [x for x in dw if not x.startswith("__")]
         path = [f"cogdl.wrappers.data_wrapper.{_name}.{x}" for x in dw]
         for x, y in zip(dw, path):
             dw_dict[x] = y

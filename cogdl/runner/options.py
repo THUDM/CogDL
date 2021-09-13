@@ -1,43 +1,63 @@
 import sys
 import argparse
 import copy
+from typing import Optional
 
 from cogdl.datasets import try_import_dataset
 from cogdl.models import MODEL_REGISTRY, try_import_model
 from cogdl.wrappers import fetch_data_wrapper, fetch_model_wrapper
 from cogdl.utils import build_args_from_dict
+from cogdl.wrappers.default_match import get_wrappers_name
+
+
+def add_args(args: list):
+    parser = argparse.ArgumentParser()
+    if "lr" in args:
+        parser.add_argument("--lr", default=0.01, type=float)
+    if "max_epoch" in args:
+        parser.add_argument("--max-epoch", default=500, type=int)
+
+
+def add_arguments(args: list):
+    parser = argparse.ArgumentParser()
+    for item in args:
+        name, _type, default = item
+        parser.add_argument(f"--{name}", default=default, type=_type)
+    return parser
 
 
 def get_parser():
     parser = argparse.ArgumentParser(conflict_handler="resolve")
     # fmt: off
-    # parser.add_argument("--log-interval", type=int, default=1000, metavar="N",
-    #                     help="log progress every N batches (when progress bar is disabled)")
-    # parser.add_argument("--tensorboard-logdir", metavar="DIR", default='',
-    #                     help="path to save logs for tensorboard, should match --logdir "
-    #                          "of running tensorboard (default: no tensorboard logging)")
     parser.add_argument("--seed", default=[1], type=int, nargs="+", metavar="N",
                         help="pseudo random number generator seed")
     parser.add_argument("--max-epoch", default=500, type=int)
     parser.add_argument("--patience", type=int, default=100)
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--weight-decay", default=5e-4, type=float)
-    parser.add_argument("--cpu", action="store_true", help="use CPU instead of CUDA")
-    parser.add_argument("--device-id", default=[0], type=int, nargs="+",
-                        help="which GPU to use")
-    parser.add_argument("--save-dir", default=".", type=str)
-    parser.add_argument("--checkpoint", type=str, default=None, help="load pre-trained model")
-    parser.add_argument("--save-model", type=str, default=None, help="save trained model")
-    parser.add_argument("--use-best-config", action="store_true", help="use best config")
+    parser.add_argument("--n-warmup-steps", type=int, default=0)
 
+    parser.add_argument("--checkpoint-path", type=str, default="./checkpoints/model.pt", help="path to save model")
+    parser.add_argument("--use-best-config", action="store_true", help="use best config")
+    parser.add_argument("--unsup", action="store_true")
+
+    parser.add_argument("--devices", default=[0], type=int, nargs="+", help="which GPU to use")
+    parser.add_argument("--cpu", action="store_true", help="use CPU instead of CUDA")
+    parser.add_argument("--cpu-inference", action="store_true", help="do validation and test in cpu")
+    parser.add_argument("--monitor", type=str, default="val_acc")
+    parser.add_argument("--distributed", action="store_true")
+    parser.add_argument("--progress-bar", type=str, default="epoch")
+    parser.add_argument("--local_rank", type=int, default=0)
+    parser.add_argument("--master-port", type=int, default=13425)
+    parser.add_argument("--master-addr", type=str, default="localhost")
     # fmt: on
     return parser
 
 
 def add_data_wrapper_args(parser):
-    group = parser.add_argument_group("Data warpper configuration")
+    group = parser.add_argument_group("Data wrapper configuration")
     # fmt: off
-    group.add_argument("--dw", "-t", default="node_classification_dw", metavar="DWRAPPER", required=True,
+    group.add_argument("--dw", "-t", type=str, default=None, metavar="DWRAPPER", required=False,
                        help="Data Wrapper")
     # fmt: on
     return group
@@ -46,7 +66,7 @@ def add_data_wrapper_args(parser):
 def add_model_wrapper_args(parser):
     group = parser.add_argument_group("Trainer configuration")
     # fmt: off
-    group.add_argument("--mw", default="node_classification_mw", metavar="MWRAPPER", required=True,
+    group.add_argument("--mw", type=str, default=None, metavar="MWRAPPER", required=False,
                        help="Model Wrapper")
     # fmt: on
     return group
@@ -131,18 +151,32 @@ def parse_args_and_arch(parser, args):
         # if hasattr(DATASET_REGISTRY[dataset], "add_args"):
         #     DATASET_REGISTRY[dataset].add_args(parser)
 
-    if hasattr(fetch_data_wrapper(args.dw), "add_args"):
-        fetch_data_wrapper(args.dw).add_args(parser)
+    default_wrappers = get_wrappers_name(args.model)
+    if default_wrappers is not None:
+        mw, dw = default_wrappers
+    else:
+        mw, dw = None, None
+
+    if args.dw is not None:
+        dw = args.dw
+    if hasattr(fetch_data_wrapper(dw), "add_args"):
+        fetch_data_wrapper(dw).add_args(parser)
+
     args_dw, _ = parser.parse_known_args()
+
     data_wrapper_args = get_diff_args(args_dw, args_m)
 
-    if hasattr(fetch_model_wrapper(args.mw), "add_args"):
-        fetch_model_wrapper(args.mw).add_args(parser)
+    if args.mw is not None:
+        mw = args.mw
+    if hasattr(fetch_model_wrapper(mw), "add_args"):
+        fetch_model_wrapper(mw).add_args(parser)
     args_mw, _ = parser.parse_known_args()
     model_wrapper_args = get_diff_args(args_mw, args_dw)
 
     # Parse a second time.
     args = parser.parse_args()
+    args.mw = mw
+    args.dw = dw
     # return args
     return args, model_wrapper_args, data_wrapper_args
 

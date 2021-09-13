@@ -19,8 +19,8 @@ class NetworkEmbeddingDataWrapper(DataWrapper):
             self.label_matrix = np.zeros((num_nodes, num_classes), dtype=int)
             self.label_matrix[range(num_nodes), data.y.numpy()] = 1
 
-    def training_wrapper(self):
+    def train_wrapper(self):
         return self.dataset.data
 
     def test_wrapper(self):
-        return self.dataset.data, self.label_matrix
+        return self.label_matrix

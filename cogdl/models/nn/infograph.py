@@ -131,6 +131,7 @@ class InfoGraph(BaseModel):
         self.sup = sup
         self.emb_dim = hidden_dim
         self.out_feats = out_feats
+        self.num_layers = num_layers
 
         self.sem_fc1 = nn.Linear(num_layers * hidden_dim, hidden_dim)
         self.sem_fc2 = nn.Linear(hidden_dim, out_feats)

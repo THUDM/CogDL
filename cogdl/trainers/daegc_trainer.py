@@ -10,6 +10,7 @@ from .base_trainer import BaseTrainer
 
 class DAEGCTrainer(BaseTrainer):
     def __init__(self, args):
+        super(DAEGCTrainer, self).__init__()
         self.num_clusters = args.num_clusters
         self.max_epoch = args.max_epoch
         self.lr = args.lr

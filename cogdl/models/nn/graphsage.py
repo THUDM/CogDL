@@ -1,4 +1,3 @@
-from typing import Any
 import random
 
 import torch
@@ -45,7 +44,7 @@ class Graphsage(BaseModel):
         parser.add_argument("--num-layers", type=int, default=2)
         parser.add_argument("--sample-size", type=int, nargs='+', default=[10, 10])
         parser.add_argument("--dropout", type=float, default=0.5)
-        parser.add_argument("--batch-size", type=int, default=128)
+        # parser.add_argument("--batch-size", type=int, default=128)
         parser.add_argument("--aggr", type=str, default="mean")
         # fmt: on
 

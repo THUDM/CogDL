@@ -64,7 +64,7 @@ class BaseTask(ABC, metaclass=LoadFrom):
         self.evaluator = dataset.get_evaluator()
 
     def get_trainer(self, args):
-        if hasattr(args, "trainer") and args.trainer is not None:
+        if hasattr(args, "controller") and args.trainer is not None:
             if "self_auxiliary_task" in args.trainer and not hasattr(self.model, "embed"):
                 raise ValueError("Model ({}) must implement embed method".format(args.model))
             return build_trainer(args)

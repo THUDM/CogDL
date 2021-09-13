@@ -13,26 +13,26 @@ class GATLayer(nn.Module):
     """
 
     def __init__(
-        self, in_features, out_features, nhead=1, alpha=0.2, attn_drop=0.5, activation=None, residual=False, norm=None
+        self, in_feats, out_feats, nhead=1, alpha=0.2, attn_drop=0.5, activation=None, residual=False, norm=None
     ):
         super(GATLayer, self).__init__()
-        self.in_features = in_features
-        self.out_features = out_features
+        self.in_features = in_feats
+        self.out_features = out_feats
         self.alpha = alpha
         self.nhead = nhead
 
-        self.W = nn.Parameter(torch.FloatTensor(in_features, out_features * nhead))
+        self.W = nn.Parameter(torch.FloatTensor(in_feats, out_feats * nhead))
 
-        self.a_l = nn.Parameter(torch.zeros(size=(1, nhead, out_features)))
-        self.a_r = nn.Parameter(torch.zeros(size=(1, nhead, out_features)))
+        self.a_l = nn.Parameter(torch.zeros(size=(1, nhead, out_feats)))
+        self.a_r = nn.Parameter(torch.zeros(size=(1, nhead, out_feats)))
 
         self.dropout = nn.Dropout(attn_drop)
         self.leakyrelu = nn.LeakyReLU(self.alpha)
         self.act = None if activation is None else get_activation(activation)
-        self.norm = None if norm is None else get_norm_layer(norm, out_features * nhead)
+        self.norm = None if norm is None else get_norm_layer(norm, out_feats * nhead)
 
         if residual:
-            self.residual = nn.Linear(in_features, out_features * nhead)
+            self.residual = nn.Linear(in_feats, out_feats * nhead)
         else:
             self.register_buffer("residual", None)
         self.reset_parameters()

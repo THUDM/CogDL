@@ -193,7 +193,7 @@ class DistributedClusterGCNTrainer(DistributedSampledTrainer, ClusterGCNTrainer)
         )
 
         if torch.__version__.split("+")[0] < "1.7.1":
-            settings.pop("persistent_wo rkers")
+            settings.pop("persistent_workers")
 
         data.train()
         train_loader = ClusteredLoader(

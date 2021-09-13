@@ -8,7 +8,7 @@ class HeterogeneousGNNDataWrapper(DataWrapper):
 
         self.dataset = dataset
 
-    def training_wrapper(self):
+    def train_wrapper(self):
         return self.dataset
 
     def val_wrapper(self):

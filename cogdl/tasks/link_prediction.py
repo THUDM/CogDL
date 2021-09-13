@@ -18,6 +18,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from . import BaseTask, register_task
+from ..data import Graph
 
 
 def save_model(model, optimizer, save_variable_list, args):
@@ -203,10 +204,11 @@ class HomoLinkPrediction(nn.Module):
         self.model.set_device(self.device)
 
     def train(self):
-        G = nx.Graph()
-        G.add_edges_from(self.train_data)
+        train_data = torch.from_numpy(np.array(self.train_data).transpose())
+        G = Graph(edge_index=train_data)
         embeddings = self.model.train(G)
 
+        G = G.to_networkx()
         embs = dict()
         for vid, node in enumerate(G.nodes()):
             embs[node] = embeddings[vid]

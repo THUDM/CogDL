@@ -8,7 +8,7 @@ TRAINER_REGISTRY = {}
 
 def register_trainer(name):
     """
-    New universal trainer types can be added to cogdl with the :func:`register_trainer`
+    New universal controller types can be added to cogdl with the :func:`register_trainer`
     function decorator.
 
     For example::
@@ -23,7 +23,7 @@ def register_trainer(name):
 
     def register_trainer_cls(cls):
         if name in TRAINER_REGISTRY:
-            raise ValueError("Cannot register duplicate universal trainer ({})".format(name))
+            raise ValueError("Cannot register duplicate universal controller ({})".format(name))
         if not issubclass(cls, BaseTrainer):
             raise ValueError("Model ({}: {}) must extend BaseTrainer".format(name, cls.__name__))
         TRAINER_REGISTRY[name] = cls
@@ -38,7 +38,7 @@ def try_import_trainer(trainer):
         if trainer in SUPPORTED_TRAINERS:
             importlib.import_module(SUPPORTED_TRAINERS[trainer])
         else:
-            print(f"Failed to import {trainer} trainer.")
+            print(f"Failed to import {trainer} controller.")
             return False
     return True
 

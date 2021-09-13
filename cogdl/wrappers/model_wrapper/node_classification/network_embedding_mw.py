@@ -1,12 +1,4 @@
-import numpy as np
-import scipy.sparse as sp
-from collections import defaultdict
-
-from sklearn.utils import shuffle as skshuffle
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import f1_score
-from sklearn.multiclass import OneVsRestClassifier
-
+from cogdl.wrappers.tools.wrapper_utils import evaluate_node_embeddings_using_liblinear
 from .. import register_model_wrapper, EmbeddingModelWrapper
 
 
@@ -32,58 +24,4 @@ class NetworkEmbeddingModelWrapper(EmbeddingModelWrapper):
 
     def test_step(self, batch):
         x, y = batch
-        return evaluate_node_embeddings(x, y, self.num_shuffle, self.training_percents)
-
-
-def evaluate_node_embeddings(features_matrix, label_matrix, num_shuffle, training_percents):
-    if len(label_matrix.shape) > 1:
-        labeled_nodes = np.nonzero(np.sum(label_matrix, axis=1) > 0)[0]
-        features_matrix = features_matrix[labeled_nodes]
-        label_matrix = label_matrix[labeled_nodes]
-
-    # shuffle, to create train/test groups
-    shuffles = []
-    for _ in range(num_shuffle):
-        shuffles.append(skshuffle(features_matrix, label_matrix))
-
-    # score each train/test group
-    all_results = defaultdict(list)
-
-    for train_percent in training_percents:
-        for shuf in shuffles:
-            X, y = shuf
-
-            training_size = int(train_percent * len(features_matrix))
-            X_train = X[:training_size, :]
-            y_train = y[:training_size, :]
-
-            X_test = X[training_size:, :]
-            y_test = y[training_size:, :]
-
-            clf = TopKRanker(LogisticRegression(solver="liblinear"))
-            clf.fit(X_train, y_train)
-
-            # find out how many labels should be predicted
-            top_k_list = y_test.sum(axis=1).astype(np.int).tolist()
-            preds = clf.predict(X_test, top_k_list)
-            result = f1_score(y_test, preds, average="micro")
-            all_results[train_percent].append(result)
-
-    return dict(
-        (f"Micro-F1 {train_percent}", np.mean(all_results[train_percent]))
-        for train_percent in sorted(all_results.keys())
-    )
-
-
-class TopKRanker(OneVsRestClassifier):
-    def predict(self, X, top_k_list):
-        assert X.shape[0] == len(top_k_list)
-        probs = np.asarray(super(TopKRanker, self).predict_proba(X))
-        all_labels = sp.lil_matrix(probs.shape)
-
-        for i, k in enumerate(top_k_list):
-            probs_ = probs[i, :]
-            labels = self.classes_[probs_.argsort()[-k:]].tolist()
-            for label in labels:
-                all_labels[i, label] = 1
-        return all_labels
+        return evaluate_node_embeddings_using_liblinear(x, y, self.num_shuffle, self.training_percents)

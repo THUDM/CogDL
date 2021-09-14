@@ -98,6 +98,15 @@ class DataWrapper(object):
         if test_data is not None:
             self.__test_data = OnLoadingWrapper(test_data, self.test_transform)
 
+    def set_train_data(self, x):
+        self.__training_data = x
+
+    def set_val_data(self, x):
+        self.__val_data = x
+
+    def set_test_data(self, x):
+        self.__test_data = x
+
     def on_train_wrapper(self):
         if self.__training_data is None:
             return None

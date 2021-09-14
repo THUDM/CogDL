@@ -13,9 +13,11 @@ class DataController(object):
         # TODO: just a toy implementation
         assert isinstance(dataloader, DataLoader)
 
+        args, kwargs = dataloader.get_parameters()
         dataset = dataloader.dataset
         sampler = torch.utils.data.distributed.DistributedSampler(dataset, num_replicas=self.world_size, rank=rank)
-        dataloader.sampler = sampler
+        kwargs["sampler"] = sampler
+        dataloader = dataloader.__class__(*args, **kwargs)
         return dataloader
 
     def prepare_data_wrapper(self, dataset_w, rank=0):
@@ -26,7 +28,7 @@ class DataController(object):
             train_wrapper = OnLoadingWrapper(train_loader, dataset_w.train_transform)
             dataset_w.prepare_val_data()
             dataset_w.prepare_test_data()
-            dataset_w.__train_data = train_wrapper
+            dataset_w.set_train_data(train_wrapper)
             return dataset_w
         else:
             dataset_w.pre_transform()

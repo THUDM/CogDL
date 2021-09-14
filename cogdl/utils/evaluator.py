@@ -1,6 +1,9 @@
 from typing import Union, Callable
 import numpy as np
+
 import torch
+import torch.nn as nn
+
 from sklearn.metrics import f1_score
 
 
@@ -83,23 +86,39 @@ class MultiLabelMicroF1(Accuracy):
             border = 0
         y_pred[y_pred >= border] = 1
         y_pred[y_pred < border] = 0
-        tp = (y_pred * y_true).sum().to(torch.float32)
-        fp = ((1 - y_true) * y_pred).sum().to(torch.float32)
-        fn = (y_true * (1 - y_pred)).sum().to(torch.float32)
+        tp = (y_pred * y_true).sum().to(torch.float32).item()
+        fp = ((1 - y_true) * y_pred).sum().to(torch.float32).item()
+        fn = (y_true * (1 - y_pred)).sum().to(torch.float32).item()
         total = tp + fp + fn
 
-        if self.mini_batch:
-            self.tp.append(tp)
-            self.total.append(total)
+        # if self.mini_batch:
+        self.tp.append(int(tp))
+        self.total.append(int(total))
 
         if total == 0:
             return 0
-        return tp / total
+        return float(tp / total)
 
 
 class MultiClassMicroF1(Accuracy):
     def __init__(self, mini_batch=False):
         super(MultiClassMicroF1, self).__init__(mini_batch)
+
+
+class CrossEntropyLoss(nn.Module):
+    def __call__(self, y_pred, y_true):
+        y_true = y_true.long()
+        y_pred = torch.nn.functional.log_softmax(y_pred, dim=-1)
+        return torch.nn.functional.nll_loss(y_pred, y_true)
+
+
+class BCEWithLogitsLoss(nn.Module):
+    def __call__(self, y_pred, y_true, reduction="mean"):
+        y_true = y_true.float()
+        loss = torch.nn.BCEWithLogitsLoss(reduction=reduction)(y_pred, y_true)
+        if reduction == "none":
+            loss = torch.sum(torch.mean(loss, dim=0))
+        return loss
 
 
 def multilabel_f1(y_pred, y_true, sigmoid=False):

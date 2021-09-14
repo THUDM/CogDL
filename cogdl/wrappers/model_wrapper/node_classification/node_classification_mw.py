@@ -1,6 +1,5 @@
 import torch
 from cogdl.wrappers.model_wrapper import ModelWrapper, register_model_wrapper
-from cogdl.wrappers.tools.wrapper_utils import pre_evaluation_index
 
 
 @register_model_wrapper("node_classification_mw")
@@ -47,3 +46,6 @@ class NodeClfModelWrapper(ModelWrapper):
             if model_spec_optim is not None:
                 return model_spec_optim
         return torch.optim.Adam(self.model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
+
+    def set_early_stopping(self):
+        return "val_metric", "big"

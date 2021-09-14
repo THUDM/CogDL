@@ -65,7 +65,8 @@ class Trainer(object):
         self.patience = patience
         self.early_stopping = early_stopping
         self.eval_step = eval_step
-        self.monitor = monitor
+        self.monitor = None
+        self.evaluation_metric = None
         self.progress_bar = progress_bar
 
         self.cpu = cpu
@@ -74,6 +75,9 @@ class Trainer(object):
 
         self.distributed_training = distributed_training
         self.distributed_inference = distributed_inference
+        # if self.world_size <= 1:
+        #     self.distributed_training = False
+        #     self.distributed_inference = False
         self.master_addr = master_addr
         self.master_port = master_port
 
@@ -130,16 +134,24 @@ class Trainer(object):
         # for deep learning models
         # set default loss_fn and evaluator for model_wrapper
         # mainly for in-cogdl setting
+
+        print("RUN!!!!!!!!!!!!!!!!")
         model_w.default_loss_fn = dataset_w.get_default_loss_fn()
         model_w.default_evaluator = dataset_w.get_default_evaluator()
-        if self.distributed_training and self.world_size > 1:
+        model_w.set_evaluation_metric()
+
+        # self.model_w = model_w
+        # self.dataset_w = dataset_w
+        if self.distributed_training:  # and self.world_size > 1:
             self.dist_train(model_w, dataset_w)
         else:
             self.train(model_w, dataset_w, self.devices[0])
-
         best_model_w = load_model(model_w, self.checkpoint_path).to(self.devices[0])
         # disable `distributed` to inference once only
         final = self.test(best_model_w, dataset_w, self.devices[0])
+        if "test_metric" in final:
+            final[f"test_{self.evaluation_metric}"] = final["test_metric"]
+            final.pop("test_metric")
         return final
 
     def dist_train(self, model_w: ModelWrapper, dataset_w: DataWrapper):
@@ -156,12 +168,15 @@ class Trainer(object):
 
         processes = []
         for rank in range(size):
-            p = mp.Process(target=self.train, args=(model_w, dataset_w, rank))
+            print(dataset_w.get_dataset())
+            p = mp.Process(target=self.train, args=(model_w, dataset_w.get_dataset(), rank))
             p.start()
+            print(f"Process [{rank}] starts!")
             processes.append(p)
 
         for p in processes:
             p.join()
+        print("joined")
 
     def build_optimizer(self, model_w):
         opt_wrap = model_w.setup_optimizer()
@@ -199,7 +214,19 @@ class Trainer(object):
         self.data_controller.prepare_data_wrapper(dataset_w, rank)
 
         optimizers, lr_schedulars = self.build_optimizer(model_w)
-        best_index, compare_fn = evaluation_comp(self.monitor)
+
+        est = model_w.set_early_stopping()
+        if isinstance(est, str):
+            est_monitor = est
+            best_index, compare_fn = evaluation_comp(est_monitor)
+        else:
+            assert len(est) == 2
+            est_monitor, est_compare = est
+            best_index, compare_fn = evaluation_comp(est_monitor, est_compare)
+        self.monitor = est_monitor
+        self.evaluation_metric = model_w.evaluation_metric
+
+        # best_index, compare_fn = evaluation_comp(self.monitor)
         best_model_w = None
 
         patience = 0
@@ -235,6 +262,7 @@ class Trainer(object):
                     dataset_w.eval()
                     # do validation in inference device
                     val_result = self.validate(model_w, dataset_w, rank)
+                    # print(val_result)
                     if val_result is not None:
                         monitoring = val_result[self.monitor]
                         if compare_fn(monitoring, best_index):
@@ -245,7 +273,7 @@ class Trainer(object):
                             patience += 1
                             if self.early_stopping and patience >= self.patience:
                                 break
-                        print_str_dict["ValMetric"] = monitoring
+                        print_str_dict[f"val_{self.evaluation_metric}"] = monitoring
 
                 epoch_printer(print_str_dict)
 
@@ -259,14 +287,22 @@ class Trainer(object):
             if best_model_w is None:
                 best_model_w = model_w
 
-        save_model(best_model_w.to("cpu"), self.checkpoint_path)
+        if self.distributed_training:
+            if rank == 0:
+                save_model(best_model_w.to("cpu"), self.checkpoint_path)
+                dist.barrier()
+            else:
+                dist.barrier()
+        else:
+            save_model(best_model_w.to("cpu"), self.checkpoint_path)
+
         for hook in self.training_end_hooks:
             hook(self)
 
     def validate(self, model_w: ModelWrapper, dataset_w: DataWrapper, device):
         # ------- distributed training ---------
         if self.distributed_training:
-            return self.distributed_test(model_w, dataset_w, device)
+            return self.distributed_test(model_w, dataset_w, device, self.val_step)
         # ------- distributed training ---------
 
         model_w.eval()
@@ -283,6 +319,11 @@ class Trainer(object):
         return result
 
     def test(self, model_w: ModelWrapper, dataset_w: DataWrapper, device):
+        # ------- distributed training ---------
+        if self.distributed_training:
+            return self.distributed_test(model_w, dataset_w, device, self.test_step)
+        # ------- distributed training ---------
+
         model_w.eval()
         if self.cpu_inference:
             model_w.to("cpu")
@@ -296,7 +337,7 @@ class Trainer(object):
         model_w.to(device)
         return result
 
-    def distributed_test(self, model_w: ModelWrapper, dataset_w: DataWrapper, rank):
+    def distributed_test(self, model_w: ModelWrapper, dataset_w: DataWrapper, rank, fn):
         model_w.eval()
         if rank == 0:
             if self.cpu_inference:
@@ -305,7 +346,7 @@ class Trainer(object):
             else:
                 _device = rank
             test_loader = dataset_w.on_test_wrapper()
-            result = self.test_step(model_w, test_loader, _device)
+            result = fn(model_w, test_loader, _device)
             object_list = [result]
             model_w.to(rank)
         else:

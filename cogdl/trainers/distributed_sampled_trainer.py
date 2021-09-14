@@ -174,6 +174,7 @@ class DistributedClusterGCNTrainer(DistributedSampledTrainer, ClusterGCNTrainer)
         super(DistributedClusterGCNTrainer, self).__init__(args)
 
     def fit(self, *args, **kwargs):
+        print("MyFit")
         return super(DistributedClusterGCNTrainer, self).dist_fit(*args, **kwargs)
 
     def build_dataloader(self, dataset, rank):

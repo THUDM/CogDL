@@ -1,5 +1,5 @@
 from .. import DataWrapper, register_data_wrapper
-from cogdl.data.sampler import ClusteredDataset, ClusteredLoader
+from cogdl.data.sampler import ClusteredLoader
 
 
 @register_data_wrapper("cluster_dw")

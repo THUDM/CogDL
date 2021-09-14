@@ -8,7 +8,7 @@ from ogb.graphproppred import GraphPropPredDataset
 
 from . import register_dataset
 from cogdl.data import Dataset, Graph, DataLoader
-from cogdl.utils import cross_entropy_loss, accuracy, remove_self_loops, coalesce, bce_with_logits_loss, to_undirected
+from cogdl.utils import CrossEntropyLoss, Accuracy, remove_self_loops, coalesce, BCEWithLogitsLoss, to_undirected
 
 
 class OGBNDataset(Dataset):
@@ -25,10 +25,10 @@ class OGBNDataset(Dataset):
         return self.data
 
     def get_loss_fn(self):
-        return cross_entropy_loss
+        return CrossEntropyLoss()
 
     def get_evaluator(self):
-        return accuracy
+        return Accuracy()
 
     def _download(self):
         pass
@@ -110,7 +110,7 @@ class OGBProteinsDataset(OGBNDataset):
         ]
 
     def get_loss_fn(self):
-        return bce_with_logits_loss
+        return BCEWithLogitsLoss()
 
     def get_evaluator(self):
         evaluator = NodeEvaluator(name="ogbn-proteins")

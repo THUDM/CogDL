@@ -43,8 +43,8 @@ def smaller_than(x, y):
     return x <= y
 
 
-def evaluation_comp(monitor):
-    if "loss" in monitor:
+def evaluation_comp(monitor, compare="small"):
+    if "loss" in monitor or compare == "small":
         return np.inf, smaller_than
     else:
         return 0, bigger_than

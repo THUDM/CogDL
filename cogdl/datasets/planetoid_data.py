@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from cogdl.data import Dataset, Graph
-from cogdl.utils import remove_self_loops, download_url, untar, coalesce
+from cogdl.utils import remove_self_loops, download_url, untar, coalesce, Accuracy, CrossEntropyLoss
 from . import register_dataset
 
 
@@ -164,6 +164,12 @@ class Planetoid(Dataset):
 
     def __len__(self):
         return 1
+
+    def get_evaluator(self):
+        return Accuracy()
+
+    def get_loss_fn(self):
+        return CrossEntropyLoss()
 
 
 def normalize_feature(data):

@@ -7,7 +7,7 @@ import torch
 import torch.utils.data
 
 from cogdl.utils import remove_self_loops, row_normalization
-from cogdl.data import Graph
+from cogdl.data import Graph, DataLoader
 
 
 def normalize(adj):
@@ -250,7 +250,7 @@ class SAINTDataset(torch.utils.data.Dataset):
         return data
 
 
-class SAINTDataLoader(torch.utils.data.DataLoader):
+class SAINTDataLoader(DataLoader):
     def __init__(self, dataset, **kwargs):
         self.dataset = dataset
         kwargs["batch_size"] = 1
@@ -385,7 +385,7 @@ class SAINTSampler(object):
         return self.sampler
 
 
-class NeighborSampler(torch.utils.data.DataLoader):
+class NeighborSampler(DataLoader):
     def __init__(self, dataset, sizes: List[int], mask=None, **kwargs):
         if "batch_size" in kwargs:
             batch_size = kwargs["batch_size"]
@@ -524,7 +524,7 @@ class ClusteredDataset(torch.utils.data.Dataset):
         return division
 
 
-class ClusteredLoader(torch.utils.data.DataLoader):
+class ClusteredLoader(DataLoader):
     def __init__(self, dataset, n_cluster: int, method="metis", **kwargs):
         if "batch_size" in kwargs:
             batch_size = kwargs["batch_size"]

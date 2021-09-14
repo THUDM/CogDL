@@ -1,10 +1,18 @@
+from abc import ABCMeta
 import torch.utils.data
 from torch.utils.data.dataloader import default_collate
 
 from cogdl.data import Batch, Graph
 
 
-class DataLoader(torch.utils.data.DataLoader):
+class RecordParameters(ABCMeta):
+    def __call__(cls, *args, **kwargs):
+        obj = type.__call__(cls, *args, **kwargs)
+        obj.default_kwargs = [args, kwargs]
+        return obj
+
+
+class DataLoader(torch.utils.data.DataLoader, metaclass=RecordParameters):
     r"""Data loader which merges data objects from a
     :class:`cogdl.data.dataset` to a mini-batch.
 
@@ -17,13 +25,16 @@ class DataLoader(torch.utils.data.DataLoader):
     """
 
     def __init__(self, dataset, batch_size=1, shuffle=True, **kwargs):
+        if "collate_fn" not in kwargs:
+            kwargs["collate_fn"] = self.collate_fn
+
         super(DataLoader, self).__init__(
             dataset,
             batch_size,
             shuffle,
-            collate_fn=self.collate_fn,
             **kwargs,
         )
+
         self.kwargs = kwargs
         self.kwargs["dataset"] = dataset
         self.kwargs["batch_size"] = batch_size
@@ -42,4 +53,7 @@ class DataLoader(torch.utils.data.DataLoader):
         raise TypeError("DataLoader found invalid type: {}".format(type(item)))
 
     def get_parameters(self):
-        return self.kwargs
+        return self.default_kwargs
+
+    def record_parameters(self, params):
+        self.default_kwargs = params

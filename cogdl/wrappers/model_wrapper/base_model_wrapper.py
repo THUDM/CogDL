@@ -2,7 +2,7 @@ from typing import Union, Callable
 from abc import abstractmethod
 import torch
 from cogdl.wrappers.tools.wrapper_utils import merge_batch_indexes
-from cogdl.utils.evaluator import setup_evaluator
+from cogdl.utils.evaluator import setup_evaluator, Accuracy, MultiLabelMicroF1
 
 
 class ModelWrapper(torch.nn.Module):
@@ -13,7 +13,7 @@ class ModelWrapper(torch.nn.Module):
     def __init__(self):
         super(ModelWrapper, self).__init__()
         self.__model_keys__ = None
-        self._loss_fn = None
+        self._loss_func = None
         self._evaluator = None
         self._evaluator_metric = None
         self.__record__ = dict()
@@ -59,6 +59,15 @@ class ModelWrapper(torch.nn.Module):
     def setup_optimizer(self):
         raise NotImplementedError
 
+    def set_early_stopping(self):
+        """
+        Return:
+            1. `str`, the monitoring metric
+            2. tuple(`str`, `str`), that is, (the monitoring metric, `small` or `big`). The second parameter means,
+                `the smaller, the better` or `the bigger, the better`
+        """
+        return "val_metric", "big"
+
     def on_train_step(self, *args, **kwargs):
         return self.train_step(*args, **kwargs)
 
@@ -99,10 +108,9 @@ class ModelWrapper(torch.nn.Module):
             return None
         out = dict()
         for key, val in self.__record__.items():
-            if key.endswith("metric"):
+            if key.endswith("_metric"):
                 _val = self._evaluator.evaluate()
-                if isinstance(self._evaluator_metric, str):
-                    key = key.replace("metric", self._evaluator_metric)
+
             elif isinstance(self._evaluator_metric, str) and key.endswith(self._evaluator_metric):
                 _val = self._evaluator.evaluate()
             else:
@@ -113,19 +121,47 @@ class ModelWrapper(torch.nn.Module):
 
     @property
     def default_loss_fn(self):
-        if self._loss_fn is None:
-            raise RuntimeError("`loss_fn` must be set for your ModelWrapper using `mw.default_loss_fn = your_loss_fn`.")
-        return self._loss_fn
+        if self._loss_func is None:
+            raise RuntimeError(
+                "`loss_fn` must be set for your ModelWrapper using `mw.default_loss_fn = your_loss_fn`.",
+                f"Now self.loss_fn is {self._loss_fn}",
+            )
+        return self._loss_func
 
     @default_loss_fn.setter
     def default_loss_fn(self, loss_fn):
-        self._loss_fn = loss_fn
+        self._loss_func = loss_fn
+
+    @property
+    def default_evaluator(self):
+        return self._evaluator
+
+    @default_evaluator.setter
+    def default_evaluator(self, x):
+        self._evaluator = x
 
     @property
     def device(self):
         # for k in self._model_key_:
         #     return next(getattr(self, k).parameters()).device
         return next(self.parameters()).device
+
+    @property
+    def evaluation_metric(self):
+        return self._evaluator_metric
+
+    def set_evaluation_metric(self):
+        if isinstance(self._evaluator, MultiLabelMicroF1):
+            self._evaluator_metric = "micro_f1"
+        elif isinstance(self._evaluator, Accuracy):
+            self._evaluator_metric = "acc"
+        else:
+            evaluation_metric = self.set_early_stopping()
+            if not isinstance(evaluation_metric, str):
+                evaluation_metric = evaluation_metric[0]
+            if evaluation_metric.startswith("val"):
+                evaluation_metric = evaluation_metric[3:]
+            self._evaluator_metric = evaluation_metric
 
     def load_checkpoint(self, path):
         pass

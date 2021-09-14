@@ -87,7 +87,7 @@ def raw_experiment(args, model_wrapper_args, data_wrapper_args):
         cpu=args.cpu,
         save_embedding_path=save_embedding_path,
         cpu_inference=args.cpu_inference,
-        monitor=args.monitor,
+        # monitor=args.monitor,
         progress_bar=args.progress_bar,
         distributed_training=args.distributed,
         checkpoint_path=args.checkpoint_path,

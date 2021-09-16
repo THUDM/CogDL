@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-**[Homepage](https://cogdl.ai)** | **[Paper](https://arxiv.org/abs/2103.00959)** | **[Leaderboards](./cogdl/tasks/README.md)** | **[Documentation](https://cogdl.readthedocs.io)** | **[BAAI link](http://open.baai.ac.cn/cogdl-toolkit)** |  **[Datasets](./cogdl/datasets/README.md)** | **[Join our Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[中文](./README_CN.md)**
+**[Homepage](https://cogdl.ai)** | **[Paper](https://arxiv.org/abs/2103.00959)** | **[Top 100 GNN papers](./paperlist/README.md)** | **[Leaderboards](./cogdl/tasks/README.md)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Datasets](./cogdl/datasets/README.md)** | **[Join our Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[中文](./README_CN.md)**
 
 CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or customized models for node classification, graph classification, and other important tasks in the graph domain. 
 

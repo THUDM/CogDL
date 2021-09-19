@@ -20,7 +20,7 @@ def register_data_wrapper(name):
         if name in DATAMODULE_REGISTRY:
             raise ValueError("Cannot register duplicate data_wrapper ({})".format(name))
         if not issubclass(cls, DataWrapper):
-            raise ValueError("Model ({}: {}) must extend BaseModel".format(name, cls.__name__))
+            raise ValueError("({}: {}) must extend DataWrapper".format(name, cls.__name__))
         DATAMODULE_REGISTRY[name] = cls
         cls.model_name = name
         return cls

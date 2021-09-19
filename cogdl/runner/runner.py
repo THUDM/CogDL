@@ -270,7 +270,7 @@ class Trainer(object):
                         if compare_fn(monitoring, best_index):
                             best_index = monitoring
                             patience = 0
-                            best_model_w = model_w
+                            best_model_w = copy.deepcopy(model_w)
                         else:
                             patience += 1
                             if self.early_stopping and patience >= self.patience:
@@ -287,7 +287,7 @@ class Trainer(object):
                 dataset_w.post_stage(stage, post_stage_out)
 
             if best_model_w is None:
-                best_model_w = model_w
+                best_model_w = copy.deepcopy(model_w)
 
         if self.distributed_training:
             if rank == 0:

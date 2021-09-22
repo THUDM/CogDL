@@ -38,6 +38,10 @@ def get_parser():
     parser.add_argument("--n-warmup-steps", type=int, default=0)
 
     parser.add_argument("--checkpoint-path", type=str, default="./checkpoints/model.pt", help="path to save model")
+    parser.add_argument("--logger", type=str, default=None)
+    parser.add_argument("--log-path", type=str, default=".", help="path to save logs")
+    parser.add_argument("--project", type=str, default="cogdl-exp", help="project name for wandb")
+
     parser.add_argument("--use-best-config", action="store_true", help="use best config")
     parser.add_argument("--unsup", action="store_true")
 

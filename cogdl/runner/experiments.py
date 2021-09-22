@@ -181,6 +181,9 @@ def train(args):
         progress_bar=args.progress_bar,
         distributed_training=args.distributed,
         checkpoint_path=args.checkpoint_path,
+        logger=args.logger,
+        log_path=args.log_path,
+        project=args.project,
     )
 
     # Go!!!

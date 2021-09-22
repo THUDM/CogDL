@@ -50,8 +50,8 @@ def evaluation_comp(monitor, compare="small"):
         return 0, bigger_than
 
 
-def save_model(model, path):
-    print(f"Saving model to {path} ...")
+def save_model(model, path, epoch):
+    print(f"Saving {epoch}-th model to {path} ...")
     torch.save(model.state_dict(), path)
 
 

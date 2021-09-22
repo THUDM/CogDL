@@ -14,6 +14,7 @@ from cogdl.wrappers.model_wrapper.base_model_wrapper import ModelWrapper, Embedd
 from cogdl.runner.runner_utils import evaluation_comp, load_model, save_model, ddp_end, ddp_after_epoch, Printer
 from cogdl.runner.embed_runner import EmbeddingTrainer
 from cogdl.runner.controller import DataController
+from cogdl.loggers import build_logger
 from cogdl.data import Graph
 
 
@@ -61,6 +62,9 @@ class Trainer(object):
         cpu_inference: bool = False,
         progress_bar: str = "epoch",
         clip_grad_norm: float = 5.0,
+        logger: str = None,
+        log_path: str = "./runs",
+        project: str = "cogdl-exp",
     ):
         self.max_epoch = max_epoch
         self.nstage = nstage
@@ -92,6 +96,8 @@ class Trainer(object):
         self.save_embedding_path = save_embedding_path
 
         self.data_controller = DataController(world_size=self.world_size, distributed=self.distributed_training)
+
+        self.logger = build_logger(logger, log_path, project)
 
         self.after_epoch_hooks = []
         self.pre_epoch_hooks = []
@@ -154,6 +160,7 @@ class Trainer(object):
         if "test_metric" in final:
             final[f"test_{self.evaluation_metric}"] = final["test_metric"]
             final.pop("test_metric")
+        self.logger.note(final)
         return final
 
     def dist_train(self, model_w: ModelWrapper, dataset_w: DataWrapper):
@@ -232,6 +239,7 @@ class Trainer(object):
         best_model_w = None
 
         patience = 0
+        best_epoch = 0
         for stage in range(self.nstage):
             with torch.no_grad():
                 pre_stage_out = model_w.pre_stage(stage, dataset_w)
@@ -245,6 +253,7 @@ class Trainer(object):
                 epoch_iter = range(self.max_epoch)
                 epoch_printer = Printer(print, rank=rank, world_size=self.world_size)
 
+            self.logger.start()
             for epoch in epoch_iter:
                 print_str_dict = dict()
                 for hook in self.pre_epoch_hooks:
@@ -269,6 +278,7 @@ class Trainer(object):
                         monitoring = val_result[self.monitor]
                         if compare_fn(monitoring, best_index):
                             best_index = monitoring
+                            best_epoch = epoch
                             patience = 0
                             best_model_w = copy.deepcopy(model_w)
                         else:
@@ -278,6 +288,7 @@ class Trainer(object):
                         print_str_dict[f"val_{self.evaluation_metric}"] = monitoring
 
                 epoch_printer(print_str_dict)
+                self.logger.note(print_str_dict, epoch)
 
                 for hook in self.after_epoch_hooks:
                     hook(self)
@@ -291,12 +302,12 @@ class Trainer(object):
 
         if self.distributed_training:
             if rank == 0:
-                save_model(best_model_w.to("cpu"), self.checkpoint_path)
+                save_model(best_model_w.to("cpu"), self.checkpoint_path, best_epoch)
                 dist.barrier()
             else:
                 dist.barrier()
         else:
-            save_model(best_model_w.to("cpu"), self.checkpoint_path)
+            save_model(best_model_w.to("cpu"), self.checkpoint_path, best_epoch)
 
         for hook in self.training_end_hooks:
             hook(self)

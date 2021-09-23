@@ -161,6 +161,7 @@ class Trainer(object):
             final[f"test_{self.evaluation_metric}"] = final["test_metric"]
             final.pop("test_metric")
         self.logger.note(final)
+        print(final)
         return final
 
     def dist_train(self, model_w: ModelWrapper, dataset_w: DataWrapper):

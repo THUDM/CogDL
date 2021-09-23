@@ -147,6 +147,11 @@ class Planetoid(Dataset):
         assert hasattr(self.data, "y")
         return int(torch.max(self.data.y)) + 1
 
+    @property
+    def num_nodes(self):
+        assert hasattr(self.data, "y")
+        return self.data.y.shape[0]
+
     def download(self):
         fname = "{}.zip".format(self.name.lower())
         download_url("{}{}.zip&dl=1".format(self.url, self.name.lower()), self.raw_dir, fname)

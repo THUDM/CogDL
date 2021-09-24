@@ -1,7 +1,7 @@
 import sys
 import argparse
 import copy
-from typing import Optional
+import warnings
 
 from cogdl.datasets import try_import_dataset
 from cogdl.models import MODEL_REGISTRY, try_import_model
@@ -38,6 +38,10 @@ def get_parser():
     parser.add_argument("--n-warmup-steps", type=int, default=0)
 
     parser.add_argument("--checkpoint-path", type=str, default="./checkpoints/model.pt", help="path to save model")
+    parser.add_argument("--logger", type=str, default=None)
+    parser.add_argument("--log-path", type=str, default=".", help="path to save logs")
+    parser.add_argument("--project", type=str, default="cogdl-exp", help="project name for wandb")
+
     parser.add_argument("--use-best-config", action="store_true", help="use best config")
     parser.add_argument("--unsup", action="store_true")
 
@@ -84,7 +88,7 @@ def add_dataset_args(parser):
 def add_model_args(parser):
     group = parser.add_argument_group("Model configuration")
     # fmt: off
-    group.add_argument("--model", "-m", metavar="MODEL", required=True,
+    group.add_argument("--model", "-m", metavar="MODEL", nargs="+", required=True,
                        help="Model Architecture")
     # fmt: on
     return group
@@ -114,12 +118,16 @@ def get_download_data_parser():
     return parser
 
 
-def get_default_args(task: str, dataset, model, **kwargs):
+def get_default_args(dataset, model, **kwargs):
     if not isinstance(dataset, list):
         dataset = [dataset]
     if not isinstance(model, list):
         model = [model]
-    sys.argv = [sys.argv[0], "-t", task, "-m"] + model + ["-dt"] + dataset
+    sys.argv = [sys.argv[0], "-m"] + model + ["-dt"] + dataset
+    if "mw" in kwargs:
+        sys.argv += ["--mw"] + [kwargs["mw"]]
+    if "dw" in kwargs:
+        sys.argv += ["--dw"] + [kwargs["dw"]]
 
     # The parser doesn"t know about specific args, so we parse twice.
     parser = get_training_parser()
@@ -140,18 +148,16 @@ def get_diff_args(args1, args2):
 
 def parse_args_and_arch(parser, args):
     # Add *-specific args to parser.
-    # basic_args = copy.deepcopy(args)
-    if try_import_model(args.model):
-        MODEL_REGISTRY[args.model].add_args(parser)
-    args_m, _ = parser.parse_known_args()
-    # model_args = get_diff_args(args_m, basic_args)
+    for model in args.model:
+        if try_import_model(model):
+            MODEL_REGISTRY[model].add_args(parser)
 
     for dataset in args.dataset:
         try_import_dataset(dataset)
-        # if hasattr(DATASET_REGISTRY[dataset], "add_args"):
-        #     DATASET_REGISTRY[dataset].add_args(parser)
 
-    default_wrappers = get_wrappers_name(args.model)
+    if len(args.model) > 1:
+        warnings.warn("Please ensure that models could use the same model wrapper!")
+    default_wrappers = get_wrappers_name(args.model[0])
     if default_wrappers is not None:
         mw, dw = default_wrappers
     else:
@@ -162,33 +168,13 @@ def parse_args_and_arch(parser, args):
     if hasattr(fetch_data_wrapper(dw), "add_args"):
         fetch_data_wrapper(dw).add_args(parser)
 
-    args_dw, _ = parser.parse_known_args()
-
-    data_wrapper_args = get_diff_args(args_dw, args_m)
-
     if args.mw is not None:
         mw = args.mw
     if hasattr(fetch_model_wrapper(mw), "add_args"):
         fetch_model_wrapper(mw).add_args(parser)
-    args_mw, _ = parser.parse_known_args()
-    model_wrapper_args = get_diff_args(args_mw, args_dw)
 
     # Parse a second time.
     args = parser.parse_args()
     args.mw = mw
     args.dw = dw
-    # return args
-    return args, model_wrapper_args, data_wrapper_args
-
-
-def get_model_args(task, model=None):
-    sys.argv = [sys.argv[0], "-t", task, "-m"] + ["gcn"] + ["-dt"] + ["cora"]
-    parser = get_training_parser()
-    if model is not None:
-        if try_import_model(model):
-            MODEL_REGISTRY[model].add_args(parser)
-    args = parser.parse_args()
-    args.task = task
-    if model is not None:
-        args.model = model
     return args

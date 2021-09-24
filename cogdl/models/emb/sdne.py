@@ -140,10 +140,10 @@ class SDNE(BaseModel):
 
         if return_dict:
             features_matrix = dict()
-            for vid, node in enumerate(nx_g.nodes()):
+            for vid, node in enumerate(G.nodes()):
                 features_matrix[node] = embeddings[vid]
         else:
             features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
-            nx_nodes = nx_g.nodes()
+            nx_nodes = G.nodes()
             features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
         return features_matrix

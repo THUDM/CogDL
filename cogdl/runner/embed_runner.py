@@ -38,7 +38,7 @@ class EmbeddingTrainer(object):
 
     def train(self, model_w, dataset_w):
         dataset_w.pre_transform()
-        train_data = dataset_w.on_training_wrapper()
+        train_data = dataset_w.on_train_wrapper()
         embeddings = []
         for batch in train_data:
             embeddings.append(model_w.train_step(batch))

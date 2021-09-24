@@ -192,16 +192,17 @@ def remove_self_loops(indices, values=None):
 
 
 def coalesce(row, col, value=None):
+    device = row.device
     if torch.is_tensor(row):
-        row = row.numpy()
+        row = row.cpu().numpy()
     if torch.is_tensor(col):
-        col = col.numpy()
+        col = col.cpu().numpy()
     indices = np.lexsort((col, row))
-    row = torch.from_numpy(row[indices]).long()
-    col = torch.from_numpy(col[indices]).long()
+    row = torch.from_numpy(row[indices]).long().to(device)
+    col = torch.from_numpy(col[indices]).long().to(device)
 
     num = col.shape[0] + 1
-    idx = torch.full((num,), -1, dtype=torch.long)
+    idx = torch.full((num,), -1, dtype=torch.long).to(device)
     max_num = max(row.max(), col.max()) + 100
     idx[1:] = (row + 1) * max_num + col
     mask = idx[1:] > idx[:-1]
@@ -210,7 +211,7 @@ def coalesce(row, col, value=None):
         return row, col, value
     row = row[mask]
     if value is not None:
-        _value = torch.zeros(row.shape[0], dtype=torch.float).to(row.device)
+        _value = torch.zeros(row.shape[0], dtype=torch.float).to(device)
         value = _value.scatter_add_(dim=0, src=value, index=col)
     col = col[mask]
     return row, col, value

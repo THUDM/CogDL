@@ -242,11 +242,11 @@ class OnLoadingWrapper(object):
             for i, item in enumerate(inputs):
                 inputs[i] = self.__get_min_len__(item)
             return np.min(outputs)
-        elif isinstance(inputs, dict):
-            outputs = {key: 0 for key in inputs.keys()}
-            for i, val in enumerate(inputs.values()):
-                outputs[i] = self.__get_min_len__(val)
-            return np.min(outputs)
+        # elif isinstance(inputs, dict):
+        #     outputs = {key: 0 for key in inputs.keys()}
+        #     for i, val in enumerate(inputs.values()):
+        #         outputs[i] = self.__get_min_len__(val)
+        #     return np.min(list(outputs.values()))
         else:
             if isinstance(inputs, DataLoader):
                 return len(inputs)

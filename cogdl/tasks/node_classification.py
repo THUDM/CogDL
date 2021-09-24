@@ -101,9 +101,9 @@ class NodeClassification(BaseTask):
             for epoch in epoch_iter:
                 self._train_step()
                 acc, losses = self._test_step()
-                train_acc = acc["train"]
-                val_acc = acc["val"]
-                val_loss = losses["val"]
+                train_acc = acc["train"].item()
+                val_acc = acc["val"].item()
+                val_loss = losses["val"].item()
                 epoch_iter.set_description(
                     f"Epoch: {epoch:03d}, Train: {train_acc:.4f}, Val: {val_acc:.4f}, ValLoss:{val_loss: .4f}"
                 )
@@ -114,7 +114,7 @@ class NodeClassification(BaseTask):
                         # best_loss = val_loss
                         best_score = val_acc
                         best_model = copy.deepcopy(self.model)
-                    min_loss = np.min((min_loss, val_loss.cpu()))
+                    min_loss = np.min((min_loss, val_loss))
                     max_score = np.max((max_score, val_acc))
                     patience = 0
                 else:
@@ -125,7 +125,7 @@ class NodeClassification(BaseTask):
             print(f"Valid accurracy = {best_score: .4f}")
             self.model = best_model
         acc, _ = self._test_step(post=True)
-        val_acc, test_acc = acc["val"], acc["test"]
+        val_acc, test_acc = acc["val"].item(), acc["test"].item()
 
         print(f"Test accuracy = {test_acc:.4f}")
 

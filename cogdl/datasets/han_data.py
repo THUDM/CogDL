@@ -103,6 +103,12 @@ class HANDataset(Dataset):
         data.test_node = torch.from_numpy(test_idx[0]).type(torch.LongTensor)
         data.test_target = torch.from_numpy(y_test).type(torch.LongTensor)
 
+        y = np.zeros((num_nodes), dtype=int)
+        x_index = torch.cat((data.train_node, data.valid_node, data.test_node))
+        y_index = torch.cat((data.train_target, data.valid_target, data.test_target))
+        y[x_index.numpy()] = y_index.numpy()
+        data.y = torch.from_numpy(y)
+
         self.data = data
 
     def get(self, idx):
@@ -111,6 +117,7 @@ class HANDataset(Dataset):
 
     def apply_to_device(self, device):
         self.data.x = self.data.x.to(device)
+        self.data.y = self.data.y.to(device)
 
         self.data.train_node = self.data.train_node.to(device)
         self.data.valid_node = self.data.valid_node.to(device)

@@ -7,6 +7,7 @@ path = os.path.join(os.path.dirname(__file__))
 
 # SPMM
 
+
 try:
     spmm = load(
         name="spmm",
@@ -68,6 +69,7 @@ try:
     from actnn.ops import quantize_activation, dequantize_activation
 except Exception:
     pass
+
 
 class ActSPMMFunction(torch.autograd.Function):
     @staticmethod

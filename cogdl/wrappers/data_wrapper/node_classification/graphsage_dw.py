@@ -1,5 +1,5 @@
 from .. import DataWrapper, register_data_wrapper
-from cogdl.data.sampler import NeighborSampler
+from cogdl.data.sampler import NeighborSampler, NeighborSamplerDataset
 
 
 @register_data_wrapper("graphsage_dw")
@@ -14,6 +14,18 @@ class SAGEDataWrapper(DataWrapper):
     def __init__(self, dataset, batch_size: int, sample_size: list):
         super(SAGEDataWrapper, self).__init__(dataset)
         self.dataset = dataset
+        self.train_dataset = NeighborSamplerDataset(
+            dataset, sizes=sample_size, batch_size=batch_size, mask=dataset.data.train_mask
+        )
+        self.val_dataset = NeighborSamplerDataset(
+            dataset, sizes=sample_size, batch_size=batch_size * 2, mask=dataset.data.val_mask
+        )
+        self.test_dataset = NeighborSamplerDataset(
+            dataset=self.dataset,
+            mask=None,
+            sizes=[-1],
+            batch_size=self.batch_size * 2,
+        )
         self.x = self.dataset.data.x
         self.y = self.dataset.data.y
         self.batch_size = batch_size
@@ -22,7 +34,7 @@ class SAGEDataWrapper(DataWrapper):
     def train_wrapper(self):
         self.dataset.data.train()
         return NeighborSampler(
-            dataset=self.dataset,
+            dataset=self.train_dataset,
             mask=self.dataset.data.train_mask,
             sizes=self.sample_size,
             num_workers=4,
@@ -34,7 +46,7 @@ class SAGEDataWrapper(DataWrapper):
         self.dataset.data.eval()
 
         return NeighborSampler(
-            dataset=self.dataset,
+            dataset=self.val_dataset,
             mask=self.dataset.data.val_mask,
             sizes=self.sample_size,
             batch_size=self.batch_size * 2,
@@ -46,7 +58,7 @@ class SAGEDataWrapper(DataWrapper):
         return (
             self.dataset,
             NeighborSampler(
-                dataset=self.dataset,
+                dataset=self.test_dataset,
                 mask=None,
                 sizes=[-1],
                 batch_size=self.batch_size * 2,
@@ -63,3 +75,6 @@ class SAGEDataWrapper(DataWrapper):
 
     def val_transform(self, batch):
         return self.train_transform(batch)
+
+    def get_train_dataset(self):
+        return self.train_dataset

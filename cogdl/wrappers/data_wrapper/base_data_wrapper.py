@@ -22,6 +22,13 @@ class DataWrapper(object):
         self.__training_data, self.__val_data, self.__test_data = None, None, None
         self.__num_training_data, self.__num_val_data, self.__num_test_data = 0, 0, 0
         self.__prepare_dataloader_per_epoch__ = False
+        self.__back_to_cpu__ = False
+
+    @property
+    def data_back_to_cpu(self):
+        return (
+            isinstance(self.__val_data.raw_data, Graph) or isinstance(self.__test_data.raw_data, Graph)
+        ) and not isinstance(self.__training_data.raw_data, Graph)
 
     def train_wrapper(self):
         """

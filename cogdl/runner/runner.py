@@ -16,6 +16,8 @@ from cogdl.runner.embed_runner import EmbeddingTrainer
 from cogdl.runner.controller import DataController
 from cogdl.data import Graph
 
+from cogdl.datasets import build_dataset_from_name
+
 
 def move_to_device(batch, device):
     if isinstance(batch, list) or isinstance(batch, tuple):
@@ -99,6 +101,8 @@ class Trainer(object):
             self.register_training_end_hook(ddp_end)
             self.register_out_epoch_hook(ddp_after_epoch)
 
+        self.eval_data_back_to_cpu = False
+
     def register_in_epoch_hook(self, hook):
         self.pre_epoch_hooks.append(hook)
 
@@ -135,19 +139,22 @@ class Trainer(object):
         # set default loss_fn and evaluator for model_wrapper
         # mainly for in-cogdl setting
 
-        print("RUN!!!!!!!!!!!!!!!!")
         model_w.default_loss_fn = dataset_w.get_default_loss_fn()
         model_w.default_evaluator = dataset_w.get_default_evaluator()
         model_w.set_evaluation_metric()
+
+        torch.multiprocessing.set_sharing_strategy("file_system")
 
         # self.model_w = model_w
         # self.dataset_w = dataset_w
         if self.distributed_training:  # and self.world_size > 1:
             self.dist_train(model_w, dataset_w)
         else:
-            self.train(model_w, dataset_w, self.devices[0])
+            self.train(self.devices[0], model_w, dataset_w)
         best_model_w = load_model(model_w, self.checkpoint_path).to(self.devices[0])
         # disable `distributed` to inference once only
+        self.distributed_training = False
+        dataset_w.prepare_test_data()
         final = self.test(best_model_w, dataset_w, self.devices[0])
         if "test_metric" in final:
             final[f"test_{self.evaluation_metric}"] = final["test_metric"]
@@ -166,17 +173,38 @@ class Trainer(object):
 
         print(f"Let's using {size} GPUs.")
 
+        # TEMP_DATASET_PATH = "temp_dataset.pt"
+        # torch.save(dataset_w, TEMP_DATASET_PATH)
         processes = []
         for rank in range(size):
-            print(dataset_w.get_dataset())
-            p = mp.Process(target=self.train, args=(model_w, dataset_w.get_dataset(), rank))
+            # p = mp.Process(target=self.dist_pre_train, args=(rank, model_w, TEMP_DATASET_PATH))
+            p = mp.Process(target=self.train, args=(rank, model_w, dataset_w))
+
             p.start()
             print(f"Process [{rank}] starts!")
             processes.append(p)
 
         for p in processes:
             p.join()
-        print("joined")
+        # os.remove(TEMP_DATASET_PATH)
+
+    def dist_pre_train(self, rank, model_w: ModelWrapper, data_wrapper_path: str):
+        model_w, model_aux = self.initialize(
+            model_w, rank=rank, master_addr=self.master_addr, master_port=self.master_port
+        )
+        if rank == 0:
+            dw = torch.load(data_wrapper_path)
+        else:
+            dist.barrier()
+
+        if rank == 0:
+            dist.barrier()
+        else:
+            dw = torch.load(data_wrapper_path)
+
+        dist.barrier()
+
+        self.train(rank, model_w, dw)
 
     def build_optimizer(self, model_w):
         opt_wrap = model_w.setup_optimizer()
@@ -207,11 +235,10 @@ class Trainer(object):
         else:
             return model_w.to(rank), None
 
-    def train(self, model_w, dataset_w, rank):
-        model_w, model_aux = self.initialize(
-            model_w, rank=rank, master_addr=self.master_addr, master_port=self.master_port
-        )
+    def train(self, rank, model_w, dataset_w):
+        model_w, _ = self.initialize(model_w, rank=rank, master_addr=self.master_addr, master_port=self.master_port)
         self.data_controller.prepare_data_wrapper(dataset_w, rank)
+        self.eval_data_back_to_cpu = dataset_w.data_back_to_cpu
 
         optimizers, lr_schedulars = self.build_optimizer(model_w)
 
@@ -254,7 +281,7 @@ class Trainer(object):
                 training_loss = self.training_step(model_w, train_loader, optimizers, lr_schedulars, rank)
 
                 print_str_dict["Epoch"] = epoch
-                print_str_dict["TrainLoss"] = training_loss
+                print_str_dict["train_loss"] = training_loss
 
                 val_loader = dataset_w.on_val_wrapper()
                 if val_loader is not None and (epoch % self.eval_step) == 0:
@@ -268,19 +295,25 @@ class Trainer(object):
                         if compare_fn(monitoring, best_index):
                             best_index = monitoring
                             patience = 0
-                            best_model_w = model_w
+                            best_model_w = copy.deepcopy(model_w)
                         else:
                             patience += 1
                             if self.early_stopping and patience >= self.patience:
                                 break
                         print_str_dict[f"val_{self.evaluation_metric}"] = monitoring
 
-                epoch_printer(print_str_dict)
+                if self.distributed_training:
+                    if rank == 0:
+                        epoch_printer(print_str_dict)
+                else:
+                    epoch_printer(print_str_dict)
+                # epoch_printer(print_str_dict)
 
                 for hook in self.after_epoch_hooks:
                     hook(self)
 
             with torch.no_grad():
+                model_w.eval()
                 post_stage_out = model_w.post_stage(stage, dataset_w)
                 dataset_w.post_stage(stage, post_stage_out)
 
@@ -302,7 +335,7 @@ class Trainer(object):
     def validate(self, model_w: ModelWrapper, dataset_w: DataWrapper, device):
         # ------- distributed training ---------
         if self.distributed_training:
-            return self.distributed_test(model_w, dataset_w, device, self.val_step)
+            return self.distributed_test(model_w, dataset_w.on_val_wrapper(), device, self.val_step)
         # ------- distributed training ---------
 
         model_w.eval()
@@ -321,7 +354,7 @@ class Trainer(object):
     def test(self, model_w: ModelWrapper, dataset_w: DataWrapper, device):
         # ------- distributed training ---------
         if self.distributed_training:
-            return self.distributed_test(model_w, dataset_w, device, self.test_step)
+            return self.distributed_test(model_w, dataset_w.on_test_wrapper(), device, self.test_step)
         # ------- distributed training ---------
 
         model_w.eval()
@@ -337,23 +370,23 @@ class Trainer(object):
         model_w.to(device)
         return result
 
-    def distributed_test(self, model_w: ModelWrapper, dataset_w: DataWrapper, rank, fn):
+    def distributed_test(self, model_w: ModelWrapper, loader, rank, fn):
         model_w.eval()
-        if rank == 0:
+        # if rank == 0:
+        if dist.get_rank() == 0:
             if self.cpu_inference:
                 model_w.to("cpu")
-                _device = rank
+                _device = "cpu"
             else:
                 _device = rank
-            test_loader = dataset_w.on_test_wrapper()
-            result = fn(model_w, test_loader, _device)
-            object_list = [result]
+            result = fn(model_w, loader, _device)
             model_w.to(rank)
+
+            object_list = [result]
         else:
-            object_list = [None, None]
+            object_list = [None]
         dist.broadcast_object_list(object_list, src=0)
-        result = object_list[0]
-        return result
+        return object_list[0]
 
     def training_step(self, model_w, train_loader, optimizers, lr_schedulars, device):
         model_w.train()
@@ -389,6 +422,8 @@ class Trainer(object):
             # batch = batch.to(device)
             batch = move_to_device(batch, device)
             model_w.on_val_step(batch)
+            if self.eval_data_back_to_cpu:
+                move_to_device(batch, "cpu")
         return model_w.collect_notes()
 
     @torch.no_grad()
@@ -398,10 +433,6 @@ class Trainer(object):
             # batch = batch.to(device)
             batch = move_to_device(batch, device)
             model_w.on_test_step(batch)
+            if self.eval_data_back_to_cpu:
+                move_to_device(batch, "cpu")
         return model_w.collect_notes()
-
-    def distributed_model_proc(self, model_w: ModelWrapper, rank):
-        _model = model_w.wrapped_model
-        ddp_model = DistributedDataParallel(_model, device_ids=[rank])
-        # _model = ddp_model.module
-        model_w.wrapped_model = ddp_model

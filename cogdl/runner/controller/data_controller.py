@@ -9,12 +9,11 @@ class DataController(object):
         self.world_size = world_size
         self.distributed = distributed
 
-    def distributed_dataloader(self, dataloader: DataLoader, rank):
+    def distributed_dataloader(self, dataloader: DataLoader, dataset, rank):
         # TODO: just a toy implementation
         assert isinstance(dataloader, DataLoader)
 
         args, kwargs = dataloader.get_parameters()
-        dataset = dataloader.dataset
         sampler = torch.utils.data.distributed.DistributedSampler(dataset, num_replicas=self.world_size, rank=rank)
         kwargs["sampler"] = sampler
         dataloader = dataloader.__class__(*args, **kwargs)
@@ -24,7 +23,7 @@ class DataController(object):
         if self.distributed:
             train_loader = dataset_w.train_wrapper()
             assert isinstance(train_loader, DataLoader)
-            train_loader = self.distributed_dataloader(train_loader, rank=rank)
+            train_loader = self.distributed_dataloader(train_loader, dataset=dataset_w.get_train_dataset(), rank=rank)
             train_wrapper = OnLoadingWrapper(train_loader, dataset_w.train_transform)
             dataset_w.prepare_val_data()
             dataset_w.prepare_test_data()
@@ -38,11 +37,11 @@ class DataController(object):
             return dataset_w
 
     def training_proc_per_stage(self, dataset_w, rank=0):
-        if dataset_w.__refresh_per_epoch__:
+        if dataset_w.__refresh_per_epoch__():
             if self.distributed:
                 train_loader = dataset_w.train_wrapper()
                 assert isinstance(train_loader, DataLoader)
-                train_loader = self.distributed_dataloader(train_loader, rank=rank)
+                train_loader = self.distributed_dataloader(train_loader, dataset=dataset_w.get_dataset(), rank=rank)
                 train_wrapper = OnLoadingWrapper(train_loader, dataset_w.train_transform)
                 dataset_w.__train_data = train_wrapper
             else:

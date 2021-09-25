@@ -327,6 +327,10 @@ class Adjacency(BaseGraph):
             return self.__num_nodes__
 
     @property
+    def row_ptr_v(self):
+        return self.row_ptr
+
+    @property
     def device(self):
         return self.row.device if self.row is not None else self.row_ptr.device
 
@@ -806,9 +810,15 @@ class Graph(BaseGraph):
         return row_ptr, edge_cols
 
     def csr_subgraph(self, node_idx):
-        if self._adj.row_ptr is None:
+        if self._adj.row_ptr_v is None:
             self._adj._to_csr()
-        indptr, indices, nodes, edges = subgraph_c(self._adj.row_ptr, self._adj.col, node_idx.cpu())
+        if torch.is_tensor(node_idx):
+            node_idx = node_idx.cpu()
+        else:
+            node_idx = torch.as_tensor(node_idx)
+
+        node_idx = torch.unique(node_idx)
+        indptr, indices, nodes, edges = subgraph_c(self._adj.row_ptr, self._adj.col, node_idx)
         nodes_idx = node_idx.to(self._adj.device)
 
         data = Graph(row_ptr=indptr, col=indices)
@@ -888,6 +898,9 @@ class Graph(BaseGraph):
         for key, item in dictionary.items():
             data[key] = item
         return data
+
+    def nodes(self):
+        return torch.arange(self.num_nodes)
 
     # @property
     # def requires_grad(self):

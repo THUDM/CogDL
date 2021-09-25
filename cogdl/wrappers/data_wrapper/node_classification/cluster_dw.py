@@ -1,5 +1,5 @@
 from .. import DataWrapper, register_data_wrapper
-from cogdl.data.sampler import ClusteredLoader
+from cogdl.data.sampler import ClusteredLoader, ClusteredDataset
 
 
 @register_data_wrapper("cluster_dw")
@@ -15,6 +15,7 @@ class ClusterWrapper(DataWrapper):
     def __init__(self, dataset, method="metis", batch_size=20, n_cluster=100):
         super(ClusterWrapper, self).__init__(dataset)
         self.dataset = dataset
+        self.cluster_dataset = ClusteredDataset(dataset, n_cluster=n_cluster, batch_size=batch_size)
         self.batch_size = batch_size
         self.n_cluster = n_cluster
         self.method = method
@@ -22,14 +23,17 @@ class ClusterWrapper(DataWrapper):
     def train_wrapper(self):
         self.dataset.data.train()
         return ClusteredLoader(
-            self.dataset,
+            self.cluster_dataset,
             method=self.method,
             batch_size=self.batch_size,
             shuffle=True,
             n_cluster=self.n_cluster,
-            persistent_workers=True,
-            num_workers=4,
+            # persistent_workers=True,
+            num_workers=0,
         )
+
+    def get_train_dataset(self):
+        return self.cluster_dataset
 
     def val_wrapper(self):
         self.dataset.data.eval()

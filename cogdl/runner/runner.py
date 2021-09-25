@@ -151,25 +151,27 @@ class Trainer(object):
         model_w.default_evaluator = dataset_w.get_default_evaluator()
         model_w.set_evaluation_metric()
 
-        torch.multiprocessing.set_sharing_strategy("file_system")
-
-        # self.model_w = model_w
-        # self.dataset_w = dataset_w
         if self.distributed_training:  # and self.world_size > 1:
+            torch.multiprocessing.set_sharing_strategy("file_system")
             self.dist_train(model_w, dataset_w)
         else:
             self.train(self.devices[0], model_w, dataset_w)
         best_model_w = load_model(model_w, self.checkpoint_path).to(self.devices[0])
+
         # disable `distributed` to inference once only
         self.distributed_training = False
         dataset_w.prepare_test_data()
-        final = self.test(best_model_w, dataset_w, self.devices[0])
-        if "test_metric" in final:
-            final[f"test_{self.evaluation_metric}"] = final["test_metric"]
-            final.pop("test_metric")
-        self.logger.note(final)
-        print(final)
-        return final
+        final_val = self.validate(model_w, dataset_w, self.devices[0])
+        final_test = self.test(best_model_w, dataset_w, self.devices[0])
+
+        if "val_metric" in final_val:
+            final_val[f"val_{self.evaluation_metric}"] = final_val["val_metric"]
+        if "test_metric" in final_test:
+            final_test[f"test_{self.evaluation_metric}"] = final_test["test_metric"]
+            final_test.pop("test_metric")
+        self.logger.note(final_test)
+        print(final_test)
+        return final_test
 
     def dist_train(self, model_w: ModelWrapper, dataset_w: DataWrapper):
         mp.set_start_method("spawn", force=True)
@@ -183,11 +185,8 @@ class Trainer(object):
 
         print(f"Let's using {size} GPUs.")
 
-        # TEMP_DATASET_PATH = "temp_dataset.pt"
-        # torch.save(dataset_w, TEMP_DATASET_PATH)
         processes = []
         for rank in range(size):
-            # p = mp.Process(target=self.dist_pre_train, args=(rank, model_w, TEMP_DATASET_PATH))
             p = mp.Process(target=self.train, args=(rank, model_w, dataset_w))
 
             p.start()
@@ -196,25 +195,6 @@ class Trainer(object):
 
         for p in processes:
             p.join()
-        # os.remove(TEMP_DATASET_PATH)
-
-    def dist_pre_train(self, rank, model_w: ModelWrapper, data_wrapper_path: str):
-        model_w, model_aux = self.initialize(
-            model_w, rank=rank, master_addr=self.master_addr, master_port=self.master_port
-        )
-        if rank == 0:
-            dw = torch.load(data_wrapper_path)
-        else:
-            dist.barrier()
-
-        if rank == 0:
-            dist.barrier()
-        else:
-            dw = torch.load(data_wrapper_path)
-
-        dist.barrier()
-
-        self.train(rank, model_w, dw)
 
     def build_optimizer(self, model_w):
         opt_wrap = model_w.setup_optimizer()

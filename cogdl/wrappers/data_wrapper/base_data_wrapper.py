@@ -30,6 +30,25 @@ class DataWrapper(object):
             isinstance(self.__val_data.raw_data, Graph) or isinstance(self.__test_data.raw_data, Graph)
         ) and not isinstance(self.__training_data.raw_data, Graph)
 
+    def get_train_dataset(self):
+        """
+        Return the `wrapped` dataset for specific usage.
+        For example, return `ClusteredDataset` in cluster_dw for DDP training.
+        """
+        raise NotImplementedError
+
+    def get_val_dataset(self):
+        """
+        Similar to `self.get_train_dataset` but for validation.
+        """
+        raise NotImplementedError
+
+    def get_test_dataset(self):
+        """
+        Similar to `self.get_train_dataset` but for test.
+        """
+        raise NotImplementedError
+
     def train_wrapper(self):
         """
         Return:

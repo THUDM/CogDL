@@ -48,4 +48,4 @@ class NodeClfModelWrapper(ModelWrapper):
         return torch.optim.Adam(self.model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
 
     def set_early_stopping(self):
-        return "val_metric", "big"
+        return "val_metric", ">"

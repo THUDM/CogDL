@@ -26,7 +26,7 @@ class ClusterWrapper(DataWrapper):
             self.cluster_dataset,
             method=self.method,
             batch_size=self.batch_size,
-            # shuffle=True,
+            shuffle=True,
             n_cluster=self.n_cluster,
             # persistent_workers=True,
             num_workers=0,

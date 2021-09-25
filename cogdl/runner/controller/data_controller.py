@@ -37,7 +37,7 @@ class DataController(object):
             return dataset_w
 
     def training_proc_per_stage(self, dataset_w, rank=0):
-        if dataset_w.__refresh_per_epoch__:
+        if dataset_w.__refresh_per_epoch__():
             if self.distributed:
                 train_loader = dataset_w.train_wrapper()
                 assert isinstance(train_loader, DataLoader)

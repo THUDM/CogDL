@@ -1,13 +1,13 @@
 from cogdl import experiment
 
-# basic usage
-experiment(task="node_classification", dataset="cora", model="gcn")
+# # basic usage
+# experiment(dataset="cora", model="gcn")
 
-# set other hyper-parameters
-experiment(task="node_classification", dataset="cora", model="gcn", hidden_size=32, max_epoch=200)
+# # set other hyper-parameters
+# experiment(dataset="cora", model="gcn", hidden_size=32, max_epoch=200)
 
-# run over multiple models on different seeds
-experiment(task="node_classification", dataset="cora", model=["gcn", "gat"], seed=[1, 2])
+# # run over multiple models on different seeds
+# experiment(dataset="cora", model=["gcn", "gat"], seed=[1, 2])
 
 
 # automl usage
@@ -19,4 +19,4 @@ def func_search(trial):
     }
 
 
-experiment(task="node_classification", dataset="cora", model="gcn", seed=[1, 2], func_search=func_search)
+experiment(dataset="cora", model="gcn", seed=[1, 2], func_search=func_search)

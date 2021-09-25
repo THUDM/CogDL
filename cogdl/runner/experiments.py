@@ -23,8 +23,7 @@ class AutoML(object):
         func_search: function to obtain hyper-parameters to search
     """
 
-    def __init__(self, task, dataset, model, n_trials=3, **kwargs):
-        self.task = task
+    def __init__(self, dataset, model, n_trials=3, **kwargs):
         self.dataset = dataset
         self.model = model
         self.seed = kwargs.pop("seed") if "seed" in kwargs else [1]
@@ -40,7 +39,7 @@ class AutoML(object):
         params = self.default_params
         cur_params = self.func_search(trials)
         params.update(cur_params)
-        result_dict = raw_experiment(task=self.task, dataset=self.dataset, model=self.model, seed=self.seed, **params)
+        result_dict = raw_experiment(dataset=self.dataset, model=self.model, seed=self.seed, **params)
         result_list = list(result_dict.values())[0]
         item = result_list[0]
         key = self.metric
@@ -234,13 +233,13 @@ def raw_experiment(dataset, model, **kwargs):
     return results_dict
 
 
-def auto_experiment(task: str, dataset, model, **kwargs):
+def auto_experiment(dataset, model, **kwargs):
     variants = list(gen_variants(dataset=dataset, model=model))
     # variants = check_task_dataset_model_match(task, variants)
 
     results_dict = defaultdict(list)
     for variant in variants:
-        tool = AutoML(task, variant.dataset, variant.model, **kwargs)
+        tool = AutoML(variant.dataset, variant.model, **kwargs)
         results_dict[variant[:]] = tool.run()
 
     tablefmt = kwargs["tablefmt"] if "tablefmt" in kwargs else "github"

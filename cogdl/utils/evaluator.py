@@ -12,7 +12,7 @@ def setup_evaluator(metric: Union[str, Callable]):
         metric = metric.lower()
         if metric == "acc" or metric == "accuracy":
             return Accuracy()
-        elif metric == "multilabel_microf1":
+        elif metric == "multilabel_microf1" or "microf1" or "micro_f1":
             return MultiLabelMicroF1()
         elif metric == "multiclass_microf1":
             return MultiClassMicroF1()

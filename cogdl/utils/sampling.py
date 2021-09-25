@@ -4,6 +4,8 @@ import torch
 import scipy.sparse as sp
 import random
 
+# from cogdl.utils.rwalk import random_walk as c_random_walk
+
 
 @numba.njit(cache=True, parallel=True)
 def random_walk(start, length, indptr, indices, p=0.0):

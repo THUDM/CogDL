@@ -66,7 +66,7 @@ class ModelWrapper(torch.nn.Module):
             2. tuple(`str`, `str`), that is, (the monitoring metric, `small` or `big`). The second parameter means,
                 `the smaller, the better` or `the bigger, the better`
         """
-        return "val_metric", "big"
+        return "val_metric", ">"
 
     def on_train_step(self, *args, **kwargs):
         return self.train_step(*args, **kwargs)

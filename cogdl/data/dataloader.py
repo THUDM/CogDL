@@ -8,7 +8,7 @@ from cogdl.data import Batch, Graph
 class RecordParameters(ABCMeta):
     def __call__(cls, *args, **kwargs):
         obj = type.__call__(cls, *args, **kwargs)
-        obj.default_kwargs = [args, kwargs]
+        obj.record_parameters([args, kwargs])
         return obj
 
 
@@ -25,7 +25,7 @@ class DataLoader(torch.utils.data.DataLoader, metaclass=RecordParameters):
     """
 
     def __init__(self, dataset, batch_size=1, shuffle=True, **kwargs):
-        if "collate_fn" not in kwargs:
+        if "collate_fn" not in kwargs or kwargs["collate_fn"] is None:
             kwargs["collate_fn"] = self.collate_fn
 
         super(DataLoader, self).__init__(
@@ -34,11 +34,6 @@ class DataLoader(torch.utils.data.DataLoader, metaclass=RecordParameters):
             shuffle,
             **kwargs,
         )
-
-        self.kwargs = kwargs
-        self.kwargs["dataset"] = dataset
-        self.kwargs["batch_size"] = batch_size
-        self.kwargs["shuffle"] = shuffle
 
     @staticmethod
     def collate_fn(batch):

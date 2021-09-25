@@ -23,23 +23,21 @@ class AutoML(object):
         func_search: function to obtain hyper-parameters to search
     """
 
-    def __init__(self, dataset, model, n_trials=3, **kwargs):
-        self.dataset = dataset
-        self.model = model
-        self.seed = kwargs.pop("seed") if "seed" in kwargs else [1]
-        assert "func_search" in kwargs
-        self.func_search = kwargs["func_search"]
-        self.metric = kwargs["metric"] if "metric" in kwargs else None
-        self.n_trials = n_trials
+    def __init__(self, args):
+        self.func_search = args.func_search
+        self.metric = args.metric if hasattr(args, "metric") else None
+        self.n_trials = args.n_trials if hasattr(args, "n_trials") else 3
         self.best_value = None
         self.best_params = None
-        self.default_params = kwargs
+        self.default_params = args
 
     def _objective(self, trials):
-        params = self.default_params
+        params = copy.deepcopy(self.default_params)
         cur_params = self.func_search(trials)
-        params.update(cur_params)
-        result_dict = raw_experiment(dataset=self.dataset, model=self.model, seed=self.seed, **params)
+        print(cur_params)
+        for key, value in cur_params.items():
+            params.__setattr__(key, value)
+        result_dict = raw_experiment(args=params)
         result_list = list(result_dict.values())[0]
         item = result_list[0]
         key = self.metric
@@ -212,12 +210,7 @@ def output_results(results_dict, tablefmt="github"):
     print(tabulate(tab_data, headers=col_names, tablefmt=tablefmt))
 
 
-def raw_experiment(dataset, model, **kwargs):
-    if "args" not in kwargs:
-        args = get_default_args(dataset=dataset, model=model, **kwargs)
-    else:
-        args = kwargs["args"]
-
+def raw_experiment(args):
     init_operator_configs(args)
 
     variants = list(gen_variants(dataset=args.dataset, model=args.model, seed=args.seed))
@@ -227,22 +220,23 @@ def raw_experiment(dataset, model, **kwargs):
     for variant, result in zip(variants, results):
         results_dict[variant[:-1]].append(result)
 
-    tablefmt = kwargs["tablefmt"] if "tablefmt" in kwargs else "github"
+    tablefmt = args.tablefmt if hasattr(args, "tablefmt") else "github"
     output_results(results_dict, tablefmt)
 
     return results_dict
 
 
-def auto_experiment(dataset, model, **kwargs):
-    variants = list(gen_variants(dataset=dataset, model=model))
-    # variants = check_task_dataset_model_match(task, variants)
+def auto_experiment(args):
+    variants = list(gen_variants(dataset=args.dataset, model=args.model))
 
     results_dict = defaultdict(list)
     for variant in variants:
-        tool = AutoML(variant.dataset, variant.model, **kwargs)
+        args.model = [variant.model]
+        args.dataset = [variant.dataset]
+        tool = AutoML(args)
         results_dict[variant[:]] = tool.run()
 
-    tablefmt = kwargs["tablefmt"] if "tablefmt" in kwargs else "github"
+    tablefmt = args.tablefmt if hasattr(args, "tablefmt") else "github"
     print("\nFinal results:\n")
     output_results(results_dict, tablefmt)
 
@@ -254,7 +248,15 @@ def experiment(dataset, model, **kwargs):
         dataset = [dataset]
     if isinstance(model, str):
         model = [model]
-    if "func_search" in kwargs:
-        return auto_experiment(dataset, model, **kwargs)
+    if "args" not in kwargs:
+        args = get_default_args(dataset=dataset, model=model, **kwargs)
+    else:
+        args = kwargs["args"]
+        for key, value in kwargs.items():
+            if key != "args":
+                args.__setattr__(key, value)
 
-    return raw_experiment(dataset, model, **kwargs)
+    if "func_search" in kwargs:
+        return auto_experiment(args)
+
+    return raw_experiment(args)

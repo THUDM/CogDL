@@ -34,7 +34,7 @@ class BaseEvaluator(object):
         self.y_true.append(y_true.cpu())
         return metric
 
-    def clean(self):
+    def clear(self):
         self.y_pred = list()
         self.y_true = list()
 
@@ -58,6 +58,8 @@ class Accuracy(object):
         pred = (y_pred.argmax(1) == y_true).int()
         tp = pred.sum().int()
         total = pred.shape[0]
+        if torch.is_tensor(tp):
+            tp = tp.item()
 
         # if self.mini_batch:
         self.tp.append(tp)
@@ -73,6 +75,10 @@ class Accuracy(object):
             self.total = list()
             return tp / total
         return 0
+
+    def clear(self):
+        self.tp = list()
+        self.total = list()
 
 
 class MultiLabelMicroF1(Accuracy):

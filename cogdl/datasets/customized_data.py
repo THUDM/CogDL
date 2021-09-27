@@ -42,7 +42,7 @@ class NodeDataset(Dataset):
     metric: Accuracy, multi-label f1 or multi-class f1. Default: `accuracy`
     """
 
-    def __init__(self, path="cus_data.pt", scale_feat=True, metric="accuracy"):
+    def __init__(self, path="cus_data.pt", scale_feat=True, metric="auto"):
         self.path = path
         super(NodeDataset, self).__init__(root=path)
         try:
@@ -54,10 +54,11 @@ class NodeDataset(Dataset):
             exit(1)
         self.metric = metric
         if hasattr(self.data, "y") and self.data.y is not None:
-            if len(self.data.y.shape) > 1:
-                self.metric = "multilabel_f1"
-            else:
-                self.metric = "accuracy"
+            if metric == "auto":
+                if len(self.data.y.shape) > 1:
+                    self.metric = "multilabel_f1"
+                else:
+                    self.metric = "accuracy"
 
     def download(self):
         pass
@@ -81,8 +82,7 @@ class NodeDataset(Dataset):
     def _process(self):
         if not os.path.exists(self.path):
             data = self.process()
-            if not os.path.exists(self.path):
-                torch.save(data, self.path)
+            torch.save(data, self.path)
 
     def __repr__(self):
         return "{}()".format(self.name)
@@ -112,8 +112,7 @@ class GraphDataset(MultiGraphDataset):
     def _process(self):
         if not os.path.exists(self.path):
             data = self.process()
-            if not os.path.exists(self.path):
-                torch.save(data, self.path)
+            torch.save(data, self.path)
 
     def get_evaluator(self):
         return _get_evaluator(self.metric)

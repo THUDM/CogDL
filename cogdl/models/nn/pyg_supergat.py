@@ -20,7 +20,6 @@ from torch_geometric.utils import (
 )
 import torch_geometric.nn.inits as tgi
 
-from cogdl.trainers.supergat_trainer import SuperGATTrainer
 from .. import BaseModel, register_model
 
 from typing import List
@@ -470,10 +469,6 @@ class SuperGAT(BaseModel):
     def modules(self) -> List[SuperGATLayer]:
         return [self.conv1, self.conv2]
 
-    @staticmethod
-    def get_trainer(args):
-        return SuperGATTrainer
-
 
 @register_model("supergat-large")
 class LargeSuperGAT(BaseModel):
@@ -577,7 +572,3 @@ class LargeSuperGAT(BaseModel):
 
     def modules(self) -> List[SuperGATLayer]:
         return self.conv_list
-
-    @staticmethod
-    def get_trainer(args):
-        return SuperGATTrainer

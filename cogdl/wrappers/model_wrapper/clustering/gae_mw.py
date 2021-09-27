@@ -5,7 +5,7 @@ from .. import register_model_wrapper, ModelWrapper
 from cogdl.wrappers.tools.wrapper_utils import evaluate_clustering
 
 
-@register_model_wrapper("gat_mw")
+@register_model_wrapper("gae_mw")
 class GAEModelWrapper(ModelWrapper):
     @staticmethod
     def add_args(parser):
@@ -25,28 +25,16 @@ class GAEModelWrapper(ModelWrapper):
 
     def train_step(self, subgraph):
         graph = subgraph
-        mean, log_var = self.model.encode(graph)
-        z = self.reparameterization(mean, log_var)
-        mat = self.model.decode(z)
-        recon_loss = F.binary_cross_entropy(mat, graph.adj_mx, reduction="sum")
-        var = torch.exp(log_var)
-        kl_loss = 0.5 * torch.mean(torch.sum(mean * mean + var - log_var - 1, dim=1))
-        # print("recon_loss = %.3f, kl_loss = %.3f" % (recon_loss, kl_loss))
-        return recon_loss + kl_loss
+        loss = self.model.make_loss(graph, graph.adj_mx)
+        return loss
 
-    def evaluate(self, dataset):
-        data = dataset.data
-        features_matrix = self.model(data)
+    def test_step(self, subgraph):
+        graph = subgraph
+        features_matrix = self.model(graph)
         features_matrix = features_matrix.cpu().numpy()
         return evaluate_clustering(
-            features_matrix, data.y, self.cluster_method, self.num_clusters, data.num_nodes, self.full
+            features_matrix, graph.y, self.cluster_method, self.num_clusters, graph.num_nodes, self.full
         )
-
-    @staticmethod
-    def reparameterization(mean, log_var):
-        sigma = torch.exp(log_var)
-        z = mean + torch.randn_like(log_var) * sigma
-        return z
 
     def pre_stage(self, stage, data_w):
         if stage == 0:
@@ -57,3 +45,7 @@ class GAEModelWrapper(ModelWrapper):
                 torch.Size([data.x.shape[0], data.x.shape[0]]),
             ).to_dense()
             data.adj_mx = adj_mx
+
+    def setup_optimizer(self):
+        lr, wd = self.optimizer_cfg["lr"], self.optimizer_cfg["weight_decay"]
+        return torch.optim.Adam(self.parameters(), lr=lr, weight_decay=wd)

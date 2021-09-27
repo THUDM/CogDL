@@ -13,6 +13,7 @@ def set_default_wrapper_config():
         "grace",
         "mvgrl",
         "graphsage",
+        "sage",
         "gdc_gcn",
         "mixhop",
         "mlp",
@@ -66,6 +67,13 @@ def set_default_wrapper_config():
         "graph2vec",
     ]
 
+    graph_clustering_models = [
+        "agc",
+        "daegc",
+        "gae",
+        "vgae",
+    ]
+
     node_classification_wrappers = dict()
     for item in node_classification_models:
         node_classification_wrappers[item] = {"mw": "node_classification_mw", "dw": "node_classification_dw"}
@@ -97,11 +105,20 @@ def set_default_wrapper_config():
     for item in graph_embedding_models:
         graph_embedding_wrappers[item] = {"mw": "graph_embedding_mw", "dw": "graph_embedding_dw"}
 
+    graph_clustering_wrappers = dict()
+    for item in graph_clustering_models:
+        graph_clustering_wrappers[item] = {"dw": "node_classification_dw"}
+    graph_clustering_wrappers["gae"]["mw"] = "gae_mw"
+    graph_clustering_wrappers["vgae"]["mw"] = "gae_mw"
+    graph_clustering_wrappers["agc"]["mw"] = "agc_mw"
+    graph_clustering_wrappers["daegc"]["mw"] = "daegc_mw"
+
     merged = dict()
     merged.update(node_classification_wrappers)
     merged.update(graph_embedding_wrappers)
-    merged.update(graph_embedding_wrappers)
+    merged.update(graph_classification_wrappers)
     merged.update(network_embedding_wrappers)
+    merged.update(graph_clustering_wrappers)
     return merged
 
 

@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from cogdl.trainers.sampled_trainer import RandomClusterTrainer
 from cogdl.utils import get_activation
 from cogdl.layers import ResGNNLayer, GENConv
 

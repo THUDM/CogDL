@@ -4,8 +4,6 @@ import torch.nn as nn
 
 from .. import BaseModel, register_model
 from cogdl.utils import get_activation, spmm
-from cogdl.trainers.self_supervised_trainer import SelfSupervisedPretrainer
-from cogdl.models.self_supervised_model import SelfSupervisedContrastiveModel
 
 
 # Borrowed from https://github.com/PetarV-/DGI
@@ -95,7 +93,7 @@ class Discriminator(nn.Module):
 
 
 @register_model("dgi")
-class DGIModel(SelfSupervisedContrastiveModel):
+class DGIModel(BaseModel):
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -166,7 +164,3 @@ class DGIModel(SelfSupervisedContrastiveModel):
         h_1 = self.gcn(data, data.x, self.sparse)
         # c = self.read(h_1, msk)
         return h_1.detach()  # , c.detach()
-
-    @staticmethod
-    def get_trainer(args):
-        return SelfSupervisedPretrainer

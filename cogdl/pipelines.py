@@ -13,7 +13,6 @@ from tabulate import tabulate
 
 from cogdl import oagbert
 from cogdl.data import Graph
-from cogdl.tasks import build_task
 from cogdl.datasets import build_dataset_from_name, NodeDataset
 from cogdl.models import build_model
 from cogdl.options import get_default_args
@@ -241,10 +240,11 @@ class RecommendationPipepline(Pipeline):
         args = get_default_args(task="recommendation", dataset="ali", model=model, **kwargs)
         args.model = args.model[0]
 
-        task = build_task(args, dataset=self.dataset)
-        task.train()
+        # task = build_task(args, dataset=self.dataset)
+        # task.train()
 
-        self.model = task.model
+        # self.model = task.model
+        self.model = build_model(args)
         self.model.eval()
 
         self.user_emb, self.item_emb = self.model.generate()

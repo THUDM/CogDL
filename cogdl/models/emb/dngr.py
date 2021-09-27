@@ -80,6 +80,7 @@ class DNGR(BaseModel):
         self.step = step
         self.max_epoch = max_epoch
         self.lr = lr
+        self.device = "cuda" if torch.cuda.is_available() and not cpu else "cpu"
 
     def scale_matrix(self, mat):
         mat = mat - np.diag(np.diag(mat))

@@ -142,13 +142,13 @@ def alias_draw(J, q):
         return J[kk]
 
 
-def identity_act(input, inplace=True):
+def identity_act(input):
     return input
 
 
-def get_activation(act: str):
+def get_activation(act: str, inplace=False):
     if act == "relu":
-        return nn.ReLU()
+        return nn.ReLU(inplace=inplace)
     elif act == "sigmoid":
         return nn.Sigmoid()
     elif act == "tanh":

@@ -1,7 +1,6 @@
 import torch
 import torch.nn.functional as F
 from cogdl.layers import GCNLayer
-from cogdl.trainers.gae_trainer import GAETrainer
 
 from .. import BaseModel, register_model
 from .gcn import TKipfGCN
@@ -25,10 +24,6 @@ class GAE(TKipfGCN):
 
     def get_features(self, data):
         return self.embed(data).detach()
-
-    @staticmethod
-    def get_trainer(args=None):
-        return GAETrainer
 
 
 @register_model("vgae")
@@ -88,7 +83,3 @@ class VGAE(BaseModel):
         kl_loss = 0.5 * torch.mean(torch.sum(mean * mean + var - log_var - 1, dim=1))
         print("recon_loss = %.3f, kl_loss = %.3f" % (recon_loss, kl_loss))
         return recon_loss + kl_loss
-
-    @staticmethod
-    def get_trainer(args):
-        return GAETrainer

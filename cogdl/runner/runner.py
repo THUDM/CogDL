@@ -1,6 +1,7 @@
 import copy
 from typing import Optional
 import numpy as np
+from torch import optim
 from tqdm import tqdm
 import os
 
@@ -164,7 +165,7 @@ class Trainer(object):
         final_val = self.validate(model_w, dataset_w, self.devices[0])
         final_test = self.test(best_model_w, dataset_w, self.devices[0])
 
-        if "val_metric" in final_val:
+        if final_val is not None and "val_metric" in final_val:
             final_val[f"val_{self.evaluation_metric}"] = final_val["val_metric"]
             final_val.pop("val_metric")
             final_val.pop("val_loss")
@@ -173,7 +174,8 @@ class Trainer(object):
             final_test.pop("test_metric")
             final_test.pop("test_loss")
         self.logger.note(final_test)
-        final_test.update(final_val)
+        if final_val is not None:
+            final_test.update(final_val)
         print(final_test)
         return final_test
 
@@ -235,6 +237,8 @@ class Trainer(object):
         self.eval_data_back_to_cpu = dataset_w.data_back_to_cpu
 
         optimizers, lr_schedulars = self.build_optimizer(model_w)
+        if optimizers[0] is None:
+            return
 
         est = model_w.set_early_stopping()
         if isinstance(est, str):

@@ -6,9 +6,7 @@ import torch.nn.functional as F
 from .. import register_model, BaseModel
 from cogdl.layers import GCNLayer
 from cogdl.utils import get_activation
-from cogdl.trainers.self_supervised_trainer import SelfSupervisedPretrainer
 from cogdl.data import Graph
-from cogdl.models.self_supervised_model import SelfSupervisedContrastiveModel
 
 
 class GraceEncoder(nn.Module):
@@ -33,7 +31,7 @@ class GraceEncoder(nn.Module):
 
 
 @register_model("grace")
-class GRACE(SelfSupervisedContrastiveModel):
+class GRACE(BaseModel):
     @staticmethod
     def add_args(parser):
         # fmt : off
@@ -91,8 +89,10 @@ class GRACE(SelfSupervisedContrastiveModel):
     def forward(
         self,
         graph: Graph,
-        x: torch.Tensor,
+        x: torch.Tensor = None,
     ):
+        if x is None:
+            x = graph.x
         graph.sym_norm()
         return self.encoder(graph, x)
 
@@ -181,7 +181,3 @@ class GRACE(SelfSupervisedContrastiveModel):
             masks = masks.to(x.device)
             x = masks * x
         return x
-
-    @staticmethod
-    def get_trainer(args):
-        return SelfSupervisedPretrainer

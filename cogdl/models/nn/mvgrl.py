@@ -6,9 +6,7 @@ import torch.nn as nn
 from .. import BaseModel, register_model
 from .dgi import GCN, AvgReadout
 from cogdl.utils.ppr_utils import build_topk_ppr_matrix_from_data
-from cogdl.trainers.self_supervised_trainer import SelfSupervisedPretrainer
 from cogdl.data import Graph
-from cogdl.models.self_supervised_model import SelfSupervisedContrastiveModel
 
 
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
@@ -59,7 +57,7 @@ class Discriminator(nn.Module):
 
 # Mainly borrowed from https://github.com/kavehhassani/mvgrl
 @register_model("mvgrl")
-class MVGRL(SelfSupervisedContrastiveModel):
+class MVGRL(BaseModel):
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -194,7 +192,3 @@ class MVGRL(SelfSupervisedContrastiveModel):
         h_2 = self.gcn2(diff, data.x.to(self.device), True)
         # c = self.read(h_1, msk)
         return (h_1 + h_2).detach()  # , c.detach()
-
-    @staticmethod
-    def get_trainer(args):
-        return SelfSupervisedPretrainer

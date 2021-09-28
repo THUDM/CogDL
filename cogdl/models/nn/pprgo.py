@@ -4,7 +4,6 @@ import torch
 from .. import BaseModel, register_model
 from cogdl.utils import spmm
 from cogdl.layers import PPRGoLayer
-from cogdl.trainers.ppr_trainer import PPRGoTrainer
 
 
 @register_model("pprgo")
@@ -49,11 +48,6 @@ class PPRGo(BaseModel):
         out = out.scatter_add_(dim=0, index=targets[:, None].repeat(1, h.shape[1]), src=h)
         return out
 
-    def node_classification_loss(self, x, targets, ppr_scores, y):
-        pred = self.forward(x, targets, ppr_scores)
-        loss = self.loss_fn(pred, y)
-        return loss
-
     def predict(self, graph, batch_size=10000):
         device = next(self.fc.parameters()).device
         x = graph.x
@@ -80,7 +74,3 @@ class PPRGo(BaseModel):
             for _ in range(self.nprop):
                 predictions = spmm(graph, predictions) + self.alpha * pred_logits
         return predictions
-
-    @staticmethod
-    def get_trainer(args: Any):
-        return PPRGoTrainer

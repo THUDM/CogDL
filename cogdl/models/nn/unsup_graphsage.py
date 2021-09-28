@@ -8,7 +8,6 @@ import torch.nn.functional as F
 from .. import register_model, BaseModel
 from cogdl.layers import SAGELayer
 from cogdl.models.nn.graphsage import sage_sampler
-from cogdl.trainers.self_supervised_trainer import SelfSupervisedPretrainer
 from cogdl.utils import RandomWalker
 
 
@@ -131,7 +130,3 @@ class SAGE(BaseModel):
 
     def sampling(self, edge_index, num_sample):
         return sage_sampler(self.adjlist, edge_index, num_sample)
-
-    @staticmethod
-    def get_trainer(args):
-        return SelfSupervisedPretrainer

@@ -7,8 +7,8 @@ from .. import register_model_wrapper, ModelWrapper
 from cogdl.wrappers.tools.wrapper_utils import evaluate_clustering
 
 
-@register_model_wrapper("dagae_mw")
-class DAGAEModelWrapper(ModelWrapper):
+@register_model_wrapper("daegc_mw")
+class DAEGCModelWrapper(ModelWrapper):
     @staticmethod
     def add_args(parser):
         # fmt: off
@@ -19,7 +19,7 @@ class DAGAEModelWrapper(ModelWrapper):
         # fmt: on
 
     def __init__(self, model, optimizer_cfg, num_clusters, cluster_method="kmeans", evaluation="full", T=5):
-        super(DAGAEModelWrapper, self).__init__()
+        super(DAEGCModelWrapper, self).__init__()
         self.model = model
         self.num_clusters = num_clusters
         self.optimizer_cfg = optimizer_cfg
@@ -46,19 +46,18 @@ class DAGAEModelWrapper(ModelWrapper):
             loss = self.recon_loss(z, graph.adj_mx) + self.gamma * self.cluster_loss(P, Q)
         return loss
 
-    def evaluate(self, dataset):
-        data = dataset.data
-        features_matrix = self.model(data)
+    def test_step(self, subgraph):
+        graph = subgraph
+        features_matrix = self.model(graph)
         features_matrix = features_matrix.cpu().numpy()
         return evaluate_clustering(
-            features_matrix, data.y, self.cluster_method, self.num_clusters, data.num_nodes, self.full
+            features_matrix, graph.y, self.cluster_method, self.num_clusters, graph.num_nodes, self.full
         )
 
     def recon_loss(self, z, adj):
         return F.binary_cross_entropy(F.softmax(torch.mm(z, z.t())), adj, reduction="sum")
 
     def cluster_loss(self, P, Q):
-        # return nn.MSELoss(reduce=True, size_average=False)(P, Q)
         return torch.nn.KLDivLoss(reduce=True, size_average=False)(P.log(), Q)
 
     def setup_optimizer(self):

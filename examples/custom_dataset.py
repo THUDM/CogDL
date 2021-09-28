@@ -1,6 +1,6 @@
 import torch
 
-from cogdl.runner.experiments import experiment
+from cogdl.experiments import experiment
 from cogdl.data import Graph
 from cogdl.datasets import NodeDataset, register_dataset
 

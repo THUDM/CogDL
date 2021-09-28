@@ -1,5 +1,5 @@
-__version__ = "0.4.1"
+__version__ = "0.5.0"
 
-from .runner.experiments import experiment
+from .experiments import experiment
 from .oag import oagbert
 from .pipelines import pipeline

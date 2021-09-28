@@ -44,7 +44,7 @@ class SAGELayer(nn.Module):
             self.dropout = None
 
         if activation is not None:
-            self.act = get_activation(activation)
+            self.act = get_activation(activation, inplace=True)
         else:
             self.act = None
 
@@ -68,7 +68,7 @@ class SAGELayer(nn.Module):
         if self.norm is not None:
             out = self.norm(out)
         if self.act is not None:
-            out = self.act(out, inplace=True)
+            out = self.act(out)
 
         if self.residual:
             out = out + self.residual(x)

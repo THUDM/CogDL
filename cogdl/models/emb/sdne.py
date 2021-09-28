@@ -106,7 +106,7 @@ class SDNE(BaseModel):
         self.nu2 = nu2
         self.max_epoch = max_epoch
         self.lr = lr
-        self.cpu = cpu
+        self.device = "cuda" if torch.cuda.is_available() and not cpu else "cpu"
 
     def train(self, graph, return_dict=False):
         return self.forward(graph, return_dict)

@@ -87,15 +87,6 @@ class GDC_GCN(BaseModel):
         x = self.gc2(graph, x)
         return x
 
-    def node_classification_loss(self, data):
-        if self.data is None:
-            self.reset_data(data)
-        mask = data.train_mask
-        self.data.apply(lambda x: x.to(self.device))
-        pred = self.forward(self.data)
-
-        return self.loss_fn(pred[mask], self.data.y[mask])
-
     def predict(self, data=None):
         self.data.apply(lambda x: x.to(self.device))
         return self.forward(self.data)

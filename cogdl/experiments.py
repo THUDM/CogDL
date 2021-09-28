@@ -1,19 +1,20 @@
 import copy
 import itertools
 import os
+import inspect
 from collections import defaultdict, namedtuple
 
 import torch
-import yaml
 import optuna
 from tabulate import tabulate
 
-from cogdl.options import get_default_args
-from cogdl.tasks import build_task
 from cogdl.utils import set_random_seed, tabulate_results, init_operator_configs
 from cogdl.configs import BEST_CONFIGS
-from cogdl.datasets import SUPPORTED_DATASETS
-from cogdl.models import SUPPORTED_MODELS
+from cogdl.models import build_model
+from cogdl.datasets import build_dataset
+from cogdl.wrappers import fetch_model_wrapper, fetch_data_wrapper
+from cogdl.options import get_default_args
+from cogdl.runner.runner import Trainer
 
 
 class AutoML(object):
@@ -22,24 +23,21 @@ class AutoML(object):
         func_search: function to obtain hyper-parameters to search
     """
 
-    def __init__(self, task, dataset, model, n_trials=3, **kwargs):
-        self.task = task
-        self.dataset = dataset
-        self.model = model
-        self.seed = kwargs.pop("seed") if "seed" in kwargs else [1]
-        assert "func_search" in kwargs
-        self.func_search = kwargs["func_search"]
-        self.metric = kwargs["metric"] if "metric" in kwargs else None
-        self.n_trials = n_trials
+    def __init__(self, args):
+        self.func_search = args.func_search
+        self.metric = args.metric if hasattr(args, "metric") else None
+        self.n_trials = args.n_trials if hasattr(args, "n_trials") else 3
         self.best_value = None
         self.best_params = None
-        self.default_params = kwargs
+        self.default_params = args
 
     def _objective(self, trials):
-        params = self.default_params
+        params = copy.deepcopy(self.default_params)
         cur_params = self.func_search(trials)
-        params.update(cur_params)
-        result_dict = raw_experiment(task=self.task, dataset=self.dataset, model=self.model, seed=self.seed, **params)
+        print(cur_params)
+        for key, value in cur_params.items():
+            params.__setattr__(key, value)
+        result_dict = raw_experiment(args=params)
         result_list = list(result_dict.values())[0]
         item = result_list[0]
         key = self.metric
@@ -67,6 +65,18 @@ class AutoML(object):
         return self.best_results
 
 
+def examine_link_prediction(args, dataset):
+    if "link_prediction" in args.mw:
+        args.num_entities = dataset.data.num_nodes
+        # args.num_entities = len(torch.unique(self.data.edge_index))
+        if dataset.data.edge_attr is not None:
+            args.num_rels = len(torch.unique(dataset.data.edge_attr))
+            args.monitor = "mrr"
+        else:
+            args.monitor = "auc"
+    return args
+
+
 def set_best_config(args):
     configs = BEST_CONFIGS[args.task]
     if args.model not in configs:
@@ -82,17 +92,99 @@ def set_best_config(args):
 
 
 def train(args):
-    if torch.cuda.is_available() and not args.cpu:
-        torch.cuda.set_device(args.device_id[0])
-
+    print(
+        f""" 
+    |---------------------------------------------------{'-' * (len(args.mw) + len(args.dw))}|
+     *** Using `{args.mw}` ModelWrapper and `{args.dw}` DataWrapper 
+    |---------------------------------------------------{'-' * (len(args.mw) + len(args.dw))}|"""
+    )
     set_random_seed(args.seed)
 
     if getattr(args, "use_best_config", False):
         args = set_best_config(args)
 
-    print(args)
-    task = build_task(args)
-    result = task.train()
+    # setup dataset and specify `num_features` and `num_classes` for model
+    args.monitor = "val_acc"
+    dataset = build_dataset(args)
+
+    mw_class = fetch_model_wrapper(args.mw)
+    dw_class = fetch_data_wrapper(args.dw)
+
+    if mw_class is None:
+        raise NotImplementedError("`model wrapper(--mw)` must be specified.")
+
+    if dw_class is None:
+        raise NotImplementedError("`data wrapper(--dw)` must be specified.")
+
+    data_wrapper_args = dict()
+    model_wrapper_args = dict()
+    # unworthy code: share `args` between model and dataset_wrapper
+    for key in inspect.signature(dw_class).parameters.keys():
+        if hasattr(args, key) and key != "dataset":
+            data_wrapper_args[key] = getattr(args, key)
+    # unworthy code: share `args` between model and model_wrapper
+    for key in inspect.signature(mw_class).parameters.keys():
+        if hasattr(args, key) and key != "model":
+            model_wrapper_args[key] = getattr(args, key)
+
+    args = examine_link_prediction(args, dataset)
+
+    # setup data_wrapper
+    dataset_wrapper = dw_class(dataset, **data_wrapper_args)
+
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    if hasattr(dataset, "num_nodes"):
+        args.num_nodes = dataset.num_nodes
+    if hasattr(dataset, "num_edges"):
+        args.num_edges = dataset.num_edges
+    if hasattr(args, "unsup") and args.unsup:
+        args.num_classes = args.hidden_size
+    else:
+        args.num_classes = dataset.num_classes
+
+    # setup model
+    model = build_model(args)
+    # specify configs for optimizer
+    optimizer_cfg = dict(
+        lr=args.lr,
+        weight_decay=args.weight_decay,
+        n_warmup_steps=args.n_warmup_steps,
+        max_epoch=args.max_epoch,
+        batch_size=args.batch_size if hasattr(args, "batch_size") else 0,
+    )
+
+    if hasattr(args, "hidden_size"):
+        optimizer_cfg["hidden_size"] = args.hidden_size
+
+    # setup model_wrapper
+    if "embedding" in args.mw:
+        model_wrapper = mw_class(model, **model_wrapper_args)
+    else:
+        model_wrapper = mw_class(model, optimizer_cfg, **model_wrapper_args)
+
+    save_embedding_path = args.emb_path if hasattr(args, "emb_path") else None
+    os.makedirs("./checkpoints", exist_ok=True)
+
+    # setup controller
+    trainer = Trainer(
+        max_epoch=args.max_epoch,
+        device_ids=args.devices,
+        cpu=args.cpu,
+        save_embedding_path=save_embedding_path,
+        cpu_inference=args.cpu_inference,
+        # monitor=args.monitor,
+        progress_bar=args.progress_bar,
+        distributed_training=args.distributed,
+        checkpoint_path=args.checkpoint_path,
+        patience=args.patience,
+        logger=args.logger,
+        log_path=args.log_path,
+        project=args.project,
+    )
+
+    # Go!!!
+    result = trainer.run(model_wrapper, dataset_wrapper)
 
     return result
 
@@ -109,32 +201,6 @@ def variant_args_generator(args, variants):
         yield copy.deepcopy(args)
 
 
-def check_task_dataset_model_match(task, variants):
-    match_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "match.yml")
-    with open(match_path, "r", encoding="utf8") as f:
-        match = yaml.load(f, Loader=yaml.FullLoader)
-    objective = match.get(task, None)
-    if objective is None:
-        raise NotImplementedError
-    pairs = []
-    for item in objective:
-        pairs.extend([(x, y) for x in item["model"] for y in item["dataset"]])
-
-    clean_variants = []
-    for item in variants:
-        if (
-            (item.dataset in SUPPORTED_DATASETS)
-            and (item.model in SUPPORTED_MODELS)
-            and (item.model, item.dataset) not in pairs
-        ):
-            print(f"({item.model}, {item.dataset}) is not implemented in task '{task}'.")
-            continue
-        clean_variants.append(item)
-    if not clean_variants:
-        exit(0)
-    return clean_variants
-
-
 def output_results(results_dict, tablefmt="github"):
     variant = list(results_dict.keys())[0]
     col_names = ["Variant"] + list(results_dict[variant][-1].keys())
@@ -143,50 +209,53 @@ def output_results(results_dict, tablefmt="github"):
     print(tabulate(tab_data, headers=col_names, tablefmt=tablefmt))
 
 
-def raw_experiment(task: str, dataset, model, **kwargs):
-    if "args" not in kwargs:
-        args = get_default_args(task=task, dataset=dataset, model=model, **kwargs)
-    else:
-        args = kwargs["args"]
-
+def raw_experiment(args):
     init_operator_configs(args)
 
     variants = list(gen_variants(dataset=args.dataset, model=args.model, seed=args.seed))
-    variants = check_task_dataset_model_match(task, variants)
 
     results_dict = defaultdict(list)
     results = [train(args) for args in variant_args_generator(args, variants)]
     for variant, result in zip(variants, results):
         results_dict[variant[:-1]].append(result)
 
-    tablefmt = kwargs["tablefmt"] if "tablefmt" in kwargs else "github"
+    tablefmt = args.tablefmt if hasattr(args, "tablefmt") else "github"
     output_results(results_dict, tablefmt)
 
     return results_dict
 
 
-def auto_experiment(task: str, dataset, model, **kwargs):
-    variants = list(gen_variants(dataset=dataset, model=model))
-    variants = check_task_dataset_model_match(task, variants)
+def auto_experiment(args):
+    variants = list(gen_variants(dataset=args.dataset, model=args.model))
 
     results_dict = defaultdict(list)
     for variant in variants:
-        tool = AutoML(task, variant.dataset, variant.model, **kwargs)
+        args.model = [variant.model]
+        args.dataset = [variant.dataset]
+        tool = AutoML(args)
         results_dict[variant[:]] = tool.run()
 
-    tablefmt = kwargs["tablefmt"] if "tablefmt" in kwargs else "github"
+    tablefmt = args.tablefmt if hasattr(args, "tablefmt") else "github"
     print("\nFinal results:\n")
     output_results(results_dict, tablefmt)
 
     return results_dict
 
 
-def experiment(task: str, dataset, model, **kwargs):
-    if "func_search" in kwargs:
-        if isinstance(dataset, str):
-            dataset = [dataset]
-        if isinstance(model, str):
-            model = [model]
-        return auto_experiment(task, dataset, model, **kwargs)
+def experiment(dataset, model, **kwargs):
+    if isinstance(dataset, str):
+        dataset = [dataset]
+    if isinstance(model, str):
+        model = [model]
+    if "args" not in kwargs:
+        args = get_default_args(dataset=dataset, model=model, **kwargs)
+    else:
+        args = kwargs["args"]
+        for key, value in kwargs.items():
+            if key != "args":
+                args.__setattr__(key, value)
 
-    return raw_experiment(task, dataset, model, **kwargs)
+    if "func_search" in kwargs:
+        return auto_experiment(args)
+
+    return raw_experiment(args)

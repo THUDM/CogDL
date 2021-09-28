@@ -24,7 +24,7 @@ class SAGEDataWrapper(DataWrapper):
             dataset=self.dataset,
             mask=None,
             sizes=[-1],
-            batch_size=self.batch_size * 2,
+            batch_size=batch_size * 2,
         )
         self.x = self.dataset.data.x
         self.y = self.dataset.data.y

@@ -1,8 +1,6 @@
 from typing import Optional, Type, Any
 import torch.nn as nn
 
-from cogdl.trainers.base_trainer import BaseTrainer
-
 
 class BaseModel(nn.Module):
     @staticmethod
@@ -26,23 +24,6 @@ class BaseModel(nn.Module):
 
     def forward(self, *args):
         raise NotImplementedError
-
-    def predict(self, data):
-        return self.forward(data)
-
-    def node_classification_loss(self, data, mask=None):
-        if mask is None:
-            mask = data.train_mask
-        pred = self.forward(data)
-        return self.loss_fn(pred[mask], data.y[mask])
-
-    def graph_classification_loss(self, batch):
-        pred = self.forward(batch)
-        return self.loss_fn(pred, batch.y)
-
-    @staticmethod
-    def get_trainer(args=None) -> Optional[Type[BaseTrainer]]:
-        return None
 
     def set_device(self, device):
         self.device = device

@@ -22,9 +22,6 @@ class MVGRLModelWrapper(ModelWrapper):
         loss = self.loss_f(logits, labels)
         return loss
 
-    # def evaluate(self, dataset):
-    #     self.model.eval()
-    # graph = dataset.data
     def test_step(self, graph):
         with torch.no_grad():
             pred = self.model(graph)

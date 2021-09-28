@@ -6,7 +6,7 @@ import torch.utils.data
 
 from cogdl.data import Adjacency, Graph
 from cogdl.utils import makedirs
-from cogdl.utils import accuracy, cross_entropy_loss
+from cogdl.utils import Accuracy, CrossEntropyLoss
 
 
 def to_list(x):
@@ -126,10 +126,10 @@ class Dataset(torch.utils.data.Dataset):
         print("Done!")
 
     def get_evaluator(self):
-        return accuracy
+        return Accuracy()
 
     def get_loss_fn(self):
-        return cross_entropy_loss
+        return CrossEntropyLoss()
 
     def __getitem__(self, idx):  # pragma: no cover
         r"""Gets the data object at index :obj:`idx` and transforms it (in case

@@ -40,7 +40,7 @@ class GraphClassificationDataWrapper(DataWrapper):
 
     def pre_transform(self):
         if self.degree_node_features and self.dataset.data.x is None:
-            self.dataset = node_degree_as_feature(self.dataset)
+            self.dataset.data = node_degree_as_feature(self.dataset.data)
         train_idx, val_idx, test_idx = split_dataset(len(self.dataset), self.train_ratio, self.test_ratio)
         self.split_idx = [train_idx, val_idx, test_idx]
 

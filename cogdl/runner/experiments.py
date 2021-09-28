@@ -153,13 +153,14 @@ def train(args):
     if hasattr(args, "hidden_size"):
         optimizer_cfg["hidden_size"] = args.hidden_size
 
+    # setup data_wrapper
+    dataset_wrapper = dw_class(dataset, **data_wrapper_args)
+
     # setup model_wrapper
     if "embedding" in args.mw:
         model_wrapper = mw_class(model, **model_wrapper_args)
     else:
         model_wrapper = mw_class(model, optimizer_cfg, **model_wrapper_args)
-    # setup data_wrapper
-    dataset_wrapper = dw_class(dataset, **data_wrapper_args)
 
     save_embedding_path = args.emb_path if hasattr(args, "emb_path") else None
     os.makedirs("./checkpoints", exist_ok=True)

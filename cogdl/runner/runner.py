@@ -17,8 +17,6 @@ from cogdl.runner.controller import DataController
 from cogdl.loggers import build_logger
 from cogdl.data import Graph
 
-from cogdl.datasets import build_dataset_from_name
-
 
 def move_to_device(batch, device):
     if isinstance(batch, list) or isinstance(batch, tuple):

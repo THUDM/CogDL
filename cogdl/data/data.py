@@ -654,8 +654,8 @@ class Graph(BaseGraph):
         keys = [key for key in keys if key[:2] != "__" and key[-2:] != "__"]
         return keys
 
-    def degrees(self, node_idx=None):
-        return self._adj.degrees
+    def degrees(self):
+        return self._adj.degrees()
 
     def __keys__(self):
         keys = [key for key in self.keys if "adj" not in key]

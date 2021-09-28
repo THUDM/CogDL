@@ -40,6 +40,7 @@ def test_multiplex_link_prediction():
 
 def test_link_prediction():
     sys.argv = [sys.argv[0], "-m", "prone", "-dt", "ppi"]
+    sys.argv += ["--mw", "embedding_link_prediction_mw", "--dw", "embedding_link_prediction_dw"]
     parser = options.get_training_parser()
     args, _ = parser.parse_known_args()
     args = options.parse_args_and_arch(parser, args)
@@ -47,7 +48,8 @@ def test_link_prediction():
 
     assert args.model[0] == "prone"
     assert args.dataset[0] == "ppi"
-    assert args.evaluate_interval == 30
+    assert args.mw == "embedding_link_prediction_mw"
+    assert args.dw == "embedding_link_prediction_dw"
 
 
 def test_unsupervised_graph_classification():
@@ -59,8 +61,6 @@ def test_unsupervised_graph_classification():
 
     assert args.model[0] == "infograph"
     assert args.dataset[0] == "mutag"
-    assert args.num_shuffle == 10
-    assert args.degree_feature is False
 
 
 def test_unsupervised_node_classification():

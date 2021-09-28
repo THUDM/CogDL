@@ -98,6 +98,12 @@ def train(args):
      *** Using `{args.mw}` ModelWrapper and `{args.dw}` DataWrapper 
     |---------------------------------------------------{'-' * (len(args.mw) + len(args.dw))}|"""
     )
+    if isinstance(args.dataset, list):
+        args.dataset = args.dataset[0]
+    if isinstance(args.model, list):
+        args.model = args.model[0]
+    if isinstance(args.seed, list):
+        args.seed = args.seed[0]
     set_random_seed(args.seed)
 
     if getattr(args, "use_best_config", False):

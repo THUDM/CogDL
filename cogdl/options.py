@@ -126,9 +126,9 @@ def get_default_args(dataset, model, **kwargs):
     if not isinstance(model, list):
         model = [model]
     sys.argv = [sys.argv[0], "-m"] + model + ["-dt"] + dataset
-    if "mw" in kwargs:
+    if "mw" in kwargs and kwargs["mw"] is not None:
         sys.argv += ["--mw"] + [kwargs["mw"]]
-    if "dw" in kwargs:
+    if "dw" in kwargs and kwargs["dw"] is not None:
         sys.argv += ["--dw"] + [kwargs["dw"]]
 
     # The parser doesn"t know about specific args, so we parse twice.

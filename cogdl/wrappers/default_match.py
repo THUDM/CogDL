@@ -113,12 +113,16 @@ def set_default_wrapper_config():
     graph_clustering_wrappers["agc"]["mw"] = "agc_mw"
     graph_clustering_wrappers["daegc"]["mw"] = "daegc_mw"
 
+    other_wrappers = dict()
+    other_wrappers["gatne"] = {"mw": "multiplex_embedding_mw", "dw": "multiplex_embedding_dw"}
+
     merged = dict()
     merged.update(node_classification_wrappers)
     merged.update(graph_embedding_wrappers)
     merged.update(graph_classification_wrappers)
     merged.update(network_embedding_wrappers)
     merged.update(graph_clustering_wrappers)
+    merged.update(other_wrappers)
     return merged
 
 

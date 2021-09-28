@@ -28,6 +28,8 @@ class GraphClassificationDataWrapper(DataWrapper):
         self.batch_size = batch_size
         self.split_idx = None
 
+        self.setup_node_features()
+
     def train_wrapper(self):
         return DataLoader(self.dataset[self.split_idx[0]], batch_size=self.batch_size, shuffle=True, num_workers=4)
 
@@ -38,9 +40,9 @@ class GraphClassificationDataWrapper(DataWrapper):
     def test_wrapper(self):
         return DataLoader(self.dataset[self.split_idx[2]], batch_size=self.batch_size, shuffle=False, num_workers=4)
 
-    def pre_transform(self):
-        if self.degree_node_features and self.dataset.data.x is None:
-            self.dataset = node_degree_as_feature(self.dataset)
+    def setup_node_features(self):
+        if self.degree_node_features or self.dataset.data[0].x is None:
+            self.dataset.data = node_degree_as_feature(self.dataset.data)
         train_idx, val_idx, test_idx = split_dataset(len(self.dataset), self.train_ratio, self.test_ratio)
         self.split_idx = [train_idx, val_idx, test_idx]
 

@@ -92,13 +92,13 @@ def node_degree_as_feature(data):
     device = data[0].edge_index[0].device
 
     for graph in data:
-        deg = graph.degrees()
+        deg = graph.degrees().long()
         degrees.append(deg)
         max_degree = max(deg.max().item(), max_degree)
 
     max_degree = int(max_degree) + 1
     for i in range(len(data)):
-        one_hot = F.one_hot(degrees[i], max_degree)
+        one_hot = F.one_hot(degrees[i], max_degree).float()
         data[i].x = one_hot.to(device)
     return data
 

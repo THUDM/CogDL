@@ -112,16 +112,6 @@ def train(args):
     # setup dataset and specify `num_features` and `num_classes` for model
     args.monitor = "val_acc"
     dataset = build_dataset(args)
-    args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
-    if hasattr(dataset, "num_nodes"):
-        args.num_nodes = dataset.num_nodes
-    if hasattr(dataset, "num_edge"):
-        args.num_edge = dataset.num_edge
-    if hasattr(args, "unsup") and args.unsup:
-        args.num_classes = args.hidden_size
-    else:
-        args.num_classes = dataset.num_classes
 
     mw_class = fetch_model_wrapper(args.mw)
     dw_class = fetch_data_wrapper(args.dw)
@@ -145,6 +135,20 @@ def train(args):
 
     args = examine_link_prediction(args, dataset)
 
+    # setup data_wrapper
+    dataset_wrapper = dw_class(dataset, **data_wrapper_args)
+
+    args.num_features = dataset.num_features
+    args.num_classes = dataset.num_classes
+    if hasattr(dataset, "num_nodes"):
+        args.num_nodes = dataset.num_nodes
+    if hasattr(dataset, "num_edges"):
+        args.num_edges = dataset.num_edges
+    if hasattr(args, "unsup") and args.unsup:
+        args.num_classes = args.hidden_size
+    else:
+        args.num_classes = dataset.num_classes
+
     # setup model
     model = build_model(args)
     # specify configs for optimizer
@@ -164,8 +168,6 @@ def train(args):
         model_wrapper = mw_class(model, **model_wrapper_args)
     else:
         model_wrapper = mw_class(model, optimizer_cfg, **model_wrapper_args)
-    # setup data_wrapper
-    dataset_wrapper = dw_class(dataset, **data_wrapper_args)
 
     save_embedding_path = args.emb_path if hasattr(args, "emb_path") else None
     os.makedirs("./checkpoints", exist_ok=True)

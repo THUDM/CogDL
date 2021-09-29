@@ -1,123 +1,96 @@
+import torch
 import torch.nn.functional as F
-from cogdl.tasks import build_task
-from cogdl.datasets import build_dataset
-from cogdl.models import build_model
-from cogdl.utils import update_args_from_dict
+
 from cogdl.options import get_default_args
+from cogdl.experiments import train
 
 
-def get_default_args_for_nc():
-    args = get_default_args(task="node_classification", dataset="cora", model="gcn")
-    default_dict = {
-        "hidden_size": 16,
-        "dropout": 0.5,
-        "patience": 2,
-        "max_epoch": 3,
-        "sampler": "none",
-        "num_layers": 2,
-        "cpu": True,
-        "missing_rate": -1,
-        "task": "node_classification",
-        "dataset": "cora",
-        "checkpoint": False,
-        "auxiliary_task": "none",
-        "eval_step": 1,
-        "activation": "relu",
-        "residual": False,
-        "norm": None,
-        "num_workers": 1,
-    }
-    return update_args_from_dict(args, default_dict)
+cuda_available = torch.cuda.is_available()
+default_dict = {
+    "hidden_size": 16,
+    "dropout": 0.5,
+    "patience": 2,
+    "max_epoch": 3,
+    "sampler": "none",
+    "num_layers": 2,
+    "cpu": not cuda_available,
+    "missing_rate": -1,
+    "task": "node_classification",
+    "dataset": "cora",
+    "checkpoint": False,
+    "auxiliary_task": "none",
+    "eval_step": 1,
+    "activation": "relu",
+    "residual": False,
+    "norm": None,
+    "num_workers": 1,
+}
+
+
+def get_default_args_for_nc(dataset, model, dw="node_classification_dw", mw="node_classification_mw"):
+    args = get_default_args(dataset=dataset, model=model, dw=dw, mw=mw)
+    for key, value in default_dict.items():
+        args.__setattr__(key, value)
+    return args
 
 
 def test_gdc_gcn_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "gdc_gcn"
-    dataset = build_dataset(args)
-    args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
+    args = get_default_args_for_nc("cora", "gdc_gcn")
     args.num_layers = 1
     args.alpha = 0.05  # ppr filter param
     args.t = 5.0  # heat filter param
     args.k = 128  # top k entries to be retained
     args.eps = 0.01  # change depending on gdc_type
-    args.dataset = dataset
     args.gdc_type = "ppr"  # ppr, heat, none
-
-    model = build_model(args)
-    task = build_task(args, dataset=dataset, model=model)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_gcn_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
+    args = get_default_args_for_nc("cora", "gcn")
     args.num_layers = 2
-    args.dataset = "cora"
-    args.model = "gcn"
     for i in [True, False]:
         args.fast_spmm = i
-        task = build_task(args)
-        ret = task.train()
-        assert 0 <= ret["Acc"] <= 1
+        ret = train(args)
+        assert 0 <= ret["test_acc"] <= 1
     for n in ["batchnorm", "layernorm"]:
         args.norm = n
-        task = build_task(args)
-        ret = task.train()
-        assert 0 <= ret["Acc"] <= 1
+        ret = train(args)
+        assert 0 <= ret["test_acc"] <= 1
     args.residual = True
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_gat_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "gat"
+    args = get_default_args_for_nc("cora", "gat")
     args.alpha = 0.2
     args.attn_drop = 0.2
     args.nhead = 8
     args.last_nhead = 2
-
     args.num_layers = 3
     args.residual = True
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_mlp_pubmed():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "pubmed"
-    args.model = "mlp"
+    args = get_default_args_for_nc("pubmed", "mlp")
     args.num_layers = 2
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_mixhop_citeseer():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "citeseer"
-    args.model = "mixhop"
+    args = get_default_args_for_nc("citeseer", "mixhop")
     args.layer1_pows = [20, 20, 20]
     args.layer2_pows = [20, 20, 20]
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_graphsage_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.model = "graphsage"
+    args = get_default_args_for_nc("cora", "graphsage")
     args.aggr = "mean"
     args.batch_size = 128
     args.num_layers = 2
@@ -127,84 +100,38 @@ def test_graphsage_cora():
     args.sample_size = [3, 5]
     args.num_workers = 1
     args.eval_step = 1
-    args.dataset = "cora"
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
-
-    args.use_trainer = True
-    args.batch_size = 20
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_pyg_cheb_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "chebyshev"
+    args = get_default_args_for_nc("cora", "chebyshev")
     args.num_layers = 2
     args.filter_size = 5
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_pyg_gcn_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "pyg_gcn"
+    args = get_default_args_for_nc("cora", "pyg_gcn")
     args.auxiliary_task = "none"
     args.num_layers = 2
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_clustergcn_cora():
-    args = get_default_args_for_nc()
-    args.dataset = "pubmed"
-    args.model = "gcn"
-    args.trainer = "clustergcn"
+    args = get_default_args_for_nc("pubmed", "gcn", dw="cluster_dw")
     args.cpu = True
     args.batch_size = 3
     args.n_cluster = 20
     args.eval_step = 1
-    task = build_task(args)
-    assert 0 <= task.train()["Acc"] <= 1
-
-
-def test_gcn_cora_sampler():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.trainer = "graphsaint"
-    args.batch_size = 10
-    args.model = "gcn"
-    args.cpu = True
-    args.num_layers = 2
-    args.sample_coverage = 20
-    args.size_subgraph = 200
-    args.num_walks = 20
-    args.walk_length = 10
-    args.size_frontier = 20
-    sampler_list = ["node", "edge", "rw", "mrw"]
-
-    for sampler in sampler_list:
-        args.method = sampler
-        task = build_task(args)
-        ret = task.train()
-        assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_graphsaint_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.trainer = "graphsaint"
-    args.model = "graphsaint"
+    args = get_default_args_for_nc("cora", "graphsaint")
     args.eval_cpu = True
     args.batch_size = 10
     args.cpu = True
@@ -218,16 +145,13 @@ def test_graphsaint_cora():
     args.walk_length = 10
     args.size_frontier = 20
     args.method = "node"
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_unet_citeseer():
-    args = get_default_args_for_nc()
+    args = get_default_args_for_nc("citeseer", "unet")
     args.cpu = True
-    args.model = "unet"
-    args.dataset = "citeseer"
     args.pool_rate = [0.5, 0.5]
     args.n_pool = 2
     args.adj_dropout = 0.3
@@ -236,53 +160,36 @@ def test_unet_citeseer():
     args.improved = True
     args.aug_adj = True
     args.activation = "elu"
-    # print(args)
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_drgcn_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "drgcn"
+    args = get_default_args_for_nc("cora", "drgcn")
     args.num_layers = 2
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_drgat_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "drgat"
+    args = get_default_args_for_nc("cora", "drgat")
     args.nhead = 8
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_disengcn_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "disengcn"
+    args = get_default_args_for_nc("cora", "disengcn")
     args.K = [4, 2]
     args.activation = "leaky_relu"
     args.tau = 1.0
     args.iterations = 3
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_graph_mix():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "gcnmix"
+    args = get_default_args_for_nc("cora", "gcnmix")
     args.max_epoch = 2
     args.rampup_starts = 1
     args.rampup_ends = 100
@@ -291,22 +198,17 @@ def test_graph_mix():
     args.alpha = 1.0
     args.temperature = 1.0
     args.k = 10
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_srgcn_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "srgcn"
+    args = get_default_args_for_nc("cora", "srgcn")
     args.num_heads = 4
     args.subheads = 1
     args.nhop = 1
     args.node_dropout = 0.5
     args.alpha = 0.2
-
     args.normalization = "identity"
     args.attention_type = "identity"
     args.activation = "linear"
@@ -317,29 +219,25 @@ def test_srgcn_cora():
 
     for norm in norm_list:
         args.normalization = norm
-        task = build_task(args)
-        ret = task.train()
-        assert 0 < ret["Acc"] < 1
+        ret = train(args)
+        assert 0 <= ret["test_acc"] <= 1
 
     args.norm = "identity"
     for ac in activation_list:
         args.activation = ac
-        task = build_task(args)
-        ret = task.train()
-        assert 0 < ret["Acc"] < 1
+        ret = train(args)
+        assert 0 <= ret["test_acc"] <= 1
 
     args.activation = "relu"
     for attn in attn_list:
         args.attention_type = attn
-        task = build_task(args)
-        ret = task.train()
-        assert 0 < ret["Acc"] < 1
+        ret = train(args)
+        assert 0 <= ret["test_acc"] <= 1
 
 
 def test_gcnii_cora():
-    args = get_default_args_for_nc()
+    args = get_default_args_for_nc("cora", "gcnii")
     args.dataset = "cora"
-    args.task = "node_classification"
     args.model = "gcnii"
     args.num_layers = 2
     args.lmbda = 0.2
@@ -348,16 +246,12 @@ def test_gcnii_cora():
     args.alpha = 0.1
     for residual in [False, True]:
         args.residual = residual
-        task = build_task(args)
-        ret = task.train()
-        assert 0 < ret["Acc"] < 1
+        ret = train(args)
+        assert 0 <= ret["test_acc"] <= 1
 
 
 def test_deepergcn_cora():
-    args = get_default_args_for_nc()
-    args.dataset = "cora"
-    args.task = "node_classification"
-    args.model = "deepergcn"
+    args = get_default_args_for_nc("cora", "deepergcn")
     args.n_cluster = 10
     args.num_layers = 2
     args.connection = "res+"
@@ -375,16 +269,12 @@ def test_deepergcn_cora():
     args.learn_p = True
     args.learn_beta = True
     args.learn_msg_scale = True
-    task = build_task(args)
-    ret = task.train()
-    assert 0 < ret["Acc"] < 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_grand_cora():
-    args = get_default_args_for_nc()
-    args.model = "grand"
-    args.dataset = "cora"
-    args.task = "node_classification"
+    args = get_default_args_for_nc("cora", "grand")
     args.hidden_dropout = 0.5
     args.order = 4
     args.input_dropout = 0.5
@@ -394,45 +284,12 @@ def test_grand_cora():
     args.alpha = 0.1
     args.dropnode_rate = 0.5
     args.bn = True
-    task = build_task(args)
-    ret = task.train()
-    assert 0 < ret["Acc"] < 1
-
-
-def test_gpt_gnn_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "gpt_gnn"
-    args.use_pretrain = False
-    args.pretrain_model_dir = ""
-    args.task_name = ""
-    args.sample_depth = 3
-    args.sample_width = 16
-    args.conv_name = "hgt"
-    args.n_hid = 16
-    args.n_heads = 2
-    args.n_layers = 2
-    args.prev_norm = True
-    args.last_norm = True
-    args.optimizer = "adamw"
-    args.scheduler = "cosine"
-    args.data_percentage = 0.1
-    args.n_epoch = 2
-    args.n_pool = 8
-    args.n_batch = 5
-    args.batch_size = 64
-    args.clip = 0.5
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 < ret["test_acc"] < 1
 
 
 def test_sign_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.model = "sign"
-    args.dataset = "cora"
+    args = get_default_args_for_nc("cora", "sign")
     args.lr = 0.00005
     args.hidden_size = 2048
     args.num_layers = 3
@@ -446,78 +303,44 @@ def test_sign_cora():
     args.remove_diag = False
     args.diffusion = "ppr"
 
-    task = build_task(args)
-    ret = task.train()
-    assert 0 < ret["Acc"] < 1
+    ret = train(args)
+    assert 0 < ret["test_acc"] < 1
     args.diffusion = "sgc"
-    ret = task.train()
-    assert 0 < ret["Acc"] < 1
-
-
-def test_jknet_jknet_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "jknet"
-    args.lr = 0.005
-    args.layer_aggregation = "maxpool"
-    args.node_aggregation = "sum"
-    args.n_layers = 3
-    args.n_units = 16
-    args.in_features = 1433
-    args.out_features = 7
-    args.max_epoch = 2
-
-    for aggr in ["maxpool", "concat"]:
-        args.layer_aggregation = aggr
-        task = build_task(args)
-        ret = task.train()
-        assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 < ret["test_acc"] < 1
 
 
 def test_ppnp_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.model = "ppnp"
-    args.dataset = "cora"
+    args = get_default_args_for_nc("cora", "ppnp")
     args.num_layers = 2
     args.propagation_type = "ppnp"
     args.alpha = 0.1
     args.num_iterations = 10
-    task = build_task(args)
-    ret = task.train()
-    assert 0 < ret["Acc"] < 1
+
+    ret = train(args)
+    assert 0 < ret["test_acc"] < 1
 
 
 def test_appnp_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.model = "ppnp"
-    args.dataset = "cora"
+    args = get_default_args_for_nc("cora", "ppnp")
     args.num_layers = 2
     args.propagation_type = "appnp"
     args.alpha = 0.1
     args.num_iterations = 10
-    task = build_task(args)
-    ret = task.train()
-    assert 0 < ret["Acc"] < 1
+
+    ret = train(args)
+    assert 0 < ret["test_acc"] < 1
 
 
 def test_sgc_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "sgc"
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    args = get_default_args_for_nc("cora", "sgc")
+
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_dropedge_gcn_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "dropedge_gcn"
+    args = get_default_args_for_nc("cora", "dropedge_gcn")
     args.baseblock = "mutigcn"
     args.inputlayer = "gcn"
     args.outputlayer = "gcn"
@@ -531,16 +354,12 @@ def test_dropedge_gcn_cora():
     args.activation = F.relu
     args.task_type = "full"
 
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_dropedge_resgcn_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "dropedge_gcn"
+    args = get_default_args_for_nc("cora", "dropedge_gcn")
     args.baseblock = "resgcn"
     args.inputlayer = "gcn"
     args.outputlayer = "gcn"
@@ -554,16 +373,12 @@ def test_dropedge_resgcn_cora():
     args.activation = F.relu
     args.task_type = "full"
 
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_dropedge_densegcn_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "dropedge_gcn"
+    args = get_default_args_for_nc("cora", "dropedge_gcn")
     args.baseblock = "densegcn"
     args.inputlayer = ""
     args.outputlayer = "none"
@@ -577,16 +392,13 @@ def test_dropedge_densegcn_cora():
     args.activation = F.relu
     args.task_type = "full"
 
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_dropedge_inceptiongcn_cora():
-    args = get_default_args_for_nc()
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "dropedge_gcn"
+    args = get_default_args_for_nc("cora", "dropedge_gcn")
+
     args.baseblock = "inceptiongcn"
     args.inputlayer = "gcn"
     args.outputlayer = "gcn"
@@ -600,17 +412,13 @@ def test_dropedge_inceptiongcn_cora():
     args.activation = F.relu
     args.task_type = "full"
 
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_pprgo_cora():
-    args = get_default_args_for_nc()
+    args = get_default_args_for_nc("cora", "pprgo")
     args.cpu = True
-    args.task = "node_classification"
-    args.dataset = "cora"
-    args.model = "pprgo"
     args.k = 32
     args.alpha = 0.5
     args.eval_step = 1
@@ -622,35 +430,23 @@ def test_pprgo_cora():
     args.eps = 0.001
     for norm in ["sym", "row"]:
         args.norm = norm
-        task = build_task(args)
-        ret = task.train()
-        assert 0 <= ret["Acc"] <= 1
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["Acc"] <= 1
+        ret = train(args)
+        assert 0 <= ret["test_acc"] <= 1
+
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_gcn_ppi():
-    args = get_default_args_for_nc()
-    args.dataset = "ppi"
-    args.model = "gcn"
+    args = get_default_args_for_nc("ppi", "gcn")
     args.cpu = True
-    task = build_task(args)
-    assert 0 <= task.train()["Acc"] <= 1
 
-
-def build_custom_dataset():
-    args = get_default_args_for_nc()
-    args.dataset = "cora"
-    dataset = build_dataset(args)
-    dataset.data._adj_train = dataset.data._adj_full
-    return dataset
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_sagn_cora():
-    args = get_default_args_for_nc()
-    dataset = build_custom_dataset()
-    args.model = "sagn"
+    args = get_default_args_for_nc("cora", "sagn")
     args.nhop = args.label_nhop = 2
     args.threshold = 0.5
     args.use_labels = True
@@ -662,12 +458,12 @@ def test_sagn_cora():
     args.nhead = 2
     args.negative_slope = 0.2
     args.mlp_layer = 2
-    task = build_task(args, dataset=dataset)
-    assert 0 <= task.train()["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_c_s_cora():
-    args = get_default_args_for_nc()
+    args = get_default_args_for_nc("cora", "correct_smooth_mlp")
     args.use_embeddings = True
     args.correct_alpha = 0.5
     args.smooth_alpha = 0.5
@@ -677,26 +473,27 @@ def test_c_s_cora():
     args.smooth_norm = "sym"
     args.scale = 1.0
     args.autoscale = True
-    args.dataset = "cora"
-    args.model = "correct_smooth_mlp"
-    task = build_task(args)
-    assert 0 <= task.train()["Acc"] <= 1
+
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
+
     args.autoscale = False
-    assert 0 <= task.train()["Acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_sage_cora():
-    args = get_default_args_for_nc()
+    args = get_default_args_for_nc("cora", "sage")
     args.aggr = "mean"
     args.normalize = True
     args.norm = "layernorm"
-    args.model = "sage"
-    task = build_task(args)
-    assert 0 <= task.train()["Acc"] <= 1
+
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_revnets_cora():
-    args = get_default_args_for_nc()
+    args = get_default_args_for_nc("cora", "revgen")
     args.group = 2
     args.num_layers = 3
     args.last_norm = "batchnorm"
@@ -705,10 +502,7 @@ def test_revnets_cora():
     args.use_msg_norm = False
     args.learn_msg_scale = False
     args.aggr = "mean"
-    args.dataset = "pubmed"
-    args.model = "revgen"
-    task = build_task(args)
-    assert 0 <= task.train()["Acc"] <= 1
+    assert 0 <= train(args)["test_acc"] <= 1
 
     args.model = "revgat"
     args.nhead = 2
@@ -717,10 +511,11 @@ def test_revnets_cora():
     args.residual = True
     args.attn_drop = 0.2
     args.last_nhead = 1
-    assert 0 <= task.train()["Acc"] <= 1
+    args.drop_edge_rate = 0.0
+    assert 0 <= train(args)["test_acc"] <= 1
 
     args.model = "revgcn"
-    assert 0 <= task.train()["Acc"] <= 1
+    assert 0 <= train(args)["test_acc"] <= 1
 
 
 if __name__ == "__main__":
@@ -739,11 +534,8 @@ if __name__ == "__main__":
     test_gcnii_cora()
     test_deepergcn_cora()
     test_grand_cora()
-    test_gcn_cora_sampler()
     test_graphsaint_cora()
-    test_gpt_gnn_cora()
     test_sign_cora()
-    test_jknet_jknet_cora()
     test_ppnp_cora()
     test_appnp_cora()
     test_dropedge_gcn_cora()

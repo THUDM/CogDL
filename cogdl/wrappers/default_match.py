@@ -95,7 +95,7 @@ def set_default_wrapper_config():
     for item in graph_classification_models:
         graph_classification_wrappers[item] = {"mw": "graph_classification_mw", "dw": "graph_classification_dw"}
 
-    graph_classification_wrappers["infograph"]["mw"] = "infograph_mw"
+    graph_classification_wrappers["infograph"] = {"mw": "infograph_mw", "dw": "infograph_dw"}
 
     network_embedding_wrappers = dict()
     for item in network_embedding_models:

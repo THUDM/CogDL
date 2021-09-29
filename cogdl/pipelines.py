@@ -173,10 +173,6 @@ class GenerateEmbeddingPipeline(Pipeline):
         args.model = args.model[0]
         self.model = build_model(args)
 
-        self.trainer = self.model.get_trainer(args)
-        if self.trainer is not None:
-            self.trainer = self.trainer(args)
-
     def __call__(self, edge_index, x=None, edge_weight=None):
         if self.method_type == "emb":
             G = nx.Graph()

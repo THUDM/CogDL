@@ -55,7 +55,7 @@ def test_customized_dataset():
 
 def test_customized_graph_dataset():
     result = experiment(
-        model="gin", task="graph_classification", dataset="mygraphdataset", degree_feature=True, max_epoch=10
+        model="gin", task="graph_classification", dataset="mygraphdataset", degree_node_features=True, max_epoch=10
     )
     result = list(result.values())[0][0]
     assert result["Acc"] >= 0
@@ -68,5 +68,5 @@ def test_build_dataset_from_path():
 
 
 if __name__ == "__main__":
-    # test_customized_dataset()
+    test_customized_dataset()
     test_customized_graph_dataset()

@@ -78,7 +78,7 @@ def test_prone_youtube():
 
 
 if __name__ == "__main__":
-    # test_gatne_amazon()
-    # test_gatne_twitter()
-    # test_prone_amazon()
+    test_gatne_amazon()
+    test_gatne_twitter()
+    test_prone_amazon()
     test_prone_youtube()

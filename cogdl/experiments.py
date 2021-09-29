@@ -20,11 +20,11 @@ from cogdl.runner.runner import Trainer
 class AutoML(object):
     """
     Args:
-        func_search: function to obtain hyper-parameters to search
+        search_space: function to obtain hyper-parameters to search
     """
 
     def __init__(self, args):
-        self.func_search = args.func_search
+        self.search_space = args.search_space
         self.metric = args.metric if hasattr(args, "metric") else None
         self.n_trials = args.n_trials if hasattr(args, "n_trials") else 3
         self.best_value = None
@@ -33,7 +33,7 @@ class AutoML(object):
 
     def _objective(self, trials):
         params = copy.deepcopy(self.default_params)
-        cur_params = self.func_search(trials)
+        cur_params = self.search_space(trials)
         print(cur_params)
         for key, value in cur_params.items():
             params.__setattr__(key, value)
@@ -91,13 +91,7 @@ def set_best_config(args):
     return args
 
 
-def train(args):
-    print(
-        f""" 
-    |---------------------------------------------------{'-' * (len(args.mw) + len(args.dw))}|
-     *** Using `{args.mw}` ModelWrapper and `{args.dw}` DataWrapper 
-    |---------------------------------------------------{'-' * (len(args.mw) + len(args.dw))}|"""
-    )
+def train(args):  # noqa: C901
     if isinstance(args.dataset, list):
         args.dataset = args.dataset[0]
     if isinstance(args.model, list):
@@ -105,6 +99,13 @@ def train(args):
     if isinstance(args.seed, list):
         args.seed = args.seed[0]
     set_random_seed(args.seed)
+
+    print(
+        f""" 
+|-------------------------------------{'-' * (len(args.dataset) + len(args.model) + len(args.dw) + len(args.mw))}|
+    *** Running (`{args.dataset}`, `{args.model}`, `{args.dw}`, `{args.mw}`)
+|-------------------------------------{'-' * (len(args.dataset) + len(args.model) + len(args.dw) + len(args.mw))}|"""
+    )
 
     if getattr(args, "use_best_config", False):
         args = set_best_config(args)
@@ -139,15 +140,25 @@ def train(args):
     dataset_wrapper = dw_class(dataset, **data_wrapper_args)
 
     args.num_features = dataset.num_features
-    args.num_classes = dataset.num_classes
     if hasattr(dataset, "num_nodes"):
         args.num_nodes = dataset.num_nodes
     if hasattr(dataset, "num_edges"):
         args.num_edges = dataset.num_edges
+    if hasattr(dataset, "num_edge"):
+        args.num_edge = dataset.num_edge
+    if hasattr(dataset, "max_graph_size"):
+        args.max_graph_size = dataset.max_graph_size
+    if hasattr(dataset, "edge_attr_size"):
+        args.edge_attr_size = dataset.edge_attr_size
+    else:
+        args.edge_attr_size = [0]
     if hasattr(args, "unsup") and args.unsup:
         args.num_classes = args.hidden_size
     else:
         args.num_classes = dataset.num_classes
+    if hasattr(dataset.data, "edge_attr") and dataset.data.edge_attr is not None:
+        args.num_entities = len(torch.unique(torch.stack(dataset.data.edge_index)))
+        args.num_rels = len(torch.unique(dataset.data.edge_attr))
 
     # setup model
     model = build_model(args)
@@ -261,7 +272,7 @@ def experiment(dataset, model, **kwargs):
             if key != "args":
                 args.__setattr__(key, value)
 
-    if "func_search" in kwargs:
+    if "search_space" in kwargs:
         return auto_experiment(args)
 
     return raw_experiment(args)

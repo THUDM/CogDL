@@ -250,6 +250,9 @@ class TUDataset(MultiGraphDataset):
         #     self.data.edge_attr = self.data.edge_attr[:, num_edge_attributes:]
 
         self.data, self.y = torch.load(self.processed_paths[0])
+        self.max_graph_size = 0
+        for graph in self.data:
+            self.max_graph_size = max(self.max_graph_size, graph.num_nodes)
 
     @property
     def raw_file_names(self):

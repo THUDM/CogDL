@@ -23,7 +23,7 @@ class HeterogeneousGNNModelWrapper(ModelWrapper):
         loss = self.default_loss_fn(pred[val_mask], graph.y[val_mask])
         metric = self.evaluate(pred[val_mask], graph.y[val_mask], metric="auto")
         self.note("val_loss", loss.item())
-        self.note("val_acc", metric)
+        self.note("val_metric", metric)
 
     def test_step(self, batch):
         graph = batch.data
@@ -32,7 +32,7 @@ class HeterogeneousGNNModelWrapper(ModelWrapper):
         loss = self.default_loss_fn(pred[test_mask], graph.y[test_mask])
         metric = self.evaluate(pred[test_mask], graph.y[test_mask], metric="auto")
         self.note("test_loss", loss.item())
-        self.note("test_acc", metric)
+        self.note("test_metric", metric)
 
     def setup_optimizer(self):
         cfg = self.optimizer_config

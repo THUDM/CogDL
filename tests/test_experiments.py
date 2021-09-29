@@ -40,7 +40,7 @@ def test_experiment():
 
 
 def test_auto_experiment():
-    def func_search_example(trial):
+    def search_space_example(trial):
         return {
             "lr": trial.suggest_categorical("lr", [1e-3, 5e-3, 1e-2]),
             "hidden_size": trial.suggest_categorical("hidden_size", [16, 32, 64, 128]),
@@ -54,7 +54,7 @@ def test_auto_experiment():
         seed=[1, 2],
         n_trials=2,
         max_epoch=10,
-        func_search=func_search_example,
+        search_space=search_space_example,
         cpu=True,
     )
 

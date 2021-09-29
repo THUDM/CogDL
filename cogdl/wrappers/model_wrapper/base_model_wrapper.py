@@ -79,10 +79,6 @@ class ModelWrapper(torch.nn.Module):
         out = self.test_step(*args, **kwargs)
         self.set_notes(out, "test")
 
-    # def on_evaluate(self, *args, **kwargs):
-    #     out = self.evaluate(*args, **kwargs)
-    #     self.set_notes(out, "evaluate")
-
     def set_notes(self, out, prefix="val"):
         if isinstance(out, dict):
             for key, val in out.items():

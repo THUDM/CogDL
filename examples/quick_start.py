@@ -11,7 +11,7 @@ from cogdl import experiment
 
 
 # automl usage
-def func_search(trial):
+def search_space(trial):
     return {
         "lr": trial.suggest_categorical("lr", [1e-3, 5e-3, 1e-2]),
         "hidden_size": trial.suggest_categorical("hidden_size", [32, 64, 128]),
@@ -19,4 +19,4 @@ def func_search(trial):
     }
 
 
-experiment(dataset="cora", model="gcn", seed=[1, 2], func_search=func_search)
+experiment(dataset="cora", model="gcn", seed=[1, 2], search_space=search_space, n_trials=3)

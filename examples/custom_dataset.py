@@ -8,7 +8,7 @@ from cogdl.datasets import NodeDataset, register_dataset
 @register_dataset("mydataset")
 class MyNodeClassificationDataset(NodeDataset):
     def __init__(self):
-        super(MyNodeClassificationDataset, self).__init__(self.path)
+        super(MyNodeClassificationDataset, self).__init__()
 
     def process(self):
         num_nodes = 100

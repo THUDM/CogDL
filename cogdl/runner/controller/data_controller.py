@@ -31,6 +31,7 @@ class DataController(object):
             dataset_w.set_train_data(train_wrapper)
             return dataset_w
         else:
+            dataset_w.pre_transform()
             dataset_w.prepare_training_data()
             dataset_w.prepare_val_data()
             dataset_w.prepare_test_data()

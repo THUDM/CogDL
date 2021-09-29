@@ -287,6 +287,6 @@ def evaluate_clustering(features_matrix, labels, cluster_method, num_clusters, n
         for i in range(num_nodes):
             clusters[i] = row_idx[clusters[i]]
         macro_f1 = f1_score(truth, clusters, average="macro")
-        return dict(Accuracy=acc, NMI=normalized_mutual_info_score(clusters, truth), Macro_F1=macro_f1)
+        return dict(acc=acc, nmi=normalized_mutual_info_score(clusters, truth), macro_f1=macro_f1)
     else:
-        return dict(NMI=normalized_mutual_info_score(clusters, truth))
+        return dict(nmi=normalized_mutual_info_score(clusters, truth))

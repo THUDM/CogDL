@@ -1,136 +1,105 @@
 import torch
-from cogdl.tasks import build_task
-from cogdl.tasks.attributed_graph_clustering import AttributedGraphClustering
-from cogdl.utils import build_args_from_dict
+from cogdl.options import get_default_args
+from cogdl.experiments import train
 
-graph_clustering_task_name = "attributed_graph_clustering"
-
-
-def get_default_args():
-    cuda_available = torch.cuda.is_available()
-    default_dict = {
-        "task": graph_clustering_task_name,
-        "device_id": [0],
-        "num_clusters": 7,
-        "cluster_method": "kmeans",
-        "evaluate": "NMI",
-        "hidden_size": 16,
-        "model_type": "spectral",
-        "enhance": None,
-        "cpu": not cuda_available,
-        "step": 5,
-        "theta": 0.5,
-        "mu": 0.2,
-        "checkpoint": False,
-        "walk_length": 10,
-        "walk_num": 4,
-        "window_size": 5,
-        "worker": 2,
-        "iteration": 3,
-        "rank": 64,
-        "negative": 1,
-        "is_large": False,
-        "max_iter": 5,
-        "embedding_size": 16,
-        "weight_decay": 0.01,
-        "num_heads": 1,
-        "dropout": 0,
-        "max_epoch": 3,
-        "lr": 0.001,
-        "T": 5,
-        "gamma": 10,
-    }
-    return build_args_from_dict(default_dict)
+cuda_available = torch.cuda.is_available()
+default_dict = {
+    "devices": [0],
+    "num_clusters": 7,
+    "cluster_method": "kmeans",
+    "evaluate": "NMI",
+    "hidden_size": 16,
+    "model_type": "spectral",
+    "enhance": None,
+    "cpu": not cuda_available,
+    "step": 5,
+    "theta": 0.5,
+    "mu": 0.2,
+    "checkpoint": False,
+    "walk_length": 10,
+    "walk_num": 4,
+    "window_size": 5,
+    "worker": 2,
+    "iteration": 3,
+    "rank": 64,
+    "negative": 1,
+    "is_large": False,
+    "max_iter": 5,
+    "embedding_size": 16,
+    "weight_decay": 0.01,
+    "num_heads": 1,
+    "dropout": 0,
+    "max_epoch": 3,
+    "lr": 0.001,
+    "T": 5,
+    "gamma": 10,
+    "n_warmup_steps": 0,
+}
 
 
-def create_simple_task():
-    args = get_default_args()
-    args.task = graph_clustering_task_name
-    args.dataset = "cora"
-    args.model = "prone"
-    args.step = 5
-    args.theta = 0.5
-    args.mu = 0.2
-    return AttributedGraphClustering(args)
+def get_default_args_agc(dataset, model, dw=None, mw=None):
+    args = get_default_args(dataset=dataset, model=model, dw=dw, mw=mw)
+    for key, value in default_dict.items():
+        args.__setattr__(key, value)
+    return args
 
 
 def test_kmeans_cora():
-    args = get_default_args()
+    args = get_default_args_agc(dataset="cora", model="prone", mw="agc_mw", dw="node_classification_dw")
     args.model_type = "content"
-    args.model = "prone"
-    args.dataset = "cora"
     args.cluster_method = "kmeans"
-    task = build_task(args)
-    ret = task.train()
-    assert ret["NMI"] > 0
+    ret = train(args)
+    assert ret["nmi"] > 0
 
 
 def test_spectral_cora():
-    args = get_default_args()
+    args = get_default_args_agc(dataset="cora", model="prone", mw="agc_mw", dw="node_classification_dw")
     args.model_type = "content"
-    args.model = "prone"
-    args.dataset = "cora"
     args.cluster_method = "spectral"
-    task = build_task(args)
-    ret = task.train()
-    assert ret["NMI"] > 0
+    ret = train(args)
+    assert ret["nmi"] > 0
 
 
 def test_prone_cora():
-    args = get_default_args()
-    args.model = "prone"
+    args = get_default_args_agc(dataset="cora", model="prone", mw="agc_mw", dw="node_classification_dw")
     args.model_type = "spectral"
-    args.dataset = "cora"
     args.cluster_method = "kmeans"
-    task = build_task(args)
-    ret = task.train()
-    assert ret["NMI"] > 0
+    ret = train(args)
+    assert ret["nmi"] > 0
 
 
 def test_agc_cora():
-    args = get_default_args()
-    args.model = "agc"
+    args = get_default_args_agc(dataset="cora", model="agc", mw="agc_mw", dw="node_classification_dw")
     args.model_type = "both"
-    args.dataset = "cora"
     args.cluster_method = "spectral"
     args.max_iter = 2
-    task = build_task(args)
-    ret = task.train()
-    assert ret["NMI"] > 0
+    ret = train(args)
+    assert ret["nmi"] > 0
 
 
 def test_daegc_cora():
-    args = get_default_args()
-    args.model = "daegc"
+    args = get_default_args_agc(dataset="cora", model="daegc", mw="daegc_mw", dw="node_classification_dw")
     args.model_type = "both"
-    args.dataset = "cora"
     args.cluster_method = "kmeans"
-    task = build_task(args)
-    ret = task.train()
-    assert ret["NMI"] > 0
+    ret = train(args)
+    assert ret["nmi"] > 0
 
 
 def test_gae_cora():
-    args = get_default_args()
-    args.model = "gae"
+    args = get_default_args_agc(dataset="cora", model="gae", mw="gae_mw", dw="node_classification_dw")
     args.num_layers = 2
     args.model_type = "both"
-    args.dataset = "cora"
     args.cluster_method = "kmeans"
-    task = build_task(args)
-    ret = task.train()
-    assert ret["NMI"] > 0
+    ret = train(args)
+    assert ret["nmi"] > 0
 
 
 def test_vgae_cora():
-    args = get_default_args()
-    args.model = "vgae"
+    args = get_default_args_agc(dataset="cora", model="vgae", mw="gae_mw", dw="node_classification_dw")
     args.model_type = "both"
-    args.dataset = "cora"
     args.cluster_method = "kmeans"
-    task = build_task(args)
-    ret = task.train()
-    assert ret["NMI"] > 0
+    ret = train(args)
+    assert ret["nmi"] > 0
 
 
 if __name__ == "__main__":

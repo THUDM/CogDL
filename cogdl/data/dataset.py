@@ -92,6 +92,8 @@ class Dataset(torch.utils.data.Dataset):
         r"""Returns the number of features per node in the graph."""
         if hasattr(self, "data") and isinstance(self.data, Graph):
             return self.data.num_features
+        elif isinstance(self.data, list):
+            return self.data[0].num_features
         else:
             return 0
 

@@ -114,6 +114,9 @@ def set_default_wrapper_config():
     for item in graph_kg_link_prediction:
         graph_kg_link_prediction_wrappers[item] = {"dw": "gnn_kg_link_prediction_dw", "mw": "gnn_kg_link_prediction_mw"}
 
+    other_wrappers = dict()
+    other_wrappers["gatne"] = {"mw": "multiplex_embedding_mw", "dw": "multiplex_embedding_dw"}
+
     merged = dict()
     merged.update(node_classification_wrappers)
     merged.update(graph_embedding_wrappers)
@@ -121,6 +124,7 @@ def set_default_wrapper_config():
     merged.update(network_embedding_wrappers)
     merged.update(graph_clustering_wrappers)
     merged.update(graph_kg_link_prediction_wrappers)
+    merged.update(other_wrappers)
     return merged
 
 

@@ -31,6 +31,8 @@ class GNNLinkPredictionDataWrapper(DataWrapper):
         data.test_edges = test_edges
         data.val_neg_edges = val_false_edges
         data.test_neg_edges = test_false_edges
+        self.dataset.data = data
+        print(data)
 
     @staticmethod
     def train_test_edge_split(edge_index, num_nodes, val_ratio=0.1, test_ratio=0.2):

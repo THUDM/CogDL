@@ -36,9 +36,9 @@ class PatchySAN(BaseModel):
         return cls(
             args.num_features,
             args.num_classes,
-            args.sample,
+            args.num_sample,
             # args.stride,
-            args.neighbor,
+            args.num_neighbor,
             args.iteration,
         )
 
@@ -47,7 +47,7 @@ class PatchySAN(BaseModel):
         # process each graph and add it into Data() as attribute x
         for i, data in enumerate(dataset):
             new_feature = get_single_feature(
-                dataset[i], args.num_features, args.num_classes, args.sample, args.neighbor, args.stride
+                dataset[i], args.num_features, args.num_classes, args.num_sample, args.num_neighbor, args.stride
             )
             dataset[i].x = torch.from_numpy(new_feature)
 

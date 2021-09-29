@@ -4,25 +4,25 @@ import torch
 from sklearn.preprocessing import StandardScaler
 
 from cogdl.data import Dataset, Batch, MultiGraphDataset
-from cogdl.utils import accuracy, multilabel_f1, multiclass_f1, bce_with_logits_loss, cross_entropy_loss
+from cogdl.utils import Accuracy, MultiLabelMicroF1, MultiClassMicroF1, CrossEntropyLoss, BCEWithLogitsLoss
 
 
 def _get_evaluator(metric):
     if metric == "accuracy":
-        return accuracy
+        return Accuracy()
     elif metric == "multilabel_f1":
-        return multilabel_f1
+        return MultiLabelMicroF1()
     elif metric == "multiclass_f1":
-        return multiclass_f1
+        return MultiClassMicroF1()
     else:
         raise NotImplementedError
 
 
 def _get_loss_fn(metric):
     if metric in ("accuracy", "multiclass_f1"):
-        return cross_entropy_loss
+        return CrossEntropyLoss()
     elif metric == "multilabel_f1":
-        return bce_with_logits_loss
+        return BCEWithLogitsLoss()
     else:
         raise NotImplementedError
 
@@ -99,9 +99,12 @@ class GraphDataset(MultiGraphDataset):
         self.data = data
 
         self.metric = metric
-        if hasattr(self, "y") and self.y is not None:
-            if len(self.y.shape) > 1:
-                self.metric = "multilabel_f1"
+        if hasattr(self.data, "y") and self.data.y is not None:
+            if metric == "auto":
+                if len(self.data.y.shape) > 1:
+                    self.metric = "multilabel_f1"
+                else:
+                    self.metric = "accuracy"
 
     def _download(self):
         pass

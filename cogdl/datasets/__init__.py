@@ -1,4 +1,5 @@
 import importlib
+import torch
 
 from cogdl.data.dataset import Dataset
 from .customized_data import NodeDataset, GraphDataset
@@ -52,7 +53,6 @@ def try_import_dataset(dataset):
 
 def build_dataset(args):
     if not try_import_dataset(args.dataset):
-        assert hasattr(args, "task")
         dataset = build_dataset_from_path(args.dataset, args.task)
         if dataset is not None:
             return dataset
@@ -72,19 +72,17 @@ def build_dataset_from_name(dataset):
     return DATASET_REGISTRY[dataset]()
 
 
-def build_dataset_from_path(data_path, task=None, dataset=None):
+def build_dataset_from_path(data_path, dataset=None):
     if dataset is not None and dataset in SUPPORTED_DATASETS:
         if try_import_dataset(dataset):
             return DATASET_REGISTRY[dataset](data_path=data_path)
 
-    if task is None:
-        return None
-    if "node_classification" in task:
-        return NodeDataset(data_path)
-    elif "graph_classification" in task:
-        return GraphDataset(data_path)
-    else:
-        return None
+    if dataset is None:
+        try:
+            return torch.load(data_path)
+        except Exception as e:
+            print(e)
+    raise ValueError("You are expected to specify `dataset` and `data_path`")
 
 
 SUPPORTED_DATASETS = {

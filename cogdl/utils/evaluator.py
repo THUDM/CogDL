@@ -1,5 +1,6 @@
 from typing import Union, Callable
 import numpy as np
+import warnings
 
 import torch
 import torch.nn as nn
@@ -74,6 +75,7 @@ class Accuracy(object):
             self.tp = list()
             self.total = list()
             return tp / total
+        warnings.warn("pre-computing list is empty")
         return 0
 
     def clear(self):

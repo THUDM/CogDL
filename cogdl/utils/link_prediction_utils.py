@@ -110,8 +110,8 @@ class GNNLinkPredict(nn.Module):
             torch.cuda.empty_cache()
             self.edge_set = set([tuple(x) for x in edge_list])  # tuple(h, t, r)
 
-    def _loss(self, head_embed, tail_embed, rel_embed, labels):
-        score = self.get_score(head_embed, tail_embed, rel_embed)
+    def _loss(self, head_embed, tail_embed, rel_embed, labels, scoring):
+        score = scoring(head_embed, tail_embed, rel_embed)
         prediction_loss = F.binary_cross_entropy_with_logits(score, labels.float())
         return prediction_loss
 

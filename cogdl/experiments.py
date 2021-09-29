@@ -160,6 +160,7 @@ def train(args):  # noqa: C901
         args.num_entities = len(torch.unique(torch.stack(dataset.data.edge_index)))
         args.num_rels = len(torch.unique(dataset.data.edge_attr))
 
+    args.max_graph_size = dataset.max_graph_size
     # setup model
     model = build_model(args)
     # specify configs for optimizer

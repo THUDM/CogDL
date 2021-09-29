@@ -5,9 +5,9 @@ from .utils import build_args_from_dict
 def spmm_scatter(row, col, values, b):
     r"""
     Args:
-        indices : Tensor, shape=(2, E)
+        (row, col): Tensor, shape=(2, E)
         values : Tensor, shape=(E,)
-        b : Tensor, shape=(N, )
+        b : Tensor, shape=(N, d)
     """
     output = b.index_select(0, col) * values.unsqueeze(-1)
     output = torch.zeros_like(b).scatter_add_(0, row.unsqueeze(-1).expand_as(output), output)

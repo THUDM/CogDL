@@ -1,5 +1,5 @@
 import random
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import scipy.sparse as sp
@@ -238,7 +238,7 @@ def to_undirected(edge_index, num_nodes=None):
 
 
 def negative_edge_sampling(
-    edge_index: torch.Tensor,
+    edge_index: Union[Tuple, torch.Tensor],
     num_nodes: Optional[int] = None,
     num_neg_samples: Optional[int] = None,
     undirected: bool = False,
@@ -246,18 +246,18 @@ def negative_edge_sampling(
     if num_nodes is None:
         num_nodes = len(torch.unique(edge_index))
     if num_neg_samples is None:
-        num_neg_samples = edge_index.shape[1]
+        num_neg_samples = edge_index[0].shape[0]
 
     size = num_nodes * num_nodes
-    num_neg_samples = min(num_neg_samples, size - edge_index.size(1))
+    num_neg_samples = min(num_neg_samples, size - edge_index[1].shape[0])
 
     row, col = edge_index
     unique_pair = row * num_nodes + col
 
-    num_samples = int(num_neg_samples * abs(1 / (1 - 1.1 * edge_index.size(1) / size)))
+    num_samples = int(num_neg_samples * abs(1 / (1 - 1.1 * row.size(0) / size)))
     sample_result = torch.LongTensor(random.sample(range(size), min(num_samples, num_samples)))
     mask = torch.from_numpy(np.isin(sample_result, unique_pair.to("cpu"))).to(torch.bool)
-    selected = sample_result[~mask][:num_neg_samples].to(edge_index.device)
+    selected = sample_result[~mask][:num_neg_samples].to(row.device)
 
     row = selected // num_nodes
     col = selected % num_nodes

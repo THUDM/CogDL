@@ -110,9 +110,10 @@ class ModelWrapper(torch.nn.Module):
         for key, val in self.__record__.items():
             if key.endswith("_metric"):
                 _val = self._evaluator.evaluate()
-
-            elif isinstance(self._evaluator_metric, str) and key.endswith(self._evaluator_metric):
-                _val = self._evaluator.evaluate()
+                if _val == 0:
+                    _val = val[0]
+            # elif isinstance(self._evaluator_metric, str) and key.endswith(self._evaluator_metric):
+            #     _val = self._evaluator.evaluate()
             else:
                 _val = merge_batch_indexes(val)
             out[key] = _val

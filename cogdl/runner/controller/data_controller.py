@@ -21,6 +21,7 @@ class DataController(object):
 
     def prepare_data_wrapper(self, dataset_w, rank=0):
         if self.distributed:
+            dataset_w.pre_transform()
             train_loader = dataset_w.train_wrapper()
             assert isinstance(train_loader, DataLoader)
             train_loader = self.distributed_dataloader(train_loader, dataset=dataset_w.get_train_dataset(), rank=rank)

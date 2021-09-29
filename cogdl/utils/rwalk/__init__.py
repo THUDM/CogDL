@@ -29,7 +29,7 @@ librwalk.random_walk.argtypes = [
 ]
 
 
-def random_walk(nodes, ptr, neighs, num_walks=1, num_steps=1, nthread=-1, seed=111413, restarp_prop=0.0):
+def random_walk(nodes, ptr, neighs, num_walks=1, num_steps=1, nthread=-1, seed=111413, restart_prob=0.0):
     assert ptr.flags["C_CONTIGUOUS"]
     assert neighs.flags["C_CONTIGUOUS"]
     assert ptr.dtype == np.int32
@@ -48,7 +48,7 @@ def random_walk(nodes, ptr, neighs, num_walks=1, num_steps=1, nthread=-1, seed=1
         num_steps,
         seed,
         nthread,
-        restarp_prop,
+        restart_prob,
         np.reshape(walks, (walks.size,), order="C"),
     )
 

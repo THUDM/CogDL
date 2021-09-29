@@ -40,13 +40,7 @@ def set_default_wrapper_config():
         "pyg_supergat",
     ]
 
-    graph_classification_models = [
-        "gin",
-        "pathcy_san",
-        "diffpool",
-        "infograph",
-        "sagpool",
-    ]
+    graph_classification_models = ["gin", "patchy_san", "diffpool", "infograph", "dgcnn", "sortpool"]
 
     network_embedding_models = [
         "deepwalk",
@@ -74,6 +68,8 @@ def set_default_wrapper_config():
         "vgae",
     ]
 
+    graph_kg_link_prediction = ["rgcn", "compgcn"]
+
     node_classification_wrappers = dict()
     for item in node_classification_models:
         node_classification_wrappers[item] = {"mw": "node_classification_mw", "dw": "node_classification_dw"}
@@ -96,6 +92,7 @@ def set_default_wrapper_config():
         graph_classification_wrappers[item] = {"mw": "graph_classification_mw", "dw": "graph_classification_dw"}
 
     graph_classification_wrappers["infograph"]["mw"] = "infograph_mw"
+    graph_classification_wrappers["infograph"]["dw"] = "infograph_dw"
 
     network_embedding_wrappers = dict()
     for item in network_embedding_models:
@@ -113,6 +110,10 @@ def set_default_wrapper_config():
     graph_clustering_wrappers["agc"]["mw"] = "agc_mw"
     graph_clustering_wrappers["daegc"]["mw"] = "daegc_mw"
 
+    graph_kg_link_prediction_wrappers = dict()
+    for item in graph_kg_link_prediction:
+        graph_kg_link_prediction_wrappers[item] = {"dw": "gnn_kg_link_prediction_dw", "mw": "gnn_kg_link_prediction_mw"}
+
     other_wrappers = dict()
     other_wrappers["gatne"] = {"mw": "multiplex_embedding_mw", "dw": "multiplex_embedding_dw"}
 
@@ -122,6 +123,7 @@ def set_default_wrapper_config():
     merged.update(graph_classification_wrappers)
     merged.update(network_embedding_wrappers)
     merged.update(graph_clustering_wrappers)
+    merged.update(graph_kg_link_prediction_wrappers)
     merged.update(other_wrappers)
     return merged
 

@@ -51,7 +51,7 @@ class InfoGraphModelWrapper(ModelWrapper):
         labels = np.array([g.y.item() for g in dataset])
         result = evaluate_graph_embeddings_using_svm(preds, labels)
 
-        self.note("test_acc", result["acc"])
+        self.note("test_metric", result["acc"])
         self.note("std", result["std"])
 
     def setup_optimizer(self):

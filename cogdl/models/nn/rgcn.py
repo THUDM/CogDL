@@ -116,11 +116,13 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
         self.cahce_index = reindexed_nodes
 
         graph.edge_index = reindexed_edges
+        # graph.num_nodes = reindexed_edges.max().item() + 1
+
         output = self.model(graph, x)
         # output = self.model(x, reindexed_indices, graph.edge_type)
         return output
 
-    def loss(self, graph):
+    def loss(self, graph, scoring):
         edge_index = graph.edge_index
         edge_types = graph.edge_attr
 
@@ -128,18 +130,20 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
         batch_edges, batch_attr, samples, rels, labels = sampling_edge_uniform(
             edge_index, edge_types, self.edge_set, self.sampling_rate, self.num_rels
         )
-        with graph.local_graph():
-            graph.edge_index = batch_edges
-            graph.edge_attr = batch_attr
-            output = self.forward(graph)
-            edge_weight = self.rel_weight(rels)
-            sampled_nodes, reindexed_edges = torch.unique(samples, sorted=True, return_inverse=True)
-            assert (sampled_nodes == self.cahce_index).any()
-            sampled_types = torch.unique(rels)
 
-            loss_n = self._loss(
-                output[reindexed_edges[0]], output[reindexed_edges[1]], edge_weight, labels
-            ) + self.penalty * self._regularization([self.emb(sampled_nodes), self.rel_weight(sampled_types)])
+        graph = graph.__class__(edge_index=batch_edges, edge_attr=batch_attr)
+        # graph.edge_index = batch_edges
+        # graph.edge_attr = batch_attr
+
+        output = self.forward(graph)
+        edge_weight = self.rel_weight(rels)
+        sampled_nodes, reindexed_edges = torch.unique(samples, sorted=True, return_inverse=True)
+        assert (sampled_nodes == self.cahce_index).any()
+        sampled_types = torch.unique(rels)
+
+        loss_n = self._loss(
+            output[reindexed_edges[0]], output[reindexed_edges[1]], edge_weight, labels, scoring
+        ) + self.penalty * self._regularization([self.emb(sampled_nodes), self.rel_weight(sampled_types)])
         return loss_n
 
     def predict(self, graph):

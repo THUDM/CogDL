@@ -143,6 +143,7 @@ def train(args):
     else:
         args.num_classes = dataset.num_classes
 
+    args.max_graph_size = dataset.max_graph_size
     # setup model
     model = build_model(args)
     # specify configs for optimizer

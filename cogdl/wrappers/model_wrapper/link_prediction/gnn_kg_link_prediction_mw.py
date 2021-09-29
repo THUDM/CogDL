@@ -37,7 +37,7 @@ class GNNKGLinkPrediction(ModelWrapper):
         with graph.local_graph():
             graph.edge_index = edge_index
             graph.edge_attr = edge_types
-            loss = self.model.loss(graph)
+            loss = self.model.loss(graph, self.scoring)
         return loss
 
     def val_step(self, subgraph):
@@ -75,3 +75,6 @@ class GNNKGLinkPrediction(ModelWrapper):
     def setup_optimizer(self):
         lr, weight_decay = self.optimizer_cfg["lr"], self.optimizer_cfg["weight_decay"]
         return torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=weight_decay)
+
+    def set_early_stopping(self):
+        return "mrr", ">"

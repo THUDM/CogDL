@@ -116,7 +116,6 @@ class Metapath2vec(BaseModel):
         nodes = list(G.nodes())
         if schema != "No":
             schema_list = schema.split(",")
-        print("node number:", len(nodes))
         for walk_iter in range(num_walks):
             random.shuffle(nodes)
             print(str(walk_iter + 1), "/", str(num_walks))

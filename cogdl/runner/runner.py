@@ -166,11 +166,15 @@ class Trainer(object):
         if final_val is not None and "val_metric" in final_val:
             final_val[f"val_{self.evaluation_metric}"] = final_val["val_metric"]
             final_val.pop("val_metric")
-            final_val.pop("val_loss")
+            if "val_loss" in final_val:
+                final_val.pop("val_loss")
+
         if "test_metric" in final_test:
             final_test[f"test_{self.evaluation_metric}"] = final_test["test_metric"]
             final_test.pop("test_metric")
-            final_test.pop("test_loss")
+            if "test_loss" in final_test:
+                final_test.pop("test_loss")
+
         self.logger.note(final_test)
         if final_val is not None:
             final_test.update(final_val)

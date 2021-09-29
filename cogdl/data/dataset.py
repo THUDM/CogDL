@@ -1,6 +1,7 @@
 import collections
 import os.path as osp
 from itertools import repeat
+import numpy as np
 
 import torch.utils.data
 
@@ -154,6 +155,18 @@ class Dataset(torch.utils.data.Dataset):
     def edge_attr_size(self):
         return None
 
+    @property
+    def max_degree(self):
+        return self.data.degrees().max().item() + 1
+
+    @property
+    def max_graph_size(self):
+        return self.data.num_nodes
+
+    @property
+    def num_graphs(self):
+        return 1
+
     def __repr__(self):  # pragma: no cover
         return "{}({})".format(self.__class__.__name__, len(self))
 
@@ -179,6 +192,20 @@ class MultiGraphDataset(Dataset):
             return self[0].num_features
         else:
             return 0
+
+    @property
+    def max_degree(self):
+        max_degree = [x.degrees().max().item() for x in self.data]
+        max_degree = np.max(max_degree) + 1
+        return max_degree
+
+    @property
+    def num_graphs(self):
+        return len(self.data)
+
+    @property
+    def max_graph_size(self):
+        return np.max([g.num_nodes for g in self.data])
 
     def len(self):
         if isinstance(self.data, list):

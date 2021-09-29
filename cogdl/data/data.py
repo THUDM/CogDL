@@ -172,7 +172,7 @@ class Adjacency(BaseGraph):
         return weight
 
     def add_remaining_self_loops(self):
-        if self.attr is not None:
+        if self.attr is not None and len(self.attr.shape) == 1:
             edge_index, weight_attr = add_remaining_self_loops(
                 (self.row, self.col), edge_weight=self.attr, fill_value=0, num_nodes=self.num_nodes
             )
@@ -185,6 +185,22 @@ class Adjacency(BaseGraph):
             )
             self.row, self.col = edge_index
             self.attr = None
+        self.row_ptr, reindex = coo2csr_index(self.row, self.col, num_nodes=self.num_nodes)
+        self.row = self.row[reindex]
+        self.col = self.col[reindex]
+
+    def padding_self_loops(self):
+        device = self.row.device
+        row, col = torch.arange(self.num_nodes, device=device), torch.arange(self.num_nodes, device=device)
+        self.row = torch.cat((self.row, row))
+        self.col = torch.cat((self.col, col))
+
+        if self.weight is not None:
+            values = torch.zeros(self.num_nodes, device=device) + 0.01
+            self.weight = torch.cat((self.weight, values))
+        if self.attr is not None:
+            attr = torch.zeros(self.num_nodes, device=device)
+            self.attr = torch.cat((self.attr, attr))
         self.row_ptr, reindex = coo2csr_index(self.row, self.col, num_nodes=self.num_nodes)
         self.row = self.row[reindex]
         self.col = self.col[reindex]
@@ -318,9 +334,9 @@ class Adjacency(BaseGraph):
 
     @property
     def num_nodes(self):
-        if self.__num_nodes__ is not None:
-            return self.__num_nodes__
-        elif self.row_ptr is not None:
+        # if self.__num_nodes__ is not None:
+        #     return self.__num_nodes__
+        if self.row_ptr is not None:
             return self.row_ptr.shape[0] - 1
         else:
             self.__num_nodes__ = max(self.row.max().item(), self.col.max().item()) + 1
@@ -407,6 +423,7 @@ class Adjacency(BaseGraph):
 
     def to_networkx(self, weighted=True):
         gnx = nx.Graph()
+        gnx.add_nodes_from(np.arange(self.num_nodes))
         row, col = self.edge_index
         row = row.tolist()
         col = col.tolist()
@@ -515,6 +532,9 @@ class Graph(BaseGraph):
         if self._adj_train is not None:
             self._adj_train.add_remaining_self_loops()
 
+    def padding_self_loops(self):
+        self._adj.padding_self_loops()
+
     def remove_self_loops(self):
         self._adj_full.remove_self_loops()
         if self._adj_train is not None:
@@ -603,12 +623,14 @@ class Graph(BaseGraph):
         if edge_index is None:
             self._adj.row = None
             self._adj.col = None
+            self.__num_nodes__ = 0
         else:
             row, col = edge_index
             if self._adj.row is not None and row.shape[0] != self._adj.row.shape[0]:
                 self._adj.row_ptr = None
             self._adj.row = row
             self._adj.col = col
+            self.__num_nodes__ = None
 
     @edge_weight.setter
     def edge_weight(self, edge_weight):

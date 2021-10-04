@@ -5,9 +5,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-from numpy.lib.arraysetops import isin
 import torch
-import yaml
 from grave import plot_network, use_attributes
 from tabulate import tabulate
 
@@ -16,6 +14,7 @@ from cogdl.data import Graph
 from cogdl.datasets import build_dataset_from_name, NodeDataset
 from cogdl.models import build_model
 from cogdl.options import get_default_args
+from cogdl.experiments import train
 from cogdl.datasets.rec_data import build_recommendation_data
 
 
@@ -140,24 +139,29 @@ class GenerateEmbeddingPipeline(Pipeline):
     def __init__(self, app: str, model: str, **kwargs):
         super(GenerateEmbeddingPipeline, self).__init__(app, model=model, **kwargs)
 
-        match_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "match.yml")
-        with open(match_path, "r", encoding="utf8") as f:
-            match = yaml.load(f, Loader=yaml.FullLoader)
-        objective = match.get("unsupervised_node_classification", None)
-        for pair_dict in objective:
-            if "blogcatalog" in pair_dict["dataset"]:
-                emb_models = pair_dict["model"]
-            elif "cora" in pair_dict["dataset"]:
-                gnn_models = pair_dict["model"]
+        self.kwargs = kwargs
+
+        emb_models = [
+            "prone",
+            "netmf",
+            "netsmf",
+            "deepwalk",
+            "line",
+            "node2vec",
+            "hope",
+            "sdne",
+            "grarep",
+            "dngr",
+            "spectral",
+        ]
+        gnn_models = ["dgi", "mvgrl", "grace", "unsup_graphsage"]
 
         if model in emb_models:
             self.method_type = "emb"
-            args = get_default_args(
-                task="unsupervised_node_classification", dataset="blogcatalog", model=model, **kwargs
-            )
+            args = get_default_args(dataset="blogcatalog", model=model, **kwargs)
         elif model in gnn_models:
             self.method_type = "gnn"
-            args = get_default_args(task="unsupervised_node_classification", dataset="cora", model=model, **kwargs)
+            args = get_default_args(dataset="cora", model=model, **kwargs)
         else:
             print("Please choose a model from ", emb_models, "or", gnn_models)
             exit(0)
@@ -171,27 +175,16 @@ class GenerateEmbeddingPipeline(Pipeline):
             exit(0)
 
         args.model = args.model[0]
-        self.model = build_model(args)
+        self.args = args
 
     def __call__(self, edge_index, x=None, edge_weight=None):
         if self.method_type == "emb":
-            G = nx.Graph()
-            if edge_weight is not None:
-                if isinstance(edge_index, np.ndarray):
-                    edges = np.concatenate([edge_index, np.expand_dims(edge_weight, -1)], -1)
-                elif isinstance(edge_index, torch.Tensor):
-                    edges = torch.cat([edge_index, edge_weight.unsqueeze(-1)], -1)
-                else:
-                    print("Please provide edges via np.ndarray or torch.Tensor.")
-                    return
-                G.add_weighted_edges_from(edges.tolist())
-            else:
-                if not isinstance(edge_index, np.ndarray) and not isinstance(edge_index, torch.Tensor):
-                    print("Please provide edges via np.ndarray or torch.Tensor.")
-                    return
-                G.add_edges_from(edge_index.tolist())
-
-            embeddings = self.model.train(G)
+            if isinstance(edge_index, np.ndarray):
+                edge_index = torch.from_numpy(edge_index)
+            edge_index = (edge_index[:, 0], edge_index[:, 1])
+            data = Graph(edge_index=edge_index, edge_weight=edge_weight)
+            self.model = build_model(self.args)
+            embeddings = self.model.train(data)
         elif self.method_type == "gnn":
             num_nodes = edge_index.max().item() + 1
             if x is None:
@@ -202,11 +195,12 @@ class GenerateEmbeddingPipeline(Pipeline):
             if isinstance(edge_index, np.ndarray):
                 edge_index = torch.from_numpy(edge_index)
             edge_index = (edge_index[:, 0], edge_index[:, 1])
-            data = Graph(x=x, edge_index=edge_index)
+            data = Graph(x=x, edge_index=edge_index, edge_weight=edge_weight)
             torch.save(data, self.data_path)
-            dataset = NodeDataset(path=self.data_path, scale_feat=False)
-            embeddings = self.trainer.fit(self.model, dataset, evaluate=False)
-            embeddings = embeddings.detach().cpu().numpy()
+            dataset = NodeDataset(path=self.data_path, scale_feat=False, metric="accuracy")
+            self.args.dataset = dataset
+            model = train(self.args)
+            embeddings = model.embed(data).cpu().numpy()
 
         return embeddings
 

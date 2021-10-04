@@ -34,3 +34,7 @@ class MyNodeClassificationDataset(NodeDataset):
 if __name__ == "__main__":
     # Run with self-loaded dataset
     experiment(dw="node_classification_dw", mw="node_classification_mw", dataset="mydataset", model="gcn")
+
+    # Or directly pass the dataset
+    dataset = MyNodeClassificationDataset()
+    experiment(dw="node_classification_dw", mw="node_classification_mw", dataset=dataset, model="gcn")

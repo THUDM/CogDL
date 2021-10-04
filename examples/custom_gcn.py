@@ -35,4 +35,7 @@ class GCN(BaseModel):
 
 
 if __name__ == "__main__":
-    experiment(task="node_classification", dataset="cora", model="mygcn")
+    experiment(dataset="cora", model="mygcn", dw="node_classification_dw", mw="node_classification_mw")
+
+    model = GCN(1433, 64, 7, 0.1)
+    experiment(dataset="cora", model=model, dw="node_classification_dw", mw="node_classification_mw")

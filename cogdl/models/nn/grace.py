@@ -140,18 +140,6 @@ class GRACE(BaseModel):
             losses.append(_loss)
         return sum(losses) / len(losses)
 
-    def self_supervised_loss(self, graph):
-        z1 = self.prop(graph, graph.x, self.drop_feature_rates[0], self.drop_edge_rates[0])
-        z2 = self.prop(graph, graph.x, self.drop_feature_rates[1], self.drop_edge_rates[1])
-
-        z1 = self.project_head(z1)
-        z2 = self.project_head(z2)
-
-        if self.batch_size > 0:
-            return 0.5 * (self.batched_loss(z1, z2, self.batch_size) + self.batched_loss(z2, z1, self.batch_size))
-        else:
-            return 0.5 * (self.contrastive_loss(z1, z2) + self.contrastive_loss(z2, z1))
-
     def embed(self, data):
         pred = self.forward(data, data.x)
         return pred

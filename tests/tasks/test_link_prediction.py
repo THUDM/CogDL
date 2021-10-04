@@ -37,10 +37,10 @@ def test_prone_ppi():
 
 
 default_dict_kg = {
-    "max_epoch": 2,
-    "num_bases": 5,
+    "max_epoch": 1,
+    "num_bases": 4,
     "num_layers": 2,
-    "hidden_size": 40,
+    "hidden_size": 16,
     "penalty": 0.001,
     "sampling_rate": 0.001,
     "dropout": 0.3,
@@ -73,7 +73,7 @@ def test_rgcn_wn18():
     args.self_loop = True
     args.regularizer = "basis"
     ret = train(args)
-    assert 0 <= ret["MRR"] <= 1
+    assert 0 <= ret["mrr"] <= 1
 
 
 def test_compgcn_wn18rr():
@@ -83,7 +83,7 @@ def test_compgcn_wn18rr():
     args.regularizer = "basis"
     args.opn = "sub"
     ret = train(args)
-    assert 0 <= ret["MRR"] <= 1
+    assert 0 <= ret["mrr"] <= 1
 
 
 default_dict_gnn_link = {
@@ -119,7 +119,7 @@ def get_default_args_gnn_link(dataset, model, dw="gnn_link_prediction_dw", mw="g
 def test_gcn_cora():
     args = get_default_args_gnn_link("cora", "gcn")
     ret = train(args)
-    assert 0.5 <= ret["AUC"] <= 1.0
+    assert 0.5 <= ret["auc"] <= 1.0
 
 
 if __name__ == "__main__":

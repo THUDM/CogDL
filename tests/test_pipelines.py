@@ -30,26 +30,22 @@ def test_oagbert():
 def test_gen_emb():
     generator = pipeline("generate-emb", model="prone")
 
-    edge_index = np.array([[0, 1], [0, 2], [0, 3], [1, 2], [2, 3]])
+    edge_index = np.array([[0, 1], [0, 2], [0, 3], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7]])
     outputs = generator(edge_index)
-    assert tuple(outputs.shape) == (4, 4)
+    assert tuple(outputs.shape) == (8, 8)
 
-    edge_weight = np.array([0.1, 0.3, 1.0, 0.8, 0.5])
-    outputs = generator(edge_index, edge_weight)
-    assert tuple(outputs.shape) == (4, 4)
-
-    """
-    generator = pipeline("generate-emb", model="dgi", num_features=8, hidden_size=10, cpu=True)
-    outputs = generator(edge_index, x=np.random.randn(4, 8))
-    assert tuple(outputs.shape) == (4, 10)
-    """
+    generator = pipeline(
+        "generate-emb", model="mvgrl", num_features=8, hidden_size=10, sample_size=2, max_epoch=2, cpu=True
+    )
+    outputs = generator(edge_index, x=np.random.randn(8, 8))
+    assert tuple(outputs.shape) == (8, 10)
 
 
-def test_recommendation():
-    data = np.array([[0, 0], [0, 1], [0, 2], [1, 1], [1, 3], [1, 4], [2, 4], [2, 5], [2, 6]])
-    rec = pipeline("recommendation", model="lightgcn", data=data, max_epoch=2, evaluate_interval=1000, cpu=True)
-    ret = rec([0], topk=3)
-    assert len(ret[0]) == 3
+# def test_recommendation():
+#     data = np.array([[0, 0], [0, 1], [0, 2], [1, 1], [1, 3], [1, 4], [2, 4], [2, 5], [2, 6]])
+#     rec = pipeline("recommendation", model="lightgcn", data=data, max_epoch=2, evaluate_interval=1000, cpu=True)
+#     ret = rec([0], topk=3)
+#     assert len(ret[0]) == 3
 
 
 if __name__ == "__main__":
@@ -57,4 +53,4 @@ if __name__ == "__main__":
     test_dataset_visual()
     test_oagbert()
     test_gen_emb()
-    test_recommendation()
+    # test_recommendation()

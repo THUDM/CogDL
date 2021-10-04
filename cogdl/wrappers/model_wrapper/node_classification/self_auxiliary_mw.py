@@ -23,15 +23,17 @@ class SelfAuxiliaryTask(ModelWrapper):
                                  " pairwise_distance, pairwise_attr_sim")
         parser.add_argument("--dropedge-rate", type=float, default=0.0)
         parser.add_argument("--mask-ratio", type=float, default=0.1)
+        parser.add_argument("--sampling", action="store_true")
         # fmt: on
 
-    def __init__(self, model, optimizer_cfg, auxiliary_task, dropedge_rate, mask_ratio):
+    def __init__(self, model, optimizer_cfg, auxiliary_task, dropedge_rate, mask_ratio, sampling):
         super().__init__()
         self.auxiliary_task = auxiliary_task
         self.optimizer_cfg = optimizer_cfg
         self.hidden_size = optimizer_cfg["hidden_size"]
         self.dropedge_rate = dropedge_rate
         self.mask_ratio = mask_ratio
+        self.sampling = sampling
         self.model = model
 
         self.agent = None
@@ -42,15 +44,22 @@ class SelfAuxiliaryTask(ModelWrapper):
             graph = self.agent.transform_data(graph)
             pred = self.model(graph)
         sup_loss = self.default_loss_fn(pred, graph.y)
+        pred = self.model.embed(graph)
         ssl_loss = self.agent.make_loss(pred)
         return sup_loss + ssl_loss
 
     def test_step(self, graph):
+        self.model.eval()
         with torch.no_grad():
-            pred = self.model(graph)
+            pred = self.model.embed(graph)
         y = graph.y
         result = evaluate_node_embeddings_using_logreg(pred, y, graph.train_mask, graph.test_mask)
         self.note("test_acc", result)
+
+    def pre_stage(self, stage, data_w):
+        if stage == 0:
+            data = data_w.get_dataset().data
+            self.generate_virtual_labels(data)
 
     def generate_virtual_labels(self, data):
         if self.auxiliary_task == "edge_mask":
@@ -112,7 +121,7 @@ class EdgeMask(SSLTask):
         self.masked_edges = edges[:, masked]
         self.cached_edges = edges[:, preserved]
         mask_num = len(masked)
-        self.neg_edges = self.neg_sample(mask_num, graph.edge_index)
+        self.neg_edges = self.neg_sample(mask_num, graph).to(self.masked_edges.device)
         self.pseudo_labels = torch.cat([torch.ones(mask_num), torch.zeros(mask_num)]).long().to(device)
         self.node_pairs = torch.cat([self.masked_edges, self.neg_edges], 1).to(device)
 
@@ -156,7 +165,7 @@ class AttributeMask(SSLTask):
 
         num_nodes = graph.num_nodes
         unlabelled = torch.where(~graph.train_mask)[0]
-        perm = np.random.permutation(unlabelled)
+        perm = np.random.permutation(unlabelled.cpu().numpy())
         mask_nnz = int(num_nodes * self.mask_ratio)
         self.masked_nodes = perm[:mask_nnz]
         x_feat[self.masked_nodes] = 0
@@ -310,7 +319,7 @@ class Distance2Clusters(SSLTask):
 
     def transform_data(self, graph):
         if not self.gen_cluster_info_cache:
-            self.gen_cluster_info_cache(graph)
+            self.gen_cluster_info(graph)
             self.gen_cluster_info_cache = True
 
         return graph

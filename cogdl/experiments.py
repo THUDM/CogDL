@@ -5,11 +5,13 @@ import inspect
 from collections import defaultdict, namedtuple
 
 import torch
+import torch.nn as nn
 import optuna
 from tabulate import tabulate
 
 from cogdl.utils import set_random_seed, tabulate_results, init_operator_configs
 from cogdl.configs import BEST_CONFIGS
+from cogdl.data import Dataset
 from cogdl.models import build_model
 from cogdl.datasets import build_dataset
 from cogdl.wrappers import fetch_model_wrapper, fetch_data_wrapper
@@ -102,9 +104,9 @@ def train(args):  # noqa: C901
 
     print(
         f""" 
-|-------------------------------------{'-' * (len(args.dataset) + len(args.model) + len(args.dw) + len(args.mw))}|
+|-------------------------------------{'-' * (len(str(args.dataset)) + len(str(args.model)) + len(args.dw) + len(args.mw))}|
     *** Running (`{args.dataset}`, `{args.model}`, `{args.dw}`, `{args.mw}`)
-|-------------------------------------{'-' * (len(args.dataset) + len(args.model) + len(args.dw) + len(args.mw))}|"""
+|-------------------------------------{'-' * (len(str(args.dataset)) + len(str(args.model)) + len(args.dw) + len(args.mw))}|"""
     )
 
     if getattr(args, "use_best_config", False):
@@ -112,7 +114,10 @@ def train(args):  # noqa: C901
 
     # setup dataset and specify `num_features` and `num_classes` for model
     args.monitor = "val_acc"
-    dataset = build_dataset(args)
+    if isinstance(args.dataset, Dataset):
+        dataset = args.dataset
+    else:
+        dataset = build_dataset(args)
 
     mw_class = fetch_model_wrapper(args.mw)
     dw_class = fetch_data_wrapper(args.dw)
@@ -162,7 +167,10 @@ def train(args):  # noqa: C901
 
     args.max_graph_size = dataset.max_graph_size
     # setup model
-    model = build_model(args)
+    if isinstance(args.model, nn.Module):
+        model = args.model
+    else:
+        model = build_model(args)
     # specify configs for optimizer
     optimizer_cfg = dict(
         lr=args.lr,
@@ -199,6 +207,7 @@ def train(args):  # noqa: C901
         logger=args.logger,
         log_path=args.log_path,
         project=args.project,
+        do_test=args.do_test,
     )
 
     # Go!!!
@@ -261,12 +270,14 @@ def auto_experiment(args):
 
 
 def experiment(dataset, model, **kwargs):
-    if isinstance(dataset, str):
+    if isinstance(dataset, str) or isinstance(dataset, Dataset):
         dataset = [dataset]
-    if isinstance(model, str):
+    if isinstance(model, str) or isinstance(model, nn.Module):
         model = [model]
     if "args" not in kwargs:
-        args = get_default_args(dataset=dataset, model=model, **kwargs)
+        args = get_default_args(dataset=[str(x) for x in dataset], model=[str(x) for x in model], **kwargs)
+        args.dataset = dataset
+        args.model = model
     else:
         args = kwargs["args"]
         for key, value in kwargs.items():

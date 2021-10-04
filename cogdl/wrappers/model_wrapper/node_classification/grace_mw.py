@@ -52,7 +52,7 @@ class GRACEModelWrapper(ModelWrapper):
             pred = self.model(graph)
         y = graph.y
         result = evaluate_node_embeddings_using_logreg(pred, y, graph.train_mask, graph.test_mask)
-        self.note("acc", result)
+        self.note("test_acc", result)
 
     def prop(
         self,
@@ -63,7 +63,7 @@ class GRACEModelWrapper(ModelWrapper):
     ):
         x = dropout_features(x, drop_feature_rate)
         with graph.local_graph():
-            graph = dropout_adj(graph.edge_index, graph.edge_weight, drop_edge_rate)
+            graph.edge_index, graph.edge_weight = dropout_adj(graph.edge_index, graph.edge_weight, drop_edge_rate)
             return self.model.forward(graph, x)
 
     def contrastive_loss(self, z1: torch.Tensor, z2: torch.Tensor):
@@ -97,3 +97,7 @@ class GRACEModelWrapper(ModelWrapper):
             _loss = self.contrastive_loss(z1[train_indices], z2)
             losses.append(_loss)
         return sum(losses) / len(losses)
+
+    def setup_optimizer(self):
+        cfg = self.optimizer_cfg
+        return torch.optim.Adam(self.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])

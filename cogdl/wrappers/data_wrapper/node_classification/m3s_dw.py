@@ -82,14 +82,14 @@ class M3SDataWrapper(FullBatchNodeClfDataWrapper):
         # Sort nodes by confidence for each class
         for i in range(num_classes):
             confidence_ranking[i] = np.argsort(-confidence[i])
-            print(confidence_ranking[i][:10])
         data.confidence_ranking = confidence_ranking
 
         self.dataset.data = data
 
     def pre_stage(self, stage, model_w_out):
         self.dataset.data.store("y")
-        self.dataset.data.y = model_w_out
+        if stage > 0:
+            self.dataset.data.y = model_w_out
 
     def post_stage(self, stage, model_w_out):
         self.dataset.data.restore("y")

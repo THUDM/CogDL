@@ -55,6 +55,8 @@ def get_parser():
     parser.add_argument("--master-port", type=int, default=13425)
     parser.add_argument("--master-addr", type=str, default="localhost")
 
+    parser.add_argument("--do-test", action="store_false")
+
     parser.add_argument("--actnn", action="store_true")
     # fmt: on
     return parser

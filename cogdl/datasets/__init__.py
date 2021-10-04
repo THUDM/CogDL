@@ -2,7 +2,7 @@ import importlib
 import torch
 
 from cogdl.data.dataset import Dataset
-from .customized_data import NodeDataset, GraphDataset
+from .customized_data import NodeDataset, GraphDataset, generate_random_graph
 
 try:
     import torch_geometric
@@ -46,14 +46,14 @@ def try_import_dataset(dataset):
         if dataset in SUPPORTED_DATASETS:
             importlib.import_module(SUPPORTED_DATASETS[dataset])
         else:
-            print(f"Failed to import {dataset} dataset.")
+            # print(f"Failed to import {dataset} dataset.")
             return False
     return True
 
 
 def build_dataset(args):
     if not try_import_dataset(args.dataset):
-        dataset = build_dataset_from_path(args.dataset, args.task)
+        dataset = build_dataset_from_path(args.dataset)
         if dataset is not None:
             return dataset
         exit(1)

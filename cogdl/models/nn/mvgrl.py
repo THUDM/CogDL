@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 from .. import BaseModel, register_model
-from .dgi import GCN, AvgReadout
+from .dgi import GCN
 from cogdl.utils.ppr_utils import build_topk_ppr_matrix_from_data
 from cogdl.data import Graph
 
@@ -20,6 +20,19 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
 
 def compute_ppr(adj, index, alpha=0.4, epsilon=1e-4, k=8, norm="row"):
     return build_topk_ppr_matrix_from_data(adj, alpha, epsilon, index, k, norm).tocsr()
+
+
+# Borrowed from https://github.com/PetarV-/DGI
+class AvgReadout(nn.Module):
+    def __init__(self):
+        super(AvgReadout, self).__init__()
+
+    def forward(self, seq, msk):
+        dim = len(seq.shape) - 2
+        if msk is None:
+            return torch.mean(seq, dim)
+        else:
+            return torch.sum(seq * msk, dim) / torch.sum(msk)
 
 
 # Borrowed from https://github.com/kavehhassani/mvgrl

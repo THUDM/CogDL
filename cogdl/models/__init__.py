@@ -41,7 +41,7 @@ def try_import_model(model):
         if model in SUPPORTED_MODELS:
             importlib.import_module(SUPPORTED_MODELS[model])
         else:
-            print(f"Failed to import {model} model.")
+            # print(f"Failed to import {model} model.")
             return False
     return True
 
@@ -86,7 +86,6 @@ SUPPORTED_MODELS = {
     "chebyshev": "cogdl.models.nn.pyg_cheb",
     "gcn": "cogdl.models.nn.gcn",
     "gdc_gcn": "cogdl.models.nn.gdc_gcn",
-    "hgpsl": "cogdl.models.nn.pyg_hgpsl",
     "graphsage": "cogdl.models.nn.graphsage",
     "compgcn": "cogdl.models.nn.compgcn",
     "drgcn": "cogdl.models.nn.drgcn",
@@ -119,7 +118,6 @@ SUPPORTED_MODELS = {
     "asgcn": "cogdl.models.nn.asgcn",
     "gcc": "cogdl.models.nn.gcc_model",
     "unsup_graphsage": "cogdl.models.nn.unsup_graphsage",
-    "sagpool": "cogdl.models.nn.pyg_sagpool",
     "graphsaint": "cogdl.models.nn.graphsaint",
     "m3s": "cogdl.models.nn.m3s",
     "supergat": "cogdl.models.nn.pyg_supergat",

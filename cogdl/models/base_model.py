@@ -30,3 +30,6 @@ class BaseModel(nn.Module):
 
     def set_loss_fn(self, loss_fn):
         self.loss_fn = loss_fn
+
+    def __repr__(self):
+        return self.__class__.__name__

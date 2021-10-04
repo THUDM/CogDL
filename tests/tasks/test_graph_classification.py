@@ -85,27 +85,6 @@ def add_patchy_san_args(args):
     return args
 
 
-def add_hgpsl_args(args):
-    args.hidden_size = 128
-    args.dropout = 0.0
-    args.pooling = 0.5
-    args.batch_size = 64
-    args.train_ratio = 0.8
-    args.test_ratio = 0.1
-    args.lr = 0.001
-    return args
-
-
-def add_sagpool_args(args):
-    args.hidden_size = 128
-    args.batch_size = 20
-    args.train_ratio = 0.7
-    args.test_ratio = 0.1
-    args.pooling_ratio = 0.5
-    args.pooling_layer_type = "gcnconv"
-    return args
-
-
 def test_gin_mutag():
     args = get_default_args_graph_clf(dataset="mutag", model="gin")
     args = add_gin_args(args)
@@ -158,30 +137,11 @@ def test_sortpool_mutag():
 
 
 def test_patchy_san_mutag():
-    args = get_default_args_graph_clf(dataset="mutag", model="patchy_san")
+    args = get_default_args_graph_clf(dataset="mutag", model="patchy_san", dw="patchy_san_dw")
     args = add_patchy_san_args(args)
     args.batch_size = 5
     ret = train(args)
     assert ret["test_acc"] > 0
-
-
-def test_hgpsl_proteins():
-    args = get_default_args_graph_clf(dataset="proteins", model="hgpsl")
-    args = add_hgpsl_args(args)
-    args.sample_neighbor = (True,)
-    args.sparse_attention = (True,)
-    args.structure_learning = (True,)
-    args.lamb = 1.0
-    ret = train(args)
-    assert ret["test_acc"] > 0
-
-
-# def test_sagpool_mutag():
-#     args = get_default_args_graph_clf(dataset="mutag", model="sagpool")
-#     args = add_sagpool_args(args)
-#     args.batch_size = 5
-#     ret = train(args)
-#     assert ret["test_acc"] >= 0
 
 
 if __name__ == "__main__":
@@ -196,8 +156,4 @@ if __name__ == "__main__":
 
     test_dgcnn_proteins()
 
-    # test_patchy_san_mutag()
-
-    test_hgpsl_proteins()
-
-    # test_sagpool_mutag()
+    test_patchy_san_mutag()

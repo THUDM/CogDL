@@ -3,7 +3,7 @@ import os
 import torch
 from sklearn.preprocessing import StandardScaler
 
-from cogdl.data import Dataset, Batch, MultiGraphDataset
+from cogdl.data import Dataset, Graph, MultiGraphDataset
 from cogdl.utils import Accuracy, MultiLabelMicroF1, MultiClassMicroF1, CrossEntropyLoss, BCEWithLogitsLoss
 
 
@@ -36,22 +36,41 @@ def scale_feats(data):
     return data
 
 
+def generate_random_graph(num_nodes=100, num_edges=1000, num_feats=64):
+    # load or generate your dataset
+    edge_index = torch.randint(0, num_nodes, (2, num_edges))
+    x = torch.randn(num_nodes, num_feats)
+    y = torch.randint(0, 2, (num_nodes,))
+
+    # set train/val/test mask in node_classification task
+    train_mask = torch.zeros(num_nodes).bool()
+    train_mask[0 : int(0.3 * num_nodes)] = True
+    val_mask = torch.zeros(num_nodes).bool()
+    val_mask[int(0.3 * num_nodes) : int(0.7 * num_nodes)] = True
+    test_mask = torch.zeros(num_nodes).bool()
+    test_mask[int(0.7 * num_nodes) :] = True
+    data = Graph(x=x, edge_index=edge_index, y=y, train_mask=train_mask, val_mask=val_mask, test_mask=test_mask)
+
+    return data
+
+
 class NodeDataset(Dataset):
     """
     data_path : path to load dataset. The dataset must be processed to specific format
     metric: Accuracy, multi-label f1 or multi-class f1. Default: `accuracy`
     """
 
-    def __init__(self, path="cus_data.pt", scale_feat=True, metric="auto"):
+    def __init__(self, path="data.pt", data=None, scale_feat=True, metric="auto"):
         self.path = path
+        self.data = data
         super(NodeDataset, self).__init__(root=path)
         try:
             self.data = torch.load(path)
-            if scale_feat:
-                self.data = scale_feats(self.data)
         except Exception as e:
             print(e)
             exit(1)
+        if scale_feat:
+            self.data = scale_feats(self.data)
         self.metric = metric
         if hasattr(self.data, "y") and self.data.y is not None:
             if metric == "auto":
@@ -64,7 +83,9 @@ class NodeDataset(Dataset):
         pass
 
     def process(self):
-        raise NotImplementedError
+        if self.data is None:
+            raise NotImplementedError
+        return self.data
 
     def get(self, idx):
         assert idx == 0
@@ -85,7 +106,7 @@ class NodeDataset(Dataset):
             torch.save(data, self.path)
 
     def __repr__(self):
-        return "{}()".format(self.name)
+        return "{}".format(self.path)
 
 
 class GraphDataset(MultiGraphDataset):
@@ -124,4 +145,4 @@ class GraphDataset(MultiGraphDataset):
         return _get_loss_fn(self.metric)
 
     def __repr__(self):
-        return "{}()".format(self.name)
+        return "{}".format(self.path)

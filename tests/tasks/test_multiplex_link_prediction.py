@@ -67,18 +67,18 @@ def test_prone_amazon():
     assert ret["ROC_AUC"] >= 0 and ret["ROC_AUC"] <= 1
 
 
-def test_prone_youtube():
-    args = get_default_args_multiplex(dataset="youtube", model="gatne")
-    args.eval_type = ["1"]
-    args.step = 5
-    args.theta = 0.5
-    args.mu = 0.2
-    ret = train(args)
-    assert ret["ROC_AUC"] >= 0 and ret["ROC_AUC"] <= 1
+# def test_prone_youtube():
+#     args = get_default_args_multiplex(dataset="youtube", model="prone")
+#     args.eval_type = ["1"]
+#     args.step = 5
+#     args.theta = 0.5
+#     args.mu = 0.2
+#     ret = train(args)
+#     assert ret["ROC_AUC"] >= 0 and ret["ROC_AUC"] <= 1
 
 
 if __name__ == "__main__":
     test_gatne_amazon()
     test_gatne_twitter()
     test_prone_amazon()
-    test_prone_youtube()
+    # test_prone_youtube()

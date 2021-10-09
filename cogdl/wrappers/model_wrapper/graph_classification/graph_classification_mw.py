@@ -1,7 +1,6 @@
 import torch
 
 from .. import register_model_wrapper, ModelWrapper
-from cogdl.wrappers.tools.wrapper_utils import pre_evaluation_index
 
 
 @register_model_wrapper("graph_classification_mw")

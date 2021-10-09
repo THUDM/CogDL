@@ -31,7 +31,7 @@ class GAEModelWrapper(ModelWrapper):
     def test_step(self, subgraph):
         graph = subgraph
         features_matrix = self.model(graph)
-        features_matrix = features_matrix.cpu().numpy()
+        features_matrix = features_matrix.detach().cpu().numpy()
         return evaluate_clustering(
             features_matrix, graph.y, self.cluster_method, self.num_clusters, graph.num_nodes, self.full
         )

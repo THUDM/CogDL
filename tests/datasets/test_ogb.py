@@ -16,7 +16,7 @@ def test_ogbg_molhiv():
     dataset = build_dataset(args)
     assert dataset.all_edges == 2259376
     assert dataset.all_nodes == 1049163
-    assert len(dataset.graphs) == 41127
+    assert len(dataset.data) == 41127
 
 
 if __name__ == "__main__":

@@ -66,7 +66,7 @@ class Trainer(object):
         logger: str = None,
         log_path: str = "./runs",
         project: str = "cogdl-exp",
-        do_test: bool = True,
+        no_test: bool = False,
     ):
         self.max_epoch = max_epoch
         self.nstage = nstage
@@ -91,7 +91,7 @@ class Trainer(object):
 
         self.cpu_inference = cpu_inference
 
-        self.do_test = do_test
+        self.no_test = no_test
 
         self.on_train_batch_transform = None
         self.on_eval_batch_transform = None
@@ -160,7 +160,7 @@ class Trainer(object):
             self.train(self.devices[0], model_w, dataset_w)
         best_model_w = load_model(model_w, self.checkpoint_path).to(self.devices[0])
 
-        if not self.do_test:
+        if self.no_test:
             return best_model_w.model
 
         # disable `distributed` to inference once only

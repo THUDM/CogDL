@@ -165,7 +165,6 @@ def train(args):  # noqa: C901
         args.num_entities = len(torch.unique(torch.stack(dataset.data.edge_index)))
         args.num_rels = len(torch.unique(dataset.data.edge_attr))
 
-    args.max_graph_size = dataset.max_graph_size
     # setup model
     if isinstance(args.model, nn.Module):
         model = args.model
@@ -207,7 +206,7 @@ def train(args):  # noqa: C901
         logger=args.logger,
         log_path=args.log_path,
         project=args.project,
-        do_test=args.do_test,
+        no_test=args.no_test,
     )
 
     # Go!!!
@@ -276,13 +275,13 @@ def experiment(dataset, model, **kwargs):
         model = [model]
     if "args" not in kwargs:
         args = get_default_args(dataset=[str(x) for x in dataset], model=[str(x) for x in model], **kwargs)
-        args.dataset = dataset
-        args.model = model
     else:
         args = kwargs["args"]
         for key, value in kwargs.items():
             if key != "args":
                 args.__setattr__(key, value)
+    args.dataset = dataset
+    args.model = model
 
     if "search_space" in kwargs:
         return auto_experiment(args)

@@ -5,7 +5,8 @@ from .. import register_data_wrapper, DataWrapper
 from cogdl.models.nn.sagn import prepare_labels, prepare_feats
 
 
-class SAGEDataWrapper(DataWrapper):
+@register_data_wrapper("sagn_dw")
+class SAGNDataWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):
         # fmt: off
@@ -16,7 +17,7 @@ class SAGEDataWrapper(DataWrapper):
         # fmt: on
 
     def __init__(self, dataset, batch_size, label_nhop, threshold, nhtop):
-        super(SAGEDataWrapper, self).__init__(dataset)
+        super(SAGNDataWrapper, self).__init__(dataset)
         self.dataset = dataset
         self.batch_size = batch_size
         self.label_nhop = label_nhop
@@ -50,7 +51,7 @@ class SAGEDataWrapper(DataWrapper):
         return self.train_transform(batch)
 
     def pre_transform(self):
-        self.multihop_feats = prepare_feats(self.dataset, self.nhop)
+        self.multihop_feats = prepare_feats(self.dataset, self.label_nhop)
 
     def train_transform(self, batch):
         batch_x = [x[batch] for x in self.multihop_feats]

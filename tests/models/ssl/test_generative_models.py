@@ -37,15 +37,17 @@ default_dict = {
 }
 
 
-def get_default_args_generative(dataset, model, dw="node_classification_dw", mw="self_auxiliary_mw"):
+def get_default_args_generative(dataset, model, dw="node_classification_dw", mw="self_auxiliary_mw", **kwargs):
     args = get_default_args(dataset=dataset, model=model, dw=dw, mw=mw)
     for key, value in default_dict.items():
+        args.__setattr__(key, value)
+    for key, value in kwargs.items():
         args.__setattr__(key, value)
     return args
 
 
 def test_edgemask():
-    args = get_default_args_generative("cora", "gcn", auxiliary_task="edgemask")
+    args = get_default_args_generative("cora", "gcn", auxiliary_task="edge_mask")
     args.alpha = 1
     ret = train(args)
     assert 0 <= ret["test_acc"] <= 1
@@ -59,14 +61,14 @@ def test_attribute_mask():
 
 
 def test_pairwise_distance():
-    args = get_default_args_generative("cora", "gcn", auxiliary_task="pairwise-distance")
+    args = get_default_args_generative("cora", "gcn", auxiliary_task="pairwise_distance")
     args.alpha = 35
     ret = train(args)
     assert 0 <= ret["test_acc"] <= 1
 
 
 def test_pairwise_distance_sampling():
-    args = get_default_args_generative("cora", "gcn", auxiliary_task="pairwise-distance")
+    args = get_default_args_generative("cora", "gcn", auxiliary_task="pairwise_distance")
     args.alpha = 35
     args.sampling = True
     ret = train(args)
@@ -81,7 +83,7 @@ def test_distance_to_clusters():
 
 
 def test_pairwise_attr_sim():
-    args = get_default_args_generative("cora", "gcn", auxiliary_task="pairwise-attr-sim")
+    args = get_default_args_generative("cora", "gcn", auxiliary_task="pairwise_attr_sim")
     args.alpha = 100
     ret = train(args)
     assert 0 <= ret["test_acc"] <= 1
@@ -109,9 +111,7 @@ def test_pairwise_attr_sim():
 
 
 def test_m3s():
-    args = get_default_args()
-    args.model = "m3s"
-    args.trainer = None
+    args = get_default_args_generative("cora", "m3s", dw="m3s_dw", mw="m3s_mw")
     args.approximate = True
     args.num_clusters = 50
     args.num_stages = 1

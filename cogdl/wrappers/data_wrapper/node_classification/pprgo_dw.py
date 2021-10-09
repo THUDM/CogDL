@@ -6,7 +6,7 @@ from .. import DataWrapper, register_data_wrapper
 from cogdl.utils.ppr_utils import build_topk_ppr_matrix_from_data
 
 
-@register_data_wrapper("ppr_dw")
+@register_data_wrapper("pprgo_dw")
 class PPRDataWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):
@@ -35,14 +35,14 @@ class PPRDataWrapper(DataWrapper):
              y: shape=(b, num_classes)
         """
         self.dataset.data.train()
-        ppr_dataset_train = pre_transform(self.dataset, self.topk, self.alpha, self.epsilon, self.norm, mode="train")
+        ppr_dataset_train = pre_transform(self.dataset, self.topk, self.alpha, self.eps, self.norm, mode="train")
         train_loader = setup_dataloader(ppr_dataset_train, self.batch_size)
         return train_loader
 
     def val_wrapper(self):
         self.dataset.data.eval()
         if self.test_batch_size > 0:
-            ppr_dataset_val = pre_transform(self.dataset, self.topk, self.alpha, self.epsilon, self.norm, mode="val")
+            ppr_dataset_val = pre_transform(self.dataset, self.topk, self.alpha, self.eps, self.norm, mode="val")
             val_loader = setup_dataloader(ppr_dataset_val, self.test_batch_size)
             return val_loader
         else:
@@ -51,7 +51,7 @@ class PPRDataWrapper(DataWrapper):
     def test_wrapper(self):
         self.dataset.data.eval()
         if self.test_batch_size > 0:
-            ppr_dataset_test = pre_transform(self.dataset, self.topk, self.alpha, self.epsilon, self.norm, mode="test")
+            ppr_dataset_test = pre_transform(self.dataset, self.topk, self.alpha, self.eps, self.norm, mode="test")
             test_loader = setup_dataloader(ppr_dataset_test, self.test_batch_size)
             return test_loader
         else:

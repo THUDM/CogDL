@@ -35,7 +35,14 @@ def test_gen_emb():
     assert tuple(outputs.shape) == (8, 8)
 
     generator = pipeline(
-        "generate-emb", model="mvgrl", num_features=8, hidden_size=10, sample_size=2, max_epoch=2, cpu=True
+        "generate-emb",
+        model="mvgrl",
+        no_test=True,
+        num_features=8,
+        hidden_size=10,
+        sample_size=2,
+        max_epoch=2,
+        cpu=True,
     )
     outputs = generator(edge_index, x=np.random.randn(8, 8))
     assert tuple(outputs.shape) == (8, 10)

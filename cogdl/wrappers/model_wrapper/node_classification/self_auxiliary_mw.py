@@ -82,7 +82,7 @@ class SelfAuxiliaryTask(ModelWrapper):
         else:
             raise Exception(
                 "auxiliary task must be edge_mask, attribute_mask, pairwise_distance, distance2clusters,"
-                "or pairwise-attr-sim"
+                "or pairwise_attr_sim"
             )
 
     def setup_optimizer(self):

@@ -1,7 +1,6 @@
 import torch
 
 from .. import ModelWrapper, register_model_wrapper
-from cogdl.wrappers.tools.wrapper_utils import pre_evaluation_index
 
 
 @register_model_wrapper("graphsage_mw")

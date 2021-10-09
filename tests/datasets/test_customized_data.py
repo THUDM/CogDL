@@ -58,13 +58,7 @@ def test_customized_graph_dataset():
         model="gin", task="graph_classification", dataset="mygraphdataset", degree_node_features=True, max_epoch=10
     )
     result = list(result.values())[0][0]
-    assert result["Acc"] >= 0
-
-
-def test_build_dataset_from_path():
-    args = build_args_from_dict({"dataset": "mydata.pt", "task": "node_classification"})
-    dataset = build_dataset(args)
-    assert dataset[0].x.shape[0] == 100
+    assert result["test_acc"] >= 0
 
 
 if __name__ == "__main__":

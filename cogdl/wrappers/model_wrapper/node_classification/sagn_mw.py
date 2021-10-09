@@ -1,14 +1,14 @@
 import torch
 
 from .. import ModelWrapper, register_model_wrapper
-from cogdl.wrappers.tools.wrapper_utils import pre_evaluation_index
 
 
 @register_model_wrapper("sagn_mw")
 class SagnModelWrapper(ModelWrapper):
-    def __init__(self, model, optimizer_cfg):
+    def __init__(self, model, optimizer_config):
         super(SagnModelWrapper, self).__init__()
         self.model = model
+        self.optimizer_config = optimizer_config
 
     def train_step(self, batch):
         batch_x, batch_y_emb, y = batch
@@ -44,3 +44,7 @@ class SagnModelWrapper(ModelWrapper):
                 preds.append(pred.to(self.data_device))
         probs = torch.cat(preds, dim=0)
         return probs
+
+    def setup_optimizer(self):
+        cfg = self.optimizer_config
+        return torch.optim.Adam(self.model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])

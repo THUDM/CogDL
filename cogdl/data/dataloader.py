@@ -1,9 +1,15 @@
 from abc import ABCMeta
-from typing import GenericMeta
 import torch.utils.data
 from torch.utils.data.dataloader import default_collate
 
 from cogdl.data import Batch, Graph
+
+try:
+    from typing import GenericMeta  # python 3.6
+except ImportError:
+    # in 3.7, genericmeta doesn't exist but we don't need it
+    class GenericMeta(type):
+        pass
 
 
 class RecordParameters(ABCMeta):

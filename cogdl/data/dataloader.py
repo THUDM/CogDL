@@ -1,4 +1,5 @@
 from abc import ABCMeta
+from typing import GenericMeta
 import torch.utils.data
 from torch.utils.data.dataloader import default_collate
 
@@ -12,7 +13,11 @@ class RecordParameters(ABCMeta):
         return obj
 
 
-class DataLoader(torch.utils.data.DataLoader, metaclass=RecordParameters):
+class GenericRecordParameters(GenericMeta, RecordParameters):
+    pass
+
+
+class DataLoader(torch.utils.data.DataLoader, metaclass=GenericRecordParameters):
     r"""Data loader which merges data objects from a
     :class:`cogdl.data.dataset` to a mini-batch.
 

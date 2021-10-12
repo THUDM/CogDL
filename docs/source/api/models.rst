@@ -33,22 +33,7 @@ Embedding Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.distmult.DistMult
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.emb.transe.TransE
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: cogdl.models.emb.deepwalk.DeepWalk
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.emb.rotate.RotatE
     :members:
     :undoc-members:
     :show-inheritance:
@@ -89,11 +74,6 @@ Embedding Model
     :show-inheritance:
 
 .. autoclass:: cogdl.models.emb.node2vec.Node2vec
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.emb.complex.ComplEx
     :members:
     :undoc-members:
     :show-inheritance:
@@ -298,11 +278,6 @@ GNN Model
     :show-inheritance:
 
 .. autoclass:: cogdl.models.nn.pyg_srgcn.SRGCN
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.nn.dgl_gcc.GCC
     :members:
     :undoc-members:
     :show-inheritance:

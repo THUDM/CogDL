@@ -49,7 +49,7 @@ News History
 
 ### Requirements and Installation
 
-- Python version >= 3.6
+- Python version >= 3.7
 - PyTorch version >= 1.7.1
 
 Please follow the instructions here to install PyTorch (https://github.com/pytorch/pytorch#installation).

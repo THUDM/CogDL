@@ -59,9 +59,9 @@ def build_dataset(args):
         exit(1)
     else:
         dataset = DATASET_REGISTRY[args.dataset]()
-    if dataset.num_classes > 0:
+    if hasattr(dataset, "num_classes") and dataset.num_classes > 0:
         args.num_classes = dataset.num_classes
-    if dataset.num_features > 0:
+    if hasattr(dataset, "num_features") and dataset.num_features > 0:
         args.num_features = dataset.num_features
     return dataset
 

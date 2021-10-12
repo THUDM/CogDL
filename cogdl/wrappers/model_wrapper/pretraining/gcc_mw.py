@@ -19,7 +19,7 @@ class GCCModelWrapper(ModelWrapper):
         parser.add_argument("--momentum", type=float, default=0.96)
 
         # specify folder
-        parser.add_argument("--model-path", type=str, default=None, help="path to save model")
+        parser.add_argument("--model-path", type=str, default="gcc_pretrain.pt", help="path to save model")
 
     def __init__(
         self,

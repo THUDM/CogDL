@@ -27,8 +27,11 @@ class DataWrapper(object):
     @property
     def data_back_to_cpu(self):
         return (
-            isinstance(self.__val_data.raw_data, Graph) or isinstance(self.__test_data.raw_data, Graph)
-        ) and not isinstance(self.__training_data.raw_data, Graph)
+            self.__val_data is not None
+            and self.__test_data is not None
+            and (isinstance(self.__val_data.raw_data, Graph) or isinstance(self.__test_data.raw_data, Graph))
+            and not isinstance(self.__training_data.raw_data, Graph)
+        )
 
     def get_train_dataset(self):
         """

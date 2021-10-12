@@ -62,7 +62,7 @@ class GCNConv(nn.Module):
 
 
 @register_model("gcnmix")
-class BaseGNNMix(BaseModel):
+class GCNMix(BaseModel):
     @staticmethod
     def add_args(parser):
         parser.add_argument("--dropout", type=float, default=0.5)
@@ -89,7 +89,7 @@ class BaseGNNMix(BaseModel):
         )
 
     def __init__(self, in_feat, hidden_size, num_classes, k, temperature, alpha, dropout):
-        super(BaseGNNMix, self).__init__()
+        super(GCNMix, self).__init__()
         self.dropout = dropout
         self.alpha = alpha
         self.k = k

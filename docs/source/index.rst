@@ -63,7 +63,6 @@ Please cite `our paper <https://arxiv.org/abs/2103.00959>`_ if you find our code
 
    api/data
    api/datasets
-   api/tasks
    api/models
    api/layers
    api/options

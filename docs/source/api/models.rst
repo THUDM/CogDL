@@ -10,15 +10,6 @@ BaseModel
     :show-inheritance:
 
 
-Supervised Model
-----------------
-
-.. automodule:: cogdl.models.supervised_model
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
 Embedding Model
 ---------------
 
@@ -166,11 +157,6 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_hgpsl.HGPSL
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: cogdl.models.nn.graphsage.Graphsage
     :members:
     :undoc-members:
@@ -182,11 +168,6 @@ GNN Model
     :show-inheritance:
 
 .. autoclass:: cogdl.models.nn.drgcn.DrGCN
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.nn.pyg_gpt_gnn.GPT_GNN
     :members:
     :undoc-members:
     :show-inheritance:
@@ -242,11 +223,6 @@ GNN Model
     :show-inheritance:
 
 .. autoclass:: cogdl.models.nn.grace.GRACE
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.nn.dgl_jknet.JKNet
     :members:
     :undoc-members:
     :show-inheritance:
@@ -316,11 +292,6 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.stpgnn.stpgnn
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: cogdl.models.nn.sortpool.SortPool
     :members:
     :undoc-members:
@@ -341,21 +312,12 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_sagpool.SAGPoolNetwork
+.. autoclass:: cogdl.models.nn.daegc.DAEGC
     :members:
     :undoc-members:
     :show-inheritance:
 
-
-AGC Model
----------
-
-.. autoclass:: cogdl.models.agc.daegc.DAEGC
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.agc.agc.AGC
+.. autoclass:: cogdl.models.nn.agc.AGC
     :members:
     :undoc-members:
     :show-inheritance:

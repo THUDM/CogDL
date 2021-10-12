@@ -516,6 +516,18 @@ def test_revnets_cora():
     assert 0 <= train(args)["test_acc"] <= 1
 
 
+def test_gcc_cora():
+    args = get_default_args_for_nc("cora", "gcc", mw="gcc_mw", dw="gcc_dw")
+    args.max_epoch = 1
+    args.num_workers = 0
+    args.batch_size = 16
+    args.rw_hops = 8
+    args.subgraph_size = 16
+    args.positional_embedding_size = 16
+    args.nce_k = 4
+    train(args)
+
+
 if __name__ == "__main__":
     test_gdc_gcn_cora()
     test_gcn_cora()
@@ -542,6 +554,7 @@ if __name__ == "__main__":
     test_dropedge_densegcn_cora()
     test_revnets_cora()
     test_gcn_ppi()
+    test_gcc_cora()
     # test_clustergcn_cora()
     # test_pprgo_cora()
     # test_sagn_cora()

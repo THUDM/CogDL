@@ -175,7 +175,7 @@ class Trainer(object):
             if "val_loss" in final_val:
                 final_val.pop("val_loss")
 
-        if "test_metric" in final_test:
+        if final_test is not None and "test_metric" in final_test:
             final_test[f"test_{self.evaluation_metric}"] = final_test["test_metric"]
             final_test.pop("test_metric")
             if "test_loss" in final_test:
@@ -428,6 +428,8 @@ class Trainer(object):
     @torch.no_grad()
     def val_step(self, model_w, val_loader, device):
         model_w.eval()
+        if val_loader is None:
+            return None
         for batch in val_loader:
             # batch = batch.to(device)
             batch = move_to_device(batch, device)
@@ -439,6 +441,8 @@ class Trainer(object):
     # @torch.no_grad()
     def test_step(self, model_w, test_loader, device):
         model_w.eval()
+        if test_loader is None:
+            return None
         for batch in test_loader:
             # batch = batch.to(device)
             batch = move_to_device(batch, device)

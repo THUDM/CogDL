@@ -2,10 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from actnn.layers import QLinear, QReLU, QBatchNorm1d
+from actnn.layers import QLinear, QReLU, QBatchNorm1d, QDropout
 
 from cogdl.utils import spmm
-from cogdl.operators.actnn import QDropout
 
 
 class MeanAggregator(object):

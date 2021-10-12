@@ -88,9 +88,9 @@ def test_mixhop_citeseer():
 
 
 def test_graphsage_cora():
-    args = get_default_args_for_nc("cora", "graphsage")
+    args = get_default_args_for_nc("cora", "graphsage", dw="graphsage_dw", mw="graphsage_mw")
     args.aggr = "mean"
-    args.batch_size = 128
+    args.batch_size = 32
     args.num_layers = 2
     args.patience = 1
     args.max_epoch = 2
@@ -187,7 +187,7 @@ def test_disengcn_cora():
 
 
 def test_graph_mix():
-    args = get_default_args_for_nc("cora", "gcnmix")
+    args = get_default_args_for_nc("cora", "gcnmix", mw="gcnmix_mw")
     args.max_epoch = 2
     args.rampup_starts = 1
     args.rampup_ends = 100
@@ -272,7 +272,7 @@ def test_deepergcn_cora():
 
 
 def test_grand_cora():
-    args = get_default_args_for_nc("cora", "grand")
+    args = get_default_args_for_nc("cora", "grand", mw="grand_mw")
     args.hidden_dropout = 0.5
     args.order = 4
     args.input_dropout = 0.5

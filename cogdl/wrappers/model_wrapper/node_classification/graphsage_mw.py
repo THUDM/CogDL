@@ -30,7 +30,7 @@ class GraphSAGEModelWrapper(ModelWrapper):
         dataset, test_loader = batch
         graph = dataset.data
         if hasattr(self.model, "inference"):
-            pred = self.model.inference(dataset.graph.x, test_loader)
+            pred = self.model.inference(graph.x, test_loader)
         else:
             pred = self.model(graph)
         pred = pred[graph.test_mask]

@@ -57,14 +57,6 @@ PyG OGB dataset
     :undoc-members:
     :show-inheritance:
 
-PyG strategies dataset
--------------------------------
-
-.. automodule:: cogdl.datasets.strategies_data
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 TU dataset
 -------------------------------
 

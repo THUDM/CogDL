@@ -49,7 +49,7 @@ CogDL的特性包括：
 
 ### 系统配置要求
 
-- Python 版本 >= 3.6
+- Python 版本 >= 3.7
 - PyTorch 版本 >= 1.7.1
 
 请根据如下链接来安装PyTorch (https://github.com/pytorch/pytorch#installation)。

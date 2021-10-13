@@ -53,7 +53,7 @@ class GCNLayer(nn.Module):
         if self.norm is not None:
             out = self.norm(out)
         if self.act is not None:
-            out = self.act(out, inplace=True)
+            out = self.act(out)
 
         if self.residual is not None:
             out = out + self.residual(x)

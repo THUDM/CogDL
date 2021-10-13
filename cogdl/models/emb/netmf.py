@@ -25,7 +25,8 @@ class NetMF(BaseModel):
         parser.add_argument("--window-size", type=int, default=5)
         parser.add_argument("--rank", type=int, default=256)
         parser.add_argument("--negative", type=int, default=1)
-        parser.add_argument('--is-large', action='store_true')
+        parser.add_argument("--is-large", action="store_true")
+        parser.add_argument("--hidden-size", type=int, default=128)
         # fmt: on
 
     @classmethod
@@ -33,14 +34,19 @@ class NetMF(BaseModel):
         return cls(args.hidden_size, args.window_size, args.rank, args.negative, args.is_large)
 
     def __init__(self, dimension, window_size, rank, negative, is_large=False):
+        super(NetMF, self).__init__()
         self.dimension = dimension
         self.window_size = window_size
         self.rank = rank
         self.negative = negative
         self.is_large = is_large
 
-    def train(self, G):
-        A = sp.csr_matrix(nx.adjacency_matrix(G))
+    def train(self, graph, return_dict=False):
+        return self.forward(graph, return_dict)
+
+    def forward(self, graph, return_dict=False):
+        nx_g = graph.to_networkx()
+        A = sp.csr_matrix(nx.adjacency_matrix(nx_g))
         if not self.is_large:
             print("Running NetMF for a small window size...")
             deepwalk_matrix = self._compute_deepwalk_matrix(A, window=self.window_size, b=self.negative)
@@ -54,8 +60,17 @@ class NetMF(BaseModel):
             )
         # factorize deepwalk matrix with SVD
         u, s, _ = sp.linalg.svds(deepwalk_matrix, self.dimension)
-        self.embeddings = sp.diags(np.sqrt(s)).dot(u.T).T
-        return self.embeddings
+        embeddings = sp.diags(np.sqrt(s)).dot(u.T).T
+
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(nx_g.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = nx_g.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        return features_matrix
 
     def _compute_deepwalk_matrix(self, A, window, b):
         # directly compute deepwalk matrix

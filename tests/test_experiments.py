@@ -1,9 +1,5 @@
-from collections import namedtuple
-
-from cogdl.experiments import check_task_dataset_model_match, experiment, gen_variants, train, set_best_config
+from cogdl.experiments import experiment, gen_variants, train, set_best_config
 from cogdl.options import get_default_args
-
-import metis
 
 
 def test_set_best_config():
@@ -24,20 +20,12 @@ def test_train():
     args.seed = args.seed[0]
     result = train(args)
 
-    assert "Acc" in result
-    assert result["Acc"] > 0
+    assert "test_acc" in result
+    assert result["test_acc"] > 0
 
 
 def test_gen_variants():
     variants = list(gen_variants(dataset=["cora"], model=["gcn", "gat"], seed=[1, 2]))
-
-    assert len(variants) == 4
-
-
-def test_check_task_dataset_model_match():
-    variants = list(gen_variants(dataset=["cora"], model=["gcn", "gat"], seed=[1, 2]))
-    variants.append(namedtuple("Variant", ["dataset", "model", "seed"])(dataset="cora", model="deepwalk", seed=1))
-    variants = check_task_dataset_model_match("node_classification", variants)
 
     assert len(variants) == 4
 
@@ -48,11 +36,11 @@ def test_experiment():
     )
 
     assert ("cora", "gcn") in results
-    assert results[("cora", "gcn")][0]["Acc"] > 0
+    assert results[("cora", "gcn")][0]["test_acc"] > 0
 
 
 def test_auto_experiment():
-    def func_search_example(trial):
+    def search_space_example(trial):
         return {
             "lr": trial.suggest_categorical("lr", [1e-3, 5e-3, 1e-2]),
             "hidden_size": trial.suggest_categorical("hidden_size", [16, 32, 64, 128]),
@@ -66,18 +54,17 @@ def test_auto_experiment():
         seed=[1, 2],
         n_trials=2,
         max_epoch=10,
-        func_search=func_search_example,
+        search_space=search_space_example,
         cpu=True,
     )
 
     assert ("cora", "gcn") in results
-    assert results[("cora", "gcn")][0]["Acc"] > 0
+    assert results[("cora", "gcn")][0]["test_acc"] > 0
 
 
 if __name__ == "__main__":
     test_set_best_config()
     test_train()
     test_gen_variants()
-    test_check_task_dataset_model_match()
     test_experiment()
     test_auto_experiment()

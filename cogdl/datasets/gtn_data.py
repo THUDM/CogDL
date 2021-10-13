@@ -103,6 +103,7 @@ class GTNDataset(Dataset):
 
     def apply_to_device(self, device):
         self.data.x = self.data.x.to(device)
+        self.data.y = self.data.y.to(device)
 
         self.data.train_node = self.data.train_node.to(device)
         self.data.valid_node = self.data.valid_node.to(device)

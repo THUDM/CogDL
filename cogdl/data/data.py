@@ -2,6 +2,7 @@ import re
 import copy
 from contextlib import contextmanager
 import scipy.sparse as sp
+import networkx as nx
 
 import torch
 import numpy as np
@@ -45,7 +46,8 @@ class BaseGraph(object):
 
     def __len__(self):
         r"""Returns the number of all present attributes."""
-        return len(self.keys)
+        # return len(self.keys)
+        return 1
 
     def __contains__(self, key):
         r"""Returns :obj:`True`, if the attribute :obj:`key` is present in the
@@ -170,7 +172,7 @@ class Adjacency(BaseGraph):
         return weight
 
     def add_remaining_self_loops(self):
-        if self.attr is not None:
+        if self.attr is not None and len(self.attr.shape) == 1:
             edge_index, weight_attr = add_remaining_self_loops(
                 (self.row, self.col), edge_weight=self.attr, fill_value=0, num_nodes=self.num_nodes
             )
@@ -183,6 +185,22 @@ class Adjacency(BaseGraph):
             )
             self.row, self.col = edge_index
             self.attr = None
+        self.row_ptr, reindex = coo2csr_index(self.row, self.col, num_nodes=self.num_nodes)
+        self.row = self.row[reindex]
+        self.col = self.col[reindex]
+
+    def padding_self_loops(self):
+        device = self.row.device
+        row, col = torch.arange(self.num_nodes, device=device), torch.arange(self.num_nodes, device=device)
+        self.row = torch.cat((self.row, row))
+        self.col = torch.cat((self.col, col))
+
+        if self.weight is not None:
+            values = torch.zeros(self.num_nodes, device=device) + 0.01
+            self.weight = torch.cat((self.weight, values))
+        if self.attr is not None:
+            attr = torch.zeros(self.num_nodes, device=device)
+            self.attr = torch.cat((self.attr, attr))
         self.row_ptr, reindex = coo2csr_index(self.row, self.col, num_nodes=self.num_nodes)
         self.row = self.row[reindex]
         self.col = self.col[reindex]
@@ -275,10 +293,12 @@ class Adjacency(BaseGraph):
         assert val in [True, False]
         self.__symmetric__ = val
 
-    @property
-    def degrees(self):
+    def degrees(self, node_idx=None):
         if self.row_ptr is not None:
-            return (self.row_ptr[1:] - self.row_ptr[:-1]).float()
+            degs = (self.row_ptr[1:] - self.row_ptr[:-1]).float()
+            if node_idx is not None:
+                return degs[node_idx]
+            return degs
         else:
             return get_degrees(self.row, self.col, num_nodes=self.num_nodes)
 
@@ -314,13 +334,17 @@ class Adjacency(BaseGraph):
 
     @property
     def num_nodes(self):
-        if self.__num_nodes__ is not None:
-            return self.__num_nodes__
-        elif self.row_ptr is not None:
+        # if self.__num_nodes__ is not None:
+        #     return self.__num_nodes__
+        if self.row_ptr is not None:
             return self.row_ptr.shape[0] - 1
         else:
             self.__num_nodes__ = max(self.row.max().item(), self.col.max().item()) + 1
             return self.__num_nodes__
+
+    @property
+    def row_ptr_v(self):
+        return self.row_ptr
 
     @property
     def device(self):
@@ -397,14 +421,26 @@ class Adjacency(BaseGraph):
             mx = sp.csr_matrix((data, col_ind, row_ptr), shape=(num_nodes, num_nodes))
         return mx
 
-    def random_walk(self, start, length=1, restart_p=0.0):
+    def to_networkx(self, weighted=True):
+        gnx = nx.Graph()
+        gnx.add_nodes_from(np.arange(self.num_nodes))
+        row, col = self.edge_index
+        row = row.tolist()
+        col = col.tolist()
+
+        if weighted:
+            weight = self.get_weight().tolist()
+            gnx.add_weighted_edges_from([(row[i], col[i], weight[i]) for i in range(len(row))])
+        else:
+            edges = torch.stack((row, col)).cpu().numpy().transpose()
+            gnx.add_edges_from(edges)
+        return gnx
+
+    def random_walk(self, seeds, length=1, restart_p=0.0):
         if not hasattr(self, "__walker__"):
             scipy_adj = self.to_scipy_csr()
             self.__walker__ = RandomWalker(scipy_adj)
-        return self.__walker__.walk(start, length, restart_p=restart_p)
-
-    def random_walk_with_restart(self, start, length, restart_p):
-        return self.random_walk(start, length, restart_p)
+        return self.__walker__.walk(seeds, length, restart_p=restart_p)
 
     @staticmethod
     def from_dict(dictionary):
@@ -478,6 +514,7 @@ class Graph(BaseGraph):
         self._adj = self._adj_full
         self.__is_train__ = False
         self.__temp_adj_stack__ = list()
+        self.__temp_storage__ = dict()
 
     def train(self):
         self.__is_train__ = True
@@ -494,6 +531,9 @@ class Graph(BaseGraph):
         self._adj_full.add_remaining_self_loops()
         if self._adj_train is not None:
             self._adj_train.add_remaining_self_loops()
+
+    def padding_self_loops(self):
+        self._adj.padding_self_loops()
 
     def remove_self_loops(self):
         self._adj_full.remove_self_loops()
@@ -583,12 +623,14 @@ class Graph(BaseGraph):
         if edge_index is None:
             self._adj.row = None
             self._adj.col = None
+            self.__num_nodes__ = 0
         else:
             row, col = edge_index
             if self._adj.row is not None and row.shape[0] != self._adj.row.shape[0]:
                 self._adj.row_ptr = None
             self._adj.row = row
             self._adj.col = col
+            self.__num_nodes__ = None
 
     @edge_weight.setter
     def edge_weight(self, edge_weight):
@@ -604,14 +646,12 @@ class Graph(BaseGraph):
 
     @property
     def row_indptr(self):
-        if self._adj.row_ptr is None:
-            self._adj.convert_csr()
-        return self._adj.row_ptr
+        return self._adj.row_indptr
 
     @property
     def col_indices(self):
         if self._adj.row_ptr is None:
-            self._adj.convert_csr()
+            self._adj._to_csr()
         return self._adj.col
 
     @row_indptr.setter
@@ -637,7 +677,7 @@ class Graph(BaseGraph):
         return keys
 
     def degrees(self):
-        return self._adj.degrees
+        return self._adj.degrees()
 
     def __keys__(self):
         keys = [key for key in self.keys if "adj" not in key]
@@ -707,6 +747,20 @@ class Graph(BaseGraph):
     def clone(self):
         return Graph.from_dict({k: v.clone() for k, v in self})
 
+    def store(self, key):
+        if hasattr(self, key) and not callable(getattr(self, key)):
+            self.__temp_storage__[key] = copy.deepcopy(getattr(self, key))
+        if hasattr(self._adj, key) and not callable(getattr(self._adj, key)):
+            self.__temp_storage__[key] = copy.deepcopy(getattr(self._adj, key))
+
+    def restore(self, key):
+        if key in self.__temp_storage__:
+            if hasattr(self, key) and not callable(getattr(self, key)):
+                setattr(self, key, self.__temp_storage__[key])
+            elif hasattr(self._adj, key) and not callable(getattr(self._adj, key)):
+                self(self._adj, key, self.__temp_storage__[key])
+            self.__temp_storage__.pop(key)
+
     def __delitem__(self, key):
         if hasattr(self, key):
             self[key] = None
@@ -720,7 +774,10 @@ class Graph(BaseGraph):
         if sample_adj_c is not None:
             if not torch.is_tensor(batch):
                 batch = torch.tensor(batch, dtype=torch.long)
-            (row_ptr, col_indices, nodes, edges) = sample_adj_c(self._adj.row_ptr, self._adj.col, batch, size, replace)
+            # (row_ptr, col_indices, nodes, edges) = sample_adj_c(self._adj.row_ptr, self._adj.col, batch, size, replace)
+            (row_ptr, col_indices, nodes, edges) = sample_adj_c(
+                self._adj.row_indptr, self.col_indices, batch, size, replace
+            )
         else:
             if not (batch[1:] > batch[:-1]).all():
                 batch = batch.sort()[0]
@@ -774,10 +831,17 @@ class Graph(BaseGraph):
         row_ptr = torch.arange(0, batch_size * size + size, size)
         return row_ptr, edge_cols
 
-    def csr_subgraph(self, node_idx):
-        if self._adj.row_ptr is None:
+    def csr_subgraph(self, node_idx, keep_order=False):
+        if self._adj.row_ptr_v is None:
             self._adj._to_csr()
-        indptr, indices, nodes, edges = subgraph_c(self._adj.row_ptr, self._adj.col, node_idx.cpu())
+        if torch.is_tensor(node_idx):
+            node_idx = node_idx.cpu()
+        else:
+            node_idx = torch.as_tensor(node_idx)
+
+        if not keep_order:
+            node_idx = torch.unique(node_idx)
+        indptr, indices, nodes, edges = subgraph_c(self._adj.row_ptr, self._adj.col, node_idx)
         nodes_idx = node_idx.to(self._adj.device)
 
         data = Graph(row_ptr=indptr, col=indices)
@@ -792,18 +856,18 @@ class Graph(BaseGraph):
         data.num_nodes = node_idx.shape[0]
         return data
 
-    def subgraph(self, node_idx):
+    def subgraph(self, node_idx, keep_order=False):
         if subgraph_c is not None:
             if isinstance(node_idx, list):
                 node_idx = torch.as_tensor(node_idx, dtype=torch.long)
             elif isinstance(node_idx, np.ndarray):
                 node_idx = torch.from_numpy(node_idx)
-            return self.csr_subgraph(node_idx)
+            return self.csr_subgraph(node_idx, keep_order)
         else:
             if isinstance(node_idx, list):
-                node_idx = np.array(node_idx)
+                node_idx = np.array(node_idx, dtype=np.int64)
             elif torch.is_tensor(node_idx):
-                node_idx = node_idx.cpu().numpy()
+                node_idx = node_idx.long().cpu().numpy()
             if self.__is_train__ and self._adj_train is not None:
                 key = "__mx_train__"
             else:
@@ -838,8 +902,17 @@ class Graph(BaseGraph):
         else:
             return g
 
+    def random_walk(self, seeds, max_nodes_per_seed, restart_p=0.0):
+        return self._adj.random_walk(seeds, max_nodes_per_seed, restart_p)
+
+    def random_walk_with_restart(self, seeds, max_nodes_per_seed, restart_p=0.0):
+        return self._adj.random_walk(seeds, max_nodes_per_seed, restart_p)
+
     def to_scipy_csr(self):
         return self._adj.to_scipy_csr()
+
+    def to_networkx(self):
+        return self._adj.to_networkx()
 
     @staticmethod
     def from_dict(dictionary):
@@ -848,6 +921,9 @@ class Graph(BaseGraph):
         for key, item in dictionary.items():
             data[key] = item
         return data
+
+    def nodes(self):
+        return torch.arange(self.num_nodes)
 
     # @property
     # def requires_grad(self):

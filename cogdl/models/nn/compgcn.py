@@ -219,7 +219,6 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
         parser.add_argument("--num-bases", type=int, default=10)
         parser.add_argument("--num-layers", type=int, default=1)
         parser.add_argument("--sampling-rate", type=float, default=0.01)
-        parser.add_argument("--score-func", type=str, default="conve")
         parser.add_argument("--lbl_smooth", type=float, default=0.1)
         parser.add_argument("--opn", type=str, default="sub")
         # fmt: on
@@ -232,7 +231,6 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
             hidden_size=args.hidden_size,
             num_bases=args.num_bases,
             sampling_rate=args.sampling_rate,
-            score_func=args.score_func,
             penalty=args.penalty,
             layers=args.num_layers,
             dropout=args.dropout,
@@ -248,14 +246,13 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
         num_bases=0,
         layers=1,
         sampling_rate=0.01,
-        score_func="conve",
         penalty=0.001,
         dropout=0.0,
         lbl_smooth=0.1,
         opn="sub",
     ):
         BaseModel.__init__(self)
-        GNNLinkPredict.__init__(self, score_func, hidden_size)
+        GNNLinkPredict.__init__(self)
         activation = F.tanh
         self.model = CompGCN(
             num_entities,
@@ -297,16 +294,9 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
             node_embed, rel_embed = self.model(graph, node_embed)
         return node_embed, rel_embed
 
-    def loss(self, data: Graph, split="train"):
-        if split == "train":
-            mask = data.train_mask
-        elif split == "val":
-            mask = data.val_mask
-        else:
-            mask = data.test_mask
+    def loss(self, data: Graph, scoring):
         row, col = data.edge_index
-        row, col = row[mask], col[mask]
-        edge_types = data.edge_attr[mask]
+        edge_types = data.edge_attr
         edge_index = torch.stack([row, col])
 
         self.get_edge_set(edge_index, edge_types)
@@ -326,7 +316,9 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
 
         sampled_nodes, reindexed_edges = torch.unique(samples, sorted=True, return_inverse=True)
         assert (self.cache_index == sampled_nodes).any()
-        loss_n = self._loss(node_embed[reindexed_edges[0]], node_embed[reindexed_edges[1]], rel_embed[rels], labels)
+        loss_n = self._loss(
+            node_embed[reindexed_edges[0]], node_embed[reindexed_edges[1]], rel_embed[rels], labels, scoring
+        )
         loss_r = self.penalty * self._regularization([self.emb(sampled_nodes), rel_embed])
         return loss_n + loss_r
 
@@ -335,15 +327,4 @@ class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
         indices = torch.arange(0, self.num_entities).to(device)
         x = self.emb(indices)
         node_embed, rel_embed = self.model(graph, x)
-        edge_index, edge_types = graph.edge_index, graph.edge_attr
-        mrr, hits = cal_mrr(
-            node_embed,
-            rel_embed,
-            edge_index,
-            edge_types,
-            scoring=self.scoring,
-            protocol="raw",
-            batch_size=500,
-            hits=[1, 3, 10],
-        )
-        return mrr, hits
+        return node_embed, rel_embed

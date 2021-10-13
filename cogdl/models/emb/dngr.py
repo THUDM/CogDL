@@ -80,6 +80,7 @@ class DNGR(BaseModel):
         self.step = step
         self.max_epoch = max_epoch
         self.lr = lr
+        self.device = "cuda" if torch.cuda.is_available() and not cpu else "cpu"
 
     def scale_matrix(self, mat):
         mat = mat - np.diag(np.diag(mat))
@@ -123,7 +124,11 @@ class DNGR(BaseModel):
         emb_matrix = preprocessing.normalize(emb_matrix, "l2")
         return emb_matrix
 
-    def train(self, G):
+    def train(self, graph, return_dict=False):
+        return self.forward(graph, return_dict=False)
+
+    def forward(self, graph, return_dict=False):
+        G = graph.to_networkx()
         self.num_node = G.number_of_nodes()
         A = nx.adjacency_matrix(G).todense()
         PPMI = self.get_ppmi_matrix(A)
@@ -147,5 +152,15 @@ class DNGR(BaseModel):
             Loss.backward()
             epoch_iter.set_description(f"Epoch: {epoch:03d},  Loss: {Loss:.8f}")
             opt.step()
-        embedding, _ = model.forward(input_mat)
-        return embedding.detach().cpu().numpy()
+        embeddings, _ = model.forward(input_mat)
+        embeddings = embeddings.detach().cpu().numpy()
+
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(G.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = G.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        return features_matrix

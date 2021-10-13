@@ -1,6 +1,5 @@
 import torch.nn.functional as F
 from cogdl.layers import GCNLayer
-from cogdl.trainers.m3s_trainer import M3STrainer
 
 from .. import BaseModel, register_model
 
@@ -56,7 +55,3 @@ class M3S(BaseModel):
 
     def predict(self, data):
         return self.forward(data)
-
-    @staticmethod
-    def get_trainer(args):
-        return M3STrainer

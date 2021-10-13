@@ -1,7 +1,8 @@
 import importlib
+import torch
 
 from cogdl.data.dataset import Dataset
-from .customized_data import NodeDataset, GraphDataset
+from .customized_data import NodeDataset, GraphDataset, generate_random_graph
 
 try:
     import torch_geometric
@@ -45,23 +46,22 @@ def try_import_dataset(dataset):
         if dataset in SUPPORTED_DATASETS:
             importlib.import_module(SUPPORTED_DATASETS[dataset])
         else:
-            print(f"Failed to import {dataset} dataset.")
+            # print(f"Failed to import {dataset} dataset.")
             return False
     return True
 
 
 def build_dataset(args):
     if not try_import_dataset(args.dataset):
-        assert hasattr(args, "task")
-        dataset = build_dataset_from_path(args.dataset, args.task)
+        dataset = build_dataset_from_path(args.dataset)
         if dataset is not None:
             return dataset
         exit(1)
     else:
         dataset = DATASET_REGISTRY[args.dataset]()
-    if dataset.num_classes > 0:
+    if hasattr(dataset, "num_classes") and dataset.num_classes > 0:
         args.num_classes = dataset.num_classes
-    if dataset.num_features > 0:
+    if hasattr(dataset, "num_features") and dataset.num_features > 0:
         args.num_features = dataset.num_features
     return dataset
 
@@ -72,19 +72,17 @@ def build_dataset_from_name(dataset):
     return DATASET_REGISTRY[dataset]()
 
 
-def build_dataset_from_path(data_path, task=None, dataset=None):
+def build_dataset_from_path(data_path, dataset=None):
     if dataset is not None and dataset in SUPPORTED_DATASETS:
         if try_import_dataset(dataset):
             return DATASET_REGISTRY[dataset](data_path=data_path)
 
-    if task is None:
-        return None
-    if "node_classification" in task:
-        return NodeDataset(data_path)
-    elif "graph_classification" in task:
-        return GraphDataset(data_path)
-    else:
-        return None
+    if dataset is None:
+        try:
+            return torch.load(data_path)
+        except Exception as e:
+            print(e)
+    raise ValueError("You are expected to specify `dataset` and `data_path`")
 
 
 SUPPORTED_DATASETS = {
@@ -145,12 +143,6 @@ SUPPORTED_DATASETS = {
     "reddit": "cogdl.datasets.saint_data",
     "ppi": "cogdl.datasets.saint_data",
     "ppi-large": "cogdl.datasets.saint_data",
-    "test_bio": "cogdl.datasets.strategies_data",
-    "test_chem": "cogdl.datasets.strategies_data",
-    "bio": "cogdl.datasets.strategies_data",
-    "chem": "cogdl.datasets.strategies_data",
-    "bace": "cogdl.datasets.strategies_data",
-    "bbbp": "cogdl.datasets.strategies_data",
     "l0fos": "cogdl.datasets.oagbert_data",
     "aff30": "cogdl.datasets.oagbert_data",
     "arxivvenue": "cogdl.datasets.oagbert_data",

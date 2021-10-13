@@ -4,6 +4,8 @@ import torch
 import scipy.sparse as sp
 import random
 
+# from cogdl.utils.rwalk import random_walk as c_random_walk
+
 
 @numba.njit(cache=True, parallel=True)
 def random_walk(start, length, indptr, indices, p=0.0):
@@ -17,9 +19,9 @@ def random_walk(start, length, indptr, indices, p=0.0):
     Return:
         list(np.array(dtype=np.int32))
     """
-    result = [np.zeros(0, dtype=np.int32)] * len(start)
-    for node in start:
-        result[node] = _random_walk(node, length, indptr, indices, p)
+    result = [np.zeros(length, dtype=np.int32)] * len(start)
+    for i in numba.prange(len(start)):
+        result[i] = _random_walk(start[i], length, indptr, indices, p)
     return result
 
 
@@ -78,6 +80,8 @@ class RandomWalker(object):
         assert self.indptr is not None, "Please build the adj_list first"
         if isinstance(start, torch.Tensor):
             start = start.cpu().numpy()
+        if isinstance(start, list):
+            start = np.asarray(start, dtype=np.int32)
         result = random_walk(start, walk_length, self.indptr, self.indices, restart_p)
         result = np.array(result, dtype=np.int64)
         return result

@@ -1,7 +1,6 @@
 import torch
 from cogdl.data import Graph
-from cogdl.datasets import NodeDataset, register_dataset, build_dataset, build_dataset_from_name, GraphDataset
-from cogdl.utils import build_args_from_dict
+from cogdl.datasets import NodeDataset, register_dataset, build_dataset_from_name, GraphDataset
 from cogdl.experiments import experiment
 
 
@@ -54,19 +53,11 @@ def test_customized_dataset():
 
 
 def test_customized_graph_dataset():
-    result = experiment(
-        model="gin", task="graph_classification", dataset="mygraphdataset", degree_feature=True, max_epoch=10
-    )
+    result = experiment(model="gin", dataset="mygraphdataset", degree_node_features=True, max_epoch=10, cpu=True)
     result = list(result.values())[0][0]
-    assert result["Acc"] >= 0
-
-
-def test_build_dataset_from_path():
-    args = build_args_from_dict({"dataset": "mydata.pt", "task": "node_classification"})
-    dataset = build_dataset(args)
-    assert dataset[0].x.shape[0] == 100
+    assert result["test_acc"] >= 0
 
 
 if __name__ == "__main__":
-    # test_customized_dataset()
+    test_customized_dataset()
     test_customized_graph_dataset()

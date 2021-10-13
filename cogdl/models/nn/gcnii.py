@@ -82,8 +82,7 @@ class GCNII(BaseModel):
         if actnn:
             try:
                 from cogdl.layers.actgcnii_layer import ActGCNIILayer
-                from actnn.layers import QLinear, QReLU
-                from cogdl.operators.actnn import QDropout
+                from actnn.layers import QLinear, QReLU, QDropout
             except Exception:
                 print("Please install the actnn library first.")
                 exit(1)

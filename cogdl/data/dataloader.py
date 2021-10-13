@@ -1,10 +1,29 @@
+from abc import ABCMeta
 import torch.utils.data
 from torch.utils.data.dataloader import default_collate
 
 from cogdl.data import Batch, Graph
 
+try:
+    from typing import GenericMeta  # python 3.6
+except ImportError:
+    # in 3.7, genericmeta doesn't exist but we don't need it
+    class GenericMeta(type):
+        pass
 
-class DataLoader(torch.utils.data.DataLoader):
+
+class RecordParameters(ABCMeta):
+    def __call__(cls, *args, **kwargs):
+        obj = type.__call__(cls, *args, **kwargs)
+        obj.record_parameters([args, kwargs])
+        return obj
+
+
+class GenericRecordParameters(GenericMeta, RecordParameters):
+    pass
+
+
+class DataLoader(torch.utils.data.DataLoader, metaclass=GenericRecordParameters):
     r"""Data loader which merges data objects from a
     :class:`cogdl.data.dataset` to a mini-batch.
 
@@ -17,12 +36,13 @@ class DataLoader(torch.utils.data.DataLoader):
     """
 
     def __init__(self, dataset, batch_size=1, shuffle=True, **kwargs):
+        if "collate_fn" not in kwargs or kwargs["collate_fn"] is None:
+            kwargs["collate_fn"] = self.collate_fn
+
         super(DataLoader, self).__init__(
-            # dataset, batch_size, shuffle, collate_fn=lambda data_list: Batch.from_data_list(data_list), **kwargs
             dataset,
             batch_size,
             shuffle,
-            collate_fn=self.collate_fn,
             **kwargs,
         )
 
@@ -37,3 +57,9 @@ class DataLoader(torch.utils.data.DataLoader):
             return torch.tensor(batch, dtype=torch.float)
 
         raise TypeError("DataLoader found invalid type: {}".format(type(item)))
+
+    def get_parameters(self):
+        return self.default_kwargs
+
+    def record_parameters(self, params):
+        self.default_kwargs = params

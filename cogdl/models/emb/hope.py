@@ -19,8 +19,9 @@ class HOPE(BaseModel):
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument('--beta', type=float, default=0.01,
-                            help='Parameter of katz for HOPE. Default is 0.01')
+        parser.add_argument("--beta", type=float, default=0.01,
+                            help="Parameter of katz for HOPE. Default is 0.01")
+        parser.add_argument("--hidden-size", type=int, default=128)
         # fmt: on
 
     @classmethod
@@ -32,16 +33,29 @@ class HOPE(BaseModel):
         self.dimension = dimension
         self.beta = beta
 
-    def train(self, G):
+    def train(self, graph, return_dict=False):
+        return self.forward(graph, return_dict)
+
+    def forward(self, graph, return_dict=False):
         r"""The author claim that Katz has superior performance in related tasks
         S_katz = (M_g)^-1 * M_l = (I - beta*A)^-1 * beta*A = (I - beta*A)^-1 * (I - (I -beta*A))
         = (I - beta*A)^-1 - I
         """
-        adj = nx.adjacency_matrix(G).todense()
+        nx_g = graph.to_networkx()
+        adj = nx.adjacency_matrix(nx_g).todense()
         n = adj.shape[0]
         katz_matrix = np.asarray((np.eye(n) - self.beta * np.mat(adj)).I - np.eye(n))
-        self.embeddings = self._get_embedding(katz_matrix, self.dimension)
-        return self.embeddings
+        embeddings = self._get_embedding(katz_matrix, self.dimension)
+
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(nx_g.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = nx_g.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        return features_matrix
 
     def _get_embedding(self, matrix, dimension):
         # get embedding from svd and process normalization for ut and vt

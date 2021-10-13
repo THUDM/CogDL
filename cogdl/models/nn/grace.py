@@ -6,9 +6,7 @@ import torch.nn.functional as F
 from .. import register_model, BaseModel
 from cogdl.layers import GCNLayer
 from cogdl.utils import get_activation
-from cogdl.trainers.self_supervised_trainer import SelfSupervisedPretrainer
 from cogdl.data import Graph
-from cogdl.models.self_supervised_model import SelfSupervisedContrastiveModel
 
 
 class GraceEncoder(nn.Module):
@@ -33,7 +31,7 @@ class GraceEncoder(nn.Module):
 
 
 @register_model("grace")
-class GRACE(SelfSupervisedContrastiveModel):
+class GRACE(BaseModel):
     @staticmethod
     def add_args(parser):
         # fmt : off
@@ -91,8 +89,10 @@ class GRACE(SelfSupervisedContrastiveModel):
     def forward(
         self,
         graph: Graph,
-        x: torch.Tensor,
+        x: torch.Tensor = None,
     ):
+        if x is None:
+            x = graph.x
         graph.sym_norm()
         return self.encoder(graph, x)
 
@@ -140,18 +140,6 @@ class GRACE(SelfSupervisedContrastiveModel):
             losses.append(_loss)
         return sum(losses) / len(losses)
 
-    def self_supervised_loss(self, graph):
-        z1 = self.prop(graph, graph.x, self.drop_feature_rates[0], self.drop_edge_rates[0])
-        z2 = self.prop(graph, graph.x, self.drop_feature_rates[1], self.drop_edge_rates[1])
-
-        z1 = self.project_head(z1)
-        z2 = self.project_head(z2)
-
-        if self.batch_size > 0:
-            return 0.5 * (self.batched_loss(z1, z2, self.batch_size) + self.batched_loss(z2, z1, self.batch_size))
-        else:
-            return 0.5 * (self.contrastive_loss(z1, z2) + self.contrastive_loss(z2, z1))
-
     def embed(self, data):
         pred = self.forward(data, data.x)
         return pred
@@ -181,7 +169,3 @@ class GRACE(SelfSupervisedContrastiveModel):
             masks = masks.to(x.device)
             x = masks * x
         return x
-
-    @staticmethod
-    def get_trainer(args):
-        return SelfSupervisedPretrainer

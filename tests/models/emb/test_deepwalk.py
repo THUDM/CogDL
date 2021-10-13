@@ -1,10 +1,12 @@
 from argparse import ArgumentParser
 from typing import Dict, List
 from unittest import mock
-import numpy as np
-from unittest.mock import call
-from unittest.mock import patch
+from unittest.mock import call, patch
+
 import networkx as nx
+import numpy as np
+import torch
+from cogdl.data import Graph
 from cogdl.models.emb.deepwalk import DeepWalk
 
 
@@ -19,7 +21,7 @@ embed_3 = [0.3, 0.2, 0.1, -0.1]
 
 
 def creator(walks, size, window, min_count, sg, workers, iter):
-    return Word2VecFake({"1": embed_1, "2": embed_2, "3": embed_3})
+    return Word2VecFake({"0": embed_1, "1": embed_2, "2": embed_3})
 
 
 class Args:
@@ -66,9 +68,7 @@ def test_correctly_builds():
 def test_will_return_computed_embeddings_for_simple_fully_connected_graph():
     args = get_args()
     model: DeepWalk = DeepWalk.build_model_from_args(args)
-    graph = nx.Graph()
-    graph.add_nodes_from([1, 2])
-    graph.add_edge(1, 2)
+    graph = Graph(edge_index=(torch.LongTensor([0]), torch.LongTensor([1])))
     trained = model.train(graph, creator)
     assert len(trained) == 2
     np.testing.assert_array_equal(trained[0], embed_1)
@@ -78,10 +78,7 @@ def test_will_return_computed_embeddings_for_simple_fully_connected_graph():
 def test_will_return_computed_embeddings_for_simple_graph():
     args = get_args()
     model: DeepWalk = DeepWalk.build_model_from_args(args)
-    graph = nx.Graph()
-    graph.add_nodes_from([1, 2, 3])
-    graph.add_edge(1, 2)
-    graph.add_edge(2, 3)
+    graph = Graph(edge_index=(torch.LongTensor([0, 1]), torch.LongTensor([1, 2])))
     trained = model.train(graph, creator)
     assert len(trained) == 3
     np.testing.assert_array_equal(trained[0], embed_1)
@@ -93,8 +90,7 @@ def test_will_pass_correct_number_of_walks():
     args = get_args()
     args.walk_num = 2
     model: DeepWalk = DeepWalk.build_model_from_args(args)
-    graph = nx.Graph()
-    graph.add_nodes_from([1, 2, 3])
+    graph = Graph(edge_index=(torch.LongTensor([0, 1]), torch.LongTensor([1, 2])))
     captured_walks_no = []
 
     def creator_mocked(walks, size, window, min_count, sg, workers, iter):
@@ -102,4 +98,12 @@ def test_will_pass_correct_number_of_walks():
         return creator(walks, size, window, min_count, sg, workers, iter)
 
     model.train(graph, creator_mocked)
-    assert captured_walks_no[0] == args.walk_num * len(graph)
+    assert captured_walks_no[0] == args.walk_num * graph.num_nodes
+
+
+if __name__ == "__main__":
+    test_adds_correct_args()
+    test_correctly_builds()
+    test_will_return_computed_embeddings_for_simple_fully_connected_graph()
+    test_will_return_computed_embeddings_for_simple_graph()
+    test_will_pass_correct_number_of_walks()

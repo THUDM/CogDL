@@ -8,8 +8,7 @@ from ogb.graphproppred import GraphPropPredDataset
 
 from . import register_dataset
 from cogdl.data import Dataset, Graph, DataLoader
-from cogdl.utils import cross_entropy_loss, accuracy, remove_self_loops, coalesce, bce_with_logits_loss
-from torch_geometric.utils import to_undirected
+from cogdl.utils import CrossEntropyLoss, Accuracy, remove_self_loops, coalesce, BCEWithLogitsLoss, to_undirected
 
 
 class OGBNDataset(Dataset):
@@ -26,10 +25,10 @@ class OGBNDataset(Dataset):
         return self.data
 
     def get_loss_fn(self):
-        return cross_entropy_loss
+        return CrossEntropyLoss()
 
     def get_evaluator(self):
-        return accuracy
+        return Accuracy()
 
     def _download(self):
         pass
@@ -111,7 +110,7 @@ class OGBProteinsDataset(OGBNDataset):
         ]
 
     def get_loss_fn(self):
-        return bce_with_logits_loss
+        return BCEWithLogitsLoss()
 
     def get_evaluator(self):
         evaluator = NodeEvaluator(name="ogbn-proteins")
@@ -253,8 +252,7 @@ class MAGDataset(Dataset):
             edge_tps = np.full(src.shape, edge_type_dict[k])
 
             if edge_type == "cites":
-                _edges = torch.as_tensor([src, tgt])
-                _src, _tgt = to_undirected(_edges).numpy()
+                _src, _tgt = to_undirected([src, tgt]).numpy()
                 edge_tps = np.full(_src.shape, edge_type_dict[k])
                 edge_idx = np.vstack([_src, _tgt])
             else:
@@ -343,7 +341,7 @@ class OGBGDataset(Dataset):
         self.name = name
         self.dataset = GraphPropPredDataset(self.name, root)
 
-        self.graphs = []
+        self.data = []
         self.all_nodes = 0
         self.all_edges = 0
         for i in range(len(self.dataset.graphs)):
@@ -355,7 +353,7 @@ class OGBGDataset(Dataset):
                 y=torch.tensor(label),
             )
             data.num_nodes = graph["num_nodes"]
-            self.graphs.append(data)
+            self.data.append(data)
 
             self.all_nodes += graph["num_nodes"]
             self.all_edges += graph["edge_index"].shape[1]
@@ -372,11 +370,11 @@ class OGBGDataset(Dataset):
     def get_subset(self, subset):
         datalist = []
         for idx in subset:
-            datalist.append(self.graphs[idx])
+            datalist.append(self.data[idx])
         return datalist
 
     def get(self, idx):
-        return self.graphs[idx]
+        return self.data[idx]
 
     def _download(self):
         pass

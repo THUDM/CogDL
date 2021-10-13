@@ -63,12 +63,12 @@ class MLP(nn.Module):
         for i, fc in enumerate(self.mlp[:-1]):
             x = fc(x)
             if self.act_first:
-                x = self.activation(x, inplace=True)
+                x = self.activation(x)
             if self.norm:
                 x = self.norm_list[i](x)
 
             if not self.act_first:
-                x = self.activation(x, inplace=True)
+                x = self.activation(x)
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.mlp[-1](x)
         return x

@@ -1,209 +1,125 @@
 import torch
 
-from cogdl.tasks import build_task
-from cogdl.datasets import build_dataset
-from cogdl.utils import build_args_from_dict
+from cogdl.options import get_default_args
+from cogdl.experiments import train
 
 
-def get_default_args():
-    default_dict = {
-        "hidden_size": 16,
-        "negative_ratio": 3,
-        "patience": 1,
-        "max_epoch": 1,
-        "cpu": True,
-        "checkpoint": False,
-        "save_dir": ".",
-        "device_id": [0],
-        "activation": "relu",
-        "residual": False,
-        "norm": None,
-        "actnn": False,
-    }
-    return build_args_from_dict(default_dict)
+default_dict_emb_link = {
+    "hidden_size": 16,
+    "negative_ratio": 3,
+    "patience": 1,
+    "max_epoch": 1,
+    "cpu": True,
+    "checkpoint": False,
+    "save_dir": ".",
+    "device_id": [0],
+    "activation": "relu",
+    "residual": False,
+    "norm": None,
+    "actnn": False,
+}
+
+
+def get_default_args_emb_link(dataset, model, dw=None, mw=None):
+    args = get_default_args(dataset=dataset, model=model, dw=dw, mw=mw)
+    for key, value in default_dict_emb_link.items():
+        args.__setattr__(key, value)
+    return args
 
 
 def test_prone_ppi():
-    args = get_default_args()
-    args.task = "link_prediction"
-    args.dataset = "ppi-ne"
-    args.model = "prone"
+    args = get_default_args_emb_link("ppi-ne", "prone", "embedding_link_prediction_dw", "embedding_link_prediction_mw")
     args.step = 3
     args.theta = 0.5
     args.mu = 0.2
-    task = build_task(args)
-    ret = task.train()
+    ret = train(args)
     assert 0 <= ret["ROC_AUC"] <= 1
 
 
-def get_kg_default_args():
-    default_dict = {
-        "max_epoch": 2,
-        "num_bases": 5,
-        "num_layers": 2,
-        "hidden_size": 40,
-        "penalty": 0.001,
-        "sampling_rate": 0.001,
-        "dropout": 0.3,
-        "evaluate_interval": 2,
-        "patience": 20,
-        "lr": 0.001,
-        "weight_decay": 0,
-        "negative_ratio": 3,
-        "cpu": True,
-        "checkpoint": False,
-        "save_dir": ".",
-        "device_id": [0],
-        "activation": "relu",
-        "residual": False,
-        "norm": None,
-        "actnn": False,
-    }
-    return build_args_from_dict(default_dict)
+default_dict_kg = {
+    "max_epoch": 1,
+    "num_bases": 4,
+    "num_layers": 2,
+    "hidden_size": 16,
+    "penalty": 0.001,
+    "sampling_rate": 0.001,
+    "dropout": 0.3,
+    "evaluate_interval": 2,
+    "patience": 20,
+    "lr": 0.001,
+    "weight_decay": 0,
+    "negative_ratio": 3,
+    "cpu": True,
+    "checkpoint": False,
+    "save_dir": ".",
+    "device_id": [0],
+    "activation": "relu",
+    "residual": False,
+    "norm": None,
+    "actnn": False,
+}
 
 
-def get_nums(dataset, args):
-    data = dataset[0]
-    args.num_entities = len(torch.unique(torch.stack(data.edge_index)))
-    args.num_rels = len(torch.unique(data.edge_attr))
+def get_default_args_kg(dataset, model, dw="gnn_kg_link_prediction_dw", mw="gnn_kg_link_prediction_mw"):
+    args = get_default_args(dataset=dataset, model=model, dw=dw, mw=mw)
+    for key, value in default_dict_kg.items():
+        args.__setattr__(key, value)
     return args
 
 
 def test_rgcn_wn18():
-    args = get_kg_default_args()
+    args = get_default_args_kg(dataset="wn18", model="rgcn")
     args.self_dropout = 0.2
     args.self_loop = True
-    args.dataset = "wn18"
-    args.model = "rgcn"
-    args.task = "link_prediction"
     args.regularizer = "basis"
-    dataset = build_dataset(args)
-    args = get_nums(dataset, args)
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["MRR"] <= 1
+    ret = train(args)
+    assert 0 <= ret["mrr"] <= 1
 
 
 def test_compgcn_wn18rr():
-    args = get_kg_default_args()
+    args = get_default_args_kg(dataset="wn18rr", model="compgcn")
     args.lbl_smooth = 0.1
     args.score_func = "distmult"
-    args.dataset = "wn18rr"
-    args.model = "compgcn"
-    args.task = "link_prediction"
     args.regularizer = "basis"
     args.opn = "sub"
-    dataset = build_dataset(args)
-    args = get_nums(dataset, args)
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["MRR"] <= 1
+    ret = train(args)
+    assert 0 <= ret["mrr"] <= 1
 
 
-def get_kge_default_args():
-    default_dict = {
-        "embedding_size": 8,
-        "nentity": None,
-        "nrelation": None,
-        "do_train": True,
-        "do_valid": False,
-        "save_path": ".",
-        "init_checkpoint": None,
-        "save_checkpoint_steps": 100,
-        "double_entity_embedding": False,
-        "double_relation_embedding": False,
-        "negative_adversarial_sampling": False,
-        "negative_sample_size": 1,
-        "batch_size": 64,
-        "test_batch_size": 100,
-        "uni_weight": False,
-        "lr": 0.0001,
-        "warm_up_steps": None,
-        "max_epoch": 10,
-        "log_steps": 100,
-        "test_log_steps": 100,
-        "gamma": 12,
-        "regularization": 0.0,
-        "cpu": True,
-        "checkpoint": False,
-        "save_dir": ".",
-        "device_id": [0],
-        "actnn": False,
-    }
-    return build_args_from_dict(default_dict)
+default_dict_gnn_link = {
+    "hidden_size": 32,
+    "dataset": "cora",
+    "model": "gcn",
+    "task": "link_prediction",
+    "lr": 0.005,
+    "weight_decay": 5e-4,
+    "max_epoch": 60,
+    "patience": 2,
+    "num_layers": 2,
+    "evaluate_interval": 1,
+    "cpu": True,
+    "device_id": [0],
+    "dropout": 0.5,
+    "checkpoint": False,
+    "save_dir": ".",
+    "activation": "relu",
+    "residual": False,
+    "norm": None,
+    "actnn": False,
+}
 
 
-def test_distmult_fb13s():
-    args = get_kge_default_args()
-    args.dataset = "fb13s"
-    args.model = "distmult"
-    args.task = "link_prediction"
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["MRR"] <= 1
-
-
-def test_rotate_fb13s():
-    args = get_kge_default_args()
-    args.dataset = "fb13s"
-    args.model = "rotate"
-    args.task = "link_prediction"
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["MRR"] <= 1
-
-
-def test_transe_fb13s():
-    args = get_kge_default_args()
-    args.dataset = "fb13s"
-    args.model = "transe"
-    args.task = "link_prediction"
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["MRR"] <= 1
-
-
-def test_complex_fb13s():
-    args = get_kge_default_args()
-    args.dataset = "fb13s"
-    args.model = "complex"
-    args.task = "link_prediction"
-    task = build_task(args)
-    ret = task.train()
-    assert 0 <= ret["MRR"] <= 1
-
-
-def get_gnn_link_prediction_args():
-    args = {
-        "hidden_size": 32,
-        "dataset": "cora",
-        "model": "gcn",
-        "task": "link_prediction",
-        "lr": 0.005,
-        "weight_decay": 5e-4,
-        "max_epoch": 60,
-        "patience": 2,
-        "num_layers": 2,
-        "evaluate_interval": 1,
-        "cpu": True,
-        "device_id": [0],
-        "dropout": 0.5,
-        "checkpoint": False,
-        "save_dir": ".",
-        "activation": "relu",
-        "residual": False,
-        "norm": None,
-        "actnn": False,
-    }
-    return build_args_from_dict(args)
+def get_default_args_gnn_link(dataset, model, dw="gnn_link_prediction_dw", mw="gnn_link_prediction_mw"):
+    args = get_default_args(dataset=dataset, model=model, dw=dw, mw=mw)
+    for key, value in default_dict_gnn_link.items():
+        args.__setattr__(key, value)
+    return args
 
 
 def test_gcn_cora():
-    args = get_gnn_link_prediction_args()
-    print(args.evaluate_interval)
-    task = build_task(args)
-    ret = task.train()
-    assert 0.5 <= ret["AUC"] <= 1.0
+    args = get_default_args_gnn_link("cora", "gcn")
+    ret = train(args)
+    assert 0.5 <= ret["auc"] <= 1.0
 
 
 if __name__ == "__main__":
@@ -211,10 +127,5 @@ if __name__ == "__main__":
 
     test_rgcn_wn18()
     test_compgcn_wn18rr()
-
-    test_distmult_fb13s()
-    test_rotate_fb13s()
-    test_transe_fb13s()
-    test_complex_fb13s()
 
     test_gcn_cora()

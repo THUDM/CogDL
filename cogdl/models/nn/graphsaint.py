@@ -5,7 +5,6 @@ import numpy as np
 
 from .. import BaseModel, register_model
 from cogdl.layers import SAINTLayer
-from cogdl.trainers.sampled_trainer import SAINTTrainer
 
 
 def parse_arch(architecture, aggr, act, bias, hidden_size, num_features):
@@ -165,7 +164,3 @@ class GraphSAINT(BaseModel):
 
     def predict(self, data):
         return self.forward(data)
-
-    @staticmethod
-    def get_trainer(args):
-        return SAINTTrainer

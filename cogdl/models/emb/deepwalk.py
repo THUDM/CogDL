@@ -26,16 +26,17 @@ class DeepWalk(BaseModel):
     def add_args(parser: argparse.ArgumentParser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument('--walk-length', type=int, default=80,
-                            help='Length of walk per source. Default is 80.')
-        parser.add_argument('--walk-num', type=int, default=40,
-                            help='Number of walks per source. Default is 40.')
-        parser.add_argument('--window-size', type=int, default=5,
-                            help='Window size of skip-gram model. Default is 5.')
-        parser.add_argument('--worker', type=int, default=10,
-                            help='Number of parallel workers. Default is 10.')
-        parser.add_argument('--iteration', type=int, default=10,
-                            help='Number of iterations. Default is 10.')
+        parser.add_argument("--walk-length", type=int, default=80,
+                            help="Length of walk per source. Default is 80.")
+        parser.add_argument("--walk-num", type=int, default=40,
+                            help="Number of walks per source. Default is 40.")
+        parser.add_argument("--window-size", type=int, default=5,
+                            help="Window size of skip-gram model. Default is 5.")
+        parser.add_argument("--worker", type=int, default=10,
+                            help="Number of parallel workers. Default is 10.")
+        parser.add_argument("--iteration", type=int, default=10,
+                            help="Number of iterations. Default is 10.")
+        parser.add_argument("--hidden-size", type=int, default=128)
         # fmt: on
 
     @classmethod
@@ -58,8 +59,12 @@ class DeepWalk(BaseModel):
         self.worker = worker
         self.iteration = iteration
 
-    def train(self, G: nx.Graph, embedding_model_creator=Word2Vec):
-        self.G = G
+    def train(self, graph, embedding_model_creator=Word2Vec, return_dict=False):
+        return self.forward(graph, embedding_model_creator, return_dict)
+
+    def forward(self, graph, embedding_model_creator=Word2Vec, return_dict=False):
+        nx_g = graph.to_networkx()
+        self.G = nx_g
         walks = self._simulate_walks(self.walk_length, self.walk_num)
         walks = [[str(node) for node in walk] for walk in walks]
         print("training word2vec...")
@@ -72,9 +77,18 @@ class DeepWalk(BaseModel):
             workers=self.worker,
             iter=self.iteration,
         )
-        id2node = dict([(vid, node) for vid, node in enumerate(G.nodes())])
+        id2node = dict([(vid, node) for vid, node in enumerate(nx_g.nodes())])
         embeddings = np.asarray([model.wv[str(id2node[i])] for i in range(len(id2node))])
-        return embeddings
+
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(nx_g.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = nx_g.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        return features_matrix
 
     def _walk(self, start_node, walk_length):
         # Simulate a random walk starting from start node.

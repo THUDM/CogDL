@@ -41,7 +41,7 @@ def try_import_model(model):
         if model in SUPPORTED_MODELS:
             importlib.import_module(SUPPORTED_MODELS[model])
         else:
-            print(f"Failed to import {model} model.")
+            # print(f"Failed to import {model} model.")
             return False
     return True
 
@@ -86,11 +86,9 @@ SUPPORTED_MODELS = {
     "chebyshev": "cogdl.models.nn.pyg_cheb",
     "gcn": "cogdl.models.nn.gcn",
     "gdc_gcn": "cogdl.models.nn.gdc_gcn",
-    "hgpsl": "cogdl.models.nn.pyg_hgpsl",
     "graphsage": "cogdl.models.nn.graphsage",
     "compgcn": "cogdl.models.nn.compgcn",
     "drgcn": "cogdl.models.nn.drgcn",
-    "gpt_gnn": "cogdl.models.nn.pyg_gpt_gnn",
     "unet": "cogdl.models.nn.pyg_graph_unet",
     "gcnmix": "cogdl.models.nn.gcnmix",
     "diffpool": "cogdl.models.nn.diffpool",
@@ -102,7 +100,6 @@ SUPPORTED_MODELS = {
     "han": "cogdl.models.nn.han",
     "ppnp": "cogdl.models.nn.ppnp",
     "grace": "cogdl.models.nn.grace",
-    "jknet": "cogdl.models.nn.dgl_jknet",
     "pprgo": "cogdl.models.nn.pprgo",
     "gin": "cogdl.models.nn.gin",
     "dgcnn": "cogdl.models.nn.pyg_dgcnn",
@@ -114,20 +111,15 @@ SUPPORTED_MODELS = {
     "infograph": "cogdl.models.nn.infograph",
     "dropedge_gcn": "cogdl.models.nn.dropedge_gcn",
     "disengcn": "cogdl.models.nn.disengcn",
-    "fastgcn": "cogdl.models.nn.fastgcn",
     "mlp": "cogdl.models.nn.mlp",
     "sgc": "cogdl.models.nn.sgc",
-    "stpgnn": "cogdl.models.nn.stpgnn",
     "sortpool": "cogdl.models.nn.sortpool",
     "srgcn": "cogdl.models.nn.pyg_srgcn",
     "asgcn": "cogdl.models.nn.asgcn",
-    "gcc": "cogdl.models.nn.dgl_gcc",
+    "gcc": "cogdl.models.nn.gcc_model",
     "unsup_graphsage": "cogdl.models.nn.unsup_graphsage",
-    "sagpool": "cogdl.models.nn.pyg_sagpool",
     "graphsaint": "cogdl.models.nn.graphsaint",
     "m3s": "cogdl.models.nn.m3s",
-    "supergat": "cogdl.models.nn.pyg_supergat",
-    "self_auxiliary_task": "cogdl.models.nn.self_auxiliary_task",
     "moe_gcn": "cogdl.models.nn.moe_gcn",
     "lightgcn": "cogdl.models.nn.lightgcn",
     "correct_smooth": "cogdl.models.nn.correct_smooth",

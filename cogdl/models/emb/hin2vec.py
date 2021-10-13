@@ -173,9 +173,17 @@ class Hin2vec(BaseModel):
         self.epochs = epochs
         self.lr = lr
 
-    def train(self, G, node_type):
+        self.device = "cpu" if not torch.cuda.is_available() or cpu else "cuda"
+
+    def forward(self, data):
+        return self.train(data)
+
+    def train(self, data):
+        G = nx.DiGraph()
+        row, col = data.edge_index
+        G.add_edges_from(list(zip(row.numpy(), col.numpy())))
         self.num_node = G.number_of_nodes()
-        rw = RWgraph(G, node_type)
+        rw = RWgraph(G, data.pos.tolist())
         walks = rw._simulate_walks(self.walk_length, self.walk_num)
         pairs, relation = rw.data_preparation(walks, self.hop, self.negative)
 

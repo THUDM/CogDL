@@ -21,17 +21,19 @@ We summarize the contributions of CogDL as follows:
 
 ## ❗ News
 
+- The new **v0.5.0b1 pre-release** designs and implements a unified training loop for GNN. It introduces `DataWrapper` to help prepare the training/validation/test data and `ModelWrapper` to define the training/validation/test steps. 
+
 - The new **v0.4.1 release** adds the implementation of Deep GNNs and the recommendation task. It also supports new pipelines for generating embeddings and recommendation. Welcome to join our tutorial on KDD 2021 at 10:30 am - 12:00 am, Aug. 14th (Singapore Time). More details can be found in https://kdd2021graph.github.io/. 🎉
 
 - The new **v0.4.0 release** refactors the data storage (from `Data` to `Graph`) and provides more fast operators to speed up GNN training. It also includes many self-supervised learning methods on graphs. BTW, we are glad to announce that we will give a tutorial on KDD 2021 in August. Please see [this link](https://kdd2021graph.github.io/) for more details. 🎉
-
-- CogDL supports GNN models with Mixture of Experts (MoE). You can install [FastMoE](https://github.com/laekov/fastmoe) and try **[MoE GCN](./cogdl/models/nn/moe_gcn.py)** in CogDL now!
 
 <details>
 <summary>
 News History
 </summary>
 <br/>
+
+- CogDL supports GNN models with Mixture of Experts (MoE). You can install [FastMoE](https://github.com/laekov/fastmoe) and try **[MoE GCN](./cogdl/models/nn/moe_gcn.py)** in CogDL now!
 
 - The new **v0.3.0 release** provides a fast spmm operator to speed up GNN training. We also release the first version of **[CogDL paper](https://arxiv.org/abs/2103.00959)** in arXiv. You can join [our slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg) for discussion. 🎉🎉🎉
 
@@ -47,7 +49,7 @@ News History
 
 ### Requirements and Installation
 
-- Python version >= 3.6
+- Python version >= 3.7
 - PyTorch version >= 1.7.1
 
 Please follow the instructions here to install PyTorch (https://github.com/pytorch/pytorch#installation).
@@ -83,33 +85,29 @@ A quickstart example can be found in the [quick_start.py](https://github.com/THU
 from cogdl import experiment
 
 # basic usage
-experiment(task="node_classification", dataset="cora", model="gcn")
+experiment(dataset="cora", model="gcn")
 
 # set other hyper-parameters
-experiment(task="node_classification", dataset="cora", model="gcn", hidden_size=32, max_epoch=200)
+experiment(dataset="cora", model="gcn", hidden_size=32, max_epoch=200)
 
 # run over multiple models on different seeds
-experiment(task="node_classification", dataset="cora", model=["gcn", "gat"], seed=[1, 2])
+experiment(dataset="cora", model=["gcn", "gat"], seed=[1, 2])
 
 # automl usage
-def func_search(trial):
+def search_space(trial):
     return {
         "lr": trial.suggest_categorical("lr", [1e-3, 5e-3, 1e-2]),
         "hidden_size": trial.suggest_categorical("hidden_size", [32, 64, 128]),
         "dropout": trial.suggest_uniform("dropout", 0.5, 0.8),
     }
 
-experiment(task="node_classification", dataset="cora", model="gcn", seed=[1, 2], func_search=func_search)
+experiment(dataset="cora", model="gcn", seed=[1, 2], search_space=search_space)
 ```
 
 Some interesting applications can be used through `pipeline` API. An example can be found in the [pipeline.py](https://github.com/THUDM/cogdl/tree/master/examples/pipeline.py). 
 
 ```python
 from cogdl import pipeline
-
-# print the statistics of datasets
-stats = pipeline("dataset-stats")
-stats(["cora", "citeseer"])
 
 # load OAGBert model and perform inference
 oagbert = pipeline("oagbert")
@@ -120,26 +118,25 @@ More details of the OAGBert usage can be found [here](./cogdl/oag/README.md).
 
 ### Command-Line Usage
 
-You can also use `python scripts/train.py --task example_task --dataset example_dataset --model example_model` to run example_model on example_data and evaluate it via example_task.
+You can also use `python scripts/train.py --dataset example_dataset --model example_model` to run example_model on example_data.
 
-- --task, downstream tasks to evaluate representation like `node_classification`, `unsupervised_node_classification`, `graph_classification`. More tasks can be found in the [cogdl/tasks](https://github.com/THUDM/cogdl/tree/master/cogdl/tasks).
-- --dataset, dataset name to run, can be a list of datasets with space like `cora citeseer ppi`. Supported datasets include
+- --dataset, dataset name to run, can be a list of datasets with space like `cora citeseer`. Supported datasets include
 'cora', 'citeseer', 'pumbed', 'ppi', 'wikipedia', 'blogcatalog', 'flickr'. More datasets can be found in the [cogdl/datasets](https://github.com/THUDM/cogdl/tree/master/cogdl/datasets).
-- --model, model name to run, can be a list of models like `deepwalk line prone`. Supported models include
+- --model, model name to run, can be a list of models like `gcn gat`. Supported models include
 'gcn', 'gat', 'graphsage', 'deepwalk', 'node2vec', 'hope', 'grarep', 'netmf', 'netsmf', 'prone'. More models can be found in the [cogdl/models](https://github.com/THUDM/cogdl/tree/master/cogdl/models).
 
-For example, if you want to run LINE, NetMF on Wikipedia with unsupervised node classification task, with 5 different seeds:
+For example, if you want to run GCN and GAT on the Cora dataset, with 5 different seeds:
 
 ```bash
-$ python scripts/train.py --task unsupervised_node_classification --dataset wikipedia --model line netmf --seed 0 1 2 3 4
+python scripts/train.py --dataset cora --model gcn gat --seed 0 1 2 3 4
 ```
 
 Expected output:
 
-| Variant                | Micro-F1 0.1   | Micro-F1 0.3   | Micro-F1 0.5   | Micro-F1 0.7   | Micro-F1 0.9   |
-|------------------------|----------------|----------------|----------------|----------------|----------------|
-| ('wikipedia', 'line')  | 0.4069±0.0011  | 0.4071±0.0010  | 0.4055±0.0013  | 0.4054±0.0020  | 0.4080±0.0042  |
-| ('wikipedia', 'netmf') | 0.4551±0.0024  | 0.4932±0.0022  | 0.5046±0.0017  | 0.5084±0.0057  | 0.5125±0.0035  |
+| Variant          | test_acc       | val_acc        |
+|------------------|----------------|----------------|
+| ('cora', 'gcn')  | 0.8050±0.0047  | 0.7940±0.0063  |
+| ('cora', 'gat')  | 0.8234±0.0042  | 0.8088±0.0016  |
 
 If you have ANY difficulties to get things working in the above steps, feel free to open an issue. You can expect a reply within 24 hours.
 
@@ -241,7 +238,7 @@ So how do you do a unit test?
 </details>
 
 ## CogDL Team
-CogDL is developed and maintained by [Tsinghua, BAAI, DAMO Academy, and ZHIPU.AI](https://cogdl.ai/about/). 
+CogDL is developed and maintained by [Tsinghua, ZJU, BAAI, DAMO Academy, and ZHIPU.AI](https://cogdl.ai/about/). 
 
 The core development team can be reached at [cogdlteam@gmail.com](mailto:cogdlteam@gmail.com).
 

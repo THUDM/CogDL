@@ -21,17 +21,19 @@ CogDL的特性包括：
 
 ## ❗ 最新
 
+- 最新的 **v0.5.0b1 pre-release** 为图神经网络的训练设计了一套统一的流程. 这个版本去除了原先的`Task`类，引入了`DataWrapper`来准备training/validation/test过程中所需的数据，引入了`ModelWrapper`来定义模型training/validation/test的步骤.
+
 - 最新的 **v0.4.1 release** 增加了深层GNN的实现和推荐任务。这个版本同时提供了新的一些pipeline用于直接获取图表示和搭建推荐应用。欢迎大家参加我们在KDD 2021上的tutorial，时间是8月14号上午10:30 - 12:00（北京时间）。 更多的内容可以查看 https://kdd2021graph.github.io/. 🎉
 
 - 最新的 **v0.4.0版本** 重构了底层的数据存储（从`Data`类变为`Graph`类），并且提供了更多快速的算子来加速图神经网络的训练。这个版本还包含了很多图自监督学习的算法。同时，我们很高兴地宣布我们将在8月份的KDD 2021会议上给一个CogDL相关的tutorial。具体信息请参见[这个链接](https://kdd2021graph.github.io/). 🎉
-
-- CogDL支持图神经网络模型使用混合专家模块（Mixture of Experts, MoE）。 你可以安装[FastMoE](https://github.com/laekov/fastmoe)然后在CogDL中尝试 **[MoE GCN](./cogdl/models/nn/moe_gcn.py)** 模型!
 
 <details>
 <summary>
 历史
 </summary>
 <br/>
+
+- CogDL支持图神经网络模型使用混合专家模块（Mixture of Experts, MoE）。 你可以安装[FastMoE](https://github.com/laekov/fastmoe)然后在CogDL中尝试 **[MoE GCN](./cogdl/models/nn/moe_gcn.py)** 模型!
 
 - 最新的 **v0.3.0版本** 提供了快速的稀疏矩阵乘操作来加速图神经网络模型的训练。我们在arXiv上发布了 **[CogDL paper](https://arxiv.org/abs/2103.00959)** 的初版. 你可以加入[我们的slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)来讨论CogDL相关的内容。🎉
 
@@ -47,7 +49,7 @@ CogDL的特性包括：
 
 ### 系统配置要求
 
-- Python 版本 >= 3.6
+- Python 版本 >= 3.7
 - PyTorch 版本 >= 1.7.1
 
 请根据如下链接来安装PyTorch (https://github.com/pytorch/pytorch#installation)。
@@ -81,33 +83,29 @@ pip install -e .
 from cogdl import experiment
 
 # basic usage
-experiment(task="node_classification", dataset="cora", model="gcn")
+experiment(dataset="cora", model="gcn")
 
 # set other hyper-parameters
-experiment(task="node_classification", dataset="cora", model="gcn", hidden_size=32, max_epoch=200)
+experiment(dataset="cora", model="gcn", hidden_size=32, max_epoch=200)
 
 # run over multiple models on different seeds
-experiment(task="node_classification", dataset="cora", model=["gcn", "gat"], seed=[1, 2])
+experiment(dataset="cora", model=["gcn", "gat"], seed=[1, 2])
 
 # automl usage
-def func_search(trial):
+def search_space(trial):
     return {
         "lr": trial.suggest_categorical("lr", [1e-3, 5e-3, 1e-2]),
         "hidden_size": trial.suggest_categorical("hidden_size", [32, 64, 128]),
         "dropout": trial.suggest_uniform("dropout", 0.5, 0.8),
     }
 
-experiment(task="node_classification", dataset="cora", model="gcn", seed=[1, 2], func_search=func_search)
+experiment(dataset="cora", model="gcn", seed=[1, 2], search_space=search_space)
 ```
 
 您也可以通过`pipeline`接口来跑一些有趣的应用。下面这个例子能够在[pipeline.py](https://github.com/THUDM/cogdl/tree/master/examples/pipeline.py)文件中找到。
 
 ```python
 from cogdl import pipeline
-
-# print the statistics of datasets
-stats = pipeline("dataset-stats")
-stats(["cora", "citeseer"])
 
 # load OAGBert model and perform inference
 oagbert = pipeline("oagbert")
@@ -117,24 +115,23 @@ outputs = oagbert(["CogDL is developed by KEG, Tsinghua.", "OAGBert is developed
 有关OAGBert更多的用法可以参见[这里](./cogdl/oag/README.md).
 
 ### 命令行
-基本用法可以使用 `python train.py --task example_task --dataset example_dataset --model example_model` 来在 `example_data` 上运行 `example_model` 并使用 `example_task` 来评测结果。
+基本用法可以使用 `python train.py --dataset example_dataset --model example_model` 来在 `example_data` 上运行 `example_model`。
 
-- --task, 运行的任务名称，像`node_classification`, `unsupervised_node_classification`, `graph_classification`这样来评测模型性能的下游任务。
 - --dataset, 运行的数据集名称，可以是以空格分隔开的数据集名称的列表,现在支持的数据集包括 cora, citeseer, pumbed, ppi, wikipedia, blogcatalog, dblp, flickr等。
 - --model, 运行的模型名称,可以是个列表，支持的模型包括 gcn, gat, deepwalk, node2vec, hope, grarep, netmf, netsmf, prone等。
 
-如果你想在 Wikipedia 数据集上运行 LINE 和 NetMF 模型并且设置5个不同的随机种子，你可以使用如下的命令
+如果你想在 Cora 数据集上运行 GCN 和 GAT 模型并且设置5个不同的随机种子，你可以使用如下的命令
 
 ```bash
-$ python scripts/train.py --task unsupervised_node_classification --dataset wikipedia --model line netmf --seed 0 1 2 3 4
+python scripts/train.py --dataset cora --model gcn gat --seed 0 1 2 3 4
 ```
 
 预计得到的结果如下：
 
-| Variant                | Micro-F1 0.1   | Micro-F1 0.3   | Micro-F1 0.5   | Micro-F1 0.7   | Micro-F1 0.9   |
-|------------------------|----------------|----------------|----------------|----------------|----------------|
-| ('wikipedia', 'line')  | 0.4069±0.0011  | 0.4071±0.0010  | 0.4055±0.0013  | 0.4054±0.0020  | 0.4080±0.0042  |
-| ('wikipedia', 'netmf') | 0.4551±0.0024  | 0.4932±0.0022  | 0.5046±0.0017  | 0.5084±0.0057  | 0.5125±0.0035  |
+| Variant          | test_acc       | val_acc        |
+|------------------|----------------|----------------|
+| ('cora', 'gcn')  | 0.8050±0.0047  | 0.7940±0.0063  |
+| ('cora', 'gat')  | 0.8234±0.0042  | 0.8088±0.0016  |
 
 如果您在我们的工具包或自定义步骤中遇到任何困难，请随时提出一个github issue或发表评论。您可以在24小时内得到答复。
 
@@ -223,7 +220,7 @@ git clone https://github.com/THUDM/cogdl /cogdl
 </details>
 
 ## CogDL团队
-CogDL是由[清华, 北京智源, 阿里达摩院, 智谱.AI](https://cogdl.ai/zh/about/)开发并维护。
+CogDL是由[清华大学, 浙江大学, 北京智源, 阿里达摩院, 智谱.AI](https://cogdl.ai/zh/about/)开发并维护。
 
 CogDL核心开发团队可以通过[cogdlteam@gmail.com](mailto:cogdlteam@gmail.com)这个邮箱来联系。
 

@@ -4,11 +4,9 @@ import torch
 import torch.nn as nn
 
 from .. import BaseModel, register_model
-from .dgi import GCN, AvgReadout
+from .dgi import GCN
 from cogdl.utils.ppr_utils import build_topk_ppr_matrix_from_data
-from cogdl.trainers.self_supervised_trainer import SelfSupervisedPretrainer
 from cogdl.data import Graph
-from cogdl.models.self_supervised_model import SelfSupervisedContrastiveModel
 
 
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
@@ -22,6 +20,19 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
 
 def compute_ppr(adj, index, alpha=0.4, epsilon=1e-4, k=8, norm="row"):
     return build_topk_ppr_matrix_from_data(adj, alpha, epsilon, index, k, norm).tocsr()
+
+
+# Borrowed from https://github.com/PetarV-/DGI
+class AvgReadout(nn.Module):
+    def __init__(self):
+        super(AvgReadout, self).__init__()
+
+    def forward(self, seq, msk):
+        dim = len(seq.shape) - 2
+        if msk is None:
+            return torch.mean(seq, dim)
+        else:
+            return torch.sum(seq * msk, dim) / torch.sum(msk)
 
 
 # Borrowed from https://github.com/kavehhassani/mvgrl
@@ -59,7 +70,7 @@ class Discriminator(nn.Module):
 
 # Mainly borrowed from https://github.com/kavehhassani/mvgrl
 @register_model("mvgrl")
-class MVGRL(SelfSupervisedContrastiveModel):
+class MVGRL(BaseModel):
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -129,6 +140,7 @@ class MVGRL(SelfSupervisedContrastiveModel):
         return adj, diff
 
     def preprocess(self, graph):
+        print("MVGRL preprocessing...")
         graph.add_remaining_self_loops()
         graph.sym_norm()
 
@@ -147,8 +159,12 @@ class MVGRL(SelfSupervisedContrastiveModel):
         self.cache["diff"] = graphs[1]
         self.cache["adj"] = graphs[0]
         self.device = next(self.gcn1.parameters()).device
+        print("Preprocessing Done...")
 
     def forward(self, graph):
+        if not self.training:
+            return self.embed(graph)
+
         x = graph.x
         if self.cache is None or "diff" not in self.cache:
             self.preprocess(graph)
@@ -182,9 +198,6 @@ class MVGRL(SelfSupervisedContrastiveModel):
         loss = self.loss_f(logits, lbl)
         return loss
 
-    def self_supervised_loss(self, data):
-        return self.loss(data)
-
     def embed(self, data, msk=None):
         adj = self.cache["adj"].to(self.device)
         diff = self.cache["diff"].to(self.device)
@@ -192,7 +205,3 @@ class MVGRL(SelfSupervisedContrastiveModel):
         h_2 = self.gcn2(diff, data.x.to(self.device), True)
         # c = self.read(h_1, msk)
         return (h_1 + h_2).detach()  # , c.detach()
-
-    @staticmethod
-    def get_trainer(args):
-        return SelfSupervisedPretrainer

@@ -28,14 +28,15 @@ class NetSMF(BaseModel):
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument('--window-size', type=int, default=10,
-                            help='Window size of approximate matrix. Default is 10.')
-        parser.add_argument('--negative', type=int, default=1,
-                            help='Number of negative node in sampling. Default is 1.')
-        parser.add_argument('--num-round', type=int, default=100,
-                            help='Number of round in NetSMF. Default is 100.')
-        parser.add_argument('--worker', type=int, default=10,
-                            help='Number of parallel workers. Default is 10.')
+        parser.add_argument("--window-size", type=int, default=10,
+                            help="Window size of approximate matrix. Default is 10.")
+        parser.add_argument("--negative", type=int, default=1,
+                            help="Number of negative node in sampling. Default is 1.")
+        parser.add_argument("--num-round", type=int, default=100,
+                            help="Number of round in NetSMF. Default is 100.")
+        parser.add_argument("--worker", type=int, default=10,
+                            help="Number of parallel workers. Default is 10.")
+        parser.add_argument("--hidden-size", type=int, default=128)
         # fmt: on
 
     @classmethod
@@ -56,12 +57,15 @@ class NetSMF(BaseModel):
         self.worker = worker
         self.num_round = num_round
 
-    def train(self, G):
-        self.G = G
-        node2id = dict([(node, vid) for vid, node in enumerate(G.nodes())])
+    def train(self, graph, return_dict=False):
+        return self.forward(graph, return_dict)
+
+    def forward(self, graph, return_dict=False):
+        self.G = graph.to_networkx()
+        node2id = dict([(node, vid) for vid, node in enumerate(self.G.nodes())])
         self.is_directed = nx.is_directed(self.G)
         self.num_node = self.G.number_of_nodes()
-        self.num_edge = G.number_of_edges()
+        self.num_edge = self.G.number_of_edges()
         self.edges = [[node2id[e[0]], node2id[e[1]]] for e in self.G.edges()]
 
         id2node = dict(zip(node2id.values(), node2id.keys()))
@@ -72,13 +76,13 @@ class NetSMF(BaseModel):
         self.alias_nodes = {}
         self.node_weight = {}
         for i in range(self.num_node):
-            unnormalized_probs = [G[id2node[i]][nbr].get("weight", 1.0) for nbr in G.neighbors(id2node[i])]
+            unnormalized_probs = [self.G[id2node[i]][nbr].get("weight", 1.0) for nbr in self.G.neighbors(id2node[i])]
             norm_const = sum(unnormalized_probs)
             normalized_probs = [float(u_prob) / norm_const for u_prob in unnormalized_probs]
             self.alias_nodes[i] = alias_setup(normalized_probs)
             self.node_weight[i] = dict(
                 zip(
-                    [node2id[nbr] for nbr in G.neighbors(id2node[i])],
+                    [node2id[nbr] for nbr in self.G.neighbors(id2node[i])],
                     unnormalized_probs,
                 )
             )
@@ -118,8 +122,17 @@ class NetSMF(BaseModel):
         print("number of nzz", M.nnz)
         print("construct matrix sparsifier time", time.time() - t2)
 
-        embedding = self._get_embedding_rand(M)
-        return embedding
+        embeddings = self._get_embedding_rand(M)
+
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(self.G.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = self.G.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        return features_matrix
 
     def _get_embedding_rand(self, matrix):
         # Sparse randomized tSVD for fast embedding

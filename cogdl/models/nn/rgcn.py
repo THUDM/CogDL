@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from cogdl.utils.link_prediction_utils import GNNLinkPredict, cal_mrr, sampling_edge_uniform
+from cogdl.utils.link_prediction_utils import GNNLinkPredict, sampling_edge_uniform
 from cogdl.layers import RGCNLayer
 from .. import register_model, BaseModel
 
@@ -84,7 +84,7 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
         self_dropout=0.0,
     ):
         BaseModel.__init__(self)
-        GNNLinkPredict.__init__(self, "distmult", hidden_size)
+        GNNLinkPredict.__init__(self)
         self.penalty = penalty
         self.num_nodes = num_entities
         self.num_rels = num_rels
@@ -116,36 +116,34 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
         self.cahce_index = reindexed_nodes
 
         graph.edge_index = reindexed_edges
+        # graph.num_nodes = reindexed_edges.max().item() + 1
+
         output = self.model(graph, x)
         # output = self.model(x, reindexed_indices, graph.edge_type)
         return output
 
-    def loss(self, graph, split="train"):
-        if split == "train":
-            mask = graph.train_mask
-        elif split == "val":
-            mask = graph.val_mask
-        else:
-            mask = graph.test_mask
-        edge_index = torch.stack(graph.edge_index)
-        edge_index, edge_types = edge_index[:, mask], graph.edge_attr[mask]
+    def loss(self, graph, scoring):
+        edge_index = graph.edge_index
+        edge_types = graph.edge_attr
 
         self.get_edge_set(edge_index, edge_types)
         batch_edges, batch_attr, samples, rels, labels = sampling_edge_uniform(
             edge_index, edge_types, self.edge_set, self.sampling_rate, self.num_rels
         )
-        with graph.local_graph():
-            graph.edge_index = batch_edges
-            graph.edge_attr = batch_attr
-            output = self.forward(graph)
-            edge_weight = self.rel_weight(rels)
-            sampled_nodes, reindexed_edges = torch.unique(samples, sorted=True, return_inverse=True)
-            assert (sampled_nodes == self.cahce_index).any()
-            sampled_types = torch.unique(rels)
 
-            loss_n = self._loss(
-                output[reindexed_edges[0]], output[reindexed_edges[1]], edge_weight, labels
-            ) + self.penalty * self._regularization([self.emb(sampled_nodes), self.rel_weight(sampled_types)])
+        graph = graph.__class__(edge_index=batch_edges, edge_attr=batch_attr)
+        # graph.edge_index = batch_edges
+        # graph.edge_attr = batch_attr
+
+        output = self.forward(graph)
+        edge_weight = self.rel_weight(rels)
+        sampled_nodes, reindexed_edges = torch.unique(samples, sorted=True, return_inverse=True)
+        assert (sampled_nodes == self.cahce_index).any()
+        sampled_types = torch.unique(rels)
+
+        loss_n = self._loss(
+            output[reindexed_edges[0]], output[reindexed_edges[1]], edge_weight, labels, scoring
+        ) + self.penalty * self._regularization([self.emb(sampled_nodes), self.rel_weight(sampled_types)])
         return loss_n
 
     def predict(self, graph):
@@ -153,14 +151,5 @@ class LinkPredictRGCN(GNNLinkPredict, BaseModel):
         indices = torch.arange(0, self.num_nodes).to(device)
         x = self.emb(indices)
         output = self.model(graph, x)
-        mrr, hits = cal_mrr(
-            output,
-            self.rel_weight.weight,
-            graph.edge_index,
-            graph.edge_attr,
-            scoring=self.scoring,
-            protocol="raw",
-            batch_size=500,
-            hits=[1, 3, 10],
-        )
-        return mrr, hits
+
+        return output, self.rel_weight.weight

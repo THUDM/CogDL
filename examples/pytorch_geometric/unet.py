@@ -51,4 +51,4 @@ class UNet(BaseModel):
 
 
 if __name__ == "__main__":
-    ret = experiment(task="node_classification", dataset="cora", model="pyg_unet")
+    ret = experiment(dataset="cora", model="pyg_unet")

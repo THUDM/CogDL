@@ -117,6 +117,7 @@ class RGCNLayer(nn.Module):
 
     def basis_forward(self, graph, x):
         edge_type = graph.edge_attr
+
         if self.num_bases < self.num_edge_types:
             weight = torch.matmul(self.alpha, self.weight.view(self.num_bases, -1))
             weight = weight.view(self.num_edge_types, self.in_feats, self.out_feats)
@@ -126,18 +127,25 @@ class RGCNLayer(nn.Module):
         edge_index = torch.stack(graph.edge_index)
         edge_weight = graph.edge_weight
 
-        with graph.local_graph():
-            graph.row_norm()
-            h = torch.matmul(x, weight)  # (N, d1) by (r, d1, d2) -> (r, N, d2)
+        graph.row_norm()
+        h = torch.matmul(x, weight)  # (N, d1) by (r, d1, d2) -> (r, N, d2)
 
-            h_list = []
-            for edge_t in range(self.num_edge_types):
-                edge_mask = edge_type == edge_t
+        h_list = []
+        for edge_t in range(self.num_edge_types):
+            g = graph.__class__()
+            edge_mask = edge_type == edge_t
 
-                graph.edge_index = edge_index[:, edge_mask]
-                graph.edge_weight = edge_weight[edge_mask]
-                temp = spmm(graph, h[edge_t])
-                h_list.append(temp)
+            if edge_mask.sum() == 0:
+                h_list.append(0)
+                continue
+
+            g.edge_index = edge_index[:, edge_mask]
+
+            g.edge_weight = edge_weight[edge_mask]
+            g.padding_self_loops()
+
+            temp = spmm(graph, h[edge_t])
+            h_list.append(temp)
             return h_list
 
     def bdd_forward(self, graph, x):

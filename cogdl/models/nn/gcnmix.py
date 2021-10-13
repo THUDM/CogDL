@@ -61,9 +61,35 @@ class GCNConv(nn.Module):
         return self.weight(x)
 
 
-class BaseGNNMix(BaseModel):
+@register_model("gcnmix")
+class GCNMix(BaseModel):
+    @staticmethod
+    def add_args(parser):
+        parser.add_argument("--dropout", type=float, default=0.5)
+        parser.add_argument("--hidden-size", type=int, default=64)
+        parser.add_argument("--alpha", type=float, default=1.0)
+        parser.add_argument("--k", type=int, default=10)
+        parser.add_argument("--temperature", type=float, default=0.1)
+        # parser.add_argument("--rampup-starts", type=int, default=500)
+        # parser.add_argument("--rampup_ends", type=int, default=1000)
+        # parser.add_argument("--mixup-consistency", type=float, default=10.0)
+        # parser.add_argument("--ema-decay", type=float, default=0.999)
+        # parser.add_argument("--tau", type=float, default=1.0)
+
+    @classmethod
+    def build_model_from_args(cls, args):
+        return cls(
+            in_feat=args.num_features,
+            hidden_size=args.hidden_size,
+            num_classes=args.num_classes,
+            k=args.k,
+            temperature=args.temperature,
+            alpha=args.alpha,
+            dropout=args.dropout,
+        )
+
     def __init__(self, in_feat, hidden_size, num_classes, k, temperature, alpha, dropout):
-        super(BaseGNNMix, self).__init__()
+        super(GCNMix, self).__init__()
         self.dropout = dropout
         self.alpha = alpha
         self.k = k
@@ -145,88 +171,3 @@ class BaseGNNMix(BaseModel):
     def predict_noise(self, data, tau=1):
         out = self.forward(data) / tau
         return out
-
-
-@register_model("gcnmix")
-class GCNMix(BaseModel):
-    @staticmethod
-    def add_args(parser):
-        parser.add_argument("--dropout", type=float, default=0.5)
-        parser.add_argument("--hidden-size", type=int, default=64)
-        parser.add_argument("--alpha", type=float, default=1.0)
-        parser.add_argument("--k", type=int, default=10)
-        parser.add_argument("--temperature", type=float, default=0.1)
-        parser.add_argument("--rampup-starts", type=int, default=500)
-        parser.add_argument("--rampup_ends", type=int, default=1000)
-        parser.add_argument("--mixup-consistency", type=float, default=10.0)
-        parser.add_argument("--ema-decay", type=float, default=0.999)
-        parser.add_argument("--tau", type=float, default=1.0)
-
-    @classmethod
-    def build_model_from_args(cls, args):
-        return cls(
-            in_feat=args.num_features,
-            hidden_size=args.hidden_size,
-            num_classes=args.num_classes,
-            k=args.k,
-            temperature=args.temperature,
-            alpha=args.alpha,
-            rampup_starts=args.rampup_starts,
-            rampup_ends=args.rampup_ends,
-            final_consistency_weight=args.mixup_consistency,
-            ema_decay=args.ema_decay,
-            dropout=args.dropout,
-        )
-
-    def __init__(
-        self,
-        in_feat,
-        hidden_size,
-        num_classes,
-        k,
-        temperature,
-        alpha,
-        rampup_starts,
-        rampup_ends,
-        final_consistency_weight,
-        ema_decay,
-        dropout,
-    ):
-        super(GCNMix, self).__init__()
-        self.final_consistency_weight = final_consistency_weight
-        self.rampup_starts = rampup_starts
-        self.rampup_ends = rampup_ends
-        self.ema_decay = ema_decay
-
-        self.base_gnn = BaseGNNMix(in_feat, hidden_size, num_classes, k, temperature, alpha, dropout)
-        self.ema_gnn = BaseGNNMix(in_feat, hidden_size, num_classes, k, temperature, alpha, dropout)
-        for param in self.ema_gnn.parameters():
-            param.detach_()
-
-        self.epoch = 0
-
-    def forward(self, graph):
-        return self.base_gnn.forward(graph)
-
-    def forward_ema(self, graph):
-        return self.ema_gnn(graph)
-
-    def node_classification_loss(self, data):
-        opt = {
-            "epoch": self.epoch,
-            "final_consistency_weight": self.final_consistency_weight,
-            "rampup_starts": self.rampup_starts,
-            "rampup_ends": self.rampup_ends,
-        }
-        self.base_gnn.train()
-        loss_n = self.base_gnn.loss(data, opt)
-
-        alpha = min(1 - 1 / (self.epoch + 1), self.ema_decay)
-        for ema_param, param in zip(self.ema_gnn.parameters(), self.base_gnn.parameters()):
-            ema_param.data.mul_(alpha).add_((1 - alpha) * param.data)
-        self.epoch += 1
-        return loss_n
-
-    def predict(self, data):
-        prediction = self.forward_ema(data)
-        return prediction

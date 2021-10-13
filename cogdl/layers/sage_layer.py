@@ -19,7 +19,9 @@ class SumAggregator(object):
 
 
 class SAGELayer(nn.Module):
-    def __init__(self, in_feats, out_feats, normalize=False, aggr="mean", dropout=0.0, norm=None, activation=None):
+    def __init__(
+        self, in_feats, out_feats, normalize=False, aggr="mean", dropout=0.0, norm=None, activation=None, residual=False
+    ):
         super(SAGELayer, self).__init__()
         self.in_feats = in_feats
         self.out_feats = out_feats
@@ -42,7 +44,7 @@ class SAGELayer(nn.Module):
             self.dropout = None
 
         if activation is not None:
-            self.act = get_activation(activation)
+            self.act = get_activation(activation, inplace=True)
         else:
             self.act = None
 
@@ -50,6 +52,11 @@ class SAGELayer(nn.Module):
             self.norm = get_norm_layer(norm, out_feats)
         else:
             self.norm = None
+
+        if residual:
+            self.residual = nn.Linear(in_features=in_feats, out_features=out_feats)
+        else:
+            self.residual = None
 
     def forward(self, graph, x):
         out = self.aggr(graph, x)
@@ -61,8 +68,12 @@ class SAGELayer(nn.Module):
         if self.norm is not None:
             out = self.norm(out)
         if self.act is not None:
-            out = self.act(out, inplace=True)
+            out = self.act(out)
+
+        if self.residual:
+            out = out + self.residual(x)
 
         if self.dropout is not None:
             out = self.dropout(out)
+
         return out

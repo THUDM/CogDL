@@ -8,7 +8,6 @@ import torch.nn.functional as F
 from .. import register_model, BaseModel
 from cogdl.layers import SAGELayer
 from cogdl.models.nn.graphsage import sage_sampler
-from cogdl.trainers.self_supervised_trainer import SelfSupervisedPretrainer
 from cogdl.utils import RandomWalker
 
 
@@ -91,12 +90,6 @@ class SAGE(BaseModel):
                     x = F.dropout(x, p=self.dropout, training=self.training)
         return x
 
-    def node_classification_loss(self, data):
-        return self.loss(data)
-
-    def self_supervised_loss(self, data):
-        return self.loss(data)
-
     def loss(self, data):
         x = self.forward(data)
         device = x.device
@@ -131,7 +124,3 @@ class SAGE(BaseModel):
 
     def sampling(self, edge_index, num_sample):
         return sage_sampler(self.adjlist, edge_index, num_sample)
-
-    @staticmethod
-    def get_trainer(args):
-        return SelfSupervisedPretrainer

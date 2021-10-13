@@ -157,7 +157,7 @@ class GTN(BaseModel):
 
         return deg_inv_sqrt[row], deg_inv_sqrt[col]
 
-    def forward(self, graph, target_x, target):
+    def forward(self, graph):
         A = graph.adj
         X = graph.x
         Ws = []
@@ -183,16 +183,5 @@ class GTN(BaseModel):
                     X_ = torch.cat((X_, F.relu(self.gcn(graph, X))), dim=1)
         X_ = self.linear1(X_)
         X_ = F.relu(X_)
-        # X_ = F.dropout(X_, p=0.5)
-        y = self.linear2(X_[target_x])
-        loss = self.cross_entropy_loss(y, target)
-        return loss, y, Ws
-
-    def loss(self, data):
-        loss, y, _ = self.forward(data, data.train_node, data.train_target)
-        return loss
-
-    def evaluate(self, data, nodes, targets):
-        loss, y, _ = self.forward(data, nodes, targets)
-        f1 = accuracy(y, targets)
-        return loss.item(), f1
+        out = self.linear2(X_)
+        return out

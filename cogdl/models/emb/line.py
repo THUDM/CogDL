@@ -29,18 +29,19 @@ class LINE(BaseModel):
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
-        parser.add_argument('--walk-length', type=int, default=80,
-                            help='Length of walk per source. Default is 80.')
-        parser.add_argument('--walk-num', type=int, default=20,
-                            help='Number of walks per source. Default is 20.')
-        parser.add_argument('--negative', type=int, default=5,
-                            help='Number of negative node in sampling. Default is 5.')
-        parser.add_argument('--batch-size', type=int, default=1000,
-                            help='Batch size in SGD training process. Default is 1000.')
-        parser.add_argument('--alpha', type=float, default=0.025,
-                            help='Initial learning rate of SGD. Default is 0.025.')
-        parser.add_argument('--order', type=int, default=3,
-                            help='Order of proximity in LINE. Default is 3 for 1+2.')
+        parser.add_argument("--walk-length", type=int, default=80,
+                            help="Length of walk per source. Default is 80.")
+        parser.add_argument("--walk-num", type=int, default=20,
+                            help="Number of walks per source. Default is 20.")
+        parser.add_argument("--negative", type=int, default=5,
+                            help="Number of negative node in sampling. Default is 5.")
+        parser.add_argument("--batch-size", type=int, default=1000,
+                            help="Batch size in SGD training process. Default is 1000.")
+        parser.add_argument("--alpha", type=float, default=0.025,
+                            help="Initial learning rate of SGD. Default is 0.025.")
+        parser.add_argument("--order", type=int, default=3,
+                            help="Order of proximity in LINE. Default is 3 for 1+2.")
+        parser.add_argument("--hidden-size", type=int, default=128)
         # fmt: on
 
     @classmethod
@@ -56,6 +57,7 @@ class LINE(BaseModel):
         )
 
     def __init__(self, dimension, walk_length, walk_num, negative, batch_size, alpha, order):
+        super(LINE, self).__init__()
         self.dimension = dimension
         self.walk_length = walk_length
         self.walk_num = walk_num
@@ -64,25 +66,29 @@ class LINE(BaseModel):
         self.init_alpha = alpha
         self.order = order
 
-    def train(self, G):
+    def train(self, graph, return_dict=False):
+        return self.train(graph, return_dict)
+
+    def forward(self, graph, return_dict=False):
         # run LINE algorithm, 1-order, 2-order or 3(1-order + 2-order)
-        self.G = G
+        nx_g = graph.to_networkx()
+        self.G = nx_g
         self.is_directed = nx.is_directed(self.G)
-        self.num_node = G.number_of_nodes()
-        self.num_edge = G.number_of_edges()
+        self.num_node = nx_g.number_of_nodes()
+        self.num_edge = nx_g.number_of_edges()
         self.num_sampling_edge = self.walk_length * self.walk_num * self.num_node
 
-        node2id = dict([(node, vid) for vid, node in enumerate(G.nodes())])
+        node2id = dict([(node, vid) for vid, node in enumerate(nx_g.nodes())])
         self.edges = [[node2id[e[0]], node2id[e[1]]] for e in self.G.edges()]
-        self.edges_prob = np.asarray([G[u][v].get("weight", 1.0) for u, v in G.edges()])
+        self.edges_prob = np.asarray([nx_g[u][v].get("weight", 1.0) for u, v in nx_g.edges()])
         self.edges_prob /= np.sum(self.edges_prob)
         self.edges_table, self.edges_prob = alias_setup(self.edges_prob)
 
         degree_weight = np.asarray([0] * self.num_node)
-        for u, v in G.edges():
-            degree_weight[node2id[u]] += G[u][v].get("weight", 1.0)
+        for u, v in nx_g.edges():
+            degree_weight[node2id[u]] += nx_g[u][v].get("weight", 1.0)
             if not self.is_directed:
-                degree_weight[node2id[v]] += G[u][v].get("weight", 1.0)
+                degree_weight[node2id[v]] += nx_g[u][v].get("weight", 1.0)
         self.node_prob = np.power(degree_weight, 0.75)
         self.node_prob /= np.sum(self.node_prob)
         self.node_table, self.node_prob = alias_setup(self.node_prob)
@@ -104,13 +110,22 @@ class LINE(BaseModel):
             embedding2 = preprocessing.normalize(self.emb_vertex, "l2")
 
         if self.order == 1:
-            self.embeddings = embedding1
+            embeddings = embedding1
         elif self.order == 2:
-            self.embeddings = embedding2
+            embeddings = embedding2
         else:
             print("concatenate two embedding...")
-            self.embeddings = np.hstack((embedding1, embedding2))
-        return self.embeddings
+            embeddings = np.hstack((embedding1, embedding2))
+
+        if return_dict:
+            features_matrix = dict()
+            for vid, node in enumerate(nx_g.nodes()):
+                features_matrix[node] = embeddings[vid]
+        else:
+            features_matrix = np.zeros((graph.num_nodes, embeddings.shape[1]))
+            nx_nodes = nx_g.nodes()
+            features_matrix[nx_nodes] = embeddings[np.arange(graph.num_nodes)]
+        return features_matrix
 
     def _update(self, vec_u, vec_v, vec_error, label):
         # update vetex embedding and vec_error

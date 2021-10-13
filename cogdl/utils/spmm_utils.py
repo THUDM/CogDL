@@ -5,9 +5,9 @@ from .utils import build_args_from_dict
 def spmm_scatter(row, col, values, b):
     r"""
     Args:
-        indices : Tensor, shape=(2, E)
+        (row, col): Tensor, shape=(2, E)
         values : Tensor, shape=(E,)
-        b : Tensor, shape=(N, )
+        b : Tensor, shape=(N, d)
     """
     output = b.index_select(0, col) * values.unsqueeze(-1)
     output = torch.zeros_like(b).scatter_add_(0, row.unsqueeze(-1).expand_as(output), output)
@@ -94,29 +94,44 @@ def edge_softmax(graph, edge_val):
     Returns:
         Softmax values of edge values for nodes
     """
-    edge_val_max = edge_val.max().item()
-    while edge_val_max > 10:
-        edge_val -= edge_val / 2
+    csr_edge_softmax = CONFIGS["csr_edge_softmax"]
+    if csr_edge_softmax is not None and edge_val.device.type != "cpu":
+        edge_val = edge_val.view(-1, 1)
+        val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
+        val = val.view(-1)
+        return val
+    else:
         edge_val_max = edge_val.max().item()
+        while edge_val_max > 10:
+            edge_val -= edge_val / 2
+            edge_val_max = edge_val.max().item()
 
-    with graph.local_graph():
-        edge_val = torch.exp(edge_val)
-        graph.edge_weight = edge_val
-        x = torch.ones(graph.num_nodes, 1).to(edge_val.device)
-        node_sum = spmm(graph, x).squeeze()
-        row = graph.edge_index[0]
-        softmax_values = edge_val / node_sum[row]
-        return softmax_values
+        with graph.local_graph():
+            edge_val = torch.exp(edge_val)
+            graph.edge_weight = edge_val
+            x = torch.ones(graph.num_nodes, 1).to(edge_val.device)
+            node_sum = spmm(graph, x).squeeze()
+            row = graph.edge_index[0]
+            softmax_values = edge_val / node_sum[row]
+            return softmax_values
 
 
 def mul_edge_softmax(graph, edge_val):
     """
+    Args:
+        graph: cogdl.Graph
+        edge_val: torch.Tensor, shape=(E, d)
     Returns:
         Softmax values of multi-dimension edge values. shape: [E, H]
     """
     csr_edge_softmax = CONFIGS["csr_edge_softmax"]
     if csr_edge_softmax is not None and edge_val.device.type != "cpu":
-        val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
+        if len(edge_val.shape) == 1:
+            edge_val = edge_val.view(-1, 1)
+            val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
+            val = val.view(-1)
+        else:
+            val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
         return val
     else:
         val = []

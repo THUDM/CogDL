@@ -96,22 +96,12 @@ class ConvELayer(nn.Module):
 
 
 class GNNLinkPredict(nn.Module):
-    def __init__(self, score_func, dim):
+    def __init__(self):
         super(GNNLinkPredict, self).__init__()
         self.edge_set = None
-        self.score_func = score_func
-        if score_func == "distmult":
-            self.scoring = DistMultLayer()
-        elif score_func == "conve":
-            self.scoring = ConvELayer(dim)
-        else:
-            raise NotImplementedError
 
     def forward(self, graph):
         raise NotImplementedError
-
-    def get_score(self, heads, tails, rels):
-        return self.scoring(heads, tails, rels)
 
     def get_edge_set(self, edge_index, edge_types):
         if self.edge_set is None:
@@ -120,8 +110,8 @@ class GNNLinkPredict(nn.Module):
             torch.cuda.empty_cache()
             self.edge_set = set([tuple(x) for x in edge_list])  # tuple(h, t, r)
 
-    def _loss(self, head_embed, tail_embed, rel_embed, labels):
-        score = self.get_score(head_embed, tail_embed, rel_embed)
+    def _loss(self, head_embed, tail_embed, rel_embed, labels, scoring):
+        score = scoring(head_embed, tail_embed, rel_embed)
         prediction_loss = F.binary_cross_entropy_with_logits(score, labels.float())
         return prediction_loss
 

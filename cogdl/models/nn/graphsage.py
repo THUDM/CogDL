@@ -1,4 +1,3 @@
-from typing import Any
 import random
 
 import torch
@@ -7,8 +6,6 @@ import torch.nn.functional as F
 
 from cogdl.data import Graph
 from cogdl.layers import SAGELayer
-from cogdl.trainers.sampled_trainer import NeighborSamplingTrainer
-from cogdl.utils import get_activation, get_norm_layer
 
 from .. import BaseModel, register_model
 
@@ -45,7 +42,7 @@ class Graphsage(BaseModel):
         parser.add_argument("--num-layers", type=int, default=2)
         parser.add_argument("--sample-size", type=int, nargs='+', default=[10, 10])
         parser.add_argument("--dropout", type=float, default=0.5)
-        parser.add_argument("--batch-size", type=int, default=128)
+        # parser.add_argument("--batch-size", type=int, default=128)
         parser.add_argument("--aggr", type=str, default="mean")
         # fmt: on
 
@@ -91,15 +88,6 @@ class Graphsage(BaseModel):
                 x = F.dropout(x, p=self.dropout, training=self.training)
         return x
 
-    def mini_loss(self, data):
-        return self.loss_fn(
-            self.mini_forward(data)[data.train_mask],
-            data.y[data.train_mask],
-        )
-
-    def predict(self, data):
-        return self.forward(data)
-
     def forward(self, *args):
         if isinstance(args[0], Graph):
             return self.mini_forward(*args)
@@ -115,14 +103,6 @@ class Graphsage(BaseModel):
                     x = F.dropout(x, p=self.dropout, training=self.training)
             return x
 
-    def node_classification_loss(self, *args):
-        if isinstance(args[0], Graph):
-            return self.mini_loss(*args)
-        else:
-            x, adjs, y = args
-            pred = self.forward(x, adjs)
-            return self.loss_fn(pred, y)
-
     def inference(self, x_all, data_loader):
         device = next(self.parameters()).device
         for i in range(len(self.convs)):
@@ -137,16 +117,6 @@ class Graphsage(BaseModel):
                 output.append(x.cpu())
             x_all = torch.cat(output, dim=0)
         return x_all
-
-    @staticmethod
-    def get_trainer(args):
-        if args.dataset not in ["cora", "citeseer", "pubmed"]:
-            return NeighborSamplingTrainer
-        if hasattr(args, "use_trainer"):
-            return NeighborSamplingTrainer
-
-    def set_data_device(self, device):
-        self.device = device
 
 
 @register_model("sage")
@@ -214,18 +184,9 @@ class SAGE(BaseModel):
                 for i in range(num_layers)
             ]
         )
-        # if norm is not None:
-        #     self.norm_list = nn.ModuleList([get_norm_layer(norm, hidden_size) for _ in range(num_layers - 1)])
-        # else:
-        #     self.norm_list = None
-        # self.act = get_activation(activation)
 
     def forward(self, graph):
         x = graph.x
-        for i, layer in enumerate(self.layers):
+        for layer in self.layers:
             x = layer(graph, x)
-            # if i != self.num_layers - 1:
-            #     if self.norm_list is not None:
-            #         x = self.norm_list[i](x)
-            #     x = self.act(x)
         return x

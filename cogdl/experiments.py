@@ -16,7 +16,7 @@ from cogdl.models import build_model
 from cogdl.datasets import build_dataset
 from cogdl.wrappers import fetch_model_wrapper, fetch_data_wrapper
 from cogdl.options import get_default_args
-from cogdl.runner.runner import Trainer
+from cogdl.trainer import Trainer
 
 
 class AutoML(object):

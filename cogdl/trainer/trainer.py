@@ -11,9 +11,9 @@ import torch.multiprocessing as mp
 
 from cogdl.wrappers.data_wrapper.base_data_wrapper import DataWrapper
 from cogdl.wrappers.model_wrapper.base_model_wrapper import ModelWrapper, EmbeddingModelWrapper
-from cogdl.runner.runner_utils import evaluation_comp, load_model, save_model, ddp_end, ddp_after_epoch, Printer
-from cogdl.runner.embed_runner import EmbeddingTrainer
-from cogdl.runner.controller import DataController
+from cogdl.trainer.trainer_utils import evaluation_comp, load_model, save_model, ddp_end, ddp_after_epoch, Printer
+from cogdl.trainer.embed_trainer import EmbeddingTrainer
+from cogdl.trainer.controller import DataController
 from cogdl.loggers import build_logger
 from cogdl.data import Graph
 

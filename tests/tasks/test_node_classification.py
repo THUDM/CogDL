@@ -414,25 +414,26 @@ def test_dropedge_inceptiongcn_cora():
     assert 0 <= ret["test_acc"] <= 1
 
 
-# def test_pprgo_cora():
-#     args = get_default_args_for_nc("cora", "pprgo", dw="pprgo_dw", mw="pprgo_mw")
-#     args.cpu = True
-#     args.k = 32
-#     args.alpha = 0.5
-#     args.eval_step = 1
-#     args.batch_size = 32
-#     args.test_batch_size = 128
-#     args.activation = "relu"
-#     args.num_layers = 2
-#     args.nprop_inference = 2
-#     args.eps = 0.001
-#     for norm in ["sym", "row"]:
-#         args.norm = norm
-#         ret = train(args)
-#         assert 0 <= ret["test_acc"] <= 1
+def test_pprgo_cora():
+    args = get_default_args_for_nc("cora", "pprgo", dw="pprgo_dw", mw="pprgo_mw")
+    args.cpu = True
+    args.k = 32
+    args.alpha = 0.5
+    args.eval_step = 1
+    args.batch_size = 32
+    args.test_batch_size = 128
+    args.activation = "relu"
+    args.num_layers = 2
+    args.nprop_inference = 2
+    args.eps = 0.001
+    for norm in ["sym", "row"]:
+        args.norm = norm
+        ret = train(args)
+        assert 0 <= ret["test_acc"] <= 1
 
-#     ret = train(args)
-#     assert 0 <= ret["test_acc"] <= 1
+    args.test_batch_size = 0
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_gcn_ppi():
@@ -448,7 +449,7 @@ def test_sagn_cora():
     args.nhop = args.label_nhop = 2
     args.threshold = 0.5
     args.use_labels = True
-    args.nstage = [2, 2]
+    args.nstage = 2
     args.batch_size = 32
     args.data_gpu = False
     args.attn_drop = 0.0
@@ -556,5 +557,5 @@ if __name__ == "__main__":
     test_gcn_ppi()
     test_gcc_cora()
     # test_clustergcn_cora()
-    # test_pprgo_cora()
-    # test_sagn_cora()
+    test_pprgo_cora()
+    test_sagn_cora()

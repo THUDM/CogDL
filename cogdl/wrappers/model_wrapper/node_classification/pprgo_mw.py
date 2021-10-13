@@ -17,10 +17,14 @@ class PPRGoModelWrapper(ModelWrapper):
 
     def val_step(self, batch):
         graph = batch
-        pred = self.model.predict(graph)
+        if isinstance(batch, list):
+            x, targets, ppr_scores, y = batch
+            pred = self.model(x, targets, ppr_scores)
+        else:
+            pred = self.model.predict(graph)
 
-        y = graph.y[graph.val_mask]
-        pred = pred[graph.val_mask]
+            y = graph.y[graph.val_mask]
+            pred = pred[graph.val_mask]
 
         loss = self.default_loss_fn(pred, y)
 
@@ -31,11 +35,17 @@ class PPRGoModelWrapper(ModelWrapper):
 
     def test_step(self, batch):
         graph = batch
-        print(next(self.parameters()).device, graph.x.device)
-        pred = self.model.predict(graph)
-        test_mask = batch.test_mask
-        pred = pred[test_mask]
-        y = graph.y[test_mask]
+
+        if isinstance(batch, list):
+            x, targets, ppr_scores, y = batch
+            pred = self.model(x, targets, ppr_scores)
+        else:
+            pred = self.model.predict(graph)
+            test_mask = batch.test_mask
+
+            pred = pred[test_mask]
+            y = graph.y[test_mask]
+
         loss = self.default_loss_fn(pred, y)
 
         self.note("test_loss", loss.item())

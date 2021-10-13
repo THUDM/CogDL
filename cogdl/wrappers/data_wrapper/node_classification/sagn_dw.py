@@ -41,7 +41,7 @@ class SAGNDataWrapper(DataWrapper):
         test_nid = self.dataset.data.test_nid
         return DataLoader(test_nid, batch_size=self.batch_size, shuffle=False)
 
-    def post_stage(self, stage, model_w_out):
+    def post_stage_wrapper(self):
         data = self.dataset.data
         train_nid, val_nid, test_nid = data.train_nid, data.val_nid, data.test_nid
         all_nid = torch.cat([train_nid, val_nid, test_nid])

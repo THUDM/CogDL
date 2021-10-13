@@ -1,7 +1,6 @@
 import copy
 from typing import Optional
 import numpy as np
-from torch import optim
 from tqdm import tqdm
 import os
 

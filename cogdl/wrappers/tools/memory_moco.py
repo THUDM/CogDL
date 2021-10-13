@@ -51,7 +51,7 @@ class MemoryMoCo(nn.Module):
 
         # # update memory
         with torch.no_grad():
-            out_ids = torch.arange(batchSize).cuda()
+            out_ids = torch.arange(batchSize, device=out.device)
             out_ids += self.index
             out_ids = torch.fmod(out_ids, self.queueSize)
             out_ids = out_ids.long()
@@ -71,7 +71,7 @@ class NCESoftmaxLoss(nn.Module):
     def forward(self, x):
         bsz = x.shape[0]
         x = x.squeeze()
-        label = torch.zeros([bsz]).cuda().long()
+        label = torch.zeros([bsz], device=x.device).long()
         loss = self.criterion(x, label)
         return loss
 

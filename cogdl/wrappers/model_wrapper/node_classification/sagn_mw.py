@@ -13,11 +13,12 @@ class SagnModelWrapper(ModelWrapper):
     def train_step(self, batch):
         batch_x, batch_y_emb, y = batch
         pred = self.model(batch_x, batch_y_emb)
-        loss = self.default_loss_fn(pred, y[batch])
+        loss = self.default_loss_fn(pred, y)
         return loss
 
     def val_step(self, batch):
         batch_x, batch_y_emb, y = batch
+        # print(batch_x.device, batch_y_emb.devce, y.device, next(self.parameters()).device)
         pred = self.model(batch_x, batch_y_emb)
 
         metric = self.evaluate(pred, y, metric="auto")
@@ -26,10 +27,18 @@ class SagnModelWrapper(ModelWrapper):
         self.note("val_metric", metric)
 
     def test_step(self, batch):
-        pass
+        batch_x, batch_y_emb, y = batch
+        pred = self.model(batch_x, batch_y_emb)
 
-    def post_stage(self, stage, data_w):
+        metric = self.evaluate(pred, y, metric="auto")
+
+        self.note("test_loss", self.default_loss_fn(pred, y))
+        self.note("test_metric", metric)
+
+    def pre_stage(self, stage, data_w):
         device = next(self.model.parameters()).device
+        if stage == 0:
+            return None
 
         self.model.eval()
         preds = []
@@ -37,11 +46,11 @@ class SagnModelWrapper(ModelWrapper):
         eval_loader = data_w.post_stage_wrapper()
         with torch.no_grad():
             for batch in eval_loader:
-                batch_x, batch_y_emb = data_w.post_stage_transform(batch)
+                batch_x, batch_y_emb, _ = data_w.pre_stage_transform(batch)
                 batch_x = batch_x.to(device)
                 batch_y_emb = batch_y_emb.to(device) if batch_y_emb is not None else batch_y_emb
                 pred = self.model(batch_x, batch_y_emb)
-                preds.append(pred.to(self.data_device))
+                preds.append(pred.to("cpu"))
         probs = torch.cat(preds, dim=0)
         return probs
 

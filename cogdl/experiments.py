@@ -207,6 +207,7 @@ def train(args):  # noqa: C901
         log_path=args.log_path,
         project=args.project,
         no_test=args.no_test,
+        nstage=args.nstage,
     )
 
     # Go!!!

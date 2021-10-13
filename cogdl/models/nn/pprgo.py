@@ -49,7 +49,7 @@ class PPRGo(BaseModel):
         return out
 
     def predict(self, graph, batch_size=10000):
-        device = next(self.fc.parameters()).device
+        device = next(self.parameters()).device
         x = graph.x
         num_nodes = x.shape[0]
         pred_logits = []
@@ -59,6 +59,7 @@ class PPRGo(BaseModel):
                 batch_logits = self.fc(batch_x)
                 pred_logits.append(batch_logits.cpu())
         pred_logits = torch.cat(pred_logits, dim=0)
+        pred_logits = pred_logits.to(device)
 
         with graph.local_graph():
             if self.norm == "sym":

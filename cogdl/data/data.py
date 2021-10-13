@@ -865,9 +865,9 @@ class Graph(BaseGraph):
             return self.csr_subgraph(node_idx, keep_order)
         else:
             if isinstance(node_idx, list):
-                node_idx = np.array(node_idx)
+                node_idx = np.array(node_idx, dtype=np.int64)
             elif torch.is_tensor(node_idx):
-                node_idx = node_idx.cpu().numpy()
+                node_idx = node_idx.long().cpu().numpy()
             if self.__is_train__ and self._adj_train is not None:
                 key = "__mx_train__"
             else:

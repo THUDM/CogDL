@@ -13,15 +13,15 @@ class SAGNDataWrapper(DataWrapper):
         parser.add_argument("--batch-size", type=int, default=128)
         parser.add_argument("--label-nhop", type=int, default=3)
         parser.add_argument("--threshold", type=float, default=0.3)
-        parser.add_argument("--nhtop")
+        parser.add_argument("--nhop", type=int, default=3)
         # fmt: on
 
-    def __init__(self, dataset, batch_size, label_nhop, threshold, nhtop):
+    def __init__(self, dataset, batch_size, label_nhop, threshold, nhop):
         super(SAGNDataWrapper, self).__init__(dataset)
         self.dataset = dataset
         self.batch_size = batch_size
         self.label_nhop = label_nhop
-        self.nhop = nhtop
+        self.nhop = nhop
         self.threshold = threshold
 
         self.label_emb, self.labels_with_pseudos, self.probs = None, None, None
@@ -38,16 +38,16 @@ class SAGNDataWrapper(DataWrapper):
         return DataLoader(val_nid, batch_size=self.batch_size, shuffle=False)
 
     def test_wrapper(self):
-        test_nid = self.dataset.data
+        test_nid = self.dataset.data.test_nid
         return DataLoader(test_nid, batch_size=self.batch_size, shuffle=False)
 
-    def post_stage_wrapper(self):
+    def post_stage(self, stage, model_w_out):
         data = self.dataset.data
         train_nid, val_nid, test_nid = data.train_nid, data.val_nid, data.test_nid
         all_nid = torch.cat([train_nid, val_nid, test_nid])
         return DataLoader(all_nid.numpy(), batch_size=self.batch_size, shuffle=False)
 
-    def post_stage_transform(self, batch):
+    def pre_stage_transform(self, batch):
         return self.train_transform(batch)
 
     def pre_transform(self):
@@ -55,6 +55,7 @@ class SAGNDataWrapper(DataWrapper):
 
     def train_transform(self, batch):
         batch_x = [x[batch] for x in self.multihop_feats]
+        batch_x = torch.stack(batch_x)
         if self.label_emb is not None:
             batch_y_emb = self.label_emb[batch]
         else:
@@ -64,6 +65,8 @@ class SAGNDataWrapper(DataWrapper):
 
     def val_transform(self, batch):
         batch_x = [x[batch] for x in self.multihop_feats]
+        batch_x = torch.stack(batch_x)
+
         if self.label_emb is not None:
             batch_y_emb = self.label_emb[batch]
         else:

@@ -37,7 +37,6 @@ def set_default_wrapper_config():
         "gat",
         "graphsaint",
         "m3s",
-        "supergat",
     ]
 
     graph_classification_models = ["gin", "patchy_san", "diffpool", "infograph", "dgcnn", "sortpool"]
@@ -82,6 +81,7 @@ def set_default_wrapper_config():
     node_classification_wrappers["grand"]["mw"] = "grand_mw"
     node_classification_wrappers["gcnmix"]["mw"] = "gcnmix_mw"
     node_classification_wrappers["grace"]["mw"] = "grace_mw"
+    node_classification_wrappers["pprgo"]["mw"] = "pprgo_mw"
 
     node_classification_wrappers["m3s"]["dw"] = "m3s_dw"
     node_classification_wrappers["graphsage"]["dw"] = "graphsage_dw"

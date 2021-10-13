@@ -89,27 +89,6 @@ def test_pairwise_attr_sim():
     assert 0 <= ret["test_acc"] <= 1
 
 
-# def test_supergat():
-#     args = get_default_args()
-#     args.model = "supergat"
-#     args.trainer = None
-#     args.heads = 8
-#     args.attention_type = "mask_only"
-#     args.neg_sample_ratio = 0.5
-#     args.edge_sampling_ratio = 0.8
-#     args.val_interval = 1
-#     args.att_lambda = 10
-#     args.pretraining_noise_ratio = 0
-#     args.to_undirected_at_neg = False
-#     args.to_undirected = False
-#     args.out_heads = None
-#     args.total_pretraining_epoch = 0
-#     args.super_gat_criterion = None
-#     args.scaling_factor = None
-#     ret = train(args)
-#     assert 0 <= ret["test_acc"] <= 1
-
-
 def test_m3s():
     args = get_default_args_generative("cora", "m3s", dw="m3s_dw", mw="m3s_mw")
     args.approximate = True
@@ -124,7 +103,6 @@ def test_m3s():
 
 
 if __name__ == "__main__":
-    # test_supergat()
     test_m3s()
     test_edgemask()
     test_pairwise_distance()

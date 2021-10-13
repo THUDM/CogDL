@@ -120,7 +120,6 @@ SUPPORTED_MODELS = {
     "unsup_graphsage": "cogdl.models.nn.unsup_graphsage",
     "graphsaint": "cogdl.models.nn.graphsaint",
     "m3s": "cogdl.models.nn.m3s",
-    "supergat": "cogdl.models.nn.pyg_supergat",
     "moe_gcn": "cogdl.models.nn.moe_gcn",
     "lightgcn": "cogdl.models.nn.lightgcn",
     "correct_smooth": "cogdl.models.nn.correct_smooth",

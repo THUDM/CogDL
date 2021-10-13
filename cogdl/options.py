@@ -44,6 +44,7 @@ def get_parser():
 
     parser.add_argument("--use-best-config", action="store_true", help="use best config")
     parser.add_argument("--unsup", action="store_true")
+    parser.add_argument("--nstage", type=int, default=1)
 
     parser.add_argument("--devices", default=[0], type=int, nargs="+", help="which GPU to use")
     parser.add_argument("--cpu", action="store_true", help="use CPU instead of CUDA")

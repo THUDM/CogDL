@@ -440,24 +440,24 @@ def test_gcn_ppi():
     args.cpu = True
 
     ret = train(args)
+    assert 0 <= ret["test_micro_f1"] <= 1
+
+
+def test_sagn_cora():
+    args = get_default_args_for_nc("cora", "sagn", dw="sagn_dw", mw="sagn_mw")
+    args.nhop = args.label_nhop = 2
+    args.threshold = 0.5
+    args.use_labels = True
+    args.nstage = [2, 2]
+    args.batch_size = 32
+    args.data_gpu = False
+    args.attn_drop = 0.0
+    args.input_drop = 0.0
+    args.nhead = 2
+    args.negative_slope = 0.2
+    args.mlp_layer = 2
+    ret = train(args)
     assert 0 <= ret["test_acc"] <= 1
-
-
-# def test_sagn_cora():
-#     args = get_default_args_for_nc("cora", "sagn", dw="sagn_dw", mw="sagn_mw")
-#     args.nhop = args.label_nhop = 2
-#     args.threshold = 0.5
-#     args.use_labels = True
-#     args.nstage = [2, 2]
-#     args.batch_size = 32
-#     args.data_gpu = False
-#     args.attn_drop = 0.0
-#     args.input_drop = 0.0
-#     args.nhead = 2
-#     args.negative_slope = 0.2
-#     args.mlp_layer = 2
-#     ret = train(args)
-#     assert 0 <= ret["test_acc"] <= 1
 
 
 def test_c_s_cora():
@@ -516,6 +516,18 @@ def test_revnets_cora():
     assert 0 <= train(args)["test_acc"] <= 1
 
 
+def test_gcc_cora():
+    args = get_default_args_for_nc("cora", "gcc", mw="gcc_mw", dw="gcc_dw")
+    args.max_epoch = 1
+    args.num_workers = 0
+    args.batch_size = 16
+    args.rw_hops = 8
+    args.subgraph_size = 16
+    args.positional_embedding_size = 16
+    args.nce_k = 4
+    train(args)
+
+
 if __name__ == "__main__":
     test_gdc_gcn_cora()
     test_gcn_cora()
@@ -541,6 +553,8 @@ if __name__ == "__main__":
     test_dropedge_inceptiongcn_cora()
     test_dropedge_densegcn_cora()
     test_revnets_cora()
+    test_gcn_ppi()
+    test_gcc_cora()
     # test_clustergcn_cora()
     # test_pprgo_cora()
     # test_sagn_cora()

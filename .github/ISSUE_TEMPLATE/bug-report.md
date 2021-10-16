@@ -29,7 +29,6 @@ Steps to reproduce the behavior:
  - Python version:
  - PyTorch version:
  - PyG version (if installed):
- - DGL version (if installed):
  - CUDA/cuDNN version (if applicable):
  - Any other relevant information:
 

@@ -136,13 +136,8 @@ def _add_undirected_graph_positional_embedding(g: Graph, hidden_size, retry=10):
         adj = g.to_scipy_csr()
     laplacian = adj
 
-    # adj = g.adjacency_matrix_scipy(transpose=False, return_edge_ids=False).astype(float)
-    # norm = sparse.diags(dgl.backend.asnumpy(g.in_degrees()).clip(1) ** -0.5, dtype=float)
-    # laplacian = norm * adj * norm
-
     k = min(n - 2, hidden_size)
     x = eigen_decomposision(n, k, laplacian, hidden_size, retry)
-    # g.ndata["pos_undirected"] = x.float()
     g.pos_undirected = x.float()
     return g
 

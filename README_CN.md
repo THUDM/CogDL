@@ -214,8 +214,8 @@ git clone https://github.com/THUDM/cogdl /cogdl
 如何使用其他图深度学习库中的模型？
 </summary>
 <br/>
-如何你对其他图深度学习库（比如PyTorch Geometric，Deep Graph Library）比较熟悉，你可以基于这些库的模块来在CogDL里实现相关模型。
-你可以通过下述的指南来安装相应的库，例如PyTorch Geometric (https://github.com/rusty1s/pytorch_geometric/#installation)，和Deep Graph Libraray (https://docs.dgl.ai/install/index.html)。
+如何你对其他图深度学习库（比如PyTorch Geometric）比较熟悉，你可以基于这些库的模块来在CogDL里实现相关模型。
+你可以通过下述的指南来安装相应的库，例如PyTorch Geometric (https://github.com/rusty1s/pytorch_geometric/#installation)。
 对于如何使用PyG的模块来实现模型，你可以在示例中找到一些参考：[examples/pytorch_geometric](https://github.com/THUDM/cogdl/tree/master/examples/pytorch_geometric/)。
 </details>
 

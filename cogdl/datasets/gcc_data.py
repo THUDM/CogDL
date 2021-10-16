@@ -23,8 +23,8 @@ class GCCDataset(Dataset):
         edge_index_1, dict_1, self.node2id_1 = self.preprocess(root, name1)
         edge_index_2, dict_2, self.node2id_2 = self.preprocess(root, name2)
         self.data = [
-            Graph(x=None, edge_index=edge_index_1, y=dict_1),
-            Graph(x=None, edge_index=edge_index_2, y=dict_2),
+            Graph(x=None, edge_index=edge_index_1, name_dict=dict_1),
+            Graph(x=None, edge_index=edge_index_2, name_dict=dict_2),
         ]
         self.transform = None
 
@@ -71,6 +71,7 @@ class GCCDataset(Dataset):
                     # to undirected
                     edge_list.append([node2id[x], node2id[y]])
                     edge_list.append([node2id[y], node2id[x]])
+        edge_list = torch.LongTensor(edge_list).t()
 
         name_dict = dict()
         with open(dict_path) as f:
@@ -81,7 +82,7 @@ class GCCDataset(Dataset):
                     node2id[x] = len(node2id)
                 name_dict[name] = node2id[x]
 
-        return torch.LongTensor(edge_list).t(), name_dict, node2id
+        return (edge_list[0], edge_list[1]), name_dict, node2id
 
     def __repr__(self):
         return "{}()".format(self.name)

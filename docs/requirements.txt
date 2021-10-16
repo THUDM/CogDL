@@ -23,7 +23,6 @@ https://pytorch-geometric.com/whl/torch-1.7.0+cpu/torch_sparse-0.6.9-cp37-cp37m-
 https://pytorch-geometric.com/whl/torch-1.7.0+cpu/torch_cluster-1.5.9-cp37-cp37m-linux_x86_64.whl
 https://pytorch-geometric.com/whl/torch-1.7.0+cpu/torch_spline_conv-1.2.1-cp37-cp37m-linux_x86_64.whl
 torch-geometric
-dgl==0.4.3
 numba
 transformers
 sentencepiece

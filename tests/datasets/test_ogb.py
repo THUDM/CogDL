@@ -10,14 +10,6 @@ def test_ogbn_arxiv():
     assert data.num_nodes == 169343
 
 
-def test_ogbn_proteins():
-    args = build_args_from_dict({"dataset": "ogbn-proteins"})
-    assert args.dataset == "ogbn-proteins"
-    dataset = build_dataset(args)
-    data = dataset.data
-    assert data.num_nodes == 132534
-
-
 def test_ogbg_molhiv():
     args = build_args_from_dict({"dataset": "ogbg-molhiv"})
     assert args.dataset == "ogbg-molhiv"
@@ -29,5 +21,4 @@ def test_ogbg_molhiv():
 
 if __name__ == "__main__":
     test_ogbn_arxiv()
-    test_ogbn_proteins()
     test_ogbg_molhiv()

@@ -6,10 +6,9 @@ from sklearn import preprocessing
 from tqdm import tqdm
 
 from cogdl.utils import alias_draw, alias_setup
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("line")
 class LINE(BaseModel):
     r"""The LINE model from the `"Line: Large-scale information network embedding"
     <http://arxiv.org/abs/1503.03578>`_ paper.

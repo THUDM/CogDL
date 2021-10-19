@@ -1,12 +1,10 @@
-from typing import Any
 import torch
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from cogdl.utils import spmm
 from cogdl.layers import PPRGoLayer
 
 
-@register_model("pprgo")
 class PPRGo(BaseModel):
     @staticmethod
     def add_args(parser):

@@ -3,33 +3,11 @@ import torch.nn.functional as F
 from torch_geometric.nn.conv import GATConv
 
 from cogdl import experiment
-from cogdl.models import BaseModel, register_model
+from cogdl.models import BaseModel
+from cogdl.datasets.planetoid_data import CoraDataset
 
 
-@register_model("pyg_gat")
 class GAT(BaseModel):
-    @staticmethod
-    def add_args(parser):
-        """Add model-specific arguments to the parser."""
-        # fmt: off
-        parser.add_argument("--num-features", type=int)
-        parser.add_argument("--num-classes", type=int)
-        parser.add_argument("--hidden-size", type=int, default=8)
-        parser.add_argument("--num-heads", type=int, default=8)
-        parser.add_argument("--dropout", type=float, default=0.6)
-        parser.add_argument("--lr", type=float, default=0.005)
-        # fmt: on
-
-    @classmethod
-    def build_model_from_args(cls, args):
-        return cls(
-            args.num_features,
-            args.hidden_size,
-            args.num_classes,
-            args.num_heads,
-            args.dropout,
-        )
-
     def __init__(self, in_feats, hidden_size, out_feats, num_heads, dropout):
         super(GAT, self).__init__()
         self.in_feats = in_feats
@@ -51,4 +29,6 @@ class GAT(BaseModel):
 
 
 if __name__ == "__main__":
-    ret = experiment(dataset="cora", model="pyg_gat")
+    cora = CoraDataset()
+    model = GAT(in_feats=cora.num_features, hidden_size=64, out_feats=cora.num_classes, num_heads=2, dropout=0.1)
+    ret = experiment(dataset=cora, model=model, dw="node_classification_dw", mw="node_classification_mw")

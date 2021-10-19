@@ -8,8 +8,6 @@ import torch
 from cogdl.data import Dataset, Graph
 from cogdl.utils import download_url, untar
 
-from . import register_dataset
-
 
 def read_cf_amazon(file_name):
     return np.loadtxt(file_name, dtype=np.int32)  # [u_id, i_id]
@@ -176,7 +174,6 @@ class RecDataset(Dataset):
         return "{}()".format(self.name)
 
 
-@register_dataset("yelp2018")
 class Yelp2018Dataset(RecDataset):
     def __init__(self, data_path="data"):
         dataset = "yelp2018"
@@ -184,7 +181,6 @@ class Yelp2018Dataset(RecDataset):
         super(Yelp2018Dataset, self).__init__(path, dataset)
 
 
-@register_dataset("ali")
 class AliDataset(RecDataset):
     def __init__(self, data_path="data"):
         dataset = "ali"
@@ -192,7 +188,6 @@ class AliDataset(RecDataset):
         super(AliDataset, self).__init__(path, dataset)
 
 
-@register_dataset("amazon-rec")
 class AmazonRecDataset(RecDataset):
     def __init__(self, data_path="data"):
         dataset = "amazon-rec"

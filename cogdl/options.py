@@ -3,8 +3,8 @@ import argparse
 import copy
 import warnings
 
-from cogdl.datasets import try_import_dataset
-from cogdl.models import MODEL_REGISTRY, try_import_model
+from cogdl.datasets import try_adding_dataset_args
+from cogdl.models import try_adding_model_args
 from cogdl.wrappers import fetch_data_wrapper, fetch_model_wrapper
 from cogdl.utils import build_args_from_dict
 from cogdl.wrappers.default_match import get_wrappers_name
@@ -59,6 +59,7 @@ def get_parser():
     parser.add_argument("--no-test", action="store_true")
 
     parser.add_argument("--actnn", action="store_true")
+    parser.add_argument("--rp-ratio", type=int, default=1)
     # fmt: on
     return parser
 
@@ -154,11 +155,10 @@ def get_diff_args(args1, args2):
 def parse_args_and_arch(parser, args):
     # Add *-specific args to parser.
     for model in args.model:
-        if try_import_model(model):
-            MODEL_REGISTRY[model].add_args(parser)
+        try_adding_model_args(model, parser)
 
     for dataset in args.dataset:
-        try_import_dataset(dataset)
+        try_adding_dataset_args(dataset, parser)
 
     if len(args.model) > 1:
         warnings.warn("Please ensure that models could use the same model wrapper!")

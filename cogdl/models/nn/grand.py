@@ -2,12 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .. import BaseModel, register_model
-from cogdl.layers import MLP
+from .. import BaseModel
 from cogdl.utils import spmm
 
 
-@register_model("grand")
 class Grand(BaseModel):
     """
     Implementation of GRAND in paper `"Graph Random Neural Networks for Semi-Supervised Learning on Graphs"`

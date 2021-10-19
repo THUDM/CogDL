@@ -5,10 +5,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from cogdl.layers import GCNIILayer
-from .. import register_model, BaseModel
+from .. import BaseModel
 
 
-@register_model("gcnii")
 class GCNII(BaseModel):
     """
     Implementation of GCNII in paper `"Simple and Deep Graph Convolutional Networks"` <https://arxiv.org/abs/2007.02133>.

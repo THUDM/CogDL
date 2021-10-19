@@ -8,7 +8,7 @@ Created on October 1, 2020
 import torch
 import torch.nn as nn
 
-from cogdl.models import BaseModel, register_model
+from cogdl.models import BaseModel
 
 
 class GraphConv(nn.Module):
@@ -70,7 +70,6 @@ class GraphConv(nn.Module):
         return embs[: self.n_users, :], embs[self.n_users :, :]
 
 
-@register_model("lightgcn")
 class LightGCN(BaseModel):
     @staticmethod
     def add_args(parser):

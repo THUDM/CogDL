@@ -4,11 +4,10 @@ from torch_geometric.nn import DynamicEdgeConv, global_max_pool
 
 from cogdl.utils import split_dataset_general
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from .mlp import MLP
 
 
-@register_model("dgcnn")
 class DGCNN(BaseModel):
     r"""EdgeConv and DynamicGraph in paper `"Dynamic Graph CNN for Learning on
     Point Clouds" <https://arxiv.org/pdf/1801.07829.pdf>__ .`

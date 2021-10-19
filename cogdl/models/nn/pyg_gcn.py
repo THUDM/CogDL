@@ -3,10 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn.conv import GCNConv
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("pyg_gcn")
 class GCN(BaseModel):
     @staticmethod
     def add_args(parser):

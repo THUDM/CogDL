@@ -1,10 +1,9 @@
 import torch.nn.functional as F
 from cogdl.layers import GCNLayer
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("m3s")
 class M3S(BaseModel):
     @staticmethod
     def add_args(parser):

@@ -1,10 +1,9 @@
 import torch
 from cogdl.data import Graph
-from cogdl.datasets import NodeDataset, register_dataset, build_dataset_from_name, GraphDataset
+from cogdl.datasets import NodeDataset, GraphDataset
 from cogdl.experiments import experiment
 
 
-@register_dataset("mydataset")
 class MyNodeClassificationDataset(NodeDataset):
     def __init__(self, path="data.pt"):
         super(MyNodeClassificationDataset, self).__init__(path)
@@ -31,7 +30,6 @@ class MyNodeClassificationDataset(NodeDataset):
         return data
 
 
-@register_dataset("mygraphdataset")
 class MyGraphClassificationDataset(GraphDataset):
     def __init__(self, path="data_graph.pt"):
         super(MyGraphClassificationDataset, self).__init__(path)
@@ -47,13 +45,14 @@ class MyGraphClassificationDataset(GraphDataset):
 
 
 def test_customized_dataset():
-    dataset = build_dataset_from_name("mydataset")
+    dataset = MyNodeClassificationDataset()
     assert isinstance(dataset[0], Graph)
     assert dataset[0].x.shape[0] == 100
 
 
 def test_customized_graph_dataset():
-    result = experiment(model="gin", dataset="mygraphdataset", degree_node_features=True, max_epoch=10, cpu=True)
+    dataset = MyGraphClassificationDataset()
+    result = experiment(model="gin", dataset=dataset, degree_node_features=True, max_epoch=10, cpu=True)
     result = list(result.values())[0][0]
     assert result["test_acc"] >= 0
 

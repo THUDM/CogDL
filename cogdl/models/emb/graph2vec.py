@@ -7,10 +7,9 @@ import numpy as np
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 import os
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("graph2vec")
 class Graph2Vec(BaseModel):
     r"""The Graph2Vec model from the `"graph2vec: Learning Distributed Representations of Graphs"
     <https://arxiv.org/abs/1707.05005>`_ paper

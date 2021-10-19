@@ -4,7 +4,7 @@ Model
 In this section, we will create a spectral clustering model, which is a very simple graph embedding algorithm.
 We name it spectral.py and put it in cogdl/models/emb directory.
 
-First we import necessary library like numpy, scipy, networkx, sklearn, we also import API like 'BaseModel' and 'register_model' from cogl/models/ to build our new model:
+First we import necessary library like numpy, scipy, networkx, sklearn, we also import API like 'BaseModel' from cogl/models/ to build our new model:
 
 .. code-block:: python
     
@@ -12,14 +12,13 @@ First we import necessary library like numpy, scipy, networkx, sklearn, we also 
     import networkx as nx
     import scipy.sparse as sp
     from sklearn import preprocessing
-    from .. import BaseModel, register_model
+    from .. import BaseModel
   
 
-Then we use function decorator to declare new model for CogDL
+Then we define new model for CogDL
 
 .. code-block:: python
 
-        @register_model('spectral')
         class Spectral(BaseModel):
             (...)
 

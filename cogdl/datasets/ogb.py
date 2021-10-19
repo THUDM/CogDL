@@ -1,14 +1,12 @@
 import os
-import numpy as np
 import torch
 
 from ogb.nodeproppred import NodePropPredDataset
 from ogb.nodeproppred import Evaluator as NodeEvaluator
 from ogb.graphproppred import GraphPropPredDataset
 
-from . import register_dataset
 from cogdl.data import Dataset, Graph, DataLoader
-from cogdl.utils import CrossEntropyLoss, Accuracy, remove_self_loops, coalesce, BCEWithLogitsLoss, to_undirected
+from cogdl.utils import CrossEntropyLoss, Accuracy, remove_self_loops, coalesce, BCEWithLogitsLoss
 
 
 class OGBNDataset(Dataset):
@@ -72,7 +70,6 @@ class OGBNDataset(Dataset):
         return data
 
 
-@register_dataset("ogbn-arxiv")
 class OGBArxivDataset(OGBNDataset):
     def __init__(self, data_path="data"):
         dataset = "ogbn-arxiv"
@@ -90,14 +87,12 @@ class OGBArxivDataset(OGBNDataset):
         return wrap
 
 
-@register_dataset("ogbn-products")
 class OGBProductsDataset(OGBNDataset):
     def __init__(self, data_path="data"):
         dataset = "ogbn-products"
         super(OGBProductsDataset, self).__init__(data_path, dataset)
 
 
-@register_dataset("ogbn-proteins")
 class OGBProteinsDataset(OGBNDataset):
     def __init__(self, data_path="data"):
         dataset = "ogbn-proteins"
@@ -163,7 +158,6 @@ class OGBProteinsDataset(OGBNDataset):
         return data
 
 
-@register_dataset("ogbn-papers100M")
 class OGBPapers100MDataset(OGBNDataset):
     def __init__(self, data_path="data"):
         dataset = "ogbn-papers100M"
@@ -222,28 +216,24 @@ class OGBGDataset(Dataset):
         return int(self.dataset.num_classes)
 
 
-@register_dataset("ogbg-molbace")
 class OGBMolbaceDataset(OGBGDataset):
     def __init__(self, data_path="data"):
         dataset = "ogbg-molbace"
         super(OGBMolbaceDataset, self).__init__(data_path, dataset)
 
 
-@register_dataset("ogbg-molhiv")
 class OGBMolhivDataset(OGBGDataset):
     def __init__(self, data_path="data"):
         dataset = "ogbg-molhiv"
         super(OGBMolhivDataset, self).__init__(data_path, dataset)
 
 
-@register_dataset("ogbg-molpcba")
 class OGBMolpcbaDataset(OGBGDataset):
     def __init__(self, data_path="data"):
         dataset = "ogbg-molpcba"
         super(OGBMolpcbaDataset, self).__init__(data_path, dataset)
 
 
-@register_dataset("ogbg-ppa")
 class OGBPpaDataset(OGBGDataset):
     def __init__(self):
         dataset = "ogbg-ppa"
@@ -251,7 +241,6 @@ class OGBPpaDataset(OGBGDataset):
         super(OGBPpaDataset, self).__init__(path, dataset)
 
 
-@register_dataset("ogbg-code")
 class OGBCodeDataset(OGBGDataset):
     def __init__(self, data_path="data"):
         dataset = "ogbg-code"

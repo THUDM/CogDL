@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from .mlp import MLP
 from cogdl.layers import GINLayer
 from cogdl.utils import batch_mean_pooling, batch_sum_pooling, split_dataset_general
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
 class Encoder(nn.Module):
@@ -87,7 +87,6 @@ class FF(nn.Module):
         return F.relu(self.block(x)) + self.shortcut(x)
 
 
-@register_model("infograph")
 class InfoGraph(BaseModel):
     r"""Implimentation of Infograph in paper `"InfoGraph: Unsupervised and Semi-supervised Graph-Level Representation
      Learning via Mutual Information Maximization" <https://openreview.net/forum?id=r1lfF2NYvH>__. `

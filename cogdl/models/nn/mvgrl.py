@@ -3,7 +3,7 @@ import scipy.sparse as sp
 import torch
 import torch.nn as nn
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from .dgi import GCN
 from cogdl.utils.ppr_utils import build_topk_ppr_matrix_from_data
 from cogdl.data import Graph
@@ -69,7 +69,6 @@ class Discriminator(nn.Module):
 
 
 # Mainly borrowed from https://github.com/kavehhassani/mvgrl
-@register_model("mvgrl")
 class MVGRL(BaseModel):
     @staticmethod
     def add_args(parser):

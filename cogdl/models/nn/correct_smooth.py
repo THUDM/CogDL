@@ -3,7 +3,7 @@ from functools import partial
 import torch
 import torch.nn.functional as F
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from .mlp import MLP
 from cogdl.data import Graph
 from cogdl.utils import spmm
@@ -72,7 +72,6 @@ def diffusion(g, x, nhtop, p=1, alpha=0.5):
     return x
 
 
-@register_model("correct_smooth")
 class CorrectSmooth(BaseModel):
     @staticmethod
     def add_args(parser):
@@ -165,7 +164,6 @@ class CorrectSmooth(BaseModel):
         return result
 
 
-@register_model("correct_smooth_mlp")
 class CorrectSmoothMLP(BaseModel):
     @staticmethod
     def add_args(parser):

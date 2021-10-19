@@ -1,12 +1,11 @@
 import torch
 import torch.nn.functional as F
 
-from .. import BaseModel, register_model
-from cogdl.utils import add_remaining_self_loops, spmm
+from .. import BaseModel
+from cogdl.utils import spmm
 from .mlp import MLP
 
 
-@register_model("ppnp")
 class PPNP(BaseModel):
     @staticmethod
     def add_args(parser):

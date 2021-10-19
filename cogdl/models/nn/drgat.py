@@ -1,13 +1,11 @@
 import numpy as np
 import torch.nn.functional as F
 
-from cogdl.layers import SELayer
+from cogdl.layers import SELayer, GATLayer
 
-from .. import BaseModel, register_model
-from .gat import GATLayer
+from .. import BaseModel
 
 
-@register_model("drgat")
 class DrGAT(BaseModel):
     @staticmethod
     def add_args(parser):

@@ -2,10 +2,9 @@ import torch
 
 from cogdl.experiments import experiment
 from cogdl.data import Graph
-from cogdl.datasets import NodeDataset, register_dataset
+from cogdl.datasets import NodeDataset
 
 
-@register_dataset("mydataset")
 class MyNodeClassificationDataset(NodeDataset):
     def __init__(self, path="mydata.pt"):
         super(MyNodeClassificationDataset, self).__init__(path)
@@ -32,9 +31,5 @@ class MyNodeClassificationDataset(NodeDataset):
 
 
 if __name__ == "__main__":
-    # Run with self-loaded dataset
-    experiment(dw="node_classification_dw", mw="node_classification_mw", dataset="mydataset", model="gcn")
-
-    # Or directly pass the dataset
     dataset = MyNodeClassificationDataset()
     experiment(dw="node_classification_dw", mw="node_classification_mw", dataset=dataset, model="gcn")

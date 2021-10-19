@@ -38,12 +38,18 @@ class SPMMFunction(torch.autograd.Function):
             out = spmm.csr_spmm_no_edge_value(rowptr, colind, feat)
         else:
             out = spmm.csr_spmm(rowptr, colind, edge_weight_csr, feat)
-        ctx.backward_csc = (rowptr, colind, feat, edge_weight_csr, sym)
+        if edge_weight_csr is not None and edge_weight_csr.requires_grad:
+            ctx.backward_csc = (rowptr, colind, feat, edge_weight_csr, sym)
+        else:
+            ctx.backward_csc = (rowptr, colind, edge_weight_csr, sym)
         return out
 
     @staticmethod
     def backward(ctx, grad_out):
-        rowptr, colind, feat, edge_weight_csr, sym = ctx.backward_csc
+        if len(ctx.backward_csc) == 5:
+            rowptr, colind, feat, edge_weight_csr, sym = ctx.backward_csc
+        else:
+            rowptr, colind, edge_weight_csr, sym = ctx.backward_csc
         if edge_weight_csr is not None:
             grad_out = grad_out.contiguous()
             if sym:
@@ -78,18 +84,24 @@ class ActSPMMFunction(torch.autograd.Function):
             out = spmm.csr_spmm_no_edge_value(rowptr, colind, feat)
         else:
             out = spmm.csr_spmm(rowptr, colind, edge_weight_csr, feat)
-        quantized = quantize_activation(feat, None)
-        ctx.backward_csc = (rowptr, colind, quantized, edge_weight_csr, sym)
-        ctx.other_args = feat.shape
-
+        if edge_weight_csr is not None and edge_weight_csr.requires_grad:
+            quantized = quantize_activation(feat, None)
+            ctx.backward_csc = (rowptr, colind, quantized, edge_weight_csr, sym)
+            ctx.other_args = feat.shape
+        else:
+            ctx.backward_csc = (rowptr, colind, edge_weight_csr, sym)
         return out
 
     @staticmethod
     def backward(ctx, grad_out):
-        rowptr, colind, quantized, edge_weight_csr, sym = ctx.backward_csc
-        q_input_shape = ctx.other_args
-        feat = dequantize_activation(quantized, q_input_shape)
-        del quantized, ctx.backward_csc
+        if len(ctx.backward_csc) == 5:
+            rowptr, colind, quantized, edge_weight_csr, sym = ctx.backward_csc
+            q_input_shape = ctx.other_args
+            feat = dequantize_activation(quantized, q_input_shape)
+            del quantized
+        else:
+            rowptr, colind, edge_weight_csr, sym = ctx.backward_csc
+        del ctx.backward_csc
 
         if edge_weight_csr is not None:
             grad_out = grad_out.contiguous()
@@ -98,7 +110,10 @@ class ActSPMMFunction(torch.autograd.Function):
             else:
                 colptr, rowind, edge_weight_csc = spmm.csr2csc(rowptr, colind, edge_weight_csr)
             grad_feat = spmm.csr_spmm(colptr, rowind, edge_weight_csc, grad_out)
-            grad_edge_weight = sddmm.csr_sddmm(rowptr, colind, grad_out, feat)
+            if edge_weight_csr.requires_grad:
+                grad_edge_weight = sddmm.csr_sddmm(rowptr, colind, grad_out, feat)
+            else:
+                grad_edge_weight = None
         else:
             if sym is False:
                 colptr, rowind, edge_weight_csc = spmm.csr2csc(rowptr, colind, edge_weight_csr)

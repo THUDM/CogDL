@@ -6,10 +6,9 @@ from sklearn import preprocessing
 from tqdm import tqdm
 
 from cogdl.utils import alias_draw, alias_setup
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("pte")
 class PTE(BaseModel):
     r"""The PTE model from the `"PTE: Predictive Text Embedding through Large-scale Heterogeneous Text Networks"
     <https://arxiv.org/abs/1508.00200>`_ paper.

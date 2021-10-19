@@ -2,7 +2,7 @@ import os
 
 import torch
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from .mlp import MLP
 from cogdl.utils import spmm, dropout_adj, to_undirected
 
@@ -31,7 +31,6 @@ def multi_hop_ppr_diffusion(graph, x, nhop, alpha=0.5):
     return results
 
 
-@register_model("sign")
 class SIGN(BaseModel):
     @staticmethod
     def add_args(parser):

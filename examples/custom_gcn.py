@@ -3,23 +3,11 @@ import torch.nn.functional as F
 
 from cogdl import experiment
 from cogdl.layers import GCNLayer
-from cogdl.models import BaseModel, register_model
+from cogdl.models import BaseModel
+from cogdl.datasets.planetoid_data import CoraDataset
 
 
-@register_model("mygcn")
 class GCN(BaseModel):
-    @staticmethod
-    def add_args(parser):
-        """Add model-specific arguments to the parser."""
-        # fmt: off
-        parser.add_argument("--hidden-size", type=int, default=64)
-        parser.add_argument("--dropout", type=float, default=0.5)
-        # fmt: on
-
-    @classmethod
-    def build_model_from_args(cls, args):
-        return cls(args.num_features, args.hidden_size, args.num_classes, args.dropout)
-
     def __init__(self, in_feats, hidden_size, out_feats, dropout):
         super(GCN, self).__init__()
         self.conv1 = GCNLayer(in_feats, hidden_size)
@@ -35,7 +23,6 @@ class GCN(BaseModel):
 
 
 if __name__ == "__main__":
-    experiment(dataset="cora", model="mygcn", dw="node_classification_dw", mw="node_classification_mw")
-
-    model = GCN(1433, 64, 7, 0.1)
+    cora = CoraDataset()
+    model = GCN(in_feats=cora.num_features, hidden_size=64, out_feats=cora.num_classes, dropout=0.1)
     experiment(dataset="cora", model=model, dw="node_classification_dw", mw="node_classification_mw")

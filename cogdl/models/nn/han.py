@@ -1,12 +1,10 @@
 import torch.nn as nn
 
-from cogdl.utils import accuracy
 from cogdl.layers import HANLayer
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("han")
 class HAN(BaseModel):
     @staticmethod
     def add_args(parser):

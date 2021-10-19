@@ -2,13 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from cogdl.layers import MLP
 from cogdl.layers import GINLayer
 from cogdl.utils import split_dataset_general
 
 
-@register_model("gin")
 class GIN(BaseModel):
     r"""Graph Isomorphism Network from paper `"How Powerful are Graph
     Neural Networks?" <https://arxiv.org/pdf/1810.00826.pdf>`__.

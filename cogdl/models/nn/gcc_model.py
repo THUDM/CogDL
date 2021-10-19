@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from cogdl.layers import SELayer
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 from cogdl.layers import MLP, GATLayer, GINLayer
 from cogdl.utils import batch_sum_pooling, batch_mean_pooling, batch_max_pooling
@@ -122,8 +122,7 @@ class GINModel(nn.Module):
         return score_over_layer, all_outputs[1:]
 
 
-@register_model("gcc")
-class GraphEncoder(BaseModel):
+class GCCModel(BaseModel):
     """
     MPNN from
     `Neural Message Passing for Quantum Chemistry <https://arxiv.org/abs/1704.01212>`__
@@ -193,7 +192,7 @@ class GraphEncoder(BaseModel):
         gnn_model="gin",
         degree_input=False,
     ):
-        super(GraphEncoder, self).__init__()
+        super(GCCModel, self).__init__()
 
         if degree_input:
             node_input_dim = positional_embedding_size + degree_embedding_size + 1

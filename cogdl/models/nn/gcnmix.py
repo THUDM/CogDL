@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from cogdl.utils import spmm
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
 def mix_hidden_state(feat, target, train_index, alpha):
@@ -35,7 +35,6 @@ class GCNConv(nn.Module):
         return self.weight(x)
 
 
-@register_model("gcnmix")
 class GCNMix(BaseModel):
     @staticmethod
     def add_args(parser):

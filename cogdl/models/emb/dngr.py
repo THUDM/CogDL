@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
 class DNGR_layer(nn.Module):
@@ -38,7 +38,6 @@ class DNGR_layer(nn.Module):
         return encoded, decoded
 
 
-@register_model("dngr")
 class DNGR(BaseModel):
     r"""The DNGR model from the `"Deep Neural Networks for Learning Graph Representations"
     <https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/download/12423/11715>`_ paper

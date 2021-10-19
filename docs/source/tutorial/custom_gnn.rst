@@ -26,9 +26,8 @@ JKNet collects the output of all layers and concatenate them together to get the
 .. code-block:: python
 
     import torch
-    from cogdl.models import register_model
+    from cogdl.models import BaseModel
 
-    @register_model("jknet")
     class JKNet(BaseModel):
         def __init__(self, in_feats, out_feats, hidden_size, num_layers):
             super(JKNet, self).__init__()
@@ -108,9 +107,5 @@ Now that you have defined your own GNN, you can use dataset/task in CogDL to imm
     data = dataset.data
     # Use the JKNet model as defined above
     model = JKNet(data.num_features, data.num_classes, 32, 4)
-    task = build_task(args, dataset=dataset, model=model)
-    task.train()
-
-    # Or you may simple run the command after `register_model`
-    experiment(model="jknet", task="node_classification", dataset="cora")
+    experiment(model=model, dataset="cora", mw="node_classification_mw", dw="node_classification_dw")
 

@@ -3,10 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from cogdl.layers import DisenGCNLayer
-from .. import register_model, BaseModel
+from .. import BaseModel
 
 
-@register_model("disengcn")
 class DisenGCN(BaseModel):
     @staticmethod
     def add_args(parser):

@@ -8,8 +8,6 @@ import torch
 from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 
-from . import register_dataset
-
 
 class GCCDataset(Dataset):
     url = "https://github.com/cenyk1230/gcc-data/raw/master"
@@ -160,7 +158,6 @@ class Edgelist(Dataset):
         torch.save(data, self.processed_paths[0])
 
 
-@register_dataset("kdd_icdm")
 class KDD_ICDM_GCCDataset(GCCDataset):
     def __init__(self, data_path="data"):
         dataset = "kdd_icdm"
@@ -168,7 +165,6 @@ class KDD_ICDM_GCCDataset(GCCDataset):
         super(KDD_ICDM_GCCDataset, self).__init__(path, dataset)
 
 
-@register_dataset("sigir_cikm")
 class SIGIR_CIKM_GCCDataset(GCCDataset):
     def __init__(self, data_path="data"):
         dataset = "sigir_cikm"
@@ -176,7 +172,6 @@ class SIGIR_CIKM_GCCDataset(GCCDataset):
         super(SIGIR_CIKM_GCCDataset, self).__init__(path, dataset)
 
 
-@register_dataset("sigmod_icde")
 class SIGMOD_ICDE_GCCDataset(GCCDataset):
     def __init__(self, data_path="data"):
         dataset = "sigmod_icde"
@@ -184,7 +179,6 @@ class SIGMOD_ICDE_GCCDataset(GCCDataset):
         super(SIGMOD_ICDE_GCCDataset, self).__init__(path, dataset)
 
 
-@register_dataset("usa-airport")
 class USAAirportDataset(Edgelist):
     def __init__(self, data_path="data"):
         dataset = "usa-airport"

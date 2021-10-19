@@ -1,11 +1,10 @@
 import torch.nn as nn
 from cogdl.layers import GCNLayer
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("gcn")
-class TKipfGCN(BaseModel):
+class GCN(BaseModel):
     r"""The GCN model from the `"Semi-Supervised Classification with Graph Convolutional Networks"
     <https://arxiv.org/abs/1609.02907>`_ paper
 
@@ -28,7 +27,6 @@ class TKipfGCN(BaseModel):
         parser.add_argument("--residual", action="store_true")
         parser.add_argument("--norm", type=str, default=None)
         parser.add_argument("--activation", type=str, default="relu")
-        parser.add_argument("--actnn", action="store_true")
         # fmt: on
 
     @classmethod
@@ -42,7 +40,8 @@ class TKipfGCN(BaseModel):
             args.activation,
             args.residual,
             args.norm,
-            args.actnn if hasattr(args, "actnn") else False,
+            args.actnn,
+            args.rp_ratio,
         )
 
     def __init__(
@@ -56,8 +55,9 @@ class TKipfGCN(BaseModel):
         residual=False,
         norm=None,
         actnn=False,
+        rp_ratio=1,
     ):
-        super(TKipfGCN, self).__init__()
+        super(GCN, self).__init__()
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
         Layer = GCNLayer
         if actnn:
@@ -76,6 +76,7 @@ class TKipfGCN(BaseModel):
                     residual=residual if i != num_layers - 1 else None,
                     norm=norm if i != num_layers - 1 else None,
                     activation=activation if i != num_layers - 1 else None,
+                    rp_ratio=rp_ratio,
                 )
                 for i in range(num_layers)
             ]

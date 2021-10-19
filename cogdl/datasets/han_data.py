@@ -6,8 +6,6 @@ import torch
 from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url, untar
 
-from . import register_dataset
-
 
 def sample_mask(idx, length):
     """Create mask."""
@@ -144,7 +142,6 @@ class HANDataset(Dataset):
         return "{}()".format(self.name)
 
 
-@register_dataset("han-acm")
 class ACM_HANDataset(HANDataset):
     def __init__(self, data_path="data"):
         dataset = "han-acm"
@@ -152,7 +149,6 @@ class ACM_HANDataset(HANDataset):
         super(ACM_HANDataset, self).__init__(path, dataset)
 
 
-@register_dataset("han-dblp")
 class DBLP_HANDataset(HANDataset):
     def __init__(self, data_path="data"):
         dataset = "han-dblp"
@@ -160,7 +156,6 @@ class DBLP_HANDataset(HANDataset):
         super(DBLP_HANDataset, self).__init__(path, dataset)
 
 
-@register_dataset("han-imdb")
 class IMDB_HANDataset(HANDataset):
     def __init__(self, data_path="data"):
         dataset = "han-imdb"

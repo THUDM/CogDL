@@ -1,8 +1,7 @@
 from .compgcn import CompGCN
 from .dgi import DGIModel
 from .disengcn import DisenGCN
-from .gat import GATLayer
-from .gcn import TKipfGCN
+from .gcn import GCN
 from .gcnii import GCNII
 from .gdc_gcn import GDC_GCN
 from .grace import GRACE
@@ -19,8 +18,7 @@ __all__ = [
     "CompGCN",
     "DGIModel",
     "DisenGCN",
-    "GATLayer",
-    "TKipfGCN",
+    "GCN",
     "GCNII",
     "GDC_GCN",
     "GRACE",

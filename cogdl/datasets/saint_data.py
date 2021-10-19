@@ -9,7 +9,6 @@ from sklearn.preprocessing import StandardScaler
 
 from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url, Accuracy, MultiLabelMicroF1, BCEWithLogitsLoss, CrossEntropyLoss
-from . import register_dataset
 from .planetoid_data import index_to_mask
 
 
@@ -131,7 +130,6 @@ def scale_feats(data):
 #     return data
 
 
-@register_dataset("yelp")
 class YelpDataset(SAINTDataset):
     def __init__(self, data_path="data"):
         dataset = "Yelp"
@@ -149,7 +147,6 @@ class YelpDataset(SAINTDataset):
         return BCEWithLogitsLoss()
 
 
-@register_dataset("amazon-s")
 class AmazonDataset(SAINTDataset):
     def __init__(self, data_path="data"):
         dataset = "AmazonSaint"
@@ -167,15 +164,14 @@ class AmazonDataset(SAINTDataset):
         return BCEWithLogitsLoss()
 
 
-@register_dataset("flickr")
-class FlickrDatset(SAINTDataset):
+class FlickrDataset(SAINTDataset):
     def __init__(self, data_path="data"):
         dataset = "Flickr"
         url = "https://cloud.tsinghua.edu.cn/d/d3ebcb5fa2da463b8213/files/?p=%2F{}&dl=1"
         path = osp.join(data_path, dataset)
         if not osp.exists(path):
             SAINTDataset(path, dataset, url)
-        super(FlickrDatset, self).__init__(path, dataset, url)
+        super(FlickrDataset, self).__init__(path, dataset, url)
         self.data = scale_feats(self.data)
 
     def get_evaluator(self):
@@ -185,7 +181,6 @@ class FlickrDatset(SAINTDataset):
         return CrossEntropyLoss()
 
 
-@register_dataset("reddit")
 class RedditDataset(SAINTDataset):
     def __init__(self, data_path="data"):
         dataset = "Reddit"
@@ -203,7 +198,6 @@ class RedditDataset(SAINTDataset):
         return CrossEntropyLoss()
 
 
-@register_dataset("ppi")
 class PPIDataset(SAINTDataset):
     def __init__(self, data_path="data"):
         dataset = "PPI"
@@ -221,7 +215,6 @@ class PPIDataset(SAINTDataset):
         return BCEWithLogitsLoss()
 
 
-@register_dataset("ppi-large")
 class PPILargeDataset(SAINTDataset):
     def __init__(self, data_path="data"):
         dataset = "PPI_Large"

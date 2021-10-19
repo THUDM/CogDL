@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
 class SDNE_layer(nn.Module):
@@ -49,7 +49,6 @@ class SDNE_layer(nn.Module):
         return t0
 
 
-@register_model("sdne")
 class SDNE(BaseModel):
     r"""The SDNE model from the `"Structural Deep Network Embedding"
     <https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf>`_ paper

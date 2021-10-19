@@ -4,26 +4,11 @@ from torch_geometric.nn import GraphUNet
 from torch_geometric.utils import dropout_adj
 
 from cogdl import experiment
-from cogdl.models import BaseModel, register_model
+from cogdl.models import BaseModel
+from cogdl.datasets.planetoid_data import CoraDataset
 
 
-@register_model("pyg_unet")
 class UNet(BaseModel):
-    @staticmethod
-    def add_args(parser):
-        """Add model-specific arguments to the parser."""
-        # fmt: off
-        parser.add_argument("--num-features", type=int)
-        parser.add_argument("--num-classes", type=int)
-        parser.add_argument("--hidden-size", type=int, default=32)
-        parser.add_argument("--num-layers", type=int, default=2)
-        parser.add_argument("--dropout", type=float, default=0.92)
-        # fmt: on
-
-    @classmethod
-    def build_model_from_args(cls, args):
-        return cls(args.num_features, args.hidden_size, args.num_classes, args.num_layers, args.dropout, args.num_nodes)
-
     def __init__(self, in_feats, hidden_size, out_feats, num_layers, dropout, num_nodes):
         super(UNet, self).__init__()
 
@@ -32,7 +17,6 @@ class UNet(BaseModel):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.dropout = dropout
-        self.num_nodes = 0
 
         self.unet = GraphUNet(
             self.in_feats, self.hidden_size, self.out_feats, depth=3, pool_ratios=[2000 / num_nodes, 0.5], act=F.elu
@@ -51,4 +35,13 @@ class UNet(BaseModel):
 
 
 if __name__ == "__main__":
-    ret = experiment(dataset="cora", model="pyg_unet")
+    cora = CoraDataset()
+    model = UNet(
+        in_feats=cora.num_features,
+        hidden_size=64,
+        out_feats=cora.num_classes,
+        num_layers=2,
+        dropout=0.1,
+        num_nodes=cora.num_nodes,
+    )
+    ret = experiment(dataset=cora, model=model, dw="node_classification_dw", mw="node_classification_mw")

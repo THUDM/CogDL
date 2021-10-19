@@ -7,10 +7,9 @@ from sklearn.utils.extmath import randomized_svd
 
 from cogdl.utils.prone_utils import get_embedding_dense
 from cogdl.data import Graph
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("prone")
 class ProNE(BaseModel):
     r"""The ProNE model from the `"ProNE: Fast and Scalable Network Representation Learning"
     <https://www.ijcai.org/Proceedings/2019/0594.pdf>`_ paper.

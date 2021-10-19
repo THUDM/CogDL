@@ -8,10 +8,9 @@ from tqdm import tqdm
 import time
 
 from cogdl.utils import alias_draw, alias_setup
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("netsmf")
 class NetSMF(BaseModel):
     r"""The NetSMF model from the `"NetSMF: Large-Scale Network Embedding as Sparse Matrix Factorization"
     <http://arxiv.org/abs/1710.02971>`_ paper.

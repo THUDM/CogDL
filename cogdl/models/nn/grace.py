@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .. import register_model, BaseModel
+from .. import BaseModel
 from cogdl.layers import GCNLayer
 from cogdl.utils import get_activation
 from cogdl.data import Graph
@@ -30,7 +30,6 @@ class GraceEncoder(nn.Module):
         return h
 
 
-@register_model("grace")
 class GRACE(BaseModel):
     @staticmethod
     def add_args(parser):

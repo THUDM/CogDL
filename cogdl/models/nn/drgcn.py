@@ -4,10 +4,9 @@ import torch.nn.functional as F
 
 from cogdl.layers import SELayer, GCNLayer
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("drgcn")
 class DrGCN(BaseModel):
     @staticmethod
     def add_args(parser):

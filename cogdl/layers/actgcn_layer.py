@@ -2,8 +2,9 @@ import math
 
 import torch
 import torch.nn as nn
-from actnn.layers import QLinear, QReLU, QBatchNorm1d, QDropout
+from actnn.layers import QReLU, QBatchNorm1d, QDropout
 
+from .actlinear_layer import QLinear
 from cogdl.utils import spmm
 
 
@@ -12,17 +13,19 @@ class ActGCNLayer(nn.Module):
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
 
-    def __init__(self, in_features, out_features, dropout=0.0, activation=None, residual=False, norm=None, bias=True):
+    def __init__(
+        self, in_features, out_features, dropout=0.0, activation=None, residual=False, norm=None, bias=True, rp_ratio=1
+    ):
         super(ActGCNLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.linear = QLinear(in_features, out_features, bias=bias)
+        self.linear = QLinear(in_features, out_features, bias=bias, rp_ratio=rp_ratio)
         if dropout > 0:
             self.dropout = QDropout(dropout)
         else:
             self.dropout = None
         if residual:
-            self.residual = QLinear(in_features, out_features)
+            self.residual = QLinear(in_features, out_features, rp_ratio=rp_ratio)
         else:
             self.residual = None
 

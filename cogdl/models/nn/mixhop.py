@@ -1,17 +1,11 @@
-from cogdl.utils import add_remaining_self_loops
-import math
-
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.parameter import Parameter
 
 from cogdl.layers import MixHopLayer
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("mixhop")
 class MixHop(BaseModel):
     @staticmethod
     def add_args(parser):

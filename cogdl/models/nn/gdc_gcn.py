@@ -4,10 +4,9 @@ import torch.nn.functional as F
 from scipy.linalg import expm
 from cogdl.layers import GCNLayer
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("gdc_gcn")
 class GDC_GCN(BaseModel):
     r"""The GDC model from the `"Diffusion Improves Graph Learning"
     <https://arxiv.org/abs/1911.05485>`_ paper, with the PPR and heat matrix variants

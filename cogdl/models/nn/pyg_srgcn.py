@@ -5,7 +5,7 @@ from cogdl.utils.srgcn_utils import act_attention, act_map, act_normalization
 from cogdl.utils import add_remaining_self_loops
 from torch_sparse import spspmm
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from cogdl.utils import spmm
 
 
@@ -182,7 +182,6 @@ class SrgcnSoftmaxHead(nn.Module):
         return val_h
 
 
-@register_model("srgcn")
 class SRGCN(BaseModel):
     @staticmethod
     def add_args(parser):

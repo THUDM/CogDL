@@ -46,16 +46,15 @@ Please cite `our paper <https://arxiv.org/abs/2103.00959>`_ if you find our code
 
    install
    quickstart
-   tutorial/index
 
 .. toctree::
    :maxdepth: 2
-   :caption: Advanced Guides
+   :caption: Tutorials 
 
-   task/index
-   trainer
-   model
-   dataset
+   tutorial/node_classification
+   tutorial/graph
+   tutorial/custom_gnn
+   tutorial/custom_dataset
 
 .. toctree::
    :maxdepth: 2

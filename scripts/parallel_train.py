@@ -6,8 +6,7 @@ import torch
 import torch.multiprocessing as mp
 from cogdl import options
 from cogdl.datasets import build_dataset
-from cogdl.experiments import gen_variants
-from cogdl.tasks import build_task
+from cogdl.experiments import train, gen_variants
 from cogdl.utils import set_random_seed, tabulate_results
 from tabulate import tabulate
 
@@ -16,11 +15,12 @@ def main(args):
     if torch.cuda.is_available() and not args.cpu:
         pid = mp.current_process().pid
         torch.cuda.set_device(args.pid_to_cuda[pid])
+        args.devices = [args.pid_to_cuda[pid]]
+    args.checkpoint_path = f"./checkpoints/model_{args.devices[0]}.pt"
 
     set_random_seed(args.seed)
 
-    task = build_task(args)
-    result = task.train()
+    result = train(args)
     return result
 
 
@@ -48,12 +48,12 @@ if __name__ == "__main__":
     print(args)
     variants = list(gen_variants(dataset=args.dataset, model=args.model, seed=args.seed))
 
-    device_ids = args.device_id
+    device_ids = args.devices
     if args.cpu:
         num_workers = 1
     else:
         num_workers = len(device_ids)
-    print("num_workers", num_workers)
+    print("Using {num_workers} workers!")
 
     results_dict = defaultdict(list)
     with mp.Pool(processes=num_workers) as pool:

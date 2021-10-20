@@ -4,11 +4,9 @@ import scipy.sparse.linalg as slinalg
 
 import torch
 
-from .. import register_data_wrapper
 from .node_classification_dw import FullBatchNodeClfDataWrapper
 
 
-@register_data_wrapper("m3s_dw")
 class M3SDataWrapper(FullBatchNodeClfDataWrapper):
     @staticmethod
     def add_args(parser):

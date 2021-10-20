@@ -1,11 +1,9 @@
 import torch
 import torch.nn.functional as F
 
-from cogdl.wrappers.model_wrapper import register_model_wrapper
 from cogdl.wrappers.model_wrapper.node_classification.node_classification_mw import NodeClfModelWrapper
 
 
-@register_model_wrapper("grand_mw")
 class GrandModelWrapper(NodeClfModelWrapper):
     """
     sample : int

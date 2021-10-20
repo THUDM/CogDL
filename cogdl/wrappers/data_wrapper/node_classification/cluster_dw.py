@@ -1,8 +1,7 @@
-from .. import DataWrapper, register_data_wrapper
+from .. import DataWrapper
 from cogdl.data.sampler import ClusteredLoader, ClusteredDataset
 
 
-@register_data_wrapper("cluster_dw")
 class ClusterWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):

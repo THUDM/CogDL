@@ -1,11 +1,10 @@
 import torch
 import torch.nn.functional as F
 
-from .. import register_model_wrapper, ModelWrapper
+from .. import ModelWrapper
 from cogdl.wrappers.tools.wrapper_utils import evaluate_clustering
 
 
-@register_model_wrapper("gae_mw")
 class GAEModelWrapper(ModelWrapper):
     @staticmethod
     def add_args(parser):

@@ -1,12 +1,11 @@
 import torch
 
-from .. import ModelWrapper, register_model_wrapper
+from .. import ModelWrapper
 
 
-@register_model_wrapper("sagn_mw")
-class SagnModelWrapper(ModelWrapper):
+class SAGNModelWrapper(ModelWrapper):
     def __init__(self, model, optimizer_config):
-        super(SagnModelWrapper, self).__init__()
+        super(SAGNModelWrapper, self).__init__()
         self.model = model
         self.optimizer_config = optimizer_config
 

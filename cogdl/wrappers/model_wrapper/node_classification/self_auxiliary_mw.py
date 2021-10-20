@@ -10,11 +10,10 @@ from cogdl.utils.transform import dropout_adj
 from cogdl.wrappers.tools.wrapper_utils import evaluate_node_embeddings_using_logreg
 from tqdm import tqdm
 
-from .. import ModelWrapper, register_model_wrapper
+from .. import ModelWrapper
 
 
-@register_model_wrapper("self_auxiliary_mw")
-class SelfAuxiliaryTask(ModelWrapper):
+class SelfAuxiliaryModelWrapper(ModelWrapper):
     @staticmethod
     def add_args(parser):
         # fmt: off
@@ -27,7 +26,7 @@ class SelfAuxiliaryTask(ModelWrapper):
         # fmt: on
 
     def __init__(self, model, optimizer_cfg, auxiliary_task, dropedge_rate, mask_ratio, sampling):
-        super().__init__()
+        super(SelfAuxiliaryModelWrapper, self).__init__()
         self.auxiliary_task = auxiliary_task
         self.optimizer_cfg = optimizer_cfg
         self.hidden_size = optimizer_cfg["hidden_size"]

@@ -3,11 +3,10 @@ import torch.nn.functional as F
 
 from sklearn.cluster import KMeans
 
-from .. import register_model_wrapper, ModelWrapper
+from .. import ModelWrapper
 from cogdl.wrappers.tools.wrapper_utils import evaluate_clustering
 
 
-@register_model_wrapper("daegc_mw")
 class DAEGCModelWrapper(ModelWrapper):
     @staticmethod
     def add_args(parser):

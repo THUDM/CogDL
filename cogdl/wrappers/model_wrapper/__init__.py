@@ -1,11 +1,6 @@
-import os
 import importlib
 
 from .base_model_wrapper import ModelWrapper, EmbeddingModelWrapper
-
-
-MODELMODULE_REGISTRY = {}
-SUPPORTED_MODELMODULES = {}
 
 
 def register_model_wrapper(name):
@@ -18,46 +13,46 @@ def register_model_wrapper(name):
     """
 
     def register_model_wrapper_cls(cls):
-        if name in MODELMODULE_REGISTRY:
-            raise ValueError("Cannot register duplicate model_wrapper ({})".format(name))
-        if not issubclass(cls, ModelWrapper):
-            raise ValueError("Model ({}: {}) must extend BaseModel".format(name, cls.__name__))
-        MODELMODULE_REGISTRY[name] = cls
-        cls.model_name = name
+        print("The `register_model_wrapper` API is deprecated!")
         return cls
 
     return register_model_wrapper_cls
 
 
-def scan_model_wrappers():
-    global SUPPORTED_MODELMODULES
-    dirname = os.path.dirname(__file__)
-    dir_names = [x for x in os.listdir(dirname) if not x.startswith("__")]
-    dirs = [os.path.join(dirname, x) for x in dir_names]
-    dirs_names = [(x, y) for x, y in zip(dirs, dir_names) if os.path.isdir(x)]
-    dw_dict = SUPPORTED_MODELMODULES
-    for _dir, _name in dirs_names:
-        files = os.listdir(_dir)
-        # files = [x for x in os.listdir(_dir) if os.path.isfile(x)]
-        dw = [x.split(".")[0] for x in files]
-        dw = [x for x in dw if not x.startswith("__")]
-        path = [f"cogdl.wrappers.model_wrapper.{_name}.{x}" for x in dw]
-        for x, y in zip(dw, path):
-            dw_dict[x] = y
-
-
-def try_import_model_wrapper(name):
-    if name in MODELMODULE_REGISTRY:
-        return
-    if name in SUPPORTED_MODELMODULES:
-        importlib.import_module(SUPPORTED_MODELMODULES[name])
-    else:
-        raise NotImplementedError(f"`{name}` model_wrapper is not implemented.")
-
-
 def fetch_model_wrapper(name):
-    try_import_model_wrapper(name)
-    return MODELMODULE_REGISTRY[name]
+    if name in SUPPORTED_MW:
+        path = ".".join(SUPPORTED_MW[name].split(".")[:-1])
+        module = importlib.import_module(path)
+    else:
+        raise NotImplementedError(f"Failed to import {name} ModelWrapper.")
+    class_name = SUPPORTED_MW[name].split(".")[-1]
+    return getattr(module, class_name)
 
 
-scan_model_wrappers()
+SUPPORTED_MW = {
+    "dgi_mw": "cogdl.wrappers.model_wrapper.node_classification.DGIModelWrapper",
+    "gcnmix_mw": "cogdl.wrappers.model_wrapper.node_classification.GCNMixModelWrapper",
+    "grace_mw": "cogdl.wrappers.model_wrapper.node_classification.GRACEModelWrapper",
+    "grand_mw": "cogdl.wrappers.model_wrapper.node_classification.GrandModelWrapper",
+    "mvgrl_mw": "cogdl.wrappers.model_wrapper.node_classification.MVGRLModelWrapper",
+    "self_auxiliary_mw": "cogdl.wrappers.model_wrapper.node_classification.SelfAuxiliaryModelWrapper",
+    "graphsage_mw": "cogdl.wrappers.model_wrapper.node_classification.GraphSAGEModelWrapper",
+    "m3s_mw": "cogdl.wrappers.model_wrapper.node_classification.M3SModelWrapper",
+    "network_embedding_mw": "cogdl.wrappers.model_wrapper.node_classification.NetworkEmbeddingModelWrapper",
+    "node_classification_mw": "cogdl.wrappers.model_wrapper.node_classification.NodeClfModelWrapper",
+    "pprgo_mw": "cogdl.wrappers.model_wrapper.node_classification.PPRGoModelWrapper",
+    "sagn_mw": "cogdl.wrappers.model_wrapper.node_classification.SAGNModelWrapper",
+    "gcc_mw": "cogdl.wrappers.model_wrapper.pretraining.GCCModelWrapper",
+    "embedding_link_prediction_mw": "cogdl.wrappers.model_wrapper.link_prediction.EmbeddingLinkPredictionModelWrapper",
+    "gnn_kg_link_prediction_mw": "cogdl.wrappers.model_wrapper.link_prediction.GNNKGLinkPredictionModelWrapper",
+    "gnn_link_prediction_mw": "cogdl.wrappers.model_wrapper.link_prediction.GNNLinkPredictionModelWrapper",
+    "heterogeneous_embedding_mw": "cogdl.wrappers.model_wrapper.heterogeneous.HeterogeneousEmbeddingModelWrapper",
+    "heterogeneous_gnn_mw": "cogdl.wrappers.model_wrapper.heterogeneous.HeterogeneousGNNModelWrapper",
+    "multiplex_embedding_mw": "cogdl.wrappers.model_wrapper.heterogeneous.MultiplexEmbeddingModelWrapper",
+    "graph_classification_mw": "cogdl.wrappers.model_wrapper.graph_classification.GraphClassificationModelWrapper",
+    "graph_embedding_mw": "cogdl.wrappers.model_wrapper.graph_classification.GraphEmbeddingModelWrapper",
+    "infograph_mw": "cogdl.wrappers.model_wrapper.graph_classification.InfoGraphModelWrapper",
+    "agc_mw": "cogdl.wrappers.model_wrapper.clustering.AGCModelWrapper",
+    "daegc_mw": "cogdl.wrappers.model_wrapper.clustering.DAEGCModelWrapper",
+    "gae_mw": "cogdl.wrappers.model_wrapper.clustering.GAEModelWrapper",
+}

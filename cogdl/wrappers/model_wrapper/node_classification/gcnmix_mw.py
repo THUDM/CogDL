@@ -3,10 +3,9 @@ import random
 import numpy as np
 import torch
 
-from .. import register_model_wrapper, ModelWrapper
+from .. import ModelWrapper
 
 
-@register_model_wrapper("gcnmix_mw")
 class GCNMixModelWrapper(ModelWrapper):
     """
     GCNMixModelWrapper calls `forward_aux` in model

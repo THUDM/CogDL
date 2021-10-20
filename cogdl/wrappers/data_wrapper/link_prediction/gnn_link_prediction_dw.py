@@ -1,10 +1,9 @@
 import numpy as np
 import torch
 
-from .. import DataWrapper, register_data_wrapper
+from .. import DataWrapper
 
 
-@register_data_wrapper("gnn_link_prediction_dw")
 class GNNLinkPredictionDataWrapper(DataWrapper):
     def __init__(self, dataset):
         super(GNNLinkPredictionDataWrapper, self).__init__(dataset)

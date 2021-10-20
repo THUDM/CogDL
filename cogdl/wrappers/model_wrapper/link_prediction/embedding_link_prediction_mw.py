@@ -1,13 +1,12 @@
 import numpy as np
 
-from .. import EmbeddingModelWrapper, register_model_wrapper
+from .. import EmbeddingModelWrapper
 from sklearn.metrics import roc_auc_score, f1_score, auc, precision_recall_curve
 
 
-@register_model_wrapper("embedding_link_prediction_mw")
-class EmbeddingLinkPrediction(EmbeddingModelWrapper):
+class EmbeddingLinkPredictionModelWrapper(EmbeddingModelWrapper):
     def __init__(self, model):
-        super(EmbeddingLinkPrediction, self).__init__()
+        super(EmbeddingLinkPredictionModelWrapper, self).__init__()
         self.model = model
 
     def train_step(self, graph):

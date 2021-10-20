@@ -1,8 +1,7 @@
 from cogdl.wrappers.tools.wrapper_utils import evaluate_node_embeddings_using_liblinear
-from .. import register_model_wrapper, EmbeddingModelWrapper
+from .. import EmbeddingModelWrapper
 
 
-@register_model_wrapper("network_embedding_mw")
 class NetworkEmbeddingModelWrapper(EmbeddingModelWrapper):
     @staticmethod
     def add_args(parser):

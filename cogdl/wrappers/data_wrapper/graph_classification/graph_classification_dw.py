@@ -1,9 +1,8 @@
-from .. import register_data_wrapper, DataWrapper
+from .. import DataWrapper
 from cogdl.wrappers.tools.wrapper_utils import node_degree_as_feature, split_dataset
 from cogdl.data import DataLoader
 
 
-@register_data_wrapper("graph_classification_dw")
 class GraphClassificationDataWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):

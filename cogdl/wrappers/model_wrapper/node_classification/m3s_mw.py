@@ -6,11 +6,9 @@ from sklearn.cluster import KMeans
 
 from cogdl.wrappers.data_wrapper import DataWrapper
 
-from .. import register_model_wrapper
 from .node_classification_mw import NodeClfModelWrapper
 
 
-@register_model_wrapper("m3s_mw")
 class M3SModelWrapper(NodeClfModelWrapper):
     @staticmethod
     def add_args(parser):

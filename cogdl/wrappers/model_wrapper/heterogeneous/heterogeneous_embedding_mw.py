@@ -5,10 +5,9 @@ import torch
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score
 
-from .. import register_model_wrapper, EmbeddingModelWrapper
+from .. import EmbeddingModelWrapper
 
 
-@register_model_wrapper("heterogeneous_embedding_mw")
 class HeterogeneousEmbeddingModelWrapper(EmbeddingModelWrapper):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):

@@ -1,10 +1,5 @@
 from .base_data_wrapper import DataWrapper
-import os
 import importlib
-
-
-DATAMODULE_REGISTRY = {}
-SUPPORTED_DATAMODULE = {}
 
 
 def register_data_wrapper(name):
@@ -17,45 +12,39 @@ def register_data_wrapper(name):
     """
 
     def register_data_wrapper_cls(cls):
-        if name in DATAMODULE_REGISTRY:
-            raise ValueError("Cannot register duplicate data_wrapper ({})".format(name))
-        if not issubclass(cls, DataWrapper):
-            raise ValueError("({}: {}) must extend DataWrapper".format(name, cls.__name__))
-        DATAMODULE_REGISTRY[name] = cls
-        cls.model_name = name
+        print("The `register_data_wrapper` API is deprecated!")
         return cls
 
     return register_data_wrapper_cls
 
 
-def scan_data_wrappers():
-    global SUPPORTED_DATAMODULE
-    dirname = os.path.dirname(__file__)
-    dir_names = [x for x in os.listdir(dirname) if not x.startswith("__")]
-    dirs = [os.path.join(dirname, x) for x in dir_names]
-    dirs_names = [(x, y) for x, y in zip(dirs, dir_names) if os.path.isdir(x)]
-    dw_dict = SUPPORTED_DATAMODULE
-    for _dir, _name in dirs_names:
-        files = os.listdir(_dir)
-        dw = [x.split(".")[0] for x in files]
-        dw = [x for x in dw if not x.startswith("__")]
-        path = [f"cogdl.wrappers.data_wrapper.{_name}.{x}" for x in dw]
-        for x, y in zip(dw, path):
-            dw_dict[x] = y
-
-
-def try_import_data_wrapper(name):
-    if name in DATAMODULE_REGISTRY:
-        return
-    if name in SUPPORTED_DATAMODULE:
-        importlib.import_module(SUPPORTED_DATAMODULE[name])
-    else:
-        raise NotImplementedError(f"`{name}` data_wrapper is not implemented.")
-
-
 def fetch_data_wrapper(name):
-    try_import_data_wrapper(name)
-    return DATAMODULE_REGISTRY[name]
+    if name in SUPPORTED_DW:
+        path = ".".join(SUPPORTED_DW[name].split(".")[:-1])
+        module = importlib.import_module(path)
+    else:
+        raise NotImplementedError(f"Failed to import {name} DataWrapper.")
+    class_name = SUPPORTED_DW[name].split(".")[-1]
+    return getattr(module, class_name)
 
 
-scan_data_wrappers()
+SUPPORTED_DW = {
+    "cluster_dw": "cogdl.wrappers.data_wrapper.node_classification.ClusterWrapper",
+    "graphsage_dw": "cogdl.wrappers.data_wrapper.node_classification.GraphSAGEDataWrapper",
+    "m3s_dw": "cogdl.wrappers.data_wrapper.node_classification.M3SDataWrapper",
+    "network_embedding_dw": "cogdl.wrappers.data_wrapper.node_classification.NetworkEmbeddingDataWrapper",
+    "node_classification_dw": "cogdl.wrappers.data_wrapper.node_classification.FullBatchNodeClfDataWrapper",
+    "pprgo_dw": "cogdl.wrappers.data_wrapper.node_classification.PPRGoDataWrapper",
+    "sagn_dw": "cogdl.wrappers.data_wrapper.node_classification.SAGNDataWrapper",
+    "gcc_dw": "cogdl.wrappers.data_wrapper.pretraining.GCCDataWrapper",
+    "embedding_link_prediction_dw": "cogdl.wrappers.data_wrapper.link_prediction.EmbeddingLinkPredictionDataWrapper",
+    "gnn_kg_link_prediction_dw": "cogdl.wrappers.data_wrapper.link_prediction.GNNKGLinkPredictionDataWrapper",
+    "gnn_link_prediction_dw": "cogdl.wrappers.data_wrapper.link_prediction.GNNLinkPredictionDataWrapper",
+    "heterogeneous_embedding_dw": "cogdl.wrappers.data_wrapper.heterogeneous.HeterogeneousEmbeddingDataWrapper",
+    "heterogeneous_gnn_dw": "cogdl.wrappers.data_wrapper.heterogeneous.HeterogeneousGNNDataWrapper",
+    "multiplex_embedding_dw": "cogdl.wrappers.data_wrapper.heterogeneous.MultiplexEmbeddingDataWrapper",
+    "graph_classification_dw": "cogdl.wrappers.data_wrapper.graph_classification.GraphClassificationDataWrapper",
+    "graph_embedding_dw": "cogdl.wrappers.data_wrapper.graph_classification.GraphEmbeddingDataWrapper",
+    "infograph_dw": "cogdl.wrappers.data_wrapper.graph_classification.InfoGraphDataWrapper",
+    "patchy_san_dw": "cogdl.wrappers.data_wrapper.graph_classification.PATCHY_SAN_DataWrapper",
+}

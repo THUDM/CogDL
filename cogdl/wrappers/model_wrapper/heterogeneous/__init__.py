@@ -1,0 +1,3 @@
+from .heterogeneous_embedding_mw import HeterogeneousEmbeddingModelWrapper
+from .heterogeneous_gnn_mw import HeterogeneousGNNModelWrapper
+from .multiplex_embedding_mw import MultiplexEmbeddingModelWrapper

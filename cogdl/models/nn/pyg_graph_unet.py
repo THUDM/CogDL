@@ -41,6 +41,7 @@ class Pool(nn.Module):
             batch = Graph(x=x, edge_index=edge_index)
         else:
             batch = graph
+            batch.x = x
         new_batch = batch.subgraph(indices)
 
         new_batch.row_norm()

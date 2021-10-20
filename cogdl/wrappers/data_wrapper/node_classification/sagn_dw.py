@@ -1,11 +1,10 @@
 import torch
 from torch.utils.data import DataLoader
 
-from .. import register_data_wrapper, DataWrapper
+from .. import DataWrapper
 from cogdl.models.nn.sagn import prepare_labels, prepare_feats
 
 
-@register_data_wrapper("sagn_dw")
 class SAGNDataWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):

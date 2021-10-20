@@ -1,11 +1,9 @@
 import torch
 
-from .. import register_data_wrapper
 from .graph_classification_dw import GraphClassificationDataWrapper
 from cogdl.models.nn.patchy_san import get_single_feature
 
 
-@register_data_wrapper("patchy_san_dw")
 class PATCHY_SAN_DataWrapper(GraphClassificationDataWrapper):
     @staticmethod
     def add_args(parser):

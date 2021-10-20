@@ -1,9 +1,8 @@
-from .. import DataWrapper, register_data_wrapper
+from .. import DataWrapper
 from cogdl.data.sampler import NeighborSampler, NeighborSamplerDataset
 
 
-@register_data_wrapper("graphsage_dw")
-class SAGEDataWrapper(DataWrapper):
+class GraphSAGEDataWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):
         # fmt: off
@@ -12,7 +11,7 @@ class SAGEDataWrapper(DataWrapper):
         # fmt: on
 
     def __init__(self, dataset, batch_size: int, sample_size: list):
-        super(SAGEDataWrapper, self).__init__(dataset)
+        super(GraphSAGEDataWrapper, self).__init__(dataset)
         self.dataset = dataset
         self.train_dataset = NeighborSamplerDataset(
             dataset, sizes=sample_size, batch_size=batch_size, mask=dataset.data.train_mask

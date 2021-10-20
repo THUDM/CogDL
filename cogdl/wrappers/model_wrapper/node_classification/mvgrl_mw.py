@@ -1,11 +1,10 @@
 import torch
 import torch.nn as nn
 
-from .. import register_model_wrapper, ModelWrapper
+from .. import ModelWrapper
 from cogdl.wrappers.tools.wrapper_utils import evaluate_node_embeddings_using_logreg
 
 
-@register_model_wrapper("mvgrl_mw")
 class MVGRLModelWrapper(ModelWrapper):
     def __init__(self, model, optimizer_cfg):
         super(MVGRLModelWrapper, self).__init__()

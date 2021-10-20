@@ -1,11 +1,10 @@
 from sklearn.metrics import roc_auc_score
 
 import torch
-from .. import ModelWrapper, register_model_wrapper
+from .. import ModelWrapper
 from cogdl.utils import negative_edge_sampling
 
 
-@register_model_wrapper("gnn_link_prediction_mw")
 class GNNLinkPredictionModelWrapper(ModelWrapper):
     def __init__(self, model, optimizer_cfg):
         super(GNNLinkPredictionModelWrapper, self).__init__()

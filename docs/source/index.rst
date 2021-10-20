@@ -64,6 +64,8 @@ Please cite `our paper <https://arxiv.org/abs/2103.00959>`_ if you find our code
    api/data
    api/datasets
    api/models
+   api/data_wrappers
+   api/model_wrappers
    api/layers
    api/options
    api/utils

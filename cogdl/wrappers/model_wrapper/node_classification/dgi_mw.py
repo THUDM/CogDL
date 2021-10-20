@@ -3,11 +3,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from .. import register_model_wrapper, ModelWrapper
+from .. import ModelWrapper
 from cogdl.wrappers.tools.wrapper_utils import evaluate_node_embeddings_using_logreg
 
 
-@register_model_wrapper("dgi_mw")
 class DGIModelWrapper(ModelWrapper):
     @staticmethod
     def add_args(parser):

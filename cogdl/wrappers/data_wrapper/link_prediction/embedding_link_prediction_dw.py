@@ -3,11 +3,10 @@ import networkx as nx
 import numpy as np
 import torch
 
-from .. import DataWrapper, register_data_wrapper
+from .. import DataWrapper
 from cogdl.data import Graph
 
 
-@register_data_wrapper("embedding_link_prediction_dw")
 class EmbeddingLinkPredictionDataWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):

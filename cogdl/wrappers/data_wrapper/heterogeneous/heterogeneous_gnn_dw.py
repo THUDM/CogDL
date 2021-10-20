@@ -1,7 +1,6 @@
-from .. import register_data_wrapper, DataWrapper
+from .. import DataWrapper
 
 
-@register_data_wrapper("heterogeneous_gnn_dw")
 class HeterogeneousGNNDataWrapper(DataWrapper):
     def __init__(self, dataset):
         super(HeterogeneousGNNDataWrapper, self).__init__(dataset=dataset)

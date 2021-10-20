@@ -1,10 +1,9 @@
 import numpy as np
 
-from .. import register_data_wrapper, DataWrapper
+from .. import DataWrapper
 from cogdl.wrappers.tools.wrapper_utils import node_degree_as_feature
 
 
-@register_data_wrapper("graph_embedding_dw")
 class GraphEmbeddingDataWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):

@@ -1,8 +1,7 @@
 import torch
-from cogdl.wrappers.model_wrapper import ModelWrapper, register_model_wrapper
+from cogdl.wrappers.model_wrapper import ModelWrapper
 
 
-@register_model_wrapper("pprgo_mw")
 class PPRGoModelWrapper(ModelWrapper):
     def __init__(self, model, optimizer_config):
         super(PPRGoModelWrapper, self).__init__()

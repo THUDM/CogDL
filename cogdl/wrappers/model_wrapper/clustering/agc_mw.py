@@ -1,8 +1,7 @@
 from cogdl.wrappers.tools.wrapper_utils import evaluate_clustering
-from .. import register_model_wrapper, EmbeddingModelWrapper
+from .. import EmbeddingModelWrapper
 
 
-@register_model_wrapper("agc_mw")
 class AGCModelWrapper(EmbeddingModelWrapper):
     @staticmethod
     def add_args(parser):

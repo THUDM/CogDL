@@ -1,9 +1,8 @@
 import torch
 
-from .. import ModelWrapper, register_model_wrapper
+from .. import ModelWrapper
 
 
-@register_model_wrapper("graphsage_mw")
 class GraphSAGEModelWrapper(ModelWrapper):
     def __init__(self, model, optimizer_cfg):
         super(GraphSAGEModelWrapper, self).__init__()

@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from cogdl.utils import get_activation, spmm
 
 
@@ -47,7 +47,6 @@ class GCN(nn.Module):
         return self.act(out)
 
 
-@register_model("dgi")
 class DGIModel(BaseModel):
     @staticmethod
     def add_args(parser):

@@ -1,8 +1,7 @@
 import torch
-from cogdl.wrappers.model_wrapper import ModelWrapper, register_model_wrapper
+from cogdl.wrappers.model_wrapper import ModelWrapper
 
 
-@register_model_wrapper("node_classification_mw")
 class NodeClfModelWrapper(ModelWrapper):
     def __init__(self, model, optimizer_config):
         super(NodeClfModelWrapper, self).__init__()

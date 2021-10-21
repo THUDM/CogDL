@@ -766,7 +766,11 @@ class Graph(BaseGraph):
             self[key] = None
 
     def __repr__(self):
-        info = ["{}={}".format(key, list(self[key].size())) for key in self.__keys__() if not key.startswith("_")]
+        info = [
+            "{}={}".format(key, list(self[key].size()))
+            for key in self.__keys__()
+            if not key.startswith("_") and hasattr(self[key], "size")
+        ]
         info += self._adj.__out_repr__()
         return "{}({})".format(self.__class__.__name__, ", ".join(info))
 

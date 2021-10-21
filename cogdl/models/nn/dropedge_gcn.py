@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from torch.nn.modules.module import Module
 from torch.nn.parameter import Parameter
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from cogdl.utils import spmm
 
 
@@ -506,7 +506,6 @@ class Dense(Module):
         return self.__class__.__name__ + " (" + str(self.in_features) + " -> " + str(self.out_features) + ")"
 
 
-@register_model("dropedge_gcn")
 class DropEdge_GCN(BaseModel):
     """
      DropEdge: Towards Deep Graph Convolutional Networks on Node Classification

@@ -1,9 +1,8 @@
 from cogdl.layers import SGCLayer
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("sgc")
 class sgc(BaseModel):
     @staticmethod
     def add_args(parser):

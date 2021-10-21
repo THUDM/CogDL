@@ -2,12 +2,11 @@ import torch
 import torch.nn.functional as F
 from cogdl.layers import GCNLayer
 
-from .. import BaseModel, register_model
-from .gcn import TKipfGCN
+from .. import BaseModel
+from .gcn import GCN
 
 
-@register_model("gae")
-class GAE(TKipfGCN):
+class GAE(GCN):
     @classmethod
     def build_model_from_args(cls, args):
         return cls(args.num_features, args.hidden_size, args.num_layers, args.dropout)
@@ -26,7 +25,6 @@ class GAE(TKipfGCN):
         return self.embed(data).detach()
 
 
-@register_model("vgae")
 class VGAE(BaseModel):
     @staticmethod
     def add_args(parser):

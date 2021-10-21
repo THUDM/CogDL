@@ -1,11 +1,10 @@
 from torch.utils.data import DataLoader
 
 from cogdl.data import MultiGraphDataset
-from .. import register_model_wrapper, EmbeddingModelWrapper
+from .. import EmbeddingModelWrapper
 from cogdl.wrappers.tools.wrapper_utils import evaluate_graph_embeddings_using_svm
 
 
-@register_model_wrapper("graph_embedding_mw")
 class GraphEmbeddingModelWrapper(EmbeddingModelWrapper):
     def __init__(self, model):
         super(GraphEmbeddingModelWrapper, self).__init__()

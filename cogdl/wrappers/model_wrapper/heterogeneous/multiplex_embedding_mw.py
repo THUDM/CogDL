@@ -4,7 +4,7 @@ import torch
 from sklearn.metrics import auc, f1_score, precision_recall_curve, roc_auc_score
 
 from cogdl.data import Graph
-from .. import register_model_wrapper, EmbeddingModelWrapper
+from .. import EmbeddingModelWrapper
 
 
 def get_score(embs, node1, node2):
@@ -57,7 +57,6 @@ def evaluate_multiplex(all_embs, test_data):
     return dict(ROC_AUC=roc_auc, PR_AUC=pr_auc, F1=f1_score)
 
 
-@register_model_wrapper("multiplex_embedding_mw")
 class MultiplexEmbeddingModelWrapper(EmbeddingModelWrapper):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):

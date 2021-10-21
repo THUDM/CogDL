@@ -66,6 +66,8 @@ class Trainer(object):
         log_path: str = "./runs",
         project: str = "cogdl-exp",
         no_test: bool = False,
+        actnn: bool = False,
+        rp_ratio: int = 1,
     ):
         self.max_epoch = max_epoch
         self.nstage = nstage
@@ -111,6 +113,17 @@ class Trainer(object):
             self.register_out_epoch_hook(ddp_after_epoch)
 
         self.eval_data_back_to_cpu = False
+
+        if actnn:
+            try:
+                import actnn
+                from actnn.conf import config
+
+                actnn.set_optimization_level("L3")
+                if rp_ratio > 1:
+                    config.group_size = 64
+            except Exception:
+                pass
 
     def register_in_epoch_hook(self, hook):
         self.pre_epoch_hooks.append(hook)
@@ -405,7 +418,6 @@ class Trainer(object):
             train_loader = tqdm(train_loader)
 
         for batch in train_loader:
-            # batch = batch.to(device)
             batch = move_to_device(batch, device)
             loss = model_w.on_train_step(batch)
 

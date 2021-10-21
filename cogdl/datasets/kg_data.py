@@ -3,7 +3,6 @@ import os.path as osp
 import torch
 from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
-from cogdl.datasets import register_dataset
 
 
 def read_triplet_data(folder):
@@ -137,7 +136,6 @@ class KnowledgeGraphDataset(Dataset):
         torch.save(triple_config, self.processed_paths[1])
 
 
-@register_dataset("fb13")
 class FB13Datset(KnowledgeGraphDataset):
     def __init__(self, data_path="data"):
         dataset = "FB13"
@@ -145,7 +143,6 @@ class FB13Datset(KnowledgeGraphDataset):
         super(FB13Datset, self).__init__(path, dataset)
 
 
-@register_dataset("fb15k")
 class FB15kDatset(KnowledgeGraphDataset):
     def __init__(self, data_path="data"):
         dataset = "FB15K"
@@ -153,7 +150,6 @@ class FB15kDatset(KnowledgeGraphDataset):
         super(FB15kDatset, self).__init__(path, dataset)
 
 
-@register_dataset("fb15k237")
 class FB15k237Datset(KnowledgeGraphDataset):
     def __init__(self, data_path="data"):
         dataset = "FB15K237"
@@ -161,7 +157,6 @@ class FB15k237Datset(KnowledgeGraphDataset):
         super(FB15k237Datset, self).__init__(path, dataset)
 
 
-@register_dataset("wn18")
 class WN18Datset(KnowledgeGraphDataset):
     def __init__(self, data_path="data"):
         dataset = "WN18"
@@ -169,7 +164,6 @@ class WN18Datset(KnowledgeGraphDataset):
         super(WN18Datset, self).__init__(path, dataset)
 
 
-@register_dataset("wn18rr")
 class WN18RRDataset(KnowledgeGraphDataset):
     def __init__(self, data_path="data"):
         dataset = "WN18RR"
@@ -177,7 +171,6 @@ class WN18RRDataset(KnowledgeGraphDataset):
         super(WN18RRDataset, self).__init__(path, dataset)
 
 
-@register_dataset("fb13s")
 class FB13SDatset(KnowledgeGraphDataset):
     def __init__(self, data_path="data"):
         dataset = "FB13S"

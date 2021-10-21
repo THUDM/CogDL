@@ -10,10 +10,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("gatne")
 class GATNE(BaseModel):
     r"""The GATNE model from the `"Representation Learning for Attributed Multiplex Heterogeneous Network"
     <https://dl.acm.org/doi/10.1145/3292500.3330964>`_ paper
@@ -109,7 +108,7 @@ class GATNE(BaseModel):
 
         self.multiplicity = True
         self.device = "cpu" if not torch.cuda.is_available() else "cuda"
-    
+
     def train(self, network_data):
         return self.forward(network_data)
 

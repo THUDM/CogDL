@@ -2,12 +2,11 @@ import os
 import scipy.sparse as sp
 import torch
 
-from .. import DataWrapper, register_data_wrapper
+from .. import DataWrapper
 from cogdl.utils.ppr_utils import build_topk_ppr_matrix_from_data
 
 
-@register_data_wrapper("pprgo_dw")
-class PPRDataWrapper(DataWrapper):
+class PPRGoDataWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):
         # fmt: off
@@ -21,7 +20,7 @@ class PPRDataWrapper(DataWrapper):
         # fmt: on
 
     def __init__(self, dataset, topk, alpha=0.2, norm="sym", batch_size=512, eps=1e-4, test_batch_size=-1):
-        super(PPRDataWrapper, self).__init__(dataset)
+        super(PPRGoDataWrapper, self).__init__(dataset)
         self.batch_size, self.test_batch_size = batch_size, test_batch_size
         self.topk, self.alpha, self.norm, self.eps = topk, alpha, norm, eps
         self.dataset = dataset

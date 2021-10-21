@@ -5,13 +5,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .. import register_model_wrapper, ModelWrapper
+from .. import ModelWrapper
 from cogdl.models.nn.mlp import MLP
 from cogdl.data import DataLoader
 from cogdl.wrappers.tools.wrapper_utils import evaluate_graph_embeddings_using_svm
 
 
-@register_model_wrapper("infograph_mw")
 class InfoGraphModelWrapper(ModelWrapper):
     @staticmethod
     def add_args(parser):

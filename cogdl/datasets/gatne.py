@@ -5,8 +5,6 @@ import torch
 from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 
-from . import register_dataset
-
 
 def read_gatne_data(folder):
     train_data = {}
@@ -83,7 +81,6 @@ class GatneDataset(Dataset):
         return "{}()".format(self.name)
 
 
-@register_dataset("amazon")
 class AmazonDataset(GatneDataset):
     def __init__(self, data_path="data"):
         dataset = "amazon"
@@ -91,7 +88,6 @@ class AmazonDataset(GatneDataset):
         super(AmazonDataset, self).__init__(path, dataset)
 
 
-@register_dataset("twitter")
 class TwitterDataset(GatneDataset):
     def __init__(self, data_path="data"):
         dataset = "twitter"
@@ -99,7 +95,6 @@ class TwitterDataset(GatneDataset):
         super(TwitterDataset, self).__init__(path, dataset)
 
 
-@register_dataset("youtube")
 class YouTubeDataset(GatneDataset):
     def __init__(self, data_path="data"):
         dataset = "youtube"

@@ -2,10 +2,9 @@ import numpy as np
 import networkx as nx
 from gensim.models import Word2Vec, KeyedVectors
 import random
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("metapath2vec")
 class Metapath2vec(BaseModel):
     r"""The Metapath2vec model from the `"metapath2vec: Scalable Representation
     Learning for Heterogeneous Networks"

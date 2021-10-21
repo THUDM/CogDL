@@ -2,10 +2,9 @@ import networkx as nx
 import numpy as np
 import scipy.sparse as sp
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("netmf")
 class NetMF(BaseModel):
     r"""The NetMF model from the `"Network Embedding as Matrix Factorization: Unifying DeepWalk, LINE, PTE, and node2vec"
     <http://arxiv.org/abs/1710.02971>`_ paper.

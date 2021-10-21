@@ -1,8 +1,7 @@
 import torch
-from cogdl.wrappers.model_wrapper import ModelWrapper, register_model_wrapper
+from cogdl.wrappers.model_wrapper import ModelWrapper
 
 
-@register_model_wrapper("heterogeneous_gnn_mw")
 class HeterogeneousGNNModelWrapper(ModelWrapper):
     def __init__(self, model, optimizer_config):
         super(HeterogeneousGNNModelWrapper, self).__init__()

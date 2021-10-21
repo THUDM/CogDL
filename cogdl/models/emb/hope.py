@@ -2,10 +2,9 @@ import numpy as np
 import networkx as nx
 import scipy.sparse as sp
 from sklearn import preprocessing
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("hope")
 class HOPE(BaseModel):
     r"""The HOPE model from the `"Grarep: Asymmetric transitivity preserving graph embedding"
     <http://dl.acm.org/citation.cfm?doid=2939672.2939751>`_ paper.

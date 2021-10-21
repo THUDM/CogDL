@@ -1,8 +1,7 @@
-from .. import DataWrapper, register_data_wrapper
+from .. import DataWrapper
 from cogdl.data import Graph
 
 
-@register_data_wrapper("node_classification_dw")
 class FullBatchNodeClfDataWrapper(DataWrapper):
     def __init__(self, dataset):
         super(FullBatchNodeClfDataWrapper, self).__init__(dataset)

@@ -6,10 +6,9 @@ import numpy as np
 from gensim.models import Word2Vec
 
 from cogdl.utils import alias_draw, alias_setup
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("node2vec")
 class Node2vec(BaseModel):
     r"""The node2vec model from the `"node2vec: Scalable feature learning for networks"
     <http://dl.acm.org/citation.cfm?doid=2939672.2939754>`_ paper

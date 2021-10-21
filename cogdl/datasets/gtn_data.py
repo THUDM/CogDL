@@ -6,8 +6,6 @@ import torch
 from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url, untar
 
-from . import register_dataset
-
 
 class GTNDataset(Dataset):
     r"""The network datasets "ACM", "DBLP" and "IMDB" from the
@@ -130,7 +128,6 @@ class GTNDataset(Dataset):
         return "{}()".format(self.name)
 
 
-@register_dataset("gtn-acm")
 class ACM_GTNDataset(GTNDataset):
     def __init__(self, data_path="data"):
         dataset = "gtn-acm"
@@ -138,7 +135,6 @@ class ACM_GTNDataset(GTNDataset):
         super(ACM_GTNDataset, self).__init__(path, dataset)
 
 
-@register_dataset("gtn-dblp")
 class DBLP_GTNDataset(GTNDataset):
     def __init__(self, data_path="data"):
         dataset = "gtn-dblp"
@@ -146,7 +142,6 @@ class DBLP_GTNDataset(GTNDataset):
         super(DBLP_GTNDataset, self).__init__(path, dataset)
 
 
-@register_dataset("gtn-imdb")
 class IMDB_GTNDataset(GTNDataset):
     def __init__(self, data_path="data"):
         dataset = "gtn-imdb"

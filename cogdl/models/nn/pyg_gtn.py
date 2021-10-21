@@ -6,9 +6,9 @@ import torch.nn.functional as F
 
 from torch_sparse import spspmm
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from cogdl.layers import GCNLayer
-from cogdl.utils import remove_self_loops, coalesce, accuracy
+from cogdl.utils import remove_self_loops, coalesce
 
 
 class GTConv(nn.Module):
@@ -84,7 +84,6 @@ class GTLayer(nn.Module):
         return H, W
 
 
-@register_model("gtn")
 class GTN(BaseModel):
     @staticmethod
     def add_args(parser):

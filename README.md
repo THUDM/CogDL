@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-**[Homepage](https://cogdl.ai)** | **[Paper](https://arxiv.org/abs/2103.00959)** | **[Top 100 GNN papers](./paperlist/README.md)** | **[Leaderboards](./cogdl/tasks/README.md)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Datasets](./cogdl/datasets/README.md)** | **[Join our Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[中文](./README_CN.md)**
+**[Homepage](https://cogdl.ai)** | **[Paper](https://arxiv.org/abs/2103.00959)** | **[100 GNN papers](./gnn_papers.md)** | **[Leaderboards](./results.md)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Datasets](./cogdl/datasets/README.md)** | **[Join our Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[中文](./README_CN.md)**
 
 CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or customized models for node classification, graph classification, and other important tasks in the graph domain. 
 
@@ -216,8 +216,8 @@ git clone https://github.com/THUDM/cogdl /cogdl
 How to use models from other libraries?
 </summary>
 <br/>
-If you are familiar with other popular graph libraries, you can implement your own model in CogDL using modules from PyTorch Geometric (PyG), and Deep Graph Library (DGL).
-For the installation of these two libraries, you can follow the instructions from PyG (https://github.com/rusty1s/pytorch_geometric/#installation), and DGL (https://docs.dgl.ai/install/index.html).
+If you are familiar with other popular graph libraries, you can implement your own model in CogDL using modules from PyTorch Geometric (PyG).
+For the installation of PyG, you can follow the instructions from PyG (https://github.com/rusty1s/pytorch_geometric/#installation).
 For the quick-start usage of how to use layers of PyG, you can find some examples in the [examples/pytorch_geometric](https://github.com/THUDM/cogdl/tree/master/examples/pytorch_geometric/).
 </details>
 

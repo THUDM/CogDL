@@ -5,10 +5,9 @@ import numpy as np
 from gensim.models import Word2Vec
 from tqdm import tqdm
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("deepwalk")
 class DeepWalk(BaseModel):
     r"""The DeepWalk model from the `"DeepWalk: Online Learning of Social Representations"
     <https://arxiv.org/abs/1403.6652>`_ paper

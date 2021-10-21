@@ -2,7 +2,7 @@ import optuna
 import numpy as np
 import random
 
-from .. import register_model, BaseModel
+from .. import BaseModel
 from cogdl.utils.prone_utils import propagate, get_embedding_dense
 
 
@@ -177,7 +177,6 @@ class Search(object):
         return best_result
 
 
-@register_model("prone++")
 class ProNEPP(BaseModel):
     @staticmethod
     def add_args(parser):

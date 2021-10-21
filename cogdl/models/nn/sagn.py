@@ -1,14 +1,12 @@
-import copy
 import os
 import os.path as osp
 import numpy as np
-from tqdm import tqdm
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from .mlp import MLP
 from cogdl.utils import spmm
 
@@ -160,7 +158,6 @@ def prepare_labels(dataset, stage, nhop, threshold, probs=None, norm="row", load
     return label_emb, labels_with_pseudos, train_nid_with_pseudos
 
 
-@register_model("sagn")
 class SAGN(BaseModel):
     @staticmethod
     def add_args(parser):

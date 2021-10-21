@@ -127,7 +127,7 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.gcn.TKipfGCN
+.. autoclass:: cogdl.models.nn.gcn.GCN
     :members:
     :undoc-members:
     :show-inheritance:

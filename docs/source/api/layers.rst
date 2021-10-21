@@ -1,9 +1,6 @@
 layers
 ======
 
-Layers
--------------------------
-
 .. automodule:: cogdl.layers.gcn_layer
     :members:
     :undoc-members:

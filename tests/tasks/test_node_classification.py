@@ -14,7 +14,6 @@ default_dict = {
     "sampler": "none",
     "num_layers": 2,
     "cpu": not cuda_available,
-    "missing_rate": -1,
     "checkpoint": False,
     "auxiliary_task": "none",
     "eval_step": 1,
@@ -118,14 +117,14 @@ def test_pyg_gcn_cora():
     assert 0 <= ret["test_acc"] <= 1
 
 
-# def test_clustergcn_cora():
-#     args = get_default_args_for_nc("pubmed", "gcn", dw="cluster_dw")
-#     args.cpu = True
-#     args.batch_size = 3
-#     args.n_cluster = 20
-#     args.eval_step = 1
-#     ret = train(args)
-#     assert 0 <= ret["test_acc"] <= 1
+def test_clustergcn_pubmed():
+    args = get_default_args_for_nc("pubmed", "gcn", dw="cluster_dw")
+    args.cpu = True
+    args.batch_size = 3
+    args.n_cluster = 20
+    args.eval_step = 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
 
 
 def test_graphsaint_cora():
@@ -556,6 +555,6 @@ if __name__ == "__main__":
     test_revnets_cora()
     test_gcn_ppi()
     test_gcc_cora()
-    # test_clustergcn_cora()
     test_pprgo_cora()
     test_sagn_cora()
+    test_clustergcn_pubmed()

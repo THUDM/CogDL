@@ -1,12 +1,9 @@
 import os.path as osp
 import os
-import sys
 import json
-import torch
 from cogdl.data import Dataset
 from cogdl.utils import download_url, untar
 
-from . import register_dataset
 
 url_map = {
     "l0fos": "https://cloud.tsinghua.edu.cn/f/cd6e3f3276c14e73a9f7/?dl=1",
@@ -72,21 +69,18 @@ class oagbert_dataset(Dataset):
         return self.content
 
 
-@register_dataset("l0fos")
 class l0fos(oagbert_dataset):
     def __init__(self):
         self.name = "l0fos"
         super(l0fos, self).__init__()
 
 
-@register_dataset("aff30")
 class aff30(oagbert_dataset):
     def __init__(self):
         self.name = "aff30"
         super(aff30, self).__init__()
 
 
-@register_dataset("arxivvenue")
 class arxivvenue(oagbert_dataset):
     def __init__(self):
         self.name = "arxivvenue"

@@ -8,7 +8,7 @@ from cogdl.layers import GCNLayer
 from cogdl.utils import dropout_adj, get_activation
 from torch_sparse import spspmm
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
 class Pool(nn.Module):
@@ -41,6 +41,7 @@ class Pool(nn.Module):
             batch = Graph(x=x, edge_index=edge_index)
         else:
             batch = graph
+            batch.x = x
         new_batch = batch.subgraph(indices)
 
         new_batch.row_norm()
@@ -126,7 +127,6 @@ class GraphUnetLayer(nn.Module):
         return h_list
 
 
-@register_model("unet")
 class GraphUnet(BaseModel):
     @staticmethod
     def add_args(parser):

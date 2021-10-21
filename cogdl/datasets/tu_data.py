@@ -9,9 +9,8 @@ import torch
 import torch.nn.functional as F
 
 from cogdl.data.dataset import MultiGraphDataset
-from . import register_dataset
-from ..data import Graph
-from ..utils import download_url
+from cogdl.data import Graph
+from cogdl.utils import download_url
 
 
 def normalize_feature(data):
@@ -44,32 +43,6 @@ def cat(seq):
     seq = [item for item in seq if item is not None]
     seq = [item.unsqueeze(-1) if item.dim() == 1 else item for item in seq]
     return torch.cat(seq, dim=-1) if len(seq) > 0 else None
-
-
-def split(data, batch):
-    node_slice = torch.cumsum(torch.from_numpy(np.bincount(batch)), 0)
-    node_slice = torch.cat([torch.tensor([0]), node_slice])
-
-    row, _ = data.edge_index
-    edge_slice = torch.cumsum(torch.from_numpy(np.bincount(batch[row])), 0)
-    edge_slice = torch.cat([torch.tensor([0]), edge_slice])
-
-    # Edge indices should start at zero for every graph.
-    data.edge_index -= node_slice[batch[row]].unsqueeze(0)
-    data.__num_nodes__ = torch.bincount(batch).tolist()
-
-    slices = {"edge_index": edge_slice}
-    if data.x is not None:
-        slices["x"] = node_slice
-    if data.edge_attr is not None:
-        slices["edge_attr"] = edge_slice
-    if data.y is not None:
-        if data.y.size(0) == batch.size(0):
-            slices["y"] = node_slice
-        else:
-            slices["y"] = torch.arange(0, batch[-1] + 2, dtype=torch.long)
-
-    return data, slices
 
 
 def _split(edge_index, batch, x=None, y=None, edge_attr=None):
@@ -283,7 +256,6 @@ class TUDataset(MultiGraphDataset):
         return len(self.data)
 
 
-@register_dataset("mutag")
 class MUTAGDataset(TUDataset):
     def __init__(self, data_path="data"):
         dataset = "MUTAG"
@@ -293,7 +265,6 @@ class MUTAGDataset(TUDataset):
         super(MUTAGDataset, self).__init__(path, name=dataset)
 
 
-@register_dataset("imdb-b")
 class ImdbBinaryDataset(TUDataset):
     def __init__(self, data_path="data"):
         dataset = "IMDB-BINARY"
@@ -303,7 +274,6 @@ class ImdbBinaryDataset(TUDataset):
         super(ImdbBinaryDataset, self).__init__(path, name=dataset)
 
 
-@register_dataset("imdb-m")
 class ImdbMultiDataset(TUDataset):
     def __init__(self, data_path="data"):
         dataset = "IMDB-MULTI"
@@ -313,7 +283,6 @@ class ImdbMultiDataset(TUDataset):
         super(ImdbMultiDataset, self).__init__(path, name=dataset)
 
 
-@register_dataset("collab")
 class CollabDataset(TUDataset):
     def __init__(self, data_path="data"):
         dataset = "COLLAB"
@@ -323,17 +292,15 @@ class CollabDataset(TUDataset):
         super(CollabDataset, self).__init__(path, name=dataset)
 
 
-@register_dataset("proteins")
-class ProtainsDataset(TUDataset):
+class ProteinsDataset(TUDataset):
     def __init__(self, data_path="data"):
         dataset = "PROTEINS"
         path = osp.join(data_path, dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
-        super(ProtainsDataset, self).__init__(path, name=dataset)
+        super(ProteinsDataset, self).__init__(path, name=dataset)
 
 
-@register_dataset("reddit-b")
 class RedditBinary(TUDataset):
     def __init__(self, data_path="data"):
         dataset = "REDDIT-BINARY"
@@ -343,7 +310,6 @@ class RedditBinary(TUDataset):
         super(RedditBinary, self).__init__(path, name=dataset)
 
 
-@register_dataset("reddit-multi-5k")
 class RedditMulti5K(TUDataset):
     def __init__(self, data_path="data"):
         dataset = "REDDIT-MULTI-5K"
@@ -353,7 +319,6 @@ class RedditMulti5K(TUDataset):
         super(RedditMulti5K, self).__init__(path, name=dataset)
 
 
-@register_dataset("reddit-multi-12k")
 class RedditMulti12K(TUDataset):
     def __init__(self, data_path="data"):
         dataset = "REDDIT-MULTI-12K"
@@ -363,7 +328,6 @@ class RedditMulti12K(TUDataset):
         super(RedditMulti12K, self).__init__(path, name=dataset)
 
 
-@register_dataset("ptc-mr")
 class PTCMRDataset(TUDataset):
     def __init__(self, data_path="data"):
         dataset = "PTC_MR"
@@ -373,27 +337,24 @@ class PTCMRDataset(TUDataset):
         super(PTCMRDataset, self).__init__(path, name=dataset)
 
 
-@register_dataset("nci1")
-class NCT1Dataset(TUDataset):
+class NCI1Dataset(TUDataset):
     def __init__(self, data_path="data"):
         dataset = "NCI1"
         path = osp.join(data_path, dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
-        super(NCT1Dataset, self).__init__(path, name=dataset)
+        super(NCI1Dataset, self).__init__(path, name=dataset)
 
 
-@register_dataset("nci109")
-class NCT109Dataset(TUDataset):
+class NCI109Dataset(TUDataset):
     def __init__(self, data_path="data"):
         dataset = "NCI109"
         path = osp.join(data_path, dataset)
         if not osp.exists(path):
             TUDataset(path, name=dataset)
-        super(NCT109Dataset, self).__init__(path, name=dataset)
+        super(NCI109Dataset, self).__init__(path, name=dataset)
 
 
-@register_dataset("enzymes")
 class ENZYMES(TUDataset):
     def __init__(self, data_path="data"):
         dataset = "ENZYMES"

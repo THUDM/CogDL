@@ -3,10 +3,9 @@ import numpy as np
 from sklearn.cluster import SpectralClustering
 
 from cogdl.utils import spmm
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("agc")
 class AGC(BaseModel):
     r"""The AGC model from the `"Attributed Graph Clustering via Adaptive Graph Convolution"
     <https://arxiv.org/abs/1906.01210>`_ paper

@@ -7,7 +7,7 @@ from scipy.linalg import block_diag
 from cogdl.layers import SAGELayer
 from cogdl.utils import split_dataset_general
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
 class EntropyLoss(nn.Module):
@@ -258,7 +258,6 @@ def toBatchedGraph(batch_adj, batch_feat, node_per_pool_graph):
     return adj, feat
 
 
-@register_model("diffpool")
 class DiffPool(BaseModel):
     r"""DIFFPOOL from paper `Hierarchical Graph Representation Learning
     with Differentiable Pooling <https://arxiv.org/pdf/1806.08804.pdf>`__.

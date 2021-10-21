@@ -1,17 +1,15 @@
 import numpy as np
-import tqdm
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .. import register_model, BaseModel
+from .. import BaseModel
 from cogdl.layers import SAGELayer
 from cogdl.models.nn.graphsage import sage_sampler
 from cogdl.utils import RandomWalker
 
 
-@register_model("unsup_graphsage")
 class SAGE(BaseModel):
     """
     Implementation of unsupervised GraphSAGE in paper `"Inductive Representation Learning on Large Graphs"` <https://cs.stanford.edu/people/jure/pubs/graphsage-nips17.pdf>

@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 from cogdl.utils.link_prediction_utils import GNNLinkPredict, sampling_edge_uniform
 from cogdl.layers import RGCNLayer
-from .. import register_model, BaseModel
+from .. import BaseModel
 
 
 class RGCN(nn.Module):
@@ -37,7 +37,6 @@ class RGCN(nn.Module):
         return h
 
 
-@register_model("rgcn")
 class LinkPredictRGCN(GNNLinkPredict, BaseModel):
     @staticmethod
     def add_args(parser):

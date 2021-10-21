@@ -3,12 +3,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from cogdl.data import Graph
-from .. import register_model_wrapper, ModelWrapper
+from .. import ModelWrapper
 from cogdl.wrappers.tools.wrapper_utils import evaluate_node_embeddings_using_logreg
 from cogdl.utils import dropout_adj, dropout_features
 
 
-@register_model_wrapper("grace_mw")
 class GRACEModelWrapper(ModelWrapper):
     @staticmethod
     def add_args(parser):

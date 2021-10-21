@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from cogdl.utils import spmm
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
 def mix_hidden_state(feat, target, train_index, alpha):
@@ -17,32 +17,6 @@ def mix_hidden_state(feat, target, train_index, alpha):
     permuted_index = train_index[torch.randperm(train_index.size(0))]
     feat[train_index] = lamb * feat[train_index] + (1 - lamb) * feat[permuted_index]
     return feat, target[train_index], target[permuted_index], lamb
-
-
-def sharpen(prob, temperature):
-    prob = torch.pow(prob, 1.0 / temperature)
-    row_sum = torch.sum(prob, dim=1).reshape(-1, 1)
-    return prob / row_sum
-
-
-def get_one_hot_label(labels, index):
-    num_classes = int(torch.max(labels) + 1)
-    target = torch.zeros(labels.shape[0], num_classes).to(labels.device)
-
-    target[index, labels[index]] = 1
-    return target
-
-
-def get_current_consistency_weight(final_consistency_weight, rampup_starts, rampup_ends, epoch):
-    # Consistency ramp-up from https://arxiv.org/abs/1610.02242
-    rampup_length = rampup_ends - rampup_starts
-    rampup = 1.0
-    epoch = epoch - rampup_starts
-    if rampup_length != 0:
-        current = np.clip(epoch, 0.0, rampup_length)
-        phase = 1.0 - current / rampup_length
-        rampup = float(np.exp(-5.0 * phase * phase))
-    return final_consistency_weight * rampup
 
 
 class GCNConv(nn.Module):
@@ -61,7 +35,6 @@ class GCNConv(nn.Module):
         return self.weight(x)
 
 
-@register_model("gcnmix")
 class GCNMix(BaseModel):
     @staticmethod
     def add_args(parser):
@@ -122,51 +95,6 @@ class GCNMix(BaseModel):
         h = self.hidden_gnn.forward_aux(h)
         target_label = lamb * target + (1 - lamb) * target_mix
         return h, target_label
-
-    def update_aux(self, data, vector_labels, train_index, opt):
-        device = data.x.device
-        train_unlabelled = torch.where(data.train_mask == False)[0].to(device)  # noqa E712
-        temp_labels = torch.zeros(self.k, vector_labels.shape[0], vector_labels.shape[1]).to(device)
-        with torch.no_grad():
-            for i in range(self.k):
-                temp_labels[i, :, :] = self.predict_noise(data)
-
-        target_labels = temp_labels.mean(dim=0)
-        target_labels = sharpen(target_labels, self.temperature)
-        vector_labels[train_unlabelled] = target_labels[train_unlabelled]
-        sampled_unlabelled = torch.randint(0, train_unlabelled.shape[0], size=(train_index.shape[0],))
-        train_unlabelled = train_unlabelled[sampled_unlabelled]
-
-        def get_loss(index):
-            mix_logits, target = self.forward_aux(data.x, vector_labels, index, mix_hidden=True)
-            temp_loss = self.loss_f(F.softmax(mix_logits[index], -1), target)
-            return temp_loss
-
-        sup_loss = get_loss(train_index)
-        unsup_loss = get_loss(train_unlabelled)
-
-        mixup_weight = get_current_consistency_weight(
-            opt["final_consistency_weight"], opt["rampup_starts"], opt["rampup_ends"], opt["epoch"]
-        )
-
-        loss_sum = sup_loss + mixup_weight * unsup_loss
-        return loss_sum
-
-    def update_soft(self, graph, labels, train_index):
-        out = self.forward(graph)
-        out = F.log_softmax(out, dim=-1)
-        loss_sum = F.nll_loss(out[train_index], labels[train_index])
-        return loss_sum
-
-    def loss(self, data, opt):
-        device = data.x.device
-        train_index = torch.where(data.train_mask)[0].to(device)
-        rand_n = random.randint(0, 1)
-        if rand_n == 0:
-            vector_labels = get_one_hot_label(data.y, train_index).to(device)
-            return self.update_aux(data, vector_labels, train_index, opt)
-        else:
-            return self.update_soft(data, data.y, train_index)
 
     def predict_noise(self, data, tau=1):
         out = self.forward(data) / tau

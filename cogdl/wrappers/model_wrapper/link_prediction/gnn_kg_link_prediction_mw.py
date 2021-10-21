@@ -1,12 +1,11 @@
 import torch
 import torch.nn as nn
 
-from .. import register_model_wrapper, ModelWrapper
+from .. import ModelWrapper
 from cogdl.utils.link_prediction_utils import cal_mrr, DistMultLayer, ConvELayer
 
 
-@register_model_wrapper("gnn_kg_link_prediction_mw")
-class GNNKGLinkPrediction(ModelWrapper):
+class GNNKGLinkPredictionModelWrapper(ModelWrapper):
     @staticmethod
     def add_args(parser):
         # fmt: off
@@ -14,7 +13,7 @@ class GNNKGLinkPrediction(ModelWrapper):
         # fmt: on
 
     def __init__(self, model, optimizer_cfg, score_func):
-        super(GNNKGLinkPrediction, self).__init__()
+        super(GNNKGLinkPredictionModelWrapper, self).__init__()
 
         self.model = model
         self.optimizer_cfg = optimizer_cfg

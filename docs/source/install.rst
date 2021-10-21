@@ -29,5 +29,5 @@ Or clone the repository and install with the following commands:
     pip install -e .
 
 
-If you want to use the modules from PyTorch Geometric (PyG), and Deep Graph Library (DGL), 
-you can follow the instructions to install PyTorch Geometric (https://github.com/rusty1s/pytorch_geometric/#installation) and Deep Graph Library (https://docs.dgl.ai/install/index.html).
+If you want to use the modules from PyTorch Geometric (PyG), 
+you can follow the instructions to install PyTorch Geometric (https://github.com/rusty1s/pytorch_geometric/#installation).

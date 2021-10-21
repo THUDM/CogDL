@@ -7,7 +7,6 @@ import torch
 
 from cogdl.data import Dataset, Graph
 from cogdl.utils import remove_self_loops, download_url, untar, coalesce, Accuracy, CrossEntropyLoss
-from . import register_dataset
 
 
 def parse_index_file(filename):
@@ -186,7 +185,6 @@ def normalize_feature(data):
     return data
 
 
-@register_dataset("cora")
 class CoraDataset(Planetoid):
     def __init__(self, data_path="data"):
         dataset = "Cora"
@@ -197,7 +195,6 @@ class CoraDataset(Planetoid):
         self.data = normalize_feature(self.data)
 
 
-@register_dataset("citeseer")
 class CiteSeerDataset(Planetoid):
     def __init__(self, data_path="data"):
         dataset = "CiteSeer"
@@ -208,7 +205,6 @@ class CiteSeerDataset(Planetoid):
         self.data = normalize_feature(self.data)
 
 
-@register_dataset("pubmed")
 class PubMedDataset(Planetoid):
     def __init__(self, data_path="data"):
         dataset = "PubMed"

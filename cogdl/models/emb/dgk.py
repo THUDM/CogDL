@@ -5,10 +5,9 @@ from joblib import Parallel, delayed
 import networkx as nx
 import numpy as np
 from gensim.models.word2vec import Word2Vec
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("dgk")
 class DeepGraphKernel(BaseModel):
     r"""The Hin2vec model from the `"Deep Graph Kernels"
     <https://dl.acm.org/citation.cfm?id=2783417&CFID=763322570&CFTOKEN=93890155>`_ paper.

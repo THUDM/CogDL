@@ -8,10 +8,9 @@ import torch.nn as nn
 
 from cogdl.utils import split_dataset_general
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("patchy_san")
 class PatchySAN(BaseModel):
     r"""The Patchy-SAN model from the `"Learning Convolutional Neural Networks for Graphs"
     <https://arxiv.org/abs/1605.05273>`_ paper.

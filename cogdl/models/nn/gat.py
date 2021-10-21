@@ -2,10 +2,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from cogdl.layers import GATLayer
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("gat")
 class GAT(BaseModel):
     r"""The GAT model from the `"Graph Attention Networks"
     <https://arxiv.org/abs/1710.10903>`_ paper

@@ -4,7 +4,7 @@ from cogdl.layers import GCNLayer
 from cogdl.utils import get_activation
 from fmoe import FMoETransformerMLP
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
 class CustomizedMoEPositionwiseFF(FMoETransformerMLP):
@@ -59,7 +59,6 @@ class GraphConvBlock(nn.Module):
         return new_feats
 
 
-@register_model("moe_gcn")
 class MoEGCN(BaseModel):
     r"""The GCN model from the `"Semi-Supervised Classification with Graph Convolutional Networks"
     <https://arxiv.org/abs/1609.02907>`_ paper

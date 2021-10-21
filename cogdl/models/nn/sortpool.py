@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from cogdl.layers import SAGELayer
 from cogdl.utils import split_dataset_general
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
 def scatter_sum(src, index, dim, dim_size):
@@ -34,7 +34,6 @@ def spare2dense_batch(x, batch=None, fill_value=0):
     return out
 
 
-@register_model("sortpool")
 class SortPool(BaseModel):
     r"""Implimentation of sortpooling in paper `"An End-to-End Deep Learning
     Architecture for Graph Classification" <https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf>__.`

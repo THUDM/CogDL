@@ -1,9 +1,8 @@
 import torch
 
-from .. import register_model_wrapper, ModelWrapper
+from .. import ModelWrapper
 
 
-@register_model_wrapper("graph_classification_mw")
 class GraphClassificationModelWrapper(ModelWrapper):
     def __init__(self, model, optimizer_cfg):
         super(GraphClassificationModelWrapper, self).__init__()

@@ -2,7 +2,7 @@ import hashlib
 import networkx as nx
 import numpy as np
 import random
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 import torch
 import torch.nn as nn
@@ -119,7 +119,6 @@ class RWgraph:
         return np.asarray(pairs), relation
 
 
-@register_model("hin2vec")
 class Hin2vec(BaseModel):
     r"""The Hin2vec model from the `"HIN2Vec: Explore Meta-paths in Heterogeneous Information Networks for Representation Learning"
     <https://dl.acm.org/doi/10.1145/3132847.3132953>`_ paper.

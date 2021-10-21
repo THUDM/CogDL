@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from cogdl.data import Graph
 from cogdl.layers import SAGELayer
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
 def sage_sampler(adjlist, edge_index, num_sample):
@@ -32,7 +32,6 @@ def sage_sampler(adjlist, edge_index, num_sample):
     return edge_idx
 
 
-@register_model("graphsage")
 class Graphsage(BaseModel):
     @staticmethod
     def add_args(parser):
@@ -119,7 +118,6 @@ class Graphsage(BaseModel):
         return x_all
 
 
-@register_model("sage")
 class SAGE(BaseModel):
     @staticmethod
     def add_args(parser):

@@ -8,8 +8,6 @@ import torch
 from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 
-from . import register_dataset
-
 
 class GCCDataset(Dataset):
     url = "https://github.com/cenyk1230/gcc-data/raw/master"
@@ -23,8 +21,8 @@ class GCCDataset(Dataset):
         edge_index_1, dict_1, self.node2id_1 = self.preprocess(root, name1)
         edge_index_2, dict_2, self.node2id_2 = self.preprocess(root, name2)
         self.data = [
-            Graph(x=None, edge_index=edge_index_1, y=dict_1),
-            Graph(x=None, edge_index=edge_index_2, y=dict_2),
+            Graph(x=None, edge_index=edge_index_1, name_dict=dict_1),
+            Graph(x=None, edge_index=edge_index_2, name_dict=dict_2),
         ]
         self.transform = None
 
@@ -71,6 +69,7 @@ class GCCDataset(Dataset):
                     # to undirected
                     edge_list.append([node2id[x], node2id[y]])
                     edge_list.append([node2id[y], node2id[x]])
+        edge_list = torch.LongTensor(edge_list).t()
 
         name_dict = dict()
         with open(dict_path) as f:
@@ -81,7 +80,7 @@ class GCCDataset(Dataset):
                     node2id[x] = len(node2id)
                 name_dict[name] = node2id[x]
 
-        return torch.LongTensor(edge_list).t(), name_dict, node2id
+        return (edge_list[0], edge_list[1]), name_dict, node2id
 
     def __repr__(self):
         return "{}()".format(self.name)
@@ -159,7 +158,6 @@ class Edgelist(Dataset):
         torch.save(data, self.processed_paths[0])
 
 
-@register_dataset("kdd_icdm")
 class KDD_ICDM_GCCDataset(GCCDataset):
     def __init__(self, data_path="data"):
         dataset = "kdd_icdm"
@@ -167,7 +165,6 @@ class KDD_ICDM_GCCDataset(GCCDataset):
         super(KDD_ICDM_GCCDataset, self).__init__(path, dataset)
 
 
-@register_dataset("sigir_cikm")
 class SIGIR_CIKM_GCCDataset(GCCDataset):
     def __init__(self, data_path="data"):
         dataset = "sigir_cikm"
@@ -175,7 +172,6 @@ class SIGIR_CIKM_GCCDataset(GCCDataset):
         super(SIGIR_CIKM_GCCDataset, self).__init__(path, dataset)
 
 
-@register_dataset("sigmod_icde")
 class SIGMOD_ICDE_GCCDataset(GCCDataset):
     def __init__(self, data_path="data"):
         dataset = "sigmod_icde"
@@ -183,7 +179,6 @@ class SIGMOD_ICDE_GCCDataset(GCCDataset):
         super(SIGMOD_ICDE_GCCDataset, self).__init__(path, dataset)
 
 
-@register_dataset("usa-airport")
 class USAAirportDataset(Edgelist):
     def __init__(self, data_path="data"):
         dataset = "usa-airport"

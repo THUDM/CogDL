@@ -1,9 +1,8 @@
 import numpy as np
 
-from .. import register_data_wrapper, DataWrapper
+from .. import DataWrapper
 
 
-@register_data_wrapper("network_embedding_dw")
 class NetworkEmbeddingDataWrapper(DataWrapper):
     def __init__(self, dataset):
         super(NetworkEmbeddingDataWrapper, self).__init__()

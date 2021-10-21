@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from .mlp import MLP
 from cogdl.layers import GINLayer
 from cogdl.utils import batch_mean_pooling, batch_sum_pooling, split_dataset_general
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
 class Encoder(nn.Module):
@@ -87,7 +87,6 @@ class FF(nn.Module):
         return F.relu(self.block(x)) + self.shortcut(x)
 
 
-@register_model("infograph")
 class InfoGraph(BaseModel):
     r"""Implimentation of Infograph in paper `"InfoGraph: Unsupervised and Semi-supervised Graph-Level Representation
      Learning via Mutual Information Maximization" <https://openreview.net/forum?id=r1lfF2NYvH>__. `
@@ -160,15 +159,6 @@ class InfoGraph(BaseModel):
         else:
             return self.unsup_forward(batch, batch.x)
 
-    def graph_classification_loss(self, batch):
-        if self.sup:
-            pred = self.sup_forward(batch, batch.x)
-            loss = self.sup_loss(pred, batch)
-        else:
-            graph_feat, node_feat = self.unsup_forward(batch, batch.x)
-            loss = self.unsup_loss(graph_feat, node_feat, batch.batch)
-        return loss
-
     def sup_forward(self, batch, x):
         node_feat, graph_feat = self.sem_encoder(batch, x)
         node_feat = F.relu(self.sem_fc1(node_feat))
@@ -182,54 +172,3 @@ class InfoGraph(BaseModel):
             return graph_feat, node_feat
         else:
             return graph_feat
-
-    def sup_loss(self, pred, batch):
-        pred = F.softmax(pred, dim=1)
-        loss = self.criterion(pred, batch)
-        loss += self.unsup_loss(batch.x, batch.edge_index, batch.batch)[1]
-        loss += self.unsup_sup_loss(batch, batch.x)
-        return loss
-
-    def unsup_loss(self, graph_feat, node_feat, batch):
-        local_encode = self.local_dis(node_feat)
-        global_encode = self.global_dis(graph_feat)
-
-        num_graphs = graph_feat.shape[0]
-        num_nodes = node_feat.shape[0]
-
-        pos_mask = torch.zeros((num_nodes, num_graphs)).to(batch.device)
-        neg_mask = torch.ones((num_nodes, num_graphs)).to(batch.device)
-        for nid, gid in enumerate(batch):
-            pos_mask[nid][gid] = 1
-            neg_mask[nid][gid] = 0
-        glob_local_mi = torch.mm(local_encode, global_encode.t())
-        loss = InfoGraph.mi_loss(pos_mask, neg_mask, glob_local_mi, num_nodes, num_nodes * (num_graphs - 1))
-        return loss
-
-    def unsup_sup_loss(self, batch, x):
-        sem_g_feat, _ = self.sem_encoder(batch, x)
-        un_g_feat, _ = self.unsup_encoder(batch, x)
-
-        sem_encode = self._fc1(sem_g_feat)
-        un_encode = self._fc2(un_g_feat)
-
-        num_graphs = sem_encode.shape[0]
-        pos_mask = torch.eye(num_graphs).to(x.device)
-        neg_mask = 1 - pos_mask
-
-        mi = torch.mm(sem_encode, un_encode.t())
-        loss = InfoGraph.mi_loss(pos_mask, neg_mask, mi, pos_mask.sum(), neg_mask.sum())
-        return loss
-
-    @staticmethod
-    def mi_loss(pos_mask, neg_mask, mi, pos_div, neg_div):
-        pos_mi = pos_mask * mi
-        neg_mi = neg_mask * mi
-
-        pos_loss = (-math.log(2.0) + F.softplus(-pos_mi)).sum()
-        neg_loss = (-math.log(2.0) + F.softplus(-neg_mi) + neg_mi).sum()
-        # pos_loss = F.softplus(-pos_mi).sum()
-        # neg_loss = (F.softplus(neg_mi)).sum()
-        # pos_loss = pos_mi.sum()
-        # neg_loss = neg_mi.sum()
-        return pos_loss / pos_div + neg_loss / neg_div

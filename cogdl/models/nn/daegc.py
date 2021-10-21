@@ -2,11 +2,10 @@ import networkx as nx
 
 import torch
 import torch.nn.functional as F
-from .. import BaseModel, register_model
+from .. import BaseModel
 from cogdl.layers import GATLayer
 
 
-@register_model("daegc")
 class DAEGC(BaseModel):
     r"""The DAEGC model from the `"Attributed Graph Clustering: A Deep Attentional Embedding Approach"
     <https://arxiv.org/abs/1906.06532>`_ paper

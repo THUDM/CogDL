@@ -6,127 +6,113 @@ from cogdl.utils import init_operator_configs
 
 init_operator_configs()
 
-MODEL_REGISTRY = {}
-
 
 def register_model(name):
     """
     New model types can be added to cogdl with the :func:`register_model`
     function decorator.
-
     For example::
-
         @register_model('gat')
         class GAT(BaseModel):
             (...)
-
     Args:
         name (str): the name of the model
     """
 
     def register_model_cls(cls):
-        if name in MODEL_REGISTRY:
-            raise ValueError("Cannot register duplicate model ({})".format(name))
-        if not issubclass(cls, BaseModel):
-            raise ValueError("Model ({}: {}) must extend BaseModel".format(name, cls.__name__))
-        MODEL_REGISTRY[name] = cls
-        cls.model_name = name
+        print("The `register_model` API is deprecated!")
         return cls
 
     return register_model_cls
 
 
-def try_import_model(model):
-    if model not in MODEL_REGISTRY:
-        if model in SUPPORTED_MODELS:
-            importlib.import_module(SUPPORTED_MODELS[model])
-        else:
-            # print(f"Failed to import {model} model.")
-            return False
-    return True
+def try_adding_model_args(model, parser):
+    if model in SUPPORTED_MODELS:
+        path = ".".join(SUPPORTED_MODELS[model].split(".")[:-1])
+        module = importlib.import_module(path)
+        class_name = SUPPORTED_MODELS[model].split(".")[-1]
+        getattr(module, class_name).add_args(parser)
 
 
 def build_model(args):
-    if not try_import_model(args.model):
-        exit(1)
-    return MODEL_REGISTRY[args.model].build_model_from_args(args)
+    model = args.model
+    if model in SUPPORTED_MODELS:
+        path = ".".join(SUPPORTED_MODELS[model].split(".")[:-1])
+        module = importlib.import_module(path)
+    else:
+        raise NotImplementedError(f"Failed to import {model} model.")
+    class_name = SUPPORTED_MODELS[model].split(".")[-1]
+    return getattr(module, class_name).build_model_from_args(args)
 
 
 SUPPORTED_MODELS = {
-    "hope": "cogdl.models.emb.hope",
-    "spectral": "cogdl.models.emb.spectral",
-    "hin2vec": "cogdl.models.emb.hin2vec",
-    "netmf": "cogdl.models.emb.netmf",
-    "distmult": "cogdl.models.emb.distmult",
-    "transe": "cogdl.models.emb.transe",
-    "deepwalk": "cogdl.models.emb.deepwalk",
-    "rotate": "cogdl.models.emb.rotate",
-    "gatne": "cogdl.models.emb.gatne",
-    "dgk": "cogdl.models.emb.dgk",
-    "grarep": "cogdl.models.emb.grarep",
-    "dngr": "cogdl.models.emb.dngr",
-    "prone++": "cogdl.models.emb.pronepp",
-    "graph2vec": "cogdl.models.emb.graph2vec",
-    "metapath2vec": "cogdl.models.emb.metapath2vec",
-    "node2vec": "cogdl.models.emb.node2vec",
-    "complex": "cogdl.models.emb.complex",
-    "pte": "cogdl.models.emb.pte",
-    "netsmf": "cogdl.models.emb.netsmf",
-    "line": "cogdl.models.emb.line",
-    "sdne": "cogdl.models.emb.sdne",
-    "prone": "cogdl.models.emb.prone",
-    "daegc": "cogdl.models.nn.daegc",
-    "agc": "cogdl.models.nn.agc",
-    "gae": "cogdl.models.nn.gae",
-    "vgae": "cogdl.models.nn.gae",
-    "dgi": "cogdl.models.nn.dgi",
-    "dgi_sampling": "cogdl.models.nn.dgi",
-    "mvgrl": "cogdl.models.nn.mvgrl",
-    "patchy_san": "cogdl.models.nn.patchy_san",
-    "chebyshev": "cogdl.models.nn.pyg_cheb",
-    "gcn": "cogdl.models.nn.gcn",
-    "gdc_gcn": "cogdl.models.nn.gdc_gcn",
-    "graphsage": "cogdl.models.nn.graphsage",
-    "compgcn": "cogdl.models.nn.compgcn",
-    "drgcn": "cogdl.models.nn.drgcn",
-    "unet": "cogdl.models.nn.pyg_graph_unet",
-    "gcnmix": "cogdl.models.nn.gcnmix",
-    "diffpool": "cogdl.models.nn.diffpool",
-    "gcnii": "cogdl.models.nn.gcnii",
-    "sign": "cogdl.models.nn.sign",
-    "pyg_gcn": "cogdl.models.nn.pyg_gcn",
-    "mixhop": "cogdl.models.nn.mixhop",
-    "gat": "cogdl.models.nn.gat",
-    "han": "cogdl.models.nn.han",
-    "ppnp": "cogdl.models.nn.ppnp",
-    "grace": "cogdl.models.nn.grace",
-    "pprgo": "cogdl.models.nn.pprgo",
-    "gin": "cogdl.models.nn.gin",
-    "dgcnn": "cogdl.models.nn.pyg_dgcnn",
-    "grand": "cogdl.models.nn.grand",
-    "gtn": "cogdl.models.nn.pyg_gtn",
-    "rgcn": "cogdl.models.nn.rgcn",
-    "deepergcn": "cogdl.models.nn.deepergcn",
-    "drgat": "cogdl.models.nn.drgat",
-    "infograph": "cogdl.models.nn.infograph",
-    "dropedge_gcn": "cogdl.models.nn.dropedge_gcn",
-    "disengcn": "cogdl.models.nn.disengcn",
-    "mlp": "cogdl.models.nn.mlp",
-    "sgc": "cogdl.models.nn.sgc",
-    "sortpool": "cogdl.models.nn.sortpool",
-    "srgcn": "cogdl.models.nn.pyg_srgcn",
-    "asgcn": "cogdl.models.nn.asgcn",
-    "gcc": "cogdl.models.nn.gcc_model",
-    "unsup_graphsage": "cogdl.models.nn.unsup_graphsage",
-    "graphsaint": "cogdl.models.nn.graphsaint",
-    "m3s": "cogdl.models.nn.m3s",
-    "moe_gcn": "cogdl.models.nn.moe_gcn",
-    "lightgcn": "cogdl.models.nn.lightgcn",
-    "correct_smooth": "cogdl.models.nn.correct_smooth",
-    "correct_smooth_mlp": "cogdl.models.nn.correct_smooth",
-    "sagn": "cogdl.models.nn.sagn",
-    "revgcn": "cogdl.models.nn.revgcn",
-    "revgat": "cogdl.models.nn.revgcn",
-    "revgen": "cogdl.models.nn.revgcn",
-    "sage": "cogdl.models.nn.graphsage",
+    "hope": "cogdl.models.emb.hope.HOPE",
+    "spectral": "cogdl.models.emb.spectral.Spectral",
+    "hin2vec": "cogdl.models.emb.hin2vec.Hin2vec",
+    "netmf": "cogdl.models.emb.netmf.NetMF",
+    "deepwalk": "cogdl.models.emb.deepwalk.DeepWalk",
+    "gatne": "cogdl.models.emb.gatne.GATNE",
+    "dgk": "cogdl.models.emb.dgk.DeepGraphKernel",
+    "grarep": "cogdl.models.emb.grarep.GraRep",
+    "dngr": "cogdl.models.emb.dngr.DNGR",
+    "prone++": "cogdl.models.emb.pronepp.ProNEPP",
+    "graph2vec": "cogdl.models.emb.graph2vec.Graph2Vec",
+    "metapath2vec": "cogdl.models.emb.metapath2vec.Metapath2vec",
+    "node2vec": "cogdl.models.emb.node2vec.Node2vec",
+    "pte": "cogdl.models.emb.pte.PTE",
+    "netsmf": "cogdl.models.emb.netsmf.NetSMF",
+    "line": "cogdl.models.emb.line.LINE",
+    "sdne": "cogdl.models.emb.sdne.SDNE",
+    "prone": "cogdl.models.emb.prone.ProNE",
+    "daegc": "cogdl.models.nn.daegc.DAEGC",
+    "agc": "cogdl.models.nn.agc.AGC",
+    "gae": "cogdl.models.nn.gae.GAE",
+    "vgae": "cogdl.models.nn.gae.VGAE",
+    "dgi": "cogdl.models.nn.dgi.DGIModel",
+    "mvgrl": "cogdl.models.nn.mvgrl.MVGRL",
+    "patchy_san": "cogdl.models.nn.patchy_san.PatchySAN",
+    "chebyshev": "cogdl.models.nn.pyg_cheb.Chebyshev",
+    "gcn": "cogdl.models.nn.gcn.GCN",
+    "gdc_gcn": "cogdl.models.nn.gdc_gcn.GDC_GCN",
+    "graphsage": "cogdl.models.nn.graphsage.Graphsage",
+    "compgcn": "cogdl.models.nn.compgcn.LinkPredictCompGCN",
+    "drgcn": "cogdl.models.nn.drgcn.DrGCN",
+    "unet": "cogdl.models.nn.pyg_graph_unet.GraphUnet",
+    "gcnmix": "cogdl.models.nn.gcnmix.GCNMix",
+    "diffpool": "cogdl.models.nn.diffpool.DiffPool",
+    "gcnii": "cogdl.models.nn.gcnii.GCNII",
+    "sign": "cogdl.models.nn.sign.SIGN",
+    "pyg_gcn": "cogdl.models.nn.pyg_gcn.GCN",
+    "mixhop": "cogdl.models.nn.mixhop.MixHop",
+    "gat": "cogdl.models.nn.gat.GAT",
+    "han": "cogdl.models.nn.han.HAN",
+    "ppnp": "cogdl.models.nn.ppnp.PPNP",
+    "grace": "cogdl.models.nn.grace.GRACE",
+    "pprgo": "cogdl.models.nn.pprgo.PPRGo",
+    "gin": "cogdl.models.nn.gin.GIN",
+    "dgcnn": "cogdl.models.nn.pyg_dgcnn.DGCNN",
+    "grand": "cogdl.models.nn.grand.Grand",
+    "gtn": "cogdl.models.nn.pyg_gtn.GTN",
+    "rgcn": "cogdl.models.nn.rgcn.LinkPredictRGCN",
+    "deepergcn": "cogdl.models.nn.deepergcn.DeeperGCN",
+    "drgat": "cogdl.models.nn.drgat.DrGAT",
+    "infograph": "cogdl.models.nn.infograph.InfoGraph",
+    "dropedge_gcn": "cogdl.models.nn.dropedge_gcn.DropEdge_GCN",
+    "disengcn": "cogdl.models.nn.disengcn.DisenGCN",
+    "mlp": "cogdl.models.nn.mlp.MLP",
+    "sgc": "cogdl.models.nn.sgc.sgc",
+    "sortpool": "cogdl.models.nn.sortpool.SortPool",
+    "srgcn": "cogdl.models.nn.pyg_srgcn.SRGCN",
+    "gcc": "cogdl.models.nn.gcc_model.GCCModel",
+    "unsup_graphsage": "cogdl.models.nn.unsup_graphsage.SAGE",
+    "graphsaint": "cogdl.models.nn.graphsaint.GraphSAINT",
+    "m3s": "cogdl.models.nn.m3s.M3S",
+    "moe_gcn": "cogdl.models.nn.moe_gcn.MoEGCN",
+    "lightgcn": "cogdl.models.nn.lightgcn.LightGCN",
+    "correct_smooth_mlp": "cogdl.models.nn.correct_smooth.CorrectSmoothMLP",
+    "sagn": "cogdl.models.nn.sagn.SAGN",
+    "revgcn": "cogdl.models.nn.revgcn.RevGCN",
+    "revgat": "cogdl.models.nn.revgcn.RevGAT",
+    "revgen": "cogdl.models.nn.revgcn.RevGEN",
+    "sage": "cogdl.models.nn.graphsage.SAGE",
 }

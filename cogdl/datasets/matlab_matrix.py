@@ -9,8 +9,6 @@ import time
 from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 
-from . import register_dataset
-
 
 class MatlabMatrix(Dataset):
     r"""networks from the http://leitang.net/code/social-dimension/data/ or http://snap.stanford.edu/node2vec/
@@ -71,7 +69,6 @@ class MatlabMatrix(Dataset):
         torch.save(data, self.processed_paths[0])
 
 
-@register_dataset("blogcatalog")
 class BlogcatalogDataset(MatlabMatrix):
     def __init__(self, data_path="data"):
         dataset, filename = "blogcatalog", "blogcatalog"
@@ -80,7 +77,6 @@ class BlogcatalogDataset(MatlabMatrix):
         super(BlogcatalogDataset, self).__init__(path, filename, url)
 
 
-@register_dataset("flickr-ne")
 class FlickrDataset(MatlabMatrix):
     def __init__(self, data_path="data"):
         dataset, filename = "flickr", "flickr"
@@ -89,7 +85,6 @@ class FlickrDataset(MatlabMatrix):
         super(FlickrDataset, self).__init__(path, filename, url)
 
 
-@register_dataset("wikipedia")
 class WikipediaDataset(MatlabMatrix):
     def __init__(self, data_path="data"):
         dataset, filename = "wikipedia", "POS"
@@ -98,7 +93,6 @@ class WikipediaDataset(MatlabMatrix):
         super(WikipediaDataset, self).__init__(path, filename, url)
 
 
-@register_dataset("ppi-ne")
 class PPIDataset(MatlabMatrix):
     def __init__(self, data_path="data"):
         dataset, filename = "ppi", "Homo_sapiens"
@@ -174,7 +168,6 @@ class NetworkEmbeddingCMTYDataset(Dataset):
         return self.data.y.shape[0]
 
 
-@register_dataset("dblp-ne")
 class DblpNEDataset(NetworkEmbeddingCMTYDataset):
     def __init__(self, data_path="data"):
         dataset = "dblp"
@@ -183,7 +176,6 @@ class DblpNEDataset(NetworkEmbeddingCMTYDataset):
         super(DblpNEDataset, self).__init__(path, dataset, url)
 
 
-@register_dataset("youtube-ne")
 class YoutubeNEDataset(NetworkEmbeddingCMTYDataset):
     def __init__(self, data_path="data"):
         dataset = "youtube"

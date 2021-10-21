@@ -3,12 +3,11 @@ import copy
 import torch
 import torch.nn as nn
 
-from .. import ModelWrapper, register_model_wrapper
+from .. import ModelWrapper
 from cogdl.wrappers.tools.memory_moco import MemoryMoCo, NCESoftmaxLoss, moment_update
 from cogdl.utils.optimizer import LinearOptimizer
 
 
-@register_model_wrapper("gcc_mw")
 class GCCModelWrapper(ModelWrapper):
     @staticmethod
     def add_args(parser):

@@ -22,7 +22,6 @@ default_dict = {
     "cpu": not cuda_available,
     "lr": 0.01,
     "weight_decay": 5e-4,
-    "missing_rate": -1,
     "checkpoint": False,
     "label_mask": 0,
     "num_layers": 2,

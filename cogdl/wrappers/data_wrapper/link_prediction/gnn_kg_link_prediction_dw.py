@@ -1,10 +1,9 @@
-from .. import register_data_wrapper, DataWrapper
+from .. import DataWrapper
 
 
-@register_data_wrapper("gnn_kg_link_prediction_dw")
-class GNNKGLinkPredictionModelWrapper(DataWrapper):
+class GNNKGLinkPredictionDataWrapper(DataWrapper):
     def __init__(self, dataset):
-        super(GNNKGLinkPredictionModelWrapper, self).__init__(dataset)
+        super(GNNKGLinkPredictionDataWrapper, self).__init__(dataset)
         self.dataset = dataset
         self.edge_set = None
 

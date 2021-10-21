@@ -11,7 +11,9 @@ class GCNLayer(nn.Module):
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
 
-    def __init__(self, in_features, out_features, dropout=0.0, activation=None, residual=False, norm=None, bias=True):
+    def __init__(
+        self, in_features, out_features, dropout=0.0, activation=None, residual=False, norm=None, bias=True, **kwargs
+    ):
         super(GCNLayer, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -26,7 +28,7 @@ class GCNLayer(nn.Module):
             self.residual = None
 
         if activation is not None:
-            self.act = get_activation(activation)
+            self.act = get_activation(activation, inplace=True)
         else:
             self.act = None
 

@@ -4,12 +4,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from .deepergcn import DeeperGCN
 from .gat import GAT
 from cogdl.layers.reversible_layer import RevGNNLayer
 from cogdl.layers import GCNLayer, GATLayer, GENConv, ResGNNLayer
-from cogdl.layers.deepergcn_layer import EdgeEncoder
 from cogdl.utils import get_activation, get_norm_layer, dropout_adj
 
 
@@ -19,7 +18,6 @@ def shared_dropout(x, dropout):
     return mask
 
 
-@register_model("revgcn")
 class RevGCN(BaseModel):
     @staticmethod
     def add_args(parser):
@@ -116,7 +114,6 @@ class RevGCN(BaseModel):
         return h
 
 
-@register_model("revgen")
 class RevGEN(BaseModel):
     @staticmethod
     def add_args(parser):
@@ -218,7 +215,6 @@ class RevGEN(BaseModel):
         return h
 
 
-@register_model("revgat")
 class RevGAT(BaseModel):
     @staticmethod
     def add_args(parser):

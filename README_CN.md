@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-**[主页](https://cogdl.ai/zh)** | **[论文](https://arxiv.org/abs/2103.00959)** | **[100篇GNN论文](./paperlist/README.md)** | **[排行榜](./cogdl/tasks/README.md)** | **[文档](https://cogdl.readthedocs.io)** | **[数据集](./cogdl/datasets/README.md)** | **[加入我们的Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[English](./README.md)**
+**[主页](https://cogdl.ai/zh)** | **[论文](https://arxiv.org/abs/2103.00959)** | **[100篇GNN论文](./gnn_papers.md)** | **[排行榜](./results.md)** | **[文档](https://cogdl.readthedocs.io)** | **[数据集](./cogdl/datasets/README.md)** | **[加入我们的Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[English](./README.md)**
 
 CogDL是由清华大学计算机系知识工程实验室（KEG）开发的基于图的深度学习的研究工具，基于Python语言和[PyTorch](https://github.com/pytorch/pytorch)库。CogDL允许研究人员和开发人员可以轻松地训练和比较基线算法或自定义模型，以进行结点分类，链接预测，图分类，社区发现等基于图结构的任务。 它提供了许多流行模型的实现，包括：非图神经网络算法例如Deepwalk、LINE、Node2vec、NetMF、ProNE、methpath2vec、PTE、graph2vec、DGK等；图神经网络算法例如GCN、GAT、GraphSAGE、FastGCN、GTN、HAN、GIN、DiffPool等。它也提供了一些下游任务，包括结点分类（分为是否具有节点属性），链接预测（分为同构和异构），图分类（分有监督和⽆监督）以及为这些任务构建各种算法效果的排行榜。
 
@@ -214,8 +214,8 @@ git clone https://github.com/THUDM/cogdl /cogdl
 如何使用其他图深度学习库中的模型？
 </summary>
 <br/>
-如何你对其他图深度学习库（比如PyTorch Geometric，Deep Graph Library）比较熟悉，你可以基于这些库的模块来在CogDL里实现相关模型。
-你可以通过下述的指南来安装相应的库，例如PyTorch Geometric (https://github.com/rusty1s/pytorch_geometric/#installation)，和Deep Graph Libraray (https://docs.dgl.ai/install/index.html)。
+如何你对其他图深度学习库（比如PyTorch Geometric）比较熟悉，你可以基于这些库的模块来在CogDL里实现相关模型。
+你可以通过下述的指南来安装相应的库，例如PyTorch Geometric (https://github.com/rusty1s/pytorch_geometric/#installation)。
 对于如何使用PyG的模块来实现模型，你可以在示例中找到一些参考：[examples/pytorch_geometric](https://github.com/THUDM/cogdl/tree/master/examples/pytorch_geometric/)。
 </details>
 

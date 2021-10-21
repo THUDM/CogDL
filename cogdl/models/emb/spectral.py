@@ -2,10 +2,9 @@ import numpy as np
 import networkx as nx
 import scipy.sparse as sp
 from sklearn import preprocessing
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
-@register_model("spectral")
 class Spectral(BaseModel):
     r"""The Spectral clustering model from the `"Leveraging social media networks for classiﬁcation"
     <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.481.5392&rep=rep1&type=pdf>`_ paper

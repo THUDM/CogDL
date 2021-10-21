@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from cogdl.data import Graph
 from cogdl.utils import row_normalization
 from cogdl.utils.link_prediction_utils import GNNLinkPredict, sampling_edge_uniform, cal_mrr
-from .. import BaseModel, register_model
+from .. import BaseModel
 
 
 # def ccorr(a, b):
@@ -208,7 +208,6 @@ class CompGCN(nn.Module):
         return node_embed, rel_embed
 
 
-@register_model("compgcn")
 class LinkPredictCompGCN(GNNLinkPredict, BaseModel):
     @staticmethod
     def add_args(parser):

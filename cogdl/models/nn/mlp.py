@@ -1,9 +1,8 @@
-from .. import BaseModel, register_model
+from .. import BaseModel
 from cogdl.layers import MLP as MLPLayer
 from cogdl.data import Graph
 
 
-@register_model("mlp")
 class MLP(BaseModel):
     @staticmethod
     def add_args(parser):

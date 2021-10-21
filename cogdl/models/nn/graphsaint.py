@@ -3,7 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 import numpy as np
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from cogdl.layers import SAINTLayer
 
 
@@ -18,7 +18,6 @@ def parse_arch(architecture, aggr, act, bias, hidden_size, num_features):
     return [num_features] + dims_layer, order_layer, act_layer, bias_layer, aggr_layer
 
 
-@register_model("graphsaint")
 class GraphSAINT(BaseModel):
     @staticmethod
     def add_args(parser):

@@ -1,7 +1,6 @@
-from .. import register_data_wrapper, DataWrapper
+from .. import DataWrapper
 
 
-@register_data_wrapper("multiplex_embedding_dw")
 class MultiplexEmbeddingDataWrapper(DataWrapper):
     def __init__(self, dataset):
         super(MultiplexEmbeddingDataWrapper, self).__init__()

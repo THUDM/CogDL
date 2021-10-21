@@ -54,6 +54,11 @@ Node Classification
     :undoc-members:
     :show-inheritance:
 
+.. autoclass:: cogdl.wrappers.model_wrapper.node_classification.CorrectSmoothModelWrapper
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 .. autoclass:: cogdl.wrappers.model_wrapper.node_classification.PPRGoModelWrapper
     :members:
     :undoc-members:

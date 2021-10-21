@@ -37,6 +37,7 @@ def set_default_wrapper_config():
         "gat",
         "graphsaint",
         "m3s",
+        "correct_smooth_mlp",
     ]
 
     graph_classification_models = ["gin", "patchy_san", "diffpool", "infograph", "dgcnn", "sortpool"]

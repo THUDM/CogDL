@@ -206,7 +206,6 @@ class CorrectSmoothMLP(BaseModel):
         return out
 
     def postprocess(self, data, out):
-        print("Correct and Smoothing...")
         if len(data.y.shape) == 1:
             out = F.softmax(out, dim=-1)
         # else:

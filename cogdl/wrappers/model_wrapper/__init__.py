@@ -40,6 +40,7 @@ SUPPORTED_MW = {
     "m3s_mw": "cogdl.wrappers.model_wrapper.node_classification.M3SModelWrapper",
     "network_embedding_mw": "cogdl.wrappers.model_wrapper.node_classification.NetworkEmbeddingModelWrapper",
     "node_classification_mw": "cogdl.wrappers.model_wrapper.node_classification.NodeClfModelWrapper",
+    "correct_smooth_mw": "cogdl.wrappers.model_wrapper.node_classification.CorrectSmoothModelWrapper",
     "pprgo_mw": "cogdl.wrappers.model_wrapper.node_classification.PPRGoModelWrapper",
     "sagn_mw": "cogdl.wrappers.model_wrapper.node_classification.SAGNModelWrapper",
     "gcc_mw": "cogdl.wrappers.model_wrapper.pretraining.GCCModelWrapper",

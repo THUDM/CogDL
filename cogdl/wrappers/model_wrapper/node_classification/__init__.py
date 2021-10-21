@@ -1,3 +1,4 @@
+from cogdl.models.nn.correct_smooth import CorrectSmooth
 from .dgi_mw import DGIModelWrapper
 from .gcnmix_mw import GCNMixModelWrapper
 from .grace_mw import GRACEModelWrapper
@@ -10,3 +11,4 @@ from .node_classification_mw import NodeClfModelWrapper
 from .pprgo_mw import PPRGoModelWrapper
 from .sagn_mw import SAGNModelWrapper
 from .self_auxiliary_mw import SelfAuxiliaryModelWrapper
+from .correct_smooth_mw import CorrectSmoothModelWrapper

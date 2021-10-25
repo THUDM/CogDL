@@ -31,11 +31,11 @@ class AGC(BaseModel):
 
         self.num_clusters = num_clusters
         self.max_iter = max_iter
-
-        self.device = "cuda" if torch.cuda.is_available() and not cpu else "cpu"
+        self.cpu = cpu
 
     def forward(self, data):
-        data = data.to(self.device)
+        device = "cuda" if torch.cuda.is_available() and not self.cpu else "cpu"
+        data = data.to(device)
         self.num_nodes = data.x.shape[0]
         graph = data
         graph.add_remaining_self_loops()

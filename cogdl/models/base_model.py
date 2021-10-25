@@ -15,7 +15,6 @@ class BaseModel(nn.Module):
 
     def __init__(self):
         super(BaseModel, self).__init__()
-        self.device = ""
         self.loss_fn = None
         self.evaluator = None
 
@@ -25,8 +24,9 @@ class BaseModel(nn.Module):
     def forward(self, *args):
         raise NotImplementedError
 
-    def set_device(self, device):
-        self.device = device
+    @property
+    def device(self):
+        return next(self.parameters()).device
 
     def set_loss_fn(self, loss_fn):
         self.loss_fn = loss_fn

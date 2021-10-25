@@ -42,7 +42,7 @@ def get_default_args_for_unsup_nn(dataset, model, dw="node_classification_dw", m
 
 
 def test_unsupervised_graphsage():
-    args = get_default_args_for_unsup_nn("cora", "unsup_graphsage")
+    args = get_default_args_for_unsup_nn("cora", "unsup_graphsage", mw="unsup_graphsage_mw")
     args.negative_samples = 10
     args.walk_length = 5
     args.sample_size = [5, 5]
@@ -91,6 +91,6 @@ def test_grace():
 
 if __name__ == "__main__":
     test_unsupervised_graphsage()
-    test_grace()
-    test_mvgrl()
-    test_dgi()
+    # test_grace()
+    # test_mvgrl()
+    # test_dgi()

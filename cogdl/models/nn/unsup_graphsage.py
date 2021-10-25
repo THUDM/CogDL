@@ -38,11 +38,6 @@ class SAGE(BaseModel):
         parser.add_argument("--num-layers", type=int, default=2)
         parser.add_argument("--sample-size", type=int, nargs='+', default=[10, 10])
         parser.add_argument("--dropout", type=float, default=0.5)
-        parser.add_argument("--walk-length", type=int, default=10)
-        parser.add_argument("--negative-samples", type=int, default=30)
-        parser.add_argument("--lr", type=float, default=0.001)
-
-        parser.add_argument("--max-epochs", type=int, default=3000)
         # fmt: on
 
     @classmethod
@@ -53,11 +48,9 @@ class SAGE(BaseModel):
             num_layers=args.num_layers,
             sample_size=args.sample_size,
             dropout=args.dropout,
-            walk_length=args.walk_length,
-            negative_samples=args.negative_samples,
         )
 
-    def __init__(self, num_features, hidden_size, num_layers, sample_size, dropout, walk_length, negative_samples):
+    def __init__(self, num_features, hidden_size, num_layers, sample_size, dropout):
         super(SAGE, self).__init__()
         self.adjlist = {}
         self.num_features = num_features
@@ -65,16 +58,9 @@ class SAGE(BaseModel):
         self.num_layers = num_layers
         self.sample_size = sample_size
         self.dropout = dropout
-        self.walk_length = walk_length
-        self.num_negative_samples = negative_samples
-        self.walk_res = None
-        self.num_nodes = 0
-        self.negative_samples = 1
 
         shapes = [num_features] + [hidden_size] * num_layers
-
         self.convs = nn.ModuleList([SAGELayer(shapes[layer], shapes[layer + 1]) for layer in range(num_layers)])
-        self.random_walker = RandomWalker()
 
     def forward(self, graph):
         x = graph.x
@@ -87,34 +73,6 @@ class SAGE(BaseModel):
                     x = F.relu(x)
                     x = F.dropout(x, p=self.dropout, training=self.training)
         return x
-
-    def loss(self, data):
-        x = self.forward(data)
-        device = x.device
-
-        self.random_walker.build_up(data.edge_index, data.x.shape[0])
-        walk_res = self.random_walker.walk(
-            start=torch.arange(0, x.shape[0]).to(device), walk_length=self.walk_length + 1
-        )
-        self.walk_res = torch.as_tensor(walk_res)[:, 1:]
-
-        if not self.num_nodes:
-            self.num_nodes = max(data.edge_index[0].max(), data.edge_index[1].max()).item() + 1
-
-        # if self.negative_samples is None:
-        self.negative_samples = torch.from_numpy(
-            np.random.choice(self.num_nodes, (self.num_nodes, self.num_negative_samples))
-        ).to(device)
-
-        pos_loss = -torch.log(
-            torch.sigmoid(torch.sum(x.unsqueeze(1).repeat(1, self.walk_length, 1) * x[self.walk_res], dim=-1))
-        ).mean()
-        neg_loss = -torch.log(
-            torch.sigmoid(
-                -torch.sum(x.unsqueeze(1).repeat(1, self.num_negative_samples, 1) * x[self.negative_samples], dim=-1)
-            )
-        ).mean()
-        return (pos_loss + neg_loss) / 2
 
     def embed(self, data):
         emb = self.forward(data)

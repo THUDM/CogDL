@@ -676,6 +676,10 @@ class Graph(BaseGraph):
         keys = [key for key in keys if key[:2] != "__" and key[-2:] != "__"]
         return keys
 
+    @property
+    def device(self):
+        return self._adj.device
+
     def degrees(self):
         return self._adj.degrees()
 

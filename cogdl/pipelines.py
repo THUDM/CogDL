@@ -189,7 +189,7 @@ class GenerateEmbeddingPipeline(Pipeline):
             num_nodes = edge_index.max().item() + 1
             if x is None:
                 print("No input node features, use random features instead.")
-                np.random.randn(num_nodes, self.num_features)
+                x = np.random.randn(num_nodes, self.num_features)
             if isinstance(x, np.ndarray):
                 x = torch.from_numpy(x).float()
             if isinstance(edge_index, np.ndarray):
@@ -200,7 +200,8 @@ class GenerateEmbeddingPipeline(Pipeline):
             dataset = NodeDataset(path=self.data_path, scale_feat=False, metric="accuracy")
             self.args.dataset = dataset
             model = train(self.args)
-            embeddings = model.embed(data).cpu().numpy()
+            embeddings = model.embed(data.to(model.device))
+            embeddings = embeddings.detach().cpu().numpy()
 
         return embeddings
 

@@ -105,12 +105,13 @@ class SDNE(BaseModel):
         self.nu2 = nu2
         self.max_epoch = max_epoch
         self.lr = lr
-        self.device = "cuda" if torch.cuda.is_available() and not cpu else "cpu"
+        self.cpu = cpu
 
     def train(self, graph, return_dict=False):
         return self.forward(graph, return_dict)
 
     def forward(self, graph, return_dict=False):
+        device = "cuda" if torch.cuda.is_available() and not self.cpu else "cpu"
         G = graph.to_networkx()
         num_node = G.number_of_nodes()
         model = SDNE_layer(
@@ -120,8 +121,8 @@ class SDNE(BaseModel):
         A = torch.from_numpy(nx.adjacency_matrix(G).todense().astype(np.float32))
         L = torch.from_numpy(nx.laplacian_matrix(G).todense().astype(np.float32))
 
-        A, L = A.to(self.device), L.to(self.device)
-        model = model.to(self.device)
+        A, L = A.to(device), L.to(device)
+        model = model.to(device)
 
         opt = torch.optim.Adam(model.parameters(), lr=self.lr)
         epoch_iter = tqdm(range(self.max_epoch))

@@ -105,14 +105,13 @@ class GATNE(BaseModel):
         self.num_sampled = negative_samples
         self.neighbor_samples = neighbor_samples
         self.schema = schema
-
         self.multiplicity = True
-        self.device = "cpu" if not torch.cuda.is_available() else "cuda"
 
     def train(self, network_data):
         return self.forward(network_data)
 
     def forward(self, network_data):
+        device = "cpu" if not torch.cuda.is_available() else "cuda"
         all_walks = generate_walks(network_data, self.walk_num, self.walk_length, schema=self.schema)
         vocab, index2word = generate_vocab(all_walks)
         train_pairs = generate_pairs(all_walks, vocab)
@@ -156,8 +155,8 @@ class GATNE(BaseModel):
         model = GATNEModel(num_nodes, embedding_size, embedding_u_size, edge_type_count, dim_att)
         nsloss = NSLoss(num_nodes, num_sampled, embedding_size)
 
-        model.to(self.device)
-        nsloss.to(self.device)
+        model.to(device)
+        nsloss.to(device)
 
         optimizer = torch.optim.Adam([{"params": model.parameters()}, {"params": nsloss.parameters()}], lr=1e-4)
 
@@ -176,11 +175,11 @@ class GATNE(BaseModel):
             for i, data in enumerate(data_iter):
                 optimizer.zero_grad()
                 embs = model(
-                    data[0].to(self.device),
-                    data[2].to(self.device),
-                    data[3].to(self.device),
+                    data[0].to(device),
+                    data[2].to(device),
+                    data[3].to(device),
                 )
-                loss = nsloss(data[0].to(self.device), embs, data[1].to(self.device))
+                loss = nsloss(data[0].to(device), embs, data[1].to(device))
                 loss.backward()
                 optimizer.step()
 
@@ -197,9 +196,9 @@ class GATNE(BaseModel):
 
         final_model = dict(zip(edge_types, [dict() for _ in range(edge_type_count)]))
         for i in range(num_nodes):
-            train_inputs = torch.tensor([i for _ in range(edge_type_count)]).to(self.device)
-            train_types = torch.tensor(list(range(edge_type_count))).to(self.device)
-            node_neigh = torch.tensor([neighbors[i] for _ in range(edge_type_count)]).to(self.device)
+            train_inputs = torch.tensor([i for _ in range(edge_type_count)]).to(device)
+            train_types = torch.tensor(list(range(edge_type_count))).to(device)
+            node_neigh = torch.tensor([neighbors[i] for _ in range(edge_type_count)]).to(device)
             node_emb = model(train_inputs, train_types, node_neigh)
             for j in range(edge_type_count):
                 final_model[edge_types[j]][index2word[i]] = node_emb[j].cpu().detach().numpy()

@@ -79,7 +79,7 @@ class DNGR(BaseModel):
         self.step = step
         self.max_epoch = max_epoch
         self.lr = lr
-        self.device = "cuda" if torch.cuda.is_available() and not cpu else "cpu"
+        self.cpu = cpu
 
     def scale_matrix(self, mat):
         mat = mat - np.diag(np.diag(mat))
@@ -124,9 +124,10 @@ class DNGR(BaseModel):
         return emb_matrix
 
     def train(self, graph, return_dict=False):
-        return self.forward(graph, return_dict=False)
+        return self.forward(graph, return_dict=return_dict)
 
     def forward(self, graph, return_dict=False):
+        device = "cuda" if torch.cuda.is_available() and not self.cpu else "cpu"
         G = graph.to_networkx()
         self.num_node = G.number_of_nodes()
         A = nx.adjacency_matrix(G).todense()
@@ -137,8 +138,8 @@ class DNGR(BaseModel):
         input_mat = torch.from_numpy(self.get_denoised_matrix(PPMI).astype(np.float32))
         model = DNGR_layer(self.num_node, self.hidden_size1, self.hidden_size2)
 
-        input_mat = input_mat.to(self.device)
-        model = model.to(self.device)
+        input_mat = input_mat.to(device)
+        model = model.to(device)
 
         opt = torch.optim.Adam(model.parameters(), lr=self.lr)
         loss_func = nn.MSELoss()

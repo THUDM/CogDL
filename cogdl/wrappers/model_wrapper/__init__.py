@@ -37,6 +37,7 @@ SUPPORTED_MW = {
     "mvgrl_mw": "cogdl.wrappers.model_wrapper.node_classification.MVGRLModelWrapper",
     "self_auxiliary_mw": "cogdl.wrappers.model_wrapper.node_classification.SelfAuxiliaryModelWrapper",
     "graphsage_mw": "cogdl.wrappers.model_wrapper.node_classification.GraphSAGEModelWrapper",
+    "unsup_graphsage_mw": "cogdl.wrappers.model_wrapper.node_classification.UnsupGraphSAGEModelWrapper",
     "m3s_mw": "cogdl.wrappers.model_wrapper.node_classification.M3SModelWrapper",
     "network_embedding_mw": "cogdl.wrappers.model_wrapper.node_classification.NetworkEmbeddingModelWrapper",
     "node_classification_mw": "cogdl.wrappers.model_wrapper.node_classification.NodeClfModelWrapper",

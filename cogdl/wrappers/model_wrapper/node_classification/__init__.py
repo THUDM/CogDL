@@ -4,6 +4,7 @@ from .gcnmix_mw import GCNMixModelWrapper
 from .grace_mw import GRACEModelWrapper
 from .grand_mw import GrandModelWrapper
 from .graphsage_mw import GraphSAGEModelWrapper
+from .unsup_graphsage_mw import UnsupGraphSAGEModelWrapper
 from .m3s_mw import M3SModelWrapper
 from .mvgrl_mw import MVGRLModelWrapper
 from .network_embedding_mw import NetworkEmbeddingModelWrapper

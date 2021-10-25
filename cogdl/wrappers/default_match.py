@@ -45,7 +45,7 @@ def set_default_wrapper_config():
     network_embedding_models = [
         "deepwalk",
         "line",
-        "node2veec",
+        "node2vec",
         "prone",
         "netmf",
         "netsmf",
@@ -77,6 +77,7 @@ def set_default_wrapper_config():
     node_classification_wrappers["dgi"]["mw"] = "dgi_mw"
     node_classification_wrappers["m3s"]["mw"] = "m3s_mw"
     node_classification_wrappers["graphsage"]["mw"] = "graphsage_mw"
+    node_classification_wrappers["unsup_graphsage"]["mw"] = "unsup_graphsage_mw"
     node_classification_wrappers["mvgrl"]["mw"] = "mvgrl_mw"
     node_classification_wrappers["sagn"]["mw"] = "sagn_mw"
     node_classification_wrappers["grand"]["mw"] = "grand_mw"

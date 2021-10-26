@@ -214,6 +214,8 @@ def tabulate_results(results_dict):
     tab_data = []
     for variant in results_dict:
         results = np.array([list(res.values()) for res in results_dict[variant]])
+        if isinstance(variant[1], nn.Module):
+            variant = (variant[0], variant[1].model_name)
         tab_data.append(
             [variant]
             + list(

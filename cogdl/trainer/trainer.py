@@ -48,7 +48,7 @@ class Trainer(object):
         max_epoch: int,
         nstage: int = 1,
         cpu: bool = False,
-        checkpoint_path: str = "./checkpoints/checkpoint.pt",
+        checkpoint_path: str = "./checkpoints/model.pt",
         device_ids: Optional[list] = None,
         distributed_training: bool = False,
         distributed_inference: bool = False,
@@ -175,11 +175,22 @@ class Trainer(object):
         if self.no_test:
             return best_model_w.model
 
+        final_test = self.evaluate(best_model_w, dataset_w)
+        return final_test
+
+    def evaluate(self, model_w: ModelWrapper, dataset_w: DataWrapper, cpu=False):
+        # for network/graph embedding models
+        if isinstance(model_w, EmbeddingModelWrapper):
+            return EmbeddingTrainer(self.save_embedding_path).run(model_w, dataset_w)
+
+        if cpu:
+            self.devices = [torch.device("cpu")]
+
         # disable `distributed` to inference once only
         self.distributed_training = False
         dataset_w.prepare_test_data()
         final_val = self.validate(model_w, dataset_w, self.devices[0])
-        final_test = self.test(best_model_w, dataset_w, self.devices[0])
+        final_test = self.test(model_w, dataset_w, self.devices[0])
 
         if final_val is not None and "val_metric" in final_val:
             final_val[f"val_{self.evaluation_metric}"] = final_val["val_metric"]

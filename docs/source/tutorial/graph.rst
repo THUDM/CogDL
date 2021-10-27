@@ -103,7 +103,7 @@ We also implement commonly used operations in ``Graph``:
 
     # inference_step
     model.eval()
-    data.eval()
+    graph.eval()
 
 
 

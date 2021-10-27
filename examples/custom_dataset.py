@@ -2,17 +2,15 @@ import torch
 
 from cogdl.experiments import experiment
 from cogdl.data import Graph
-from cogdl.datasets import NodeDataset
+from cogdl.datasets import NodeDataset, generate_random_graph
 
 
 class MyNodeClassificationDataset(NodeDataset):
-    def __init__(self, path="mydata.pt"):
+    def __init__(self, path="data.pt"):
         super(MyNodeClassificationDataset, self).__init__(path)
 
     def process(self):
-        num_nodes = 100
-        num_edges = 300
-        feat_dim = 30
+        num_nodes, num_edges, feat_dim = 100, 300, 30
 
         # load or generate your dataset
         edge_index = torch.randint(0, num_nodes, (2, num_edges))
@@ -31,5 +29,11 @@ class MyNodeClassificationDataset(NodeDataset):
 
 
 if __name__ == "__main__":
+    # Train customized dataset via defining a new class
     dataset = MyNodeClassificationDataset()
-    experiment(dw="node_classification_dw", mw="node_classification_mw", dataset=dataset, model="gcn")
+    experiment(dataset=dataset, model="gcn")
+
+    # Train customized dataset via feeding the graph data to NodeDataset
+    data = generate_random_graph(num_nodes=100, num_edges=300, num_feats=30)
+    dataset = NodeDataset(data=data)
+    experiment(dataset=dataset, model="gcn")

@@ -49,6 +49,7 @@ class Trainer(object):
         nstage: int = 1,
         cpu: bool = False,
         checkpoint_path: str = "./checkpoints/model.pt",
+        resume_training: str = False,
         device_ids: Optional[list] = None,
         distributed_training: bool = False,
         distributed_inference: bool = False,
@@ -58,7 +59,8 @@ class Trainer(object):
         early_stopping: bool = True,
         patience: int = 100,
         eval_step: int = 1,
-        save_embedding_path: Optional[str] = None,
+        save_emb_path: Optional[str] = None,
+        load_emb_path: Optional[str] = None,
         cpu_inference: bool = False,
         progress_bar: str = "epoch",
         clip_grad_norm: float = 5.0,
@@ -81,6 +83,7 @@ class Trainer(object):
         self.cpu = cpu
         self.devices, self.world_size = self.set_device(device_ids)
         self.checkpoint_path = checkpoint_path
+        self.resume_training = resume_training
 
         self.distributed_training = distributed_training
         self.distributed_inference = distributed_inference
@@ -98,7 +101,8 @@ class Trainer(object):
         self.on_eval_batch_transform = None
         self.clip_grad_norm = clip_grad_norm
 
-        self.save_embedding_path = save_embedding_path
+        self.save_emb_path = save_emb_path
+        self.load_emb_path = load_emb_path
 
         self.data_controller = DataController(world_size=self.world_size, distributed=self.distributed_training)
 
@@ -155,7 +159,7 @@ class Trainer(object):
     def run(self, model_w: ModelWrapper, dataset_w: DataWrapper):
         # for network/graph embedding models
         if isinstance(model_w, EmbeddingModelWrapper):
-            return EmbeddingTrainer(self.save_embedding_path).run(model_w, dataset_w)
+            return EmbeddingTrainer(self.save_emb_path, self.load_emb_path).run(model_w, dataset_w)
 
         # for deep learning models
         # set default loss_fn and evaluator for model_wrapper
@@ -164,6 +168,9 @@ class Trainer(object):
         model_w.default_loss_fn = dataset_w.get_default_loss_fn()
         model_w.default_evaluator = dataset_w.get_default_evaluator()
         model_w.set_evaluation_metric()
+
+        if self.resume_training:
+            model_w = load_model(model_w, self.checkpoint_path).to(self.devices[0])
 
         if self.distributed_training:  # and self.world_size > 1:
             torch.multiprocessing.set_sharing_strategy("file_system")
@@ -179,10 +186,6 @@ class Trainer(object):
         return final_test
 
     def evaluate(self, model_w: ModelWrapper, dataset_w: DataWrapper, cpu=False):
-        # for network/graph embedding models
-        if isinstance(model_w, EmbeddingModelWrapper):
-            return EmbeddingTrainer(self.save_embedding_path).run(model_w, dataset_w)
-
         if cpu:
             self.devices = [torch.device("cpu")]
 

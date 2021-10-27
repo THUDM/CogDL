@@ -64,11 +64,12 @@ class NodeDataset(Dataset):
         self.path = path
         self.data = data
         super(NodeDataset, self).__init__(root=path)
-        try:
-            self.data = torch.load(path)
-        except Exception as e:
-            print(e)
-            exit(1)
+        if self.data is None:
+            try:
+                self.data = torch.load(path)
+            except Exception as e:
+                print(e)
+                exit(1)
         if scale_feat:
             self.data = scale_feats(self.data)
         self.metric = metric

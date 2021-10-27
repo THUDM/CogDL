@@ -32,7 +32,6 @@ JKNet collects the output of all layers and concatenate them together to get the
         def __init__(self, in_feats, out_feats, hidden_size, num_layers):
             super(JKNet, self).__init__()
             shapes = [in_feats] + [hidden_size] * num_layers
-            #
             self.layers = nn.ModuleList([
                 GCNLayer(shape[i], shape[i+1])
                 for i in range(num_layers)
@@ -40,7 +39,6 @@ JKNet collects the output of all layers and concatenate them together to get the
             self.fc = nn.Linear(hidden_size * num_layers, out_feats)
 
         def forward(self, graph):
-            graph.add_remaining_self_loops()
             graph.sym_norm()
             h = graph.x
             out = []

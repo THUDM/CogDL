@@ -38,6 +38,7 @@ def get_parser():
     parser.add_argument("--n-warmup-steps", type=int, default=0)
 
     parser.add_argument("--checkpoint-path", type=str, default="./checkpoints/model.pt", help="path to save model")
+    parser.add_argument("--resume-training", action="store_true")
     parser.add_argument("--logger", type=str, default=None)
     parser.add_argument("--log-path", type=str, default=".", help="path to save logs")
     parser.add_argument("--project", type=str, default="cogdl-exp", help="project name for wandb")
@@ -170,11 +171,17 @@ def parse_args_and_arch(parser, args):
 
     if args.dw is not None:
         dw = args.dw
+    if dw is None:
+        warnings.warn("Using default data wrapper ('node_classification_dw') for training!")
+        dw = "node_classification_dw"
     if hasattr(fetch_data_wrapper(dw), "add_args"):
         fetch_data_wrapper(dw).add_args(parser)
 
     if args.mw is not None:
         mw = args.mw
+    if mw is None:
+        warnings.warn("Using default model wrapper ('node_classification_mw') for training!")
+        mw = "node_classification_mw"
     if hasattr(fetch_model_wrapper(mw), "add_args"):
         fetch_model_wrapper(mw).add_args(parser)
 

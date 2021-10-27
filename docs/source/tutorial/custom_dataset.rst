@@ -8,8 +8,7 @@ We provide ``NodeDataset`` and ``GraphDataset`` as abstract classes and implemen
 
 Dataset for node_classification
 ---------------------------------
-To create a dataset for node_classification, you need to inherit ``NodeDataset``. ``NodeDataset`` is for tasks like `node_classification`
-or `unsupervised_node_classification`, which focus on node-level prediction. Then you need to implement ``process`` method.
+To create a dataset for node_classification, you need to inherit ``NodeDataset``. ``NodeDataset`` is for node-level prediction. Then you need to implement ``process`` method.
 In this method, you are expected to read in your data and preprocess raw data to the format available to CogDL with ``Graph``.
 Afterwards, we suggest you to save the processed data (we will also help you do it as you return the data) to avoid doing
 the preprocessing again. Next time you run the code, CogDL will directly load it.
@@ -39,9 +38,8 @@ Here is an example:
 .. code-block:: python
 
     from cogdl.data import Graph
-    from cogdl.datasets import NodeDataset, register_dataset
+    from cogdl.datasets import NodeDataset
 
-    @register_dataset("node_dataset")
     class MyNodeDataset(NodeDataset):
         def __init__(self, path="data.pt"):
             self.path = path
@@ -55,7 +53,6 @@ Here is an example:
             mask = torch.bool(4)
             # Provide attributes as you need and save the data into `Graph`
             data = Graph(x=x, edge_index=edge_index)
-            torch.save(data, self.path)
             return data
 
     dataset = MyNodeDataset("data.pt")
@@ -73,7 +70,6 @@ An example is shown as follows:
 
     from cogdl.datasets import GraphDataset
 
-    @register_dataset("graph_dataset")
     class MyGraphDataset(GraphDataset):
         def __init__(self, path="data.pt"):
             self.path = path
@@ -87,7 +83,6 @@ An example is shown as follows:
                 edges = torch.randint(0, 20, (2, 30))
                 label = torch.randint(0, 7, (1,))
                 graphs.append(Graph(edge_index=edges, y=label))
-            torch.save(graphs, self.path)
             return graphs
 
 
@@ -101,13 +96,8 @@ Now that you have set up your dataset, you can use models/task in CogDL immediat
 
     # Use the GCN model with the dataset we define above
     dataset = MyNodeDataset("data.pt")
-    args.model = "gcn"
-    task = build_task(args, dataset=dataset)
-    task.train()
-
-    # Or you may simple run the command after `register_dataset`
-    experiment(model="gcn", task="node_classification", dataset="node_dataset")
+    experiment(model="gcn", dataset=dataset)
 
     # That's the same for other tasks
-    experiment(model="gin", task="graph_classification", dataset="graph_dataset")
-
+    dataset = MyGraphDataset("data.pt")
+    experiment(model="gin", dataset=dataset)

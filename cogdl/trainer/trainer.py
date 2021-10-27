@@ -49,6 +49,7 @@ class Trainer(object):
         nstage: int = 1,
         cpu: bool = False,
         checkpoint_path: str = "./checkpoints/checkpoint.pt",
+        resume_training: str = False,
         device_ids: Optional[list] = None,
         distributed_training: bool = False,
         distributed_inference: bool = False,
@@ -81,6 +82,7 @@ class Trainer(object):
         self.cpu = cpu
         self.devices, self.world_size = self.set_device(device_ids)
         self.checkpoint_path = checkpoint_path
+        self.resume_training = resume_training
 
         self.distributed_training = distributed_training
         self.distributed_inference = distributed_inference
@@ -164,6 +166,9 @@ class Trainer(object):
         model_w.default_loss_fn = dataset_w.get_default_loss_fn()
         model_w.default_evaluator = dataset_w.get_default_evaluator()
         model_w.set_evaluation_metric()
+
+        if self.resume_training:
+            model_w = load_model(model_w, self.checkpoint_path).to(self.devices[0])
 
         if self.distributed_training:  # and self.world_size > 1:
             torch.multiprocessing.set_sharing_strategy("file_system")

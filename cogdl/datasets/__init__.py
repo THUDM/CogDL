@@ -38,6 +38,8 @@ def try_adding_dataset_args(dataset, parser):
 
 
 def build_dataset_from_name(dataset):
+    if isinstance(dataset, list):
+        dataset = dataset[0]
     if dataset in SUPPORTED_DATASETS:
         path = ".".join(SUPPORTED_DATASETS[dataset].split(".")[:-1])
         module = importlib.import_module(path)

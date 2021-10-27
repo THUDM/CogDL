@@ -32,4 +32,4 @@ class MyNodeClassificationDataset(NodeDataset):
 
 if __name__ == "__main__":
     dataset = MyNodeClassificationDataset()
-    experiment(dw="node_classification_dw", mw="node_classification_mw", dataset=dataset, model="gcn")
+    experiment(dataset=dataset, model="gcn")

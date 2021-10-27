@@ -14,26 +14,23 @@ results in different datasets.
 .. code-block:: python
 
     from cogdl import experiment
-    experiment(model="gcn", dataset="cora", task="node_classification")
+    experiment(model="gcn", dataset="cora")
 
 
 
-
-Or you can create each component separately and manually run the process using ``build_dataset``, ``build_model``, ``build_task``
-in CogDL.
+Or you can create each component separately and manually run the process using ``build_dataset``, ``build_model`` in CogDL.
 
 .. code-block:: python
 
+    from cogdl import experiment
     from cogdl.datasets import build_dataset
     from cogdl.models import build_model
-    from cogdl.tasks import build_task
+    from cogdl.options import get_default_args 
 
-    args = build_args_from_dict(dict(task="node_classification", model="gcn", dataset="cora"))
+    args = get_default_args(model="gcn", dataset="cora")
     dataset = build_dataset(args)
     model = build_model(args)
-    task = build_task(args, dataset=dataset, model=model)
-    task.train()
-
+    experiment(model=model, dataset=dataset)
 
 
 As show above, model/dataset/task are 3 key components in establishing a training process. In fact, CogDL also supports
@@ -44,13 +41,11 @@ of each component.
 Save trained model
 -------------------
 
-CogDL supports saving the trained model with ``save_model`` in command line or notebook. For example:
+CogDL supports saving the trained model with ``checkpoint_path`` in command line or API usage. For example:
 
 .. code-block:: python
 
-    experiment(model="gcn", task="node_classification", dataset="cora", save_model="gcn_cora.pt")
-
-
+    experiment(model="gcn", dataset="cora", checkpoint_path="gcn_cora.pt")
 
 
 When the training stops, the model will be saved in `gcn_cora.py`. If you want to continue the training from previous checkpoint
@@ -60,8 +55,7 @@ and do it as follows:
 
 .. code-block:: python
 
-    experiment(model="gcn", task="node_classification", dataset="cora", checkpoint="gcn_cora.pt")
-
+    experiment(model="gcn", dataset="cora", checkpoint_path="gcn_cora.pt", resume_training=True)
 
 
 Or you may just want to do the inference to get prediction results without training. The prediction results will be automatically
@@ -70,12 +64,11 @@ saved in `gcn_cora.pred`.
 
 .. code-block:: python
 
-    experiment(model="gcn", task="node_classification", dataset="cora", checkpoint="gcn_cora.pt", inference=True)
+    experiment(model="gcn", dataset="cora", checkpoint_path="gcn_cora.pt", inference=True)
 
 
+In command line usage, the same results can be achieved with ``--checkpoint-path {path}``, ``--resume-training`` and ``--inference`` set.
 
-
-In command line usage, the same results can be achieved with ``--save-model {path}``, ``--checkpoint {path}`` and ``--inference`` set.
 
 Save embeddings
 ----------------
@@ -85,7 +78,7 @@ the embeddings will be save in `./embedding/prone_blogcatalog.npy`.
 
 .. code-block:: python
 
-    experiment(model="prone", dataset="blogcatalog", task="unsupervised_node_classification")
+    experiment(model="prone", dataset="blogcatalog")
 
 
 Evaluation on node classification will run as the end of training. We follow the same experimental settings used in DeepWalk, Node2Vec and ProNE.
@@ -101,7 +94,6 @@ code snippet evaluates the embedding we get above:
     experiment(
         model="prone",
         dataset="blogcatalog",
-        task="unsupervised_node_classification",
         load_emb_path="./embedding/prone_blogcatalog.npy",
         num_shuffle=5,
         training_percents=[0.1, 0.5, 0.9]
@@ -114,8 +106,8 @@ You can also use command line to achieve the same quickly
 .. code-block:: bash
 
     # Get embedding
-    python script/train.py --model prone --task unsupervised_node_classification --dataset blogcatalog
+    python script/train.py --model prone --dataset blogcatalog
 
     # Evaluate only
-    python script/train.py --model prone --task unsupervised_node_classification --dataset blogcatalog --load-emb-path ./embedding/prone_blogcatalog.npy --num-shuffle 5 --training-percents 0.1 0.5 0.9
+    python script/train.py --model prone --dataset blogcatalog --load-emb-path ./embedding/prone_blogcatalog.npy --num-shuffle 5 --training-percents 0.1 0.5 0.9
 

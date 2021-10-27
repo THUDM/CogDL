@@ -36,6 +36,8 @@ def try_adding_model_args(model, parser):
 
 def build_model(args):
     model = args.model
+    if isinstance(model, list):
+        model = model[0]
     if model in SUPPORTED_MODELS:
         path = ".".join(SUPPORTED_MODELS[model].split(".")[:-1])
         module = importlib.import_module(path)

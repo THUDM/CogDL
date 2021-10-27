@@ -15,6 +15,7 @@ class BaseModel(nn.Module):
 
     def __init__(self):
         super(BaseModel, self).__init__()
+        self.model_name = self.__class__.__name__
         self.loss_fn = None
         self.evaluator = None
 
@@ -30,6 +31,3 @@ class BaseModel(nn.Module):
 
     def set_loss_fn(self, loss_fn):
         self.loss_fn = loss_fn
-
-    def __repr__(self):
-        return self.__class__.__name__

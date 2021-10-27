@@ -58,27 +58,17 @@ and do it as follows:
     experiment(model="gcn", dataset="cora", checkpoint_path="gcn_cora.pt", resume_training=True)
 
 
-Or you may just want to do the inference to get prediction results without training. The prediction results will be automatically
-saved in `gcn_cora.pred`.
-
-
-.. code-block:: python
-
-    experiment(model="gcn", dataset="cora", checkpoint_path="gcn_cora.pt", inference=True)
-
-
-In command line usage, the same results can be achieved with ``--checkpoint-path {path}``, ``--resume-training`` and ``--inference`` set.
+In command line usage, the same results can be achieved with ``--checkpoint-path {path}`` and ``--resume-training``.
 
 
 Save embeddings
 ----------------
 Graph representation learning (network embedding and unsupervised GNNs) aims to get node representation. The embeddings
-can be used in various downstream applications. CogDL will save node embeddings in directory `./embedding`. As shown below,
-the embeddings will be save in `./embedding/prone_blogcatalog.npy`.
+can be used in various downstream applications. CogDL will save node embeddings in the given path specified by ``--save-emb-path {path}``. 
 
 .. code-block:: python
 
-    experiment(model="prone", dataset="blogcatalog")
+    experiment(model="prone", dataset="blogcatalog", save_emb_path="./embeddings/prone_blog.npy")
 
 
 Evaluation on node classification will run as the end of training. We follow the same experimental settings used in DeepWalk, Node2Vec and ProNE.
@@ -94,14 +84,14 @@ code snippet evaluates the embedding we get above:
     experiment(
         model="prone",
         dataset="blogcatalog",
-        load_emb_path="./embedding/prone_blogcatalog.npy",
+        load_emb_path="./embeddings/prone_blog.npy",
         num_shuffle=5,
         training_percents=[0.1, 0.5, 0.9]
     )
 
 
 
-You can also use command line to achieve the same quickly
+You can also use command line to achieve the same results
 
 .. code-block:: bash
 
@@ -109,5 +99,5 @@ You can also use command line to achieve the same quickly
     python script/train.py --model prone --dataset blogcatalog
 
     # Evaluate only
-    python script/train.py --model prone --dataset blogcatalog --load-emb-path ./embedding/prone_blogcatalog.npy --num-shuffle 5 --training-percents 0.1 0.5 0.9
+    python script/train.py --model prone --dataset blogcatalog --load-emb-path ./embeddings/prone_blog.npy --num-shuffle 5 --training-percents 0.1 0.5 0.9
 

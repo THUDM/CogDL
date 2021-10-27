@@ -190,7 +190,6 @@ def train(args):  # noqa: C901
     else:
         model_wrapper = mw_class(model, optimizer_cfg, **model_wrapper_args)
 
-    save_embedding_path = args.emb_path if hasattr(args, "emb_path") else None
     os.makedirs("./checkpoints", exist_ok=True)
 
     # setup controller
@@ -198,7 +197,8 @@ def train(args):  # noqa: C901
         max_epoch=args.max_epoch,
         device_ids=args.devices,
         cpu=args.cpu,
-        save_embedding_path=save_embedding_path,
+        save_emb_path=args.save_emb_path,
+        load_emb_path=args.load_emb_path,
         cpu_inference=args.cpu_inference,
         # monitor=args.monitor,
         progress_bar=args.progress_bar,

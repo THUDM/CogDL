@@ -38,6 +38,8 @@ def get_parser():
     parser.add_argument("--n-warmup-steps", type=int, default=0)
 
     parser.add_argument("--checkpoint-path", type=str, default="./checkpoints/model.pt", help="path to save model")
+    parser.add_argument("--save-emb-path", type=str, default=None, help="path to save embeddings")
+    parser.add_argument("--load-emb-path", type=str, default=None, help="path to load embeddings")
     parser.add_argument("--resume-training", action="store_true")
     parser.add_argument("--logger", type=str, default=None)
     parser.add_argument("--log-path", type=str, default=".", help="path to save logs")

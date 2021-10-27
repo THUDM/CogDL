@@ -32,13 +32,13 @@ If ``scale_feat`` is set to be `True`, CogDL will normalize node features with m
     z = (x - u) / s
 
 
-Here is an example:
+Here is an `example <https://github.com/THUDM/cogdl/blob/master/examples/custom_dataset.py>`_:
 
 
 .. code-block:: python
 
     from cogdl.data import Graph
-    from cogdl.datasets import NodeDataset
+    from cogdl.datasets import NodeDataset, generate_random_graph
 
     class MyNodeDataset(NodeDataset):
         def __init__(self, path="data.pt"):
@@ -47,15 +47,32 @@ Here is an example:
 
         def process(self):
             """You need to load your dataset and transform to `Graph`"""
-            # Load and preprocess data
-            edge_index = torch.tensor([[0, 1], [0, 2], [1, 2], [1, 3]).t()
-            x = torch.randn(4, 10)
-            mask = torch.bool(4)
-            # Provide attributes as you need and save the data into `Graph`
-            data = Graph(x=x, edge_index=edge_index)
+            num_nodes, num_edges, feat_dim = 100, 300, 30
+
+            # load or generate your dataset
+            edge_index = torch.randint(0, num_nodes, (2, num_edges))
+            x = torch.randn(num_nodes, feat_dim)
+            y = torch.randint(0, 2, (num_nodes,))
+
+            # set train/val/test mask in node_classification task
+            train_mask = torch.zeros(num_nodes).bool()
+            train_mask[0 : int(0.3 * num_nodes)] = True
+            val_mask = torch.zeros(num_nodes).bool()
+            val_mask[int(0.3 * num_nodes) : int(0.7 * num_nodes)] = True
+            test_mask = torch.zeros(num_nodes).bool()
+            test_mask[int(0.7 * num_nodes) :] = True
+            data = Graph(x=x, edge_index=edge_index, y=y, train_mask=train_mask, val_mask=val_mask, test_mask=test_mask)
             return data
 
-    dataset = MyNodeDataset("data.pt")
+    if __name__ == "__main__":
+        # Train customized dataset via defining a new class
+        dataset = MyNodeDataset()
+        experiment(dataset=dataset, model="gcn")
+
+        # Train customized dataset via feeding the graph data to NodeDataset
+        data = generate_random_graph(num_nodes=100, num_edges=300, num_feats=30)
+        dataset = NodeDataset(data=data)
+        experiment(dataset=dataset, model="gcn")
 
 
 
@@ -68,6 +85,7 @@ An example is shown as follows:
 
 .. code-block:: python
 
+    from cogdl.data import Graph
     from cogdl.datasets import GraphDataset
 
     class MyGraphDataset(GraphDataset):
@@ -85,19 +103,6 @@ An example is shown as follows:
                 graphs.append(Graph(edge_index=edges, y=label))
             return graphs
 
-
-
-
-Use custom dataset with CogDL
----------------------------------
-Now that you have set up your dataset, you can use models/task in CogDL immediately to get results.
-
-.. code-block:: python
-
-    # Use the GCN model with the dataset we define above
-    dataset = MyNodeDataset("data.pt")
-    experiment(model="gcn", dataset=dataset)
-
-    # That's the same for other tasks
-    dataset = MyGraphDataset("data.pt")
-    experiment(model="gin", dataset=dataset)
+    if __name__ == "__main__":
+        dataset = MyGraphDataset()
+        experiment(model="gin", dataset=dataset)

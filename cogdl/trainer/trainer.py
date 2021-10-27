@@ -59,7 +59,8 @@ class Trainer(object):
         early_stopping: bool = True,
         patience: int = 100,
         eval_step: int = 1,
-        save_embedding_path: Optional[str] = None,
+        save_emb_path: Optional[str] = None,
+        load_emb_path: Optional[str] = None,
         cpu_inference: bool = False,
         progress_bar: str = "epoch",
         clip_grad_norm: float = 5.0,
@@ -100,7 +101,8 @@ class Trainer(object):
         self.on_eval_batch_transform = None
         self.clip_grad_norm = clip_grad_norm
 
-        self.save_embedding_path = save_embedding_path
+        self.save_emb_path = save_emb_path
+        self.load_emb_path = load_emb_path
 
         self.data_controller = DataController(world_size=self.world_size, distributed=self.distributed_training)
 
@@ -157,7 +159,7 @@ class Trainer(object):
     def run(self, model_w: ModelWrapper, dataset_w: DataWrapper):
         # for network/graph embedding models
         if isinstance(model_w, EmbeddingModelWrapper):
-            return EmbeddingTrainer(self.save_embedding_path).run(model_w, dataset_w)
+            return EmbeddingTrainer(self.save_emb_path, self.load_emb_path).run(model_w, dataset_w)
 
         # for deep learning models
         # set default loss_fn and evaluator for model_wrapper
@@ -184,10 +186,6 @@ class Trainer(object):
         return final_test
 
     def evaluate(self, model_w: ModelWrapper, dataset_w: DataWrapper, cpu=False):
-        # for network/graph embedding models
-        if isinstance(model_w, EmbeddingModelWrapper):
-            return EmbeddingTrainer(self.save_embedding_path).run(model_w, dataset_w)
-
         if cpu:
             self.devices = [torch.device("cpu")]
 

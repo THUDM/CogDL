@@ -102,11 +102,13 @@ def train(args):  # noqa: C901
         args.seed = args.seed[0]
     set_random_seed(args.seed)
 
+    model_name = args.model if isinstance(args.model, str) else args.model.model_name
+
     print(
         f""" 
-|-------------------------------------{'-' * (len(str(args.dataset)) + len(str(args.model)) + len(args.dw) + len(args.mw))}|
-    *** Running (`{args.dataset}`, `{args.model}`, `{args.dw}`, `{args.mw}`)
-|-------------------------------------{'-' * (len(str(args.dataset)) + len(str(args.model)) + len(args.dw) + len(args.mw))}|"""
+|-------------------------------------{'-' * (len(str(args.dataset)) + len(model_name) + len(args.dw) + len(args.mw))}|
+    *** Running (`{args.dataset}`, `{model_name}`, `{args.dw}`, `{args.mw}`)
+|-------------------------------------{'-' * (len(str(args.dataset)) + len(model_name) + len(args.dw) + len(args.mw))}|"""
     )
 
     if getattr(args, "use_best_config", False):

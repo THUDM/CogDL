@@ -171,13 +171,13 @@ class Hin2vec(BaseModel):
         self.negative = negative
         self.epochs = epochs
         self.lr = lr
-
-        self.device = "cpu" if not torch.cuda.is_available() or cpu else "cuda"
+        self.cpu = cpu
 
     def forward(self, data):
         return self.train(data)
 
     def train(self, data):
+        device = "cpu" if not torch.cuda.is_available() or self.cpu else "cuda"
         G = nx.DiGraph()
         row, col = data.edge_index
         G.add_edges_from(list(zip(row.numpy(), col.numpy())))
@@ -187,8 +187,8 @@ class Hin2vec(BaseModel):
         pairs, relation = rw.data_preparation(walks, self.hop, self.negative)
 
         self.num_relation = len(relation)
-        model = Hin2vec_layer(self.num_node, self.num_relation, self.hidden_dim, self.device)
-        self.model = model.to(self.device)
+        model = Hin2vec_layer(self.num_node, self.num_relation, self.hidden_dim, device)
+        self.model = model.to(device)
 
         num_batch = int(len(pairs) / self.batch_size)
         print_num_batch = 100
@@ -200,7 +200,7 @@ class Hin2vec(BaseModel):
             loss_n, pred, label = [], [], []
             for i in range(num_batch):
                 batch_pairs = torch.from_numpy(pairs[i * self.batch_size : (i + 1) * self.batch_size])
-                batch_pairs = batch_pairs.to(self.device)
+                batch_pairs = batch_pairs.to(device)
                 batch_pairs = batch_pairs.T
                 x, y, r, l = batch_pairs[0], batch_pairs[1], batch_pairs[2], batch_pairs[3]  # noqa E741
                 opt.zero_grad()
@@ -210,7 +210,7 @@ class Hin2vec(BaseModel):
                 label.append(l)
                 pred.extend(logits)
                 if i % print_num_batch == 0 and i != 0:
-                    label = torch.cat(label).to(self.device)
+                    label = torch.cat(label).to(device)
                     pred = torch.stack(pred, dim=0)
                     pred = pred.max(1)[1]
                     acc = pred.eq(label).sum().item() / len(label)

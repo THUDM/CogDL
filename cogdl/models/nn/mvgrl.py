@@ -157,7 +157,6 @@ class MVGRL(BaseModel):
 
         self.cache["diff"] = graphs[1]
         self.cache["adj"] = graphs[0]
-        self.device = next(self.gcn1.parameters()).device
         print("Preprocessing Done...")
 
     def forward(self, graph):
@@ -169,6 +168,7 @@ class MVGRL(BaseModel):
             self.preprocess(graph)
         diff, adj = self.cache["diff"], self.cache["adj"]
 
+        self.sample_size = min(self.sample_size, graph.num_nodes - self.batch_size)
         idx = np.random.randint(0, graph.num_nodes - self.sample_size + 1, self.batch_size)
         logits = []
         for i in idx:

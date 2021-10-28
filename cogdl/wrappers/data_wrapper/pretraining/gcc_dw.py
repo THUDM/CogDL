@@ -12,11 +12,10 @@ import torch.nn.functional as F
 
 from torch.utils.data import DataLoader
 
-from .. import register_data_wrapper, DataWrapper
+from .. import DataWrapper
 from cogdl.data import batch_graphs, Graph
 
 
-@register_data_wrapper("gcc_dw")
 class GCCDataWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):

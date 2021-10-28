@@ -29,7 +29,7 @@ default_dict = {
     "weight_decay": 0.01,
     "num_heads": 1,
     "dropout": 0,
-    "max_epoch": 3,
+    "epochs": 3,
     "lr": 0.001,
     "T": 5,
     "gamma": 10,

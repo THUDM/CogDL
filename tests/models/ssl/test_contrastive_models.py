@@ -10,15 +10,13 @@ default_dict = {
     "lr": 0.01,
     "dropout": 0.0,
     "patience": 1,
-    "max_epoch": 1,
+    "epochs": 1,
     "cpu": not torch.cuda.is_available(),
     "weight_decay": 5e-4,
     "num_shuffle": 2,
     "save_dir": "./embedding",
     "enhance": None,
-    "device_id": [
-        0,
-    ],
+    "device_id": [0],
     "task": "unsupervised_node_classification",
     "checkpoint": False,
     "load_emb_path": None,
@@ -47,7 +45,7 @@ def test_unsupervised_graphsage():
     args.walk_length = 5
     args.sample_size = [5, 5]
     args.patience = 20
-    args.max_epochs = 2
+    args.epochs = 2
     args.checkpoint_path = "graphsage.pt"
     ret = train(args)
     assert ret["test_acc"] > 0
@@ -57,14 +55,14 @@ def test_dgi():
     args = get_default_args_for_unsup_nn("cora", "dgi", mw="dgi_mw")
     args.activation = "relu"
     args.sparse = True
-    args.max_epochs = 2
+    args.epochs = 2
     ret = train(args)
     assert ret["test_acc"] > 0
 
 
 def test_mvgrl():
     args = get_default_args_for_unsup_nn("cora", "mvgrl", mw="mvgrl_mw")
-    args.max_epochs = 2
+    args.epochs = 2
     args.sparse = False
     args.sample_size = 200
     args.batch_size = 4
@@ -76,7 +74,7 @@ def test_mvgrl():
 def test_grace():
     args = get_default_args_for_unsup_nn("cora", "grace", mw="grace_mw")
     args.num_layers = 2
-    args.max_epoch = 2
+    args.epochs = 2
     args.drop_feature_rates = [0.1, 0.2]
     args.drop_edge_rates = [0.2, 0.3]
     args.activation = "relu"

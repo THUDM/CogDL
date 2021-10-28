@@ -52,7 +52,7 @@ def test_customized_dataset():
 
 def test_customized_graph_dataset():
     dataset = MyGraphClassificationDataset()
-    result = experiment(model="gin", dataset=dataset, degree_node_features=True, max_epoch=10, cpu=True)
+    result = experiment(model="gin", dataset=dataset, degree_node_features=True, epochs=10, cpu=True)
     result = list(result.values())[0][0]
     assert result["test_acc"] >= 0
 

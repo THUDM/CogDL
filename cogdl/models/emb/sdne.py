@@ -61,7 +61,7 @@ class SDNE(BaseModel):
         beta (float) : Parameter of 2-nd order objective function in SDNE.
         nu1 (float) : Parameter of l1 normlization in SDNE.
         nu2 (float) : Parameter of l2 normlization in SDNE.
-        max_epoch (int) : The max epoches in training step.
+        epochs (int) : The max epoches in training step.
         lr (float) : Learning rate in SDNE.
         cpu (bool) : Use CPU or GPU to train hin2vec.
     """
@@ -89,12 +89,12 @@ class SDNE(BaseModel):
             args.beta,
             args.nu1,
             args.nu2,
-            args.max_epoch,
+            args.epochs,
             args.lr,
             args.cpu,
         )
 
-    def __init__(self, hidden_size1, hidden_size2, droput, alpha, beta, nu1, nu2, max_epoch, lr, cpu):
+    def __init__(self, hidden_size1, hidden_size2, droput, alpha, beta, nu1, nu2, epochs, lr, cpu):
         super(SDNE, self).__init__()
         self.hidden_size1 = hidden_size1
         self.hidden_size2 = hidden_size2
@@ -103,7 +103,7 @@ class SDNE(BaseModel):
         self.beta = beta
         self.nu1 = nu1
         self.nu2 = nu2
-        self.max_epoch = max_epoch
+        self.epochs = epochs
         self.lr = lr
         self.cpu = cpu
 
@@ -125,7 +125,7 @@ class SDNE(BaseModel):
         model = model.to(device)
 
         opt = torch.optim.Adam(model.parameters(), lr=self.lr)
-        epoch_iter = tqdm(range(self.max_epoch))
+        epoch_iter = tqdm(range(self.epochs))
         for epoch in epoch_iter:
             opt.zero_grad()
             L_1st, L_2nd, L_all, L_reg = model.forward(A, L)

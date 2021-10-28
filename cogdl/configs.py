@@ -3,7 +3,7 @@ BEST_CONFIGS = {
         "chebyshev": {"general": {}},
         "dropedge_gcn": {"general": {}},
         "gat": {
-            "general": {"lr": 0.005, "max_epoch": 1000},
+            "general": {"lr": 0.005, "epochs": 1000},
             "citeseer": {"weight_decay": 0.001},
             "pubmed": {"weight_decay": 0.001},
             "ppi-large": {
@@ -24,7 +24,7 @@ BEST_CONFIGS = {
                 "hidden_size": 2048,
                 "num_layers": 2,
                 "dropout": 0.3,
-                "max_epoch": 7000,
+                "epochs": 7000,
                 # 78.04
             },
             "flickr": {
@@ -39,7 +39,7 @@ BEST_CONFIGS = {
         },
         "gcnii": {
             "general": {
-                "max_epoch": 1000,
+                "epochs": 1000,
                 "dropout": 0.5,
                 "wd1": 0.001,
                 "wd2": 5e-4,
@@ -54,7 +54,7 @@ BEST_CONFIGS = {
                 "hidden_size": 256,
                 "lr": 0.001,
                 "patience": 200,
-                "max_epoch": 2000,
+                "epochs": 2000,
                 "lmbda": 0.6,
                 "dropout": 0.7,
             },
@@ -73,7 +73,7 @@ BEST_CONFIGS = {
                 "wd2": 0,
                 "lr": 0.001,
                 "residual": True,
-                "max_epoch": 1000,
+                "epochs": 1000,
                 "lmbda": 1.0,
                 # 96.42
             },
@@ -93,7 +93,7 @@ BEST_CONFIGS = {
         },
         "grand": {
             "general": {
-                "max_epoch": 1000,
+                "epochs": 1000,
             },
             "cora": {
                 "order": 8,
@@ -139,7 +139,7 @@ BEST_CONFIGS = {
         "sgcpn": {
             "general": {
                 "lr": 0.005,
-                "max_epoch": 1000,
+                "epochs": 1000,
                 "patience": 1000,
                 "norm_mode": "PN",
                 "norm_scale": 10,
@@ -157,14 +157,14 @@ BEST_CONFIGS = {
         "srgcn": {
             "general": {
                 "lr": 0.005,
-                "max_epoch": 1000,
+                "epochs": 1000,
             },
             "cora": {"dropout": 0.6},
             "citeseer": {"dropout": 0.6},
         },
         "unet": {
             "general": {
-                "max_epoch": 1000,
+                "epochs": 1000,
                 "n_dropout": 0.90,
                 "adj_dropout": 0.05,
                 "hidden_size": 128,
@@ -182,7 +182,7 @@ BEST_CONFIGS = {
                 "dropout": 0.3,
                 "num_layers": 2,
                 "hidden_size": 256,
-                "max_epoch": 1000,
+                "epochs": 1000,
                 "num_iterations": 4,
                 "alpha": 0.5,
                 # 0.5227
@@ -193,7 +193,7 @@ BEST_CONFIGS = {
                 "alpha": 0.1087,
                 "num_iterations": 7,
                 "num_layers": 2,
-                "max_epoch": 1000,
+                "epochs": 1000,
                 "hidden_size": 32,
                 "dropout": 0.8185,
                 #
@@ -206,7 +206,7 @@ BEST_CONFIGS = {
                 "alpha": 0.171,
                 "weight_decay": 0.0004117,
                 "num_layers": 2,
-                "max_epoch": 1000,
+                "epochs": 1000,
                 # 0.7199
             },
             "pubmed": {
@@ -215,7 +215,7 @@ BEST_CONFIGS = {
                 "dropout": 0.3766,
                 "alpha": 0.1201,
                 "weight_decay": 0.0002754,
-                "max_epoch": 1000,
+                "epochs": 1000,
                 "lr": 0.001,
             },
             "reddit": {
@@ -289,7 +289,7 @@ BEST_CONFIGS = {
             "general": {
                 "hidden_size": 128,
                 "lr": 0.001,
-                "max_epoch": 500,
+                "epochs": 500,
                 "hidden_size1": 1000,
                 "hidden_size2": 128,
                 "noise": 0.2,
@@ -342,7 +342,7 @@ BEST_CONFIGS = {
         "grace": {
             "general": {
                 "weight_decay": 0,
-                "max_epoch": 1000,
+                "epochs": 1000,
                 "patience": 20,
             },
             "cora": {
@@ -351,7 +351,7 @@ BEST_CONFIGS = {
                 "tau": 0.4,
                 "drop_feature_rates": [0.3, 0.4],
                 "drop_edge_rates": [0.2, 0.4],
-                "max_epoch": 200,
+                "epochs": 200,
                 "hidden_size": 128,
                 "proj_hidden_size": 128,
             },
@@ -378,7 +378,7 @@ BEST_CONFIGS = {
         "unsup_graphsage": {
             "lr": 0.001,
             "weight_decay": 0,
-            "max_epoch": 3000,
+            "epochs": 3000,
         },
         "revgcn": {
             "general": {},
@@ -417,7 +417,7 @@ BEST_CONFIGS = {
             },
             "mutag": {
                 "num_layers": 1,
-                "epoch": 20,
+                "epochs": 20,
             },
             "imdb-b": {"degree_feature": True},
             "imdb-m": {"degree_feature": True},
@@ -449,7 +449,7 @@ BEST_CONFIGS = {
             "nci1": {
                 "lr": 0.001,
                 "window_size": 8,
-                "epoch": 10,
+                "epochs": 10,
                 "iteration": 4,
             },
             "reddit-b": {

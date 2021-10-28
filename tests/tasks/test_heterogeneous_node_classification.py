@@ -6,7 +6,7 @@ default_dict = {
     "hidden_size": 8,
     "dropout": 0.5,
     "patience": 1,
-    "max_epoch": 1,
+    "epochs": 1,
     "device_id": [0],
     "cpu": True,
     "lr": 0.001,

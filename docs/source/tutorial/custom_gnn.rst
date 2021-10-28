@@ -17,8 +17,8 @@ JKNet collects the output of all layers and concatenate them together to get the
 
     \begin{gather*}
     H^{(0)} = X \\
-    H^{(i+1)} = \sigma(\hat{A} H^{(i)} W^{(i)} \\
-    OUT = CONCAT([H^{(0)},...,H^{(L)})
+    H^{(i+1)} = \sigma(\hat{A} H^{(i)} W^{(i)}) \\
+    OUT = CONCAT([H^{(0)},...,H^{(L)}])
     \end{gather*}
 
 
@@ -26,6 +26,7 @@ JKNet collects the output of all layers and concatenate them together to get the
 .. code-block:: python
 
     import torch
+    from cogdl.layers import GCNLayer
     from cogdl.models import BaseModel
 
     class JKNet(BaseModel):
@@ -39,6 +40,7 @@ JKNet collects the output of all layers and concatenate them together to get the
             self.fc = nn.Linear(hidden_size * num_layers, out_feats)
 
         def forward(self, graph):
+            # symmetric normalization of adjacency matrix
             graph.sym_norm()
             h = graph.x
             out = []
@@ -74,8 +76,6 @@ shows how to implement a GCNLayer using ``Graph`` and efficient sparse matrix op
             self.fc = torch.nn.Linear(in_feats, out_feats)
 
         def forward(self, graph, x):
-            # symmetric normalization of adjacency matrix
-            graph.sym_norm()
             h = self.fc(x)
             h = spmm(graph, h)
             return h

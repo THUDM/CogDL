@@ -43,7 +43,7 @@ class BaseEvaluator(object):
         if len(self.y_pred) > 0:
             y_pred = torch.cat(self.y_pred, dim=0)
             y_true = torch.cat(self.y_true, dim=0)
-            self.clean()
+            self.clear()
             return self.eval_func(y_pred, y_true)
         return 0
 

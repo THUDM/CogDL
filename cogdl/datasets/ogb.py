@@ -39,7 +39,7 @@ class OGBNDataset(Dataset):
         name = self.name.replace("_", "-")
         dataset = NodePropPredDataset(name, self.root)
         graph, y = dataset[0]
-        x = torch.tensor(graph["node_feat"]) if graph["node_feat"] is not None else None
+        x = torch.tensor(graph["node_feat"]).contiguous() if graph["node_feat"] is not None else None
         y = torch.tensor(y.squeeze())
         row, col = graph["edge_index"][0], graph["edge_index"][1]
         row = torch.from_numpy(row)
@@ -74,17 +74,6 @@ class OGBArxivDataset(OGBNDataset):
     def __init__(self, data_path="data"):
         dataset = "ogbn-arxiv"
         super(OGBArxivDataset, self).__init__(data_path, dataset)
-
-    def get_evaluator(self):
-        evaluator = NodeEvaluator(name="ogbn-arxiv")
-
-        def wrap(y_pred, y_true):
-            y_pred = y_pred.argmax(dim=-1, keepdim=True)
-            y_true = y_true.view(-1, 1)
-            input_dict = {"y_true": y_true, "y_pred": y_pred}
-            return evaluator.eval(input_dict)["acc"]
-
-        return wrap
 
 
 class OGBProductsDataset(OGBNDataset):

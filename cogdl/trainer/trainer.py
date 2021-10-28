@@ -1,4 +1,5 @@
 import copy
+import warnings
 from typing import Optional
 import numpy as np
 from tqdm import tqdm
@@ -45,7 +46,8 @@ def clip_grad_norm(params, max_norm):
 class Trainer(object):
     def __init__(
         self,
-        max_epoch: int,
+        epochs: int,
+        max_epoch: int = None,
         nstage: int = 1,
         cpu: bool = False,
         checkpoint_path: str = "./checkpoints/model.pt",
@@ -71,7 +73,7 @@ class Trainer(object):
         actnn: bool = False,
         rp_ratio: int = 1,
     ):
-        self.max_epoch = max_epoch
+        self.epochs = epochs
         self.nstage = nstage
         self.patience = patience
         self.early_stopping = early_stopping
@@ -80,6 +82,10 @@ class Trainer(object):
         self.evaluation_metric = None
         self.progress_bar = progress_bar
 
+        if max_epoch is not None:
+            warnings.warn("The max_epoch is deprecated and will be removed in the future, please use epochs instead!")
+            self.epochs = max_epoch
+
         self.cpu = cpu
         self.devices, self.world_size = self.set_device(device_ids)
         self.checkpoint_path = checkpoint_path
@@ -87,9 +93,7 @@ class Trainer(object):
 
         self.distributed_training = distributed_training
         self.distributed_inference = distributed_inference
-        # if self.world_size <= 1:
-        #     self.distributed_training = False
-        #     self.distributed_inference = False
+
         self.master_addr = master_addr
         self.master_port = master_port
 
@@ -161,10 +165,11 @@ class Trainer(object):
         if isinstance(model_w, EmbeddingModelWrapper):
             return EmbeddingTrainer(self.save_emb_path, self.load_emb_path).run(model_w, dataset_w)
 
+        print("Model Parameters:", sum(p.numel() for p in model_w.parameters()))
+
         # for deep learning models
         # set default loss_fn and evaluator for model_wrapper
         # mainly for in-cogdl setting
-
         model_w.default_loss_fn = dataset_w.get_default_loss_fn()
         model_w.default_evaluator = dataset_w.get_default_evaluator()
         model_w.set_evaluation_metric()
@@ -172,7 +177,7 @@ class Trainer(object):
         if self.resume_training:
             model_w = load_model(model_w, self.checkpoint_path).to(self.devices[0])
 
-        if self.distributed_training:  # and self.world_size > 1:
+        if self.distributed_training:
             torch.multiprocessing.set_sharing_strategy("file_system")
             self.dist_train(model_w, dataset_w)
         else:
@@ -297,10 +302,10 @@ class Trainer(object):
                 self.data_controller.training_proc_per_stage(dataset_w, rank)
 
             if self.progress_bar == "epoch":
-                epoch_iter = tqdm(range(self.max_epoch))
+                epoch_iter = tqdm(range(self.epochs))
                 epoch_printer = Printer(epoch_iter.set_description, rank=rank, world_size=self.world_size)
             else:
-                epoch_iter = range(self.max_epoch)
+                epoch_iter = range(self.epochs)
                 epoch_printer = Printer(print, rank=rank, world_size=self.world_size)
 
             self.logger.start()
@@ -456,7 +461,6 @@ class Trainer(object):
         if val_loader is None:
             return None
         for batch in val_loader:
-            # batch = batch.to(device)
             batch = move_to_device(batch, device)
             model_w.on_val_step(batch)
             if self.eval_data_back_to_cpu:
@@ -469,7 +473,6 @@ class Trainer(object):
         if test_loader is None:
             return None
         for batch in test_loader:
-            # batch = batch.to(device)
             batch = move_to_device(batch, device)
             model_w.on_test_step(batch)
             if self.eval_data_back_to_cpu:

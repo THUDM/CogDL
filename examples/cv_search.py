@@ -18,7 +18,7 @@ def build_default_args():
     args = {
         "lr": 0.01,
         "weight_decay": 0.001,
-        "max_epoch": 1000,
+        "epochs": 1000,
         "patience": 100,
         "cpu": cpu,
         "device_id": [0],

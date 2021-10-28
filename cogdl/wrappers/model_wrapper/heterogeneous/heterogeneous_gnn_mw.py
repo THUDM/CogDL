@@ -3,9 +3,9 @@ from cogdl.wrappers.model_wrapper import ModelWrapper
 
 
 class HeterogeneousGNNModelWrapper(ModelWrapper):
-    def __init__(self, model, optimizer_config):
+    def __init__(self, model, optimizer_cfg):
         super(HeterogeneousGNNModelWrapper, self).__init__()
-        self.optimizer_config = optimizer_config
+        self.optimizer_cfg = optimizer_cfg
         self.model = model
 
     def train_step(self, batch):
@@ -34,7 +34,7 @@ class HeterogeneousGNNModelWrapper(ModelWrapper):
         self.note("test_metric", metric)
 
     def setup_optimizer(self):
-        cfg = self.optimizer_config
+        cfg = self.optimizer_cfg
         if hasattr(self.model, "get_optimizer"):
             model_spec_optim = self.model.get_optimizer(cfg)
             if model_spec_optim is not None:

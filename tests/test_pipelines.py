@@ -41,7 +41,7 @@ def test_gen_emb():
         num_features=8,
         hidden_size=10,
         sample_size=2,
-        max_epoch=2,
+        epochs=2,
         cpu=True,
     )
     outputs = generator(edge_index, x=np.random.randn(8, 8))
@@ -50,7 +50,7 @@ def test_gen_emb():
 
 # def test_recommendation():
 #     data = np.array([[0, 0], [0, 1], [0, 2], [1, 1], [1, 3], [1, 4], [2, 4], [2, 5], [2, 6]])
-#     rec = pipeline("recommendation", model="lightgcn", data=data, max_epoch=2, evaluate_interval=1000, cpu=True)
+#     rec = pipeline("recommendation", model="lightgcn", data=data, epochs=2, evaluate_interval=1000, cpu=True)
 #     ret = rec([0], topk=3)
 #     assert len(ret[0]) == 3
 

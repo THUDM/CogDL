@@ -30,7 +30,7 @@ def test_gatne_amazon():
     args.window_size = 3
     args.worker = 5
     args.schema = None
-    args.epoch = 1
+    args.epochs = 1
     args.batch_size = 128
     args.edge_dim = 5
     args.att_dim = 5
@@ -48,7 +48,7 @@ def test_gatne_twitter():
     args.window_size = 3
     args.worker = 5
     args.schema = None
-    args.epoch = 1
+    args.epochs = 1
     args.batch_size = 128
     args.edge_dim = 5
     args.att_dim = 5

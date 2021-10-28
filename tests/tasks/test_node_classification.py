@@ -10,7 +10,7 @@ default_dict = {
     "hidden_size": 16,
     "dropout": 0.5,
     "patience": 2,
-    "max_epoch": 3,
+    "epochs": 3,
     "sampler": "none",
     "num_layers": 2,
     "cpu": not cuda_available,
@@ -92,7 +92,7 @@ def test_graphsage_cora():
     args.batch_size = 32
     args.num_layers = 2
     args.patience = 1
-    args.max_epoch = 2
+    args.epochs = 2
     args.hidden_size = [32, 32]
     args.sample_size = [3, 5]
     args.num_workers = 1
@@ -187,7 +187,7 @@ def test_disengcn_cora():
 
 def test_graph_mix():
     args = get_default_args_for_nc("cora", "gcnmix", mw="gcnmix_mw")
-    args.max_epoch = 2
+    args.epochs = 2
     args.rampup_starts = 1
     args.rampup_ends = 100
     args.mixup_consistency = 5.0
@@ -253,7 +253,7 @@ def test_deepergcn_cora():
     args.num_layers = 2
     args.connection = "res+"
     args.cluster_number = 3
-    args.max_epoch = 2
+    args.epochs = 2
     args.patience = 1
     args.learn_beta = True
     args.learn_msg_scale = True
@@ -518,7 +518,7 @@ def test_revnets_cora():
 
 def test_gcc_cora():
     args = get_default_args_for_nc("cora", "gcc", mw="gcc_mw", dw="gcc_dw")
-    args.max_epoch = 1
+    args.epochs = 1
     args.num_workers = 0
     args.batch_size = 16
     args.rw_hops = 8

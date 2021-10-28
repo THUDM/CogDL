@@ -48,7 +48,7 @@ class DNGR(BaseModel):
         noise (float) : Denoise rate of DAE.
         alpha (float) : Parameter in DNGR.
         step (int) : The max step in random surfing.
-        max_epoch (int) : The max epoches in training step.
+        epochs (int) : The max epoches in training step.
         lr (float) : Learning rate in DNGR.
     """
 
@@ -67,17 +67,17 @@ class DNGR(BaseModel):
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            args.hidden_size1, args.hidden_size2, args.noise, args.alpha, args.step, args.max_epoch, args.lr, args.cpu
+            args.hidden_size1, args.hidden_size2, args.noise, args.alpha, args.step, args.epochs, args.lr, args.cpu
         )
 
-    def __init__(self, hidden_size1, hidden_size2, noise, alpha, step, max_epoch, lr, cpu):
+    def __init__(self, hidden_size1, hidden_size2, noise, alpha, step, epochs, lr, cpu):
         super(DNGR, self).__init__()
         self.hidden_size1 = hidden_size1
         self.hidden_size2 = hidden_size2
         self.noise = noise
         self.alpha = alpha
         self.step = step
-        self.max_epoch = max_epoch
+        self.epochs = epochs
         self.lr = lr
         self.cpu = cpu
 
@@ -144,7 +144,7 @@ class DNGR(BaseModel):
         opt = torch.optim.Adam(model.parameters(), lr=self.lr)
         loss_func = nn.MSELoss()
 
-        epoch_iter = tqdm(range(self.max_epoch))
+        epoch_iter = tqdm(range(self.epochs))
         for epoch in epoch_iter:
             opt.zero_grad()
             encoded, decoded = model.forward(input_mat)

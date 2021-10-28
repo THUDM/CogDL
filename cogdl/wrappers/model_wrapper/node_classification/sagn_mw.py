@@ -4,10 +4,10 @@ from .. import ModelWrapper
 
 
 class SAGNModelWrapper(ModelWrapper):
-    def __init__(self, model, optimizer_config):
+    def __init__(self, model, optimizer_cfg):
         super(SAGNModelWrapper, self).__init__()
         self.model = model
-        self.optimizer_config = optimizer_config
+        self.optimizer_cfg = optimizer_cfg
 
     def train_step(self, batch):
         batch_x, batch_y_emb, y = batch
@@ -54,5 +54,5 @@ class SAGNModelWrapper(ModelWrapper):
         return probs
 
     def setup_optimizer(self):
-        cfg = self.optimizer_config
+        cfg = self.optimizer_cfg
         return torch.optim.Adam(self.model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])

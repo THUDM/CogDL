@@ -38,7 +38,6 @@ class DAEGCModelWrapper(ModelWrapper):
             cluster_center = self.model.get_cluster_center()
             z = self.model(graph)
             Q = self.getQ(z, cluster_center)
-            # if epoch % self.T == 0:
             self.count += 1
             if self.count % self.t == 0:
                 P = self.getP(Q).detach()

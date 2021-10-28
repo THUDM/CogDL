@@ -10,31 +10,16 @@ from cogdl.utils import build_args_from_dict
 from cogdl.wrappers.default_match import get_wrappers_name
 
 
-def add_args(args: list):
-    parser = argparse.ArgumentParser()
-    if "lr" in args:
-        parser.add_argument("--lr", default=0.01, type=float)
-    if "max_epoch" in args:
-        parser.add_argument("--max-epoch", default=500, type=int)
-
-
-def add_arguments(args: list):
-    parser = argparse.ArgumentParser()
-    for item in args:
-        name, _type, default = item
-        parser.add_argument(f"--{name}", default=default, type=_type)
-    return parser
-
-
 def get_parser():
     parser = argparse.ArgumentParser(conflict_handler="resolve")
     # fmt: off
     parser.add_argument("--seed", default=[1], type=int, nargs="+", metavar="N",
                         help="pseudo random number generator seed")
-    parser.add_argument("--max-epoch", default=500, type=int)
+    parser.add_argument("--epochs", default=500, type=int)
+    parser.add_argument("--max-epoch", default=None, type=int)
     parser.add_argument("--patience", type=int, default=100)
     parser.add_argument("--lr", default=0.01, type=float)
-    parser.add_argument("--weight-decay", default=5e-4, type=float)
+    parser.add_argument("--weight-decay", default=0, type=float)
     parser.add_argument("--n-warmup-steps", type=int, default=0)
 
     parser.add_argument("--checkpoint-path", type=str, default="./checkpoints/model.pt", help="path to save model")
@@ -174,7 +159,7 @@ def parse_args_and_arch(parser, args):
     if args.dw is not None:
         dw = args.dw
     if dw is None:
-        warnings.warn("Using default data wrapper ('node_classification_dw') for training!")
+        # warnings.warn("Using default data wrapper ('node_classification_dw') for training!")
         dw = "node_classification_dw"
     if hasattr(fetch_data_wrapper(dw), "add_args"):
         fetch_data_wrapper(dw).add_args(parser)
@@ -182,7 +167,7 @@ def parse_args_and_arch(parser, args):
     if args.mw is not None:
         mw = args.mw
     if mw is None:
-        warnings.warn("Using default model wrapper ('node_classification_mw') for training!")
+        # warnings.warn("Using default model wrapper ('node_classification_mw') for training!")
         mw = "node_classification_mw"
     if hasattr(fetch_model_wrapper(mw), "add_args"):
         fetch_model_wrapper(mw).add_args(parser)

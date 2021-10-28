@@ -21,7 +21,6 @@ class Graph2Vec(BaseModel):
         sampling_rate (float) : Parameter in doc2vec.
         dm (int) :  Parameter in doc2vec.
         iteration (int) : The number of iteration in WL method.
-        epoch (int) : The max epoches in training step.
         lr (float) : Learning rate in doc2vec.
     """
 
@@ -33,7 +32,6 @@ class Graph2Vec(BaseModel):
         parser.add_argument("--dm", type=int, default=0)
         parser.add_argument("--sampling", type=float, default=0.0001)
         parser.add_argument("--iteration", type=int, default=2)
-        parser.add_argument("--epoch", type=int, default=10)
         parser.add_argument("--lr", type=float, default=0.025)
 
     @classmethod
@@ -45,7 +43,7 @@ class Graph2Vec(BaseModel):
             args.sampling,
             args.dm,
             args.iteration,
-            args.epoch,
+            args.epochs,
             args.lr,
         )
 
@@ -79,7 +77,7 @@ class Graph2Vec(BaseModel):
             features = new_feats
         return wl_features
 
-    def __init__(self, dimension, min_count, window_size, dm, sampling_rate, rounds, epoch, lr, worker=4):
+    def __init__(self, dimension, min_count, window_size, dm, sampling_rate, rounds, epochs, lr, worker=4):
         super(Graph2Vec, self).__init__()
         self.dimension = dimension
         self.min_count = min_count
@@ -90,7 +88,7 @@ class Graph2Vec(BaseModel):
         self.rounds = rounds
         self.model = None
         self.doc_collections = None
-        self.epoch = epoch
+        self.epochs = epochs
         self.lr = lr
 
     def forward(self, graphs, **kwargs):
@@ -106,7 +104,7 @@ class Graph2Vec(BaseModel):
             dm=self.dm,
             sample=self.sampling_rate,
             workers=self.worker,
-            epochs=self.epoch,
+            epochs=self.epochs,
             alpha=self.lr,
         )
         vectors = np.array([self.model["g_" + str(i)] for i in range(len(graphs))])

@@ -144,7 +144,6 @@ class Hin2vec(BaseModel):
         parser.add_argument("--batch-size", type=int, default=1000, help="Batch size in SGD training process. Default is 1000.")
         parser.add_argument("--hop", type=int, default=2)
         parser.add_argument("--negative", type=int, default=5)
-        parser.add_argument("--epochs", type=int, default=1)
         # fmt: on
 
     @classmethod

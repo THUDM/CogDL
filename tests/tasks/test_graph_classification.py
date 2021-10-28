@@ -8,7 +8,7 @@ default_dict = {
     "hidden_size": 32,
     "dropout": 0.5,
     "patience": 1,
-    "max_epoch": 2,
+    "epochs": 2,
     "cpu": not cuda_available,
     "lr": 0.001,
     "kfold": False,

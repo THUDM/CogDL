@@ -170,7 +170,7 @@ class Dataset(torch.utils.data.Dataset):
         return 1
 
     def __repr__(self):  # pragma: no cover
-        return "{}({})".format(self.__class__.__name__, len(self))
+        return "{}".format(self.__class__.__name__)
 
 
 class MultiGraphDataset(Dataset):
@@ -268,3 +268,6 @@ class MultiGraphDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
+
+    def __repr__(self):  # pragma: no cover
+        return "{}({})".format(self.__class__.__name__, len(self))

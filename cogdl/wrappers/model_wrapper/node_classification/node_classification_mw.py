@@ -3,9 +3,9 @@ from cogdl.wrappers.model_wrapper import ModelWrapper
 
 
 class NodeClfModelWrapper(ModelWrapper):
-    def __init__(self, model, optimizer_config):
+    def __init__(self, model, optimizer_cfg):
         super(NodeClfModelWrapper, self).__init__()
-        self.optimizer_config = optimizer_config
+        self.optimizer_cfg = optimizer_cfg
         self.model = model
 
     def train_step(self, subgraph):
@@ -39,7 +39,7 @@ class NodeClfModelWrapper(ModelWrapper):
         self.note("test_metric", metric)
 
     def setup_optimizer(self):
-        cfg = self.optimizer_config
+        cfg = self.optimizer_cfg
         if hasattr(self.model, "setup_optimizer"):
             model_spec_optim = self.model.setup_optimizer(cfg)
             if model_spec_optim is not None:

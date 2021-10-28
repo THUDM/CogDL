@@ -9,12 +9,12 @@ def test_set_best_config():
     args = set_best_config(args)
 
     assert args.lr == 0.005
-    assert args.max_epoch == 1000
+    assert args.epochs == 1000
     assert args.weight_decay == 0.001
 
 
 def test_train():
-    args = get_default_args(task="node_classification", dataset="cora", model="gcn", max_epoch=10, cpu=True)
+    args = get_default_args(task="node_classification", dataset="cora", model="gcn", epochs=10, cpu=True)
     args.dataset = args.dataset[0]
     args.model = args.model[0]
     args.seed = args.seed[0]
@@ -31,9 +31,7 @@ def test_gen_variants():
 
 
 def test_experiment():
-    results = experiment(
-        task="node_classification", dataset="cora", model="gcn", hidden_size=32, max_epoch=10, cpu=True
-    )
+    results = experiment(task="node_classification", dataset="cora", model="gcn", hidden_size=32, epochs=10, cpu=True)
 
     assert ("cora", "gcn") in results
     assert results[("cora", "gcn")][0]["test_acc"] > 0
@@ -53,7 +51,7 @@ def test_auto_experiment():
         model="gcn",
         seed=[1, 2],
         n_trials=2,
-        max_epoch=10,
+        epochs=10,
         search_space=search_space_example,
         cpu=True,
     )

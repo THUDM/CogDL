@@ -86,7 +86,7 @@ from cogdl import experiment
 experiment(dataset="cora", model="gcn")
 
 # set other hyper-parameters
-experiment(dataset="cora", model="gcn", hidden_size=32, max_epoch=200)
+experiment(dataset="cora", model="gcn", hidden_size=32, epochs=200)
 
 # run over multiple models on different seeds
 experiment(dataset="cora", model=["gcn", "gat"], seed=[1, 2])

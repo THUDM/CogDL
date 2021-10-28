@@ -3,9 +3,9 @@ from cogdl.wrappers.model_wrapper import ModelWrapper
 
 
 class PPRGoModelWrapper(ModelWrapper):
-    def __init__(self, model, optimizer_config):
+    def __init__(self, model, optimizer_cfg):
         super(PPRGoModelWrapper, self).__init__()
-        self.optimizer_config = optimizer_config
+        self.optimizer_cfg = optimizer_cfg
         self.model = model
 
     def train_step(self, batch):
@@ -51,5 +51,5 @@ class PPRGoModelWrapper(ModelWrapper):
         self.note("test_metric", self.evaluate(pred, y))
 
     def setup_optimizer(self):
-        cfg = self.optimizer_config
+        cfg = self.optimizer_cfg
         return torch.optim.Adam(self.model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])

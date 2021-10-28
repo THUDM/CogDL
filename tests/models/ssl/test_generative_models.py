@@ -16,7 +16,7 @@ default_dict = {
     "dropout": 0.5,
     "patience": 2,
     "device_id": [0],
-    "max_epoch": 3,
+    "epochs": 3,
     "sampler": "none",
     "sampling": False,
     "cpu": not cuda_available,

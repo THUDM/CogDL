@@ -13,7 +13,7 @@ default_dict = {
     "save_dir": ".",
     "dropout": 0.5,
     "patience": 1,
-    "max_epoch": 2,
+    "epochs": 2,
     "cpu": not cuda_available,
     "lr": 0.001,
     "weight_decay": 5e-4,
@@ -43,7 +43,7 @@ def add_infograp_args(args):
     args.train_num = 100
     args.num_layers = 3
     args.sup = False
-    args.epoch = 3
+    args.epochs = 3
     args.nn = True
     args.lr = 0.0001
     args.train_ratio = 0.7
@@ -60,7 +60,7 @@ def add_graph2vec_args(args):
     args.dm = 0
     args.sampling = 0.0001
     args.iteration = 2
-    args.epoch = 4
+    args.epochs = 4
     args.nn = False
     args.lr = 0.001
     args.model = "graph2vec"
@@ -74,7 +74,7 @@ def add_dgk_args(args):
     args.min_count = 5
     args.sampling = 0.0001
     args.iteration = 2
-    args.epoch = 4
+    args.epochs = 4
     args.nn = False
     args.alpha = 0.01
     args.model = "dgk"

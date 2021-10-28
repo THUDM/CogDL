@@ -8,7 +8,7 @@ default_dict_emb_link = {
     "hidden_size": 16,
     "negative_ratio": 3,
     "patience": 1,
-    "max_epoch": 1,
+    "epochs": 1,
     "cpu": True,
     "checkpoint": False,
     "save_dir": ".",
@@ -37,7 +37,7 @@ def test_prone_ppi():
 
 
 default_dict_kg = {
-    "max_epoch": 1,
+    "epochs": 1,
     "num_bases": 4,
     "num_layers": 2,
     "hidden_size": 16,
@@ -93,7 +93,7 @@ default_dict_gnn_link = {
     "task": "link_prediction",
     "lr": 0.005,
     "weight_decay": 5e-4,
-    "max_epoch": 60,
+    "epochs": 60,
     "patience": 2,
     "num_layers": 2,
     "evaluate_interval": 1,

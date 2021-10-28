@@ -157,7 +157,7 @@ def test_sdne_ppi():
     args.beta = 5
     args.nu1 = 1e-4
     args.nu2 = 1e-3
-    args.max_epoch = 1
+    args.epochs = 1
     args.lr = 0.001
     ret = train(args)
     assert ret["Micro-F1 0.1"] > 0
@@ -170,7 +170,7 @@ def test_dngr_ppi():
     args.noise = 0.2
     args.alpha = 0.01
     args.step = 3
-    args.max_epoch = 1
+    args.epochs = 1
     args.lr = 0.001
     ret = train(args)
     assert ret["Micro-F1 0.1"] > 0

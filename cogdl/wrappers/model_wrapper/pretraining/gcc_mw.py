@@ -89,7 +89,7 @@ class GCCModelWrapper(ModelWrapper):
         lr = cfg["lr"]
         weight_decay = cfg["weight_decay"]
         warm_steps = cfg["n_warmup_steps"]
-        max_epoch = cfg["max_epoch"]
+        epochs = cfg["epochs"]
         batch_size = cfg["batch_size"]
         if self.finetune:
             optimizer = torch.optim.Adam(
@@ -99,7 +99,7 @@ class GCCModelWrapper(ModelWrapper):
             )
         else:
             optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay)
-        optimizer = LinearOptimizer(optimizer, warm_steps, max_epoch * batch_size, init_lr=lr)
+        optimizer = LinearOptimizer(optimizer, warm_steps, epochs * batch_size, init_lr=lr)
         return optimizer
 
     def save_checkpoint(self, path):

@@ -22,7 +22,7 @@ class GATNE(BaseModel):
         walk_num (int) : The number of walks to sample for each node.
         window_size (int) : The actual context size which is considered in language model.
         worker (int) : The number of workers for word2vec.
-        epoch (int) : The number of training epochs.
+        epochs (int) : The number of training epochs.
         batch_size (int) : The size of each training batch.
         edge_dim (int) : Number of edge embedding dimensions.
         att_dim (int) : Number of attention dimensions.
@@ -44,8 +44,8 @@ class GATNE(BaseModel):
                             help='Window size of skip-gram model. Default is 5.')
         parser.add_argument('--worker', type=int, default=10,
                             help='Number of parallel workers. Default is 10.')
-        parser.add_argument('--epoch', type=int, default=20,
-                            help='Number of epoch. Default is 20.')
+        parser.add_argument('--epochs', type=int, default=20,
+                            help='Number of epochs. Default is 20.')
         parser.add_argument('--batch-size', type=int, default=256,
                             help='Number of batch_size. Default is 256.')
         parser.add_argument('--edge-dim', type=int, default=10,
@@ -68,7 +68,7 @@ class GATNE(BaseModel):
             args.walk_num,
             args.window_size,
             args.worker,
-            args.epoch,
+            args.epochs,
             args.batch_size,
             args.edge_dim,
             args.att_dim,
@@ -84,7 +84,7 @@ class GATNE(BaseModel):
         walk_num,
         window_size,
         worker,
-        epoch,
+        epochs,
         batch_size,
         edge_dim,
         att_dim,
@@ -98,7 +98,7 @@ class GATNE(BaseModel):
         self.walk_num = walk_num
         self.window_size = window_size
         self.worker = worker
-        self.epochs = epoch
+        self.epochs = epochs
         self.batch_size = batch_size
         self.embedding_u_size = edge_dim
         self.dim_att = att_dim

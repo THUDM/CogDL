@@ -111,7 +111,7 @@ class InfoGraph(BaseModel):
         parser.add_argument("--train-num", dest="train_num", type=int, default=5000)
         parser.add_argument("--num-layers", type=int, default=1)
         parser.add_argument("--sup", dest="sup", action="store_true")
-        parser.add_argument("--epoch", type=int, default=15)
+        parser.add_argument("--epochs", type=int, default=15)
         parser.add_argument("--lr", type=float, default=0.0001)
         parser.add_argument("--train-ratio", type=float, default=0.7)
         parser.add_argument("--test-ratio", type=float, default=0.1)

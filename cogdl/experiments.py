@@ -3,6 +3,7 @@ import itertools
 import os
 import inspect
 from collections import defaultdict, namedtuple
+import warnings
 
 import torch
 import torch.nn as nn
@@ -177,7 +178,7 @@ def train(args):  # noqa: C901
         lr=args.lr,
         weight_decay=args.weight_decay,
         n_warmup_steps=args.n_warmup_steps,
-        max_epoch=args.max_epoch,
+        epochs=args.epochs,
         batch_size=args.batch_size if hasattr(args, "batch_size") else 0,
     )
 
@@ -194,7 +195,7 @@ def train(args):  # noqa: C901
 
     # setup controller
     trainer = Trainer(
-        max_epoch=args.max_epoch,
+        epochs=args.epochs,
         device_ids=args.devices,
         cpu=args.cpu,
         save_emb_path=args.save_emb_path,
@@ -285,8 +286,15 @@ def experiment(dataset, model, **kwargs):
         for key, value in kwargs.items():
             if key != "args":
                 args.__setattr__(key, value)
+    if isinstance(model[0], nn.Module):
+        args.model = [x.model_name for x in model]
+    print(args)
     args.dataset = dataset
     args.model = model
+
+    if args.max_epoch is not None:
+        warnings.warn("The max_epoch is deprecated and will be removed in the future, please use epochs instead!")
+        args.epochs = args.max_epoch
 
     if "search_space" in kwargs:
         return auto_experiment(args)

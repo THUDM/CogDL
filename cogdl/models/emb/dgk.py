@@ -18,7 +18,7 @@ class DeepGraphKernel(BaseModel):
         window (int) : The actual context size which is considered in language model.
         sampling_rate (float) : Parameter in word2vec.
         iteration (int) : The number of iteration in WL method.
-        epoch (int) : The number of training iteration.
+        epochs (int) : The number of training iteration.
         alpha (float) : The learning rate of word2vec.
     """
 
@@ -29,13 +29,13 @@ class DeepGraphKernel(BaseModel):
         parser.add_argument("--min-count", type=int, default=1)
         parser.add_argument("--sampling", type=float, default=0.0001)
         parser.add_argument("--iteration", type=int, default=2)
-        parser.add_argument("--epoch", type=int, default=20)
+        parser.add_argument("--epochs", type=int, default=20)
         parser.add_argument("--alpha", type=float, default=0.01)
 
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            args.hidden_size, args.min_count, args.window_size, args.sampling, args.iteration, args.epoch, args.alpha
+            args.hidden_size, args.min_count, args.window_size, args.sampling, args.iteration, args.epochs, args.alpha
         )
 
     @staticmethod
@@ -67,7 +67,7 @@ class DeepGraphKernel(BaseModel):
             features = new_feats
         return wl_features
 
-    def __init__(self, hidden_dim, min_count, window_size, sampling_rate, rounds, epoch, alpha, n_workers=4):
+    def __init__(self, hidden_dim, min_count, window_size, sampling_rate, rounds, epochs, alpha, n_workers=4):
         super(DeepGraphKernel, self).__init__()
         self.hidden_dim = hidden_dim
         self.min_count = min_count
@@ -77,7 +77,7 @@ class DeepGraphKernel(BaseModel):
         self.rounds = rounds
         self.model = None
         self.gl_collections = None
-        self.epoch = epoch
+        self.epochs = epochs
         self.alpha = alpha
 
     def forward(self, graphs, **kwargs):
@@ -93,7 +93,7 @@ class DeepGraphKernel(BaseModel):
             min_count=self.min_count,
             sample=self.sampling_rate,
             workers=self.n_workers,
-            iter=self.epoch,
+            iter=self.epochs,
             alpha=self.alpha,
         )
         vectors = np.asarray([model.wv[str(node)] for node in model.wv.index2word])

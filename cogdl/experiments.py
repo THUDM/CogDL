@@ -68,18 +68,6 @@ class AutoML(object):
         return self.best_results
 
 
-def examine_link_prediction(args, dataset):
-    if "link_prediction" in args.mw:
-        args.num_entities = dataset.data.num_nodes
-        # args.num_entities = len(torch.unique(self.data.edge_index))
-        if dataset.data.edge_attr is not None:
-            args.num_rels = len(torch.unique(dataset.data.edge_attr))
-            args.monitor = "mrr"
-        else:
-            args.monitor = "auc"
-    return args
-
-
 def set_best_config(args):
     configs = BEST_CONFIGS[args.task]
     if args.model not in configs:
@@ -104,19 +92,20 @@ def train(args):  # noqa: C901
     set_random_seed(args.seed)
 
     model_name = args.model if isinstance(args.model, str) else args.model.model_name
+    dw_name = args.dw if isinstance(args.dw, str) else args.dw.__name__
+    mw_name = args.mw if isinstance(args.mw, str) else args.mw.__name__
 
     print(
         f""" 
-|-------------------------------------{'-' * (len(str(args.dataset)) + len(model_name) + len(args.dw) + len(args.mw))}|
-    *** Running (`{args.dataset}`, `{model_name}`, `{args.dw}`, `{args.mw}`)
-|-------------------------------------{'-' * (len(str(args.dataset)) + len(model_name) + len(args.dw) + len(args.mw))}|"""
+|-------------------------------------{'-' * (len(str(args.dataset)) + len(model_name) + len(dw_name) + len(mw_name))}|
+    *** Running (`{args.dataset}`, `{model_name}`, `{dw_name}`, `{mw_name}`)
+|-------------------------------------{'-' * (len(str(args.dataset)) + len(model_name) + len(dw_name) + len(mw_name))}|"""
     )
 
     if getattr(args, "use_best_config", False):
         args = set_best_config(args)
 
     # setup dataset and specify `num_features` and `num_classes` for model
-    args.monitor = "val_acc"
     if isinstance(args.dataset, Dataset):
         dataset = args.dataset
     else:
@@ -141,8 +130,6 @@ def train(args):  # noqa: C901
     for key in inspect.signature(mw_class).parameters.keys():
         if hasattr(args, key) and key != "model":
             model_wrapper_args[key] = getattr(args, key)
-
-    args = examine_link_prediction(args, dataset)
 
     # setup data_wrapper
     dataset_wrapper = dw_class(dataset, **data_wrapper_args)
@@ -186,7 +173,7 @@ def train(args):  # noqa: C901
         optimizer_cfg["hidden_size"] = args.hidden_size
 
     # setup model_wrapper
-    if "embedding" in args.mw:
+    if isinstance(args.mw, str) and "embedding" in args.mw:
         model_wrapper = mw_class(model, **model_wrapper_args)
     else:
         model_wrapper = mw_class(model, optimizer_cfg, **model_wrapper_args)
@@ -201,7 +188,6 @@ def train(args):  # noqa: C901
         save_emb_path=args.save_emb_path,
         load_emb_path=args.load_emb_path,
         cpu_inference=args.cpu_inference,
-        # monitor=args.monitor,
         progress_bar=args.progress_bar,
         distributed_training=args.distributed,
         checkpoint_path=args.checkpoint_path,

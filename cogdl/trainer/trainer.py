@@ -57,7 +57,6 @@ class Trainer(object):
         distributed_inference: bool = False,
         master_addr: str = "localhost",
         master_port: int = 10086,
-        # monitor: str = "val_acc",
         early_stopping: bool = True,
         patience: int = 100,
         eval_step: int = 1,

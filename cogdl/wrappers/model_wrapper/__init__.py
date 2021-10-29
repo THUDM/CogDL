@@ -20,6 +20,8 @@ def register_model_wrapper(name):
 
 
 def fetch_model_wrapper(name):
+    if isinstance(name, type):
+        return name
     if name in SUPPORTED_MW:
         path = ".".join(SUPPORTED_MW[name].split(".")[:-1])
         module = importlib.import_module(path)

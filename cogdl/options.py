@@ -37,7 +37,6 @@ def get_parser():
     parser.add_argument("--devices", default=[0], type=int, nargs="+", help="which GPU to use")
     parser.add_argument("--cpu", action="store_true", help="use CPU instead of CUDA")
     parser.add_argument("--cpu-inference", action="store_true", help="do validation and test in cpu")
-    # parser.add_argument("--monitor", type=str, default="val_acc")
     parser.add_argument("--distributed", action="store_true")
     parser.add_argument("--progress-bar", type=str, default="epoch")
     parser.add_argument("--local_rank", type=int, default=0)

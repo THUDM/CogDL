@@ -19,6 +19,8 @@ def register_data_wrapper(name):
 
 
 def fetch_data_wrapper(name):
+    if isinstance(name, type):
+        return name
     if name in SUPPORTED_DW:
         path = ".".join(SUPPORTED_DW[name].split(".")[:-1])
         module = importlib.import_module(path)

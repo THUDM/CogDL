@@ -7,7 +7,10 @@ experiment(dataset="cora", model="gcn")
 experiment(dataset="cora", model="gcn", hidden_size=32, epochs=200)
 
 # run over multiple models on different seeds
-experiment(dataset="cora", model=["gcn", "gat"], seed=[1, 2])
+experiment(dataset="cora", model=["gcn", "gat"], seed=[0, 1])
+
+# run on different splits
+experiment(dataset="chameleon", model="gcn", seed=[0, 1], split=[0, 1])
 
 
 def search_space(trial):

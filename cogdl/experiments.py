@@ -89,6 +89,8 @@ def train(args):  # noqa: C901
         args.model = args.model[0]
     if isinstance(args.seed, list):
         args.seed = args.seed[0]
+    if isinstance(args.split, list):
+        args.split = args.split[0]
     set_random_seed(args.seed)
 
     model_name = args.model if isinstance(args.model, str) else args.model.model_name
@@ -215,7 +217,7 @@ def gen_variants(**items):
 def variant_args_generator(args, variants):
     """Form variants as group with size of num_workers"""
     for variant in variants:
-        args.dataset, args.model, args.seed = variant
+        args.dataset, args.model, args.seed, args.split = variant
         yield copy.deepcopy(args)
 
 
@@ -230,12 +232,12 @@ def output_results(results_dict, tablefmt="github"):
 def raw_experiment(args):
     init_operator_configs(args)
 
-    variants = list(gen_variants(dataset=args.dataset, model=args.model, seed=args.seed))
+    variants = list(gen_variants(dataset=args.dataset, model=args.model, seed=args.seed, split=args.split))
 
     results_dict = defaultdict(list)
     results = [train(args) for args in variant_args_generator(args, variants)]
     for variant, result in zip(variants, results):
-        results_dict[variant[:-1]].append(result)
+        results_dict[variant[:-2]].append(result)
 
     tablefmt = args.tablefmt if hasattr(args, "tablefmt") else "github"
     output_results(results_dict, tablefmt)

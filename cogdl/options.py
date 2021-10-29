@@ -21,6 +21,7 @@ def get_parser():
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--weight-decay", default=0, type=float)
     parser.add_argument("--n-warmup-steps", type=int, default=0)
+    parser.add_argument("--split", default=[0], type=int, nargs="+", metavar="N")
 
     parser.add_argument("--checkpoint-path", type=str, default="./checkpoints/model.pt", help="path to save model")
     parser.add_argument("--save-emb-path", type=str, default=None, help="path to save embeddings")

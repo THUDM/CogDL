@@ -289,7 +289,6 @@ class Trainer(object):
         self.monitor = est_monitor
         self.evaluation_metric = model_w.evaluation_metric
 
-        # best_index, compare_fn = evaluation_comp(self.monitor)
         best_model_w = None
 
         patience = 0
@@ -327,7 +326,6 @@ class Trainer(object):
                     dataset_w.eval()
                     # do validation in inference device
                     val_result = self.validate(model_w, dataset_w, rank)
-                    # print(val_result)
                     if val_result is not None:
                         monitoring = val_result[self.monitor]
                         if compare_fn(monitoring, best_index):

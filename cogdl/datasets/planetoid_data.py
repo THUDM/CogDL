@@ -121,7 +121,6 @@ class Planetoid(Dataset):
         self.data = torch.load(self.processed_paths[0])
 
         self.split = split
-        assert self.split in ["public", "full"]
 
         self.raw_dir = osp.join(self.root, self.name, "raw")
         self.processed_dir = osp.join(self.root, self.name, "processed")

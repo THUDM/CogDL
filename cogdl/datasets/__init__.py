@@ -1,5 +1,6 @@
 import importlib
 import torch
+import inspect
 
 from cogdl.data.dataset import Dataset
 from .customized_data import NodeDataset, GraphDataset, generate_random_graph
@@ -37,9 +38,11 @@ def try_adding_dataset_args(dataset, parser):
             dataset_class.add_args(parser)
 
 
-def build_dataset_from_name(dataset):
+def build_dataset_from_name(dataset, split=0):
     if isinstance(dataset, list):
         dataset = dataset[0]
+    if isinstance(split, list):
+        split = split[0]
     if dataset in SUPPORTED_DATASETS:
         path = ".".join(SUPPORTED_DATASETS[dataset].split(".")[:-1])
         module = importlib.import_module(path)
@@ -49,13 +52,18 @@ def build_dataset_from_name(dataset):
             return dataset
         raise NotImplementedError(f"Failed to import {dataset} dataset.")
     class_name = SUPPORTED_DATASETS[dataset].split(".")[-1]
-    dataset = getattr(module, class_name)()
+    dataset_class = getattr(module, class_name)
+    for key in inspect.signature(dataset_class.__init__).parameters.keys():
+        if key == "split":
+            return dataset_class(split=split)
 
-    return dataset
+    return dataset_class()
 
 
 def build_dataset(args):
-    dataset = build_dataset_from_name(args.dataset)
+    if not hasattr(args, "split"):
+        args.split = 0
+    dataset = build_dataset_from_name(args.dataset, args.split)
 
     if hasattr(dataset, "num_classes") and dataset.num_classes > 0:
         args.num_classes = dataset.num_classes
@@ -109,6 +117,12 @@ SUPPORTED_DATASETS = {
     "cora": "cogdl.datasets.planetoid_data.CoraDataset",
     "citeseer": "cogdl.datasets.planetoid_data.CiteSeerDataset",
     "pubmed": "cogdl.datasets.planetoid_data.PubMedDataset",
+    "chameleon": "cogdl.datasets.geom_data.ChameleonDataset",
+    "cornell": "cogdl.datasets.geom_data.CornellDataset",
+    "film": "cogdl.datasets.geom_data.FilmDataset",
+    "squirrel": "cogdl.datasets.geom_data.SquirrelDataset",
+    "texas": "cogdl.datasets.geom_data.TexasDataset",
+    "wisconsin": "cogdl.datasets.geom_data.WisconsinDataset",
     "blogcatalog": "cogdl.datasets.matlab_matrix.BlogcatalogDataset",
     "flickr-ne": "cogdl.datasets.matlab_matrix.FlickrDataset",
     "dblp-ne": "cogdl.datasets.matlab_matrix.DblpNEDataset",

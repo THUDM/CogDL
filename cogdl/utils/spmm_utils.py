@@ -14,7 +14,8 @@ def spmm_scatter(row, col, values, b):
     return output
 
 
-CONFIGS = {"fast_spmm": None, "csrmhspmm": None, "csr_edge_softmax": None, "spmm_flag": False, "mh_spmm_flag": False}
+CONFIGS = {"fast_spmm": None, "csrmhspmm": None, "csr_edge_softmax": None, "fused_gat_func": None,
+           "spmm_flag": False, "mh_spmm_flag": False, "fused_gat_flag": False}
 
 
 def init_operator_configs(args=None):
@@ -30,6 +31,7 @@ def init_operator_configs(args=None):
         args = build_args_from_dict({"fast_spmm": True, "cpu": not torch.cuda.is_available()})
     initialize_spmm(args)
     initialize_edge_softmax(args)
+    initialize_fused_gat(args)
 
 
 def initialize_spmm(args):
@@ -54,6 +56,14 @@ def initialize_edge_softmax(args):
         CONFIGS["csr_edge_softmax"] = csr_edge_softmax
 
 
+def initialize_fused_gat(args):
+    CONFIGS["fused_gat_flag"] = True
+    if torch.cuda.is_available() and not args.cpu:
+        from cogdl.operators.fused_gat import fused_gat_func
+
+        CONFIGS["fused_gat_func"] = fused_gat_func
+
+
 def check_fast_spmm():
     return CONFIGS["fast_spmm"] is not None
 
@@ -64,6 +74,10 @@ def check_mh_spmm():
 
 def check_edge_softmax():
     return CONFIGS["csr_edge_softmax"] is not None
+
+
+def check_fused_gat():
+    return CONFIGS["fused_gat_func"] is not None
 
 
 def spmm(graph, x, actnn=False):
@@ -153,3 +167,8 @@ def mh_spmm(graph, attention, h):
     """
     csrmhspmm = CONFIGS["csrmhspmm"]
     return csrmhspmm(graph.row_indptr.int(), graph.col_indices.int(), h, attention)
+
+
+def fused_gat_op(attn_row, attn_col, graph, negative_slope, in_feat):
+    fused_gat_func = CONFIGS["fused_gat_func"]
+    return fused_gat_func(attn_row, attn_col, graph.row_indptr.int(), graph.col_indices.int(), graph.row_indptr.int(), graph.col_indices.int(), negative_slope, in_feat)

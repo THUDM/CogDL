@@ -334,8 +334,8 @@ class Adjacency(BaseGraph):
 
     @property
     def num_nodes(self):
-        # if self.__num_nodes__ is not None:
-        #     return self.__num_nodes__
+        if self.__num_nodes__ is not None:
+            return self.__num_nodes__
         if self.row_ptr is not None:
             return self.row_ptr.shape[0] - 1
         else:

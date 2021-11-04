@@ -19,14 +19,14 @@ try:
     )
     mhtranspose = load(
         name="mhtranspose",
-        extra_cflags=["-lcusparse"],
+        extra_ldflags=["-lcusparse"],
         sources=[os.path.join(path, "spmm/mhTranspose.cpp"), os.path.join(path, "spmm/mhTranspose.cu")],
         verbose=False,
     )
 
     spmm = load(
         name="spmm",
-        extra_cflags=["-lcusparse"],
+        extra_ldflags=["-lcusparse"],
         sources=[os.path.join(path, "spmm/spmm.cpp"), os.path.join(path, "spmm/spmm_kernel.cu")],
         verbose=False,
     )

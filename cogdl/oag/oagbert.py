@@ -59,12 +59,12 @@ class OAGBertPretrainingModel(BertForPreTrainingPreLN):
             version = None
 
         bert_config = BertConfig.from_dict(json.load(open(os.path.join(model_name_or_path, "bert_config.json"))))
-        if os.path.exists(os.path.join(model_name_or_path, 'vocab.txt')):
+        if os.path.exists(os.path.join(model_name_or_path, "vocab.txt")):
             tokenizer = BertTokenizer.from_pretrained(model_name_or_path)
-        elif os.path.exists(os.path.join(model_name_or_path, 'vocab.model')):
-            tokenizer = spm.SentencePieceProcessor(model_file=os.path.join(model_name_or_path, 'vocab.model'))
+        elif os.path.exists(os.path.join(model_name_or_path, "vocab.model")):
+            tokenizer = spm.SentencePieceProcessor(model_file=os.path.join(model_name_or_path, "vocab.model"))
         else:
-            raise FileNotFoundError('Cannot find vocabulary file')
+            raise FileNotFoundError("Cannot find vocabulary file")
         if version == "2":
             bert_model = OAGMetaInfoBertModel(bert_config, tokenizer)
         else:

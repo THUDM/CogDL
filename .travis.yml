@@ -18,8 +18,8 @@ install:
   - pip install -e .
 
 before_script:
-  - black .
-  - flake8 .
+  - black cogdl
+  - flake8 cogdl
 
 script:
   - export METIS_DLL=~/.local/lib/libmetis.so

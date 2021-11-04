@@ -4,7 +4,16 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from cogdl.utils import check_mh_spmm, mh_spmm, mul_edge_softmax, spmm, get_activation, get_norm_layer, check_fused_gat, fused_gat_op
+from cogdl.utils import (
+    check_mh_spmm,
+    mh_spmm,
+    mul_edge_softmax,
+    spmm,
+    get_activation,
+    get_norm_layer,
+    check_fused_gat,
+    fused_gat_op,
+)
 
 
 class GATLayer(nn.Module):

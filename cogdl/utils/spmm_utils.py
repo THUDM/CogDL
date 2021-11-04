@@ -14,8 +14,15 @@ def spmm_scatter(row, col, values, b):
     return output
 
 
-CONFIGS = {"fast_spmm": None, "csrmhspmm": None, "csr_edge_softmax": None, "fused_gat_func": None,
-           "spmm_flag": False, "mh_spmm_flag": False, "fused_gat_flag": False}
+CONFIGS = {
+    "fast_spmm": None,
+    "csrmhspmm": None,
+    "csr_edge_softmax": None,
+    "fused_gat_func": None,
+    "spmm_flag": False,
+    "mh_spmm_flag": False,
+    "fused_gat_flag": False,
+}
 
 
 def init_operator_configs(args=None):
@@ -171,4 +178,13 @@ def mh_spmm(graph, attention, h):
 
 def fused_gat_op(attn_row, attn_col, graph, negative_slope, in_feat):
     fused_gat_func = CONFIGS["fused_gat_func"]
-    return fused_gat_func(attn_row, attn_col, graph.row_indptr.int(), graph.col_indices.int(), graph.row_indptr.int(), graph.col_indices.int(), negative_slope, in_feat)
+    return fused_gat_func(
+        attn_row,
+        attn_col,
+        graph.row_indptr.int(),
+        graph.col_indices.int(),
+        graph.row_indptr.int(),
+        graph.col_indices.int(),
+        negative_slope,
+        in_feat,
+    )

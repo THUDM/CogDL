@@ -58,9 +58,6 @@ class DeepWalk(BaseModel):
         self.worker = worker
         self.iteration = iteration
 
-    def train(self, graph, embedding_model_creator=Word2Vec, return_dict=False):
-        return self.forward(graph, embedding_model_creator, return_dict)
-
     def forward(self, graph, embedding_model_creator=Word2Vec, return_dict=False):
         nx_g = graph.to_networkx()
         self.G = nx_g

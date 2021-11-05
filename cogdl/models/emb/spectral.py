@@ -28,9 +28,6 @@ class Spectral(BaseModel):
         super(Spectral, self).__init__()
         self.dimension = hidden_size
 
-    def train(self, graph, return_dict=False):
-        return self.forward(graph, return_dict)
-
     def forward(self, graph, return_dict=False):
         nx_g = graph.to_networkx()
         matrix = nx.normalized_laplacian_matrix(nx_g).todense()

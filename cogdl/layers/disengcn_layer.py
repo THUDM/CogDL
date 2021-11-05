@@ -6,7 +6,7 @@ from cogdl.utils import mul_edge_softmax
 
 class DisenGCNLayer(nn.Module):
     """
-    Implementation of "Disentangled Graph Convolutional Networks" <http://proceedings.mlr.press/v97/ma19a.html>.
+    Implementation of `"Disentangled Graph Convolutional Networks" <http://proceedings.mlr.press/v97/ma19a.html>`_.
     """
 
     def __init__(self, in_feats, out_feats, K, iterations, tau=1.0, activation="leaky_relu"):

@@ -37,7 +37,7 @@ class M3S(BaseModel):
         self.gcn1 = GCNLayer(num_features, hidden_size)
         self.gcn2 = GCNLayer(hidden_size, num_classes)
 
-    def get_embeddings(self, graph):
+    def embed(self, graph):
         graph.sym_norm()
         h = graph.x
         h = self.gcn1(graph, h)

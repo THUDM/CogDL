@@ -123,9 +123,6 @@ class DNGR(BaseModel):
         emb_matrix = preprocessing.normalize(emb_matrix, "l2")
         return emb_matrix
 
-    def train(self, graph, return_dict=False):
-        return self.forward(graph, return_dict=return_dict)
-
     def forward(self, graph, return_dict=False):
         device = "cuda" if torch.cuda.is_available() and not self.cpu else "cpu"
         G = graph.to_networkx()

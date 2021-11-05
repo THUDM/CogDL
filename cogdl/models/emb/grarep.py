@@ -32,9 +32,6 @@ class GraRep(BaseModel):
         self.dimension = dimension
         self.step = step
 
-    def train(self, graph, return_dict=False):
-        return self.forward(graph, return_dict)
-
     def forward(self, graph, return_dict=False):
         self.G = graph.to_networkx()
         self.num_node = self.G.number_of_nodes()

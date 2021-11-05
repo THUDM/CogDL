@@ -32,9 +32,6 @@ class HOPE(BaseModel):
         self.dimension = dimension
         self.beta = beta
 
-    def train(self, graph, return_dict=False):
-        return self.forward(graph, return_dict)
-
     def forward(self, graph, return_dict=False):
         r"""The author claim that Katz has superior performance in related tasks
         S_katz = (M_g)^-1 * M_l = (I - beta*A)^-1 * beta*A = (I - beta*A)^-1 * (I - (I -beta*A))

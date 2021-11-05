@@ -10,7 +10,7 @@ from .. import BaseModel
 
 class GCNII(BaseModel):
     """
-    Implementation of GCNII in paper `"Simple and Deep Graph Convolutional Networks"` <https://arxiv.org/abs/2007.02133>.
+    Implementation of GCNII in paper `"Simple and Deep Graph Convolutional Networks" <https://arxiv.org/abs/2007.02133>`_.
 
     Parameters
     -----------

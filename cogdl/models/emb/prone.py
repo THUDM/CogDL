@@ -43,9 +43,6 @@ class ProNE(BaseModel):
         self.mu = mu
         self.theta = theta
 
-    def train(self, graph, return_dict=False):
-        return self.forward(graph, return_dict)
-
     def forward(self, graph: Graph, return_dict=False):
         nx_g = graph.to_networkx()
         self.matrix0 = sp.csr_matrix(nx.adjacency_matrix(nx_g))

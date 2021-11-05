@@ -184,7 +184,7 @@ class GenerateEmbeddingPipeline(Pipeline):
             edge_index = (edge_index[:, 0], edge_index[:, 1])
             data = Graph(edge_index=edge_index, edge_weight=edge_weight)
             self.model = build_model(self.args)
-            embeddings = self.model.train(data)
+            embeddings = self.model(data)
         elif self.method_type == "gnn":
             num_nodes = edge_index.max().item() + 1
             if x is None:

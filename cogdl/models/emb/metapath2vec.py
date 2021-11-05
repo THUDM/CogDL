@@ -64,9 +64,6 @@ class Metapath2vec(BaseModel):
         self.node_type = None
 
     def forward(self, data):
-        return self.train(data)
-
-    def train(self, data):
         G = nx.DiGraph()
         row, col = data.edge_index
         G.add_edges_from(list(zip(row.numpy(), col.numpy())))

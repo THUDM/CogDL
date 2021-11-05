@@ -118,7 +118,7 @@ class GENConv(nn.Module):
 
 class ResGNNLayer(nn.Module):
     """
-    Implementation of DeeperGCN in paper `"DeeperGCN: All You Need to Train Deeper GCNs"` <https://arxiv.org/abs/2006.07739>
+    Implementation of DeeperGCN in paper `"DeeperGCN: All You Need to Train Deeper GCNs" <https://arxiv.org/abs/2006.07739>`_
 
     Parameters
     -----------

@@ -107,9 +107,6 @@ class GATNE(BaseModel):
         self.schema = schema
         self.multiplicity = True
 
-    def train(self, network_data):
-        return self.forward(network_data)
-
     def forward(self, network_data):
         device = "cpu" if not torch.cuda.is_available() else "cuda"
         all_walks = generate_walks(network_data, self.walk_num, self.walk_length, schema=self.schema)

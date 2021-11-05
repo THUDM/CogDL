@@ -22,7 +22,7 @@ class HeterogeneousEmbeddingModelWrapper(EmbeddingModelWrapper):
         self.hidden_size = hidden_size
 
     def train_step(self, batch):
-        embeddings = self.model.train(batch)
+        embeddings = self.model(batch)
         embeddings = np.hstack((embeddings, batch.x.numpy()))
 
         return embeddings

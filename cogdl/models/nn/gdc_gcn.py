@@ -21,7 +21,7 @@ class GDC_GCN(BaseModel):
         t (float)           : Heat polynomial filter param
         k (int)             : Top k nodes retained during sparsification.
         eps (float)         : Threshold for clipping.
-        gdc_type (str)            : "none", "ppr", "heat"
+        gdc_type (str)      : "none", "ppr", "heat"
     """
 
     @staticmethod

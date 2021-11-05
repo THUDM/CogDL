@@ -6,3 +6,7 @@
 	path = third_party/actnn
 	url = https://github.com/ucbrise/actnn
 	branch = main
+[submodule "third_party/fastmoe"]
+	path = third_party/fastmoe
+	url = https://github.com/laekov/fastmoe
+	branch = master

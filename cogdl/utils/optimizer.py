@@ -29,7 +29,7 @@ class NoamOptimizer(nn.Module):
         )
 
     def _update_learning_rate(self):
-        """ Learning rate scheduling per step """
+        """Learning rate scheduling per step"""
 
         self.n_current_steps += 1
         lr = self.init_lr * self._get_lr_scale()
@@ -69,7 +69,7 @@ class LinearOptimizer(nn.Module):
         )
 
     def _update_learning_rate(self):
-        """ Learning rate scheduling per step """
+        """Learning rate scheduling per step"""
 
         self.n_current_steps += 1
         lr = self.init_lr * self._get_lr_scale()

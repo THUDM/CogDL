@@ -5,7 +5,6 @@ import time
 
 path = os.path.join(os.path.dirname(__file__))
 
-# SPMM
 try:
     edge_softmax = load(
         name="edge_softmax",

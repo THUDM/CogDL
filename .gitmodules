@@ -1,0 +1,12 @@
+[submodule "third_party/dgNN"]
+	path = third_party/dgNN
+	url = https://github.com/dgSPARSE/dgNN
+	branch = main
+[submodule "third_party/actnn"]
+	path = third_party/actnn
+	url = https://github.com/ucbrise/actnn
+	branch = main
+[submodule "third_party/fastmoe"]
+	path = third_party/fastmoe
+	url = https://github.com/laekov/fastmoe
+	branch = master

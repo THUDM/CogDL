@@ -4,7 +4,16 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from cogdl.utils import check_mh_spmm, mh_spmm, mul_edge_softmax, spmm, get_activation, get_norm_layer
+from cogdl.utils import (
+    check_mh_spmm,
+    mh_spmm,
+    mul_edge_softmax,
+    spmm,
+    get_activation,
+    get_norm_layer,
+    check_fused_gat,
+    fused_gat_op,
+)
 
 
 class GATLayer(nn.Module):
@@ -52,33 +61,38 @@ class GATLayer(nn.Module):
 
         row, col = graph.edge_index
         # Self-attention on the nodes - Shared attention mechanism
-        h_l = (self.a_l * h).sum(dim=-1)[row]
-        h_r = (self.a_r * h).sum(dim=-1)[col]
-        edge_attention = self.leakyrelu(h_l + h_r)
-        # edge_attention: E * H
-        edge_attention = mul_edge_softmax(graph, edge_attention)
-        edge_attention = self.dropout(edge_attention)
+        h_l = (self.a_l * h).sum(dim=-1)
+        h_r = (self.a_r * h).sum(dim=-1)
 
-        if check_mh_spmm() and next(self.parameters()).device.type != "cpu":
-            if self.nhead > 1:
-                h_prime = mh_spmm(graph, edge_attention, h)
-                out = h_prime.view(h_prime.shape[0], -1)
-            else:
-                edge_weight = edge_attention.view(-1)
-                with graph.local_graph():
-                    graph.edge_weight = edge_weight
-                    out = spmm(graph, h.squeeze(1))
+        if self.dropout.p == 0.0 and graph.is_symmetric() and check_fused_gat():
+            out = fused_gat_op(h_l, h_r, graph, self.alpha, h)
+            out = out.view(out.shape[0], -1)
         else:
-            with graph.local_graph():
-                h_prime = []
-                h = h.permute(1, 0, 2).contiguous()
-                for i in range(self.nhead):
-                    edge_weight = edge_attention[:, i]
-                    graph.edge_weight = edge_weight
-                    hidden = h[i]
-                    assert not torch.isnan(hidden).any()
-                    h_prime.append(spmm(graph, hidden))
-            out = torch.cat(h_prime, dim=1)
+            # edge_attention: E * H
+            edge_attention = self.leakyrelu(h_l[row] + h_r[col])
+            edge_attention = mul_edge_softmax(graph, edge_attention)
+            edge_attention = self.dropout(edge_attention)
+
+            if check_mh_spmm() and next(self.parameters()).device.type != "cpu":
+                if self.nhead > 1:
+                    h_prime = mh_spmm(graph, edge_attention, h)
+                    out = h_prime.view(h_prime.shape[0], -1)
+                else:
+                    edge_weight = edge_attention.view(-1)
+                    with graph.local_graph():
+                        graph.edge_weight = edge_weight
+                        out = spmm(graph, h.squeeze(1))
+            else:
+                with graph.local_graph():
+                    h_prime = []
+                    h = h.permute(1, 0, 2).contiguous()
+                    for i in range(self.nhead):
+                        edge_weight = edge_attention[:, i]
+                        graph.edge_weight = edge_weight
+                        hidden = h[i]
+                        assert not torch.isnan(hidden).any()
+                        h_prime.append(spmm(graph, hidden))
+                out = torch.cat(h_prime, dim=1)
 
         if self.residual:
             res = self.residual(x)

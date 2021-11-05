@@ -44,4 +44,4 @@ if __name__ == "__main__":
         dropout=0.1,
         num_nodes=cora.num_nodes,
     )
-    ret = experiment(dataset=cora, model=model, dw="node_classification_dw", mw="node_classification_mw")
+    ret = experiment(dataset=cora, model=model)

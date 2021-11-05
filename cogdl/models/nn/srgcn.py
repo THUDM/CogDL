@@ -2,17 +2,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from cogdl.utils.srgcn_utils import act_attention, act_map, act_normalization
-from cogdl.utils import add_remaining_self_loops
+from cogdl.utils import spmm, add_remaining_self_loops
 from torch_sparse import spspmm
 
 from .. import BaseModel
-from cogdl.utils import spmm
 
 
 class NodeAdaptiveEncoder(nn.Module):
     def __init__(self, num_features, dropout=0.5):
         super(NodeAdaptiveEncoder, self).__init__()
-        # self.fc = nn.Linear(num_features, 1, bias=True)
         self.fc = nn.Parameter(torch.zeros(size=(num_features, 1)))
         nn.init.xavier_normal_(self.fc.data, gain=1.414)
         self.bf = nn.Parameter(torch.zeros(size=(1,)))
@@ -73,7 +71,6 @@ class SrgcnHead(nn.Module):
         edge_index = graph.edge_index
         N, dim = x.shape
 
-        # nl_adj_mat_ind, nl_adj_mat_val = add_self_loops(edge_index, num_nodes=N)[0], edge_attr.squeeze()
         nl_adj_mat_ind = add_remaining_self_loops(edge_index, num_nodes=N)[0]
         nl_adj_mat_ind = torch.stack(nl_adj_mat_ind)
         nl_adj_mat_val = torch.ones(nl_adj_mat_ind.shape[1]).to(x.device)
@@ -101,9 +98,7 @@ class SrgcnHead(nn.Module):
                 graph.edge_weight = adj_mat_val
                 for _ in range(i + 1):
                     val_h = spmm(graph, val_h)
-                    # val_h = spmm(adj_mat_ind, F.dropout(adj_mat_val, p=self.node_dropout, training=self.training), N, N, val_h)
 
-                # val_h = val_h / norm
                 val_h[val_h != val_h] = 0
                 val_h = val_h + self.bias[i]
                 val_h = self.adaptive_enc[i](val_h)
@@ -148,7 +143,6 @@ class SrgcnSoftmaxHead(nn.Module):
         # x = self.dropout(x)
 
         edge_index = graph.edge_index
-        # adj_mat_ind, adj_mat_val = add_self_loops(edge_index, num_nodes=N)[0], edge_attr.squeeze()
         adj_mat_ind = add_remaining_self_loops(edge_index, num_nodes=N)[0]
         adj_mat_ind = torch.stack(adj_mat_ind)
         adj_mat_val = torch.ones(adj_mat_ind.shape[1]).to(x.device)
@@ -168,7 +162,6 @@ class SrgcnSoftmaxHead(nn.Module):
         # N, dim = val_h.shape
 
         # MATRIX_MUL
-        # val_h = spmm(adj_mat_ind, F.dropout(adj_mat_val, p=self.node_dropout, training=self.training), N, N, val_h)
         with graph.local_graph():
             graph.edge_index = adj_mat_ind
             graph.edge_weight = adj_mat_val

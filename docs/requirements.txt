@@ -19,9 +19,6 @@ coveralls
 https://download.pytorch.org/whl/cpu/torch-1.7.1%2Bcpu-cp37-cp37m-linux_x86_64.whl
 https://pytorch-geometric.com/whl/torch-1.7.0+cpu/torch_scatter-2.0.7-cp37-cp37m-linux_x86_64.whl
 https://pytorch-geometric.com/whl/torch-1.7.0+cpu/torch_sparse-0.6.9-cp37-cp37m-linux_x86_64.whl
-https://pytorch-geometric.com/whl/torch-1.7.0+cpu/torch_cluster-1.5.9-cp37-cp37m-linux_x86_64.whl
-https://pytorch-geometric.com/whl/torch-1.7.0+cpu/torch_spline_conv-1.2.1-cp37-cp37m-linux_x86_64.whl
-torch-geometric
 numba
 transformers
 sentencepiece

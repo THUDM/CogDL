@@ -25,6 +25,9 @@ class BaseModel(nn.Module):
     def forward(self, *args):
         raise NotImplementedError
 
+    def predict(self, data):
+        return self.forward(data)
+
     @property
     def device(self):
         return next(self.parameters()).device

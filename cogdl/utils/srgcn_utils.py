@@ -5,7 +5,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_sparse import spspmm, spmm
-from torch_geometric.utils import degree
+
+from cogdl.utils import get_degrees
 
 
 # ==========
@@ -27,7 +28,7 @@ class NodeAttention(nn.Module):
         self.dropout(diag_val)
 
         row, col = edge_index
-        deg = degree(col, x.size(0), dtype=x.dtype)
+        deg = get_degrees(row, col, N)
         deg_inv = deg.pow(-1)
         edge_attr_t = deg_inv[row] * edge_attr
 
@@ -48,7 +49,7 @@ class EdgeAttention(nn.Module):
         N, dim = x.shape
 
         row, col = edge_index
-        deg = degree(col, x.size(0), dtype=x.dtype)
+        deg = get_degrees(row, col, N)
         deg_inv_sqrt = deg.pow(-0.5)
         edge_attr_t = deg_inv_sqrt[row] * edge_attr * deg_inv_sqrt[col]
 
@@ -71,42 +72,42 @@ class Identity(nn.Module):
         return edge_index, edge_attr
 
 
-# class Gaussian(nn.Module):
-#     def __init__(self, in_feat):
-#         super(Gaussian, self).__init__()
-#         self.mu = 0.2
-#         self.theta = 1.
-#         self.steps = 4
+class Gaussian(nn.Module):
+    def __init__(self, in_feat):
+        super(Gaussian, self).__init__()
+        self.mu = 0.2
+        self.theta = 1.0
+        self.steps = 4
 
-#     def forward(self, x, edge_index, edge_attr):
-#         N = x.shape[0]
-#         row, col = edge_index
-#         deg = degree(row, x.size(0), dtype=x.dtype)
-#         deg_inv = deg.pow(-1)
-#         adj = torch.sparse_coo_tensor(edge_index, deg_inv[row] * edge_attr , size=(N, N))
-#         identity = torch.sparse_coo_tensor([range(N)] * 2, torch.ones(N), size=(N, N)).to(x.device)
-#         laplacian = identity - adj
+    def forward(self, x, edge_index, edge_attr):
+        N = x.shape[0]
+        row, col = edge_index
+        deg = get_degrees(row, col, N)
+        deg_inv = deg.pow(-1)
+        adj = torch.sparse_coo_tensor(edge_index, deg_inv[row] * edge_attr, size=(N, N))
+        identity = torch.sparse_coo_tensor([range(N)] * 2, torch.ones(N), size=(N, N)).to(x.device)
+        laplacian = identity - adj
 
-#         t0 = identity
-#         t1 = laplacian - self.mu * identity
-#         t1 = t1.mm(t1.to_dense()).to_sparse()
-#         l_x = -0.5 * (t1 - identity)
-#         # l_x = -0.5 * ((laplacian - self.mu * identity).pow(2) - identity)
+        t0 = identity
+        t1 = laplacian - self.mu * identity
+        t1 = t1.mm(t1.to_dense()).to_sparse()
+        l_x = -0.5 * (t1 - identity)
 
-#         ivs = [iv(i, self.theta) for i in range(self.steps)]
-#         ivs[1:] = [(-1) ** i * 2 * x for i, x in enumerate(ivs[1:])]
-#         ivs = torch.tensor(ivs).to(x.device)
-#         result = [t0, l_x]
-#         for i in range(2, self.steps):
-#             result.append(2*l_x.mm(result[i-1].to_dense()).to_sparse().sub(result[i-2]))
+        ivs = [iv(i, self.theta) for i in range(self.steps)]
+        ivs[1:] = [(-1) ** i * 2 * x for i, x in enumerate(ivs[1:])]
+        ivs = torch.tensor(ivs).to(x.device)
+        result = [t0, l_x]
+        for i in range(2, self.steps):
+            result.append(2 * l_x.mm(result[i - 1].to_dense()).to_sparse().sub(result[i - 2]))
 
-#         result = [result[i] * ivs[i] for i in range(self.steps)]
+        result = [result[i] * ivs[i] for i in range(self.steps)]
 
-#         def fn(x, y):
-#             return x.add(y)
-#         res = reduce(fn, result)
+        def fn(x, y):
+            return x.add(y)
 
-#         return res._indices(), res._values()
+        res = reduce(fn, result)
+
+        return res._indices(), res._values()
 
 
 class PPR(nn.Module):
@@ -117,7 +118,7 @@ class PPR(nn.Module):
 
     def forward(self, x, edge_index, edge_attr):
         row, col = edge_index
-        deg = degree(col, x.size(0), dtype=x.dtype)
+        deg = get_degrees(row, col, x.shape[0])
         deg_inv_sqrt = deg.pow(-0.5)
         edge_attr_t = deg_inv_sqrt[row] * edge_attr * deg_inv_sqrt[col]
 
@@ -155,7 +156,7 @@ class HeatKernel(nn.Module):
 
     def forward(self, x, edge_index, edge_attr):
         row, col = edge_index
-        deg = degree(col, x.size(0), dtype=x.dtype)
+        deg = get_degrees(row, col, x.shape[0])
         deg_inv = deg.pow(-1)
         edge_attr_t = self.t * edge_attr * deg_inv[col] - self.t
         return edge_index, edge_attr_t.exp()
@@ -172,6 +173,8 @@ def act_attention(attn_type):
         return PPR
     elif attn_type == "heat":
         return HeatKernel
+    elif attn_type == "gaussian":
+        return Gaussian
     else:
         raise ValueError("no such attention type")
 

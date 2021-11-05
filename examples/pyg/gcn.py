@@ -3,31 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn.conv import GCNConv
 
-from .. import BaseModel
+from cogdl import experiment
+from cogdl.models import BaseModel
+from cogdl.datasets.planetoid_data import CoraDataset
 
 
 class GCN(BaseModel):
-    @staticmethod
-    def add_args(parser):
-        """Add model-specific arguments to the parser."""
-        # fmt: off
-        parser.add_argument("--num-features", type=int)
-        parser.add_argument("--num-classes", type=int)
-        parser.add_argument("--hidden-size", type=int, default=64)
-        parser.add_argument("--num-layers", type=int, default=2)
-        parser.add_argument("--dropout", type=float, default=0.5)
-        # fmt: on
-
-    @classmethod
-    def build_model_from_args(cls, args):
-        return cls(
-            args.num_features,
-            args.num_classes,
-            args.hidden_size,
-            args.num_layers,
-            args.dropout,
-        )
-
     def __init__(self, num_features, num_classes, hidden_size, num_layers, dropout):
         super(GCN, self).__init__()
 
@@ -50,8 +31,14 @@ class GCN(BaseModel):
         x = self.convs[-1](x, edge_index, edge_weight)
         return F.log_softmax(x, dim=1)
 
-    def get_embeddings(self, x, edge_index, weight=None):
-        for conv in self.convs[:-1]:
-            x = F.relu(conv(x, edge_index, weight))
-            x = F.dropout(x, p=self.dropout, training=self.training)
-        return x
+
+if __name__ == "__main__":
+    cora = CoraDataset()
+    model = GCN(
+        num_features=cora.num_features,
+        hidden_size=64,
+        num_classes=cora.num_classes,
+        num_layers=2,
+        dropout=0.5,
+    )
+    ret = experiment(dataset=cora, model=model)

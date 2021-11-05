@@ -53,7 +53,7 @@ if __name__ == "__main__":
         num_workers = 1
     else:
         num_workers = len(device_ids)
-    print("Using {num_workers} workers!")
+    print(f"Using {num_workers} workers!")
 
     results_dict = defaultdict(list)
     with mp.Pool(processes=num_workers) as pool:

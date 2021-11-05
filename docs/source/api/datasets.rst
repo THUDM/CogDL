@@ -49,7 +49,7 @@ Matlab matrix dataset
     :undoc-members:
     :show-inheritance:
 
-PyG OGB dataset
+OGB dataset
 -------------------------------
 
 .. automodule:: cogdl.datasets.ogb

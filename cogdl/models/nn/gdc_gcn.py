@@ -124,7 +124,6 @@ class GDC_GCN(BaseModel):
                 else:
                     raise ValueError
 
-            # create PyG Data object
             edges_i = []
             edges_j = []
             edge_attr = []

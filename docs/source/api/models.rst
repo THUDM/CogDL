@@ -122,11 +122,6 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_cheb.Chebyshev
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: cogdl.models.nn.gcn.GCN
     :members:
     :undoc-members:
@@ -152,7 +147,7 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_graph_unet.GraphUnet
+.. autoclass:: cogdl.models.nn.graph_unet.GraphUnet
     :members:
     :undoc-members:
     :show-inheritance:
@@ -173,11 +168,6 @@ GNN Model
     :show-inheritance:
 
 .. autoclass:: cogdl.models.nn.sign.MLP
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: cogdl.models.nn.pyg_gcn.GCN
     :members:
     :undoc-members:
     :show-inheritance:
@@ -217,17 +207,12 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_dgcnn.DGCNN
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: cogdl.models.nn.grand.Grand
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_gtn.GTN
+.. autoclass:: cogdl.models.nn.gtn.GTN
     :members:
     :undoc-members:
     :show-inheritance:
@@ -277,7 +262,7 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pyg_srgcn.SRGCN
+.. autoclass:: cogdl.models.nn.srgcn.SRGCN
     :members:
     :undoc-members:
     :show-inheritance:

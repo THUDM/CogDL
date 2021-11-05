@@ -3,35 +3,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn.conv import ChebConv
 
-from .. import BaseModel
+from cogdl import experiment
+from cogdl.models import BaseModel
+from cogdl.datasets.planetoid_data import CoraDataset
 
 
-class Chebyshev(BaseModel):
-    @staticmethod
-    def add_args(parser):
-        """Add model-specific arguments to the parser."""
-        # fmt: off
-        parser.add_argument("--num-features", type=int)
-        parser.add_argument("--num-classes", type=int)
-        parser.add_argument("--hidden-size", type=int, default=64)
-        parser.add_argument("--num-layers", type=int, default=2)
-        parser.add_argument("--dropout", type=float, default=0.5)
-        parser.add_argument("--filter-size", type=int, default=5)
-        # fmt: on
-
-    @classmethod
-    def build_model_from_args(cls, args):
-        return cls(
-            args.num_features,
-            args.hidden_size,
-            args.num_classes,
-            args.num_layers,
-            args.dropout,
-            args.filter_size,
-        )
-
+class ChebyNet(BaseModel):
     def __init__(self, in_feats, hidden_size, out_feats, num_layers, dropout, filter_size):
-        super(Chebyshev, self).__init__()
+        super(ChebyNet, self).__init__()
 
         self.num_features = in_feats
         self.num_classes = out_feats
@@ -53,5 +32,15 @@ class Chebyshev(BaseModel):
         x = self.convs[-1](x, edge_index)
         return x
 
-    def predict(self, data):
-        return self.forward(data)
+
+if __name__ == "__main__":
+    cora = CoraDataset()
+    model = ChebyNet(
+        in_feats=cora.num_features,
+        hidden_size=64,
+        out_feats=cora.num_classes,
+        num_layers=2,
+        dropout=0.5,
+        filter_size=5,
+    )
+    ret = experiment(dataset=cora, model=model)

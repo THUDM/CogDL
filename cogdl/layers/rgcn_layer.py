@@ -7,12 +7,12 @@ from cogdl.utils import row_normalization, spmm
 
 class RGCNLayer(nn.Module):
     """
-    Implementation of Relational-GCN in paper `"Modeling Relational Data with Graph Convolutional Networks"`
-     <https://arxiv.org/abs/1703.06103>
+    Implementation of Relational-GCN in paper `"Modeling Relational Data with Graph Convolutional Networks"
+    <https://arxiv.org/abs/1703.06103>`_
 
-     Parameters
-     ----------
-     in_feats : int
+    Parameters
+    ----------
+    in_feats : int
         Size of each input embedding.
     out_feats : int
         Size of each output embedding.

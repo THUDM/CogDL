@@ -10,7 +10,7 @@
 
 **[主页](https://cogdl.ai/zh)** | **[论文](https://arxiv.org/abs/2103.00959)** | **[100篇GNN论文](./gnn_papers.md)** | **[排行榜](./results.md)** | **[文档](https://cogdl.readthedocs.io)** | **[数据集](./cogdl/datasets/README.md)** | **[加入我们的Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[English](./README.md)**
 
-CogDL是由清华大学计算机系知识工程实验室（KEG）开发的基于图的深度学习的研究工具，基于Python语言和[PyTorch](https://github.com/pytorch/pytorch)库。CogDL允许研究人员和开发人员可以轻松地训练和比较基线算法或自定义模型，以进行结点分类，链接预测，图分类，社区发现等基于图结构的任务。 它提供了许多流行模型的实现，包括：非图神经网络算法例如Deepwalk、LINE、Node2vec、NetMF、ProNE、methpath2vec、PTE、graph2vec、DGK等；图神经网络算法例如GCN、GAT、GraphSAGE、FastGCN、GTN、HAN、GIN、DiffPool等。它也提供了一些下游任务，包括结点分类（分为是否具有节点属性），链接预测（分为同构和异构），图分类（分有监督和⽆监督）以及为这些任务构建各种算法效果的排行榜。
+CogDL是一款图深度学习工具包，基于[PyTorch](https://github.com/pytorch/pytorch)框架。CogDL允许研究人员和开发人员可以轻松地训练和比较基线算法或自定义模型，以进行结点分类，链接预测，图分类，社区发现等基于图结构的任务。 它提供了许多流行模型的实现，包括：非图神经网络算法例如Deepwalk、LINE、Node2vec、NetMF、ProNE、methpath2vec、PTE、graph2vec、DGK等；图神经网络算法例如GCN、GAT、GraphSAGE、FastGCN、GTN、HAN、GIN、DiffPool等。它也提供了一些下游任务，包括结点分类（分为是否具有节点属性），链接预测（分为同构和异构），图分类（分有监督和⽆监督）以及为这些任务构建各种算法效果的排行榜。
 
 CogDL的特性包括：
 
@@ -166,7 +166,7 @@ CogDL提供了一种快速的稀疏矩阵乘的操作（[GE-SpMM](https://arxiv.
 如果你想使用多个 GPU 同时在 Cora 数据集上运行 GCN 和 GAT 模型，可以使用如下指令:
 
 ```bash
-$ python scripts/parallel_train.py --task node_classification --dataset cora --model gcn gat --device-id 0 1 --seed 0 1 2 3 4
+$ python scripts/parallel_train.py --dataset cora --model gcn gat --devices 0 1 --seed 0 1 2 3 4
 ```
 
 预计得到的结果如下:
@@ -179,44 +179,12 @@ $ python scripts/parallel_train.py --task node_classification --dataset cora --m
 
 <details>
 <summary>
-如何使用docker容器来配置cogdl的环境？
-</summary>
-<br/>
-您也可以选择使用Docker来配置cogdl所需的环境。要构建Docker镜像，只需运行以下命令。
-
-```bash
-docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VERSION --tag cogdl .
-```
-请根据您的CUDA版本（或CPU）更换 `YOUR_CUDA_VERSION` 以及 更换 `YOUR_TORCH_VERSION` 为您使用的PyTorch版本。
-
-
-例如，使用 CUDA 10.1 和 PyTorch 1.7.1 一起运行
-
-```bash
-docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.1 --tag cogdl .
-```
-
-启动容器
-
-```bash
-docker run -it -v cogdl:/cogdl cogdl /bin/bash
-```
-
-将cogdl克隆到cogdl目录下：
-
-```bash
-git clone https://github.com/THUDM/cogdl /cogdl
-```
-</details>
-
-<details>
-<summary>
 如何使用其他图深度学习库中的模型？
 </summary>
 <br/>
 如何你对其他图深度学习库（比如PyTorch Geometric）比较熟悉，你可以基于这些库的模块来在CogDL里实现相关模型。
 你可以通过下述的指南来安装相应的库，例如PyTorch Geometric (https://github.com/rusty1s/pytorch_geometric/#installation)。
-对于如何使用PyG的模块来实现模型，你可以在示例中找到一些参考：[examples/pytorch_geometric](https://github.com/THUDM/cogdl/tree/master/examples/pytorch_geometric/)。
+对于如何使用PyG的模块来实现模型，你可以在示例中找到一些参考：[examples/pyg](https://github.com/THUDM/cogdl/tree/master/examples/pyg/)。
 </details>
 
 ## CogDL团队

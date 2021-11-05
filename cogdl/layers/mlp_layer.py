@@ -19,7 +19,7 @@ class MLP(nn.Module):
     hidden_dim : int
         Size of hidden layer dimension.
     use_bn : bool, optional
-        Apply batch normalization if True, default: `True).
+        Apply batch normalization if True, default: `True`.
     """
 
     def __init__(

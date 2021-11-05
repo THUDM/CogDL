@@ -81,6 +81,7 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
+    "sphinx.ext.napoleon",
     "recommonmark",
     "sphinx_markdown_tables",
 ]

@@ -163,7 +163,7 @@ class Planetoid(Dataset):
         return self.data
 
     def __repr__(self):
-        return "{}()".format(self.name)
+        return "{}".format(self.name)
 
     def __len__(self):
         return 1

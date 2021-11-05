@@ -57,12 +57,6 @@ def add_gin_args(args):
     return args
 
 
-def add_dgcnn_args(args):
-    args.hidden_size = 64
-    args.batch_size = 20
-    return args
-
-
 def add_sortpool_args(args):
     args.hidden_size = 64
     args.batch_size = 20
@@ -121,13 +115,6 @@ def test_diffpool_mutag():
     assert ret["test_acc"] > 0
 
 
-def test_dgcnn_proteins():
-    args = get_default_args_graph_clf(dataset="proteins", model="dgcnn")
-    args = add_dgcnn_args(args)
-    ret = train(args)
-    assert ret["test_acc"] > 0
-
-
 def test_sortpool_mutag():
     args = get_default_args_graph_clf(dataset="mutag", model="sortpool")
     args = add_sortpool_args(args)
@@ -151,9 +138,5 @@ if __name__ == "__main__":
     test_gin_proteins()
 
     test_sortpool_mutag()
-
     test_diffpool_mutag()
-
-    test_dgcnn_proteins()
-
     test_patchy_san_mutag()

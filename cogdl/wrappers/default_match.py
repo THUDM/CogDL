@@ -22,7 +22,6 @@ def set_default_wrapper_config():
         "appnp",
         "pprgo",
         "chebyshev",
-        "pyg_gcn",
         "unet",
         "srgcn",
         "revgcn",

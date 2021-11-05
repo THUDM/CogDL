@@ -10,7 +10,7 @@
 
 **[Homepage](https://cogdl.ai)** | **[Paper](https://arxiv.org/abs/2103.00959)** | **[100 GNN papers](./gnn_papers.md)** | **[Leaderboards](./results.md)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Datasets](./cogdl/datasets/README.md)** | **[Join our Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[中文](./README_CN.md)**
 
-CogDL is a graph representation learning toolkit that allows researchers and developers to easily train and compare baseline or customized models for node classification, graph classification, and other important tasks in the graph domain. 
+CogDL is a graph deep learning toolkit that allows researchers and developers to easily train and compare baseline or customized models for node classification, graph classification, and other important tasks in the graph domain. 
 
 We summarize the contributions of CogDL as follows:
 
@@ -173,7 +173,7 @@ How to run parallel experiments with GPUs on several models?
 If you want to run parallel experiments on your server with multiple GPUs on multiple models, GCN and GAT, on the Cora dataset:
 
 ```bash
-$ python scripts/parallel_train.py --task node_classification --dataset cora --model gcn gat --device-id 0 1 --seed 0 1 2 3 4
+$ python scripts/parallel_train.py --dataset cora --model gcn gat --devices 0 1 --seed 0 1 2 3 4
 ```
 
 Expected output:
@@ -186,39 +186,12 @@ Expected output:
 
 <details>
 <summary>
-How to use docker container?
-</summary>
-<br/>
-You might also opt to use a Docker container. There is an image available in this repo that you can build with the Torch and CUDA versions available in your system. To build the docker image just run:
-
-```
-docker build --build-arg CUDA=YOUR_CUDA_VERSION --build-arg TORCH=YOUR_TORCH_VERSION --tag cogdl .
-```
-
-Where `YOUR_CUDA_VERSION` should be cuxxx representing your cuda version (or just cpu) and `YOUR_TORCH_VERSION` should be the version of PyTorch you want to use. For example, to run with CUDA 10.1 and PyTorch 1.7.1 you can run:
-```
-docker build --build-arg CUDA=cu101 --build-arg TORCH=1.7.1 --tag cogdl .
-```
-
-Then you can start the container by running:
-```
-docker run -it -v cogdl:/cogdl cogdl /bin/bash
-```
-
-And then clone your fork or this repository into the cogdl folder:
-```
-git clone https://github.com/THUDM/cogdl /cogdl
-```
-</details>
-
-<details>
-<summary>
 How to use models from other libraries?
 </summary>
 <br/>
 If you are familiar with other popular graph libraries, you can implement your own model in CogDL using modules from PyTorch Geometric (PyG).
 For the installation of PyG, you can follow the instructions from PyG (https://github.com/rusty1s/pytorch_geometric/#installation).
-For the quick-start usage of how to use layers of PyG, you can find some examples in the [examples/pytorch_geometric](https://github.com/THUDM/cogdl/tree/master/examples/pytorch_geometric/).
+For the quick-start usage of how to use layers of PyG, you can find some examples in the [examples/pyg](https://github.com/THUDM/cogdl/tree/master/examples/pyg/).
 </details>
 
 <details>

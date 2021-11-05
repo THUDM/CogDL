@@ -101,22 +101,6 @@ def test_graphsage_cora():
     assert 0 <= ret["test_acc"] <= 1
 
 
-def test_pyg_cheb_cora():
-    args = get_default_args_for_nc("cora", "chebyshev")
-    args.num_layers = 2
-    args.filter_size = 5
-    ret = train(args)
-    assert 0 <= ret["test_acc"] <= 1
-
-
-def test_pyg_gcn_cora():
-    args = get_default_args_for_nc("cora", "pyg_gcn")
-    args.auxiliary_task = "none"
-    args.num_layers = 2
-    ret = train(args)
-    assert 0 <= ret["test_acc"] <= 1
-
-
 def test_clustergcn_pubmed():
     args = get_default_args_for_nc("pubmed", "gcn", dw="cluster_dw")
     args.cpu = True
@@ -212,7 +196,7 @@ def test_srgcn_cora():
 
     norm_list = ["identity", "row_uniform", "row_softmax", "col_uniform", "symmetry"]
     activation_list = ["relu", "relu6", "sigmoid", "tanh", "leaky_relu", "softplus", "elu", "linear"]
-    attn_list = ["node", "edge", "identity", "heat", "ppr"]  # gaussian
+    attn_list = ["node", "edge", "identity", "heat", "ppr", "gaussian"]
 
     for norm in norm_list:
         args.normalization = norm
@@ -536,8 +520,6 @@ if __name__ == "__main__":
     test_mlp_pubmed()
     test_mixhop_citeseer()
     test_graphsage_cora()
-    test_pyg_cheb_cora()
-    test_pyg_gcn_cora()
     test_disengcn_cora()
     test_graph_mix()
     test_srgcn_cora()

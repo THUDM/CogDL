@@ -40,9 +40,6 @@ class NetMF(BaseModel):
         self.negative = negative
         self.is_large = is_large
 
-    def train(self, graph, return_dict=False):
-        return self.forward(graph, return_dict)
-
     def forward(self, graph, return_dict=False):
         nx_g = graph.to_networkx()
         A = sp.csr_matrix(nx.adjacency_matrix(nx_g))

@@ -173,9 +173,6 @@ class Hin2vec(BaseModel):
         self.cpu = cpu
 
     def forward(self, data):
-        return self.train(data)
-
-    def train(self, data):
         device = "cpu" if not torch.cuda.is_available() or self.cpu else "cuda"
         G = nx.DiGraph()
         row, col = data.edge_index

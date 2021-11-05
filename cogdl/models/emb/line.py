@@ -65,9 +65,6 @@ class LINE(BaseModel):
         self.init_alpha = alpha
         self.order = order
 
-    def train(self, graph, return_dict=False):
-        return self.forward(graph, return_dict)
-
     def forward(self, graph, return_dict=False):
         # run LINE algorithm, 1-order, 2-order or 3(1-order + 2-order)
         nx_g = graph.to_networkx()

@@ -69,7 +69,7 @@ def test_will_return_computed_embeddings_for_simple_fully_connected_graph():
     args = get_args()
     model: DeepWalk = DeepWalk.build_model_from_args(args)
     graph = Graph(edge_index=(torch.LongTensor([0]), torch.LongTensor([1])))
-    trained = model.train(graph, creator)
+    trained = model(graph, creator)
     assert len(trained) == 2
     np.testing.assert_array_equal(trained[0], embed_1)
     np.testing.assert_array_equal(trained[1], embed_2)
@@ -79,7 +79,7 @@ def test_will_return_computed_embeddings_for_simple_graph():
     args = get_args()
     model: DeepWalk = DeepWalk.build_model_from_args(args)
     graph = Graph(edge_index=(torch.LongTensor([0, 1]), torch.LongTensor([1, 2])))
-    trained = model.train(graph, creator)
+    trained = model(graph, creator)
     assert len(trained) == 3
     np.testing.assert_array_equal(trained[0], embed_1)
     np.testing.assert_array_equal(trained[1], embed_2)
@@ -97,7 +97,7 @@ def test_will_pass_correct_number_of_walks():
         captured_walks_no.append(len(walks))
         return creator(walks, size, window, min_count, sg, workers, iter)
 
-    model.train(graph, creator_mocked)
+    model(graph, creator_mocked)
     assert captured_walks_no[0] == args.walk_num * graph.num_nodes
 
 

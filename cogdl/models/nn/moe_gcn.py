@@ -126,7 +126,7 @@ class MoEGCN(BaseModel):
         self.act = get_activation(activation)
         self.final_cls = nn.Linear(hidden_size, out_feats)
 
-    def get_embeddings(self, graph):
+    def embed(self, graph):
         graph.sym_norm()
         h = graph.x
         for i in range(self.num_layers - 1):

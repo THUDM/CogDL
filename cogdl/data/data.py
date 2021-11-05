@@ -782,13 +782,10 @@ class Graph(BaseGraph):
         if sample_adj_c is not None:
             if not torch.is_tensor(batch):
                 batch = torch.tensor(batch, dtype=torch.long)
-            # (row_ptr, col_indices, nodes, edges) = sample_adj_c(self._adj.row_ptr, self._adj.col, batch, size, replace)
             (row_ptr, col_indices, nodes, edges) = sample_adj_c(
                 self._adj.row_indptr, self.col_indices, batch, size, replace
             )
         else:
-            if not (batch[1:] > batch[:-1]).all():
-                batch = batch.sort()[0]
             if torch.is_tensor(batch):
                 batch = batch.cpu().numpy()
             if self.__is_train__ and self._adj_train is not None:

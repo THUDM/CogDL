@@ -7,6 +7,25 @@ from .. import BaseModel
 
 
 class DeeperGCN(BaseModel):
+    """Implementation of DeeperGCN in paper `"DeeperGCN: All You Need to Train Deeper GCNs" <https://arxiv.org/abs/2006.07739>`_
+
+    Args:
+        in_feat (int): the dimension of input features
+        hidden_size (int): the dimension of hidden representation
+        out_feat (int): the dimension of output features
+        num_layers (int): the number of layers
+        activation (str, optional): activation function. Defaults to "relu".
+        dropout (float, optional): dropout rate. Defaults to 0.0.
+        aggr (str, optional): aggregation function. Defaults to "max".
+        beta (float, optional): a coefficient for aggregation function. Defaults to 1.0.
+        p (float, optional): a coefficient for aggregation function. Defaults to 1.0.
+        learn_beta (bool, optional): whether beta is learnable. Defaults to False.
+        learn_p (bool, optional): whether p is learnable. Defaults to False.
+        learn_msg_scale (bool, optional): whether message scale is learnable. Defaults to True.
+        use_msg_norm (bool, optional): use message norm or not. Defaults to False.
+        edge_attr_size (int, optional): the dimension of edge features. Defaults to None.
+    """
+
     @staticmethod
     def add_args(parser):
         # fmt: off

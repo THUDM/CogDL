@@ -36,7 +36,7 @@ class M3SModelWrapper(NodeClfModelWrapper):
             num_nodes = graph.num_nodes
 
             with torch.no_grad():
-                emb = self.model.get_embeddings(graph)
+                emb = self.model.embed(graph)
 
             confidence_ranking = np.zeros([num_classes, num_nodes], dtype=int)
             kmeans = KMeans(n_clusters=self.num_clusters, random_state=0).fit(emb)

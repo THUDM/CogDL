@@ -69,9 +69,6 @@ class Node2vec(BaseModel):
         self.p = p
         self.q = q
 
-    def train(self, graph, return_dict=False):
-        return self.forward(graph, return_dict)
-
     def forward(self, graph, return_dict=False):
         G = graph.to_networkx()
         self.G = G

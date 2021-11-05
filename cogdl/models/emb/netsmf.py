@@ -56,9 +56,6 @@ class NetSMF(BaseModel):
         self.worker = worker
         self.num_round = num_round
 
-    def train(self, graph, return_dict=False):
-        return self.forward(graph, return_dict)
-
     def forward(self, graph, return_dict=False):
         self.G = graph.to_networkx()
         node2id = dict([(node, vid) for vid, node in enumerate(self.G.nodes())])

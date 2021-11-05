@@ -107,9 +107,6 @@ class SDNE(BaseModel):
         self.lr = lr
         self.cpu = cpu
 
-    def train(self, graph, return_dict=False):
-        return self.forward(graph, return_dict)
-
     def forward(self, graph, return_dict=False):
         device = "cuda" if torch.cuda.is_available() and not self.cpu else "cpu"
         G = graph.to_networkx()

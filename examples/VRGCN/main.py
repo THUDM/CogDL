@@ -7,7 +7,7 @@ from dataloder import AdjSampler
 from cogdl.datasets.ogb import OGBArxivDataset
 from VRGCN import VRGCN
 
-dataset = OGBArxivDataset(data_path='/home/tlhuang/dataset/cogdl')
+dataset = OGBArxivDataset(data_path='data/')
 data = dataset.data
 data.add_remaining_self_loops()
 data.set_symmetric()

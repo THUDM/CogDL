@@ -125,7 +125,7 @@ class GTNDataset(Dataset):
         torch.save(self.data, self.processed_paths[0])
 
     def __repr__(self):
-        return "{}()".format(self.name)
+        return "{}".format(self.name)
 
 
 class ACM_GTNDataset(GTNDataset):

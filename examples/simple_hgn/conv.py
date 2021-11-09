@@ -4,7 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from cogdl.utils import check_mh_spmm, mh_spmm, mul_edge_softmax, spmm, get_activation, get_norm_layer
+from cogdl.utils import mul_edge_softmax, get_activation
+from cogdl.utils.spmm_utils import MultiHeadSpMM
 
 
 class myGATConv(nn.Module):
@@ -31,7 +32,7 @@ class myGATConv(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.nhead = nhead
-        self.edge_emb = nn.Parameter(torch.zeros(size=(num_etypes, edge_feats))) # nn.Embedding(num_etypes, edge_feats)
+        self.edge_emb = nn.Parameter(torch.zeros(size=(num_etypes, edge_feats)))  # nn.Embedding(num_etypes, edge_feats)
 
         self.W = nn.Parameter(torch.FloatTensor(in_features, out_features * nhead))
         self.W_e = nn.Parameter(torch.FloatTensor(edge_feats, edge_feats * nhead))
@@ -39,6 +40,8 @@ class myGATConv(nn.Module):
         self.a_l = nn.Parameter(torch.zeros(size=(1, nhead, out_features)))
         self.a_r = nn.Parameter(torch.zeros(size=(1, nhead, out_features)))
         self.a_e = nn.Parameter(torch.zeros(size=(1, nhead, edge_feats)))
+
+        self.mhspmm = MultiHeadSpMM()
 
         self.feat_drop = nn.Dropout(feat_drop)
         self.dropout = nn.Dropout(attn_drop)
@@ -83,26 +86,27 @@ class myGATConv(nn.Module):
         if res_attn is not None:
             edge_attention = edge_attention * (1 - self.alpha) + res_attn * self.alpha
 
-        if check_mh_spmm() and next(self.parameters()).device.type != "cpu":
-            if self.nhead > 1:
-                h_prime = mh_spmm(graph, edge_attention, h)
-                out = h_prime.view(h_prime.shape[0], -1)
-            else:
-                edge_weight = edge_attention.view(-1)
-                with graph.local_graph():
-                    graph.edge_weight = edge_weight
-                    out = spmm(graph, h.squeeze(1))
-        else:
-            with graph.local_graph():
-                h_prime = []
-                h = h.permute(1, 0, 2).contiguous()
-                for i in range(self.nhead):
-                    edge_weight = edge_attention[:, i]
-                    graph.edge_weight = edge_weight
-                    hidden = h[i]
-                    assert not torch.isnan(hidden).any()
-                    h_prime.append(spmm(graph, hidden))
-            out = torch.cat(h_prime, dim=1)
+        # if check_mh_spmm() and next(self.parameters()).device.type != "cpu":
+        #     if self.nhead > 1:
+        #         h_prime = mh_spmm(graph, edge_attention, h)
+        #         out = h_prime.view(h_prime.shape[0], -1)
+        #     else:
+        #         edge_weight = edge_attention.view(-1)
+        #         with graph.local_graph():
+        #             graph.edge_weight = edge_weight
+        #             out = spmm(graph, h.squeeze(1))
+        # else:
+        #     with graph.local_graph():
+        #         h_prime = []
+        #         h = h.permute(1, 0, 2).contiguous()
+        #         for i in range(self.nhead):
+        #             edge_weight = edge_attention[:, i]
+        #             graph.edge_weight = edge_weight
+        #             hidden = h[i]
+        #             assert not torch.isnan(hidden).any()
+        #             h_prime.append(spmm(graph, hidden))
+        #     out = torch.cat(h_prime, dim=1)
+        out = self.mhspmm(graph, edge_attention, h)
 
         if self.residual:
             res = self.residual(x)

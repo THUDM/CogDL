@@ -14,7 +14,6 @@ from cogdl.utils import (
     row_normalization,
     get_degrees,
 )
-from cogdl.utils import check_fast_spmm as check_indicator
 from cogdl.utils import RandomWalker
 from cogdl.operators.sample import sample_adj_c, subgraph_c
 
@@ -273,8 +272,7 @@ class Adjacency(BaseGraph):
         self.__normed__ = norm
 
     def convert_csr(self):
-        if check_indicator():
-            self._to_csr()
+        self._to_csr()
 
     def _to_csr(self):
         self.row_ptr, reindex = coo2csr_index(self.row, self.col, num_nodes=self.num_nodes)

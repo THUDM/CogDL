@@ -1,10 +1,6 @@
 import importlib
 
 from .base_model import BaseModel
-from cogdl.utils import init_operator_configs
-
-
-init_operator_configs()
 
 
 def register_model(name):

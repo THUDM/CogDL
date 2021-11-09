@@ -10,7 +10,7 @@ import torch.nn as nn
 import optuna
 from tabulate import tabulate
 
-from cogdl.utils import set_random_seed, tabulate_results, init_operator_configs
+from cogdl.utils import set_random_seed, tabulate_results
 from cogdl.configs import BEST_CONFIGS
 from cogdl.data import Dataset
 from cogdl.models import build_model
@@ -230,8 +230,6 @@ def output_results(results_dict, tablefmt="github"):
 
 
 def raw_experiment(args):
-    init_operator_configs(args)
-
     variants = list(gen_variants(dataset=args.dataset, model=args.model, seed=args.seed, split=args.split))
 
     results_dict = defaultdict(list)

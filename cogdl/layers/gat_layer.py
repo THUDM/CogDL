@@ -5,10 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from cogdl.utils import (
-    check_mh_spmm,
-    mh_spmm,
-    mul_edge_softmax,
-    spmm,
+    MulEdgeSoftmax,
+    MultiHeadSpMM,
     get_activation,
     get_norm_layer,
     check_fused_gat,
@@ -34,6 +32,9 @@ class GATLayer(nn.Module):
 
         self.a_l = nn.Parameter(torch.zeros(size=(1, nhead, out_feats)))
         self.a_r = nn.Parameter(torch.zeros(size=(1, nhead, out_feats)))
+
+        self.edge_softmax = MulEdgeSoftmax()
+        self.mhspmm = MultiHeadSpMM()
 
         self.dropout = nn.Dropout(attn_drop)
         self.leakyrelu = nn.LeakyReLU(self.alpha)
@@ -70,29 +71,10 @@ class GATLayer(nn.Module):
         else:
             # edge_attention: E * H
             edge_attention = self.leakyrelu(h_l[row] + h_r[col])
-            edge_attention = mul_edge_softmax(graph, edge_attention)
+            edge_attention = self.edge_softmax(graph, edge_attention)
             edge_attention = self.dropout(edge_attention)
 
-            if check_mh_spmm() and next(self.parameters()).device.type != "cpu":
-                if self.nhead > 1:
-                    h_prime = mh_spmm(graph, edge_attention, h)
-                    out = h_prime.view(h_prime.shape[0], -1)
-                else:
-                    edge_weight = edge_attention.view(-1)
-                    with graph.local_graph():
-                        graph.edge_weight = edge_weight
-                        out = spmm(graph, h.squeeze(1))
-            else:
-                with graph.local_graph():
-                    h_prime = []
-                    h = h.permute(1, 0, 2).contiguous()
-                    for i in range(self.nhead):
-                        edge_weight = edge_attention[:, i]
-                        graph.edge_weight = edge_weight
-                        hidden = h[i]
-                        assert not torch.isnan(hidden).any()
-                        h_prime.append(spmm(graph, hidden))
-                out = torch.cat(h_prime, dim=1)
+            out = self.mhspmm(graph, edge_attention, h)
 
         if self.residual:
             res = self.residual(x)

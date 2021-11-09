@@ -25,7 +25,7 @@ CogDL now supports the following datasets for different tasks:
         <th>#Name in Cogdl</th>
     </tr>
     <tr>
-    	<th rowspan="4">Transductive</th>
+    	<th rowspan="10">Transductive</th>
     </tr>
     <tr>
         <td> <a href="https://cloud.tsinghua.edu.cn/d/71ee1916f3644f6f81b4/"> Cora </a> </td>
@@ -56,6 +56,66 @@ CogDL now supports the following datasets for different tasks:
         <td> 60 / 500 / 1999 </td>
         <td> 2 </td>
         <td> pubmed </td>
+    </tr>
+    <tr>
+        <td> <a href=""> Chameleon </a> </td>
+        <td> 2,277 </td>
+        <td> 36,101 </td>
+        <td> 2,325 </td>
+        <td> 5 </td>
+        <td> 0.48 / 0.32 / 0.20 </td>
+        <td> 16 </td>
+        <td> chameleon </td>
+    </tr>
+        <tr>
+        <td> <a href=""> Cornell </a> </td>
+        <td> 183 </td>
+        <td> 298 </td>
+        <td> 1,703 </td>
+        <td> 5 </td>
+        <td> 0.48 / 0.32 / 0.20 </td>
+        <td> 1.6 </td>
+        <td> cornell </td>
+    </tr>
+    </tr>
+        <td> <a href=""> Film </a> </td>
+        <td> 7,600 </td>
+        <td> 30,019 </td>
+        <td> 932 </td>
+        <td> 5 </td>
+        <td> 0.48 / 0.32 / 0.20 </td>
+        <td> 4 </td>
+        <td> film </td>
+    </tr>
+    </tr>
+        <td> <a href=""> Squirrel </a> </td>
+        <td> 5201 </td>
+        <td> 217,073 </td>
+        <td> 2,089 </td>
+        <td> 5 </td>
+        <td> 0.48 / 0.32 / 0.20 </td>
+        <td> 41.7 </td>
+        <td> squirrel </td>
+    </tr>
+    </tr>
+        <td> <a href=""> Texas </a> </td>
+        <td> 182 </td>
+        <td> 325 </td>
+        <td> 1,703 </td>
+        <td> 5 </td>
+        <td> 0.48 / 0.32 / 0.20 </td>
+        <td> 1.8 </td>
+        <td> texas </td>
+    </tr>
+        </tr>
+        <td> <a href=""> Wisconsin </a> </td>
+        <td> 251 </td>
+        <td> 515 </td>
+        <td> 1,703 </td>
+        <td> 5 </td>
+        <td> 0.48 / 0.32 / 0.20 </td>
+        <td> 2 </td>
+        <td> Wisconsin </td>
     </tr>
     <tr>
         <th rowspan="8"> Inductive </th>

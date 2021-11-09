@@ -17,7 +17,7 @@ evaluator = dataset.get_evaluator()
 train_loader = AdjSampler(data, sizes=[2, 2], batch_size=2048, shuffle=True)
 test_loader = AdjSampler(data, sizes=[-1], batch_size=4096, shuffle=False, training=False)
 
-device = torch.device('cuda:7' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 model = VRGCN(num_nodes=data.x.shape[0], in_channels=dataset.num_features,
               hidden_channels=256,
               out_channels=dataset.num_classes,

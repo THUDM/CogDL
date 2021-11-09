@@ -1,4 +1,4 @@
-__version__ = "0.5.0-alpha0"
+__version__ = "0.5.0-alpha1"
 
 from .experiments import experiment
 from .oag import oagbert

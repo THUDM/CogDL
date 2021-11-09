@@ -1,7 +1,6 @@
 import os
 import torch
 from torch.utils.cpp_extension import load
-import time
 
 path = os.path.join(os.path.dirname(__file__))
 

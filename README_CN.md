@@ -154,7 +154,7 @@ python scripts/train.py --dataset cora --model gcn gat --seed 0 1 2 3 4
 </summary>
 <br/>
 CogDL提供了一种快速的稀疏矩阵乘的操作（[GE-SpMM](https://arxiv.org/abs/2007.03179)）来加速图神经网络模型在GPU上的训练效率。
-你可以设置`fast_spmm=True`或者`--fast-spmm`来启用这个特性。
+如果这个特性在当前环境下可用的话，它会自动开启。
 需要注意的是这个特性仍在测试阶段，可能在某些CUDA版本下无法正常使用。
 </details>
 

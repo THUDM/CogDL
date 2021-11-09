@@ -160,7 +160,7 @@ How to enable fast GNN training?
 </summary>
 <br/>
 CogDL provides a fast sparse matrix-matrix multiplication operator called [GE-SpMM](https://arxiv.org/abs/2007.03179) to speed up training of GNN models on the GPU. 
-You can set `fast_spmm=True` in the API usage or `--fast-spmm` in the command-line usage to enable this feature.
+The feature will be automatically used if it is available.
 Note that this feature is still in testing and may not work under some versions of CUDA.
 </details>
 

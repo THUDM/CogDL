@@ -46,10 +46,8 @@ def test_gdc_gcn_cora():
 def test_gcn_cora():
     args = get_default_args_for_nc("cora", "gcn")
     args.num_layers = 2
-    for i in [True, False]:
-        args.fast_spmm = i
-        ret = train(args)
-        assert 0 <= ret["test_acc"] <= 1
+    ret = train(args)
+    assert 0 <= ret["test_acc"] <= 1
     for n in ["batchnorm", "layernorm"]:
         args.norm = n
         ret = train(args)

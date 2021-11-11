@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from cogdl.utils import mul_edge_softmax
+from cogdl.utils import edge_softmax
 
 
 class DisenGCNLayer(nn.Module):
@@ -56,7 +56,7 @@ class DisenGCNLayer(nn.Module):
         for _ in range(self.iterations):
             src_edge_attr = h_dst[edge_index[0]] * h_src[edge_index[1]]
             src_edge_attr = src_edge_attr.sum(dim=-1) / self.tau  # shape: (N, K)
-            edge_attr_softmax = mul_edge_softmax(graph, src_edge_attr).T  # shape: (E, K)
+            edge_attr_softmax = edge_softmax(graph, src_edge_attr).T  # shape: (E, K)
             edge_attr_softmax = edge_attr_softmax.unsqueeze(-1)  # shape: (K, E, 1)
 
             dst_edge_attr = h_src.index_select(0, edge_index[1]).permute(1, 0, 2)  # shape: (E, K, d) -> (K, E, d)

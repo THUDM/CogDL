@@ -40,6 +40,26 @@ def spmm_scatter(row, col, values, b):
     return output
 
 
+def spmm(graph, x, actnn=False, fast_spmm=None):
+    if fast_spmm is None:
+        initialize_spmm()
+        fast_spmm = CONFIGS["fast_spmm"]
+    if fast_spmm is not None and str(x.device) != "cpu":
+        if graph.out_norm is not None:
+            x = graph.out_norm * x
+
+        row_ptr, col_indices = graph.row_indptr, graph.col_indices
+        csr_data = graph.raw_edge_weight
+        x = fast_spmm(row_ptr.int(), col_indices.int(), x, csr_data, graph.is_symmetric(), actnn=actnn)
+
+        if graph.in_norm is not None:
+            x = graph.in_norm * x
+    else:
+        row, col = graph.edge_index
+        x = spmm_scatter(row, col, graph.edge_weight, x)
+    return x
+
+
 class SpMM(torch.nn.Module):
     def __init__(self, actnn=False):
         super().__init__()
@@ -48,24 +68,7 @@ class SpMM(torch.nn.Module):
         self.fast_spmm = CONFIGS["fast_spmm"]
 
     def forward(self, graph, x):
-        if self.fast_spmm is not None and str(x.device) != "cpu":
-            if graph.out_norm is not None:
-                x = graph.out_norm * x
-
-            row_ptr, col_indices = graph.row_indptr, graph.col_indices
-            csr_data = graph.raw_edge_weight
-            x = self.fast_spmm(row_ptr.int(), col_indices.int(), x, csr_data, graph.is_symmetric(), actnn=self.actnn)
-
-            if graph.in_norm is not None:
-                x = graph.in_norm * x
-        else:
-            row, col = graph.edge_index
-            x = spmm_scatter(row, col, graph.edge_weight, x)
-        return x
-
-
-def spmm(graph, x, actnn=False):
-    return SpMM(actnn=actnn)(graph, x)
+        return spmm(graph, x, self.actnn, self.fast_spmm)
 
 
 def initialize_edge_softmax():
@@ -103,30 +106,61 @@ def edge_softmax_val(graph, edge_val):
         return softmax_values
 
 
-class MulEdgeSoftmax(torch.nn.Module):
+def edge_softmax(graph, edge_val, csr_edge_softmax=None):
+    if csr_edge_softmax is None:
+        initialize_edge_softmax()
+        csr_edge_softmax = CONFIGS["csr_edge_softmax"]
+    if csr_edge_softmax is not None and edge_val.device.type != "cpu":
+        if len(edge_val.shape) == 1:
+            edge_val = edge_val.view(-1, 1)
+            val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
+            val = val.view(-1)
+        else:
+            val = csr_edge_softmax(graph.row_indptr.int(), edge_val)
+        return val
+    else:
+        val = []
+        for i in range(edge_val.shape[1]):
+            val.append(edge_softmax_val(graph, edge_val[:, i]))
+        return torch.stack(val).t()
+
+
+class EdgeSoftmax(torch.nn.Module):
     def __init__(self):
         super().__init__()
         initialize_edge_softmax()
         self.csr_edge_softmax = CONFIGS["csr_edge_softmax"]
 
     def forward(self, graph, edge_val):
-        if self.csr_edge_softmax is not None and edge_val.device.type != "cpu":
-            if len(edge_val.shape) == 1:
-                edge_val = edge_val.view(-1, 1)
-                val = self.csr_edge_softmax(graph.row_indptr.int(), edge_val)
-                val = val.view(-1)
-            else:
-                val = self.csr_edge_softmax(graph.row_indptr.int(), edge_val)
-            return val
+        return edge_softmax(graph, edge_val, self.csr_edge_softmax)
+
+
+def mh_spmm(graph, attention, h, csrmhspmm=None, fast_spmm=None):
+    if csrmhspmm is None:
+        initialize_edge_softmax()
+        csrmhspmm = CONFIGS["csrmhspmm"]
+    nhead = h.shape[1]
+    if csrmhspmm is not None and h.device.type != "cpu":
+        if nhead > 1:
+            h_prime = csrmhspmm(graph.row_indptr.int(), graph.col_indices.int(), h, attention)
+            out = h_prime.view(h_prime.shape[0], -1)
         else:
-            val = []
-            for i in range(edge_val.shape[1]):
-                val.append(edge_softmax_val(graph, edge_val[:, i]))
-            return torch.stack(val).t()
-
-
-def mul_edge_softmax(graph, edge_val):
-    return MulEdgeSoftmax()(graph, edge_val)
+            edge_weight = attention.view(-1)
+            with graph.local_graph():
+                graph.edge_weight = edge_weight
+                out = spmm(graph, h.squeeze(1), fast_spmm=fast_spmm)
+    else:
+        with graph.local_graph():
+            h_prime = []
+            h = h.permute(1, 0, 2).contiguous()
+            for i in range(nhead):
+                edge_weight = attention[:, i]
+                graph.edge_weight = edge_weight
+                hidden = h[i]
+                assert not torch.isnan(hidden).any()
+                h_prime.append(spmm(graph, hidden, fast_spmm=fast_spmm))
+        out = torch.cat(h_prime, dim=1)
+    return out
 
 
 class MultiHeadSpMM(torch.nn.Module):
@@ -138,32 +172,7 @@ class MultiHeadSpMM(torch.nn.Module):
         self.csrmhspmm = CONFIGS["csrmhspmm"]
 
     def forward(self, graph, attention, h):
-        nhead = h.shape[1]
-        if self.csrmhspmm is not None and h.device.type != "cpu":
-            if nhead > 1:
-                h_prime = self.csrmhspmm(graph.row_indptr.int(), graph.col_indices.int(), h, attention)
-                out = h_prime.view(h_prime.shape[0], -1)
-            else:
-                edge_weight = attention.view(-1)
-                with graph.local_graph():
-                    graph.edge_weight = edge_weight
-                    out = spmm(graph, h.squeeze(1))
-        else:
-            with graph.local_graph():
-                h_prime = []
-                h = h.permute(1, 0, 2).contiguous()
-                for i in range(nhead):
-                    edge_weight = attention[:, i]
-                    graph.edge_weight = edge_weight
-                    hidden = h[i]
-                    assert not torch.isnan(hidden).any()
-                    h_prime.append(spmm(graph, hidden))
-            out = torch.cat(h_prime, dim=1)
-        return out
-
-
-def mh_spmm(graph, attention, h):
-    return MultiHeadSpMM()(graph, attention, h)
+        return mh_spmm(graph, attention, h, csrmhspmm=self.csrmhspmm, fast_spmm=self.spmm)
 
 
 def initialize_fused_gat():
@@ -176,6 +185,22 @@ def initialize_fused_gat():
         CONFIGS["fused_gat_func"] = fused_gat_func
 
 
+def fused_gat_op(attn_row, attn_col, graph, negative_slope, in_feat, fused_gat_func=None):
+    if fused_gat_func is None:
+        initialize_fused_gat()
+        fused_gat_func = CONFIGS["fused_gat_func"]
+    return fused_gat_func(
+        attn_row,
+        attn_col,
+        graph.row_indptr.int(),
+        graph.col_indices.int(),
+        graph.row_indptr.int(),
+        graph.col_indices.int(),
+        negative_slope,
+        in_feat,
+    )
+
+
 class FusedGATOp(torch.nn.Module):
     def __init__(self):
         super().__init__()
@@ -183,17 +208,4 @@ class FusedGATOp(torch.nn.Module):
         self.fused_gat_func = CONFIGS["fused_gat_func"]
 
     def forward(self, attn_row, attn_col, graph, negative_slope, in_feat):
-        return self.fused_gat_func(
-            attn_row,
-            attn_col,
-            graph.row_indptr.int(),
-            graph.col_indices.int(),
-            graph.row_indptr.int(),
-            graph.col_indices.int(),
-            negative_slope,
-            in_feat,
-        )
-
-
-def fused_gat_op(attn_row, attn_col, graph, negative_slope, in_feat):
-    return FusedGATOp()(attn_row, attn_col, graph, negative_slope, in_feat)
+        return fused_gat_op(attn_row, attn_col, graph, negative_slope, in_feat, fused_gat_op=self.fused_gat_func)

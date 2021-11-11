@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from cogdl.utils import (
-    MulEdgeSoftmax,
+    EdgeSoftmax,
     MultiHeadSpMM,
     get_activation,
     get_norm_layer,
@@ -33,7 +33,7 @@ class GATLayer(nn.Module):
         self.a_l = nn.Parameter(torch.zeros(size=(1, nhead, out_feats)))
         self.a_r = nn.Parameter(torch.zeros(size=(1, nhead, out_feats)))
 
-        self.edge_softmax = MulEdgeSoftmax()
+        self.edge_softmax = EdgeSoftmax()
         self.mhspmm = MultiHeadSpMM()
 
         self.dropout = nn.Dropout(attn_drop)

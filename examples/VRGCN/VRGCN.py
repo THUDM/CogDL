@@ -8,13 +8,13 @@ from cogdl.data import Graph
 
 class History(torch.nn.Module):
     r"""A historical embedding storage module."""
+
     def __init__(self, num_embeddings: int, embedding_dim: int):
         super().__init__()
         self.num_embeddings = num_embeddings
         self.embedding_dim = embedding_dim
-        self.emb = torch.empty(num_embeddings, embedding_dim, device='cpu',
-                               pin_memory=True)
-        self._device = torch.device('cpu')
+        self.emb = torch.empty(num_embeddings, embedding_dim, device="cpu", pin_memory=True)
+        self._device = torch.device("cpu")
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -42,9 +42,17 @@ class History(torch.nn.Module):
 
 
 class VRGCN(torch.nn.Module):
-    def __init__(self, num_nodes: int, in_channels, hidden_channels: int,
-                 out_channels: int, num_layers: int, dropout: float = 0.0,
-                 residual: bool = False, device=None):
+    def __init__(
+        self,
+        num_nodes: int,
+        in_channels,
+        hidden_channels: int,
+        out_channels: int,
+        num_layers: int,
+        dropout: float = 0.0,
+        residual: bool = False,
+        device=None,
+    ):
         super().__init__()
 
         self.in_channels = in_channels
@@ -64,10 +72,12 @@ class VRGCN(torch.nn.Module):
             norm = nn.LayerNorm(hidden_channels)
             self.norms.append(norm)
 
-        self.histories = torch.nn.ModuleList([
-            History(num_nodes, hidden_channels) if l != 0 else History(num_nodes, in_channels)
-            for l in range(num_layers)
-        ])
+        self.histories = torch.nn.ModuleList(
+            [
+                History(num_nodes, hidden_channels) if i != 0 else History(num_nodes, in_channels)
+                for i in range(num_layers)
+            ]
+        )
 
         self._device = device
 
@@ -95,8 +105,7 @@ class VRGCN(torch.nn.Module):
             x = x - self.histories[i].pull(cur_id).detach()
             h = self.histories[i].pull(full_id)
 
-            x = self.slow_spmm(sample_adj, x)[:target_id.shape[0]] + \
-                self.slow_spmm(full_adj, h)[:target_id.shape[0]].detach()
+            x = self.spmm(sample_adj, x)[: target_id.shape[0]] + self.spmm(full_adj, h)[: target_id.shape[0]].detach()
             x = self.lins[i](x)
 
             if i != self.num_layers - 1:
@@ -110,13 +119,6 @@ class VRGCN(torch.nn.Module):
             self.histories[i].push(x_list[i - 1].detach(), sample_ids[i])
         return x.log_softmax(dim=-1)
 
-    def slow_spmm(self, graph, x):
-        row, col = graph.edge_index
-        values = graph.edge_weight
-        output = x.index_select(0, col) * values.unsqueeze(-1)
-        output = torch.zeros_like(x).scatter_add_(0, row.unsqueeze(-1).expand_as(output), output)
-        return output
-
     def initialize_history(self, x, test_loader):
         _, xs = self.inference_batch(x, test_loader)
         for i in range(self.num_layers):
@@ -129,7 +131,7 @@ class VRGCN(torch.nn.Module):
         adj = adj.to(self._device)
         xs = [x]
         for i in range(self.num_layers):
-            x = self.slow_spmm(adj, x)
+            x = self.spmm(adj, x)
             x = self.lins[i](x)
             if i != self.num_layers - 1:
                 x = self.norms[i](x)
@@ -142,12 +144,11 @@ class VRGCN(torch.nn.Module):
     def inference_batch(self, x, test_loader):
         device = self._device
         xs = [x]
-        node_list = torch.arange(0, x.shape[0])
         for i in range(self.num_layers):
             tmp_x = []
             for target_id, full_id, full_adj in test_loader:
                 full_adj = full_adj.to(device)
-                agg_x = self.slow_spmm(full_adj, x[full_id].to(device))[:target_id.shape[0]]
+                agg_x = self.spmm(full_adj, x[full_id].to(device))[: target_id.shape[0]]
                 agg_x = self.lins[i](agg_x)
 
                 if i != self.num_layers - 1:

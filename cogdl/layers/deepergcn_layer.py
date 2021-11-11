@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint
 
 from .mlp_layer import MLP
-from cogdl.utils import get_activation, mul_edge_softmax, get_norm_layer, batch_max_pooling
+from cogdl.utils import get_activation, edge_softmax, get_norm_layer, batch_max_pooling
 
 
 class GENConv(nn.Module):
@@ -84,10 +84,10 @@ class GENConv(nn.Module):
         edge_msg = self.message_encoder(edge_msg) + self.eps
 
         if self.aggr == "softmax_sg":
-            h = mul_edge_softmax(graph, self.beta * edge_msg.contiguous())
+            h = edge_softmax(graph, self.beta * edge_msg.contiguous())
             h = edge_msg * h
         elif self.aggr == "softmax":
-            h = mul_edge_softmax(graph, edge_msg)
+            h = edge_softmax(graph, edge_msg)
             h = edge_msg * h
         elif self.aggr == "powermean":
             deg = graph.degrees()

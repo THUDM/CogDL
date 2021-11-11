@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from cogdl.utils import mul_edge_softmax, get_activation
+from cogdl.utils import edge_softmax, get_activation
 from cogdl.utils.spmm_utils import MultiHeadSpMM
 
 
@@ -81,7 +81,7 @@ class myGATConv(nn.Module):
         h_e = (self.a_e * e).sum(dim=-1)[tp]
         edge_attention = self.leakyrelu(h_l + h_r + h_e)
         # edge_attention: E * H
-        edge_attention = mul_edge_softmax(graph, edge_attention)
+        edge_attention = edge_softmax(graph, edge_attention)
         edge_attention = self.dropout(edge_attention)
         if res_attn is not None:
             edge_attention = edge_attention * (1 - self.alpha) + res_attn * self.alpha

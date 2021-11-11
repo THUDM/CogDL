@@ -1,5 +1,5 @@
 import torch
-from cogdl.utils import mul_edge_softmax, batch_sum_pooling
+from cogdl.utils import edge_softmax, batch_sum_pooling
 
 
 class Set2Set(torch.nn.Module):
@@ -56,7 +56,7 @@ class Set2Set(torch.nn.Module):
             q, h = self.lstm(q_star.unsqueeze(0), h)
             q = q.view(batch_size, self.in_channels)
             e = (x * q[batch]).sum(dim=-1, keepdim=True)
-            a = mul_edge_softmax(e, batch)
+            a = edge_softmax(e, batch)
             r = batch_sum_pooling(a * x, batch)
             q_star = torch.cat([q, r], dim=-1)
 

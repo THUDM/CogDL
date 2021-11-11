@@ -87,12 +87,12 @@ shows how to implement a GCNLayer using ``Graph`` and efficient sparse matrix op
 
 .. math::
 
-        H = AH = SpMM(A, H)
+        H = AH = spmm(A, H)
 
 
 Sparse matrix is stored  in ``Graph`` and will be called automatically. Message-passing in spatial space is equivalent to
 matrix operations. CogDL also supports other efficient operators like ``edge_softmax`` and ``multi_head_spmm``, you can refer
-to this `page <https://github.com/THUDM/cogdl/blob/master/cogdl/models/nn/gat.py>`_ for usage.
+to this `page <https://github.com/THUDM/cogdl/blob/master/cogdl/layers/gat_layer.py>`_ for usage.
 
 
 Use Custom models with CogDL

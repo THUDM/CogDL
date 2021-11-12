@@ -79,12 +79,14 @@ def build_dataset_from_path(data_path, dataset=None):
         module = importlib.import_module(path)
         class_name = SUPPORTED_DATASETS[dataset].split(".")[-1]
         dataset = getattr(module, class_name)(data_path=data_path)
+        return dataset
 
     if dataset is None:
         try:
             return torch.load(data_path)
         except Exception as e:
             print(e)
+            exit(0)
     raise ValueError("You are expected to specify `dataset` and `data_path`")
 
 

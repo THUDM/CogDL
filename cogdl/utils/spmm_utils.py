@@ -155,7 +155,7 @@ def mh_spmm(graph, attention, h, csrmhspmm=None, fast_spmm=None):
             h = h.permute(1, 0, 2).contiguous()
             for i in range(nhead):
                 edge_weight = attention[:, i]
-                graph.edge_weight = edge_weight
+                graph.edge_weight = edge_weight.contiguous()
                 hidden = h[i]
                 assert not torch.isnan(hidden).any()
                 h_prime.append(spmm(graph, hidden, fast_spmm=fast_spmm))

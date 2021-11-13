@@ -105,7 +105,7 @@ class VRGCN(torch.nn.Module):
             x = x - self.histories[i].pull(cur_id).detach()
             h = self.histories[i].pull(full_id)
 
-            x = self.spmm(sample_adj, x)[: target_id.shape[0]] + self.spmm(full_adj, h)[: target_id.shape[0]].detach()
+            x = spmm(sample_adj, x)[: target_id.shape[0]] + spmm(full_adj, h)[: target_id.shape[0]].detach()
             x = self.lins[i](x)
 
             if i != self.num_layers - 1:
@@ -131,7 +131,7 @@ class VRGCN(torch.nn.Module):
         adj = adj.to(self._device)
         xs = [x]
         for i in range(self.num_layers):
-            x = self.spmm(adj, x)
+            x = spmm(adj, x)
             x = self.lins[i](x)
             if i != self.num_layers - 1:
                 x = self.norms[i](x)
@@ -148,7 +148,7 @@ class VRGCN(torch.nn.Module):
             tmp_x = []
             for target_id, full_id, full_adj in test_loader:
                 full_adj = full_adj.to(device)
-                agg_x = self.spmm(full_adj, x[full_id].to(device))[: target_id.shape[0]]
+                agg_x = spmm(full_adj, x[full_id].to(device))[: target_id.shape[0]]
                 agg_x = self.lins[i](agg_x)
 
                 if i != self.num_layers - 1:

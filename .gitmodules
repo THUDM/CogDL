@@ -1,15 +1,15 @@
 [submodule "third_party/dgNN"]
 	ignore = dirty
 	path = third_party/dgNN
-	url = https://github.com/dgSPARSE/dgNN
+	url = git@github.com:dgSPARSE/dgNN.git
 	branch = main
 [submodule "third_party/actnn"]
 	ignore = dirty
 	path = third_party/actnn
-	url = https://github.com/ucbrise/actnn
+	url = git@github.com:ucbrise/actnn.git
 	branch = main
 [submodule "third_party/fastmoe"]
 	ignore = dirty
 	path = third_party/fastmoe
-	url = https://github.com/laekov/fastmoe
+	url = git@github.com:laekov/fastmoe.git
 	branch = master

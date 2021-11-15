@@ -60,13 +60,14 @@ std::vector<torch::Tensor> scatter_max_fp_cuda(torch::Tensor rowptr,
 }
 
 torch::Tensor scatter_max_bp_cuda(torch::Tensor node_feature,
-                                  torch::Tensor max_mask) {
+                                  torch::Tensor max_mask,
+                                  long num_nodes) {
   const long m = node_feature.size(0);
   const long k = node_feature.size(1);
   auto devid = node_feature.device().index();
   auto options =
       torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCUDA, devid);
-  auto out = torch::empty({m, k}, options);
+  auto out = torch::empty({num_nodes, k}, options);
   scatter_max_backward<<<m, k>>>(node_feature.data_ptr<float>(),
                                  out.data_ptr<float>(),
                                  max_mask.data_ptr<int>());

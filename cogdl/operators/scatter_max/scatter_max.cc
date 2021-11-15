@@ -13,7 +13,8 @@ std::vector<torch::Tensor> scatter_max_fp_cuda(torch::Tensor rowptr,
                                                torch::Tensor node_feature);
 
 torch::Tensor scatter_max_bp_cuda(torch::Tensor node_feature,
-                                  torch::Tensor max_mask);
+                                  torch::Tensor max_mask,
+                                  long num_nodes);
 
 std::vector<torch::Tensor> scatter_max(torch::Tensor rowptr,
                                        torch::Tensor colind,
@@ -25,10 +26,11 @@ std::vector<torch::Tensor> scatter_max(torch::Tensor rowptr,
 }
 
 torch::Tensor scatter_max_bp(torch::Tensor node_feature,
-                             torch::Tensor max_mask) {
+                             torch::Tensor max_mask,
+                             long num_nodes) {
   assertTensor(node_feature, torch::kFloat32);
-  assertTensor(max_mask, torch::kFloat32);
-  return scatter_max_bp_cuda(node_feature, max_mask);
+  assertTensor(max_mask, torch::kInt32);
+  return scatter_max_bp_cuda(node_feature, max_mask, num_nodes);
 }
 
 PYBIND11_MODULE(scatter_max, m) {

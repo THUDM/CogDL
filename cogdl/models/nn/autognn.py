@@ -5,16 +5,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from cogdl.layers import GATLayer, SELayer, GCNLayer, GCNIILayer
-from cogdl import options, experiment
-from cogdl.models import BaseModel, register_model
+from cogdl.models import BaseModel
 from cogdl.utils import spmm
 
-def gcn_model(in_feats, hidden_size, num_layers, out_feats, dropout,residual, norm, activation):
+
+def gcn_model(in_feats, hidden_size, num_layers, out_feats, dropout, residual, norm, activation):
     shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
-            #if layers_connection == "skip-sum":
-            #    self.layers_connection = nn.Linear(in_feats, out_feats)
-            #else:
-            #    self.layers_connection = None
 
     return nn.ModuleList(
         [
@@ -29,21 +25,20 @@ def gcn_model(in_feats, hidden_size, num_layers, out_feats, dropout,residual, no
             for i in range(num_layers)
         ]
     )
-    
-def gat_model(in_feats, hidden_size, out_feats, nhead, attn_drop, alpha, residual, norm, num_layers, dropout, last_nhead):
 
-    #if layers_connection == "skip-sum":
-    #    self.layers_connection = nn.Linear(in_feats, out_feats * nhead)
-    #else:
-    #    self.layers_connection = None
+
+def gat_model(
+    in_feats, hidden_size, out_feats, nhead, attn_drop, alpha, residual, norm, num_layers, dropout, last_nhead
+):
     layers = nn.ModuleList()
-    #if dropout > 0.0: self.layers.append(nn.Dropout(dropout))
     layers.append(
         GATLayer(in_feats, hidden_size, nhead=nhead, attn_drop=attn_drop, alpha=alpha, residual=residual, norm=norm)
     )
-    if num_layers != 1: layers.append(nn.ELU())
+    if num_layers != 1:
+        layers.append(nn.ELU())
     for i in range(num_layers - 2):
-        if dropout > 0.0 : layers.append(nn.Dropout(dropout))
+        if dropout > 0.0:
+            layers.append(nn.Dropout(dropout))
         layers.append(
             GATLayer(
                 hidden_size * nhead,
@@ -56,8 +51,9 @@ def gat_model(in_feats, hidden_size, out_feats, nhead, attn_drop, alpha, residua
             )
         )
         layers.append(nn.ELU())
-    
-    if dropout > 0.0 : layers.append(nn.Dropout(p=dropout))
+
+    if dropout > 0.0:
+        layers.append(nn.Dropout(p=dropout))
     layers.append(
         GATLayer(
             hidden_size * nhead,
@@ -71,20 +67,23 @@ def gat_model(in_feats, hidden_size, out_feats, nhead, attn_drop, alpha, residua
 
     return layers
 
-def grand_model(in_feats, hidden_size,out_feats, dropout, dropout2,norm):
+
+def grand_model(in_feats, hidden_size, out_feats, dropout, dropout2, norm):
     layers = nn.ModuleList()
-    if norm == "batchnorm": layers.append(nn.BatchNorm1d(in_feats))
-    layers.append(nn.Dropout(p=dropout))#dropout=inputdropout
+    if norm == "batchnorm":
+        layers.append(nn.BatchNorm1d(in_feats))
+    layers.append(nn.Dropout(p=dropout))  # dropout=inputdropout
     layers.append(nn.Linear(in_feats, hidden_size))
     layers.append(nn.ReLU())
-    if norm == "batchnorm": layers.append(nn.BatchNorm1d(hidden_size))
-    layers.append(nn.Dropout(p=dropout2))#dropout2
+    if norm == "batchnorm":
+        layers.append(nn.BatchNorm1d(hidden_size))
+    layers.append(nn.Dropout(p=dropout2))  # dropout2
     layers.append(nn.Linear(hidden_size, out_feats))
 
     return layers
 
 
-def gcnii_model(in_feats,hidden_size,out_feats,dropout,num_layers,alpha,lmbda,residual):
+def gcnii_model(in_feats, hidden_size, out_feats, dropout, num_layers, alpha, lmbda, residual):
     layers = nn.ModuleList()
     layers.append(nn.Dropout(p=dropout))
     layers.append(nn.Linear(in_feats, hidden_size))
@@ -98,7 +97,8 @@ def gcnii_model(in_feats,hidden_size,out_feats,dropout,num_layers,alpha,lmbda,re
 
     return layers
 
-def drgat_model(num_features,hidden_size,num_classes,dropout,num_heads):
+
+def drgat_model(num_features, hidden_size, num_classes, dropout, num_heads):
     layers = nn.ModuleList()
     layers.append(nn.Dropout(p=dropout))
     layers.append(SELayer(num_features, se_channels=int(np.sqrt(num_features))))
@@ -112,11 +112,11 @@ def drgat_model(num_features,hidden_size,num_classes,dropout,num_heads):
     return layers
 
 
-@register_model("autognn")
-class Autognn(BaseModel):
+class AutoGNN(BaseModel):
     """
-        Args
+    Args
     """
+
     @staticmethod
     def add_args(parser):
         parser.add_argument("--num-features", type=int)
@@ -135,9 +135,18 @@ class Autognn(BaseModel):
         parser.add_argument("--weight-decay", type=float, default=0.0)
         parser.add_argument("--dropoutn", type=float, default=0.5)
 
-
     @classmethod
     def build_model_from_args(cls, args):
+        if not hasattr(args, "attn_drop"):
+            args.attn_drop = 0.5
+        if not hasattr(args, "alpha"):
+            args.alpha = 0.2
+        if not hasattr(args, "nhead"):
+            args.nhead = 8
+        if not hasattr(args, "last_nhead"):
+            args.last_nhead = 1
+        if not hasattr(args, "dropoutn"):
+            args.dropoutn = 0.5
         return cls(
             args.num_features,
             args.hidden_size,
@@ -153,50 +162,59 @@ class Autognn(BaseModel):
             args.nhead,
             args.last_nhead,
             args.dropoutn,
-        )    
+        )
 
     def __init__(
-        self, 
-        in_feats, 
-        hidden_size, 
-        out_feats, 
-        num_layers, 
-        layers_type, 
-        dropout, 
+        self,
+        in_feats,
+        hidden_size,
+        out_feats,
+        num_layers,
+        layers_type,
+        dropout,
         activation=None,
-        norm=None, #复用use_bn
+        norm=None,  # reuse `use_bn`
         residual=False,
-        attn_drop=0.5,#复用dropnode
+        attn_drop=0.5,  # reuse `dropnode`
         alpha=0.2,
-        nhead=8,#复用order
+        nhead=8,  # reuse `order`
         last_nhead=1,
-        dropoutn=0.5,#复用gcnii:lambda
-        ):
-        super(Autognn,self).__init__()
-        
+        dropoutn=0.5,  # reuse `gcnii:lambda`
+    ):
+        super(AutoGNN, self).__init__()
+
         self.dropout = dropout
         self.layers_type = layers_type
-        if self.layers_type == "gcn":           
-            self.layers = gcn_model(in_feats, hidden_size, num_layers, out_feats, dropout,residual, norm, activation)
-            self.num_layers = num_layers    
+        if self.layers_type == "gcn":
+            self.layers = gcn_model(in_feats, hidden_size, num_layers, out_feats, dropout, residual, norm, activation)
+            self.num_layers = num_layers
 
-        elif self.layers_type == "gat":         
-            self.layers = gat_model(in_feats, hidden_size, out_feats, nhead, attn_drop, alpha, residual, norm, num_layers, dropout, last_nhead)
+        elif self.layers_type == "gat":
+            self.layers = gat_model(
+                in_feats,
+                hidden_size,
+                out_feats,
+                nhead,
+                attn_drop,
+                alpha,
+                residual,
+                norm,
+                num_layers,
+                dropout,
+                last_nhead,
+            )
             self.num_layers = num_layers
             self.last_nhead = last_nhead
         elif self.layers_type == "grand":
-            self.layers = grand_model(in_feats, hidden_size,out_feats, dropout, dropoutn,norm)
+            self.layers = grand_model(in_feats, hidden_size, out_feats, dropout, dropoutn, norm)
             self.dropnode_rate = attn_drop
             self.order = nhead
         elif self.layers_type == "gcnii":
-            self.layers = gcnii_model(in_feats,hidden_size,out_feats,dropout,num_layers,alpha,dropoutn,residual)
+            self.layers = gcnii_model(in_feats, hidden_size, out_feats, dropout, num_layers, alpha, dropoutn, residual)
         elif self.layers_type == "drgat":
-            self.layers = drgat_model(in_feats,hidden_size,out_feats,dropout,nhead)
+            self.layers = drgat_model(in_feats, hidden_size, out_feats, dropout, nhead)
 
         self.autognn_parameters = list(self.layers.parameters())
-
-    # def get_optimizer(self, args):
-    #     return torch.optim.SGD(self.autognn_parameters,lr=args.lr,weight_decay=self.wd) if args.optimizer=="sgd" else torch.optim.Adam(self.autognn_parameters,lr=args.lr,weight_decay=self.wd)
 
     def drop_node(self, x):
         n = x.shape[0]
@@ -225,7 +243,6 @@ class Autognn(BaseModel):
         x = x * row_inv[:, None]
         return x
 
-
     def forward(self, graph):
         if self.layers_type == "gcn":
             graph.sym_norm()
@@ -242,141 +259,17 @@ class Autognn(BaseModel):
             h = graph.x
         elif self.layers_type == "drgat":
             h = graph.x
-            
 
-
+        init_h = None
         for i, layer in enumerate(self.layers):
-            
+
             if type(layer).__name__ == "GATLayer" or type(layer).__name__ == "GCNLayer":
                 h = layer(graph, h)
             elif type(layer).__name__ == "GCNIILayer":
-                h= layer(graph, h, init_h)
+                h = layer(graph, h, init_h)
             else:
                 h = layer(h)
-            
-            if i==2:
+
+            if i == 2:
                 init_h = h
         return h
-
-# import torch
-# import torch.nn as nn
-# import torch.nn.functional as F
-
-# from cogdl.models.nn.pyg_srgcn import SrgcnHead, SrgcnSoftmaxHead
-# from cogdl.utils.srgcn_utils import act_attention, act_map, act_normalization
-# from cogdl import experiment
-# from cogdl.models import BaseModel, register_model
-
-# @register_model("autognn")
-# class Autognn(BaseModel):
-#     """
-#         Args
-#     """
-#     @staticmethod
-#     def add_args(parser):
-#         parser.add_argument("--hidden-size", type=int, default=8)
-#         parser.add_argument("--num-heads", type=int, default=8)
-#         parser.add_argument("--dropout", type=float, default=0.5)
-#         parser.add_argument("--node-dropout", type=float, default=0.5)
-#         parser.add_argument("--alpha", type=float, default=0.2)
-#         parser.add_argument("--lr", type=float, default=0.005)
-#         parser.add_argument("--subheads", type=int, default=1)
-#         parser.add_argument("--attention-type", type=str, default="node")
-#         parser.add_argument("--activation", type=str, default="leaky_relu")
-#         parser.add_argument("--nhop", type=int, default=1)
-#         parser.add_argument("--normalization", type=str, default="row_uniform")
-
-
-#     @classmethod
-#     def build_model_from_args(cls, args):
-#         return cls(
-#             in_feats=args.num_features,
-#             hidden_size=args.hidden_size,
-#             out_feats=args.num_classes,
-#             dropout=args.dropout,
-#             node_dropout=args.node_dropout,
-#             nhead=args.num_heads,
-#             subheads=args.subheads,
-#             alpha=args.alpha,
-#             attention=args.attention_type,
-#             activation=args.activation,
-#             nhop=args.nhop,
-#             normalization=args.normalization,
-#         )    
-
-#     def __init__(
-#         self,
-#         in_feats,
-#         hidden_size,
-#         out_feats,
-#         attention,
-#         activation,
-#         nhop,
-#         normalization,
-#         dropout,
-#         node_dropout,
-#         alpha,
-#         nhead,
-#         subheads,
-#         ):
-#         super(Autognn,self).__init__()
-#         attn_f = act_attention(attention)
-#         activate_f = act_map(activation)
-#         norm_f = act_normalization(normalization)
-#         self.attentions = [
-#             SrgcnHead(
-#                 num_features=in_feats,
-#                 out_feats=hidden_size,
-#                 attention=attn_f,
-#                 activation=activate_f,
-#                 nhop=nhop,
-#                 normalization=norm_f,
-#                 subheads=subheads,
-#                 dropout=dropout,
-#                 node_dropout=node_dropout,
-#                 alpha=alpha,
-#                 concat=True,
-#             )
-#             for _ in range(nhead)
-#         ]
-#         for i, attention in enumerate(self.attentions):
-#             self.add_module("attention_{}".format(i), attention)
-#         self.out_att = SrgcnSoftmaxHead(
-#             num_features=hidden_size * nhead * subheads,
-#             out_feats=out_feats,
-#             attention=attn_f,
-#             activation=activate_f,
-#             normalization=act_normalization("row_softmax"),
-#             nhop=nhop,
-#             dropout=dropout,
-#             node_dropout=node_dropout,
-#         )
-
-
-#     def forward(self, graph):
-#         x = torch.cat([att(graph, graph.x) for att in self.attentions], dim=1)
-#         x = F.elu(x)
-#         x = self.out_att(graph, x)
-#         return x
-            
-
-
-if __name__ == "__main__":
-
-    def func_search(trial):
-        return {
-            "dropout": trial.suggest_uniform("dropout", 0.5, 0.8),#intra-layer
-            "norm": trial.suggest_categorical("norm", ["batchnorm", "layernorm"]),
-            "activation": trial.suggest_categorical("activation", ["relu", "tanh", "gelu"]),
-            "layers_type": trial.suggest_categorical("layers_type", ["gcn", "gat"]),
-            "residual": trial.suggest_categorical("residual", [True, False]),#inter-layer
-            "num_layers": trial.suggest_categorical("num_layers", [2, 4, 8]),
-            "lr": trial.suggest_categorical("lr", [1e-3, 5e-3, 1e-2]),#config
-            "hidden_size": trial.suggest_categorical("hidden_size", [32, 64, 128]),
-            "optimizer": trial.suggest_categorical("optimizer", ["sgd", "adam"]),
-            "max_epoch": trial.suggest_categorical("max_epoch", [500, 1000, 1500]),
-            "weight_decay": trial.suggest_categorical("weight_decay", [0, 1e-4]),
-        }
-
-
-    experiment(task="node_classification", dataset="citeseer", model="autognn", seed=[1, 2], n_trials=100, func_search=func_search)

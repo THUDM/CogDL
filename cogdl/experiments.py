@@ -64,6 +64,13 @@ class AutoML(object):
     def run(self):
         study = optuna.create_study(direction="maximize")
         study.optimize(self._objective, n_trials=self.n_trials, n_jobs=1)
+        fig1=optuna.visualization.plot_optimization_history(study)
+        fig1.show()
+        fig2=optuna.visualization.plot_slice(study)
+        fig2.show()
+        fig3=optuna.visualization.plot_param_importances(study)
+        fig3.show()
+
         print(study.best_params)
         return self.best_results
 

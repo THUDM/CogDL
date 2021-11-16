@@ -277,7 +277,7 @@ def default_search_space(trial):
         "lr": trial.suggest_categorical("lr", [1e-3, 5e-3, 1e-2]),  # config
         "hidden_size": trial.suggest_categorical("hidden_size", [32, 64, 128]),
         # "optimizer": trial.suggest_categorical("optimizer", ["sgd", "adam"]),
-        "epochs": trial.suggest_categorical("epochs", [500, 1000, 1500]),
+        # "epochs": trial.suggest_categorical("epochs", [500, 1000, 1500]),
         "weight_decay": trial.suggest_categorical("weight_decay", [0, 1e-5, 1e-4]),
     }
 

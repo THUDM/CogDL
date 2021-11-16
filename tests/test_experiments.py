@@ -3,7 +3,7 @@ from cogdl.options import get_default_args
 
 
 def test_set_best_config():
-    args = get_default_args(task="node_classification", dataset="citeseer", model="gat")
+    args = get_default_args(dataset="citeseer", model="gat")
     args.model = args.model[0]
     args.dataset = args.dataset[0]
     args = set_best_config(args)
@@ -14,7 +14,7 @@ def test_set_best_config():
 
 
 def test_train():
-    args = get_default_args(task="node_classification", dataset="cora", model="gcn", epochs=10, cpu=True)
+    args = get_default_args(dataset="cora", model="gcn", epochs=10, cpu=True)
     args.dataset = args.dataset[0]
     args.model = args.model[0]
     args.seed = args.seed[0]
@@ -46,7 +46,6 @@ def test_auto_experiment():
         }
 
     results = experiment(
-        task="node_classification",
         dataset="cora",
         model="gcn",
         seed=[1, 2],
@@ -60,9 +59,23 @@ def test_auto_experiment():
     assert results[("cora", "gcn")][0]["test_acc"] > 0
 
 
+def test_autognn_experiment():
+    results = experiment(
+        dataset="cora",
+        model="autognn",
+        seed=[1],
+        n_trials=2,
+        epochs=2,
+        cpu=True,
+    )
+    assert ("cora", "autognn") in results
+    assert results[("cora", "autognn")][0]["test_acc"] > 0
+
+
 if __name__ == "__main__":
     test_set_best_config()
     test_train()
     test_gen_variants()
     test_experiment()
     test_auto_experiment()
+    test_autognn_experiment()

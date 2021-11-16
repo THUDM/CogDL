@@ -64,6 +64,12 @@ class AutoML(object):
     def run(self):
         study = optuna.create_study(direction="maximize")
         study.optimize(self._objective, n_trials=self.n_trials, n_jobs=1)
+        # fig1 = optuna.visualization.plot_optimization_history(study)
+        # fig1.show()
+        # fig2 = optuna.visualization.plot_slice(study)
+        # fig2.show()
+        # fig3 = optuna.visualization.plot_param_importances(study)
+        # fig3.show()
         print(study.best_params)
         return self.best_results
 
@@ -260,7 +266,25 @@ def auto_experiment(args):
     return results_dict
 
 
-def experiment(dataset, model, **kwargs):
+def default_search_space(trial):
+    return {
+        "dropout": trial.suggest_uniform("dropout", 0.2, 0.6),  # intra-layer
+        "norm": trial.suggest_categorical("norm", ["batchnorm", "layernorm"]),
+        "activation": trial.suggest_categorical("activation", ["relu", "gelu"]),
+        "layers_type": trial.suggest_categorical("layers_type", ["gcn", "gat", "grand", "gcnii", "drgat"]),
+        "residual": trial.suggest_categorical("residual", [True, False]),  # inter-layer
+        "num_layers": trial.suggest_categorical("num_layers", [2, 4, 8]),
+        "lr": trial.suggest_categorical("lr", [1e-3, 5e-3, 1e-2]),  # config
+        "hidden_size": trial.suggest_categorical("hidden_size", [32, 64, 128]),
+        # "optimizer": trial.suggest_categorical("optimizer", ["sgd", "adam"]),
+        # "epochs": trial.suggest_categorical("epochs", [500, 1000, 1500]),
+        "weight_decay": trial.suggest_categorical("weight_decay", [0, 1e-5, 1e-4]),
+    }
+
+
+def experiment(dataset, model=None, **kwargs):
+    if model is None:
+        model = "autognn"
     if isinstance(dataset, str) or isinstance(dataset, Dataset):
         dataset = [dataset]
     if isinstance(model, str) or isinstance(model, nn.Module):
@@ -282,7 +306,15 @@ def experiment(dataset, model, **kwargs):
         warnings.warn("The max_epoch is deprecated and will be removed in the future, please use epochs instead!")
         args.epochs = args.max_epoch
 
-    if "search_space" in kwargs:
+    if len(model) == 1 and isinstance(model[0], str) and model[0] == "autognn":
+        if not hasattr(args, "search_space"):
+            args.search_space = default_search_space
+        if not hasattr(args, "seed"):
+            args.seed = [1, 2]
+        if not hasattr(args, "n_trials"):
+            args.n_trials = 20
+
+    if hasattr(args, "search_space"):
         return auto_experiment(args)
 
     return raw_experiment(args)

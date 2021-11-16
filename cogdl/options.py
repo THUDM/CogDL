@@ -34,6 +34,7 @@ def get_parser():
     parser.add_argument("--use-best-config", action="store_true", help="use best config")
     parser.add_argument("--unsup", action="store_true")
     parser.add_argument("--nstage", type=int, default=1)
+    parser.add_argument("--n-trials", type=int, default=3)
 
     parser.add_argument("--devices", default=[0], type=int, nargs="+", help="which GPU to use")
     parser.add_argument("--cpu", action="store_true", help="use CPU instead of CUDA")
@@ -82,7 +83,7 @@ def add_dataset_args(parser):
 def add_model_args(parser):
     group = parser.add_argument_group("Model configuration")
     # fmt: off
-    group.add_argument("--model", "-m", metavar="MODEL", nargs="+", required=True,
+    group.add_argument("--model", "-m", default="autognn", metavar="MODEL", nargs="+", required=False,
                        help="Model Architecture")
     # fmt: on
     return group

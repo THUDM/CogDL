@@ -1,5 +1,6 @@
 sphinx==4.2.0
 sphinx_rtd_theme==1.0.0
+markdown==3.3.4
 sphinx-markdown-tables==0.0.15
 recommonmark==0.7.1
 networkx

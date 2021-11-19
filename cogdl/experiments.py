@@ -201,6 +201,7 @@ def train(args):  # noqa: C901
         checkpoint_path=args.checkpoint_path,
         resume_training=args.resume_training,
         patience=args.patience,
+        eval_step=args.eval_step,
         logger=args.logger,
         log_path=args.log_path,
         project=args.project,

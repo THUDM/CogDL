@@ -307,8 +307,8 @@ class Trainer(object):
                 epoch_printer = Printer(print, rank=rank, world_size=self.world_size)
 
             self.logger.start()
+            print_str_dict = dict()
             for epoch in epoch_iter:
-                print_str_dict = dict()
                 for hook in self.pre_epoch_hooks:
                     hook(self)
 
@@ -321,7 +321,7 @@ class Trainer(object):
                 print_str_dict["train_loss"] = training_loss
 
                 val_loader = dataset_w.on_val_wrapper()
-                if val_loader is not None and (epoch % self.eval_step) == 0:
+                if val_loader is not None and epoch % self.eval_step == 0:
                     # inductive setting ..
                     dataset_w.eval()
                     # do validation in inference device
@@ -377,6 +377,7 @@ class Trainer(object):
         # ------- distributed training ---------
 
         model_w.eval()
+        dataset_w.eval()
         if self.cpu_inference:
             model_w.to("cpu")
             _device = device
@@ -396,6 +397,7 @@ class Trainer(object):
         # ------- distributed training ---------
 
         model_w.eval()
+        dataset_w.eval()
         if self.cpu_inference:
             model_w.to("cpu")
             _device = device

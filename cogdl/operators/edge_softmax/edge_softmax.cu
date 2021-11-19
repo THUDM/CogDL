@@ -12,12 +12,12 @@ __global__ void edge_softmax(
     int lb = rowptr[rid];
     int hb = rowptr[(rid + 1)];
     int loop = 1 + (hb - lb) / 32;
-    float weightMax = 0;
+    float weightMax = -1e8;
     float expAll = 0;
     for (int j = 0; j < loop; j++)
     {
         int pid = threadIdx.x + (j << 5) + lb;
-        float weight = 0;
+        float weight = -1e8;
         if(pid < hb)
         {
             weight = values[pid * head + hid];

@@ -17,7 +17,7 @@ We summarize the contributions of CogDL as follows:
 ❗ News
 ------------
 
-- The new **v0.5.0-alpha0 pre-release** designs and implements a unified training loop for GNN. It introduces `DataWrapper` to help prepare the training/validation/test data and `ModelWrapper` to define the training/validation/test steps. 
+- The new **v0.5.0 release** designs and implements a unified training loop for GNN. It introduces `DataWrapper` to help prepare the training/validation/test data and `ModelWrapper` to define the training/validation/test steps. 
 - The new **v0.4.1 release** adds the implementation of Deep GNNs and the recommendation task. It also supports new pipelines for generating embeddings and recommendation. Welcome to join our tutorial on KDD 2021 at 10:30 am - 12:00 am, Aug. 14th (Singapore Time). More details can be found in https://kdd2021graph.github.io/. 🎉
 - The new **v0.4.0 release** refactors the data storage (from ``Data`` to ``Graph``) and provides more fast operators to speed up GNN training. It also includes many self-supervised learning methods on graphs. BTW, we are glad to announce that we will give a tutorial on KDD 2021 in August. Please see this `link <https://kdd2021graph.github.io/>`_ for more details. 🎉
 - The new **v0.3.0 release** provides a fast spmm operator to speed up GNN training. We also release the first version of `CogDL paper <https://arxiv.org/abs/2103.00959>`_ in arXiv. You can join `our slack <https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg>`_ for discussion. 🎉🎉🎉

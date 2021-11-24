@@ -6,9 +6,11 @@ CONFIGS = {
     "csrmhspmm": None,
     "csr_edge_softmax": None,
     "fused_gat_func": None,
+    "fast_spmm_cpu": None,
     "spmm_flag": False,
     "mh_spmm_flag": False,
     "fused_gat_flag": False,
+    "spmm_cpu_flag": False,
 }
 
 
@@ -28,6 +30,16 @@ def initialize_spmm():
         #     print("Failed to load fast version of SpMM, use torch.scatter_add instead.")
 
 
+def initialize_spmm_cpu():
+    if CONFIGS["spmm_cpu_flag"]:
+        return
+    CONFIGS["spmm_cpu_flag"] = True
+
+    from cogdl.operators.spmm import spmm_cpu
+
+    CONFIGS["fast_spmm_cpu"] = spmm_cpu
+
+
 def spmm_scatter(row, col, values, b):
     r"""
     Args:
@@ -38,6 +50,36 @@ def spmm_scatter(row, col, values, b):
     output = b.index_select(0, col) * values.unsqueeze(-1)
     output = torch.zeros_like(b).scatter_add_(0, row.unsqueeze(-1).expand_as(output), output)
     return output
+
+
+def spmm_cpu(graph, x, fast_spmm_cpu=None):
+    if fast_spmm_cpu is None:
+        initialize_spmm_cpu()
+        fast_spmm_cpu = CONFIGS["fast_spmm_cpu"]
+    if fast_spmm_cpu is not None and str(x.device) == "cpu":
+        if graph.out_norm is not None:
+            x = graph.out_norm * x
+
+        row_ptr, col_indices = graph.row_indptr, graph.col_indices
+        csr_data = graph.raw_edge_weight
+        x = fast_spmm_cpu(row_ptr.int(), col_indices.int(), csr_data, x)
+
+        if graph.in_norm is not None:
+            x = graph.in_norm * x
+    else:
+        row, col = graph.edge_index
+        x = spmm_scatter(row, col, graph.edge_weight, x)
+    return x
+
+
+class SpMM_CPU(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        initialize_spmm_cpu()
+        self.fast_spmm_cpu = CONFIGS["fast_spmm_cpu"]
+
+    def forward(self, graph, x):
+        return spmm_cpu(graph, x, self.fast_spmm_cpu)
 
 
 def spmm(graph, x, actnn=False, fast_spmm=None):

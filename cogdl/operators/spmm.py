@@ -31,6 +31,19 @@ except Exception:
     csrspmm = None
 
 
+try:
+    spmm_cpu = load(
+        name="spmm_cpu",
+        extra_cflags=["-fopenmp"],
+        sources=[os.path.join(path, "spmm/spmm_cpu.cpp")],
+        verbose=False,
+    )
+    spmm_cpu = spmm_cpu.csr_spmm_cpu
+except Exception as e:
+    print(e)
+    spmm_cpu = None
+
+
 class SPMMFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx, rowptr, colind, feat, edge_weight_csr=None, sym=False):

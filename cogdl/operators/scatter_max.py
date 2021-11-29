@@ -27,13 +27,11 @@ class ScatterMaxFunction(torch.autograd.Function):
     def forward(ctx, rowptr, colind, feat):
         out, max_id = spmm_max.scatter_max_fp(rowptr, colind, feat)
         ctx.save_for_backward(max_id)
-        ctx.other_args = feat.shape[0]
         return out
 
     @staticmethod
     def backward(ctx, grad):
         grad = grad.contiguous()
         max_id = ctx.saved_tensors[0]
-        num_nodes = ctx.other_args
-        out = spmm_max.scatter_max_bp(grad, max_id, num_nodes)
+        out = spmm_max.scatter_max_bp(grad, max_id)
         return None, None, out

@@ -15,10 +15,11 @@ __global__ void scatter_max_forward(const int *A_indptr, const int *A_indices,
     int max_id;
     float acc = (stride > 0) ? FLT_MIN : 0;
     for (int ptr = lb; ptr < hb; ptr++) {
-      offset = A_indices[ptr] * k + threadIdx.x;
+      int cid = A_indices[ptr];
+      offset = cid * k + threadIdx.x;
       if (acc < B[offset]) {
         acc = B[offset];
-        max_id = ptr;
+        max_id = cid;
       }
     }
     C[(rid * k + threadIdx.x)] = acc;
@@ -60,8 +61,7 @@ std::vector<torch::Tensor> scatter_max_fp_cuda(torch::Tensor rowptr,
 }
 
 torch::Tensor scatter_max_bp_cuda(torch::Tensor node_feature,
-                                  torch::Tensor max_mask,
-                                  long num_nodes) {
+                                  torch::Tensor max_mask, long num_nodes) {
   const long m = node_feature.size(0);
   const long k = node_feature.size(1);
   auto devid = node_feature.device().index();

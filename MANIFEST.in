@@ -1,1 +1,4 @@
-include cogdl/operators/*
+include cogdl/operators/spmm/*
+include cogdl/operators/sample/*
+include cogdl/operators/scatter_max/*
+include cogdl/operators/edge_softmax/*

@@ -75,10 +75,9 @@ class AutoML(object):
 
 
 def set_best_config(args):
-    configs = BEST_CONFIGS[args.task]
-    if args.model not in configs:
+    if args.model not in BEST_CONFIGS:
         return args
-    configs = configs[args.model]
+    configs = BEST_CONFIGS[args.model]
     for key, value in configs["general"].items():
         args.__setattr__(key, value)
     if args.dataset not in configs:

@@ -1,10 +1,15 @@
 import torch.nn as nn
-from cogdl.layers import GCNLayer
+
+try:
+    from cogdl.layers.actgcn_layer import ActGCNLayer
+except Exception:
+    print("Please install the actnn library first.")
+    exit(1)
 
 from .. import BaseModel
 
 
-class GCN(BaseModel):
+class ActGCN(BaseModel):
     r"""The GCN model from the `"Semi-Supervised Classification with Graph Convolutional Networks"
     <https://arxiv.org/abs/1609.02907>`_ paper
 
@@ -40,6 +45,7 @@ class GCN(BaseModel):
             args.activation,
             args.residual,
             args.norm,
+            args.rp_ratio,
         )
 
     def __init__(
@@ -52,18 +58,20 @@ class GCN(BaseModel):
         activation="relu",
         residual=False,
         norm=None,
+        rp_ratio=1,
     ):
-        super(GCN, self).__init__()
+        super(ActGCN, self).__init__()
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
         self.layers = nn.ModuleList(
             [
-                GCNLayer(
+                ActGCNLayer(
                     shapes[i],
                     shapes[i + 1],
                     dropout=dropout if i != num_layers - 1 else 0,
                     residual=residual if i != num_layers - 1 else None,
                     norm=norm if i != num_layers - 1 else None,
                     activation=activation if i != num_layers - 1 else None,
+                    rp_ratio=rp_ratio,
                 )
                 for i in range(num_layers)
             ]

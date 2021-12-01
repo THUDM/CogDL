@@ -70,6 +70,7 @@ SUPPORTED_MODELS = {
     "mvgrl": "cogdl.models.nn.mvgrl.MVGRL",
     "patchy_san": "cogdl.models.nn.patchy_san.PatchySAN",
     "gcn": "cogdl.models.nn.gcn.GCN",
+    "actgcn": "cogdl.models.nn.actgcn.ActGCN",
     "gdc_gcn": "cogdl.models.nn.gdc_gcn.GDC_GCN",
     "graphsage": "cogdl.models.nn.graphsage.Graphsage",
     "compgcn": "cogdl.models.nn.compgcn.LinkPredictCompGCN",

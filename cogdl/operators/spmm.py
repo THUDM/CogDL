@@ -39,8 +39,7 @@ try:
         verbose=False,
     )
     spmm_cpu = spmm_cpu.csr_spmm_cpu
-except Exception as e:
-    print(e)
+except Exception:
     spmm_cpu = None
 
 

@@ -132,7 +132,7 @@ def coo2csr(row, col, data, num_nodes=None, ordered=False):
 
 def coo2csr_index(row, col, num_nodes=None):
     if num_nodes is None:
-        num_nodes = torch.max(torch.stack(row, col)).item() + 1
+        num_nodes = torch.max(torch.stack([row, col])).item() + 1
     if coo2csr_cpu_index is None:
         return _coo2csr(torch.stack([row, col]), None, num_nodes=num_nodes, return_index=True)
     device = row.device

@@ -13,6 +13,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from tabulate import tabulate
 
+from .graph_utils import coo2csr_index
+
 
 class ArgClass(object):
     def __init__(self):
@@ -202,6 +204,17 @@ def batch_mean_pooling(x, batch):
 
 
 def batch_max_pooling(x, batch):
+    if torch.cuda.is_available() and str(x.device) != "cpu":
+        try:
+            from cogdl.operators.scatter_max import scatter_max
+
+            col = torch.arange(0, len(batch)).to(x.device)
+            rowptr, colind = coo2csr_index(batch, col, num_nodes=batch.max().item() + 1)
+            x = scatter_max(rowptr.int(), colind.int(), x)
+            return x
+        except Exception:
+            pass
+
     from torch_scatter import scatter_max
 
     x, _ = scatter_max(x, batch, dim=0)

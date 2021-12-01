@@ -18,6 +18,17 @@ class SumAggregator(object):
         return x
 
 
+class MaxAggregator(object):
+    def __init__(self):
+        from cogdl.operators.scatter_max import scatter_max
+
+        self.scatter_max = scatter_max
+
+    def __call__(self, graph, x):
+        x = self.scatter_max(graph.row_indptr.int(), graph.col_indices.int(), x)
+        return x
+
+
 class SAGELayer(nn.Module):
     def __init__(
         self, in_feats, out_feats, normalize=False, aggr="mean", dropout=0.0, norm=None, activation=None, residual=False
@@ -35,6 +46,8 @@ class SAGELayer(nn.Module):
             self.aggr = MeanAggregator()
         elif aggr == "sum":
             self.aggr = SumAggregator()
+        elif aggr == "max":
+            self.aggr = MaxAggregator()
         else:
             raise NotImplementedError
 

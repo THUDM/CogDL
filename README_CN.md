@@ -21,6 +21,8 @@ CogDL的特性包括：
 
 ## ❗ 最新
 
+- 最新的 **v0.5.1 release** 添加了一些高效的算子，包括cpu版本的SpMM和cuda版本的scatter_max。这个版本同时增加了很多用于节点分类的[数据集](./cogdl/datasets/rd2cd_data.py)。 🎉
+
 - 最新的 **v0.5.0 release** 为图神经网络的训练设计了一套统一的流程. 这个版本去除了原先的`Task`类，引入了`DataWrapper`来准备training/validation/test过程中所需的数据，引入了`ModelWrapper`来定义模型training/validation/test的步骤. 🎉
 
 - 最新的 **v0.4.1 release** 增加了深层GNN的实现和推荐任务。这个版本同时提供了新的一些pipeline用于直接获取图表示和搭建推荐应用。欢迎大家参加我们在KDD 2021上的tutorial，时间是8月14号上午10:30 - 12:00（北京时间）。 更多的内容可以查看 https://kdd2021graph.github.io/. 🎉

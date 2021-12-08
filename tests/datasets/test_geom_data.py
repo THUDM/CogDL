@@ -50,6 +50,14 @@ def test_wisconsin():
     assert data.num_classes == 5
 
 
+def test_citeseer_geom():
+    args = build_args_from_dict({"dataset": "citeseer_geom"})
+    data = build_dataset(args)
+    assert data.data.num_nodes == 3327
+    assert data.num_features == 3703
+    assert data.num_classes == 6
+
+
 if __name__ == "__main__":
     test_chameleon()
     test_cornell()
@@ -57,3 +65,4 @@ if __name__ == "__main__":
     test_squirrel()
     test_texas()
     test_wisconsin()
+    test_citeseer_geom()

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <pybind11/pybind11.h>
+#include <c10/cuda/CUDAGuard.h>
 
 torch::Tensor mhsddmm_cuda(
     torch::Tensor rowptr,
@@ -29,6 +30,10 @@ torch::Tensor mhsddmm(
     assert(colind.dtype() == torch::kInt32);
     assert(grad.dtype() == torch::kFloat32);
     assert(feature.dtype() == torch::kFloat32);
+    const at::cuda::OptionalCUDAGuard device_guard1(device_of(rowptr));
+    const at::cuda::OptionalCUDAGuard device_guard2(device_of(colind));
+    const at::cuda::OptionalCUDAGuard device_guard3(device_of(grad));
+    const at::cuda::OptionalCUDAGuard device_guard4(device_of(feature));
     return mhsddmm_cuda(rowptr, colind, grad, feature);
 }
 

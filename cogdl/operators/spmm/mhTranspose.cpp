@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <pybind11/pybind11.h>
+#include <c10/cuda/CUDAGuard.h>
 
 torch::Tensor mhtranspose_cuda(
     torch::Tensor permute,
@@ -18,6 +19,8 @@ torch::Tensor mhtranspose(
     assert(attention.is_contiguous());
     assert(permute.dtype() == torch::kInt32);
     assert(attention.dtype() == torch::kFloat32);
+    const at::cuda::OptionalCUDAGuard device_guard1(device_of(permute));
+    const at::cuda::OptionalCUDAGuard device_guard2(device_of(attention));
     return mhtranspose_cuda(permute, attention);
 }
 
@@ -40,6 +43,9 @@ std::vector<torch::Tensor> csr2csc(
     assert(rowptr.dtype() == torch::kInt32);
     assert(colind.dtype() == torch::kInt32);
     assert(csr_data.dtype() == torch::kInt32);
+    const at::cuda::OptionalCUDAGuard device_guard1(device_of(rowptr));
+    const at::cuda::OptionalCUDAGuard device_guard2(device_of(colind));
+    const at::cuda::OptionalCUDAGuard device_guard3(device_of(csr_data));
     return csr2csc_cuda(rowptr, colind, csr_data);
 }
 

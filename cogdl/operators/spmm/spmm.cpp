@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <pybind11/pybind11.h>
+#include <c10/cuda/CUDAGuard.h>
 
 torch::Tensor spmm_cuda(
     torch::Tensor rowptr,
@@ -36,6 +37,10 @@ torch::Tensor csr_spmm(
     assert(A_colind.dtype() == torch::kInt32);
     assert(A_csrVal.dtype() == torch::kFloat32);
     assert(B.dtype() == torch::kFloat32);
+    const at::cuda::OptionalCUDAGuard device_guard1(device_of(A_rowptr));
+    const at::cuda::OptionalCUDAGuard device_guard2(device_of(A_colind));
+    const at::cuda::OptionalCUDAGuard device_guard3(device_of(A_csrVal));
+    const at::cuda::OptionalCUDAGuard device_guard4(device_of(B));
     return spmm_cuda(A_rowptr, A_colind, A_csrVal, B);
 }
 
@@ -53,6 +58,9 @@ torch::Tensor csr_spmm_no_edge_value(
     assert(A_rowptr.dtype() == torch::kInt32);
     assert(A_colind.dtype() == torch::kInt32);
     assert(B.dtype() == torch::kFloat32);
+    const at::cuda::OptionalCUDAGuard device_guard1(device_of(A_rowptr));
+    const at::cuda::OptionalCUDAGuard device_guard2(device_of(A_colind));
+    const at::cuda::OptionalCUDAGuard device_guard3(device_of(B));
     return spmm_cuda_no_edge_value(A_rowptr, A_colind, B);
 }
 
@@ -75,6 +83,9 @@ std::vector<torch::Tensor> csr2csc(
     assert(rowptr.dtype() == torch::kInt32);
     assert(colind.dtype() == torch::kInt32);
     assert(csr_data.dtype() == torch::kFloat32);
+    const at::cuda::OptionalCUDAGuard device_guard1(device_of(rowptr));
+    const at::cuda::OptionalCUDAGuard device_guard2(device_of(colind));
+    const at::cuda::OptionalCUDAGuard device_guard3(device_of(csr_data));
     return csr2csc_cuda(rowptr, colind, csr_data);
 }
 

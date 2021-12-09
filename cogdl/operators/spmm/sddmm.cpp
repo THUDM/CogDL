@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <pybind11/pybind11.h>
+#include <c10/cuda/CUDAGuard.h>
 
 torch::Tensor sddmm_cuda_coo(
     torch::Tensor rowind,
@@ -36,6 +37,10 @@ torch::Tensor coo_sddmm(
     assert(colind.dtype()==torch::kInt32);
     assert(D1.dtype()==torch::kFloat32);
     assert(D2.dtype()==torch::kFloat32);
+    const at::cuda::OptionalCUDAGuard device_guard1(device_of(rowind));
+    const at::cuda::OptionalCUDAGuard device_guard2(device_of(colind));
+    const at::cuda::OptionalCUDAGuard device_guard3(device_of(D1));
+    const at::cuda::OptionalCUDAGuard device_guard4(device_of(D2));
     return sddmm_cuda_coo(rowind, colind, D1, D2);
 }
 
@@ -57,6 +62,10 @@ torch::Tensor csr_sddmm(
     assert(colind.dtype()==torch::kInt32);
     assert(D1.dtype()==torch::kFloat32);
     assert(D2.dtype()==torch::kFloat32);
+    const at::cuda::OptionalCUDAGuard device_guard1(device_of(rowptr));
+    const at::cuda::OptionalCUDAGuard device_guard2(device_of(colind));
+    const at::cuda::OptionalCUDAGuard device_guard3(device_of(D1));
+    const at::cuda::OptionalCUDAGuard device_guard4(device_of(D2));
     return sddmm_cuda_csr(rowptr, colind, D1, D2);
 }
 

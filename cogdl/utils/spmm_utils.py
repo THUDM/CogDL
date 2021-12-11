@@ -82,11 +82,12 @@ class SpMM_CPU(torch.nn.Module):
         return spmm_cpu(graph, x, self.fast_spmm_cpu)
 
 
-def spmm(graph, x, actnn=False, fast_spmm=None):
+def spmm(graph, x, actnn=False, fast_spmm=None, fast_spmm_cpu=None):
     if fast_spmm is None:
         initialize_spmm()
-        initialize_spmm_cpu()
         fast_spmm = CONFIGS["fast_spmm"]
+    if fast_spmm_cpu is None:
+        initialize_spmm_cpu()
         fast_spmm_cpu = CONFIGS["fast_spmm_cpu"]
     if fast_spmm is not None and str(x.device) != "cpu":
         if graph.out_norm is not None:

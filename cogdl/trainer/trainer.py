@@ -445,18 +445,15 @@ class Trainer(object):
 
     def train_step(self, model_w, train_loader, optimizers, lr_schedulers, device):
         model_w.train()
-        total_loss = 0.0
-        total_examples = 0
+        losses = []
 
         if self.progress_bar == "iteration":
             train_loader = tqdm(train_loader)
 
         for batch in train_loader:
             batch = move_to_device(batch, device)
-            num_examples = batch.train_mask.sum().item()
-            if num_examples == 0:
+            if hasattr(batch, "train_mask") and batch.train_mask.sum().item() == 0:
                 continue
-            total_examples += num_examples
             loss = model_w.on_train_step(batch)
 
             for optimizer in optimizers:
@@ -468,12 +465,12 @@ class Trainer(object):
             for optimizer in optimizers:
                 optimizer.step()
 
-            total_loss += loss.item() * num_examples
+            losses.append(loss.item())
         if lr_schedulers is not None:
             for lr_schedular in lr_schedulers:
                 lr_schedular.step()
 
-        return total_loss / total_examples
+        return np.mean(losses)
 
     def val_step(self, model_w, val_loader, device):
         model_w.eval()

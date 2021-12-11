@@ -14,10 +14,9 @@ CogDL是一款图深度学习工具包，基于[PyTorch](https://github.com/pyto
 
 CogDL的特性包括：
 
-- 高效：CogDL支持使用优化好的算子来加速GNN模型的训练。
+- 高效性：CogDL支持使用优化好的算子来加速GNN模型的训练。
 - 易用性：CogDL提供了非常易用的API来在给定的模型和数据集上运行实验。
-- 可扩展性：用户可以基于CogDL已有的框架来实现和提交新的数据集、模型和任务。
-- 可复现性：CogDL对图领域大多数重要的任务都提供了可复现的排行榜。
+- 扩展性：用户可以基于CogDL已有的框架来扩展新的数据集、模型。
 
 ## ❗ 最新
 
@@ -200,7 +199,7 @@ CogDL核心开发团队可以通过[cogdlteam@gmail.com](mailto:cogdlteam@gmail.
 
 ```
 @article{cen2021cogdl,
-    title={CogDL: An Extensive Toolkit for Deep Learning on Graphs},
+    title={CogDL: Toolkit for Deep Learning on Graphs},
     author={Yukuo Cen and Zhenyu Hou and Yan Wang and Qibin Chen and Yizhen Luo and Xingcheng Yao and Aohan Zeng and Shiguang Guo and Peng Zhang and Guohao Dai and Yu Wang and Chang Zhou and Hongxia Yang and Jie Tang},
     journal={arXiv preprint arXiv:2103.00959},
     year={2021}

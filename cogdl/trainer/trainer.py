@@ -275,7 +275,7 @@ class Trainer(object):
         else:
             return model_w.to(rank), None
 
-    def train(self, rank, model_w, dataset_w):
+    def train(self, rank, model_w, dataset_w):  # noqa: C901
         model_w, _ = self.initialize(model_w, rank=rank, master_addr=self.master_addr, master_port=self.master_port)
         self.data_controller.prepare_data_wrapper(dataset_w, rank)
         self.eval_data_back_to_cpu = dataset_w.data_back_to_cpu
@@ -306,10 +306,10 @@ class Trainer(object):
                 self.data_controller.training_proc_per_stage(dataset_w, rank)
 
             if self.progress_bar == "epoch":
-                epoch_iter = tqdm(range(self.epochs))
+                epoch_iter = tqdm(range(1, self.epochs + 1))
                 epoch_printer = Printer(epoch_iter.set_description, rank=rank, world_size=self.world_size)
             else:
-                epoch_iter = range(self.epochs)
+                epoch_iter = range(1, self.epochs + 1)
                 epoch_printer = Printer(print, rank=rank, world_size=self.world_size)
 
             self.logger.start()
@@ -321,7 +321,10 @@ class Trainer(object):
                 # inductive setting ..
                 dataset_w.train()
                 train_loader = dataset_w.on_train_wrapper()
-                training_loss = self.training_step(model_w, train_loader, optimizers, lr_schedulers, rank)
+                train_dataset = train_loader.get_dataset_from_loader()
+                if hasattr(train_dataset, "shuffle"):
+                    train_dataset.shuffle()
+                training_loss = self.train_step(model_w, train_loader, optimizers, lr_schedulers, rank)
 
                 print_str_dict["Epoch"] = epoch
                 print_str_dict["train_loss"] = training_loss
@@ -386,12 +389,13 @@ class Trainer(object):
         dataset_w.eval()
         if self.cpu_inference:
             model_w.to("cpu")
-            _device = device
+            _device = "cpu"
         else:
             _device = device
 
         val_loader = dataset_w.on_val_wrapper()
-        result = self.val_step(model_w, val_loader, _device)
+        with torch.no_grad():
+            result = self.val_step(model_w, val_loader, _device)
 
         model_w.to(device)
         return result
@@ -406,12 +410,16 @@ class Trainer(object):
         dataset_w.eval()
         if self.cpu_inference:
             model_w.to("cpu")
-            _device = device
+            _device = "cpu"
         else:
             _device = device
 
         test_loader = dataset_w.on_test_wrapper()
-        result = self.test_step(model_w, test_loader, _device)
+        if model_w.training_type == "unsupervised":
+            result = self.test_step(model_w, test_loader, _device)
+        else:
+            with torch.no_grad():
+                result = self.test_step(model_w, test_loader, _device)
 
         model_w.to(device)
         return result
@@ -425,7 +433,8 @@ class Trainer(object):
                 _device = "cpu"
             else:
                 _device = rank
-            result = fn(model_w, loader, _device)
+            with torch.no_grad():
+                result = fn(model_w, loader, _device)
             model_w.to(rank)
 
             object_list = [result]
@@ -434,15 +443,20 @@ class Trainer(object):
         dist.broadcast_object_list(object_list, src=0)
         return object_list[0]
 
-    def training_step(self, model_w, train_loader, optimizers, lr_schedulers, device):
+    def train_step(self, model_w, train_loader, optimizers, lr_schedulers, device):
         model_w.train()
-        losses = []
+        total_loss = 0.0
+        total_examples = 0
 
         if self.progress_bar == "iteration":
             train_loader = tqdm(train_loader)
 
         for batch in train_loader:
             batch = move_to_device(batch, device)
+            num_examples = batch.train_mask.sum().item()
+            if num_examples == 0:
+                continue
+            total_examples += num_examples
             loss = model_w.on_train_step(batch)
 
             for optimizer in optimizers:
@@ -454,13 +468,13 @@ class Trainer(object):
             for optimizer in optimizers:
                 optimizer.step()
 
-            losses.append(loss.item())
+            total_loss += loss.item() * num_examples
         if lr_schedulers is not None:
             for lr_schedular in lr_schedulers:
                 lr_schedular.step()
-        return np.mean(losses)
 
-    @torch.no_grad()
+        return total_loss / total_examples
+
     def val_step(self, model_w, val_loader, device):
         model_w.eval()
         if val_loader is None:
@@ -472,7 +486,6 @@ class Trainer(object):
                 move_to_device(batch, "cpu")
         return model_w.collect_notes()
 
-    # @torch.no_grad()
     def test_step(self, model_w, test_loader, device):
         model_w.eval()
         if test_loader is None:

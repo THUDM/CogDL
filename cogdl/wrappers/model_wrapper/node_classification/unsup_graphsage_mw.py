@@ -3,10 +3,10 @@ import torch
 import numpy as np
 from cogdl.utils import RandomWalker
 from cogdl.wrappers.tools.wrapper_utils import evaluate_node_embeddings_using_logreg
-from .. import ModelWrapper
+from .. import UnsupervisedModelWrapper
 
 
-class UnsupGraphSAGEModelWrapper(ModelWrapper):
+class UnsupGraphSAGEModelWrapper(UnsupervisedModelWrapper):
     @staticmethod
     def add_args(parser):
         # fmt: off

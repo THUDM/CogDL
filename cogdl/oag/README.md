@@ -8,7 +8,7 @@ A basic version OAG-BERT. Similar to [SciBERT](https://github.com/allenai/sciber
 
 The usage of OAG-BERT is the same of ordinary SciBERT or BERT. For example, you can use the following code to encode two text sequences and retrieve their outputs
 ```python
-from cogdl import oagbert
+from cogdl.oag import oagbert
 
 tokenizer, bert_model = oagbert()
 
@@ -20,7 +20,7 @@ outputs = bert_model(**tokens)
 ## V2: The entity augmented version
 An extension to the vanilla OAG-BERT. We incorporate rich entity information in Open Academic Graph such as **authors** and **field-of-study**. Thus, you can encode various type of entities in OAG-BERT v2. For example, to encode the paper of BERT, you can use the following code
 ```python
-from cogdl import oagbert
+from cogdl.oag import oagbert
 import torch
 
 tokenizer, model = oagbert("oagbert-v2")
@@ -47,7 +47,7 @@ sequence_output, pooled_output = model.bert.forward(
 ```
 If you want to encode various type of entities separately, you can use the following code instead
 ```python
-from cogdl import oagbert
+from cogdl.oag import oagbert
 
 tokenizer, model = oagbert("oagbert-v2")
 title = 'BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding'
@@ -87,7 +87,7 @@ We also release another two V2 version for users.
 
 One is a generation based version which can be used for generating texts based on other information. For example, use the following code to automatically generate paper titles with abstracts.
 ```python
-from cogdl import oagbert
+from cogdl.oag import oagbert
 
 tokenizer, model = oagbert('oagbert-v2-lm')
 model.eval()
@@ -101,7 +101,7 @@ for seq, prob in model.generate_title(abstract="To enrich language models with d
 In addition to that, we fine-tune the OAG-BERT for calculating paper similarity based on name disambiguation tasks, which is named as Sentence-OAGBERT following [Sentence-BERT](https://github.com/UKPLab/sentence-transformers). The following codes demonstrate an example of using Sentence-OAGBERT to calculate paper similarity.
 ```python
 import os
-from cogdl import oagbert
+from cogdl.oag import oagbert
 import torch
 import torch.nn.functional as F
 import numpy as np

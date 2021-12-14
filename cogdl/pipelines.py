@@ -9,7 +9,6 @@ import torch
 from grave import plot_network, use_attributes
 from tabulate import tabulate
 
-from cogdl import oagbert
 from cogdl.data import Graph
 from cogdl.datasets import build_dataset_from_name, NodeDataset
 from cogdl.models import build_model
@@ -126,6 +125,9 @@ class OAGBertInferencePipepline(Pipeline):
         super(OAGBertInferencePipepline, self).__init__(app, model=model, **kwargs)
 
         load_weights = kwargs["load_weights"] if "load_weights" in kwargs else True
+
+        from cogdl.oag import oagbert
+
         self.tokenizer, self.bert_model = oagbert(model, load_weights=load_weights)
 
     def __call__(self, sequence, **kwargs):

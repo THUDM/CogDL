@@ -1,4 +1,4 @@
-from cogdl import oagbert
+from cogdl.oag import oagbert
 
 
 def test_encode_paper():

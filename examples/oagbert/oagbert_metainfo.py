@@ -1,4 +1,4 @@
-from cogdl import oagbert
+from cogdl.oag import oagbert
 from cogdl.oag.utils import colored
 import math
 

@@ -47,6 +47,7 @@ class VGAE(BaseModel):
         self.conv2_var = GCNLayer(self.hidden_size, self.hidden_size)
 
     def reparameterize(self, mean, log_var):
+        log_var = log_var.clamp(max=10)
         sigma = torch.exp(log_var)
         z = mean + torch.randn_like(log_var) * sigma
         return z

@@ -81,4 +81,4 @@ class DAEGC(BaseModel):
 
     def recon_loss(self, z, adj):
         # print(torch.mm(z, z.t()), adj)
-        return F.binary_cross_entropy(F.softmax(torch.mm(z, z.t())), adj, reduction="sum")
+        return F.binary_cross_entropy(F.sigmoid(torch.mm(z, z.t())), adj, reduction="sum")

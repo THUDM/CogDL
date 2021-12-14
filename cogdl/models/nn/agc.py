@@ -43,7 +43,7 @@ class AGC(BaseModel):
         graph.sym_norm()
         graph.edge_weight = data.edge_weight * 0.5
 
-        pre_intra = 1e8
+        pre_intra = 1e27
         pre_feat = None
         for t in range(1, self.max_iter + 1):
             x = data.x

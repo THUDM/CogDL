@@ -99,7 +99,7 @@ def spmm(graph, x, actnn=False, fast_spmm=None, fast_spmm_cpu=None):
 
         if graph.in_norm is not None:
             x = graph.in_norm * x
-    elif fast_spmm_cpu is not None and str(x.device) == "cpu" and x.requires_grad is False:
+    elif fast_spmm_cpu is not None and str(x.device) == "cpu" and x.requires_grad is False and x.max().item() <= 1e10:
         if graph.out_norm is not None:
             x = graph.out_norm * x
 

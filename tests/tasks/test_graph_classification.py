@@ -105,10 +105,10 @@ def test_gin_proteins():
     assert ret["test_acc"] > 0
 
 
-def test_diffpool_mutag():
-    args = get_default_args_graph_clf(dataset="mutag", model="diffpool")
+def test_diffpool_imdb_binary():
+    args = get_default_args_graph_clf(dataset="imdb-b", model="diffpool")
     args = add_diffpool_args(args)
-    args.batch_size = 5
+    args.batch_size = 100
     args.train_ratio = 0.6
     args.test_ratio = 0.2
     ret = train(args)
@@ -138,5 +138,5 @@ if __name__ == "__main__":
     test_gin_proteins()
 
     test_sortpool_mutag()
-    test_diffpool_mutag()
+    test_diffpool_imdb_binary()
     test_patchy_san_mutag()

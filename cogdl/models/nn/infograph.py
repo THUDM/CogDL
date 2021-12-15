@@ -88,7 +88,7 @@ class FF(nn.Module):
 
 
 class InfoGraph(BaseModel):
-    r"""Implimentation of Infograph in paper `"InfoGraph: Unsupervised and Semi-supervised Graph-Level Representation
+    r"""Implementation of Infograph in paper `"InfoGraph: Unsupervised and Semi-supervised Graph-Level Representation
      Learning via Mutual Information Maximization" <https://openreview.net/forum?id=r1lfF2NYvH>__. `
 
      Parameters

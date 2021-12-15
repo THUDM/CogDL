@@ -17,6 +17,8 @@ from cogdl.utils import (
 from cogdl.utils import RandomWalker
 from cogdl.operators.sample import sample_adj_c, subgraph_c
 
+subgraph_c = None  # noqa: F811
+
 
 class BaseGraph(object):
     def __init__(self):
@@ -628,7 +630,11 @@ class Graph(BaseGraph):
                 self._adj.row_ptr = None
             self._adj.row = row
             self._adj.col = col
-            self.__num_nodes__ = None
+            if self.x is not None:
+                self._adj.__num_nodes__ = self.x.shape[0]
+                self.__num_nodes__ = self.x.shape[0]
+            else:
+                self.__num_nodes__ = None
 
     @edge_weight.setter
     def edge_weight(self, edge_weight):
@@ -857,6 +863,7 @@ class Graph(BaseGraph):
                 continue
             data._adj[key] = self._adj[key][edges]
         data.num_nodes = node_idx.shape[0]
+        data.edge_weight = None
         return data
 
     def subgraph(self, node_idx, keep_order=False):

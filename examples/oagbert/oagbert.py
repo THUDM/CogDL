@@ -1,5 +1,5 @@
 import torch
-from cogdl import oagbert
+from cogdl.oag import oagbert
 
 tokenizer, bert_model = oagbert()
 bert_model.eval()

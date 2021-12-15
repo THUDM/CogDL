@@ -17,6 +17,7 @@ class ModelWrapper(torch.nn.Module):
         self._evaluator = None
         self._evaluator_metric = None
         self.__record__ = dict()
+        self.training_type = ""
 
     def forward(self):
         pass
@@ -196,3 +197,9 @@ class ModelWrapper(torch.nn.Module):
 class EmbeddingModelWrapper(ModelWrapper):
     def setup_optimizer(self):
         pass
+
+
+class UnsupervisedModelWrapper(ModelWrapper):
+    def __init__(self):
+        super(UnsupervisedModelWrapper, self).__init__()
+        self.training_type = "unsupervised"

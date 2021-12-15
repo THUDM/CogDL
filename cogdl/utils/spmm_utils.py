@@ -82,10 +82,13 @@ class SpMM_CPU(torch.nn.Module):
         return spmm_cpu(graph, x, self.fast_spmm_cpu)
 
 
-def spmm(graph, x, actnn=False, fast_spmm=None):
+def spmm(graph, x, actnn=False, fast_spmm=None, fast_spmm_cpu=None):
     if fast_spmm is None:
         initialize_spmm()
         fast_spmm = CONFIGS["fast_spmm"]
+    if fast_spmm_cpu is None:
+        initialize_spmm_cpu()
+        fast_spmm_cpu = CONFIGS["fast_spmm_cpu"]
     if fast_spmm is not None and str(x.device) != "cpu":
         if graph.out_norm is not None:
             x = graph.out_norm * x
@@ -93,6 +96,16 @@ def spmm(graph, x, actnn=False, fast_spmm=None):
         row_ptr, col_indices = graph.row_indptr, graph.col_indices
         csr_data = graph.raw_edge_weight
         x = fast_spmm(row_ptr.int(), col_indices.int(), x, csr_data, graph.is_symmetric(), actnn=actnn)
+
+        if graph.in_norm is not None:
+            x = graph.in_norm * x
+    elif fast_spmm_cpu is not None and str(x.device) == "cpu" and x.requires_grad is False:
+        if graph.out_norm is not None:
+            x = graph.out_norm * x
+
+        row_ptr, col_indices = graph.row_indptr, graph.col_indices
+        csr_data = graph.raw_edge_weight
+        x = fast_spmm_cpu(row_ptr.int(), col_indices.int(), csr_data, x)
 
         if graph.in_norm is not None:
             x = graph.in_norm * x

@@ -14,10 +14,9 @@ CogDL is a graph deep learning toolkit that allows researchers and developers to
 
 We summarize the contributions of CogDL as follows:
 
-- **High Efficiency**: CogDL utilizes well-optimized operators to speed up training and save GPU memory of GNN models.
-- **Easy-to-Use**: CogDL provides easy-to-use APIs for running experiments with the given models and datasets using hyper-parameter search.
+- **Efficiency**: CogDL utilizes well-optimized operators to speed up training and save GPU memory of GNN models.
+- **Ease of Use**: CogDL provides easy-to-use APIs for running experiments with the given models and datasets using hyper-parameter search.
 - **Extensibility**: The design of CogDL makes it easy to apply GNN models to new scenarios based on our framework.
-- **Reproducibility**: CogDL provides reproducible leaderboards for state-of-the-art models on most of important tasks in the graph domain.
 
 ## ❗ News
 
@@ -223,7 +222,7 @@ Please cite [our paper](https://arxiv.org/abs/2103.00959) if you find our code o
 
 ```
 @article{cen2021cogdl,
-    title={CogDL: An Extensive Toolkit for Deep Learning on Graphs},
+    title={CogDL: Toolkit for Deep Learning on Graphs},
     author={Yukuo Cen and Zhenyu Hou and Yan Wang and Qibin Chen and Yizhen Luo and Xingcheng Yao and Aohan Zeng and Shiguang Guo and Peng Zhang and Guohao Dai and Yu Wang and Chang Zhou and Hongxia Yang and Jie Tang},
     journal={arXiv preprint arXiv:2103.00959},
     year={2021}

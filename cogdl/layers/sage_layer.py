@@ -51,11 +51,6 @@ class SAGELayer(nn.Module):
         else:
             raise NotImplementedError
 
-        if dropout > 0:
-            self.dropout = nn.Dropout(dropout)
-        else:
-            self.dropout = None
-
         if activation is not None:
             self.act = get_activation(activation, inplace=True)
         else:

@@ -13,7 +13,7 @@ torch::Tensor spmm_cpu(
     const auto k = dense.size(1);
     auto devid = dense.device().index();
     auto options = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCPU, devid);
-    auto out = torch::empty({m,k}, options);
+    auto out = torch::zeros({m,k}, options);
     
     int *rowptr_ptr = rowptr.data_ptr<int>();
     int *colind_ptr = colind.data_ptr<int>();

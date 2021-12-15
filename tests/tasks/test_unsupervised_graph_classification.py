@@ -38,16 +38,16 @@ def get_default_args_graph_clf(dataset, model, dw="graph_embedding_dw", mw="grap
 
 def add_infograp_args(args):
     args.hidden_size = 16
-    args.batch_size = 10
+    args.batch_size = 32
     args.target = 0
     args.train_num = 100
-    args.num_layers = 3
+    args.num_layers = 2
     args.sup = False
-    args.epochs = 3
+    args.epochs = 2
     args.nn = True
     args.lr = 0.0001
     args.train_ratio = 0.7
-    args.test_ratio = 0.1
+    args.test_ratio = 0.2
     args.model = "infograph"
     args.degree_node_features = False
     return args

@@ -1,6 +1,6 @@
 import importlib
 
-from .base_model_wrapper import ModelWrapper, EmbeddingModelWrapper
+from .base_model_wrapper import ModelWrapper, EmbeddingModelWrapper, UnsupervisedModelWrapper
 
 
 def register_model_wrapper(name):

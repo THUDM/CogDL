@@ -10,10 +10,10 @@ from cogdl.utils.transform import dropout_adj
 from cogdl.wrappers.tools.wrapper_utils import evaluate_node_embeddings_using_logreg
 from tqdm import tqdm
 
-from .. import ModelWrapper
+from .. import UnsupervisedModelWrapper
 
 
-class SelfAuxiliaryModelWrapper(ModelWrapper):
+class SelfAuxiliaryModelWrapper(UnsupervisedModelWrapper):
     @staticmethod
     def add_args(parser):
         # fmt: off

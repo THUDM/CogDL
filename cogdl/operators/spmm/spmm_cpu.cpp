@@ -13,7 +13,7 @@ torch::Tensor spmm_cpu(
     const auto k = dense.size(1);
     auto devid = dense.device().index();
     auto options = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCPU, devid);
-    auto out = torch::empty({m,k}, options);
+    auto out = torch::zeros({m,k}, options);
     
     int *rowptr_ptr = rowptr.data_ptr<int>();
     int *colind_ptr = colind.data_ptr<int>();
@@ -25,9 +25,6 @@ torch::Tensor spmm_cpu(
     for (int i = 0; i < m; ++i) {
         int row_start = rowptr_ptr[i], row_end = rowptr_ptr[i + 1];
         int ik = i * k;
-        for (int t = 0; t < k; ++t) {
-            out_ptr[ik + t] = 0.0;
-        }
         for (int key = row_start; key < row_end; ++key) {
             int j = colind_ptr[key] * k;
             float val = values_ptr[key];

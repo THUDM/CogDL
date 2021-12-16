@@ -9,14 +9,14 @@ CogDL is a graph representation learning toolkit that allows researchers and dev
 
 We summarize the contributions of CogDL as follows:
 
-- **High Efficiency**: CogDL utilizes well-optimized operators to speed up training and save GPU memory of GNN models.
-- **Easy-to-Use**: CogDL provides easy-to-use APIs for running experiments with the given models and datasets using hyper-parameter search.
+- **Efficiency**: CogDL utilizes well-optimized operators to speed up training and save GPU memory of GNN models.
+- **Ease of Use**: CogDL provides easy-to-use APIs for running experiments with the given models and datasets using hyper-parameter search.
 - **Extensibility**: The design of CogDL makes it easy to apply GNN models to new scenarios based on our framework.
-- **Reproducibility**: CogDL provides reproducible leaderboards for state-of-the-art models on most of important tasks in the graph domain.
 
 ❗ News
 ------------
 
+- The new **v0.5.2 release** adds a GNN example for ogbn-products and updates geom datasets. It also fixes some potential bugs including setting devices, using cpu for inference, etc.
 - The new **v0.5.1 release** adds fast operators including SpMM (cpu version) and scatter_max (cuda version). It also adds lots of datasets for node classification. 🎉
 - The new **v0.5.0 release** designs and implements a unified training loop for GNN. It introduces `DataWrapper` to help prepare the training/validation/test data and `ModelWrapper` to define the training/validation/test steps. 
 - The new **v0.4.1 release** adds the implementation of Deep GNNs and the recommendation task. It also supports new pipelines for generating embeddings and recommendation. Welcome to join our tutorial on KDD 2021 at 10:30 am - 12:00 am, Aug. 14th (Singapore Time). More details can be found in https://kdd2021graph.github.io/. 🎉
@@ -34,7 +34,7 @@ Please cite `our paper <https://arxiv.org/abs/2103.00959>`_ if you find our code
 ::
 
    @article{cen2021cogdl,
-      title={CogDL: An Extensive Toolkit for Deep Learning on Graphs},
+      title={CogDL: Toolkit for Deep Learning on Graphs},
       author={Yukuo Cen and Zhenyu Hou and Yan Wang and Qibin Chen and Yizhen Luo and Xingcheng Yao and Aohan Zeng and Shiguang Guo and Peng Zhang and Guohao Dai and Yu Wang and Chang Zhou and Hongxia Yang and Jie Tang},
       journal={arXiv preprint arXiv:2103.00959},
       year={2021}

@@ -20,19 +20,21 @@ CogDL的特性包括：
 
 ## ❗ 最新
 
+- 最新的 **v0.5.2 release** 给ogbn-products数据集添加了GNN样例，更新了geom数据集。这个版本同时修复了一些潜在的问题，包括设置不同device，使用cpu进行预测等。
+
 - 最新的 **v0.5.1 release** 添加了一些高效的算子，包括cpu版本的SpMM和cuda版本的scatter_max。这个版本同时增加了很多用于节点分类的[数据集](./cogdl/datasets/rd2cd_data.py)。 🎉
 
 - 最新的 **v0.5.0 release** 为图神经网络的训练设计了一套统一的流程. 这个版本去除了原先的`Task`类，引入了`DataWrapper`来准备training/validation/test过程中所需的数据，引入了`ModelWrapper`来定义模型training/validation/test的步骤. 🎉
 
 - 最新的 **v0.4.1 release** 增加了深层GNN的实现和推荐任务。这个版本同时提供了新的一些pipeline用于直接获取图表示和搭建推荐应用。欢迎大家参加我们在KDD 2021上的tutorial，时间是8月14号上午10:30 - 12:00（北京时间）。 更多的内容可以查看 https://kdd2021graph.github.io/. 🎉
 
-- 最新的 **v0.4.0版本** 重构了底层的数据存储（从`Data`类变为`Graph`类），并且提供了更多快速的算子来加速图神经网络的训练。这个版本还包含了很多图自监督学习的算法。同时，我们很高兴地宣布我们将在8月份的KDD 2021会议上给一个CogDL相关的tutorial。具体信息请参见[这个链接](https://kdd2021graph.github.io/). 🎉
-
 <details>
 <summary>
 历史
 </summary>
 <br/>
+
+- 最新的 **v0.4.0版本** 重构了底层的数据存储（从`Data`类变为`Graph`类），并且提供了更多快速的算子来加速图神经网络的训练。这个版本还包含了很多图自监督学习的算法。同时，我们很高兴地宣布我们将在8月份的KDD 2021会议上给一个CogDL相关的tutorial。具体信息请参见[这个链接](https://kdd2021graph.github.io/). 🎉
 
 - CogDL支持图神经网络模型使用混合专家模块（Mixture of Experts, MoE）。 你可以安装[FastMoE](https://github.com/laekov/fastmoe)然后在CogDL中尝试 **[MoE GCN](./cogdl/models/nn/moe_gcn.py)** 模型!
 

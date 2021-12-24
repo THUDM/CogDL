@@ -1,14 +1,12 @@
-import os
+import os.path as osp
 import random
-import tarfile
 
 import numpy as np
-import requests
 import torch
 from torch import Tensor
 
-from cogdl.data import Graph
-from cogdl.datasets import NodeDataset
+from cogdl.data import Dataset, Graph
+from cogdl.utils import download_url, untar
 
 base_url = "https://cloud.tsinghua.edu.cn/d/65d7c53dd8474d7091a9/files/?p=%2F"
 
@@ -67,43 +65,50 @@ def check_train_containing(train_mask, y):
     return True
 
 
-class RD2CD(NodeDataset):
+class RD2CD(Dataset):
     def __init__(self, root, name):
-        self.root = root
         self.name = name
-        self.source_path = root + "/" + name + "/raw"
-        if not os.path.exists(self.source_path):
-            os.makedirs(self.source_path)
-        dst_path = root + "/" + name + "/processed"
-        if not os.path.exists(dst_path):
-            os.makedirs(dst_path)
-        self.data_path = dst_path + "/data.pt"
-        if not os.path.exists(self.data_path):
-            self.download()
-        super(RD2CD, self).__init__(path=self.data_path, scale_feat=False)
+        path = osp.join(root, name)
+
+        super(RD2CD, self).__init__(path)
+        self.data = torch.load(self.processed_paths[0])
+
+    @property
+    def raw_file_names(self):
+        names = ["x.npy", "y.npy", "edge_index.npy"]
+        return names
+
+    @property
+    def processed_file_names(self):
+        return "data.pt"
+
+    @property
+    def num_nodes(self):
+        assert hasattr(self.data, "y")
+        return self.data.y.shape[0]
 
     def download(self):
-        r = requests.get(base_url + self.name + ".tgz&dl=1")
-        tarfile_path = self.source_path + "/" + self.name + ".tgz"
-        with open(tarfile_path, "wb") as f:
-            f.write(r.content)
-        with tarfile.open(tarfile_path, "r") as f:
-            f.extractall(self.source_path)
+        fname = "{}.tgz".format(self.name.lower())
+        download_url("{}{}.tgz&dl=1".format(base_url, self.name), self.raw_dir, fname)
+        untar(self.raw_dir, fname)
 
     def process(self):
-        numpy_x = np.load(self.source_path + "/x.npy")
+        numpy_x = np.load(self.raw_dir + "/x.npy")
         x = torch.from_numpy(numpy_x).to(torch.float)
-        numpy_y = np.load(self.source_path + "/y.npy")
+        numpy_y = np.load(self.raw_dir + "/y.npy")
         y = torch.from_numpy(numpy_y).to(torch.long)
-        numpy_edge_index = np.load(self.source_path + "/edge_index.npy")
+        numpy_edge_index = np.load(self.raw_dir + "/edge_index.npy")
         edge_index = torch.from_numpy(numpy_edge_index).to(torch.long)
 
         # set train/val/test mask in node_classification task
         random_seed = 14530529  # a fixed seed
         (train_mask, val_mask, test_mask) = get_whole_mask(y, "6-2-2", random_seed)
         data = Graph(x=x, edge_index=edge_index, y=y, train_mask=train_mask, val_mask=val_mask, test_mask=test_mask)
-        torch.save(data, self.data_path)
+        torch.save(data, self.processed_paths[0])
         return data
+
+    def get(self, idx):
+        return self.data
 
 
 class Github(RD2CD):

@@ -48,7 +48,7 @@ CogDL supports saving the trained model with ``checkpoint_path`` in command line
     experiment(model="gcn", dataset="cora", checkpoint_path="gcn_cora.pt")
 
 
-When the training stops, the model will be saved in `gcn_cora.py`. If you want to continue the training from previous checkpoint
+When the training stops, the model will be saved in `gcn_cora.pt`. If you want to continue the training from previous checkpoint
 with different parameters(such as learning rate, weight decay and etc.), keep the same model parameters (such as hidden size, model layers)
 and do it as follows:
 

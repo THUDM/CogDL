@@ -99,6 +99,8 @@ class GeomDataset(Dataset):
         self.data.val_mask = self.data.all_masks[split]["val"]
         self.data.test_mask = self.data.all_masks[split]["test"]
 
+        self.data.set_asymmetric()
+
     @property
     def raw_file_names(self):
         names = ["out1_graph_edges.txt", "out1_node_feature_label.txt"] + [

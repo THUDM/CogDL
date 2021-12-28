@@ -49,6 +49,7 @@ def get_parser():
     parser.add_argument("--no-test", action="store_true")
 
     parser.add_argument("--actnn", action="store_true")
+    parser.add_argument("--fp16", action="store_true")
     parser.add_argument("--rp-ratio", type=int, default=1)
     # fmt: on
     return parser

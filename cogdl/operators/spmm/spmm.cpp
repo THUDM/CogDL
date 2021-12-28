@@ -35,8 +35,8 @@ torch::Tensor csr_spmm(
     assert(B.is_contiguous());
     assert(A_rowptr.dtype() == torch::kInt32);
     assert(A_colind.dtype() == torch::kInt32);
-    assert(A_csrVal.dtype() == torch::kFloat32);
-    assert(B.dtype() == torch::kFloat32);
+    assert(A_csrVal.dtype() == torch::kFloat32 || A_csrVal.dtype() == torch::kFloat16);
+    assert(B.dtype() == torch::kFloat32 || B.dtype() == torch::kFloat16);
     const at::cuda::OptionalCUDAGuard device_guard1(device_of(A_rowptr));
     const at::cuda::OptionalCUDAGuard device_guard2(device_of(A_colind));
     const at::cuda::OptionalCUDAGuard device_guard3(device_of(A_csrVal));

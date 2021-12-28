@@ -7,8 +7,10 @@ import os
 
 import torch
 import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel
 import torch.multiprocessing as mp
+from torch.nn.parallel import DistributedDataParallel
+from torch.cuda.amp import GradScaler, autocast
+
 
 from cogdl.wrappers.data_wrapper.base_data_wrapper import DataWrapper
 from cogdl.wrappers.model_wrapper.base_model_wrapper import ModelWrapper, EmbeddingModelWrapper
@@ -70,6 +72,7 @@ class Trainer(object):
         project: str = "cogdl-exp",
         no_test: bool = False,
         actnn: bool = False,
+        fp16: bool = False,
         rp_ratio: int = 1,
     ):
         self.epochs = epochs
@@ -120,6 +123,8 @@ class Trainer(object):
             self.register_out_epoch_hook(ddp_after_epoch)
 
         self.eval_data_back_to_cpu = False
+
+        self.fp16 = fp16
 
         if actnn:
             try:
@@ -297,6 +302,8 @@ class Trainer(object):
 
         best_model_w = None
 
+        scaler = GradScaler() if self.fp16 else None
+
         patience = 0
         best_epoch = 0
         for stage in range(self.nstage):
@@ -324,7 +331,7 @@ class Trainer(object):
                 train_dataset = train_loader.get_dataset_from_loader()
                 if hasattr(train_dataset, "shuffle"):
                     train_dataset.shuffle()
-                training_loss = self.train_step(model_w, train_loader, optimizers, lr_schedulers, rank)
+                training_loss = self.train_step(model_w, train_loader, optimizers, lr_schedulers, rank, scaler)
 
                 print_str_dict["Epoch"] = epoch
                 print_str_dict["train_loss"] = training_loss
@@ -443,7 +450,7 @@ class Trainer(object):
         dist.broadcast_object_list(object_list, src=0)
         return object_list[0]
 
-    def train_step(self, model_w, train_loader, optimizers, lr_schedulers, device):
+    def train_step(self, model_w, train_loader, optimizers, lr_schedulers, device, scaler):
         model_w.train()
         losses = []
 
@@ -454,16 +461,29 @@ class Trainer(object):
             batch = move_to_device(batch, device)
             if hasattr(batch, "train_mask") and batch.train_mask.sum().item() == 0:
                 continue
-            loss = model_w.on_train_step(batch)
+            if scaler is not None:
+                with autocast():
+                    loss = model_w.on_train_step(batch)
+            else:
+                loss = model_w.on_train_step(batch)
 
             for optimizer in optimizers:
                 optimizer.zero_grad()
-            loss.backward()
+
+            if scaler is not None:
+                scaler.scale(loss).backward()
+            else:
+                loss.backward()
 
             torch.nn.utils.clip_grad_norm_(model_w.parameters(), self.clip_grad_norm)
 
             for optimizer in optimizers:
-                optimizer.step()
+                if scaler is not None:
+                    scaler.step(optimizer)
+                else:
+                    optimizer.step()
+            if scaler is not None:
+                scaler.update()
 
             losses.append(loss.item())
         if lr_schedulers is not None:

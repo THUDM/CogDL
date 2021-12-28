@@ -47,7 +47,7 @@ def spmm_scatter(row, col, values, b):
         values : Tensor, shape=(E,)
         b : Tensor, shape=(N, d)
     """
-    output = b.index_select(0, col) * values.unsqueeze(-1)
+    output = b.index_select(0, col) * values.unsqueeze(-1).to(b.dtype)
     output = torch.zeros_like(b).scatter_add_(0, row.unsqueeze(-1).expand_as(output), output)
     return output
 
@@ -95,6 +95,8 @@ def spmm(graph, x, actnn=False, fast_spmm=None, fast_spmm_cpu=None):
 
         row_ptr, col_indices = graph.row_indptr, graph.col_indices
         csr_data = graph.raw_edge_weight
+        if x.dtype == torch.half:
+            csr_data = csr_data.half()
         x = fast_spmm(row_ptr.int(), col_indices.int(), x, csr_data, graph.is_symmetric(), actnn=actnn)
 
         if graph.in_norm is not None:

@@ -1,6 +1,9 @@
 import copy
 import itertools
+import json
 import os
+import random
+import string
 import inspect
 from collections import defaultdict, namedtuple
 import warnings
@@ -34,32 +37,66 @@ class AutoML(object):
         self.best_params = None
         self.default_params = args
 
+        self.trial_log = {}
+        self.trial_cnt = 0
+        self.trial_history = {}
+
     def _objective(self, trials):
-        params = copy.deepcopy(self.default_params)
-        cur_params = self.search_space(trials)
-        print(cur_params)
-        for key, value in cur_params.items():
-            params.__setattr__(key, value)
-        result_dict = raw_experiment(args=params)
-        result_list = list(result_dict.values())[0]
-        item = result_list[0]
-        key = self.metric
-        if key is None:
-            for _key in item.keys():
-                if "Val" in _key or "val" in _key:
-                    key = _key
-                    break
+        try:
+            params = copy.deepcopy(self.default_params)
+            cur_params = self.search_space(trials)
+            print(cur_params)
+            
+            tag_params = str(cur_params)
+            if tag_params not in self.trial_history:
+                for key, value in cur_params.items():
+                    params.__setattr__(key, value)
+                result_dict = raw_experiment(args=params)
+                result_list = list(result_dict.values())[0]
+                item = result_list[0]
+                
+                result_mean = {}
+                # Mean
+                for _key in item.keys():
+                    val = [result[_key] for result in result_list]
+                    mean = sum(val) / len(val)
+                    result_mean[_key] = mean
+                
+                # Std
+                for _key in item.keys():
+                    mean_val = result_mean[_key]
+                    val = [(result[_key] - mean_val) ** 2.0 for result in result_list]
+                    mean = (sum(val) / len(val)) ** 0.5
+                    result_mean[_key+'_std'] = mean
+                self.trial_history[tag_params] = copy.deepcopy(result_mean)
+            else:
+                result_mean = self.trial_history[tag_params]
+                
+            key = self.metric
             if key is None:
-                raise KeyError("Unable to find validation metrics")
-        val = [result[key] for result in result_list]
-        mean = sum(val) / len(val)
-
-        if self.best_value is None or mean > self.best_value:
-            self.best_value = mean
-            self.best_params = cur_params
-            self.best_results = result_list
-
-        return mean
+                for _key in result_mean.keys():
+                    if "Val" in _key or "val" in _key:
+                        key = _key
+                        break
+                if key is None:
+                    raise KeyError("Unable to find validation metrics")
+            mean = result_mean[key]
+            
+            cur_params.update(result_mean)
+            if self.best_value is None or mean > self.best_value:
+                self.best_value = mean
+                self.best_params = cur_params
+                self.best_results = result_list
+                self.best_mean = result_mean
+            
+            self.trial_log['Trial{:_>4d}'.format(self.trial_cnt)] = copy.deepcopy(cur_params)
+            self.trial_cnt += 1
+            print (result_mean)
+            
+            return mean
+        except Exception as e:
+            print ('Exception in _objective', str(e))
+            return 0.0
 
     def run(self):
         study = optuna.create_study(direction="maximize")
@@ -71,8 +108,8 @@ class AutoML(object):
         # fig3 = optuna.visualization.plot_param_importances(study)
         # fig3.show()
         print(study.best_params)
-        return self.best_results
-
+        self.trial_log['Trial_best'] = self.best_params
+        return self.best_results, self.trial_log
 
 def set_best_config(args):
     if args.model not in BEST_CONFIGS:
@@ -225,9 +262,7 @@ def variant_args_generator(args, variants):
     """Form variants as group with size of num_workers"""
     for idx, variant in enumerate(variants):
         args.dataset, args.model, args.seed, args.split = variant
-        if idx < len(variants) - 1:
-            yield copy.deepcopy(args)
-        yield args
+        yield copy.deepcopy(args)
 
 
 def output_results(results_dict, tablefmt="github"):
@@ -239,6 +274,12 @@ def output_results(results_dict, tablefmt="github"):
 
 
 def raw_experiment(args):
+    random.seed()
+    if args.checkpoint_path.endswith('model.pt'):
+        ran_str = ''.join(random.sample(string.ascii_letters + string.digits, 8))
+        print ("random_string", ran_str)
+        args.checkpoint_path = args.checkpoint_path[:-3] + '_' + ran_str + '.pt'
+        
     variants = list(gen_variants(dataset=args.dataset, model=args.model, seed=args.seed, split=args.split))
 
     results_dict = defaultdict(list)
@@ -254,19 +295,44 @@ def raw_experiment(args):
 
 def auto_experiment(args):
     variants = list(gen_variants(dataset=args.dataset, model=args.model))
-
+    
     results_dict = defaultdict(list)
+    trials_dict = defaultdict(list)
     for variant in variants:
-        args.model = [variant.model]
-        args.dataset = [variant.dataset]
-        tool = AutoML(args)
-        results_dict[variant[:]] = tool.run()
+        try:
+            args.model = [variant.model]
+            args.dataset = [variant.dataset]
+            
+            if isinstance(variant.dataset, Dataset):
+                dataset_name = str(variant.dataset)
+            else:
+                dataset_name = variant.dataset
+            if isinstance(variant.model, nn.Module):
+                model_name = variant.model.model_name
+            else:
+                model_name = variant.model
+            random.seed()
+            ran_str = ''.join(random.sample(string.ascii_letters + string.digits, 8))
+            print ("random_string", ran_str)
+            args.checkpoint_path= './checkpoints/%s_%s_%s_device_%d_%s' % (args.project, model_name, dataset_name, args.devices[0], ran_str)
+            tool = AutoML(args)
+            best_results, trial_logs = tool.run()
+            if isinstance(variant[1], nn.Module):
+                tmp_model_name = variant[1].model_name
+            else:
+                tmp_model_name = str(variant[1])
+            variant_name = '(%s, %s)' % (str(variant[0]), tmp_model_name)
+            results_dict[variant_name] = best_results
+            trials_dict[variant_name] = trial_logs
+            
+        except Exception as e:
+            print (f'Exception at Model {variant.model}, Dataset {variant.dataset}, Exception {str(e)}')
 
     tablefmt = args.tablefmt if hasattr(args, "tablefmt") else "github"
     print("\nFinal results:\n")
     output_results(results_dict, tablefmt)
 
-    return results_dict
+    return (results_dict, trials_dict)
 
 
 def default_search_space(trial):
@@ -285,7 +351,7 @@ def default_search_space(trial):
     }
 
 
-def experiment(dataset, model=None, **kwargs):
+def experiment(dataset, model=None, trial_log_path=None, **kwargs):
     if model is None:
         model = "autognn"
     if isinstance(dataset, str) or isinstance(dataset, Dataset):
@@ -318,6 +384,12 @@ def experiment(dataset, model=None, **kwargs):
             args.n_trials = 20
 
     if hasattr(args, "search_space"):
-        return auto_experiment(args)
+        trial_result_dict, trial_log_dict = auto_experiment(args)
+        
+        if trial_log_path:
+            with open(trial_log_path, 'w') as file:
+                json.dump(trial_log_dict, file, indent=4, ensure_ascii=False)
+        
+        return (trial_result_dict, trial_log_dict)
 
     return raw_experiment(args)

@@ -225,9 +225,7 @@ def variant_args_generator(args, variants):
     """Form variants as group with size of num_workers"""
     for idx, variant in enumerate(variants):
         args.dataset, args.model, args.seed, args.split = variant
-        if idx < len(variants) - 1:
-            yield copy.deepcopy(args)
-        yield args
+        yield copy.deepcopy(args)
 
 
 def output_results(results_dict, tablefmt="github"):

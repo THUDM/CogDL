@@ -14,7 +14,6 @@ import optuna
 from tabulate import tabulate
 
 from cogdl.utils import set_random_seed, tabulate_results
-from cogdl.configs import BEST_CONFIGS
 from cogdl.data import Dataset
 from cogdl.models import build_model
 from cogdl.datasets import build_dataset
@@ -112,14 +111,21 @@ class AutoML(object):
         return self.best_results, self.trial_log
 
 def set_best_config(args):
+    path = os.path.dirname(os.path.realpath(__file__)) + os.path.sep + 'configs.json'
+    with open(path, 'r') as file:
+        BEST_CONFIGS = json.load(file)
     if args.model not in BEST_CONFIGS:
         return args
     configs = BEST_CONFIGS[args.model]
     for key, value in configs["general"].items():
+        if '_acc' in key:
+            continue
         args.__setattr__(key, value)
     if args.dataset not in configs:
         return args
     for key, value in configs[args.dataset].items():
+        if '_acc' in key:
+            continue
         args.__setattr__(key, value)
     return args
 
@@ -275,9 +281,8 @@ def output_results(results_dict, tablefmt="github"):
 
 def raw_experiment(args):
     random.seed()
-    if args.checkpoint_path.endswith('model.pt'):
+    if args.checkpoint_path == './checkpoints/model.pt':
         ran_str = ''.join(random.sample(string.ascii_letters + string.digits, 8))
-        print ("random_string", ran_str)
         args.checkpoint_path = args.checkpoint_path[:-3] + '_' + ran_str + '.pt'
         
     variants = list(gen_variants(dataset=args.dataset, model=args.model, seed=args.seed, split=args.split))
@@ -313,8 +318,7 @@ def auto_experiment(args):
                 model_name = variant.model
             random.seed()
             ran_str = ''.join(random.sample(string.ascii_letters + string.digits, 8))
-            print ("random_string", ran_str)
-            args.checkpoint_path= './checkpoints/%s_%s_%s_device_%d_%s' % (args.project, model_name, dataset_name, args.devices[0], ran_str)
+            args.checkpoint_path= './checkpoints/%s_%s_%s_device_%d_%s.pt' % (args.project, model_name, dataset_name, args.devices[0], ran_str)
             tool = AutoML(args)
             best_results, trial_logs = tool.run()
             if isinstance(variant[1], nn.Module):
@@ -350,8 +354,84 @@ def default_search_space(trial):
         "weight_decay": trial.suggest_categorical("weight_decay", [0, 1e-5, 1e-4]),
     }
 
+def check_experiment(dataset, model, use_best_config=False, args=None):
+    seed = list(range(20))
+    if dataset in ["cora_geom", "citeseer_geom", "pubmed_geom", "chameleon", "squirrel", "film", "cornell", "texas", "wisconsin"]:
+        split = list(range(10))
+    else:
+        split = list(range(1))
+    
+    if use_best_config:
+        result_dict = experiment(dataset=dataset, model=model, split=split, seed=seed, use_best_config=True)
+    else:
+        result_dict = experiment(dataset=dataset, model=model, split=split, seed=seed, args=args)
+    
+    result_list = list(result_dict.values())[0]
+    item = result_list[0]
+    
+    result_mean = {}
+    # Mean
+    for _key in item.keys():
+        val = [result[_key] for result in result_list]
+        mean = sum(val) / len(val)
+        result_mean[_key+'_mean'] = mean
+    
+    # Std
+    for _key in item.keys():
+        mean_val = result_mean[_key+'_mean']
+        val = [(result[_key] - mean_val) ** 2.0 for result in result_list]
+        mean = (sum(val) / len(val)) ** 0.5
+        result_mean[_key+'_std'] = mean
 
-def experiment(dataset, model=None, trial_log_path=None, **kwargs):
+    return result_mean
+
+def result_update(trial_log_dict):
+    for key, value in trial_log_dict.items():
+        dataset = key.split(',')[0].split('(')[1].strip()
+        model = key.split(',')[1].split(')')[0].strip()
+        kwargs = copy.deepcopy(value['Trial_best'])
+        for _k in value['Trial_best']:
+            if '_acc' in _k:
+                del kwargs[_k]
+
+        args = get_default_args(dataset=[dataset], model=[model], **kwargs)
+
+        result_mean = check_experiment(dataset=dataset, model=model, args=args)
+
+        val_acc_mean = result_mean['val_acc_mean']
+        val_acc_std = result_mean['val_acc_std']
+        test_acc_mean = result_mean["test_acc_mean"]
+        test_acc_std = result_mean['test_acc_std']
+
+        path = os.path.dirname(os.path.realpath(__file__)) + os.path.sep + 'configs.json'
+        with open(path, 'r') as file:
+            configuration = json.load(file)
+        
+        old_result= configuration.get(model, {}).get(dataset, {})
+        old_val_acc_mean = old_result.get('val_acc_mean', 0.0)
+        old_val_acc_std = old_result.get('val_acc_std', 0.0)
+        old_test_acc_mean = old_result.get("test_acc_mean", 0.0)
+        old_test_acc_std = old_result.get('test_acc_std', 0.0)
+
+        if val_acc_mean > old_val_acc_mean:
+            if model not in configuration:
+                configuration[model] = {}
+            
+            kwargs['val_acc_mean'] = val_acc_mean
+            kwargs['val_acc_std'] = val_acc_std
+            kwargs["test_acc_mean"] = test_acc_mean
+            kwargs["test_acc_std"] = test_acc_std
+            configuration[model][dataset] = copy.deepcopy(kwargs)
+
+            path = os.path.dirname(os.path.realpath(__file__)) + os.path.sep + 'configs.json'
+            with open(path, 'w') as file:
+                json.dump(configuration, file, indent=4, ensure_ascii=False)
+            
+            print ("Update configs of (%s, %s) successd: %5.2f±%4.2f / %5.2f±%4.2f -> %5.2f±%4.2f / %5.2f±%4.2f " % (model, dataset, old_test_acc_mean*100, old_test_acc_std*100, old_val_acc_mean*100, old_val_acc_std*100, test_acc_mean*100, test_acc_std*100, val_acc_mean*100, val_acc_std*100))
+        else:
+            print ("Update configs of (%s, %s) failed:   %5.2f±%4.2f / %5.2f±%4.2f -> %5.2f±%4.2f / %5.2f±%4.2f " % (model, dataset, old_test_acc_mean*100, old_test_acc_std*100, old_val_acc_mean*100, old_val_acc_std*100, test_acc_mean*100, test_acc_std*100, val_acc_mean*100, val_acc_std*100)) 
+
+def experiment(dataset, model=None, trial_log_path=None, update_configs=False, **kwargs):
     if model is None:
         model = "autognn"
     if isinstance(dataset, str) or isinstance(dataset, Dataset):
@@ -390,6 +470,9 @@ def experiment(dataset, model=None, trial_log_path=None, **kwargs):
             with open(trial_log_path, 'w') as file:
                 json.dump(trial_log_dict, file, indent=4, ensure_ascii=False)
         
+        if update_configs:
+            result_update(trial_log_dict)
+
         return (trial_result_dict, trial_log_dict)
 
     return raw_experiment(args)

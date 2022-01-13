@@ -1,6 +1,10 @@
-BEST_CONFIGS = {
-    "chebyshev": {"general": {}},
-    "dropedge_gcn": {"general": {}},
+{
+    "chebyshev": {
+        "general": {}
+    },
+    "dropedge_gcn": {
+        "general": {}
+    },
     "mlp": {
         "general": {},
         "cora": {
@@ -8,21 +12,29 @@ BEST_CONFIGS = {
             "num_layers": 2,
             "dropout": 0.6,
             "activation": "gelu",
-            "norm": None,
+            "norm": null,
             "lr": 0.03,
             "weight_decay": 1e-05,
             "epochs": 2000,
-        }, 
+            "val_acc_mean": 0.6154,
+            "val_acc_std": 0.0048,
+            "test_acc_mean": 0.5919,
+            "test_acc_std": 0.0073
+        },
         "citeseer": {
             "hidden_size": 16,
             "num_layers": 2,
             "dropout": 0.3,
             "activation": "gelu",
-            "norm": None,
+            "norm": null,
             "lr": 0.1,
             "weight_decay": 0.0001,
-            "epochs": 2000
-        }, 
+            "epochs": 2000,
+            "val_acc_mean": 0.5989,
+            "val_acc_std": 0.0075,
+            "test_acc_mean": 0.5916,
+            "test_acc_std": 0.0083
+        },
         "pubmed": {
             "hidden_size": 256,
             "num_layers": 2,
@@ -31,19 +43,27 @@ BEST_CONFIGS = {
             "norm": "layernorm",
             "lr": 0.03,
             "weight_decay": 0.0001,
-            "epochs": 2000
-        }, 
-        "cora_geom":{
+            "epochs": 2000,
+            "val_acc_mean": 0.7362,
+            "val_acc_std": 0.0063,
+            "test_acc_mean": 0.7319,
+            "test_acc_std": 0.0089
+        },
+        "cora_geom": {
             "hidden_size": 256,
             "num_layers": 2,
             "dropout": 0.9,
             "activation": "relu",
-            "norm": None,
+            "norm": null,
             "lr": 0.01,
             "weight_decay": 1e-05,
             "epochs": 2000,
+            "val_acc_mean": 0.7712,
+            "val_acc_std": 0.0095,
+            "test_acc_mean": 0.7691,
+            "test_acc_std": 0.0207
         },
-        "citeseer_geom":{
+        "citeseer_geom": {
             "hidden_size": 256,
             "num_layers": 2,
             "dropout": 0.9,
@@ -52,28 +72,40 @@ BEST_CONFIGS = {
             "lr": 0.001,
             "weight_decay": 0.0001,
             "epochs": 2000,
+            "val_acc_mean": 0.7476,
+            "val_acc_std": 0.0137,
+            "test_acc_mean": 0.7434,
+            "test_acc_std": 0.0178
         },
-        "pubmed_geom":{
+        "pubmed_geom": {
             "hidden_size": 128,
             "num_layers": 2,
             "dropout": 0.6,
             "activation": "relu",
-            "norm": None,
+            "norm": null,
             "lr": 0.03,
             "weight_decay": 1e-05,
             "epochs": 2000,
+            "val_acc_mean": 0.8818,
+            "val_acc_std": 0.004,
+            "test_acc_mean": 0.8764,
+            "test_acc_std": 0.004
         },
-        "chameleon":{
+        "chameleon": {
             "hidden_size": 64,
             "num_layers": 2,
             "dropout": 0.9,
             "activation": "gelu",
-            "norm": None,
+            "norm": null,
             "lr": 0.003,
             "weight_decay": 0.0,
             "epochs": 2000,
+            "val_acc_mean": 0.5169,
+            "val_acc_std": 0.0151,
+            "test_acc_mean": 0.5158,
+            "test_acc_std": 0.0199
         },
-        "squirrel":{
+        "squirrel": {
             "hidden_size": 128,
             "num_layers": 2,
             "dropout": 0.9,
@@ -81,47 +113,67 @@ BEST_CONFIGS = {
             "norm": "batchnorm",
             "lr": 0.003,
             "weight_decay": 0.0,
-            "epochs": 2000,  
+            "epochs": 2000,
+            "val_acc_mean": 0.3678,
+            "val_acc_std": 0.0089,
+            "test_acc_mean": 0.3613,
+            "test_acc_std": 0.0165
         },
-        "film":{
+        "film": {
             "hidden_size": 128,
             "num_layers": 2,
             "dropout": 0.8,
             "activation": "gelu",
-            "norm": None,
+            "norm": null,
             "lr": 0.003,
             "weight_decay": 1e-05,
             "epochs": 2000,
+            "val_acc_mean": 0.3746,
+            "val_acc_std": 0.0058,
+            "test_acc_mean": 0.3581,
+            "test_acc_std": 0.008
         },
-        "cornell":{
+        "cornell": {
             "hidden_size": 256,
             "num_layers": 4,
             "dropout": 0.5,
             "activation": "relu",
-            "norm": None,
+            "norm": null,
             "lr": 0.01,
             "weight_decay": 0.0001,
-            "epochs": 2000
+            "epochs": 2000,
+            "val_acc_mean": 0.8949,
+            "val_acc_std": 0.039,
+            "test_acc_mean": 0.8249,
+            "test_acc_std": 0.0661
         },
-        "texas":{
+        "texas": {
             "hidden_size": 64,
             "num_layers": 4,
             "dropout": 0.2,
             "activation": "gelu",
-            "norm": None,
+            "norm": null,
             "lr": 0.03,
             "weight_decay": 0.0001,
             "epochs": 2000,
+            "val_acc_mean": 0.8885,
+            "val_acc_std": 0.0327,
+            "test_acc_mean": 0.7996,
+            "test_acc_std": 0.0605
         },
-        "wisconsin":{
+        "wisconsin": {
             "hidden_size": 256,
             "num_layers": 2,
             "dropout": 0.5,
             "activation": "relu",
-            "norm": None,
+            "norm": null,
             "lr": 0.01,
             "weight_decay": 0.0001,
             "epochs": 2000,
+            "val_acc_mean": 0.8814,
+            "val_acc_std": 0.0337,
+            "test_acc_mean": 0.8481,
+            "test_acc_std": 0.0463
         },
         "ogbn-arxiv": {
             "hidden_size": 256,
@@ -132,7 +184,11 @@ BEST_CONFIGS = {
             "lr": 0.003,
             "weight_decay": 0.0001,
             "epochs": 2000,
-        },
+            "val_acc_mean": 0.5856,
+            "val_acc_std": 0.0012,
+            "test_acc_mean": 0.5638,
+            "test_acc_std": 0.002
+        }
     },
     "gcn": {
         "general": {},
@@ -141,183 +197,237 @@ BEST_CONFIGS = {
             "num_layers": 2,
             "dropout": 0.9,
             "activation": "relu",
-            "residual": False,
-            "norm": None,
+            "residual": false,
+            "norm": null,
             "lr": 0.01,
             "weight_decay": 0.0001,
             "epochs": 2000,
+            "val_acc_mean": 0.8058,
+            "val_acc_std": 0.0027,
+            "test_acc_mean": 0.823,
+            "test_acc_std": 0.0049
         },
         "citeseer": {
             "hidden_size": 128,
             "num_layers": 2,
             "dropout": 0.8,
             "activation": "relu",
-            "residual": False,
-            "norm": None,
+            "residual": false,
+            "norm": null,
             "lr": 0.1,
             "weight_decay": 0.0001,
             "epochs": 2000,
+            "val_acc_mean": 0.718,
+            "val_acc_std": 0.0052,
+            "test_acc_mean": 0.7035,
+            "test_acc_std": 0.0081
         },
         "pubmed": {
             "hidden_size": 256,
             "num_layers": 2,
             "dropout": 0.9,
             "activation": "gelu",
-            "residual": False,
+            "residual": false,
             "norm": "batchnorm",
             "lr": 0.1,
             "weight_decay": 0.0,
-            "epochs": 2000,  
+            "epochs": 2000,
+            "val_acc_mean": 0.8108,
+            "val_acc_std": 0.0071,
+            "test_acc_mean": 0.786,
+            "test_acc_std": 0.0088
         },
         "cora_geom": {
             "hidden_size": 256,
             "num_layers": 2,
             "dropout": 0.9,
             "activation": "relu",
-            "residual": False,
-            "norm": None,
+            "residual": false,
+            "norm": null,
             "lr": 0.003,
             "weight_decay": 0.0001,
             "epochs": 2000,
+            "val_acc_mean": 0.8832,
+            "val_acc_std": 0.0091,
+            "test_acc_mean": 0.8725,
+            "test_acc_std": 0.0087
         },
         "citeseer_geom": {
             "hidden_size": 256,
             "num_layers": 2,
             "dropout": 0.9,
             "activation": "gelu",
-            "residual": False,
-            "norm": None,
+            "residual": false,
+            "norm": null,
             "lr": 0.001,
             "weight_decay": 0.0,
             "epochs": 2000,
+            "val_acc_mean": 0.7715,
+            "val_acc_std": 0.0105,
+            "test_acc_mean": 0.7605,
+            "test_acc_std": 0.0136
         },
         "pubmed_geom": {
             "hidden_size": 256,
             "num_layers": 2,
             "dropout": 0.5,
             "activation": "relu",
-            "residual": True,
+            "residual": true,
             "norm": "layernorm",
             "lr": 0.1,
             "weight_decay": 0.0001,
             "epochs": 2000,
+            "val_acc_mean": 0.889,
+            "val_acc_std": 0.0024,
+            "test_acc_mean": 0.8833,
+            "test_acc_std": 0.0052
         },
         "chameleon": {
-            "hidden_size": 256,
+            "hidden_size": 64,
             "num_layers": 2,
-            "dropout": 0.8,
-            "activation": "gelu",
-            "residual": False,
-            "norm": None,
-            "lr": 0.03,
-            "weight_decay": 0.0001,
-            "epochs": 2000,
+            "residual": false,
+            "dropout": 0.5,
+            "lr": 0.01,
+            "val_acc_mean": 0.7298285322359397,
+            "val_acc_std": 0.01421080967857829,
+            "test_acc_mean": 0.7280372807017547,
+            "test_acc_std": 0.015587890681905924
         },
         "squirrel": {
             "hidden_size": 256,
             "num_layers": 2,
             "dropout": 0.7,
             "activation": "relu",
-            "residual": True,
+            "residual": true,
             "norm": "layernorm",
             "lr": 0.001,
             "weight_decay": 0.0001,
             "epochs": 2000,
+            "val_acc_mean": 0.6612,
+            "val_acc_std": 0.0106,
+            "test_acc_mean": 0.655,
+            "test_acc_std": 0.021
         },
         "film": {
             "hidden_size": 32,
             "num_layers": 4,
             "dropout": 0.7,
             "activation": "gelu",
-            "residual": True,
-            "norm": None,
+            "residual": true,
+            "norm": null,
             "lr": 0.003,
             "weight_decay": 0.0,
             "epochs": 2000,
+            "val_acc_mean": 0.3056,
+            "val_acc_std": 0.0063,
+            "test_acc_mean": 0.2915,
+            "test_acc_std": 0.0105
         },
         "cornell": {
             "hidden_size": 256,
             "num_layers": 2,
             "dropout": 0.9,
             "activation": "relu",
-            "residual": True,
+            "residual": true,
             "norm": "layernorm",
             "lr": 0.1,
             "weight_decay": 0.0001,
             "epochs": 2000,
+            "val_acc_mean": 0.6789,
+            "val_acc_std": 0.0563,
+            "test_acc_mean": 0.5774,
+            "test_acc_std": 0.0613
         },
         "texas": {
             "hidden_size": 64,
             "num_layers": 8,
             "dropout": 0.0,
             "activation": "relu",
-            "residual": True,
-            "norm": None,
+            "residual": true,
+            "norm": null,
             "lr": 0.1,
             "weight_decay": 1e-05,
             "epochs": 2000,
+            "val_acc_mean": 0.6225,
+            "val_acc_std": 0.0473,
+            "test_acc_mean": 0.5762,
+            "test_acc_std": 0.0698
         },
         "wisconsin": {
             "hidden_size": 256,
             "num_layers": 4,
             "dropout": 0.5,
             "activation": "gelu",
-            "residual": True,
+            "residual": true,
             "norm": "layernorm",
             "lr": 0.001,
             "weight_decay": 1e-05,
             "epochs": 2000,
+            "val_acc_mean": 0.5219,
+            "val_acc_std": 0.038,
+            "test_acc_mean": 0.4385,
+            "test_acc_std": 0.0514
         },
         "ogbn-arxiv": {
             "hidden_size": 256,
             "num_layers": 4,
             "dropout": 0.4,
             "activation": "relu",
-            "residual": False,
+            "residual": false,
             "norm": "batchnorm",
             "lr": 0.001,
             "weight_decay": 0.0,
             "epochs": 2000,
+            "val_acc_mean": 0.7347,
+            "val_acc_std": 0.0006,
+            "test_acc_mean": 0.7219,
+            "test_acc_std": 0.002
         },
         "ppi-large": {
             "lr": 0.005,
             "hidden_size": 2048,
             "num_layers": 2,
             "dropout": 0.3,
-            "epochs": 7000,
-            # 78.04
+            "epochs": 7000
         },
         "flickr": {
             "lr": 0.01,
             "dropout": 0.5,
             "weight_decay": 0.0,
-            "hidden_size": 256,
-        },
+            "hidden_size": 256
+        }
     },
     "gat": {
-        "general": {"lr": 0.005, "epochs": 1000},
-        "citeseer": {"weight_decay": 0.001},
-        "pubmed": {"weight_decay": 0.001},
+        "general": {
+            "lr": 0.005,
+            "epochs": 1000
+        },
+        "citeseer": {
+            "weight_decay": 0.001
+        },
+        "pubmed": {
+            "weight_decay": 0.001
+        },
         "ppi-large": {
             "nhead": 4,
             "hidden_size": 256,
             "lr": 0.005,
-            "residual": True,
+            "residual": true,
             "num_layers": 3,
             "weight_decay": 0.0,
             "attn_drop": 0,
-            "dropout": 0,
-        },
+            "dropout": 0
+        }
     },
     "sage": {
-        "general": {},
+        "general": {}
     },
     "gcnii": {
         "general": {
             "epochs": 1000,
             "dropout": 0.5,
             "wd1": 0.001,
-            "wd2": 5e-4,
+            "wd2": 0.0005
         },
         "cora": {
             "hidden_size": 128,
@@ -328,7 +438,11 @@ BEST_CONFIGS = {
             "wd1": 0.001,
             "wd2": 0.001,
             "lr": 0.03,
-            "epochs": 2000
+            "epochs": 2000,
+            "val_acc_mean": 0.8234,
+            "val_acc_std": 0.0053,
+            "test_acc_mean": 0.8328,
+            "test_acc_std": 0.0057
         },
         "citeseer": {
             "hidden_size": 256,
@@ -340,6 +454,10 @@ BEST_CONFIGS = {
             "wd2": 0.001,
             "lr": 0.001,
             "epochs": 2000,
+            "val_acc_mean": 0.7217,
+            "val_acc_std": 0.0046,
+            "test_acc_mean": 0.7019,
+            "test_acc_std": 0.0037
         },
         "pubmed": {
             "hidden_size": 256,
@@ -351,6 +469,10 @@ BEST_CONFIGS = {
             "wd2": 0.0001,
             "lr": 0.003,
             "epochs": 2000,
+            "val_acc_mean": 0.8248,
+            "val_acc_std": 0.0032,
+            "test_acc_mean": 0.7929,
+            "test_acc_std": 0.0052
         },
         "cora_geom": {
             "hidden_size": 256,
@@ -362,6 +484,10 @@ BEST_CONFIGS = {
             "wd2": 1e-05,
             "lr": 0.003,
             "epochs": 2000,
+            "val_acc_mean": 0.8884,
+            "val_acc_std": 0.0086,
+            "test_acc_mean": 0.8802,
+            "test_acc_std": 0.0113
         },
         "citeseer_geom": {
             "hidden_size": 256,
@@ -373,6 +499,10 @@ BEST_CONFIGS = {
             "wd2": 5e-06,
             "lr": 0.003,
             "epochs": 2000,
+            "val_acc_mean": 0.7813,
+            "val_acc_std": 0.0098,
+            "test_acc_mean": 0.7692,
+            "test_acc_std": 0.0163
         },
         "pubmed_geom": {
             "hidden_size": 64,
@@ -384,6 +514,10 @@ BEST_CONFIGS = {
             "wd2": 0.0,
             "lr": 0.003,
             "epochs": 2000,
+            "val_acc_mean": 0.9047,
+            "val_acc_std": 0.0027,
+            "test_acc_mean": 0.8985,
+            "test_acc_std": 0.0043
         },
         "chameleon": {
             "hidden_size": 256,
@@ -394,7 +528,11 @@ BEST_CONFIGS = {
             "wd1": 0.001,
             "wd2": 5e-05,
             "lr": 0.01,
-            "epochs": 2000
+            "epochs": 2000,
+            "val_acc_mean": 0.6683,
+            "val_acc_std": 0.0188,
+            "test_acc_mean": 0.6512,
+            "test_acc_std": 0.0173
         },
         "squirrel": {
             "hidden_size": 256,
@@ -406,6 +544,10 @@ BEST_CONFIGS = {
             "wd2": 5e-06,
             "lr": 0.01,
             "epochs": 2000,
+            "val_acc_mean": 0.4162,
+            "val_acc_std": 0.0279,
+            "test_acc_mean": 0.4133,
+            "test_acc_std": 0.0252
         },
         "film": {
             "hidden_size": 32,
@@ -417,6 +559,10 @@ BEST_CONFIGS = {
             "wd2": 5e-05,
             "lr": 0.01,
             "epochs": 2000,
+            "val_acc_mean": 0.3815,
+            "val_acc_std": 0.0068,
+            "test_acc_mean": 0.3663,
+            "test_acc_std": 0.0095
         },
         "cornell": {
             "hidden_size": 128,
@@ -428,6 +574,10 @@ BEST_CONFIGS = {
             "wd2": 5e-05,
             "lr": 0.01,
             "epochs": 2000,
+            "val_acc_mean": 0.849,
+            "val_acc_std": 0.0364,
+            "test_acc_mean": 0.7692,
+            "test_acc_std": 0.0699
         },
         "texas": {
             "hidden_size": 256,
@@ -439,6 +589,10 @@ BEST_CONFIGS = {
             "wd2": 1e-05,
             "lr": 0.03,
             "epochs": 2000,
+            "val_acc_mean": 0.8284,
+            "val_acc_std": 0.0429,
+            "test_acc_mean": 0.7205,
+            "test_acc_std": 0.077
         },
         "wisconsin": {
             "hidden_size": 64,
@@ -450,6 +604,10 @@ BEST_CONFIGS = {
             "wd2": 0.001,
             "lr": 0.03,
             "epochs": 2000,
+            "val_acc_mean": 0.8428,
+            "val_acc_std": 0.0323,
+            "test_acc_mean": 0.8076,
+            "test_acc_std": 0.0527
         },
         "ogbn-arxiv": {
             "hidden_size": 256,
@@ -460,7 +618,11 @@ BEST_CONFIGS = {
             "wd1": 0.001,
             "wd2": 0.001,
             "lr": 0.01,
-            "epochs": 2000,  
+            "epochs": 2000,
+            "val_acc_mean": 0.74,
+            "val_acc_std": 0.0022,
+            "test_acc_mean": 0.729,
+            "test_acc_std": 0.0015
         },
         "reddit": {
             "num_layers": 3,
@@ -469,28 +631,28 @@ BEST_CONFIGS = {
             "wd1": 0,
             "wd2": 0,
             "lr": 0.001,
-            "residual": True,
+            "residual": true,
             "epochs": 1000,
-            "lmbda": 1.0,
-            # 96.42
+            "lmbda": 1.0
         },
         "flickr": {
             "lr": 0.002,
             "num_layers": 4,
-            "residual": True,
+            "residual": true,
             "wd1": 0.0005,
             "wd2": 0.0005,
             "lmbda": 1.0,
-            "alpha": 0.1,
+            "alpha": 0.1
         }
-        # 52.54
     },
     "gdc_gcn": {
-        "general": {"hidden_size": 16},
+        "general": {
+            "hidden_size": 16
+        }
     },
     "grand": {
         "general": {
-            "epochs": 1000,
+            "epochs": 1000
         },
         "cora": {
             "order": 8,
@@ -500,7 +662,7 @@ BEST_CONFIGS = {
             "alpha": 0.5,
             "patience": 200,
             "input_dropout": 0.5,
-            "hidden_dropout": 0.5,
+            "hidden_dropout": 0.5
         },
         "citeseer": {
             "order": 2,
@@ -510,7 +672,7 @@ BEST_CONFIGS = {
             "alpha": 0.5,
             "input_dropout": 0.0,
             "hidden_dropout": 0.2,
-            "patience": 200,
+            "patience": 200
         },
         "pubmed": {
             "order": 5,
@@ -519,19 +681,19 @@ BEST_CONFIGS = {
             "tem": 0.2,
             "alpha": 0.5,
             "lr": 0.2,
-            "bn": True,
+            "bn": true,
             "input_dropout": 0.6,
-            "hidden_dropout": 0.8,
-        },
+            "hidden_dropout": 0.8
+        }
     },
     "graphsage": {
-        "general": {},
+        "general": {}
     },
     "sgc": {
         "general": {
             "hidden_size": 16,
-            "dropout": 0.5,
-        },
+            "dropout": 0.5
+        }
     },
     "sgcpn": {
         "general": {
@@ -540,36 +702,45 @@ BEST_CONFIGS = {
             "patience": 1000,
             "norm_mode": "PN",
             "norm_scale": 10,
-            "dropout": 0.6,
-        },
+            "dropout": 0.6
+        }
     },
     "sign": {
         "general": {
-            "lr": 0.00005,
+            "lr": 5e-05,
             "hidden_size": 2048,
             "dropout": 0.5,
-            "dropedge_rate": 0.2,
-        },
+            "dropedge_rate": 0.2
+        }
     },
     "srgcn": {
         "general": {
             "lr": 0.005,
-            "epochs": 1000,
+            "epochs": 1000
         },
-        "cora": {"dropout": 0.6},
-        "citeseer": {"dropout": 0.6},
+        "cora": {
+            "dropout": 0.6
+        },
+        "citeseer": {
+            "dropout": 0.6
+        }
     },
     "unet": {
         "general": {
             "epochs": 1000,
-            "n_dropout": 0.90,
+            "n_dropout": 0.9,
             "adj_dropout": 0.05,
             "hidden_size": 128,
-            "aug_adj": False,
-            "improved": False,
+            "aug_adj": false,
+            "improved": false,
             "n_pool": 4,
-            "pool_rate": [0.7, 0.5, 0.5, 0.4],
-        },
+            "pool_rate": [
+                0.7,
+                0.5,
+                0.5,
+                0.4
+            ]
+        }
     },
     "ppnp": {
         "general": {},
@@ -583,6 +754,10 @@ BEST_CONFIGS = {
             "lr": 0.01,
             "weight_decay": 5e-05,
             "epochs": 2000,
+            "val_acc_mean": 0.8238,
+            "val_acc_std": 0.0059,
+            "test_acc_mean": 0.8324,
+            "test_acc_std": 0.0058
         },
         "citeseer": {
             "hidden_size": 128,
@@ -593,6 +768,10 @@ BEST_CONFIGS = {
             "num_iterations": 4,
             "weight_decay": 0.0004117,
             "epochs": 1000,
+            "val_acc_mean": 0.7319,
+            "val_acc_std": 0.0029,
+            "test_acc_mean": 0.7105,
+            "test_acc_std": 0.0067
         },
         "pubmed": {
             "hidden_size": 128,
@@ -603,7 +782,11 @@ BEST_CONFIGS = {
             "num_iterations": 16,
             "lr": 0.01,
             "weight_decay": 0.0001,
-            "epochs": 2000
+            "epochs": 2000,
+            "val_acc_mean": 0.8249,
+            "val_acc_std": 0.0017,
+            "test_acc_mean": 0.8006,
+            "test_acc_std": 0.0012
         },
         "flickr": {
             "lr": 0.005,
@@ -613,8 +796,7 @@ BEST_CONFIGS = {
             "hidden_size": 256,
             "epochs": 1000,
             "num_iterations": 4,
-            "alpha": 0.5,
-            # 0.5227
+            "alpha": 0.5
         },
         "reddit": {
             "lr": 0.005,
@@ -622,10 +804,9 @@ BEST_CONFIGS = {
             "dropout": 0.3751,
             "alpha": 0.1995,
             "num_layers": 3,
-            "weight_decay": 5.918e-6,
-            "num_iterations": 3,
-            # 96.26
-        },
+            "weight_decay": 5.918e-06,
+            "num_iterations": 3
+        }
     },
     "correct_smooth_mlp": {
         "general": {},
@@ -636,8 +817,8 @@ BEST_CONFIGS = {
             "smooth_alpha": 0.7564990804200602,
             "num_correct_prop": 50,
             "num_smooth_prop": 50,
-            "autoscale": True,
-            "norm": "batchnorm",
+            "autoscale": true,
+            "norm": "batchnorm"
         },
         "ogbn_products": {
             "correct_norm": "sym",
@@ -646,27 +827,31 @@ BEST_CONFIGS = {
             "smooth_alpha": 0.8,
             "num_correct_prop": 50,
             "num_smooth_prop": 50,
-            "autoscale": False,
+            "autoscale": false,
             "scale": 10.0,
             "norm": "batchnorm",
-            "act_first": True,
-        },
+            "act_first": true
+        }
     },
     "sagn": {
         "general": {
-            "data_gpu": True,
+            "data_gpu": true,
             "lr": 0.001,
             "hidden-size": 512,
             "attn-drop": 0.0,
-            "dropout": 0.7,
+            "dropout": 0.7
         },
         "flickr": {
             "threshold": 0.5,
             "label-hop": 2,
-            "weight-decay": 3e-6,
-            "nstage": [50, 50, 50],
+            "weight-decay": 3e-06,
+            "nstage": [
+                50,
+                50,
+                50
+            ],
             "nhop": 2,
-            "batch-size": 256,
+            "batch-size": 256
         },
         "reddit": {
             "threshold": 0.9,
@@ -675,11 +860,15 @@ BEST_CONFIGS = {
             "nhop": 2,
             "label-nhop": 4,
             "weight-decay": 0.0,
-            "nstage": [500, 500, 500],
-        },
+            "nstage": [
+                500,
+                500,
+                500
+            ]
+        }
     },
     "deepwalk": {
-        "general": {},
+        "general": {}
     },
     "dngr": {
         "general": {
@@ -690,91 +879,139 @@ BEST_CONFIGS = {
             "hidden_size2": 128,
             "noise": 0.2,
             "alpha": 0.1,
-            "step": 10,
-        },
+            "step": 10
+        }
     },
     "grarep": {
-        "general": {},
+        "general": {}
     },
     "hope": {
-        "general": {},
+        "general": {}
     },
     "line": {
         "general": {},
-        "blogcatalog": {"walk_num": 40},
+        "blogcatalog": {
+            "walk_num": 40
+        }
     },
     "netmf": {
         "general": {},
-        "ppi-ne": {"window_size": 10, "is_large": True},
-        "blogcatalog": {"window_size": 10, "is_large": True},
-        "wikipedia": {"window_size": 1},
+        "ppi-ne": {
+            "window_size": 10,
+            "is_large": true
+        },
+        "blogcatalog": {
+            "window_size": 10,
+            "is_large": true
+        },
+        "wikipedia": {
+            "window_size": 1
+        }
     },
     "netsmf": {
-        "general": {"window_size": 10, "num_round": 1000},
-        "wikipedia": {"window_size": 1},
-        "blogcatalog": {"num_round": 10000},
+        "general": {
+            "window_size": 10,
+            "num_round": 1000
+        },
+        "wikipedia": {
+            "window_size": 1
+        },
+        "blogcatalog": {
+            "num_round": 10000
+        }
     },
     "node2vec": {
-        "general": {},
+        "general": {}
     },
     "prone": {
-        "general": {"step": 10},
-        "ppi-ne": {"mu": 0.0},
-        "wikipedia": {"mu": -4.0},
-        "dblp-ne": {"mu": -1.2, "theta": 2.0},
+        "general": {
+            "step": 10
+        },
+        "ppi-ne": {
+            "mu": 0.0
+        },
+        "wikipedia": {
+            "mu": -4.0
+        },
+        "dblp-ne": {
+            "mu": -1.2,
+            "theta": 2.0
+        }
     },
     "sdne": {
-        "general": {},
+        "general": {}
     },
     "spectral": {
-        "general": {},
+        "general": {}
     },
     "dgi": {
-        "general": {"weight_decay": 0},
+        "general": {
+            "weight_decay": 0
+        }
     },
     "gcc": {
-        "general": {},
+        "general": {}
     },
     "grace": {
         "general": {
             "weight_decay": 0,
             "epochs": 1000,
-            "patience": 20,
+            "patience": 20
         },
         "cora": {
             "lr": 0.0005,
-            "weight_decay": 0.00001,
+            "weight_decay": 1e-05,
             "tau": 0.4,
-            "drop_feature_rates": [0.3, 0.4],
-            "drop_edge_rates": [0.2, 0.4],
+            "drop_feature_rates": [
+                0.3,
+                0.4
+            ],
+            "drop_edge_rates": [
+                0.2,
+                0.4
+            ],
             "epochs": 200,
             "hidden_size": 128,
-            "proj_hidden_size": 128,
+            "proj_hidden_size": 128
         },
         "citeseer": {
             "hidden_size": 256,
             "proj_hidden_size": 256,
-            "drop_feature_rates": [0.3, 0.2],
-            "drop_edge_rates": [0.2, 0.0],
+            "drop_feature_rates": [
+                0.3,
+                0.2
+            ],
+            "drop_edge_rates": [
+                0.2,
+                0.0
+            ],
             "lr": 0.001,
-            "_weight_decay": 0.00001,
+            "_weight_decay": 1e-05,
             "tau": 0.9,
-            "activation": "prelu",
+            "activation": "prelu"
         },
         "pubmed": {
             "hidden_size": 256,
             "proj_hidden_size": 256,
-            "drop_edge_rates": [0.4, 0.1],
-            "drop_feature_rates": [0.0, 0.2],
+            "drop_edge_rates": [
+                0.4,
+                0.1
+            ],
+            "drop_feature_rates": [
+                0.0,
+                0.2
+            ],
             "tau": 0.7,
             "lr": 0.001,
-            "weight_decay": 0.00001,
-        },
+            "weight_decay": 1e-05
+        }
     },
     "unsup_graphsage": {
-        "lr": 0.001,
-        "weight_decay": 0,
-        "epochs": 3000,
+        "general": {
+            "lr": 0.001,
+            "weight_decay": 0,
+            "epochs": 3000
+        }
     },
     "revgcn": {
         "general": {},
@@ -784,57 +1021,78 @@ BEST_CONFIGS = {
             "dropout": 0.4706458854,
             "weight_decay": 0.0008907,
             "norm": "layernorm",
-            "num_layers": 10,
-            # 81.40
-        },
+            "num_layers": 10
+        }
     },
     "gin": {
-        "general": {"lr": 0.001},
-        "imdb-b": {"degree_feature": True},
-        "imdb-m": {"degree_feature": True},
-        "collab": {"degree_feature": True},
+        "general": {
+            "lr": 0.001
+        },
+        "imdb-b": {
+            "degree_feature": true
+        },
+        "imdb-m": {
+            "degree_feature": true
+        },
+        "collab": {
+            "degree_feature": true
+        },
         "proteins": {
             "num_layers": 5,
-            "dropout": 0.0,
+            "dropout": 0.0
         },
         "nci1": {
             "num_layers": 5,
             "dropout": 0.3,
-            "hidden_size": 64,
-        },
+            "hidden_size": 64
+        }
     },
     "infograph": {
         "general": {
             "lr": 0.0001,
-            "weight_decay": 5e-4,
-            "sup": False,
+            "weight_decay": 0.0005,
+            "sup": false
         },
         "mutag": {
             "num_layers": 1,
-            "epochs": 20,
+            "epochs": 20
         },
-        "imdb-b": {"degree_feature": True},
-        "imdb-m": {"degree_feature": True},
-        "collab": {"degree_feature": True},
-        "nci1": {"num_layers": 3},
+        "imdb-b": {
+            "degree_feature": true
+        },
+        "imdb-m": {
+            "degree_feature": true
+        },
+        "collab": {
+            "degree_feature": true
+        },
+        "nci1": {
+            "num_layers": 3
+        }
     },
     "sortpool": {
         "nci1": {
             "dropout": 0.3,
             "hidden_size": 64,
-            "num_layers": 5,
-        },
+            "num_layers": 5
+        }
     },
     "patchy_san": {
         "general": {
             "lr": 0.001,
             "hidden_size": 32,
             "gamma": 0.5,
-            "dropout": 0.5,
+            "dropout": 0.5
         },
-        "imdb-b": {"degree_feature": True},
-        "imdb-m": {"degree_feature": True},
-        "collab": {"degree_feature": True},
+        "imdb-b": {
+            "degree_feature": true
+        },
+        "imdb-m": {
+            "degree_feature": true
+        },
+        "collab": {
+            "degree_feature": true
+        }
     },
     "graph2vec": {
         "general": {},
@@ -842,41 +1100,43 @@ BEST_CONFIGS = {
             "lr": 0.001,
             "window_size": 8,
             "epochs": 10,
-            "iteration": 4,
+            "iteration": 4
         },
         "reddit-b": {
             "lr": 0.01,
-            "degree_feature": True,
-            "hidden_size": 128,
-        },
+            "degree_feature": true,
+            "hidden_size": 128
+        }
     },
     "gatne": {
         "general": {},
-        "twitter": {"eval_type": "1"},
+        "twitter": {
+            "eval_type": "1"
+        }
     },
     "hin2vec": {
         "general": {
-            "lr": 0.025,
-        },
+            "lr": 0.025
+        }
     },
     "metapath2vec": {
         "general": {
-            "walk_num": 40,
-        },
+            "walk_num": 40
+        }
     },
     "pte": {},
     "gtn": {
         "general": {
             "hidden_size": 128,
             "lr": 0.005,
-            "weight_decay": 0.001,
-        },
+            "weight_decay": 0.001
+        }
     },
     "han": {
         "general": {
             "hidden_size": 128,
             "lr": 0.005,
-            "weight_decay": 0.001,
+            "weight_decay": 0.001
         }
-    },
+    }
 }

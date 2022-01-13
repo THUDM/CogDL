@@ -354,7 +354,7 @@ def default_search_space(trial):
         "weight_decay": trial.suggest_categorical("weight_decay", [0, 1e-5, 1e-4]),
     }
 
-def check_experiment(dataset, model, use_best_config=False, args=None):
+def check_experiment(dataset, model, use_best_config=False, args=None, devices=[0]):
     seed = list(range(20))
     if dataset in ["cora_geom", "citeseer_geom", "pubmed_geom", "chameleon", "squirrel", "film", "cornell", "texas", "wisconsin"]:
         split = list(range(10))
@@ -362,9 +362,9 @@ def check_experiment(dataset, model, use_best_config=False, args=None):
         split = list(range(1))
     
     if use_best_config:
-        result_dict = experiment(dataset=dataset, model=model, split=split, seed=seed, use_best_config=True)
+        result_dict = experiment(dataset=dataset, model=model, split=split, seed=seed, use_best_config=True, devices=devices)
     else:
-        result_dict = experiment(dataset=dataset, model=model, split=split, seed=seed, args=args)
+        result_dict = experiment(dataset=dataset, model=model, split=split, seed=seed, devices=devices, args=args)
     
     result_list = list(result_dict.values())[0]
     item = result_list[0]
@@ -385,7 +385,7 @@ def check_experiment(dataset, model, use_best_config=False, args=None):
 
     return result_mean
 
-def result_update(trial_log_dict):
+def result_update(trial_log_dict, devices):
     for key, value in trial_log_dict.items():
         dataset = key.split(',')[0].split('(')[1].strip()
         model = key.split(',')[1].split(')')[0].strip()
@@ -396,7 +396,7 @@ def result_update(trial_log_dict):
 
         args = get_default_args(dataset=[dataset], model=[model], **kwargs)
 
-        result_mean = check_experiment(dataset=dataset, model=model, args=args)
+        result_mean = check_experiment(dataset=dataset, model=model, args=args, devices=devices)
 
         val_acc_mean = result_mean['val_acc_mean']
         val_acc_std = result_mean['val_acc_std']
@@ -471,7 +471,7 @@ def experiment(dataset, model=None, trial_log_path=None, update_configs=False, *
                 json.dump(trial_log_dict, file, indent=4, ensure_ascii=False)
         
         if update_configs:
-            result_update(trial_log_dict)
+            result_update(trial_log_dict, args.devices)
 
         return (trial_result_dict, trial_log_dict)
 

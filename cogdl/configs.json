@@ -309,19 +309,20 @@
             "test_acc_std": 0.021
         },
         "film": {
-            "hidden_size": 32,
+            "hidden_size": 128,
             "num_layers": 4,
-            "dropout": 0.7,
-            "activation": "gelu",
+            "activation": "relu",
             "residual": true,
-            "norm": null,
-            "lr": 0.003,
-            "weight_decay": 0.0,
+            "dropout": 0.9,
+            "norm": "layernorm",
+            "lr": 0.01,
+            "weight_decay": 1e-06,
             "epochs": 2000,
-            "val_acc_mean": 0.3056,
-            "val_acc_std": 0.0063,
-            "test_acc_mean": 0.2915,
-            "test_acc_std": 0.0105
+            "patience": 200,
+            "val_acc_mean": 0.3165111019736844,
+            "val_acc_std": 0.0076340307600008695,
+            "test_acc_mean": 0.29954276315789485,
+            "test_acc_std": 0.00811992370189001
         },
         "cornell": {
             "hidden_size": 256,

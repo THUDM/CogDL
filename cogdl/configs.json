@@ -205,18 +205,19 @@
         "general": {},
         "cora": {
             "hidden_size": 256,
-            "num_layers": 2,
-            "dropout": 0.9,
-            "activation": "relu",
+            "num_layers": 3,
+            "activation": "gelu",
             "residual": false,
+            "dropout": 0.9,
             "norm": null,
             "lr": 0.01,
             "weight_decay": 0.0001,
             "epochs": 2000,
-            "val_acc_mean": 0.8058,
-            "val_acc_std": 0.0027,
-            "test_acc_mean": 0.823,
-            "test_acc_std": 0.0049
+            "patience": 200,
+            "val_acc_mean": 0.8128,
+            "val_acc_std": 0.004489988864128692,
+            "test_acc_mean": 0.8223999999999997,
+            "test_acc_std": 0.008132650244538965
         },
         "citeseer": {
             "hidden_size": 128,

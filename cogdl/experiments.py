@@ -154,6 +154,7 @@ def train(args):  # noqa: C901
 
     if getattr(args, "use_best_config", False):
         args = set_best_config(args)
+        print (args)
 
     # setup dataset and specify `num_features` and `num_classes` for model
     if isinstance(args.dataset, Dataset):

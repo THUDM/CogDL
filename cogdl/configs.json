@@ -291,15 +291,20 @@
             "test_acc_std": 0.0052
         },
         "chameleon": {
-            "hidden_size": 64,
-            "num_layers": 2,
-            "residual": false,
-            "dropout": 0.5,
-            "lr": 0.01,
-            "val_acc_mean": 0.7298285322359397,
-            "val_acc_std": 0.01421080967857829,
-            "test_acc_mean": 0.7280372807017547,
-            "test_acc_std": 0.015587890681905924
+            "hidden_size": 512,
+            "num_layers": 3,
+            "activation": "gelu",
+            "residual": true,
+            "dropout": 0.2,
+            "norm": "batchnorm",
+            "lr": 0.001,
+            "weight_decay": 0.0,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.7533813443072701,
+            "val_acc_std": 0.010550719034286874,
+            "test_acc_mean": 0.7457894736842111,
+            "test_acc_std": 0.014509127257576403
         },
         "squirrel": {
             "hidden_size": 256,

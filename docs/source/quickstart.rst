@@ -59,7 +59,7 @@ If you want to run parallel experiments on your server with multiple GPUs on mul
 
 .. code-block:: bash
 
-    python scripts/parallel_train.py --dataset cora citeseer --model gcn gat --devices 0 1 --seed 0 1 2 3 4
+    python scripts/train.py --dataset cora citeseer --model gcn gat --devices 0 1 --seed 0 1 2 3 4
 
 Expected output:
 

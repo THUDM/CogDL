@@ -1,3 +1,4 @@
+import time
 import copy
 import itertools
 import os
@@ -7,6 +8,7 @@ import warnings
 
 import torch
 import torch.nn as nn
+import torch.multiprocessing as mp
 import optuna
 from tabulate import tabulate
 
@@ -236,13 +238,48 @@ def output_results(results_dict, tablefmt="github"):
     print(tabulate(tab_data, headers=col_names, tablefmt=tablefmt))
 
 
+def train_parallel(args):
+    if torch.cuda.is_available() and not args.cpu:
+        pid = mp.current_process().pid
+        torch.cuda.set_device(args.pid_to_cuda[pid])
+        args.devices = [args.pid_to_cuda[pid]]
+    args.checkpoint_path = args.checkpoint_path + f".{args.devices[0]}"
+
+    result = train(args)
+    return result
+
+
+def getpid(_):
+    time.sleep(1)
+    return mp.current_process().pid
+
+
 def raw_experiment(args):
     variants = list(gen_variants(dataset=args.dataset, model=args.model, seed=args.seed, split=args.split))
 
     results_dict = defaultdict(list)
-    results = [train(args) for args in variant_args_generator(args, variants)]
-    for variant, result in zip(variants, results):
-        results_dict[variant[:-2]].append(result)
+    if len(args.devices) == 1 or args.cpu or args.distributed:
+        results = [train(args) for args in variant_args_generator(args, variants)]
+        for variant, result in zip(variants, results):
+            results_dict[variant[:-2]].append(result)
+    else:
+        mp.set_start_method("spawn", force=True)
+
+        # Make sure datasets are downloaded first
+        datasets = args.dataset
+        for dataset in datasets:
+            args.dataset = dataset
+            build_dataset(args)
+        args.dataset = datasets
+
+        num_workers = len(args.devices)
+        with mp.Pool(processes=num_workers) as pool:
+            pids = pool.map(getpid, range(num_workers))
+            args.pid_to_cuda = dict(zip(pids, args.devices))
+
+            results = pool.map(train_parallel, variant_args_generator(args, variants))
+            for variant, result in zip(variants, results):
+                results_dict[variant[:-2]].append(result)
 
     tablefmt = args.tablefmt if hasattr(args, "tablefmt") else "github"
     output_results(results_dict, tablefmt)

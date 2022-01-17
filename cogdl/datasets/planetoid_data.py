@@ -122,9 +122,6 @@ class Planetoid(Dataset):
 
         self.split = split
 
-        self.raw_dir = osp.join(self.root, self.name, "raw")
-        self.processed_dir = osp.join(self.root, self.name, "processed")
-
         if split == "full":
             data = self.get(0)
             data.train_mask.fill_(True)

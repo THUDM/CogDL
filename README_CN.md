@@ -169,7 +169,7 @@ CogDL提供了一种快速的稀疏矩阵乘的操作（[GE-SpMM](https://arxiv.
 如果你想使用多个 GPU 同时在 Cora 数据集上运行 GCN 和 GAT 模型，可以使用如下指令:
 
 ```bash
-$ python scripts/parallel_train.py --dataset cora --model gcn gat --devices 0 1 --seed 0 1 2 3 4
+$ python scripts/train.py --dataset cora --model gcn gat --devices 0 1 --seed 0 1 2 3 4
 ```
 
 预计得到的结果如下:

@@ -176,7 +176,7 @@ How to run parallel experiments with GPUs on several models?
 If you want to run parallel experiments on your server with multiple GPUs on multiple models, GCN and GAT, on the Cora dataset:
 
 ```bash
-$ python scripts/parallel_train.py --dataset cora --model gcn gat --devices 0 1 --seed 0 1 2 3 4
+$ python scripts/train.py --dataset cora --model gcn gat --hidden-size 64 --devices 0 1 --seed 0 1 2 3 4
 ```
 
 Expected output:

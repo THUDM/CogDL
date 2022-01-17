@@ -78,7 +78,12 @@ def build_dataset_from_path(data_path, dataset=None):
         path = ".".join(SUPPORTED_DATASETS[dataset].split(".")[:-1])
         module = importlib.import_module(path)
         class_name = SUPPORTED_DATASETS[dataset].split(".")[-1]
-        dataset = getattr(module, class_name)(data_path=data_path)
+        dataset_class = getattr(module, class_name)
+        keys = inspect.signature(dataset_class.__init__).parameters.keys()
+        if "data_path" in keys:
+            dataset = dataset_class(data_path=data_path)
+        elif "root" in keys:
+            dataset = dataset_class(root=data_path)
         return dataset
 
     if dataset is None:

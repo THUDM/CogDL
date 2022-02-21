@@ -64,7 +64,7 @@ def test_autognn_experiment():
         dataset="cora",
         model="autognn",
         seed=[1],
-        n_trials=2,
+        n_trials=10,
         epochs=2,
         cpu=True,
     )

@@ -57,6 +57,14 @@ def test_customized_graph_dataset():
     assert result["test_acc"] >= 0
 
 
+def test_customized_graph_dataset_graph2vec():
+    dataset = MyGraphClassificationDataset()
+    result = experiment(model="graph2vec", dataset=dataset, degree_node_features=False, epochs=10, cpu=True)
+    result = list(result.values())[0][0]
+    assert result["acc"] >= 0
+
+
 if __name__ == "__main__":
     test_customized_dataset()
     test_customized_graph_dataset()
+    test_customized_graph_dataset_graph2vec()

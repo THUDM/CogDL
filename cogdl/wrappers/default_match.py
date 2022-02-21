@@ -69,6 +69,17 @@ def set_default_wrapper_config():
 
     graph_kg_link_prediction = ["rgcn", "compgcn"]
 
+    heterogeneous_gnn_models = [
+        "gtn",
+        "han",
+    ]
+
+    heterogeneous_emb_models = [
+        "metapath2vec",
+        "pte",
+        "hin2vec",
+    ]
+
     node_classification_wrappers = dict()
     for item in node_classification_models:
         node_classification_wrappers[item] = {"mw": "node_classification_mw", "dw": "node_classification_dw"}
@@ -115,6 +126,14 @@ def set_default_wrapper_config():
     for item in graph_kg_link_prediction:
         graph_kg_link_prediction_wrappers[item] = {"dw": "gnn_kg_link_prediction_dw", "mw": "gnn_kg_link_prediction_mw"}
 
+    heterogeneous_gnn_wrappers = dict()
+    for item in heterogeneous_gnn_models:
+        heterogeneous_gnn_wrappers[item] = {"dw": "heterogeneous_gnn_dw", "mw": "heterogeneous_gnn_mw"}
+
+    heterogeneous_emb_wrappers = dict()
+    for item in heterogeneous_emb_models:
+        heterogeneous_emb_wrappers[item] = {"dw": "heterogeneous_embedding_dw", "mw": "heterogeneous_embedding_mw"}
+
     other_wrappers = dict()
     other_wrappers["gatne"] = {"mw": "multiplex_embedding_mw", "dw": "multiplex_embedding_dw"}
 
@@ -125,6 +144,8 @@ def set_default_wrapper_config():
     merged.update(network_embedding_wrappers)
     merged.update(graph_clustering_wrappers)
     merged.update(graph_kg_link_prediction_wrappers)
+    merged.update(heterogeneous_gnn_wrappers)
+    merged.update(heterogeneous_emb_wrappers)
     merged.update(other_wrappers)
     return merged
 

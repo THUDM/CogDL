@@ -70,7 +70,7 @@ class Graph2Vec(BaseModel):
                 neighbors = graph.neighbors(node)
                 neigh_feats = [features[x] for x in neighbors]
                 neigh_feats = [features[node]] + sorted(neigh_feats)
-                hash_feat = hashlib.md5("_".join(neigh_feats).encode())
+                hash_feat = hashlib.md5("_".join([str(x) for x in neigh_feats]).encode())
                 hash_feat = hash_feat.hexdigest()
                 new_feats[node] = hash_feat
             wl_features = wl_features + list(new_feats.values())

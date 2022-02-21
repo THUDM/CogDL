@@ -38,9 +38,10 @@ def test_gdc_gcn_cora():
     args.t = 5.0  # heat filter param
     args.k = 128  # top k entries to be retained
     args.eps = 0.01  # change depending on gdc_type
-    args.gdc_type = "ppr"  # ppr, heat, none
-    ret = train(args)
-    assert 0 <= ret["test_acc"] <= 1
+    for gdc_type in ["none", "ppr", "heat"]:
+        args.gdc_type = gdc_type
+        ret = train(args)
+        assert 0 <= ret["test_acc"] <= 1
 
 
 def test_gcn_cora():

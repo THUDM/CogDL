@@ -39,7 +39,6 @@ class GDC_GCN(BaseModel):
         parser.add_argument("--t", type=float, default=5.0)
         parser.add_argument("--k", type=int, default=128)
         parser.add_argument("--eps", type=float, default=0.01)
-        parser.add_argument("--dataset", default=None)
         parser.add_argument("--gdc-type", default="ppr")
         # fmt: on
 
@@ -76,8 +75,12 @@ class GDC_GCN(BaseModel):
         self.dropout = dropout
 
     def forward(self, graph):
+        if self.data is None:
+            self.reset_data(graph)
+        graph = self.data
         x = graph.x
-        graph.sym_norm()
+        if self.gdc_type == "none":
+            graph.sym_norm()
 
         x = F.dropout(x, self.dropout, training=self.training)
         x = F.relu(self.gc1(graph, x))

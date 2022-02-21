@@ -82,9 +82,6 @@ class GRACE(BaseModel):
         )
         self.encoder = GraceEncoder(in_feats, hidden_size, num_layers, activation)
 
-    def augment(self, graph):
-        pass
-
     def forward(
         self,
         graph: Graph,
@@ -95,76 +92,6 @@ class GRACE(BaseModel):
         graph.sym_norm()
         return self.encoder(graph, x)
 
-    def prop(
-        self,
-        graph: Graph,
-        x: torch.Tensor,
-        drop_feature_rate: float = 0.0,
-        drop_edge_rate: float = 0.0,
-    ):
-        x = self.drop_feature(x, drop_feature_rate)
-        with graph.local_graph():
-            graph = self.drop_adj(graph, drop_edge_rate)
-            return self.forward(graph, x)
-
-    def contrastive_loss(self, z1: torch.Tensor, z2: torch.Tensor):
-        z1 = F.normalize(z1, p=2, dim=-1)
-        z2 = F.normalize(z2, p=2, dim=-1)
-
-        def score_func(emb1, emb2):
-            scores = torch.matmul(emb1, emb2.t())
-            scores = torch.exp(scores / self.tau)
-            return scores
-
-        intro_scores = score_func(z1, z1)
-        inter_scores = score_func(z1, z2)
-
-        _loss = -torch.log(intro_scores.diag() / (intro_scores.sum(1) - intro_scores.diag() + inter_scores.sum(1)))
-        return torch.mean(_loss)
-
-    def batched_loss(
-        self,
-        z1: torch.Tensor,
-        z2: torch.Tensor,
-        batch_size: int,
-    ):
-        num_nodes = z1.shape[0]
-        num_batches = (num_nodes - 1) // batch_size + 1
-
-        losses = []
-        indices = torch.arange(num_nodes).to(z1.device)
-        for i in range(num_batches):
-            train_indices = indices[i * batch_size : (i + 1) * batch_size]
-            _loss = self.contrastive_loss(z1[train_indices], z2)
-            losses.append(_loss)
-        return sum(losses) / len(losses)
-
     def embed(self, data):
         pred = self.forward(data, data.x)
         return pred
-
-    def drop_adj(self, graph: Graph, drop_rate: float = 0.5):
-        if drop_rate < 0.0 or drop_rate > 1.0:
-            raise ValueError("Dropout probability has to be between 0 and 1, " "but got {}".format(drop_rate))
-        if not self.training:
-            return graph
-
-        num_edges = graph.num_edges
-        mask = torch.full((num_edges,), 1 - drop_rate, dtype=torch.float)
-        mask = torch.bernoulli(mask).to(torch.bool)
-        row, col = graph.edge_index
-        row = row[mask]
-        col = col[mask]
-        edge_weight = graph.edge_weight[mask]
-        graph.edge_index = (row, col)
-        graph.edge_weight = edge_weight
-        return graph
-
-    def drop_feature(self, x: torch.Tensor, droprate: float):
-        n = x.shape[1]
-        drop_rates = torch.ones(n) * droprate
-        if self.training:
-            masks = torch.bernoulli(1.0 - drop_rates).view(1, -1).expand_as(x)
-            masks = masks.to(x.device)
-            x = masks * x
-        return x

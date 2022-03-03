@@ -76,7 +76,7 @@ setup(
         "networkx",
         "matplotlib",
         "tqdm",
-        "numpy<1.21,>=1.17",
+        "numpy>=1.21",
         "scipy",
         "gensim<4.0",
         "grave",

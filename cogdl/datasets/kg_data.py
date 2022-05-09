@@ -61,8 +61,7 @@ def read_triplet_data(folder):
 
 
 class KnowledgeGraphDataset(Dataset):
-    # url = "https://raw.githubusercontent.com/thunlp/OpenKE/OpenKE-PyTorch/benchmarks"
-    url = "https://cloud.tsinghua.edu.cn/d/b567292338f2488699b7/files/?p=%2F{}%2F{}&dl=1"
+    url = "https://cloud.tsinghua.edu.cn/d/d1c733373b014efab986/files/?p=%2F{}%2F{}&dl=1"
 
     def __init__(self, root, name):
         self.name = name

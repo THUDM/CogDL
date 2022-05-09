@@ -133,7 +133,7 @@ def scale_feats(data):
 class YelpDataset(SAINTDataset):
     def __init__(self, data_path="data"):
         dataset = "Yelp"
-        url = "https://cloud.tsinghua.edu.cn/d/7218cc013c9a40159306/files/?p=%2F{}&dl=1"
+        url = "https://cloud.tsinghua.edu.cn/d/03d65f79f231445b9f42/files/?p=%2F{}&dl=1"
         path = osp.join(data_path, dataset)
         if not osp.exists(path):
             SAINTDataset(path, dataset, url)
@@ -150,7 +150,7 @@ class YelpDataset(SAINTDataset):
 class AmazonDataset(SAINTDataset):
     def __init__(self, data_path="data"):
         dataset = "AmazonSaint"
-        url = "https://cloud.tsinghua.edu.cn/d/ae4b2c4f59bd41be9b0b/files/?p=%2F{}&dl=1"
+        url = "https://cloud.tsinghua.edu.cn/d/6246372398f24c549419/files/?p=%2F{}&dl=1"
         path = osp.join(data_path, dataset)
         if not osp.exists(path):
             SAINTDataset(path, dataset, url)
@@ -167,7 +167,7 @@ class AmazonDataset(SAINTDataset):
 class FlickrDataset(SAINTDataset):
     def __init__(self, data_path="data"):
         dataset = "Flickr"
-        url = "https://cloud.tsinghua.edu.cn/d/d3ebcb5fa2da463b8213/files/?p=%2F{}&dl=1"
+        url = "https://cloud.tsinghua.edu.cn/d/7ee4296bf71e4059972d/files/?p=%2F{}&dl=1"
         path = osp.join(data_path, dataset)
         if not osp.exists(path):
             SAINTDataset(path, dataset, url)
@@ -184,7 +184,7 @@ class FlickrDataset(SAINTDataset):
 class RedditDataset(SAINTDataset):
     def __init__(self, data_path="data"):
         dataset = "Reddit"
-        url = "https://cloud.tsinghua.edu.cn/d/d087e7e766e747ce8073/files/?p=%2F{}&dl=1"
+        url = "https://cloud.tsinghua.edu.cn/d/4de907d0006e4c61ba22/files/?p=%2F{}&dl=1"
         path = osp.join(data_path, dataset)
         if not osp.exists(path):
             SAINTDataset(path, dataset, url)
@@ -201,7 +201,7 @@ class RedditDataset(SAINTDataset):
 class PPIDataset(SAINTDataset):
     def __init__(self, data_path="data"):
         dataset = "PPI"
-        url = "https://cloud.tsinghua.edu.cn/d/2c6e94ec9dad4972b58e/files/?p=%2F{}&dl=1"
+        url = "https://cloud.tsinghua.edu.cn/d/1c8bd1d5a481402aa938/files/?p=%2F{}&dl=1"
         path = osp.join(data_path, dataset)
         if not osp.exists(path):
             SAINTDataset(path, dataset, url)
@@ -218,7 +218,7 @@ class PPIDataset(SAINTDataset):
 class PPILargeDataset(SAINTDataset):
     def __init__(self, data_path="data"):
         dataset = "PPI_Large"
-        url = "https://cloud.tsinghua.edu.cn/d/469ef38a520640bba267/files/?p=%2F{}&dl=1"
+        url = "https://cloud.tsinghua.edu.cn/d/436011ecea614a51baea/files/?p=%2F{}&dl=1"
         if data_path is None:
             data_path = "data"
         path = osp.join(data_path, dataset)

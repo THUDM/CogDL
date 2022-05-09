@@ -11,13 +11,13 @@ from .oagbert_metainfo import OAGMetaInfoBertModel
 
 PRETRAINED_MODEL_ARCHIVE_MAP = {
     "oagbert-v1": "https://cloud.tsinghua.edu.cn/f/051c9f87d8544698826e/?dl=1",
-    "oagbert-test": "https://cloud.tsinghua.edu.cn/f/68a8d42802564d43984e/?dl=1",
-    "oagbert-v2-test": "https://cloud.tsinghua.edu.cn/f/baff5abe84c4483bb690/?dl=1",
-    "oagbert-v2": "https://cloud.tsinghua.edu.cn/f/f06448fa3c234317bd16/?dl=1",
-    "oagbert-v2-lm": "https://cloud.tsinghua.edu.cn/f/efb2094951a94084947d/?dl=1",
-    "oagbert-v2-sim": "https://cloud.tsinghua.edu.cn/f/103a467b0fe14177bf51/?dl=1",
-    "oagbert-v2-zh": "https://cloud.tsinghua.edu.cn/f/8efc97a77af046dc8d24/?dl=1",
-    "oagbert-v2-zh-sim": "https://cloud.tsinghua.edu.cn/f/6faaf0d095ee4013a098/?dl=1",
+    "oagbert-test": "https://cloud.tsinghua.edu.cn/f/9277b9229f6246479ec7/?dl=1",
+    "oagbert-v2-test": "https://cloud.tsinghua.edu.cn/f/3b8c4525677f4816a138/?dl=1",
+    "oagbert-v2": "https://cloud.tsinghua.edu.cn/f/89da6262f3424dd38b05/?dl=1",
+    "oagbert-v2-lm": "https://cloud.tsinghua.edu.cn/f/e9e9f435633d4a4ba232/?dl=1",
+    "oagbert-v2-sim": "https://cloud.tsinghua.edu.cn/f/e26cb053dbfb45c8af4c/?dl=1",
+    "oagbert-v2-zh": "https://cloud.tsinghua.edu.cn/f/cf806c8008b542509201/?dl=1",
+    "oagbert-v2-zh-sim": "https://cloud.tsinghua.edu.cn/f/bb6fbc9cda9342698c31/?dl=1",
 }
 
 

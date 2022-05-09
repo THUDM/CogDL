@@ -172,7 +172,7 @@ class DblpNEDataset(NetworkEmbeddingCMTYDataset):
     def __init__(self, data_path="data"):
         dataset = "dblp"
         path = osp.join(data_path, dataset + "-ne")
-        url = "https://cloud.tsinghua.edu.cn/d/1da2ec50b08749f48033/files/?p=%2F{}&dl=1"
+        url = "https://cloud.tsinghua.edu.cn/d/5ba8b35db80343549c67/files/?p=%2F{}&dl=1"
         super(DblpNEDataset, self).__init__(path, dataset, url)
 
 
@@ -180,5 +180,5 @@ class YoutubeNEDataset(NetworkEmbeddingCMTYDataset):
     def __init__(self, data_path="data"):
         dataset = "youtube"
         path = osp.join(data_path, dataset + "-ne")
-        url = "https://cloud.tsinghua.edu.cn/d/e338d719659b44e5ac9d/files/?p=%2F{}&dl=1"
+        url = "https://cloud.tsinghua.edu.cn/d/c1ae63c4f1f14afb8ab8/files/?p=%2F{}&dl=1"
         super(YoutubeNEDataset, self).__init__(path, dataset, url)

@@ -48,13 +48,15 @@ test_score = evaluate(model,
                       device=device)
 print("Test score before attack for surrogate model: {:.4f}.".format(test_score))
 
-# defnese model
-from cogdl.models.defense import RobustGCN
-model_target = RobustGCN(in_feats=graph.num_features,
-                        hidden_size=128,
-                        dropout=0.5,
+# defnese model: GATGuard
+from cogdl.models.defense import GATGuard
+model_target = GATGuard(in_feats=graph.num_features,
+                        hidden_size=64,
                         out_feats=graph.num_classes,
-                        num_layers=3)
+                        num_layers=3,
+                        activation="relu",
+                        num_heads=4,
+                        drop=True)
 print(model_target)
 mw_class = fetch_model_wrapper("node_classification_mw")
 dw_class = fetch_data_wrapper("node_classification_dw")

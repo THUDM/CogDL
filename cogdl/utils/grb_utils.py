@@ -5,6 +5,7 @@ import torch
 import numpy as np
 import scipy
 
+
 def getGRBGraph(graph: Graph):
     features = graph.x
     if graph.grb_adj is not None:
@@ -41,7 +42,7 @@ def getGraph(adj, features: torch.FloatTensor, labels: torch.Tensor = None, devi
                      y=labels,
                      edge_index=edge_index,
                      edge_attr=edge_attr,
-                     grb_adj = adj).to(device)
+                     grb_adj=adj).to(device)
     return data
 
 
@@ -49,8 +50,8 @@ def updateGraph(graph, adj, features: torch.FloatTensor):
     if type(adj) != torch.Tensor:     
         edge_index, edge_attr = adj2edge(adj)
         graph.x = features
-        graph.edge_index=edge_index
-        graph.edge_attr=edge_attr
+        graph.edge_index = edge_index
+        graph.edge_attr = edge_attr
     else:
         if adj.is_sparse:
             adj_np = sp.csr_matrix(adj.to_dense().detach().cpu().numpy())
@@ -58,8 +59,8 @@ def updateGraph(graph, adj, features: torch.FloatTensor):
             adj_np = sp.csr_matrix(adj.detach().cpu().numpy())
         edge_index, edge_attr = adj2edge(adj_np)
         graph.x = features
-        graph.edge_index=edge_index
-        graph.edge_attr=edge_attr
+        graph.edge_index = edge_index
+        graph.edge_attr = edge_attr
         graph.grb_adj = adj
 
 
@@ -71,6 +72,7 @@ def adj2edge(adj: sp.csr.csr_matrix):
     edge_index = torch.stack([row, col], dim=0)
     edge_attr = torch.tensor(data, dtype=torch.float)
     return edge_index, edge_attr
+
 
 def adj_to_tensor(adj):
     r"""
@@ -130,16 +132,20 @@ def adj_preprocess(adj, adj_norm_func=None, mask=None, device='cpu'):
 
     if adj_norm_func is not None:
         adj = adj_norm_func(adj)
-    
+
     if type(adj) is tuple or type(adj) is list:
         if mask is not None:
-            adj = [adj_to_tensor(adj_[mask][:, mask]).to(device)
-                    if type(adj_) != torch.Tensor else adj_[mask][:, mask].to(device)
-                    for adj_ in adj]
+            adj = [
+                adj_to_tensor(adj_[mask][:, mask]).to(device)
+                if type(adj_) != torch.Tensor else adj_[mask][:, mask].to(device)
+                for adj_ in adj
+            ]
         else:
-            adj = [adj_to_tensor(adj_).to(device)
-                    if type(adj_) != torch.Tensor else adj_.to(device)
-                    for adj_ in adj]
+            adj = [
+                adj_to_tensor(adj_).to(device)
+                if type(adj_) != torch.Tensor else adj_.to(device)
+                for adj_ in adj
+            ]
     else:
         if type(adj) != torch.Tensor:
             if mask is not None:

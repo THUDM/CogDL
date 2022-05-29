@@ -182,10 +182,11 @@ class TDGIA(InjectionAttack):
         time_end = time.time()
         if self.verbose:
             print("Attack runtime: {:.4f}.".format(time_end - time_start))
-        
+
         out_graph = getGraph(adj_attack, out_features, graph.y, device=self.device)
         return out_graph
 
+    # flake8: noqa: C901
     def injection(self,
                   adj,
                   n_inject,
@@ -349,8 +350,8 @@ class TDGIA(InjectionAttack):
                     rnd_times = 100
                     yy = random.randint(0, n_inject - 1)
 
-                    while (np.sum(is_linked[yy]) >= n_self_connect or yy == i or
-                           is_linked[i][yy] == 1) and (rnd_times > 0):
+                    while (np.sum(is_linked[yy]) >= n_self_connect or yy == i
+                            or is_linked[i][yy] == 1) and (rnd_times > 0):
                         yy = random.randint(0, n_inject - 1)
                         rnd_times -= 1
 
@@ -462,8 +463,10 @@ class TDGIA(InjectionAttack):
             optimizer.zero_grad()
             pred_loss.backward(retain_graph=True)
             optimizer.step()
-            test_score = eval_acc(pred[:n_origin][target_mask],
-                                         labels_origin[target_mask])
+            test_score = eval_acc(
+                pred[:n_origin][target_mask],
+                labels_origin[target_mask]
+            )
 
             if self.early_stop:
                 self.early_stop(test_score)

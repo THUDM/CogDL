@@ -8,7 +8,6 @@ import torch_sparse
 from tqdm.auto import tqdm
 
 from cogdl.attack.base import ModificationAttack, EarlyStop
-from ..base import ModificationAttack
 from cogdl.data import Graph
 from cogdl.utils.grb_utils import eval_acc, feat_preprocess, adj_preprocess, getGraph, getGRBGraph, SPARSEAdjNorm, adj_to_tensor
 
@@ -18,8 +17,8 @@ def tanh_margin_loss(logits, labels, normalizer=40):
     best_non_target_class = sorted[sorted != labels[:, None]].reshape(
         logits.size(0), -1)[:, -1]
     margin = (
-            logits[np.arange(logits.size(0)), labels]
-            - logits[np.arange(logits.size(0)), best_non_target_class]
+        logits[np.arange(logits.size(0)), labels]
+        - logits[np.arange(logits.size(0)), best_non_target_class]
     )
     loss = torch.tanh(-margin / normalizer).mean()
     return loss
@@ -81,7 +80,7 @@ class PRBCD(ModificationAttack):
 
     def attack(self,
                model,
-               graph :Graph,
+               graph: Graph,
                feat_norm=None,
                adj_norm_func=SPARSEAdjNorm):
         time_start = time.time()
@@ -428,15 +427,15 @@ class PRBCD(ModificationAttack):
     @staticmethod
     def linear_to_triu_idx(n: int, lin_idx: torch.Tensor) -> torch.Tensor:
         row_idx = (
-                n
-                - 2
-                - torch.floor(torch.sqrt(-8 * lin_idx.double() + 4 * n * (n - 1) - 7) / 2.0 - 0.5)
+            n
+            - 2
+            - torch.floor(torch.sqrt(-8 * lin_idx.double() + 4 * n * (n - 1) - 7) / 2.0 - 0.5)
         ).long()
         col_idx = (
-                lin_idx
-                + row_idx
-                + 1 - n * (n - 1) // 2
-                + (n - row_idx) * ((n - row_idx) - 1) // 2
+            lin_idx
+            + row_idx
+            + 1 - n * (n - 1) // 2
+            + (n - row_idx) * ((n - row_idx) - 1) // 2
         )
         return torch.stack((row_idx, col_idx))
 

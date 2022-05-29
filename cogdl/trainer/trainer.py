@@ -403,7 +403,7 @@ class Trainer(object):
 
             if best_model_w is None:
                 best_model_w = copy.deepcopy(model_w)
-            
+
             dataset_w.dataset.data = graph_backup
 
         if self.distributed_training:

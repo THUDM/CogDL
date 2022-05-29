@@ -6,8 +6,10 @@ import torch.nn.functional as F
 from cogdl.layers import GCNLayer
 from .. import BaseModel
 import cogdl.utils.grb_utils as utils
-from cogdl.utils.grb_utils import  getGRBGraph, updateGraph, RobustGCNAdjNorm
+from cogdl.utils.grb_utils import getGRBGraph, updateGraph, RobustGCNAdjNorm
 import copy
+import types
+
 
 class RobustGCN(BaseModel):
     r"""
@@ -41,8 +43,8 @@ class RobustGCN(BaseModel):
         parser.add_argument("--num-layers", type=int, default=2)
         parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--dropout", type=float, default=0.5)
-        parser.add_argument("--feat-norm", type=function, default=None)
-        parser.add_argument("--adj-norm", type=function, default=RobustGCNAdjNorm)
+        parser.add_argument("--feat-norm", type=types.FunctionType, default=None)
+        parser.add_argument("--adj-norm", type=types.FunctionType, default=RobustGCNAdjNorm)
         # fmt: on
 
     @classmethod
@@ -84,7 +86,6 @@ class RobustGCN(BaseModel):
             self.layers.append(RobustGCNConv(n_features[i], n_features[i + 1], act0=self.act0, act1=self.act1,
                                              initial=True if i == 0 else False,
                                              dropout=dropout if i != num_layers - 1 else 0.0))
-
 
     def forward(self, graph):
         r"""

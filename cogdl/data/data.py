@@ -937,7 +937,7 @@ class Graph(BaseGraph):
 
     def nodes(self):
         return torch.arange(self.num_nodes)
-    
+
     def set_grb_adj(self, adj):
         self.grb_adj = adj
 

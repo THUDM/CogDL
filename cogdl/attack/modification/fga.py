@@ -36,8 +36,8 @@ class FGA(ModificationAttack):
                                    feat_norm=feat_norm,
                                    device=self.device)
         adj_tensor = adj_preprocess(adj=adj,
-                             adj_norm_func=adj_norm_func,
-                             device=self.device)
+                                    adj_norm_func=adj_norm_func,
+                                    device=self.device)
         model.to(self.device)
         pred_origin = model(getGraph(adj_tensor, features, device=self.device))
         labels_origin = torch.argmax(pred_origin, dim=1)

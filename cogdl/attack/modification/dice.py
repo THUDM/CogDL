@@ -6,6 +6,7 @@ from ..base import ModificationAttack
 from cogdl.data import Graph
 from cogdl.utils.grb_utils import getGraph, updateGraph
 
+
 class DICE(ModificationAttack):
     """
     DICE (delete internally, connect externally)
@@ -24,7 +25,7 @@ class DICE(ModificationAttack):
         self.verbose = verbose
 
     def attack(self, graph: Graph):
-        if graph.test_mask == None or len(graph.test_nid) == 0:
+        if graph.test_mask is None or len(graph.test_nid) == 0:
             print("index_target is None.")
             exit(1)
         adj_attack = self.modification(graph.to_scipy_csr(), graph.test_nid.cpu(), graph.y)

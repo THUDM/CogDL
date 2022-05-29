@@ -6,7 +6,6 @@ import torch.nn.functional as F
 from tqdm.auto import tqdm
 
 from cogdl.attack.base import ModificationAttack, EarlyStop
-from ..base import ModificationAttack
 from cogdl.data import Graph
 from cogdl.utils.grb_utils import eval_acc, feat_preprocess, adj_preprocess, getGraph, getGRBGraph
 
@@ -52,7 +51,7 @@ class PGD(ModificationAttack):
 
     def attack(self,
                model,
-               graph :Graph,
+               graph: Graph,
                feat_norm=None,
                adj_norm_func=None):
         time_start = time.time()
@@ -189,7 +188,6 @@ class PGD(ModificationAttack):
             features_attack = features_attack.detach()
             features_attack[index_mod] = features_attack.clone()[index_mod] + epsilon * grad.sign()[index_mod]
             features_attack = torch.clamp(features_attack, feat_lim_min, feat_lim_max)
-
 
             test_score = self.eval_metric(pred[index_target],
                                           labels_origin[index_target])

@@ -144,7 +144,7 @@ class FGSM(InjectionAttack):
         time_end = time.time()
         if self.verbose:
             print("Attack runtime: {:.4f}.".format(time_end - time_start))
-        
+
         out_graph = getGraph(adj_attack, out_features, graph.y, device=self.device)
         return out_graph
 

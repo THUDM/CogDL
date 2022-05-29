@@ -1,6 +1,7 @@
 import torch
 from cogdl.wrappers.model_wrapper import ModelWrapper
 
+
 class NodeClfModelWrapper(ModelWrapper):
     def __init__(self, model, optimizer_cfg):
         super(NodeClfModelWrapper, self).__init__()

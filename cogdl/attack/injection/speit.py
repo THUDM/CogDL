@@ -154,6 +154,7 @@ class SPEIT(InjectionAttack):
         out_graph = getGraph(adj_attack, out_features, graph.y, device=self.device)
         return out_graph
 
+    # flake8: noqa: C901
     def injection(self,
                   adj,
                   n_inject,
@@ -400,8 +401,10 @@ class SPEIT(InjectionAttack):
             with torch.no_grad():
                 features_attack.clamp_(feat_lim_min, feat_lim_max)
 
-            test_score = eval_acc(pred[:n_total][target_mask],
-                                         labels_origin[target_mask])
+            test_score = eval_acc(
+                pred[:n_total][target_mask],
+                labels_origin[target_mask]
+            )
 
             if self.early_stop:
                 self.early_stop(test_score)

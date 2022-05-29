@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from cogdl.layers import GCNLayer
 from .. import BaseModel
 import cogdl.utils.grb_utils as utils
+import types
 
 
 class GCNSVD(BaseModel):
@@ -20,8 +21,8 @@ class GCNSVD(BaseModel):
         parser.add_argument("--dropout", type=float, default=0.5)
         parser.add_argument("--residual", action="store_true")
         parser.add_argument("--norm", type=str, default=None)
-        parser.add_argument("--feat-norm", type=function, default=None)
-        parser.add_argument("--adj-norm", type=function, default=None)
+        parser.add_argument("--feat-norm", type=types.FunctionType, default=None)
+        parser.add_argument("--adj-norm", type=types.FunctionType, default=None)
         parser.add_argument("--activation", type=str, default="relu")
         parser.add_argument("--k", type=int, default=50)
         # fmt: on
@@ -41,7 +42,7 @@ class GCNSVD(BaseModel):
             args.adj_norm,
             args.k
         )
-    
+
     def __init__(self,
                  in_feats,
                  hidden_size,
@@ -69,12 +70,14 @@ class GCNSVD(BaseModel):
         for i in range(num_layers):
             if norm == "layernorm" and i == 0:
                 self.layers.append(nn.LayerNorm(n_features[i]))
-            self.layers.append(GCNLayer(in_features=n_features[i],
-                                       out_features=n_features[i + 1],
-                                       activation=activation if i != num_layers - 1 else None,
-                                       residual=residual if i != num_layers - 1 else False,
-                                       dropout=dropout if i != num_layers - 1 else 0.0,
-                                       norm=norm if i != num_layers - 1 else None))
+            self.layers.append(GCNLayer(
+                in_features=n_features[i],
+                out_features=n_features[i + 1],
+                activation=activation if i != num_layers - 1 else None,
+                residual=residual if i != num_layers - 1 else False,
+                dropout=dropout if i != num_layers - 1 else 0.0,
+                norm=norm if i != num_layers - 1 else None)
+            )
         self.k = k
 
     def forward(self, graph):

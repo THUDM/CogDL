@@ -10,6 +10,7 @@ from sklearn.preprocessing import normalize
 from cogdl.layers import GCNLayer, GATLayer
 from .. import BaseModel
 import cogdl.utils.grb_utils as utils
+import types
 
 
 class GCNGuard(BaseModel):
@@ -23,8 +24,8 @@ class GCNGuard(BaseModel):
         parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--dropout", type=float, default=0.5)
         parser.add_argument("--norm", type=str, default=None)
-        parser.add_argument("--feat-norm", type=function, default=None)
-        parser.add_argument("--adj-norm", type=function, default=utils.GCNAdjNorm)
+        parser.add_argument("--feat-norm", type=types.FunctionType, default=None)
+        parser.add_argument("--adj-norm", type=types.FunctionType, default=utils.GCNAdjNorm)
         parser.add_argument("--activation", type=str, default="relu")
         parser.add_argument("--attention", type=bool, default=True)
         parser.add_argument("--drop", type=bool, default=False)
@@ -45,7 +46,7 @@ class GCNGuard(BaseModel):
             args.attention,
             args.drop
         )
-    
+
     def __init__(self,
                  in_feats,
                  hidden_size,
@@ -73,11 +74,13 @@ class GCNGuard(BaseModel):
         for i in range(num_layers):
             if norm == "layernorm" and i == 0:
                 self.layers.append(nn.LayerNorm(n_features[i]))
-            self.layers.append(GCNLayer(in_features=n_features[i],
-                                       out_features=n_features[i + 1],
-                                       activation=activation if i != num_layers - 1 else None,
-                                       dropout=dropout if i != num_layers - 1 else 0.0,
-                                       norm=norm if i != num_layers - 1 else None))
+            self.layers.append(GCNLayer(
+                in_features=n_features[i],
+                out_features=n_features[i + 1],
+                activation=activation if i != num_layers - 1 else None,
+                dropout=dropout if i != num_layers - 1 else 0.0,
+                norm=norm if i != num_layers - 1 else None
+            ))
         self.reset_parameters()
         self.drop = drop
         self.drop_learn = torch.nn.Linear(2, 1)
@@ -167,8 +170,8 @@ class GATGuard(nn.Module):
         parser.add_argument("--hidden-size", type=int, default=64)
         parser.add_argument("--dropout", type=float, default=0.5)
         parser.add_argument("--norm", type=str, default=None)
-        parser.add_argument("--feat-norm", type=function, default=None)
-        parser.add_argument("--adj-norm", type=function, default=utils.GCNAdjNorm)
+        parser.add_argument("--feat-norm", type=types.FunctionType, default=None)
+        parser.add_argument("--adj-norm", type=types.FunctionType, default=utils.GCNAdjNorm)
         parser.add_argument("--activation", type=str, default="relu")
         parser.add_argument("--attention", type=bool, default=True)
         parser.add_argument("--drop", type=bool, default=False)
@@ -190,7 +193,7 @@ class GATGuard(nn.Module):
             args.attention,
             args.drop
         )
-    
+
     def __init__(self,
                  in_feats,
                  hidden_size,
@@ -220,11 +223,13 @@ class GATGuard(nn.Module):
         for i in range(num_layers):
             if norm == "layernorm" and i == 0:
                 self.layers.append(nn.LayerNorm(n_features[i]))
-            self.layers.append(GATLayer(in_feats=n_features[i] * num_heads if i != 0 else n_features[i],
-                                       out_feats=n_features[i + 1],
-                                       nhead=num_heads if i != num_layers - 1 else 1,
-                                       activation=activation if i != num_layers - 1 else None,
-                                       norm=norm if i != num_layers - 1 else None))
+            self.layers.append(GATLayer(
+                in_feats=n_features[i] * num_heads if i != 0 else n_features[i],
+                out_feats=n_features[i + 1],
+                nhead=num_heads if i != num_layers - 1 else 1,
+                activation=activation if i != num_layers - 1 else None,
+                norm=norm if i != num_layers - 1 else None)
+            )
         self.drop = drop
         self.drop_learn = torch.nn.Linear(2, 1)
         self.attention = attention

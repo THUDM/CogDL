@@ -5,7 +5,7 @@ from .gcn import GCN
 from .gcnii import GCNII
 from .gdc_gcn import GDC_GCN
 from .grace import GRACE
-from .graphsage import Graphsage
+from .graphsage import Graphsage, SAGE
 from .mvgrl import MVGRL
 from .patchy_san import PatchySAN
 from .ppnp import PPNP
@@ -33,4 +33,5 @@ __all__ = [
     "RevGEN",
     "DeeperGCN",
     "ResGNNLayer",
+    "SAGE"
 ]

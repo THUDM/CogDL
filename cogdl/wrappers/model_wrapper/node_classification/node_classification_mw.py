@@ -1,7 +1,6 @@
 import torch
 from cogdl.wrappers.model_wrapper import ModelWrapper
 
-
 class NodeClfModelWrapper(ModelWrapper):
     def __init__(self, model, optimizer_cfg):
         super(NodeClfModelWrapper, self).__init__()
@@ -34,7 +33,6 @@ class NodeClfModelWrapper(ModelWrapper):
         loss = self.default_loss_fn(pred[test_mask], batch.y[test_mask])
 
         metric = self.evaluate(pred[test_mask], batch.y[test_mask], metric="auto")
-
         self.note("test_loss", loss.item())
         self.note("test_metric", metric)
 

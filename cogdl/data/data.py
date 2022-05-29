@@ -479,10 +479,13 @@ class Graph(BaseGraph):
                 raise ValueError("Node features must be Tensor")
         self.x = x
         self.y = y
+        self.grb_adj = None
 
         for key, item in kwargs.items():
             if key == "num_nodes":
                 self.__num_nodes__ = item
+            elif key == "grb_adj":
+                self.grb_adj = item
             elif not is_read_adj_key(key):
                 self[key] = item
 
@@ -934,6 +937,9 @@ class Graph(BaseGraph):
 
     def nodes(self):
         return torch.arange(self.num_nodes)
+    
+    def set_grb_adj(self, adj):
+        self.grb_adj = adj
 
     # @property
     # def requires_grad(self):

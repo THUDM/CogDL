@@ -8,7 +8,7 @@ import scipy
 
 def getGRBGraph(graph: Graph):
     features = graph.x
-    if graph.grb_adj is not None:
+    if hasattr(graph, 'grb_adj') and graph.grb_adj is not None:
         adj = graph.grb_adj
     else:
         edge_index = graph.edge_index

@@ -326,10 +326,11 @@ class Trainer(object):
 
             self.logger.start()
             print_str_dict = dict()
-            graph = dataset_w.dataset.data
-            graph_backup = copy.deepcopy(graph)
-            graph0 = copy.deepcopy(graph)
-            num_train = torch.sum(graph.train_mask).item()
+            if self.attack is not None:
+                graph = dataset_w.dataset.data
+                graph_backup = copy.deepcopy(graph)
+                graph0 = copy.deepcopy(graph)
+                num_train = torch.sum(graph.train_mask).item()
             for epoch in epoch_iter:
                 for hook in self.pre_epoch_hooks:
                     hook(self)
@@ -403,8 +404,8 @@ class Trainer(object):
 
             if best_model_w is None:
                 best_model_w = copy.deepcopy(model_w)
-
-            dataset_w.dataset.data = graph_backup
+            if self.attack is not None:
+                dataset_w.dataset.data = graph_backup
 
         if self.distributed_training:
             if rank == 0:

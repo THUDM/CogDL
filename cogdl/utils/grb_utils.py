@@ -91,7 +91,8 @@ def adj_to_tensor(adj):
         Adjacency matrix in form of ``N * N`` sparse tensor.
 
     """
-
+    if type(adj) == torch.Tensor:
+        return adj
     if type(adj) != scipy.sparse.coo.coo_matrix:
         adj = adj.tocoo()
     sparse_row = torch.LongTensor(adj.row).unsqueeze(1)

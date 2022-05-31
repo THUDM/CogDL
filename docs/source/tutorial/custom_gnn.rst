@@ -1,4 +1,4 @@
-Using customized GNN
+Using Customized GNN
 =====================
 
 Sometimes you would like to design your own GNN module or use GNN for other purposes. In this chapter, we introduce how to

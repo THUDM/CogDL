@@ -1,5 +1,17 @@
-Graph Storage
-=====================
+Introduction to Graphs
+======================
+
+
+Real-world graphs
+-----------------
+Graph-structured data have been widely utilized in many real-world scenarios. 
+For example, each user on Facebook can be seen as a vertex and their relations like friendship or followership can be seen as edges in the graph. 
+We might be interested in predicting the interests of users, or whether a pair of nodes in a network might have an edge connecting them.
+
+
+
+How to represent a graph in CogDL
+---------------------------------
 A graph is used to store information of structured data. CogDL represents a graph with a ``cogdl.data.Graph`` object.
 Briefly, a ``Graph`` holds the following attributes:
 
@@ -14,7 +26,7 @@ Briefly, a ``Graph`` holds the following attributes:
 - ``num_edges``: The number of edges in graph.
 
 The above are the basic attributes but are not necessary. You may define a graph with `g = Graph(edge_index=edges)` and omit the others.
-Besides, ``Graph`` is not restricted to these attributes and other self-defined attributes, e.x. `graph.mask = mask`, are also supported.
+Besides, ``Graph`` is not restricted to these attributes and other self-defined attributes, e.g., `graph.mask = mask`, are also supported.
 
 ``Graph`` stores sparse matrix with COO or CSR format. COO format is easier to add or remove edges, e.x. `add_self_loops`, and CSR is stored for fast message-passing.
 ``Graph`` automatically convert between two formats and you can use both on demands without worrying. You can create a Graph with edges or assign edges
@@ -107,8 +119,8 @@ We also implement commonly used operations in ``Graph``:
 
 
 
-Mini-batch Graphs
---------------------
+How to construct mini-batch graphs
+----------------------------------
 
 In node classification, all operations are in one single graph. But in tasks like graph classification, we need to deal with
 many graphs with mini-batch. Datasets for graph classification contains graphs which can be accessed with index, e.x. ``data[2]``.
@@ -156,9 +168,9 @@ The following code snippet shows how to do global pooling to sum over features o
 
 
 
-Editing Graphs
----------------
-Mutation or changes can be applied to edges in some settings. In such cases, we need to `generate` a graph for calculation while
+How to edit the graph?
+----------------------
+Changes can be applied to edges in some settings. In such cases, we need to `generate` a graph for calculation while
 keep the original graph. CogDL provides `graph.local_graph` to set up a local scape and any out-of-place operation will not
 reflect to the original graph. However, in-place operation will affect the original graph.
 
@@ -187,18 +199,20 @@ reflect to the original graph. However, in-place operation will affect the origi
 
 
 
-Common benchmarks
--------------------
+Common graph datasets
+---------------------
 
-CogDL provides a bunch of commonly used datasets for graph tasks like node classification, graph classification and many others.
+CogDL provides a bunch of commonly used datasets for graph tasks like node classification, graph classification and others.
 You can access them conveniently shown as follows. Statistics of datasets are on
 this `page <https://github.com/THUDM/cogdl/blob/master/cogdl/datasets/README.md>`_ .
 
 .. code-block:: python
 
-    from cogdl.datasets import build_dataset_from_name, build_dataset
+    from cogdl.datasets import build_dataset_from_name
     dataset = build_dataset_from_name("cora")
-    dataset = build_dataset(args) # args.dataet = "cora"
+    
+    from cogdl.datasets import build_dataset
+    dataset = build_dataset(args) # if args.dataet = "cora"
 
 
 

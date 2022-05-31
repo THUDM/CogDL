@@ -34,8 +34,8 @@ Please cite `our paper <https://arxiv.org/abs/2103.00959>`_ if you find our code
 ::
 
    @article{cen2021cogdl,
-      title={CogDL: Toolkit for Deep Learning on Graphs},
-      author={Yukuo Cen and Zhenyu Hou and Yan Wang and Qibin Chen and Yizhen Luo and Xingcheng Yao and Aohan Zeng and Shiguang Guo and Peng Zhang and Guohao Dai and Yu Wang and Chang Zhou and Hongxia Yang and Jie Tang},
+      title={CogDL: A Toolkit for Deep Learning on Graphs},
+      author={Yukuo Cen and Zhenyu Hou and Yan Wang and Qibin Chen and Yizhen Luo and Zhongming Yu and Hengrui Zhang and Xingcheng Yao and Aohan Zeng and Shiguang Guo and Yuxiao Dong and Yang Yang and Peng Zhang and Guohao Dai and Yu Wang and Chang Zhou and Hongxia Yang and Jie Tang},
       journal={arXiv preprint arXiv:2103.00959},
       year={2021}
    }
@@ -52,10 +52,11 @@ Please cite `our paper <https://arxiv.org/abs/2103.00959>`_ if you find our code
    :maxdepth: 2
    :caption: Tutorials 
 
-   tutorial/node_classification
    tutorial/graph
-   tutorial/custom_gnn
+   tutorial/training
    tutorial/custom_dataset
+   tutorial/custom_gnn
+   tutorial/results
 
 .. toctree::
    :maxdepth: 2

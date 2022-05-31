@@ -1,4 +1,4 @@
-Using customized Dataset
+Using Customized Dataset
 =========================
 
 CogDL has provided lots of common datasets. But you may wish to apply GNN to new datasets for different applications. CogDL

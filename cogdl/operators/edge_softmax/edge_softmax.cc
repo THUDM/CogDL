@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <pybind11/pybind11.h>
+#include <c10/cuda/CUDAGuard.h>
 
 torch::Tensor edge_softmax_cuda(
     torch::Tensor rowptr,
@@ -22,6 +23,8 @@ torch::Tensor edge_softmax(
     assert(weight.is_contiguous());
     assert(rowptr.dtype() == torch::kInt32);
     assert(weight.dtype() == torch::kFloat32);
+    const at::cuda::OptionalCUDAGuard device_guard1(device_of(rowptr));
+    const at::cuda::OptionalCUDAGuard device_guard2(device_of(weight));
     return edge_softmax_cuda(rowptr, weight);
 }
 
@@ -39,6 +42,9 @@ torch::Tensor edge_softmax_backward(
     assert(rowptr.dtype() == torch::kInt32);
     assert(softmax.dtype() == torch::kFloat32);
     assert(grad.dtype() == torch::kFloat32);
+    const at::cuda::OptionalCUDAGuard device_guard1(device_of(rowptr));
+    const at::cuda::OptionalCUDAGuard device_guard2(device_of(softmax));
+    const at::cuda::OptionalCUDAGuard device_guard3(device_of(grad));
     return edge_softmax_backward_cuda(rowptr, softmax, grad);
 }
 

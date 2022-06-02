@@ -1,0 +1,1160 @@
+{
+    "chebyshev": {
+        "general": {}
+    },
+    "dropedge_gcn": {
+        "general": {}
+    },
+    "mlp": {
+        "general": {},
+        "cora": {
+            "hidden_size": 128,
+            "num_layers": 2,
+            "activation": "gelu",
+            "dropout": 0.9,
+            "norm": null,
+            "lr": 0.03,
+            "weight_decay": 1e-05,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.6255,
+            "val_acc_std": 0.00799687438940991,
+            "test_acc_mean": 0.59995,
+            "test_acc_std": 0.006996248994997255
+        },
+        "citeseer": {
+            "hidden_size": 256,
+            "num_layers": 2,
+            "activation": "gelu",
+            "dropout": 0.9,
+            "norm": "batchnorm",
+            "lr": 0.1,
+            "weight_decay": 0.0,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.6479999999999999,
+            "val_acc_std": 0.014198591479439093,
+            "test_acc_mean": 0.6327999999999999,
+            "test_acc_std": 0.014517575555167618
+        },
+        "pubmed": {
+            "hidden_size": 256,
+            "num_layers": 1,
+            "activation": "gelu",
+            "dropout": 0.4,
+            "norm": "layernorm",
+            "lr": 0.1,
+            "weight_decay": 0.0001,
+            "epochs": 2000,
+            "patience": 100,
+            "val_acc_mean": 0.7420000000000003,
+            "val_acc_std": 3.3306690738754696e-16,
+            "test_acc_mean": 0.7294999999999998,
+            "test_acc_std": 0.0005000000000000006
+        },
+        "cora_geom": {
+            "hidden_size": 512,
+            "num_layers": 2,
+            "activation": "relu",
+            "dropout": 0.9,
+            "norm": null,
+            "lr": 0.03,
+            "weight_decay": 1e-06,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.7760804020100504,
+            "val_acc_std": 0.00850312286201992,
+            "test_acc_mean": 0.7678873239436617,
+            "test_acc_std": 0.0235421417223406
+        },
+        "citeseer_geom": {
+            "hidden_size": 512,
+            "num_layers": 3,
+            "activation": "gelu",
+            "dropout": 0.9,
+            "norm": "layernorm",
+            "lr": 0.003,
+            "weight_decay": 1e-05,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.7515730050405527,
+            "val_acc_std": 0.014471270244899578,
+            "test_acc_mean": 0.7413331845996938,
+            "test_acc_std": 0.01821380048179651
+        },
+        "pubmed_geom": {
+            "hidden_size": 256,
+            "num_layers": 2,
+            "activation": "relu",
+            "dropout": 0.6000000000000001,
+            "norm": null,
+            "lr": 0.03,
+            "weight_decay": 0.0001,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.8864714738510302,
+            "val_acc_std": 0.004058171940268982,
+            "test_acc_mean": 0.8806389452332662,
+            "test_acc_std": 0.0029757532502419372
+        },
+        "chameleon": {
+            "hidden_size": 512,
+            "num_layers": 2,
+            "activation": "relu",
+            "dropout": 0.9,
+            "norm": "batchnorm",
+            "lr": 0.1,
+            "weight_decay": 1e-06,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.5415089163237311,
+            "val_acc_std": 0.014352408650349346,
+            "test_acc_mean": 0.5308881578947364,
+            "test_acc_std": 0.024689104019835286
+        },
+        "squirrel": {
+            "hidden_size": 128,
+            "num_layers": 2,
+            "activation": "gelu",
+            "dropout": 0.9,
+            "norm": "batchnorm",
+            "lr": 0.1,
+            "weight_decay": 0.0,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.37282151442307687,
+            "val_acc_std": 0.0071644187527974265,
+            "test_acc_mean": 0.36221902017291074,
+            "test_acc_std": 0.01584155736320335
+        },
+        "film": {
+            "hidden_size": 256,
+            "num_layers": 4,
+            "activation": "gelu",
+            "dropout": 0.7000000000000001,
+            "norm": "batchnorm",
+            "lr": 0.1,
+            "weight_decay": 0.0,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.3953474506578948,
+            "val_acc_std": 0.0089660767817096,
+            "test_acc_mean": 0.37954276315789476,
+            "test_acc_std": 0.012439186817503306
+        },
+        "cornell": {
+            "hidden_size": 256,
+            "num_layers": 4,
+            "activation": "gelu",
+            "dropout": 0.5,
+            "norm": "layernorm",
+            "lr": 0.1,
+            "weight_decay": 0.0001,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.9120338983050849,
+            "val_acc_std": 0.03648558525813778,
+            "test_acc_mean": 0.8440540540540543,
+            "test_acc_std": 0.06336728422464791
+        },
+        "texas": {
+            "hidden_size": 64,
+            "num_layers": 3,
+            "activation": "relu",
+            "dropout": 0.4,
+            "norm": "layernorm",
+            "lr": 0.1,
+            "weight_decay": 0.0001,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.9088135593220327,
+            "val_acc_std": 0.026828961271063555,
+            "test_acc_mean": 0.8251351351351349,
+            "test_acc_std": 0.05864989412054057
+        },
+        "wisconsin": {
+            "hidden_size": 256,
+            "num_layers": 2,
+            "dropout": 0.5,
+            "activation": "relu",
+            "norm": null,
+            "lr": 0.01,
+            "weight_decay": 0.0001,
+            "epochs": 2000,
+            "val_acc_mean": 0.8814,
+            "val_acc_std": 0.0337,
+            "test_acc_mean": 0.8481,
+            "test_acc_std": 0.0463
+        },
+        "ogbn-arxiv": {
+            "hidden_size": 256,
+            "num_layers": 4,
+            "dropout": 0.4,
+            "activation": "gelu",
+            "norm": "batchnorm",
+            "lr": 0.003,
+            "weight_decay": 0.0001,
+            "epochs": 2000,
+            "val_acc_mean": 0.5856,
+            "val_acc_std": 0.0012,
+            "test_acc_mean": 0.5638,
+            "test_acc_std": 0.002
+        }
+    },
+    "gcn": {
+        "general": {},
+        "cora": {
+            "hidden_size": 256,
+            "num_layers": 3,
+            "activation": "gelu",
+            "residual": false,
+            "dropout": 0.9,
+            "norm": null,
+            "lr": 0.01,
+            "weight_decay": 0.0001,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.8128,
+            "val_acc_std": 0.004489988864128692,
+            "test_acc_mean": 0.8223999999999997,
+            "test_acc_std": 0.008132650244538965
+        },
+        "citeseer": {
+            "hidden_size": 128,
+            "num_layers": 2,
+            "dropout": 0.8,
+            "activation": "relu",
+            "residual": false,
+            "norm": null,
+            "lr": 0.1,
+            "weight_decay": 0.0001,
+            "epochs": 2000,
+            "val_acc_mean": 0.718,
+            "val_acc_std": 0.0052,
+            "test_acc_mean": 0.7035,
+            "test_acc_std": 0.0081
+        },
+        "pubmed": {
+            "hidden_size": 256,
+            "num_layers": 2,
+            "dropout": 0.9,
+            "activation": "gelu",
+            "residual": false,
+            "norm": "batchnorm",
+            "lr": 0.1,
+            "weight_decay": 0.0,
+            "epochs": 2000,
+            "val_acc_mean": 0.8108,
+            "val_acc_std": 0.0071,
+            "test_acc_mean": 0.786,
+            "test_acc_std": 0.0088
+        },
+        "cora_geom": {
+            "hidden_size": 256,
+            "num_layers": 2,
+            "dropout": 0.9,
+            "activation": "relu",
+            "residual": false,
+            "norm": null,
+            "lr": 0.003,
+            "weight_decay": 0.0001,
+            "epochs": 2000,
+            "val_acc_mean": 0.8832,
+            "val_acc_std": 0.0091,
+            "test_acc_mean": 0.8725,
+            "test_acc_std": 0.0087
+        },
+        "citeseer_geom": {
+            "hidden_size": 256,
+            "num_layers": 2,
+            "dropout": 0.9,
+            "activation": "gelu",
+            "residual": false,
+            "norm": null,
+            "lr": 0.001,
+            "weight_decay": 0.0,
+            "epochs": 2000,
+            "val_acc_mean": 0.7715,
+            "val_acc_std": 0.0105,
+            "test_acc_mean": 0.7605,
+            "test_acc_std": 0.0136
+        },
+        "pubmed_geom": {
+            "hidden_size": 256,
+            "num_layers": 2,
+            "dropout": 0.5,
+            "activation": "relu",
+            "residual": true,
+            "norm": "layernorm",
+            "lr": 0.1,
+            "weight_decay": 0.0001,
+            "epochs": 2000,
+            "val_acc_mean": 0.889,
+            "val_acc_std": 0.0024,
+            "test_acc_mean": 0.8833,
+            "test_acc_std": 0.0052
+        },
+        "chameleon": {
+            "hidden_size": 512,
+            "num_layers": 3,
+            "activation": "gelu",
+            "residual": true,
+            "dropout": 0.2,
+            "norm": "batchnorm",
+            "lr": 0.001,
+            "weight_decay": 0.0,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.7533813443072701,
+            "val_acc_std": 0.010550719034286874,
+            "test_acc_mean": 0.7457894736842111,
+            "test_acc_std": 0.014509127257576403
+        },
+        "squirrel": {
+            "hidden_size": 256,
+            "num_layers": 2,
+            "dropout": 0.7,
+            "activation": "relu",
+            "residual": true,
+            "norm": "layernorm",
+            "lr": 0.001,
+            "weight_decay": 0.0001,
+            "epochs": 2000,
+            "val_acc_mean": 0.6612,
+            "val_acc_std": 0.0106,
+            "test_acc_mean": 0.655,
+            "test_acc_std": 0.021
+        },
+        "film": {
+            "hidden_size": 128,
+            "num_layers": 4,
+            "activation": "relu",
+            "residual": true,
+            "dropout": 0.9,
+            "norm": "layernorm",
+            "lr": 0.01,
+            "weight_decay": 1e-06,
+            "epochs": 2000,
+            "patience": 200,
+            "val_acc_mean": 0.3165111019736844,
+            "val_acc_std": 0.0076340307600008695,
+            "test_acc_mean": 0.29954276315789485,
+            "test_acc_std": 0.00811992370189001
+        },
+        "cornell": {
+            "hidden_size": 256,
+            "num_layers": 2,
+            "dropout": 0.9,
+            "activation": "relu",
+            "residual": true,
+            "norm": "layernorm",
+            "lr": 0.1,
+            "weight_decay": 0.0001,
+            "epochs": 2000,
+            "val_acc_mean": 0.6789,
+            "val_acc_std": 0.0563,
+            "test_acc_mean": 0.5774,
+            "test_acc_std": 0.0613
+        },
+        "texas": {
+            "hidden_size": 64,
+            "num_layers": 8,
+            "dropout": 0.0,
+            "activation": "relu",
+            "residual": true,
+            "norm": null,
+            "lr": 0.1,
+            "weight_decay": 1e-05,
+            "epochs": 2000,
+            "val_acc_mean": 0.6225,
+            "val_acc_std": 0.0473,
+            "test_acc_mean": 0.5762,
+            "test_acc_std": 0.0698
+        },
+        "wisconsin": {
+            "hidden_size": 256,
+            "num_layers": 4,
+            "dropout": 0.5,
+            "activation": "gelu",
+            "residual": true,
+            "norm": "layernorm",
+            "lr": 0.001,
+            "weight_decay": 1e-05,
+            "epochs": 2000,
+            "val_acc_mean": 0.5219,
+            "val_acc_std": 0.038,
+            "test_acc_mean": 0.4385,
+            "test_acc_std": 0.0514
+        },
+        "ogbn-arxiv": {
+            "hidden_size": 256,
+            "num_layers": 4,
+            "dropout": 0.4,
+            "activation": "relu",
+            "residual": false,
+            "norm": "batchnorm",
+            "lr": 0.001,
+            "weight_decay": 0.0,
+            "epochs": 2000,
+            "val_acc_mean": 0.7347,
+            "val_acc_std": 0.0006,
+            "test_acc_mean": 0.7219,
+            "test_acc_std": 0.002
+        },
+        "ppi-large": {
+            "lr": 0.005,
+            "hidden_size": 2048,
+            "num_layers": 2,
+            "dropout": 0.3,
+            "epochs": 7000
+        },
+        "flickr": {
+            "lr": 0.01,
+            "dropout": 0.5,
+            "weight_decay": 0.0,
+            "hidden_size": 256
+        }
+    },
+    "gat": {
+        "general": {
+            "lr": 0.005,
+            "epochs": 1000
+        },
+        "citeseer": {
+            "weight_decay": 0.001
+        },
+        "pubmed": {
+            "weight_decay": 0.001
+        },
+        "ppi-large": {
+            "nhead": 4,
+            "hidden_size": 256,
+            "lr": 0.005,
+            "residual": true,
+            "num_layers": 3,
+            "weight_decay": 0.0,
+            "attn_drop": 0,
+            "dropout": 0
+        }
+    },
+    "sage": {
+        "general": {}
+    },
+    "gcnii": {
+        "general": {
+            "epochs": 1000,
+            "dropout": 0.5,
+            "wd1": 0.001,
+            "wd2": 0.0005
+        },
+        "cora": {
+            "hidden_size": 128,
+            "num_layers": 64,
+            "dropout": 0.7,
+            "alpha": 0.1,
+            "lmbda": 0.5,
+            "wd1": 0.001,
+            "wd2": 0.001,
+            "lr": 0.03,
+            "epochs": 2000,
+            "val_acc_mean": 0.8234,
+            "val_acc_std": 0.0053,
+            "test_acc_mean": 0.8328,
+            "test_acc_std": 0.0057
+        },
+        "citeseer": {
+            "hidden_size": 256,
+            "num_layers": 64,
+            "dropout": 0.7,
+            "alpha": 0.3,
+            "lmbda": 0.5,
+            "wd1": 1e-06,
+            "wd2": 0.001,
+            "lr": 0.001,
+            "epochs": 2000,
+            "val_acc_mean": 0.7217,
+            "val_acc_std": 0.0046,
+            "test_acc_mean": 0.7019,
+            "test_acc_std": 0.0037
+        },
+        "pubmed": {
+            "hidden_size": 256,
+            "num_layers": 64,
+            "dropout": 0.6,
+            "alpha": 0.1,
+            "lmbda": 1.5,
+            "wd1": 0.0,
+            "wd2": 0.0001,
+            "lr": 0.003,
+            "epochs": 2000,
+            "val_acc_mean": 0.8248,
+            "val_acc_std": 0.0032,
+            "test_acc_mean": 0.7929,
+            "test_acc_std": 0.0052
+        },
+        "cora_geom": {
+            "hidden_size": 256,
+            "num_layers": 64,
+            "dropout": 0.5,
+            "alpha": 0.2,
+            "lmbda": 1.5,
+            "wd1": 0.001,
+            "wd2": 1e-05,
+            "lr": 0.003,
+            "epochs": 2000,
+            "val_acc_mean": 0.8884,
+            "val_acc_std": 0.0086,
+            "test_acc_mean": 0.8802,
+            "test_acc_std": 0.0113
+        },
+        "citeseer_geom": {
+            "hidden_size": 256,
+            "num_layers": 32,
+            "dropout": 0.7,
+            "alpha": 0.3,
+            "lmbda": 0.5,
+            "wd1": 5e-06,
+            "wd2": 5e-06,
+            "lr": 0.003,
+            "epochs": 2000,
+            "val_acc_mean": 0.7813,
+            "val_acc_std": 0.0098,
+            "test_acc_mean": 0.7692,
+            "test_acc_std": 0.0163
+        },
+        "pubmed_geom": {
+            "hidden_size": 64,
+            "num_layers": 16,
+            "dropout": 0.4,
+            "alpha": 0.4,
+            "lmbda": 1.0,
+            "wd1": 1e-06,
+            "wd2": 0.0,
+            "lr": 0.003,
+            "epochs": 2000,
+            "val_acc_mean": 0.9047,
+            "val_acc_std": 0.0027,
+            "test_acc_mean": 0.8985,
+            "test_acc_std": 0.0043
+        },
+        "chameleon": {
+            "hidden_size": 256,
+            "num_layers": 2,
+            "dropout": 0.6,
+            "alpha": 0.2,
+            "lmbda": 0.5,
+            "wd1": 0.001,
+            "wd2": 5e-05,
+            "lr": 0.01,
+            "epochs": 2000,
+            "val_acc_mean": 0.6683,
+            "val_acc_std": 0.0188,
+            "test_acc_mean": 0.6512,
+            "test_acc_std": 0.0173
+        },
+        "squirrel": {
+            "hidden_size": 256,
+            "num_layers": 2,
+            "dropout": 0.8,
+            "alpha": 0.3,
+            "lmbda": 0.5,
+            "wd1": 5e-06,
+            "wd2": 5e-06,
+            "lr": 0.01,
+            "epochs": 2000,
+            "val_acc_mean": 0.4162,
+            "val_acc_std": 0.0279,
+            "test_acc_mean": 0.4133,
+            "test_acc_std": 0.0252
+        },
+        "film": {
+            "hidden_size": 32,
+            "num_layers": 2,
+            "dropout": 0.6,
+            "alpha": 0.2,
+            "lmbda": 1.5,
+            "wd1": 1e-06,
+            "wd2": 5e-05,
+            "lr": 0.01,
+            "epochs": 2000,
+            "val_acc_mean": 0.3815,
+            "val_acc_std": 0.0068,
+            "test_acc_mean": 0.3663,
+            "test_acc_std": 0.0095
+        },
+        "cornell": {
+            "hidden_size": 128,
+            "num_layers": 2,
+            "dropout": 0.8,
+            "alpha": 0.3,
+            "lmbda": 1.5,
+            "wd1": 0.0001,
+            "wd2": 5e-05,
+            "lr": 0.01,
+            "epochs": 2000,
+            "val_acc_mean": 0.849,
+            "val_acc_std": 0.0364,
+            "test_acc_mean": 0.7692,
+            "test_acc_std": 0.0699
+        },
+        "texas": {
+            "hidden_size": 256,
+            "num_layers": 4,
+            "dropout": 0.3,
+            "alpha": 0.4,
+            "lmbda": 1.5,
+            "wd1": 5e-05,
+            "wd2": 1e-05,
+            "lr": 0.03,
+            "epochs": 2000,
+            "val_acc_mean": 0.8284,
+            "val_acc_std": 0.0429,
+            "test_acc_mean": 0.7205,
+            "test_acc_std": 0.077
+        },
+        "wisconsin": {
+            "hidden_size": 64,
+            "num_layers": 2,
+            "dropout": 0.5,
+            "alpha": 0.5,
+            "lmbda": 1.5,
+            "wd1": 1e-06,
+            "wd2": 0.001,
+            "lr": 0.03,
+            "epochs": 2000,
+            "val_acc_mean": 0.8428,
+            "val_acc_std": 0.0323,
+            "test_acc_mean": 0.8076,
+            "test_acc_std": 0.0527
+        },
+        "ogbn-arxiv": {
+            "hidden_size": 256,
+            "num_layers": 8,
+            "dropout": 0.2,
+            "alpha": 0.1,
+            "lmbda": 0.5,
+            "wd1": 0.001,
+            "wd2": 0.001,
+            "lr": 0.01,
+            "epochs": 2000,
+            "val_acc_mean": 0.74,
+            "val_acc_std": 0.0022,
+            "test_acc_mean": 0.729,
+            "test_acc_std": 0.0015
+        },
+        "reddit": {
+            "num_layers": 3,
+            "hidden_size": 256,
+            "alpha": 0.2,
+            "wd1": 0,
+            "wd2": 0,
+            "lr": 0.001,
+            "residual": true,
+            "epochs": 1000,
+            "lmbda": 1.0
+        },
+        "flickr": {
+            "lr": 0.002,
+            "num_layers": 4,
+            "residual": true,
+            "wd1": 0.0005,
+            "wd2": 0.0005,
+            "lmbda": 1.0,
+            "alpha": 0.1
+        }
+    },
+    "gdc_gcn": {
+        "general": {
+            "hidden_size": 16
+        }
+    },
+    "grand": {
+        "general": {
+            "epochs": 1000
+        },
+        "cora": {
+            "order": 8,
+            "sample": 4,
+            "lam": 1.0,
+            "tem": 0.5,
+            "alpha": 0.5,
+            "patience": 200,
+            "input_dropout": 0.5,
+            "hidden_dropout": 0.5
+        },
+        "citeseer": {
+            "order": 2,
+            "sample": 2,
+            "lam": 0.7,
+            "tem": 0.3,
+            "alpha": 0.5,
+            "input_dropout": 0.0,
+            "hidden_dropout": 0.2,
+            "patience": 200
+        },
+        "pubmed": {
+            "order": 5,
+            "sample": 4,
+            "lam": 1.0,
+            "tem": 0.2,
+            "alpha": 0.5,
+            "lr": 0.2,
+            "bn": true,
+            "input_dropout": 0.6,
+            "hidden_dropout": 0.8
+        }
+    },
+    "graphsage": {
+        "general": {}
+    },
+    "sgc": {
+        "general": {
+            "hidden_size": 16,
+            "dropout": 0.5
+        }
+    },
+    "sgcpn": {
+        "general": {
+            "lr": 0.005,
+            "epochs": 1000,
+            "patience": 1000,
+            "norm_mode": "PN",
+            "norm_scale": 10,
+            "dropout": 0.6
+        }
+    },
+    "sign": {
+        "general": {
+            "lr": 5e-05,
+            "hidden_size": 2048,
+            "dropout": 0.5,
+            "dropedge_rate": 0.2
+        }
+    },
+    "srgcn": {
+        "general": {
+            "lr": 0.005,
+            "epochs": 1000
+        },
+        "cora": {
+            "dropout": 0.6
+        },
+        "citeseer": {
+            "dropout": 0.6
+        }
+    },
+    "unet": {
+        "general": {
+            "epochs": 1000,
+            "n_dropout": 0.9,
+            "adj_dropout": 0.05,
+            "hidden_size": 128,
+            "aug_adj": false,
+            "improved": false,
+            "n_pool": 4,
+            "pool_rate": [
+                0.7,
+                0.5,
+                0.5,
+                0.4
+            ]
+        }
+    },
+    "ppnp": {
+        "general": {},
+        "cora": {
+            "hidden_size": 128,
+            "num_layers": 2,
+            "dropout": 0.6,
+            "propagation_type": "appnp",
+            "alpha": 0.1,
+            "num_iterations": 8,
+            "lr": 0.01,
+            "weight_decay": 5e-05,
+            "epochs": 2000,
+            "val_acc_mean": 0.8238,
+            "val_acc_std": 0.0059,
+            "test_acc_mean": 0.8324,
+            "test_acc_std": 0.0058
+        },
+        "citeseer": {
+            "hidden_size": 128,
+            "num_layers": 2,
+            "dropout": 0.3095,
+            "lr": 0.01,
+            "alpha": 0.171,
+            "num_iterations": 4,
+            "weight_decay": 0.0004117,
+            "epochs": 1000,
+            "val_acc_mean": 0.7319,
+            "val_acc_std": 0.0029,
+            "test_acc_mean": 0.7105,
+            "test_acc_std": 0.0067
+        },
+        "pubmed": {
+            "hidden_size": 128,
+            "num_layers": 2,
+            "dropout": 0.0,
+            "propagation_type": "appnp",
+            "alpha": 0.05,
+            "num_iterations": 16,
+            "lr": 0.01,
+            "weight_decay": 0.0001,
+            "epochs": 2000,
+            "val_acc_mean": 0.8249,
+            "val_acc_std": 0.0017,
+            "test_acc_mean": 0.8006,
+            "test_acc_std": 0.0012
+        },
+        "flickr": {
+            "lr": 0.005,
+            "weight_decay": 0.001,
+            "dropout": 0.3,
+            "num_layers": 2,
+            "hidden_size": 256,
+            "epochs": 1000,
+            "num_iterations": 4,
+            "alpha": 0.5
+        },
+        "reddit": {
+            "lr": 0.005,
+            "hidden_size": 256,
+            "dropout": 0.3751,
+            "alpha": 0.1995,
+            "num_layers": 3,
+            "weight_decay": 5.918e-06,
+            "num_iterations": 3
+        }
+    },
+    "correct_smooth_mlp": {
+        "general": {},
+        "ogbn_arxiv": {
+            "correct_norm": "row",
+            "smooth_norm": "col",
+            "correct_alpha": 0.9791632871592579,
+            "smooth_alpha": 0.7564990804200602,
+            "num_correct_prop": 50,
+            "num_smooth_prop": 50,
+            "autoscale": true,
+            "norm": "batchnorm"
+        },
+        "ogbn_products": {
+            "correct_norm": "sym",
+            "smooth_norm": "row",
+            "correct_alpha": 1.0,
+            "smooth_alpha": 0.8,
+            "num_correct_prop": 50,
+            "num_smooth_prop": 50,
+            "autoscale": false,
+            "scale": 10.0,
+            "norm": "batchnorm",
+            "act_first": true
+        }
+    },
+    "sagn": {
+        "general": {
+            "data_gpu": true,
+            "lr": 0.001,
+            "hidden-size": 512,
+            "attn-drop": 0.0,
+            "dropout": 0.7
+        },
+        "flickr": {
+            "threshold": 0.5,
+            "label-hop": 2,
+            "weight-decay": 3e-06,
+            "nstage": [
+                50,
+                50,
+                50
+            ],
+            "nhop": 2,
+            "batch-size": 256
+        },
+        "reddit": {
+            "threshold": 0.9,
+            "lr": 0.0001,
+            "batch-size": 1000,
+            "nhop": 2,
+            "label-nhop": 4,
+            "weight-decay": 0.0,
+            "nstage": [
+                500,
+                500,
+                500
+            ]
+        }
+    },
+    "deepwalk": {
+        "general": {}
+    },
+    "dngr": {
+        "general": {
+            "hidden_size": 128,
+            "lr": 0.001,
+            "epochs": 500,
+            "hidden_size1": 1000,
+            "hidden_size2": 128,
+            "noise": 0.2,
+            "alpha": 0.1,
+            "step": 10
+        }
+    },
+    "grarep": {
+        "general": {}
+    },
+    "hope": {
+        "general": {}
+    },
+    "line": {
+        "general": {},
+        "blogcatalog": {
+            "walk_num": 40
+        }
+    },
+    "netmf": {
+        "general": {},
+        "ppi-ne": {
+            "window_size": 10,
+            "is_large": true
+        },
+        "blogcatalog": {
+            "window_size": 10,
+            "is_large": true
+        },
+        "wikipedia": {
+            "window_size": 1
+        }
+    },
+    "netsmf": {
+        "general": {
+            "window_size": 10,
+            "num_round": 1000
+        },
+        "wikipedia": {
+            "window_size": 1
+        },
+        "blogcatalog": {
+            "num_round": 10000
+        }
+    },
+    "node2vec": {
+        "general": {}
+    },
+    "prone": {
+        "general": {
+            "step": 10
+        },
+        "ppi-ne": {
+            "mu": 0.0
+        },
+        "wikipedia": {
+            "mu": -4.0
+        },
+        "dblp-ne": {
+            "mu": -1.2,
+            "theta": 2.0
+        }
+    },
+    "sdne": {
+        "general": {}
+    },
+    "spectral": {
+        "general": {}
+    },
+    "dgi": {
+        "general": {
+            "weight_decay": 0
+        }
+    },
+    "gcc": {
+        "general": {}
+    },
+    "grace": {
+        "general": {
+            "weight_decay": 0,
+            "epochs": 1000,
+            "patience": 20
+        },
+        "cora": {
+            "lr": 0.0005,
+            "weight_decay": 1e-05,
+            "tau": 0.4,
+            "drop_feature_rates": [
+                0.3,
+                0.4
+            ],
+            "drop_edge_rates": [
+                0.2,
+                0.4
+            ],
+            "epochs": 200,
+            "hidden_size": 128,
+            "proj_hidden_size": 128
+        },
+        "citeseer": {
+            "hidden_size": 256,
+            "proj_hidden_size": 256,
+            "drop_feature_rates": [
+                0.3,
+                0.2
+            ],
+            "drop_edge_rates": [
+                0.2,
+                0.0
+            ],
+            "lr": 0.001,
+            "_weight_decay": 1e-05,
+            "tau": 0.9,
+            "activation": "prelu"
+        },
+        "pubmed": {
+            "hidden_size": 256,
+            "proj_hidden_size": 256,
+            "drop_edge_rates": [
+                0.4,
+                0.1
+            ],
+            "drop_feature_rates": [
+                0.0,
+                0.2
+            ],
+            "tau": 0.7,
+            "lr": 0.001,
+            "weight_decay": 1e-05
+        }
+    },
+    "unsup_graphsage": {
+        "general": {
+            "lr": 0.001,
+            "weight_decay": 0,
+            "epochs": 3000
+        }
+    },
+    "revgcn": {
+        "general": {},
+        "cora": {
+            "hidden_size": 128,
+            "lr": 0.001,
+            "dropout": 0.4706458854,
+            "weight_decay": 0.0008907,
+            "norm": "layernorm",
+            "num_layers": 10
+        }
+    },
+    "gin": {
+        "general": {
+            "lr": 0.001
+        },
+        "imdb-b": {
+            "degree_feature": true
+        },
+        "imdb-m": {
+            "degree_feature": true
+        },
+        "collab": {
+            "degree_feature": true
+        },
+        "proteins": {
+            "num_layers": 5,
+            "dropout": 0.0
+        },
+        "nci1": {
+            "num_layers": 5,
+            "dropout": 0.3,
+            "hidden_size": 64
+        }
+    },
+    "infograph": {
+        "general": {
+            "lr": 0.0001,
+            "weight_decay": 0.0005,
+            "sup": false
+        },
+        "mutag": {
+            "num_layers": 1,
+            "epochs": 20
+        },
+        "imdb-b": {
+            "degree_feature": true
+        },
+        "imdb-m": {
+            "degree_feature": true
+        },
+        "collab": {
+            "degree_feature": true
+        },
+        "nci1": {
+            "num_layers": 3
+        }
+    },
+    "sortpool": {
+        "nci1": {
+            "dropout": 0.3,
+            "hidden_size": 64,
+            "num_layers": 5
+        }
+    },
+    "patchy_san": {
+        "general": {
+            "lr": 0.001,
+            "hidden_size": 32,
+            "gamma": 0.5,
+            "dropout": 0.5
+        },
+        "imdb-b": {
+            "degree_feature": true
+        },
+        "imdb-m": {
+            "degree_feature": true
+        },
+        "collab": {
+            "degree_feature": true
+        }
+    },
+    "graph2vec": {
+        "general": {},
+        "nci1": {
+            "lr": 0.001,
+            "window_size": 8,
+            "epochs": 10,
+            "iteration": 4
+        },
+        "reddit-b": {
+            "lr": 0.01,
+            "degree_feature": true,
+            "hidden_size": 128
+        }
+    },
+    "gatne": {
+        "general": {},
+        "twitter": {
+            "eval_type": "1"
+        }
+    },
+    "hin2vec": {
+        "general": {
+            "lr": 0.025
+        }
+    },
+    "metapath2vec": {
+        "general": {
+            "walk_num": 40
+        }
+    },
+    "pte": {},
+    "gtn": {
+        "general": {
+            "hidden_size": 128,
+            "lr": 0.005,
+            "weight_decay": 0.001
+        }
+    },
+    "han": {
+        "general": {
+            "hidden_size": 128,
+            "lr": 0.005,
+            "weight_decay": 0.001
+        }
+    }
+}

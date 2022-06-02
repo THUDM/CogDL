@@ -55,8 +55,8 @@ def test_auto_experiment():
         cpu=True,
     )
 
-    assert ("cora", "gcn") in results
-    assert results[("cora", "gcn")][0]["test_acc"] > 0
+    assert "(cora, gcn)" in results[0]
+    assert results[0]["(cora, gcn)"][0]["test_acc"] > 0
 
 
 def test_autognn_experiment():
@@ -68,8 +68,9 @@ def test_autognn_experiment():
         epochs=2,
         cpu=True,
     )
-    assert ("cora", "autognn") in results
-    assert results[("cora", "autognn")][0]["test_acc"] > 0
+    
+    assert "(cora, autognn)" in results[0]
+    assert results[0]["(cora, autognn)"][0]["test_acc"] > 0
 
 
 if __name__ == "__main__":

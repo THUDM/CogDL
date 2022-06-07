@@ -34,7 +34,7 @@ JKNet collects the output of all layers and concatenate them together to get the
             super(JKNet, self).__init__()
             shapes = [in_feats] + [hidden_size] * num_layers
             self.layers = nn.ModuleList([
-                GCNLayer(shape[i], shape[i+1])
+                GCNLayer(shapes[i], shapes[i+1])
                 for i in range(num_layers)
             ])
             self.fc = nn.Linear(hidden_size * num_layers, out_feats)
@@ -45,7 +45,7 @@ JKNet collects the output of all layers and concatenate them together to get the
             h = graph.x
             out = []
             for layer in self.layers:
-                h = layer(x)
+                h = layer(graph,h)
                 out.append(h)
             out = torch.cat(out, dim=1)
             return self.fc(out)
@@ -102,7 +102,7 @@ Now that you have defined your own GNN, you can use dataset/task in CogDL to imm
 
 .. code-block:: python
 
-    data = dataset.data
+    data = build_dataset_from_name("cora")[0]
     # Use the JKNet model as defined above
     model = JKNet(data.num_features, data.num_classes, 32, 4)
     experiment(model=model, dataset="cora", mw="node_classification_mw", dw="node_classification_dw")

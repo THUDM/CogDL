@@ -95,9 +95,9 @@ We also implement commonly used operations in ``Graph``:
     from cogdl.datasets import build_dataset_from_name
     g = build_dataset_from_name("cora")[0]
     g.num_nodes
-    >> 2707
+    >> 2708
     g.num_edges
-    >> 10184
+    >> 10556
     # Get a subgraph contaning nodes [0, .., 99]
     sub_g = g.subgraph(torch.arange(100))
     >> Graph(x=[100, 1433], edge_index=[2, 18], y=[100])
@@ -134,7 +134,7 @@ and others(node features, labels) are concatenated in node dimension. ``cogdl.da
 
     dataset = build_dataset_from_name("mutag")
     >> MUTAGDataset(188)
-    dataswet[0]
+    dataset[0]
     >> Graph(x=[17, 7], y=[1], edge_index=[2, 38])
     loader = DataLoader(dataset, batch_size=8)
     for batch in loader:
@@ -179,7 +179,7 @@ reflect to the original graph. However, in-place operation will affect the origi
 
     graph = build_dataset_from_name("cora")[0]
     graph.num_edges
-    >> 10184
+    >> 10556
     with graph.local_graph():
         mask = torch.arange(100)
         row, col = graph.edge_index
@@ -187,7 +187,7 @@ reflect to the original graph. However, in-place operation will affect the origi
         graph.num_edges
         >> 100
     graph.num_edges
-    >> 10184
+    >> 10556
 
     graph.edge_weight
     >> tensor([1.,...,1.])

@@ -10,9 +10,12 @@ We might be interested in predicting the interests of users, or whether a pair o
 
 A graph can be represented using an adjacency matrix
 
-.. image:: ../_static/graph.png
+======== ========
+|image0| |image1|
+======== ========
 
-.. image:: ../_static/adjacency_matrix.png
+.. |image0| image:: ../_static/graph.png
+.. |image1| image:: ../_static/adjacency_matrix.png
 
 How to represent a graph in CogDL
 ---------------------------------
@@ -32,11 +35,15 @@ Briefly, a ``Graph`` holds the following attributes:
 The above are the basic attributes but are not necessary. You may define a graph with `g = Graph(edge_index=edges)` and omit the others.
 Besides, ``Graph`` is not restricted to these attributes and other self-defined attributes, e.g., `graph.mask = mask`, are also supported.
 
-Represent this graph in cogdl
+Represent this graph in cogdl:
 
-.. image:: ../_static/coo.png
+======== ========
+|image0| |image1|
+======== ========
 
-.. image:: ../_static/csr.png
+.. |image0| image:: ../_static/coo.png
+.. |image1| image:: ../_static/csr.png
+
 
 
 ``Graph`` stores sparse matrix with COO or CSR format. COO format is easier to add or remove edges, e.x. `add_self_loops`, and CSR is stored for fast message-passing.
@@ -271,7 +278,7 @@ Network Embedding(Unsupervised Node classification)
 Heterogenous Graph
 ------------------------------------------------------------------
 =============== ========= ============ ============ =========== ================== ========== ============= ====================
-Dataset         #Nodes    #Edges       #Features    #Classes    #Train/Val/Test    #Degree    #Edge Type    #Name in Cogdl
+Dataset          Nodes     Edges        Features     Classes     Train/Val/Test     Degree     Edge Type     Name in Cogdl
 =============== ========= ============ ============ =========== ================== ========== ============= ====================
 DBLP            18,405    67,946       334          4           800 / 400 / 2857   4          4             gtn-dblp(han-acm)
 ACM             8,994     25,922       1,902        3           600 / 300 / 2125   3          4             gtn-acm(han-acm)
@@ -284,7 +291,7 @@ Twitter         10,000    331,899      -            -           -               
 Knowledge Graph Link Prediction
 ------------------------------------------------------------------
 ============ ========= ========= =========================== =================== ========== =================
-Dataset      #Nodes    #Edges    #Train/Val/Test             #Relations Types    #Degree    #Name in Cogdl
+Dataset       Nodes     Edges     Train/Val/Test              Relations Types     Degree     Name in Cogdl
 ============ ========= ========= =========================== =================== ========== =================
 FB13         75,043    345,872   316,232 / 5,908 / 23,733    12                  5          fb13
 FB15k        14,951    592,213   483,142 / 50,000 / 59,071   1345                40         fb15k
@@ -299,7 +306,7 @@ Graph Classification
 TUdataset from https://www.chrsmrrs.com/graphkerneldatasets
 
 ================== ========== =========== ============= ===================
-Dataset            #Graphs    #Classes    #Avg. Size    #Name in Cogdl
+Dataset             Graphs     Classes     Avg. Size     Name in Cogdl
 ================== ========== =========== ============= ===================
 MUTAG              188        2           17.9          mutag
 IMDB-B             1,000      2           19.8          imdb-b

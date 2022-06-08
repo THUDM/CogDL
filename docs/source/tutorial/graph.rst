@@ -38,11 +38,11 @@ Besides, ``Graph`` is not restricted to these attributes and other self-defined 
 Represent this graph in cogdl:
 
 ======== ========
-|image0| |image1|
+|image2| |image3|
 ======== ========
 
-.. |image0| image:: ../_static/coo.png
-.. |image1| image:: ../_static/csr.png
+.. |image2| image:: ../_static/coo.png
+.. |image3| image:: ../_static/csr.png
 
 
 

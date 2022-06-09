@@ -49,16 +49,13 @@ GCNII((`Chen et al.,ICML’20  <https://arxiv.org/pdf/2007.02133.pdf>`__)       
 DR-GAT `(Zou et al., 2019) <https://arxiv.org/abs/1907.02237>`__                          drgat
 MVGRL `(Hassani et al., KDD’20) <https://arxiv.org/pdf/2006.05582v1.pdf>`__               mvgrl
 APPNP `(Klicpera et al., ICLR’19) <https://arxiv.org/pdf/2006.05582v1.pdf>`__             ppnp
-Graph U-Net `(Gao et al., 2019) <https://arxiv.org/abs/1905.05178>`__
 GAT `(Veličković et al., ICLR’18) <https://arxiv.org/abs/1710.10903>`__                   gat
 GDC_GCN `(Klicpera et al., NeurIPS’19) <https://arxiv.org/pdf/1911.05485.pdf>`__          gdc_gcn
-DropEdge `(Rong et al., ICLR’20) <https://openreview.net/pdf?id=Hkx1qkrKPr>`__             dropedge_gcn
+DropEdge `(Rong et al., ICLR’20) <https://openreview.net/pdf?id=Hkx1qkrKPr>`__            dropedge_gcn
 GCN `(Kipf et al., ICLR’17) <https://arxiv.org/abs/1609.02907>`__                         gcn
 DGI `(Veličković et al., ICLR’19) <https://arxiv.org/abs/1809.10341>`__                   dgi
-JK-net `(Xu et al., ICML’18) <https://arxiv.org/pdf/1806.03536.pdf>`__
 GraphSAGE `(Hamilton et al., NeurIPS’17) <https://arxiv.org/abs/1706.02216>`__            graphsage
-GraphSAGE `(unsup)(Hamilton et al., NeurIPS’17) <https://arxiv.org/abs/1706.02216>`__      unsup_graphsage
-Chebyshev `(Defferrard et al., NeurIPS’16) <https://arxiv.org/abs/1606.09375>`__
+GraphSAGE `(unsup)(Hamilton et al., NeurIPS’17) <https://arxiv.org/abs/1706.02216>`__     unsup_graphsage
 MixHop  `(Abu-El-Haija et al., ICML’19) <https://arxiv.org/abs/1905.00067>`__             mixhop
 ===================================================================================== ==================
 
@@ -120,10 +117,6 @@ __________________________
 ======================================================================================================================================================== ==================
  Model                                                                                                                                                     Name in Cogdl
 ======================================================================================================================================================== ==================
-RotatE `(Sun et al, ICLR’19) <https://arxiv.org/pdf/1902.10197.pdf>`__
-ComplEx `(Trouillon et al, ICML’18) <https://arxiv.org/abs/1606.06357>`__
-TransE `(Bordes et al, NIPS’13)Bordes et al, NIPS'13)] <https://proceedings.neurips.cc/paper/2013/file/1cecc7a77928ca8133fa24680a88d2f9-Paper.pdf>`__
-DistMult `(Yang et al, ICLR’15) <https://arxiv.org/pdf/1412.6575.pdf>`__
 CompGCN `(Vashishth et al, ICLR’20) <https://arxiv.org/abs/1911.03082>`__                                                                                      compgcn
 ======================================================================================================================================================== ==================
 
@@ -140,9 +133,6 @@ DiffPool `(Ying et al, NeuIPS’18) <https://arxiv.org/abs/1806.08804>`__       
 SortPool `(Zhang et al, AAAI’18) <https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf>`__        softpool
 Graph2Vec `(Narayanan et al, CoRR’17) <https://arxiv.org/abs/1707.05005>`__                              graph2vec
 PATCH_SAN `(Niepert et al, ICML’16) <https://arxiv.org/pdf/1605.05273.pdf>`__                            patchy_san
-HGP-SL `(Zhang et al, AAAI’20) <https://arxiv.org/abs/1911.05954>`__
-DGCNN `(Wang et al, ACM Transactions on Graphics’17) <https://arxiv.org/abs/1801.07829>`__
-SAGPool `(J. Lee, ICML’19) <https://arxiv.org/abs/1904.08082>`__
 DGK `(Yanardag et al, KDD’15) <https://dl.acm.org/doi/10.1145/2783258.2783417>`__                        dgk
 
 ==================================================================================================== ===============

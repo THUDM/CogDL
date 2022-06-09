@@ -267,7 +267,7 @@ Network Embedding(Unsupervised Node classification)
 ============= ============ ============ =========== ========== =================
   Dataset        Nodes       Edges       Classes     Degree       Name in Cogdl
 ============= ============ ============ =========== ========== =================
-  PPI            3,890        76,584       50(m)       20         ppi-ne
+  PPI            3,890        76,584       50(m)       —          ppi-ne
   BlogCatalog    10,312       333,983      40(m)       32         blogcatalog
   Wikipedia      4.777        184,812      39(m)       39         wikipedia
   Flickr         80,513       5,899,882    195(m)      73         flickr-ne
@@ -283,9 +283,9 @@ Dataset          Nodes     Edges        Features     Classes     Train/Val/Test 
 DBLP            18,405    67,946       334          4           800 / 400 / 2857   4          4             gtn-dblp(han-acm)
 ACM             8,994     25,922       1,902        3           600 / 300 / 2125   3          4             gtn-acm(han-acm)
 IMDB            12,772    37,288       1,256        3           300 / 300 / 2339   3          4             gtn-imdb(han-imdb)
-Amazon-GATNE    10,166    148,863      -            -           -                  15         2             amazon
-Youtube-GATNE   2,000     1,310,617    -            -           -                  655        5             youtube
-Twitter         10,000    331,899      -            -           -                  33         4             twitter
+Amazon-GATNE    10,166    148,863       —           —                  —           15         2             amazon
+Youtube-GATNE   2,000     1,310,617     —           —                  —           655        5             youtube
+Twitter         10,000    331,899       —           —                  —           33         4             twitter
 =============== ========= ============ ============ =========== ================== ========== ============= ====================
 
 Knowledge Graph Link Prediction

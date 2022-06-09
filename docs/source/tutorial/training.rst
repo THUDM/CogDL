@@ -1,6 +1,48 @@
 Model Training
 ==============
+Customized  model training logic
+--------------------------------
+cogdl supports the selection of custom training logic, you can use the models and data sets in Cogdl to achieve your personalized needs.
 
+.. code-block:: python
+
+   import torch
+   import torch.nn as nn
+   import torch.nn.functional as F
+   from cogdl import experiment
+   from cogdl.datasets import build_dataset_from_name
+   from cogdl.layers import GCNLayer
+   from cogdl.models import BaseModel
+   class Gnn(BaseModel):
+       def __init__(self, in_feats, hidden_size, out_feats, dropout):
+           super(Gnn, self).__init__()
+           self.conv1 = GCNLayer(in_feats, hidden_size)
+           self.conv2 = GCNLayer(hidden_size, out_feats)
+           self.dropout = nn.Dropout(dropout)
+       def forward(self, graph):
+           graph.sym_norm()
+           h = graph.x
+           h = F.relu(self.conv1(graph, self.dropout(h)))
+           h = self.conv2(graph, self.dropout(h))
+           return F.log_softmax(h, dim=1)
+
+   if __name__ == "__main__":
+       dataset = build_dataset_from_name("cora")[0]
+       model = Gnn(in_feats=dataset.num_features, hidden_size=64, out_feats=dataset.num_classes, dropout=0.1)
+       optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-3)
+       model.train()
+       for epoch in range(300):
+           optimizer.zero_grad()
+           out = model(dataset)
+           loss = F.nll_loss(out[dataset.train_mask], dataset.y[dataset.train_mask])
+           loss.backward()
+           optimizer.step()
+       model.eval()
+       _, pred = model(dataset).max(dim=1)
+       correct = float(pred[dataset.test_mask].eq(dataset.y[dataset.test_mask]).sum().item())
+       acc = correct / dataset.test_mask.sum().item()
+       print('The accuracy rate obtained by running the experiment with the custom training logic: {:.6f}'.format(acc))
+       
 Unified Trainer
 ---------------
 CogDL provides a unified trainer for GNN models, which takes over the entire loop of the training process. The unified trainer, which contains much engineering code, is implemented flexibly to cover arbitrary GNN training settings. 
@@ -65,52 +107,6 @@ Or you can create each component separately and manually run the process using `
 As show above, model/dataset are key components in establishing a training process. In fact, CogDL also supports
 customized model and datasets. This will be introduced in next chapter. In the following we will briefly show the details
 of each component.
-
-Customized  model training logic
---------------------------------
-We can choose the model and data of Cogdl to customize the training logic, or we can directly use the API provided by Cogdl for training.
-
-.. code-block:: python
-
-   import torch
-   import torch.nn as nn
-   import torch.nn.functional as F
-   from cogdl import experiment
-   from cogdl.datasets import build_dataset_from_name
-   from cogdl.layers import GCNLayer
-   from cogdl.models import BaseModel
-   class Gnn(BaseModel):
-       def __init__(self, in_feats, hidden_size, out_feats, dropout):
-           super(Gnn, self).__init__()
-           self.conv1 = GCNLayer(in_feats, hidden_size)
-           self.conv2 = GCNLayer(hidden_size, out_feats)
-           self.dropout = nn.Dropout(dropout)
-       def forward(self, graph):
-           graph.sym_norm()
-           h = graph.x
-           h = F.relu(self.conv1(graph, self.dropout(h)))
-           h = self.conv2(graph, self.dropout(h))
-           return F.log_softmax(h, dim=1)
-
-   if __name__ == "__main__":
-       dataset = build_dataset_from_name("cora")[0]
-       model = Gnn(in_feats=dataset.num_features, hidden_size=64, out_feats=dataset.num_classes, dropout=0.1)
-       optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
-       model.train()
-       for epoch in range(300):
-           optimizer.zero_grad()
-           out = model(dataset)
-           loss = F.nll_loss(out[dataset.train_mask], dataset.y[dataset.train_mask])
-           loss.backward()
-           optimizer.step()
-       model.eval()
-       _, pred = model(dataset).max(dim=1)
-       correct = float(pred[dataset.test_mask].eq(dataset.y[dataset.test_mask]).sum().item())
-       acc = correct / dataset.test_mask.sum().item()
-       print('The accuracy rate obtained by running the experiment with the custom training logic: {:.6f}'.format(acc))
-       #Run the experiment through Cogdl API
-       experiment(dataset="cora", model=model, dw="node_classification_dw", mw="node_classification_mw")
-
 
 How to save trained model?
 --------------------------

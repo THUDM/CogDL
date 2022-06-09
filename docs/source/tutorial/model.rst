@@ -48,7 +48,7 @@ Grand(`Feng et al.,NLPS'20 <https://arxiv.org/pdf/2005.11079.pdf>`__)           
 GCNII((`Chen et al.,ICML’20  <https://arxiv.org/pdf/2007.02133.pdf>`__)                   gcnii
 DR-GAT `(Zou et al., 2019) <https://arxiv.org/abs/1907.02237>`__                          drgat
 MVGRL `(Hassani et al., KDD’20) <https://arxiv.org/pdf/2006.05582v1.pdf>`__               mvgrl
-APPNP `(Klicpera et al., ICLR’19) <https://arxiv.org/pdf/2006.05582v1.pdf>`__
+APPNP `(Klicpera et al., ICLR’19) <https://arxiv.org/pdf/2006.05582v1.pdf>`__             ppnp
 Graph U-Net `(Gao et al., 2019) <https://arxiv.org/abs/1905.05178>`__
 GAT `(Veličković et al., ICLR’18) <https://arxiv.org/abs/1710.10903>`__                   gat
 GDC_GCN `(Klicpera et al., NeurIPS’19) <https://arxiv.org/pdf/1911.05485.pdf>`__          gdc_gcn
@@ -68,7 +68,7 @@ Multiplex Node Classification
 ======================================================================================================================= =================
          Model                                                                                                           Name in Cogdl
 ======================================================================================================================= =================
-Simple-HGN `(Lv and Ding et al, KDD’21) <https://github.com/THUDM/HGB>`__
+Simple-HGN `(Lv and Ding et al, KDD’21) <https://github.com/THUDM/HGB>`__                                                  `simple-hgn <https://github.com/QingFei1/cogdl/tree/master/examples/simple_hgn>`__
 GTN `(Yun et al, NeurIPS’19) <https://arxiv.org/abs/1911.06455>`__                                                         gtn
 HAN `(Xiao et al, WWW’19) <https://arxiv.org/abs/1903.07293>`__                                                            han
 GCC `(Qiu et al, KDD’20) <http://keg.cs.tsinghua.edu.cn/jietang/publications/KDD20-Qiu-et-al-GCC-GNN-pretrain.pdf>`__      gcc

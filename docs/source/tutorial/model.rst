@@ -8,12 +8,23 @@ Inspired by recent trends of representation learning on computer vision and natu
 
 Recently, graph neural networks (GNNs) have been proposed and have achieved impressive performance in semi-supervised representation learning. Graph Convolution Networks (GCNs) proposes a convolutional architecture via a localized first-order approximation of spectral graph convolutions. GraphSAGE is a general inductive framework that leverages node features to generate node embeddings for previously unseen samples. Graph Attention Networks (GATs) utilizes the multi-head self-attention mechanism and enables (implicitly) specifying different weights to different nodes in a neighborhood.
 
+CogDL now supports the following tasks:
+-----------------------
+- unsupervised node classification
+- semi-supervised node classification
+- heterogeneous node classification
+- link prediction
+- multiplex link prediction
+- unsupervised graph classification
+- supervised graph classification
+- graph pre-training
+- attributed graph clustering
 
 Unsupervised Multi-label Node Classification
 ---------------------------------------------
 
 ==================================================================================================================== ================
-                                       model                                                                         Name in Cogdl
+                                       Model                                                                          Name in Cogdl
 ==================================================================================================================== ================
 NetMF `(Qiu et al, WSDM’18) <http://arxiv.org/abs/1710.02971>`__                                                          netmf
 ProNE `(Zhang et al, IJCAI’19) <https://www.ijcai.org/Proceedings/2019/0594.pdf>`__                                      prone
@@ -32,7 +43,7 @@ Semi-Supervised Node Classification with Attributes
 This leaderboard reports the semi-supervised node classification under a transductive setting including several popular graph neural network methods.
 
 ===================================================================================== ==================
-Method                                                                                Name in Cogdl
+Model                                                                                  Name in Cogdl
 ===================================================================================== ==================
 Grand(`Feng et al.,NLPS'20 <https://arxiv.org/pdf/2005.11079.pdf>`__)                     grand
 GCNII((`Chen et al.,ICML’20  <https://arxiv.org/pdf/2007.02133.pdf>`__)                   gcnii
@@ -58,7 +69,7 @@ Multiplex Node Classification
 For multiplex node classification, we use macro F1 to evaluate models. We evaluate all models under the setting and datasets of GTN.
 
 ======================================================================================================================= =================
-         Method                                                                                                           Name in Cogdl
+         Model                                                                                                           Name in Cogdl
 ======================================================================================================================= =================
 Simple-HGN `(Lv and Ding et al, KDD’21) <https://github.com/THUDM/HGB>`__
 GTN `(Yun et al, NeurIPS’19) <https://arxiv.org/abs/1911.06455>`__                                                         gtn
@@ -76,7 +87,7 @@ _______________
 For link prediction, we adopt Area Under the Receiver Operating Characteristic Curve (ROC AUC), which represents the probability that vertices in a random unobserved link are more similar than those in a random nonexistent link. We evaluate these measures while removing 10 percents of edges on these dataset. We repeat our experiments for 10 times and report the results in order.
 
 ================================================================================================ =============
- Method                                                                                          Name in Cogdl
+ Model                                                                                           Name in Cogdl
 ================================================================================================ =============
 ProNE `(Zhang et al, IJCAI’19) <https://www.ijcai.org/Proceedings/2019/0594.pdf>`__                 prone
 NetMF `(Qiu et al, WSDM’18) <http://arxiv.org/abs/1710.02971>`__                                    netmf
@@ -95,7 +106,7 @@ _________________________
 For multiplex link prediction, we adopt Area Under the Receiver Operating Characteristic Curve (ROC AUC). We evaluate these measures while removing 15 percents of edges on these dataset. We repeat our experiments for 10 times and report the three matrices in order.
 
 ============================================================================================ =============
- Method                                                                                      Name in Cogdl
+ Model                                                                                       Name in Cogdl
 ============================================================================================ =============
 GATNE `(Cen et al, KDD’19) <https://arxiv.org/abs/1905.01669>`__                                gatne
 NetMF `(Qiu et al, WSDM’18) <http://arxiv.org/abs/1710.02971>`__                                netmf
@@ -113,7 +124,7 @@ __________________________
 For knowledge graph completion, we adopt Mean Reciprocal Rank (MRR) as the evaluation metric. Every triplet-based embedding algorithm is trained with negative sample size 128 and learning rate 0.001. Every GNN-based embedding algorithm is trained with 3000 steps with patience 20.
 
 ======================================================================================================================================================== ==================
- Method                                                                                                                                                    Name in Cogdl
+ Model                                                                                                                                                     Name in Cogdl
 ======================================================================================================================================================== ==================
 RotatE `(Sun et al, ICLR’19) <https://arxiv.org/pdf/1902.10197.pdf>`__
 ComplEx `(Trouillon et al, ICML’18) <https://arxiv.org/abs/1606.06357>`__
@@ -128,7 +139,7 @@ ____________________
 This leaderboard reports the performance of graph classification methods. we run all algorithms on several datasets and report the sorted experimental results.
 
 ==================================================================================================== ===============
- Method                                                                                               Name in Cogdl
+ Model                                                                                                Name in Cogdl
 ==================================================================================================== ===============
 GIN `(Xu et al, ICLR’19) <https://openreview.net/forum?id=ryGs6iA5Km>`__                                 gin
 Infograph `(Sun et al, ICLR’20) <https://openreview.net/forum?id=r1lfF2NYvH>`__                         infograph

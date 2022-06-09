@@ -1,99 +1,6 @@
 Model Training
 ==============
 
-Introduction to graph representation learning
----------------------------------------------
-
-Inspired by recent trends of representation learning on computer vision and natural language processing, graph representation learning is proposed as an efficient technique to address this issue. 
-Graph representation aims at either learning low-dimensional continuous vectors for vertices/graphs while preserving intrinsic graph properties, or using graph encoders to an end-to-end training.
-
-Recently, graph neural networks (GNNs) have been proposed and have achieved impressive performance in semi-supervised representation learning. 
-Graph Convolution Networks (GCNs) proposes a convolutional architecture via a localized first-order approximation of spectral graph convolutions. 
-GraphSAGE is a general inductive framework that leverages node features to generate node embeddings for previously unseen samples. 
-Graph Attention Networks (GATs) utilizes the multi-head self-attention mechanism and enables (implicitly) specifying different weights to different nodes in a neighborhood.
-
-Models of CogDL
----------------
-
-CogDL now supports the following models for different tasks:
-
--  unsupervised node classification (无监督结点分类): ProNE `(Zhang et
-   al, IJCAI’19) <https://www.ijcai.org/Proceedings/2019/0594.pdf>`__,
-   NetMF `(Qiu et al, WSDM’18) <http://arxiv.org/abs/1710.02971>`__,
-   Node2vec `(Grover et al,
-   KDD’16) <http://dl.acm.org/citation.cfm?doid=2939672.2939754>`__,
-   NetSMF `(Qiu et at, WWW’19) <https://arxiv.org/abs/1906.11156>`__,
-   DeepWalk `(Perozzi et al,
-   KDD’14) <http://arxiv.org/abs/1403.6652>`__, LINE `(Tang et al,
-   WWW’15) <http://arxiv.org/abs/1503.03578>`__, Hope `(Ou et al,
-   KDD’16) <http://dl.acm.org/citation.cfm?doid=2939672.2939751>`__,
-   SDNE `(Wang et al,
-   KDD’16) <https://www.kdd.org/kdd2016/papers/files/rfp0191-wangAemb.pdf>`__,
-   GraRep `(Cao et al,
-   CIKM’15) <http://dl.acm.org/citation.cfm?doid=2806416.2806512>`__,
-   DNGR `(Cao et al,
-   AAAI’16) <https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/download/12423/11715>`__.
-
--  semi-supervised node classification (半监督结点分类): SGC-PN `(Zhao &
-   Akoglu, 2019) <https://arxiv.org/abs/1909.12223>`__, Graph U-Net
-   `(Gao et al., 2019) <https://arxiv.org/abs/1905.05178>`__, MixHop
-   `(Abu-El-Haija et al.,
-   ICML’19) <https://arxiv.org/abs/1905.00067>`__, DR-GAT `(Zou et al.,
-   2019) <https://arxiv.org/abs/1907.02237>`__, GAT `(Veličković et al.,
-   ICLR’18) <https://arxiv.org/abs/1710.10903>`__, DGI `(Veličković et
-   al., ICLR’19) <https://arxiv.org/abs/1809.10341>`__, GCN `(Kipf et
-   al., ICLR’17) <https://arxiv.org/abs/1609.02907>`__, GraphSAGE
-   `(Hamilton et al., NeurIPS’17) <https://arxiv.org/abs/1706.02216>`__,
-   Chebyshev `(Defferrard et al.,
-   NeurIPS’16) <https://arxiv.org/abs/1606.09375>`__.
-
--  heterogeneous node classification (异构结点分类): GTN `(Yun et al,
-   NeurIPS’19) <https://arxiv.org/abs/1911.06455>`__, HAN `(Xiao et al,
-   WWW’19) <https://arxiv.org/abs/1903.07293>`__, PTE `(Tang et al,
-   KDD’15) <https://arxiv.org/abs/1508.00200>`__, Metapath2vec `(Dong et
-   al,
-   KDD’17) <https://ericdongyx.github.io/papers/KDD17-dong-chawla-swami-metapath2vec.pdf>`__,
-   Hin2vec `(Fu et al,
-   CIKM’17) <https://dl.acm.org/doi/10.1145/3132847.3132953>`__.
-
--  multiplex link prediction (多重边链接预测): GATNE `(Cen et al,
-   KDD’19) <https://arxiv.org/abs/1905.01669>`__, NetMF `(Qiu et al,
-   WSDM’18) <http://arxiv.org/abs/1710.02971>`__, ProNE `(Zhang et al,
-   IJCAI’19) <https://www.ijcai.org/Proceedings/2019/0594.pdf>`__,
-   Node2vec `(Grover et al,
-   KDD’16) <http://dl.acm.org/citation.cfm?doid=2939672.2939754>`__,
-   DeepWalk `(Perozzi et al,
-   KDD’14) <http://arxiv.org/abs/1403.6652>`__, LINE `(Tang et al,
-   WWW’15) <http://arxiv.org/abs/1503.03578>`__, Hope `(Ou et al,
-   KDD’16) <http://dl.acm.org/citation.cfm?doid=2939672.2939751>`__,
-   GraRep `(Cao et al,
-   CIKM’15) <http://dl.acm.org/citation.cfm?doid=2806416.2806512>`__.
-
--  unsupervised graph classification (无监督图分类): Infograph `(Sun et
-   al, ICLR’20) <https://openreview.net/forum?id=r1lfF2NYvH>`__,
-   Graph2Vec `(Narayanan et al,
-   CoRR’17) <https://arxiv.org/abs/1707.05005>`__, DGK `(Yanardag et al,
-   KDD’15) <https://dl.acm.org/doi/10.1145/2783258.2783417>`__.
-
--  supervised graph classification (有监督图分类): GIN `(Xu et al,
-   ICLR’19) <https://openreview.net/forum?id=ryGs6iA5Km>`__, DiffPool
-   `(Ying et al, NeuIPS’18) <https://arxiv.org/abs/1806.08804>`__,
-   SortPool `(Zhang et al,
-   AAAI’18) <https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf>`__,
-   PATCHY_SAN `(Niepert et al,
-   ICML’16) <https://arxiv.org/pdf/1605.05273.pdf>`__, DGCNN `(Wang et
-   al, ACM Transactions on
-   Graphics’17) <https://arxiv.org/abs/1801.07829>`__.
-
-..
-
-   ``metis`` is required to run ClusterGCN, you can follow the following
-   steps to install ``metis``. 1) Download metis-5.1.0.tar.gz from
-   http://glaros.dtc.umn.edu/gkhome/metis/metis/download and unpack it
-   2) cd metis-5.1.0 3) make config shared=1 prefix=~/.local/ 4) make
-   install 5) export METIS_DLL=~/.local/lib/libmetis.so 6) pip install
-   metis
-
 Unified Trainer
 ---------------
 CogDL provides a unified trainer for GNN models, which takes over the entire loop of the training process. The unified trainer, which contains much engineering code, is implemented flexibly to cover arbitrary GNN training settings. 
@@ -158,6 +65,51 @@ Or you can create each component separately and manually run the process using `
 As show above, model/dataset are key components in establishing a training process. In fact, CogDL also supports
 customized model and datasets. This will be introduced in next chapter. In the following we will briefly show the details
 of each component.
+
+Customized  model training logic
+--------------------------------
+We can choose the model and data of Cogdl to customize the training logic, or we can directly use the API provided by Cogdl for training.
+
+.. code-block:: python
+
+   import torch
+   import torch.nn as nn
+   import torch.nn.functional as F
+   from cogdl import experiment
+   from cogdl.datasets import build_dataset_from_name
+   from cogdl.layers import GCNLayer
+   from cogdl.models import BaseModel
+   class Gnn(BaseModel):
+       def __init__(self, in_feats, hidden_size, out_feats, dropout):
+           super(Gnn, self).__init__()
+           self.conv1 = GCNLayer(in_feats, hidden_size)
+           self.conv2 = GCNLayer(hidden_size, out_feats)
+           self.dropout = nn.Dropout(dropout)
+       def forward(self, graph):
+           graph.sym_norm()
+           h = graph.x
+           h = F.relu(self.conv1(graph, self.dropout(h)))
+           h = self.conv2(graph, self.dropout(h))
+           return F.log_softmax(h, dim=1)
+
+   if __name__ == "__main__":
+       dataset = build_dataset_from_name("cora")[0]
+       model = Gnn(in_feats=dataset.num_features, hidden_size=64, out_feats=dataset.num_classes, dropout=0.1)
+       optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
+       model.train()
+       for epoch in range(300):
+           optimizer.zero_grad()
+           out = model(dataset)
+           loss = F.nll_loss(out[dataset.train_mask], dataset.y[dataset.train_mask])
+           loss.backward()
+           optimizer.step()
+       model.eval()
+       _, pred = model(dataset).max(dim=1)
+       correct = float(pred[dataset.test_mask].eq(dataset.y[dataset.test_mask]).sum().item())
+       acc = correct / dataset.test_mask.sum().item()
+       print('The accuracy rate obtained by running the experiment with the custom training logic: {:.6f}'.format(acc))
+       #Run the experiment through Cogdl API
+       experiment(dataset="cora", model=model, dw="node_classification_dw", mw="node_classification_mw")
 
 
 How to save trained model?

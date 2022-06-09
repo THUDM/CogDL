@@ -40,7 +40,6 @@ GraRep `(Cao et al, CIKM’15) <http://dl.acm.org/citation.cfm?doid=2806416.2806
 Semi-Supervised Node Classification with Attributes
 ---------------------------------------------------
 
-This leaderboard reports the semi-supervised node classification under a transductive setting including several popular graph neural network methods.
 
 ===================================================================================== ==================
 Model                                                                                  Name in Cogdl
@@ -66,8 +65,6 @@ MixHop  `(Abu-El-Haija et al., ICML’19) <https://arxiv.org/abs/1905.00067>`__ 
 Multiplex Node Classification
 -----------------------------
 
-For multiplex node classification, we use macro F1 to evaluate models. We evaluate all models under the setting and datasets of GTN.
-
 ======================================================================================================================= =================
          Model                                                                                                           Name in Cogdl
 ======================================================================================================================= =================
@@ -84,7 +81,6 @@ Hin2vec `(Fu et al, CIKM’17) <https://dl.acm.org/doi/10.1145/3132847.3132953>`
 Link Prediction
 _______________
 
-For link prediction, we adopt Area Under the Receiver Operating Characteristic Curve (ROC AUC), which represents the probability that vertices in a random unobserved link are more similar than those in a random nonexistent link. We evaluate these measures while removing 10 percents of edges on these dataset. We repeat our experiments for 10 times and report the results in order.
 
 ================================================================================================ =============
  Model                                                                                           Name in Cogdl
@@ -103,7 +99,6 @@ SDNE `(Wang et al, KDD’16) <https://www.kdd.org/kdd2016/papers/files/rfp0191-w
 
 Multiplex Link Prediction
 _________________________
-For multiplex link prediction, we adopt Area Under the Receiver Operating Characteristic Curve (ROC AUC). We evaluate these measures while removing 15 percents of edges on these dataset. We repeat our experiments for 10 times and report the three matrices in order.
 
 ============================================================================================ =============
  Model                                                                                       Name in Cogdl
@@ -121,7 +116,6 @@ GraRep `(Cao et al, CIKM’15) <http://dl.acm.org/citation.cfm?doid=2806416.2806
 Knowledge graph completion
 __________________________
 
-For knowledge graph completion, we adopt Mean Reciprocal Rank (MRR) as the evaluation metric. Every triplet-based embedding algorithm is trained with negative sample size 128 and learning rate 0.001. Every GNN-based embedding algorithm is trained with 3000 steps with patience 20.
 
 ======================================================================================================================================================== ==================
  Model                                                                                                                                                     Name in Cogdl
@@ -136,7 +130,6 @@ CompGCN `(Vashishth et al, ICLR’20) <https://arxiv.org/abs/1911.03082>`__     
 
 Graph Classification
 ____________________
-This leaderboard reports the performance of graph classification methods. we run all algorithms on several datasets and report the sorted experimental results.
 
 ==================================================================================================== ===============
  Model                                                                                                Name in Cogdl

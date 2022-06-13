@@ -18,6 +18,8 @@ import sys
 from datetime import date
 from os import path
 
+from sphinx_gallery.sorting import ExplicitOrder
+
 
 def read(filename):
     here = path.dirname(path.abspath(__file__))
@@ -84,8 +86,18 @@ extensions = [
     "sphinx.ext.napoleon",
     "recommonmark",
     "sphinx_markdown_tables",
+    "sphinx_gallery.gen_gallery"
 ]
 
+sphinx_gallery_conf = {
+     'examples_dirs': 'examples',   # path to your example scripts
+     'subsection_order': ExplicitOrder(['examples/graph.py',
+                                       'examples/trainning.py',
+                                       'examples/custom_dataset.py',
+                                        'examples/custom_gnn.py']),
+     'gallery_dirs': 'auto_examples'  # path to where to save gallery generated output
+
+    }
 
 # generate autosummary pages
 autosummary_generate = True

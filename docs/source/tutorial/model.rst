@@ -1,4 +1,4 @@
-Models of cogdl
+Models of Cogdl
 ======================
 
 
@@ -8,8 +8,8 @@ Inspired by recent trends of representation learning on computer vision and natu
 
 Recently, graph neural networks (GNNs) have been proposed and have achieved impressive performance in semi-supervised representation learning. Graph Convolution Networks (GCNs) proposes a convolutional architecture via a localized first-order approximation of spectral graph convolutions. GraphSAGE is a general inductive framework that leverages node features to generate node embeddings for previously unseen samples. Graph Attention Networks (GATs) utilizes the multi-head self-attention mechanism and enables (implicitly) specifying different weights to different nodes in a neighborhood.
 
-CogDL now supports the following tasks:
------------------------
+CogDL now supports the following tasks
+--------------------------------------
 - unsupervised node classification
 - semi-supervised node classification
 - heterogeneous node classification
@@ -20,8 +20,15 @@ CogDL now supports the following tasks:
 - graph pre-training
 - attributed graph clustering
 
+CogDL provides abundant of common benchmark datasets and GNN models. You can simply start a running using models and datasets in CogDL.
+
+.. code-block:: python
+
+    from cogdl import experiment
+    experiment(model="gcn", dataset="cora")
+
 Unsupervised Multi-label Node Classification
----------------------------------------------
+____________________________________________
 
 ==================================================================================================================== ================
                                        Model                                                                          Name in Cogdl
@@ -38,7 +45,7 @@ GraRep `(Cao et al, CIKM’15) <http://dl.acm.org/citation.cfm?doid=2806416.2806
 ==================================================================================================================== ================
 
 Semi-Supervised Node Classification with Attributes
----------------------------------------------------
+___________________________________________________
 
 
 ===================================================================================== ==================
@@ -60,7 +67,7 @@ MixHop  `(Abu-El-Haija et al., ICML’19) <https://arxiv.org/abs/1905.00067>`__ 
 ===================================================================================== ==================
 
 Multiplex Node Classification
------------------------------
+______________________________
 
 ======================================================================================================================= =================
          Model                                                                                                           Name in Cogdl
@@ -78,7 +85,6 @@ Hin2vec `(Fu et al, CIKM’17) <https://dl.acm.org/doi/10.1145/3132847.3132953>`
 Link Prediction
 _______________
 
-
 ================================================================================================ =============
  Model                                                                                           Name in Cogdl
 ================================================================================================ =============
@@ -95,7 +101,7 @@ SDNE `(Wang et al, KDD’16) <https://www.kdd.org/kdd2016/papers/files/rfp0191-w
 
 
 Multiplex Link Prediction
-_________________________
+___________________________
 
 ============================================================================================ =============
  Model                                                                                       Name in Cogdl
@@ -122,7 +128,7 @@ CompGCN `(Vashishth et al, ICLR’20) <https://arxiv.org/abs/1911.03082>`__     
 
 
 Graph Classification
-____________________
+_______________________
 
 ==================================================================================================== ===============
  Model                                                                                                Name in Cogdl

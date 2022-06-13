@@ -222,9 +222,22 @@ reflect to the original graph. However, in-place operation will affect the origi
 
 Common graph datasets
 ---------------------
+CogDL provides a bunch of commonly used datasets for graph tasks like node classification, graph classification and others.
+You can access them conveniently shown as follows.
 
-Datasets of CogDL
-=========================
+.. code-block:: python
+
+    from cogdl.datasets import build_dataset_from_name
+    dataset = build_dataset_from_name("cora")
+
+    from cogdl.datasets import build_dataset
+    dataset = build_dataset(args) # if args.dataet = "cora"
+
+
+
+For all datasets for node classification, we use `train_mask`, `val_mask`, `test_mask` to denote
+train/validation/test split for nodes.
+
 
 CogDL now supports the following datasets for different tasks:
 
@@ -235,11 +248,21 @@ CogDL now supports the following datasets for different tasks:
 - Multiplex link prediction: Amazon, YouTube, Twitter
 - graph classification: MUTAG, IMDB-B, IMDB-M, PROTEINS, COLLAB, NCI, NCI109, Reddit-BINARY
 
-Node classification
----------------------------------
+Network Embedding(Unsupervised Node classification)
+___________________________________________________
+============= ============ ============ =========== ========== =================
+  Dataset        Nodes       Edges       Classes     Degree       Name in Cogdl
+============= ============ ============ =========== ========== =================
+  PPI            3,890        76,584       50(m)       —          ppi-ne
+  BlogCatalog    10,312       333,983      40(m)       32         blogcatalog
+  Wikipedia      4.777        184,812      39(m)       39         wikipedia
+  Flickr         80,513       5,899,882    195(m)      73         flickr-ne
+  DBLP           51,264       2,990,443    60(m)       2          dblp-ne
+  Youtube        1,138,499    2,990,443    47(m)       3          youtube-ne
+============= ============ ============ =========== ========== =================
 
-CogDL provides a bunch of commonly used datasets for graph tasks like node classification, graph classification and others.
-You can access them conveniently shown as follows.
+Node classification
+______________________
 
 =================== ============== =============== ============ =========== ======================= ========= ===============
      Dataset             Nodes         Edges          Features    Classes    Train/Val/Test         Degree     Name in cogdl
@@ -262,21 +285,8 @@ You can access them conveniently shown as follows.
     Amazon-SAINT       1,598,960      132,169,734     200          107(m)      0.85 / 0.05 / 0.10      83      amazon-s
 =================== ============== =============== ============ =========== ======================= ========= ===============
 
-Network Embedding(Unsupervised Node classification)
-------------------------------------------------------------------
-============= ============ ============ =========== ========== =================
-  Dataset        Nodes       Edges       Classes     Degree       Name in Cogdl
-============= ============ ============ =========== ========== =================
-  PPI            3,890        76,584       50(m)       —          ppi-ne
-  BlogCatalog    10,312       333,983      40(m)       32         blogcatalog
-  Wikipedia      4.777        184,812      39(m)       39         wikipedia
-  Flickr         80,513       5,899,882    195(m)      73         flickr-ne
-  DBLP           51,264       2,990,443    60(m)       2          dblp-ne
-  Youtube        1,138,499    2,990,443    47(m)       3          youtube-ne
-============= ============ ============ =========== ========== =================
-
 Heterogenous Graph
-------------------------------------------------------------------
+__________________
 =============== ========= ============ ============ =========== ================== ========== ============= ====================
 Dataset          Nodes     Edges        Features     Classes     Train/Val/Test     Degree     Edge Type     Name in Cogdl
 =============== ========= ============ ============ =========== ================== ========== ============= ====================
@@ -289,7 +299,7 @@ Twitter         10,000    331,899       —           —                  —  
 =============== ========= ============ ============ =========== ================== ========== ============= ====================
 
 Knowledge Graph Link Prediction
-------------------------------------------------------------------
+________________________________
 ============ ========= ========= =========================== =================== ========== =================
 Dataset       Nodes     Edges     Train/Val/Test              Relations Types     Degree     Name in Cogdl
 ============ ========= ========= =========================== =================== ========== =================
@@ -301,7 +311,7 @@ WN18RR       86,835    93,003    86,835 / 3,034 / 3,134      11                 
 ============ ========= ========= =========================== =================== ========== =================
 
 Graph Classification
-------------------------------------------------------------------
+_____________________
 
 TUdataset from https://www.chrsmrrs.com/graphkerneldatasets
 
@@ -324,15 +334,4 @@ BACE               1,513      2           34.1          bace
 ================== ========== =========== ============= ===================
 
 
-.. code-block:: python
 
-    from cogdl.datasets import build_dataset_from_name
-    dataset = build_dataset_from_name("cora")
-    
-    from cogdl.datasets import build_dataset
-    dataset = build_dataset(args) # if args.dataet = "cora"
-
-
-
-For all datasets for node classification, we use `train_mask`, `val_mask`, `test_mask` to denote
-train/validation/test split for nodes.

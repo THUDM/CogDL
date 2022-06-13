@@ -54,10 +54,12 @@ Please cite `our paper <https://arxiv.org/abs/2103.00959>`_ if you find our code
    :caption: Tutorials 
 
    tutorial/graph
+   tutorial/model
    tutorial/training
    tutorial/custom_dataset
    tutorial/custom_gnn
    tutorial/results
+   auto_examples/index
 
 .. toctree::
    :maxdepth: 2

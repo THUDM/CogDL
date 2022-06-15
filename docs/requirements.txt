@@ -23,3 +23,4 @@ https://pytorch-geometric.com/whl/torch-1.7.0+cpu/torch_sparse-0.6.9-cp37-cp37m-
 numba
 transformers
 sentencepiece
+sphinx-gallery==0.10.0

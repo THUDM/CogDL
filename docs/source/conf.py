@@ -18,6 +18,8 @@ import sys
 from datetime import date
 from os import path
 
+from sphinx_gallery.sorting import ExplicitOrder, FileNameSortKey
+
 
 def read(filename):
     here = path.dirname(path.abspath(__file__))
@@ -84,8 +86,16 @@ extensions = [
     "sphinx.ext.napoleon",
     "recommonmark",
     "sphinx_markdown_tables",
+    "sphinx_gallery.gen_gallery"
 ]
 
+sphinx_gallery_conf = {
+    'examples_dirs': ['examples', 'tutorial_cn/examples'],
+    'gallery_dirs': ['auto_examples', 'tutorial_cn/auto_examples'],
+
+    'within_subsection_order': FileNameSortKey
+
+    }
 
 # generate autosummary pages
 autosummary_generate = True

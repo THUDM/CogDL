@@ -18,7 +18,7 @@ import sys
 from datetime import date
 from os import path
 
-from sphinx_gallery.sorting import ExplicitOrder
+from sphinx_gallery.sorting import ExplicitOrder, FileNameSortKey
 
 
 def read(filename):
@@ -90,12 +90,10 @@ extensions = [
 ]
 
 sphinx_gallery_conf = {
-     'examples_dirs': 'examples',   # path to your example scripts
-     'subsection_order': ExplicitOrder(['examples/graph.py',
-                                       'examples/trainning.py',
-                                       'examples/custom_dataset.py',
-                                        'examples/custom_gnn.py']),
-     'gallery_dirs': 'auto_examples'  # path to where to save gallery generated output
+    'examples_dirs': ['examples', 'tutorial_cn/examples'],
+    'gallery_dirs': ['auto_examples', 'tutorial_cn/auto_examples'],
+
+    'within_subsection_order': FileNameSortKey
 
     }
 

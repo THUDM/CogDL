@@ -69,7 +69,7 @@ DGI            GCN      dgi\_mw          full-graph
 
 Based on the design of the unified trainer and decoupled modules, we could do arbitrary combinations of models, model wrappers, and data wrappers. For example, if we want to apply DGI to large-scale datasets, all we need is to substitute the full-graph data wrapper with the neighbor-sampling or clustering data wrappers without additional modifications. 
 If we propose a new GNN model, all we need is to write essential PyTorch-style code for the model. The rest could be automatically handled by CogDL by specifying the model wrapper and the data wrapper. 
-We could quickly conduct experiments for the model using the trainer via \textit{trainer = Trainer(epochs,...)} and \textit{trainer.run(...)}. 
+We could quickly conduct experiments for the model using the trainer via ``trainer = Trainer(epochs,...)`` and ``trainer.run(...)``.
 Moreover, based on the unified trainer, CogDL provides native support for many useful features, including hyperparameter optimization, efficient training techniques, and experiment management without any modification to the model implementation. 
 
 

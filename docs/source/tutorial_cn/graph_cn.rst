@@ -1,37 +1,33 @@
-Introduction to Graphs
+图简介
 ======================
 
+真实世界的图表
+-------------
+图结构数据已在许多现实世界场景中得到广泛应用。例如，Facebook 上的每个用户都可以被视为一个顶点，而他们之间比如友谊或追随性等关系可以被视为图中的边。
+我们可能对预测用户的兴趣或者对网络中的一对节点是否有有连接它们的边感兴趣。
 
-Real-world graphs
------------------
-Graph-structured data have been widely utilized in many real-world scenarios. 
-For example, each user on Facebook can be seen as a vertex and their relations like friendship or followership can be seen as edges in the graph. 
-We might be interested in predicting the interests of users, or whether a pair of nodes in a network might have an edge connecting them.
-
-A graph can be represented using an adjacency matrix
+我们可以使用邻接矩阵表示一张图
 
 .. image:: ../_static/graph.jpg
 
+如何在 CogDL 中表示图形
+--------------------
+图用于存储结构化数据的信息,在CogDL中使用cogdl.data.Graph对象来表示一张图。简而言之，一个Graph具有以下属性：
 
-How to represent a graph in CogDL
----------------------------------
-A graph is used to store information of structured data. CogDL represents a graph with a ``cogdl.data.Graph`` object.
-Briefly, a ``Graph`` holds the following attributes:
+- x: 节点特征矩阵，shape[num_nodes, num_features]，torch.Tensor
+- edge_index：COO格式的稀疏矩阵，tuple
+- edge_weight：边权重shape[num_edges,]，torch.Tensor
+- edge_attr：边属性矩阵shape[num_edges, num_attr]
+- y: 每个节点的目标标签,单标签情况下shape [num_nodes,],多标签情况下的shape [num_nodes, num_labels]
+- row_indptr：CSR 稀疏矩阵的行索引指针，torch.Tensor。
+- col_indices：CSR 稀疏矩阵的列索引，torch.Tensor。
+- num_nodes：图中的节点数。
+- num_edges：图中的边数。
 
-- ``x``: Node feature matrix with shape ``[num_nodes, num_features]``, `torch.Tensor`
-- ``edge_index``:  COO format sparse matrix, `Tuple`
-- ``edge_weight``: Edge weight with shape ``[num_edges,]``, `torch.Tensor`
-- ``edge_attr``: Edge attribute matrix with shape ``[num_edges, num_attr]``
-- ``y``: Target labels of each node, with shape ``[num_nodes,]`` for single label case and `[num_nodes, num_labels]` for mult-label case
-- ``row_indptr``: Row index pointer for CSR sparse matrix, `torch.Tensor`.
-- ``col_indices``: Column indices for CSR sparse matrix, `torch.Tensor`.
-- ``num_nodes``: The number of nodes in graph.
-- ``num_edges``: The number of edges in graph.
+以上是基本属性，但不是必需的。你可以用 g = Graph(edge_index=edges) 定义一个图并省略其他属性。此外，Graph不限于这些属性，还支持其他自定义属性，
+例如graph.mask = mask。
 
-The above are the basic attributes but are not necessary. You may define a graph with `g = Graph(edge_index=edges)` and omit the others.
-Besides, ``Graph`` is not restricted to these attributes and other self-defined attributes, e.g., `graph.mask = mask`, are also supported.
-
-Represent this graph in cogdl:
+在Cogdl中表示这张图
 
 ======== ========
 |image2| |image3|
@@ -40,11 +36,7 @@ Represent this graph in cogdl:
 .. |image2| image:: ../_static/coo.png
 .. |image3| image:: ../_static/csr.png
 
-
-
-``Graph`` stores sparse matrix with COO or CSR format. COO format is easier to add or remove edges, e.x. `add_self_loops`, and CSR is stored for fast message-passing.
-``Graph`` automatically convert between two formats and you can use both on demands without worrying. You can create a Graph with edges or assign edges
-to a created graph. `edge_weight` will be automatically initialized as all ones, and you can modify it to fit your need.
+Graph以 COO 或 CSR 格式存储稀疏矩阵。COO 格式更容易添加或删除边，例如 add_self_loops，使用CSR存储是为了用于快速消息传递。 Graph自动在两种格式之间转换，您可以按需使用两种格式而无需担心。您可以创建带有边的图形或将边分配给创建的图形。edge_weight 将自动初始化为1，您可以根据需要对其进行修改。
 
 .. code-block:: python
 
@@ -67,28 +59,29 @@ to a created graph. `edge_weight` will be automatically initialized as all ones,
     print(g.edge_weight)
     >> tensor([0.8399, 0.6341, 0.3028, 0.0602, 0.7190])
 
-We also implement commonly used operations in ``Graph``:
+我们在Graph中实现了常用的操作：
 
-- ``add_self_loops``: add self loops for nodes in graph,
+- ``add_self_loops``: 为图中的节点添加自循环
 
 .. math::
 
     \hat{A}=A+I
 
-- ``add_remaining_self_loops``: add self-loops for nodes without it.
-- ``sym_norm``: symmetric normalization of edge_weight used `GCN`:
+- ``add_remaining_self_loops``: 为图中还没有自环的节点添加自环
+
+- ``sym_norm``:使用 GCN 的 edge_weight 的对称归一化
 
 .. math::
 
     \hat{A}=D^{-1/2}AD^{-1/2}
 
-- ``row_norm``: row-wise normalization of edge_weight:
+- ``row_norm``: edge_weight 的逐行归一化:
 
 .. math::
 
     \hat{A} = D^{-1}A
 
-- ``degrees``: get degrees for each node. For directed graph, this function returns in-degrees of each node.
+- ``degrees``: 获取每个节点的度数。对于有向图，此函数返回每个节点的入度
 
 .. code-block:: python
 
@@ -103,9 +96,9 @@ We also implement commonly used operations in ``Graph``:
     g.row_norm()
     >> print(edge_weight) # tensor([0.3333, ..., 0.50])
 
-- ``subgraph``: get a subgraph containing given nodes and edges between them.
-- ``edge_subgraph``: get a subgraph containing given edges and corresponding nodes.
-- ``sample_adj``: sample a fixed number of neighbors for each given node.
+- ``subgraph``: 得到一个包含给定节点和它们之间的边的子图。
+- ``edge_subgraph``: 得到一个包含给定边和相应节点的子图。
+- ``sample_adj``: 为每个给定节点采样固定数量的邻居
 
 .. code-block:: python
 
@@ -122,7 +115,7 @@ We also implement commonly used operations in ``Graph``:
     nodes, adj_g = g.sample_adj(torch.arange(100), size=3)
     >> Graph(edge_index=[2, 300]) # adj_g
 
-- ``train/eval``: In inductive settings, some nodes and edges are unseen during training, ``train/eval`` provides access to switching backend graph for training/evaluation. In transductive setting, you may ignore this.
+- ``train/eval``:在inductive的设置中, 一些节点和边在trainning中看不见的, 对于training/evaluation使用 ``train/eval`` 来切换backend graph. 在transductive设置中,您可以忽略这一点.
 
 .. code-block:: python
 
@@ -135,14 +128,12 @@ We also implement commonly used operations in ``Graph``:
     graph.eval()
 
 
+如何构建mini-batch graphs
+-------------------------
 
-How to construct mini-batch graphs
-----------------------------------
-
-In node classification, all operations are in one single graph. But in tasks like graph classification, we need to deal with
-many graphs with mini-batch. Datasets for graph classification contains graphs which can be accessed with index, e.x. ``data[2]``.
-To support mini-batch training/inference, CogDL combines graphs in a batch into one whole graph, where adjacency matrices form sparse block diagnal matrices
-and others(node features, labels) are concatenated in node dimension. ``cogdl.data.Dataloader`` handles the process.
+在节点分类中，所有操作都在一个图中。但是在像图分类这样的任务中，我们需要用 mini-batch 处理很多图。图分类的数据集包含可以使用索引访问的图，例如data
+[2]。为了支持小批量训练/推理，CogDL 将一批中的图组合成一个完整的图，其中邻接矩阵形成稀疏块对角矩阵，其他的（节点特征、标签）在节点维度上连接。
+这个过程由由cogdl.data.Dataloader来处理。
 
 .. code-block:: python
 
@@ -160,16 +151,13 @@ and others(node features, labels) are concatenated in node dimension. ``cogdl.da
 
 
 
-
-``batch`` is an additional attributes that indicate the respective graph the node belongs to. It is mainly used to do global
-pooling, or called `readout` to generate graph-level representation. Concretely, ``batch`` is a tensor like:
+``batch`` 是一个附加属性，指示节点所属的各个图。它主要用于做全局池化，或者称为readout来生成graph-level表示。具体来说，batch是一个像这样的张量
 
 .. math::
 
     batch=[0,..,0, 1,...,1, N-1,...,N-1]
 
-
-The following code snippet shows how to do global pooling to sum over features of nodes in each graph:
+以下代码片段显示了如何进行全局池化对每个图中节点的特征进行求和
 
 .. code-block:: python
 
@@ -184,13 +172,11 @@ The following code snippet shows how to do global pooling to sum over features o
         return out
 
 
+如何编辑一个graph?
+----------------
 
-How to edit the graph?
-----------------------
-Changes can be applied to edges in some settings. In such cases, we need to `generate` a graph for calculation while
-keep the original graph. CogDL provides `graph.local_graph` to set up a local scape and any out-of-place operation will not
-reflect to the original graph. However, in-place operation will affect the original graph.
-
+在某些设置中，可以更改edges.在这种情况下，我们需要在保留原始图的同时生成计算图。CogDL 提供了 graph.local_graph 来设置local scape，任何out-of-place
+操作都不会反映到原始图上。但是， in-place操作会影响原始图形。
 
 .. code-block:: python
 
@@ -214,12 +200,10 @@ reflect to the original graph. However, in-place operation will affect the origi
     >> tensor([2.,...,2.])
 
 
-
-
-Common graph datasets
+常见的graph数据集
 ---------------------
-CogDL provides a bunch of commonly used datasets for graph tasks like node classification, graph classification and others.
-You can access them conveniently shown as follows.
+
+CogDL 为节点分类、图分类等任务提供了一些常用的数据集。您可以方便地访问它们，如下所示：
 
 .. code-block:: python
 
@@ -229,22 +213,18 @@ You can access them conveniently shown as follows.
     from cogdl.datasets import build_dataset
     dataset = build_dataset(args) # if args.dataet = "cora"
 
+对于节点分类的所有数据集，我们使用 train_mask、val_mask、test_mask 来表示节点的训练/验证/测试拆分。
 
+CogDL 现在支持以下的数据集用于不同的任务：
 
-For all datasets for node classification, we use `train_mask`, `val_mask`, `test_mask` to denote
-train/validation/test split for nodes.
+- Network Embedding (无监督节点分类): PPI, Blogcatalog, Wikipedia, Youtube, DBLP, Flickr
+- 半监督/无监督节点分类: Cora, Citeseer, Pubmed, Reddit, PPI, PPI-large, Yelp, Flickr, Amazon
+- 异构节点分类: DBLP, ACM, IMDB
+- 链接预测: PPI, Wikipedia, Blogcatalog
+- 多路链接预测: Amazon, YouTube, Twitter
+- 图分类: MUTAG, IMDB-B, IMDB-M, PROTEINS, COLLAB, NCI, NCI109, Reddit-BINARY
 
-
-CogDL now supports the following datasets for different tasks:
-
-- Network Embedding (Unsupervised node classification): PPI, Blogcatalog, Wikipedia, Youtube, DBLP, Flickr
-- Semi/Un-superviesd Node classification: Cora, Citeseer, Pubmed, Reddit, PPI, PPI-large, Yelp, Flickr, Amazon
-- Heterogeneous node classification: DBLP, ACM, IMDB
-- Link prediction: PPI, Wikipedia, Blogcatalog
-- Multiplex link prediction: Amazon, YouTube, Twitter
-- graph classification: MUTAG, IMDB-B, IMDB-M, PROTEINS, COLLAB, NCI, NCI109, Reddit-BINARY
-
-Network Embedding(Unsupervised Node classification)
+Network Embedding(无监督节点分类)
 ___________________________________________________
 ============= ============ ============ =========== ========== =================
   Dataset        Nodes       Edges       Classes     Degree       Name in Cogdl
@@ -257,8 +237,8 @@ ___________________________________________________
   Youtube        1,138,499    2,990,443    47(m)       3          youtube-ne
 ============= ============ ============ =========== ========== =================
 
-Node classification
-______________________
+节点分类
+________
 
 =================== ============== =============== ============ =========== ======================= ========= ===============
      Dataset             Nodes         Edges          Features    Classes    Train/Val/Test         Degree     Name in cogdl
@@ -281,7 +261,7 @@ ______________________
     Amazon-SAINT       1,598,960      132,169,734     200          107(m)      0.85 / 0.05 / 0.10      83      amazon-s
 =================== ============== =============== ============ =========== ======================= ========= ===============
 
-Heterogenous Graph
+异构图
 __________________
 =============== ========= ============ ============ =========== ================== ========== ============= ====================
 Dataset          Nodes     Edges        Features     Classes     Train/Val/Test     Degree     Edge Type     Name in Cogdl
@@ -294,7 +274,7 @@ Youtube-GATNE   2,000     1,310,617     —           —                  —  
 Twitter         10,000    331,899       —           —                  —           33         4             twitter
 =============== ========= ============ ============ =========== ================== ========== ============= ====================
 
-Knowledge Graph Link Prediction
+知识图谱链接预测
 ________________________________
 ============ ========= ========= =========================== =================== ========== =================
 Dataset       Nodes     Edges     Train/Val/Test              Relations Types     Degree     Name in Cogdl
@@ -306,7 +286,7 @@ WN18         40,943    151,442   141,442 / 5,000 / 5,000     18                 
 WN18RR       86,835    93,003    86,835 / 3,034 / 3,134      11                  1          wn18rr
 ============ ========= ========= =========================== =================== ========== =================
 
-Graph Classification
+图分类
 _____________________
 
 TUdataset from https://www.chrsmrrs.com/graphkerneldatasets

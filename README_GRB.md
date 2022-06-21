@@ -195,5 +195,5 @@ print(model)
 
 - [ ] RobustGCN 存在问题
 - [ ] betweenness Flip modification attack 卡住
-- [ ] PRBCD modification attack 不支持CUDA，且在cpu上非常慢
+- [ ] PRBCD modification attack 不支持CUDA，且在cpu上非常慢，输出inf
 - [ ] leaderboards

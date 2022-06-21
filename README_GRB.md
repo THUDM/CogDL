@@ -194,4 +194,6 @@ print(model)
 ## Todo
 
 - [ ] RobustGCN 存在问题
+- [ ] betweenness Flip modification attack 卡住
+- [ ] PRBCD modification attack 不支持CUDA
 - [ ] leaderboards

@@ -5,7 +5,7 @@ import scipy.sparse as sp
 import torch
 import torch.nn.functional as F
 
-from grb.attack.base import InjectionAttack
+from cogdl.attack.base import InjectionAttack
 from cogdl.utils.grb_utils import eval_acc, feat_preprocess, adj_preprocess, getGraph, getGRBGraph
 
 

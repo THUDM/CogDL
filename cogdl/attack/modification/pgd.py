@@ -59,7 +59,7 @@ class PGD(ModificationAttack):
         # adj, features = getGRBGraph(graph)
         adj = graph.to_scipy_csr()
         index_target = graph.test_nid.cpu()
-        features = graph.x
+        features = graph.x.clone().detach()
         features = feat_preprocess(features=features,
                                    feat_norm=feat_norm,
                                    device=self.device)

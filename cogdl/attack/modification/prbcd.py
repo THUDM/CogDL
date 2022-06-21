@@ -86,7 +86,7 @@ class PRBCD(ModificationAttack):
         time_start = time.time()
         model.to(self.device)
         adj = graph.to_scipy_csr()
-        features = graph.x
+        features = graph.x.clone().detach()
 
         self.n = adj.shape[0]
         if self.make_undirected:

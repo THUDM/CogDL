@@ -126,7 +126,7 @@ class TDGIA(InjectionAttack):
         # adj, features = getGRBGraph(graph)
         adj = graph.to_scipy_csr()
         target_mask = graph.test_mask
-        features = graph.x
+        features = graph.x.clone()
         model.to(self.device)
         n_total, n_feat = features.shape
         features = feat_preprocess(features=features,
@@ -143,10 +143,10 @@ class TDGIA(InjectionAttack):
         """Sequential injection"""
         while n_inject < self.n_inject_max:
             with torch.no_grad():
-                adj = adj_preprocess(adj=adj,
+                adj_tensor = adj_preprocess(adj=adj,
                                      adj_norm_func=adj_norm_func,
                                      device=self.device)
-                current_labels = F.softmax(model(getGraph(adj, features_attack, device=self.device)), dim=1)
+                current_labels = F.softmax(model(getGraph(adj_tensor, features_attack, device=self.device)), dim=1)
             n_inject_cur = self.n_inject_max - n_inject
             if n_inject_cur > self.n_inject_max * self.sequential_step:
                 n_inject_cur = int(self.n_inject_max * self.sequential_step)
@@ -182,7 +182,6 @@ class TDGIA(InjectionAttack):
         time_end = time.time()
         if self.verbose:
             print("Attack runtime: {:.4f}.".format(time_end - time_start))
-
         out_graph = getGraph(adj_attack, out_features, graph.y, device=self.device)
         return out_graph
 

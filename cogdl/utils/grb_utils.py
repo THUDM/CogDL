@@ -19,14 +19,14 @@ def getGRBGraph(graph: Graph):
             edge_index = edge_index.cpu().numpy()
         if type(edge_index) == tuple:
             edge_index = [edge_index[0].cpu().numpy(), edge_index[1].cpu().numpy()]
-        adj = sp.csr_matrix((edge_attr, edge_index))
+        adj = sp.csr_matrix((edge_attr, edge_index), shape=[graph.num_nodes, graph.num_nodes])
 
     return adj, features
 
 
 def getGraph(adj, features: torch.FloatTensor, labels: torch.Tensor = None, device="cpu"):
     if type(adj) != torch.Tensor:     
-        edge_index, edge_attr = adj2edge(adj)
+        edge_index, edge_attr = adj2edge(adj, device)
         data = Graph(x=features,
                      y=labels,
                      edge_index=edge_index,
@@ -37,7 +37,7 @@ def getGraph(adj, features: torch.FloatTensor, labels: torch.Tensor = None, devi
         else:
             adj_np = sp.csr_matrix(adj.detach().cpu().numpy())
         # print(type(adj_np))
-        edge_index, edge_attr = adj2edge(adj_np)
+        edge_index, edge_attr = adj2edge(adj_np, device)
         data = Graph(x=features,
                      y=labels,
                      edge_index=edge_index,
@@ -48,7 +48,7 @@ def getGraph(adj, features: torch.FloatTensor, labels: torch.Tensor = None, devi
 
 def updateGraph(graph, adj, features: torch.FloatTensor):
     if type(adj) != torch.Tensor:     
-        edge_index, edge_attr = adj2edge(adj)
+        edge_index, edge_attr = adj2edge(adj, graph.device)
         graph.x = features
         graph.edge_index = edge_index
         graph.edge_attr = edge_attr
@@ -57,21 +57,21 @@ def updateGraph(graph, adj, features: torch.FloatTensor):
             adj_np = sp.csr_matrix(adj.to_dense().detach().cpu().numpy())
         else:
             adj_np = sp.csr_matrix(adj.detach().cpu().numpy())
-        edge_index, edge_attr = adj2edge(adj_np)
+        edge_index, edge_attr = adj2edge(adj_np, graph.device)
         graph.x = features
         graph.edge_index = edge_index
         graph.edge_attr = edge_attr
         graph.grb_adj = adj
 
 
-def adj2edge(adj: sp.csr.csr_matrix):
+def adj2edge(adj: sp.csr.csr_matrix, device="cpu"):
     row, col = adj.nonzero()
     data = adj.data
     row = torch.tensor(row, dtype=torch.long)
     col = torch.tensor(col, dtype=torch.long)
     edge_index = torch.stack([row, col], dim=0)
     edge_attr = torch.tensor(data, dtype=torch.float)
-    return edge_index, edge_attr
+    return edge_index.to(device), edge_attr.to(device)
 
 
 def adj_to_tensor(adj):

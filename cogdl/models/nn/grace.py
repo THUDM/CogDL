@@ -11,11 +11,7 @@ from cogdl.data import Graph
 
 class GraceEncoder(nn.Module):
     def __init__(
-        self,
-        in_feats: int,
-        out_feats: int,
-        num_layers: int,
-        activation: str = "relu",
+        self, in_feats: int, out_feats: int, num_layers: int, activation: str = "relu",
     ):
         super(GraceEncoder, self).__init__()
         shapes = [in_feats] + [2 * out_feats] * (num_layers - 1) + [out_feats]
@@ -83,9 +79,7 @@ class GRACE(BaseModel):
         self.encoder = GraceEncoder(in_feats, hidden_size, num_layers, activation)
 
     def forward(
-        self,
-        graph: Graph,
-        x: torch.Tensor = None,
+        self, graph: Graph, x: torch.Tensor = None,
     ):
         if x is None:
             x = graph.x

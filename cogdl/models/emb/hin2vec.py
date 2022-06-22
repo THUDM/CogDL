@@ -47,9 +47,7 @@ class Hin2vec_layer(nn.Module):
         self.logits = torch.cat((self.preds, 1 - self.preds), 1)
         return self.logits, self.criterion(self.logits, l)
 
-    def get_emb(
-        self,
-    ):
+    def get_emb(self,):
         x = F.one_hot(torch.arange(0, self.num_node), num_classes=self.num_node).float().to(self.device)
         return torch.mm(x, self.Wx)
 

@@ -9,6 +9,7 @@ class Attack(metaclass=ABCMeta):
     Abstract class for graph adversarial attack.
 
     """
+
     @abstractmethod
     def attack(self, model, adj, features, **kwargs):
         r"""
@@ -35,6 +36,7 @@ class ModificationAttack(Attack):
     Abstract class for graph modification attack.
 
     """
+
     @abstractmethod
     def attack(self, **kwargs):
         """
@@ -66,6 +68,7 @@ class InjectionAttack(Attack):
     Abstract class for graph injection attack.
 
     """
+
     @abstractmethod
     def attack(self, **kwargs):
         """
@@ -108,6 +111,7 @@ class EarlyStop(object):
     Strategy to early stop attack process.
 
     """
+
     def __init__(self, patience=1000, epsilon=1e-4):
         r"""
 

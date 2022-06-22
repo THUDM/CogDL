@@ -12,12 +12,7 @@ class DICE(ModificationAttack):
     DICE (delete internally, connect externally)
     """
 
-    def __init__(self,
-                 n_edge_mod,
-                 ratio_delete=0.6,
-                 allow_isolate=True,
-                 device="cpu",
-                 verbose=True):
+    def __init__(self, n_edge_mod, ratio_delete=0.6, allow_isolate=True, device="cpu", verbose=True):
         self.n_edge_mod = n_edge_mod
         self.ratio_delete = ratio_delete
         self.allow_isolate = allow_isolate
@@ -78,6 +73,7 @@ class DICE(ModificationAttack):
 
         if self.verbose:
             print(
-                "DICE attack finished. {:d} edges were removed, {:d} edges were connected.".format(n_delete, n_connect))
+                "DICE attack finished. {:d} edges were removed, {:d} edges were connected.".format(n_delete, n_connect)
+            )
 
         return adj_attack

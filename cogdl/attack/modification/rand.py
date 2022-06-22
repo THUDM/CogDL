@@ -11,11 +11,7 @@ class RAND(ModificationAttack):
     FLIP, degree, betweenness, eigen.
     """
 
-    def __init__(self,
-                 n_edge_mod,
-                 allow_isolate=True,
-                 device="cpu",
-                 verbose=True):
+    def __init__(self, n_edge_mod, allow_isolate=True, device="cpu", verbose=True):
         self.n_edge_mod = n_edge_mod
         self.allow_isolate = allow_isolate
         self.device = device

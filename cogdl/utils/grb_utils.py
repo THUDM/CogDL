@@ -8,7 +8,7 @@ import scipy
 
 def getGRBGraph(graph: Graph):
     features = graph.x
-    if hasattr(graph, 'grb_adj') and graph.grb_adj is not None:
+    if hasattr(graph, "grb_adj") and graph.grb_adj is not None:
         adj = graph.grb_adj
     else:
         edge_index = graph.edge_index
@@ -25,12 +25,9 @@ def getGRBGraph(graph: Graph):
 
 
 def getGraph(adj, features: torch.FloatTensor, labels: torch.Tensor = None, device="cpu"):
-    if type(adj) != torch.Tensor:     
+    if type(adj) != torch.Tensor:
         edge_index, edge_attr = adj2edge(adj, device)
-        data = Graph(x=features,
-                     y=labels,
-                     edge_index=edge_index,
-                     edge_attr=edge_attr).to(device)
+        data = Graph(x=features, y=labels, edge_index=edge_index, edge_attr=edge_attr).to(device)
     else:
         if adj.is_sparse:
             adj_np = sp.csr_matrix(adj.to_dense().detach().cpu().numpy())
@@ -38,16 +35,12 @@ def getGraph(adj, features: torch.FloatTensor, labels: torch.Tensor = None, devi
             adj_np = sp.csr_matrix(adj.detach().cpu().numpy())
         # print(type(adj_np))
         edge_index, edge_attr = adj2edge(adj_np, device)
-        data = Graph(x=features,
-                     y=labels,
-                     edge_index=edge_index,
-                     edge_attr=edge_attr,
-                     grb_adj=adj).to(device)
+        data = Graph(x=features, y=labels, edge_index=edge_index, edge_attr=edge_attr, grb_adj=adj).to(device)
     return data
 
 
 def updateGraph(graph, adj, features: torch.FloatTensor):
-    if type(adj) != torch.Tensor:     
+    if type(adj) != torch.Tensor:
         edge_index, edge_attr = adj2edge(adj, graph.device)
         graph.x = features
         graph.edge_index = edge_index
@@ -104,7 +97,7 @@ def adj_to_tensor(adj):
     return adj_tensor
 
 
-def adj_preprocess(adj, adj_norm_func=None, mask=None, device='cpu'):
+def adj_preprocess(adj, adj_norm_func=None, mask=None, device="cpu"):
     r"""
 
     Description
@@ -138,15 +131,12 @@ def adj_preprocess(adj, adj_norm_func=None, mask=None, device='cpu'):
         if mask is not None:
             adj = [
                 adj_to_tensor(adj_[mask][:, mask]).to(device)
-                if type(adj_) != torch.Tensor else adj_[mask][:, mask].to(device)
+                if type(adj_) != torch.Tensor
+                else adj_[mask][:, mask].to(device)
                 for adj_ in adj
             ]
         else:
-            adj = [
-                adj_to_tensor(adj_).to(device)
-                if type(adj_) != torch.Tensor else adj_.to(device)
-                for adj_ in adj
-            ]
+            adj = [adj_to_tensor(adj_).to(device) if type(adj_) != torch.Tensor else adj_.to(device) for adj_ in adj]
     else:
         if type(adj) != torch.Tensor:
             if mask is not None:
@@ -162,7 +152,7 @@ def adj_preprocess(adj, adj_norm_func=None, mask=None, device='cpu'):
     return adj
 
 
-def feat_preprocess(features, feat_norm=None, device='cpu'):
+def feat_preprocess(features, feat_norm=None, device="cpu"):
     r"""
 
     Description
@@ -197,7 +187,7 @@ def feat_preprocess(features, feat_norm=None, device='cpu'):
 
     if type(features) != torch.Tensor:
         features = torch.FloatTensor(features)
-    elif features.type() != 'torch.FloatTensor':
+    elif features.type() != "torch.FloatTensor":
         features = features.float()
     if feat_norm is not None:
         features = feat_normalize(features, norm=feat_norm)
@@ -207,7 +197,7 @@ def feat_preprocess(features, feat_norm=None, device='cpu'):
     return features
 
 
-def label_preprocess(labels, device='cpu'):
+def label_preprocess(labels, device="cpu"):
     r"""
 
     Description
@@ -230,7 +220,7 @@ def label_preprocess(labels, device='cpu'):
 
     if type(labels) != torch.Tensor:
         labels = torch.LongTensor(labels)
-    elif labels.type() != 'torch.LongTensor':
+    elif labels.type() != "torch.LongTensor":
         labels = labels.long()
 
     labels = labels.to(device)
@@ -270,8 +260,7 @@ def eval_acc(pred, labels, mask=None):
     return acc
 
 
-def evaluate(model, graph, feat_norm=None, adj_norm_func=None, eval_metric=eval_acc,
-             mask=None, device="cpu"):
+def evaluate(model, graph, feat_norm=None, adj_norm_func=None, eval_metric=eval_acc, mask=None, device="cpu"):
     """
 
     Parameters
@@ -301,17 +290,13 @@ def evaluate(model, graph, feat_norm=None, adj_norm_func=None, eval_metric=eval_
     model.eval()
     adj, features = getGRBGraph(graph)
     labels = graph.y
-    adj = adj_preprocess(adj,
-                         adj_norm_func=adj_norm_func,
-                         device=device)
-    features = feat_preprocess(features,
-                               feat_norm=feat_norm,
-                               device=device)
+    adj = adj_preprocess(adj, adj_norm_func=adj_norm_func, device=device)
+    features = feat_preprocess(features, feat_norm=feat_norm, device=device)
     labels = label_preprocess(labels=labels, device=device)
     updateGraph(graph, adj, features)
     logits = model(graph)
     if logits.shape[0] > labels.shape[0]:
-        logits = logits[:labels.shape[0]]
+        logits = logits[: labels.shape[0]]
     score = eval_metric(logits, labels, mask)
 
     return score
@@ -344,18 +329,17 @@ def GCNAdjNorm(adj, order=-0.5):
         adj = sp.coo_matrix(adj)
         rowsum = np.array(adj.sum(1))
         d_inv = np.power(rowsum, order).flatten()
-        d_inv[np.isinf(d_inv)] = 0.
+        d_inv[np.isinf(d_inv)] = 0.0
         d_mat_inv = sp.diags(d_inv)
         adj = d_mat_inv @ adj @ d_mat_inv
     else:
         rowsum = torch.sparse.mm(adj, torch.ones((adj.shape[0], 1), device=adj.device)) + 1
         d_inv = torch.pow(rowsum, order).flatten()
-        d_inv[torch.isinf(d_inv)] = 0.
+        d_inv[torch.isinf(d_inv)] = 0.0
 
-        self_loop_idx = torch.stack((
-            torch.arange(adj.shape[0], device=adj.device),
-            torch.arange(adj.shape[0], device=adj.device)
-        ))
+        self_loop_idx = torch.stack(
+            (torch.arange(adj.shape[0], device=adj.device), torch.arange(adj.shape[0], device=adj.device))
+        )
         self_loop_val = torch.ones_like(self_loop_idx[0], dtype=adj.dtype)
         indices = torch.cat((self_loop_idx, adj.indices()), dim=1)
         values = torch.cat((self_loop_val, adj.values()))
@@ -399,14 +383,14 @@ def SAGEAdjNorm(adj, order=-1):
             return adj.tocoo()
         rowsum = np.array(adj.sum(1))
         d_inv = np.power(rowsum, order).flatten()
-        d_inv[np.isinf(d_inv)] = 0.
+        d_inv[np.isinf(d_inv)] = 0.0
         d_mat_inv = sp.diags(d_inv)
         adj = d_mat_inv @ adj
     else:
         adj = torch.eye(adj.shape[0]).to(adj.device) + adj
         rowsum = adj.sum(1)
         d_inv = torch.pow(rowsum, order).flatten()
-        d_inv[torch.isinf(d_inv)] = 0.
+        d_inv[torch.isinf(d_inv)] = 0.0
         d_mat_inv = torch.diag(d_inv)
         adj = d_mat_inv @ adj
 
@@ -440,18 +424,17 @@ def SPARSEAdjNorm(adj, order=-0.5):
         adj = sp.coo_matrix(adj)
         rowsum = np.array(adj.sum(1))
         d_inv = np.power(rowsum, order).flatten()
-        d_inv[np.isinf(d_inv)] = 0.
+        d_inv[np.isinf(d_inv)] = 0.0
         d_mat_inv = sp.diags(d_inv)
         adj = d_mat_inv @ adj @ d_mat_inv
     else:
         rowsum = torch.sparse.mm(adj, torch.ones((adj.shape[0], 1), device=adj.device)) + 1
         d_inv = torch.pow(rowsum, order).flatten()
-        d_inv[torch.isinf(d_inv)] = 0.
+        d_inv[torch.isinf(d_inv)] = 0.0
 
-        self_loop_idx = torch.stack((
-            torch.arange(adj.shape[0], device=adj.device),
-            torch.arange(adj.shape[0], device=adj.device)
-        ))
+        self_loop_idx = torch.stack(
+            (torch.arange(adj.shape[0], device=adj.device), torch.arange(adj.shape[0], device=adj.device))
+        )
         self_loop_val = torch.ones_like(self_loop_idx[0], dtype=adj.dtype)
         indices = torch.cat((self_loop_idx, adj.indices()), dim=1)
         values = torch.cat((self_loop_val, adj.values()))

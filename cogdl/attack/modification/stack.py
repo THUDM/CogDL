@@ -13,11 +13,7 @@ class STACK(ModificationAttack):
     STACK.
     """
 
-    def __init__(self,
-                 n_edge_mod,
-                 allow_isolate=True,
-                 device="cpu",
-                 verbose=True):
+    def __init__(self, n_edge_mod, allow_isolate=True, device="cpu", verbose=True):
         self.n_edge_mod = n_edge_mod
         self.allow_isolate = allow_isolate
         self.device = device
@@ -42,7 +38,8 @@ class STACK(ModificationAttack):
         for x in range(len(edges_target)):
             i, j = edges_target[x]
             vals_est = eigen_vals + flip_indicator[x] * (
-                2 * eigen_vecs[i] * eigen_vecs[j] - eigen_vals * (eigen_vecs[i] ** 2 + eigen_vecs[j] ** 2))
+                2 * eigen_vecs[i] * eigen_vecs[j] - eigen_vals * (eigen_vecs[i] ** 2 + eigen_vecs[j] ** 2)
+            )
             loss_ij = np.abs(sub_org - np.sqrt(np.sum(vals_est ** 2)))
             eigen_scores[x] = loss_ij
         struct_scores = np.expand_dims(eigen_scores, 1)

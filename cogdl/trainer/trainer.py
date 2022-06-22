@@ -348,14 +348,10 @@ class Trainer(object):
                         graph0.test_mask = graph0.train_mask
                     else:
                         graph0.test_mask[torch.where(graph0.train_mask)[0].multinomial(int(num_train * 0.01))] = True
-                    graph_attack = self.attack.attack(model=model_w.model,
-                                                      graph=graph0,
-                                                      adj_norm_func=None)   # todo
+                    graph_attack = self.attack.attack(model=model_w.model, graph=graph0, adj_norm_func=None)  # todo
                     adj_attack = graph_attack.to_scipy_csr()
                     features_attack = graph_attack.x
-                    adj_train = adj_preprocess(adj=adj_attack,
-                                               adj_norm_func=None,    # todo
-                                               device=rank)
+                    adj_train = adj_preprocess(adj=adj_attack, adj_norm_func=None, device=rank)  # todo
                     n_inject = graph_attack.num_nodes - graph.num_nodes
                     updateGraph(graph, adj_train, features_attack)
                     graph.edge_weight = torch.ones(graph.num_edges, device=rank)

@@ -234,10 +234,7 @@ def tabulate_results(results_dict):
             + list(
                 itertools.starmap(
                     lambda x, y: f"{x:.4f}±{y:.4f}",
-                    zip(
-                        np.mean(results, axis=0).tolist(),
-                        np.std(results, axis=0).tolist(),
-                    ),
+                    zip(np.mean(results, axis=0).tolist(), np.std(results, axis=0).tolist(),),
                 )
             )
         )

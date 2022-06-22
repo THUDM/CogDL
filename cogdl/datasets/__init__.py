@@ -182,7 +182,6 @@ SUPPORTED_DATASETS = {
     "Aids": "cogdl.datasets.rd2cd_data.Aids",
     "Nba": "cogdl.datasets.rd2cd_data.Nba",
     "Pokec_z": "cogdl.datasets.rd2cd_data.Pokec_z",
-
     "grb-cora": "cogdl.datasets.grb_data.Cora_GRBDataset",
     "grb-citeseer": "cogdl.datasets.grb_data.Citeseer_GRBDataset",
     "grb-reddit": "cogdl.datasets.grb_data.Reddit_GRBDataset",

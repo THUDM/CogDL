@@ -12,13 +12,7 @@ class FLIP(ModificationAttack):
     FLIP, degree, betweenness, eigen.
     """
 
-    def __init__(self,
-                 n_edge_mod,
-                 flip_type="deg",
-                 mode="descend",
-                 allow_isolate=True,
-                 device="cpu",
-                 verbose=True):
+    def __init__(self, n_edge_mod, flip_type="deg", mode="descend", allow_isolate=True, device="cpu", verbose=True):
         self.n_edge_mod = n_edge_mod
         self.flip_type = flip_type
         self.mode = mode
@@ -27,11 +21,9 @@ class FLIP(ModificationAttack):
         self.verbose = verbose
 
     def attack(self, graph: Graph, **kwargs):
-        adj_attack = self.modification(graph.to_scipy_csr(),
-                                       graph.test_nid.cpu(),
-                                       flip_type=self.flip_type,
-                                       mode=self.mode,
-                                       **kwargs)
+        adj_attack = self.modification(
+            graph.to_scipy_csr(), graph.test_nid.cpu(), flip_type=self.flip_type, mode=self.mode, **kwargs
+        )
 
         return getGraph(adj_attack, graph.x, graph.y, device=self.device)
 

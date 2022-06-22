@@ -40,14 +40,7 @@ class DeepWalk(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args) -> "DeepWalk":
-        return cls(
-            args.hidden_size,
-            args.walk_length,
-            args.walk_num,
-            args.window_size,
-            args.worker,
-            args.iteration,
-        )
+        return cls(args.hidden_size, args.walk_length, args.walk_num, args.window_size, args.worker, args.iteration,)
 
     def __init__(self, dimension, walk_length, walk_num, window_size, worker, iteration):
         super(DeepWalk, self).__init__()

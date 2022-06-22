@@ -40,21 +40,23 @@ class GCNSVD(BaseModel):
             args.norm,
             args.feat_norm,
             args.adj_norm,
-            args.k
+            args.k,
         )
 
-    def __init__(self,
-                 in_feats,
-                 hidden_size,
-                 out_feats,
-                 num_layers,
-                 dropout=0.0,
-                 activation=F.relu,
-                 residual=False,
-                 norm=None,
-                 feat_norm=None,
-                 adj_norm_func=None,
-                 k=50):
+    def __init__(
+        self,
+        in_feats,
+        hidden_size,
+        out_feats,
+        num_layers,
+        dropout=0.0,
+        activation=F.relu,
+        residual=False,
+        norm=None,
+        feat_norm=None,
+        adj_norm_func=None,
+        k=50,
+    ):
         super(GCNSVD, self).__init__()
         self.in_features = in_feats
         self.out_features = out_feats
@@ -70,13 +72,15 @@ class GCNSVD(BaseModel):
         for i in range(num_layers):
             if norm == "layernorm" and i == 0:
                 self.layers.append(nn.LayerNorm(n_features[i]))
-            self.layers.append(GCNLayer(
-                in_features=n_features[i],
-                out_features=n_features[i + 1],
-                activation=activation if i != num_layers - 1 else None,
-                residual=residual if i != num_layers - 1 else False,
-                dropout=dropout if i != num_layers - 1 else 0.0,
-                norm=norm if i != num_layers - 1 else None)
+            self.layers.append(
+                GCNLayer(
+                    in_features=n_features[i],
+                    out_features=n_features[i + 1],
+                    activation=activation if i != num_layers - 1 else None,
+                    residual=residual if i != num_layers - 1 else False,
+                    dropout=dropout if i != num_layers - 1 else 0.0,
+                    norm=norm if i != num_layers - 1 else None,
+                )
             )
         self.k = k
 

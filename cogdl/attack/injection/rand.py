@@ -36,15 +36,18 @@ class RAND(InjectionAttack):
         Whether to display logs. Default: ``True``.
 
     """
-    def __init__(self,
-                 n_inject_max,
-                 n_edge_max,
-                 feat_lim_min,
-                 feat_lim_max,
-                 loss=F.cross_entropy,
-                 eval_metric=eval_acc,
-                 device='cpu',
-                 verbose=True):
+
+    def __init__(
+        self,
+        n_inject_max,
+        n_edge_max,
+        feat_lim_min,
+        feat_lim_max,
+        loss=F.cross_entropy,
+        eval_metric=eval_acc,
+        device="cpu",
+        verbose=True,
+    ):
         self.device = device
         self.n_inject_max = n_inject_max
         self.n_edge_max = n_edge_max
@@ -84,24 +87,21 @@ class RAND(InjectionAttack):
         model.to(self.device)
         n_total, n_feat = features.shape
         features = feat_preprocess(features=features, device=self.device)
-        adj_tensor = adj_preprocess(adj=adj,
-                                    adj_norm_func=adj_norm_func,
-                                    device=self.device)
+        adj_tensor = adj_preprocess(adj=adj, adj_norm_func=adj_norm_func, device=self.device)
         pred_origin = model(getGraph(adj_tensor, features, device=self.device))
         labels_origin = torch.argmax(pred_origin, dim=1)
-        adj_attack = self.injection(adj=adj,
-                                    n_inject=self.n_inject_max,
-                                    n_node=n_total,
-                                    target_mask=target_mask)
+        adj_attack = self.injection(adj=adj, n_inject=self.n_inject_max, n_node=n_total, target_mask=target_mask)
 
         features_attack = np.zeros((self.n_inject_max, n_feat))
-        features_attack = self.update_features(model=model,
-                                               adj_attack=adj_attack,
-                                               features_origin=features,
-                                               features_attack=features_attack,
-                                               labels_origin=labels_origin,
-                                               target_mask=target_mask,
-                                               adj_norm_func=adj_norm_func)
+        features_attack = self.update_features(
+            model=model,
+            adj_attack=adj_attack,
+            features_origin=features,
+            features_attack=features_attack,
+            labels_origin=labels_origin,
+            target_mask=target_mask,
+            adj_norm_func=adj_norm_func,
+        )
         out_features = torch.cat((features, features_attack), 0)
         time_end = time.time()
         if self.verbose:
@@ -110,11 +110,7 @@ class RAND(InjectionAttack):
         out_graph = getGraph(adj_attack, out_features, graph.y, device=self.device)
         return out_graph
 
-    def injection(self,
-                  adj,
-                  n_inject,
-                  n_node,
-                  target_mask):
+    def injection(self, adj, n_inject, n_node, target_mask):
         r"""
 
         Description
@@ -169,15 +165,17 @@ class RAND(InjectionAttack):
 
         return adj_attack
 
-    def update_features(self,
-                        model,
-                        adj_attack,
-                        features_origin,
-                        features_attack,
-                        labels_origin,
-                        target_mask,
-                        feat_norm=None,
-                        adj_norm_func=None):
+    def update_features(
+        self,
+        model,
+        adj_attack,
+        features_origin,
+        features_attack,
+        labels_origin,
+        target_mask,
+        feat_norm=None,
+        adj_norm_func=None,
+    ):
         r"""
         Description
         -----------
@@ -212,24 +210,19 @@ class RAND(InjectionAttack):
         feat_lim_min, feat_lim_max = self.feat_lim_min, self.feat_lim_max
         n_total = features_origin.shape[0]
 
-        adj_attacked = adj_preprocess(adj=adj_attack,
-                                      adj_norm_func=adj_norm_func,
-                                      device=self.device)
-        features_attack = np.random.normal(loc=0, scale=feat_lim_max,
-                                           size=(self.n_inject_max, features_origin.shape[1]))
+        adj_attacked = adj_preprocess(adj=adj_attack, adj_norm_func=adj_norm_func, device=self.device)
+        features_attack = np.random.normal(
+            loc=0, scale=feat_lim_max, size=(self.n_inject_max, features_origin.shape[1])
+        )
         features_attack = np.clip(features_attack, feat_lim_min, feat_lim_max)
-        features_attack = feat_preprocess(features=features_attack,
-                                          feat_norm=feat_norm,
-                                          device=self.device)
+        features_attack = feat_preprocess(features=features_attack, feat_norm=feat_norm, device=self.device)
         model.eval()
 
         features_concat = torch.cat((features_origin, features_attack), dim=0)
         pred = model(getGraph(adj_attacked, features_concat, device=self.device))
-        pred_loss = -self.loss(pred[:n_total][target_mask],
-                               labels_origin[target_mask]).to(self.device)
+        pred_loss = -self.loss(pred[:n_total][target_mask], labels_origin[target_mask]).to(self.device)
 
-        test_acc = self.eval_metric(pred[:n_total][target_mask],
-                                    labels_origin[target_mask])
+        test_acc = self.eval_metric(pred[:n_total][target_mask], labels_origin[target_mask])
 
         if self.verbose:
             print("Loss: {:.4f}, Surrogate test acc: {:.4f}".format(pred_loss, test_acc))

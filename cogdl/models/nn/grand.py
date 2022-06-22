@@ -69,16 +69,7 @@ class Grand(BaseModel):
         )
 
     def __init__(
-        self,
-        nfeat,
-        nhid,
-        nclass,
-        input_droprate,
-        hidden_droprate,
-        use_bn,
-        dropnode_rate,
-        order,
-        alpha,
+        self, nfeat, nhid, nclass, input_droprate, hidden_droprate, use_bn, dropnode_rate, order, alpha,
     ):
         super(Grand, self).__init__()
         self.layer1 = nn.Linear(nfeat, nhid)

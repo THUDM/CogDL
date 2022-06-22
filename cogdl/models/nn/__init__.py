@@ -33,5 +33,5 @@ __all__ = [
     "RevGEN",
     "DeeperGCN",
     "ResGNNLayer",
-    "SAGE"
+    "SAGE",
 ]

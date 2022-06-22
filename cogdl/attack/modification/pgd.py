@@ -11,22 +11,23 @@ from cogdl.utils.grb_utils import eval_acc, feat_preprocess, adj_preprocess, get
 
 
 class PGD(ModificationAttack):
-
-    def __init__(self,
-                 epsilon,
-                 n_epoch,
-                 n_node_mod,
-                 n_edge_mod,
-                 feat_lim_min,
-                 feat_lim_max,
-                 allow_isolate=False,
-                 loss=F.cross_entropy,
-                 eval_metric=eval_acc,
-                 early_stop=None,
-                 early_stop_patience=1000,
-                 early_stop_epsilon=1e-5,
-                 device="cpu",
-                 verbose=True):
+    def __init__(
+        self,
+        epsilon,
+        n_epoch,
+        n_node_mod,
+        n_edge_mod,
+        feat_lim_min,
+        feat_lim_max,
+        allow_isolate=False,
+        loss=F.cross_entropy,
+        eval_metric=eval_acc,
+        early_stop=None,
+        early_stop_patience=1000,
+        early_stop_epsilon=1e-5,
+        device="cpu",
+        verbose=True,
+    ):
         self.epsilon = epsilon
         self.n_epoch = n_epoch
         self.n_node_mod = n_node_mod
@@ -44,37 +45,30 @@ class PGD(ModificationAttack):
             if isinstance(early_stop, EarlyStop):
                 self.early_stop = early_stop
             else:
-                self.early_stop = EarlyStop(patience=early_stop_patience,
-                                            epsilon=early_stop_epsilon)
+                self.early_stop = EarlyStop(patience=early_stop_patience, epsilon=early_stop_epsilon)
         else:
             self.early_stop = None
 
-    def attack(self,
-               model,
-               graph: Graph,
-               feat_norm=None,
-               adj_norm_func=None):
+    def attack(self, model, graph: Graph, feat_norm=None, adj_norm_func=None):
         time_start = time.time()
         model.to(self.device)
         # adj, features = getGRBGraph(graph)
         adj = graph.to_scipy_csr()
         index_target = graph.test_nid.cpu()
         features = graph.x.clone().detach()
-        features = feat_preprocess(features=features,
-                                   feat_norm=feat_norm,
-                                   device=self.device)
-        adj_tensor = adj_preprocess(adj=adj,
-                                    adj_norm_func=adj_norm_func,
-                                    device=self.device)
+        features = feat_preprocess(features=features, feat_norm=feat_norm, device=self.device)
+        adj_tensor = adj_preprocess(adj=adj, adj_norm_func=adj_norm_func, device=self.device)
         pred_origin = model(getGraph(adj_tensor, features, device=self.device))
         labels_origin = torch.argmax(pred_origin, dim=1)
         adj_attack = self.modification(adj, index_target)
 
-        features_attack = self.update_features(model=model,
-                                               adj_attack=adj_attack,
-                                               features_origin=features,
-                                               labels_origin=labels_origin,
-                                               index_target=index_target)
+        features_attack = self.update_features(
+            model=model,
+            adj_attack=adj_attack,
+            features_origin=features,
+            labels_origin=labels_origin,
+            index_target=index_target,
+        )
 
         time_end = time.time()
         if self.verbose:
@@ -82,10 +76,8 @@ class PGD(ModificationAttack):
 
         return getGraph(adj_attack, features_attack, graph.y, device=self.device)
 
-    def modification(self,
-                     adj,
-                     index_target):
-        # if type(adj) == torch.Tensor: 
+    def modification(self, adj, index_target):
+        # if type(adj) == torch.Tensor:
         #     adj_attack = adj.clone().to_dense()
         # else:
         #     adj_attack = adj.todense()
@@ -122,14 +114,9 @@ class PGD(ModificationAttack):
         adj_attack.eliminate_zeros()
         return adj_attack
 
-    def update_features(self,
-                        model,
-                        adj_attack,
-                        features_origin,
-                        labels_origin,
-                        index_target,
-                        feat_norm=None,
-                        adj_norm_func=None):
+    def update_features(
+        self, model, adj_attack, features_origin, labels_origin, index_target, feat_norm=None, adj_norm_func=None
+    ):
         r"""
 
         Description
@@ -166,12 +153,8 @@ class PGD(ModificationAttack):
         n_epoch = self.n_epoch
         feat_lim_min, feat_lim_max = self.feat_lim_min, self.feat_lim_max
 
-        features_attack = feat_preprocess(features=features_origin,
-                                          feat_norm=feat_norm,
-                                          device=self.device)
-        adj_attacked_tensor = adj_preprocess(adj=adj_attack,
-                                             adj_norm_func=adj_norm_func,
-                                             device=self.device)
+        features_attack = feat_preprocess(features=features_origin, feat_norm=feat_norm, device=self.device)
+        adj_attacked_tensor = adj_preprocess(adj=adj_attack, adj_norm_func=adj_norm_func, device=self.device)
         index_mod = np.random.choice(index_target, self.n_node_mod)
         model.eval()
         epoch_bar = tqdm(range(n_epoch), disable=not self.verbose)
@@ -179,8 +162,7 @@ class PGD(ModificationAttack):
             features_attack.requires_grad_(True)
             features_attack.retain_grad()
             pred = model(getGraph(adj_attacked_tensor, features_attack, device=self.device))
-            pred_loss = self.loss(pred[index_target],
-                                  labels_origin[index_target]).to(self.device)
+            pred_loss = self.loss(pred[index_target], labels_origin[index_target]).to(self.device)
 
             model.zero_grad()
             pred_loss.backward()
@@ -189,8 +171,7 @@ class PGD(ModificationAttack):
             features_attack[index_mod] = features_attack.clone()[index_mod] + epsilon * grad.sign()[index_mod]
             features_attack = torch.clamp(features_attack, feat_lim_min, feat_lim_max)
 
-            test_score = self.eval_metric(pred[index_target],
-                                          labels_origin[index_target])
+            test_score = self.eval_metric(pred[index_target], labels_origin[index_target])
 
             if self.early_stop:
                 self.early_stop(test_score)
@@ -202,7 +183,8 @@ class PGD(ModificationAttack):
                     return features_attack
             if self.verbose:
                 epoch_bar.set_description(
-                    "Epoch {}, Loss: {:.4f}, Surrogate test score: {:.4f}".format(i, pred_loss, test_score))
+                    "Epoch {}, Loss: {:.4f}, Surrogate test score: {:.4f}".format(i, pred_loss, test_score)
+                )
         if self.verbose:
             print("Surrogate test score: {:.4f}".format(test_score))
 

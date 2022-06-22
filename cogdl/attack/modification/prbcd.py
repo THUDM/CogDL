@@ -9,50 +9,55 @@ from tqdm.auto import tqdm
 
 from cogdl.attack.base import ModificationAttack, EarlyStop
 from cogdl.data import Graph
-from cogdl.utils.grb_utils import eval_acc, feat_preprocess, adj_preprocess, getGraph, getGRBGraph, SPARSEAdjNorm, adj_to_tensor
+from cogdl.utils.grb_utils import (
+    eval_acc,
+    feat_preprocess,
+    adj_preprocess,
+    getGraph,
+    getGRBGraph,
+    SPARSEAdjNorm,
+    adj_to_tensor,
+)
 
 
 def tanh_margin_loss(logits, labels, normalizer=40):
     sorted = logits.argsort(-1)
-    best_non_target_class = sorted[sorted != labels[:, None]].reshape(
-        logits.size(0), -1)[:, -1]
-    margin = (
-        logits[np.arange(logits.size(0)), labels]
-        - logits[np.arange(logits.size(0)), best_non_target_class]
-    )
+    best_non_target_class = sorted[sorted != labels[:, None]].reshape(logits.size(0), -1)[:, -1]
+    margin = logits[np.arange(logits.size(0)), labels] - logits[np.arange(logits.size(0)), best_non_target_class]
     loss = torch.tanh(-margin / normalizer).mean()
     return loss
 
 
 class PRBCD(ModificationAttack):
-
-    def __init__(self,
-                 epsilon,  # L_infty budget?
-                 n_epoch,
-                 n_node_mod,
-                 n_edge_mod,
-                 feat_lim_min,
-                 feat_lim_max,
-                 n_epoch_resampling=None,
-                 allow_isolate=True,
-                 loss=tanh_margin_loss,
-                 eval_metric=eval_acc,
-                 early_stop=None,
-                 early_stop_patience=1000,
-                 early_stop_epsilon=1e-5,
-                 max_final_samples=20,
-                 eps: float = 1e-7,
-                 search_space_size: int = 1_000_000,
-                 make_undirected: bool = True,
-                 lr_factor: float = 100,
-                 device="cpu",
-                 verbose=True):
+    def __init__(
+        self,
+        epsilon,  # L_infty budget?
+        n_epoch,
+        n_node_mod,
+        n_edge_mod,
+        feat_lim_min,
+        feat_lim_max,
+        n_epoch_resampling=None,
+        allow_isolate=True,
+        loss=tanh_margin_loss,
+        eval_metric=eval_acc,
+        early_stop=None,
+        early_stop_patience=1000,
+        early_stop_epsilon=1e-5,
+        max_final_samples=20,
+        eps: float = 1e-7,
+        search_space_size: int = 1_000_000,
+        make_undirected: bool = True,
+        lr_factor: float = 100,
+        device="cpu",
+        verbose=True,
+    ):
         self.epsilon = epsilon
         self.n_epoch = n_epoch
         self.n_epoch_resampling = int(0.75 * n_epoch) if n_epoch_resampling is None else n_epoch_resampling
         self.n_node_mod = n_node_mod
         self.n_edge_mod = n_edge_mod
-        assert allow_isolate, 'PRBCD currently only supports `allow_isolate=True`'
+        assert allow_isolate, "PRBCD currently only supports `allow_isolate=True`"
         self.allow_isolate = allow_isolate
         self.feat_lim_min = feat_lim_min
         self.feat_lim_max = feat_lim_max
@@ -67,8 +72,7 @@ class PRBCD(ModificationAttack):
             if isinstance(early_stop, EarlyStop):
                 self.early_stop = early_stop
             else:
-                self.early_stop = EarlyStop(patience=early_stop_patience,
-                                            epsilon=early_stop_epsilon)
+                self.early_stop = EarlyStop(patience=early_stop_patience, epsilon=early_stop_epsilon)
         else:
             self.early_stop = None
 
@@ -78,11 +82,7 @@ class PRBCD(ModificationAttack):
         self.search_space_size = search_space_size
         self.lr_factor = lr_factor
 
-    def attack(self,
-               model,
-               graph: Graph,
-               feat_norm=None,
-               adj_norm_func=SPARSEAdjNorm):
+    def attack(self, model, graph: Graph, feat_norm=None, adj_norm_func=SPARSEAdjNorm):
         time_start = time.time()
         model.to(self.device)
         adj = graph.to_scipy_csr()
@@ -94,24 +94,22 @@ class PRBCD(ModificationAttack):
         else:
             self.n_possible_edges = self.n ** 2  # We filter self-loops later
 
-        self.lr_factor = self.lr_factor * max(math.log2(self.n_possible_edges / self.search_space_size), 1.)
+        self.lr_factor = self.lr_factor * max(math.log2(self.n_possible_edges / self.search_space_size), 1.0)
 
-        features = feat_preprocess(features=features,
-                                   feat_norm=feat_norm,
-                                   device=self.device)
-        adj_tensor = adj_preprocess(adj=adj,
-                                    adj_norm_func=adj_norm_func,
-                                    device=self.device)
+        features = feat_preprocess(features=features, feat_norm=feat_norm, device=self.device)
+        adj_tensor = adj_preprocess(adj=adj, adj_norm_func=adj_norm_func, device=self.device)
         pred_origin = model(getGraph(adj_tensor, features, device=self.device))
         labels_origin = torch.argmax(pred_origin, dim=1)
 
-        adj_attack, features_attack = self.modification(model,
-                                                        adj,
-                                                        features_origin=features,
-                                                        labels_origin=labels_origin,
-                                                        index_target=graph.test_nid.cpu(),
-                                                        feat_norm=feat_norm,
-                                                        adj_norm_func=adj_norm_func)
+        adj_attack, features_attack = self.modification(
+            model,
+            adj,
+            features_origin=features,
+            labels_origin=labels_origin,
+            index_target=graph.test_nid.cpu(),
+            feat_norm=feat_norm,
+            adj_norm_func=adj_norm_func,
+        )
 
         time_end = time.time()
         if self.verbose:
@@ -119,14 +117,9 @@ class PRBCD(ModificationAttack):
 
         return getGraph(adj_attack, features_attack, graph.y, device=self.device)
 
-    def modification(self,
-                     model,
-                     adj,
-                     features_origin,
-                     labels_origin,
-                     index_target,
-                     feat_norm=None,
-                     adj_norm_func=None):
+    def modification(
+        self, model, adj, features_origin, labels_origin, index_target, feat_norm=None, adj_norm_func=None
+    ):
         r"""
 
         Description
@@ -158,29 +151,25 @@ class PRBCD(ModificationAttack):
             Updated features of nodes after attacks in form of :math:`N_{inject}` * D` torch float tensor.
 
         """
-        features_attack = feat_preprocess(features=features_origin,
-                                          feat_norm=feat_norm,
-                                          device=self.device)
+        features_attack = feat_preprocess(features=features_origin, feat_norm=feat_norm, device=self.device)
 
         index_target = torch.where(index_target)[0]
         index_mod = np.random.choice(index_target, self.n_node_mod)
 
-        assert (adj.todense().T == adj.todense()).all(), 'adjacency matrix must be symmetrical'
+        assert (adj.todense().T == adj.todense()).all(), "adjacency matrix must be symmetrical"
         adj = adj_to_tensor(adj).to(self.device).coalesce()
 
         perturbed_edge_indices, perturbed_edge_weight, current_search_space = self.sample_random_block()
 
         # For early stopping (not explicitly covered by pesudo code)
-        best_test_score = float('Inf')
-        best_epoch = float('-Inf')
+        best_test_score = float("Inf")
+        best_epoch = float("-Inf")
 
         def evaluate(features, adj):
             pred = model(getGraph(adj_norm_func(adj), features, device=self.device))
-            pred_loss = self.loss(pred[index_target],
-                                  labels_origin[index_target])
+            pred_loss = self.loss(pred[index_target], labels_origin[index_target])
 
-            test_score = self.eval_metric(pred[index_target],
-                                          labels_origin[index_target])
+            test_score = self.eval_metric(pred[index_target], labels_origin[index_target])
             return pred_loss, test_score
 
         model.eval()
@@ -205,12 +194,13 @@ class PRBCD(ModificationAttack):
                     self.early_stop = EarlyStop()
                     if self.verbose:
                         print("Attack early stopped. Surrogate test score: {:.4f}".format(test_score))
-                        print(f'Loading search space of epoch {best_epoch} for fine tuning\n')
+                        print(f"Loading search space of epoch {best_epoch} for fine tuning\n")
                     break
 
             if self.verbose:
                 epoch_bar.set_description(
-                    "Epoch {}, Loss: {:.4f}, Surrogate test score: {:.4f}".format(epoch, pred_loss, test_score))
+                    "Epoch {}, Loss: {:.4f}, Surrogate test score: {:.4f}".format(epoch, pred_loss, test_score)
+                )
 
             model.zero_grad()
             pred_loss.backward()
@@ -230,11 +220,12 @@ class PRBCD(ModificationAttack):
                 # Resample random block for `self.n_epoch_resampling` epochs
                 if epoch < self.n_epoch_resampling - 1:
                     perturbed_edge_indices, perturbed_edge_weight, current_search_space = self.resample_random_block(
-                        perturbed_edge_indices, perturbed_edge_weight, current_search_space)
+                        perturbed_edge_indices, perturbed_edge_weight, current_search_space
+                    )
                 # Take the best random block including edge weights for fine tuning
                 elif self.early_stop and epoch == self.n_epoch_resampling - 1:
                     if self.verbose:
-                        print(f'Fine tune block of epoch {best_epoch} (test_score={best_test_score})\n')
+                        print(f"Fine tune block of epoch {best_epoch} (test_score={best_test_score})\n")
                     perturbed_edge_indices = best_perturbed_edge_indices.to(self.device)
                     perturbed_edge_weight = best_perturbed_edge_weight.to(self.device)
                     current_search_space = best_current_search_space.to(self.device)
@@ -242,7 +233,7 @@ class PRBCD(ModificationAttack):
 
         if self.verbose:
             print("Surrogate test score: {:.4f}".format(best_test_score))
-            print(f'Loading search space of epoch {best_epoch}\n')
+            print(f"Loading search space of epoch {best_epoch}\n")
 
         if self.early_stop:
             perturbed_edge_indices = best_perturbed_edge_indices.to(self.device)
@@ -251,14 +242,14 @@ class PRBCD(ModificationAttack):
             features_attack = best_features_attack.to(self.device)
 
         modified_adj = self.sample_final_edges(
-            evaluate, adj, features_attack, perturbed_edge_indices, perturbed_edge_weight)
+            evaluate, adj, features_attack, perturbed_edge_indices, perturbed_edge_weight
+        )
 
         return modified_adj, features_attack
 
     def sample_random_block(self):
         for _ in range(self.max_final_samples):
-            current_search_space = torch.randint(
-                self.n_possible_edges, (self.search_space_size,), device=self.device)
+            current_search_space = torch.randint(self.n_possible_edges, (self.search_space_size,), device=self.device)
             current_search_space = torch.unique(current_search_space, sorted=True)
             if self.make_undirected:
                 perturbed_edge_indices = PRBCD.linear_to_triu_idx(self.n, current_search_space)
@@ -273,7 +264,7 @@ class PRBCD(ModificationAttack):
             )
             if current_search_space.size(0) >= self.n_edge_mod:
                 return perturbed_edge_indices, perturbed_edge_weight, current_search_space
-        raise RuntimeError('Sampling random block was not successfull. Please decrease `n_edge_mod`.')
+        raise RuntimeError("Sampling random block was not successfull. Please decrease `n_edge_mod`.")
 
     def get_modified_adj(self, adj, perturbed_edge_indices, perturbed_edge_weight):
         if self.make_undirected:
@@ -283,15 +274,16 @@ class PRBCD(ModificationAttack):
         edge_index = torch.cat((adj.indices().to(self.device), perturbed_edge_indices), dim=-1)
         edge_weight = torch.cat((adj.values().to(self.device), perturbed_edge_weight))
 
-        edge_index, edge_weight = torch_sparse.coalesce(edge_index, edge_weight, m=self.n, n=self.n, op='sum')
+        edge_index, edge_weight = torch_sparse.coalesce(edge_index, edge_weight, m=self.n, n=self.n, op="sum")
 
         # Allow removal of edges
         edge_weight[edge_weight > 1] = 2 - edge_weight[edge_weight > 1]
 
         return torch.sparse.FloatTensor(edge_index, edge_weight, (self.n, self.n)).coalesce()
 
-    def update_edge_weights(self, perturbed_edge_weight: torch.Tensor, epoch: int,
-                            gradient: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def update_edge_weights(
+        self, perturbed_edge_weight: torch.Tensor, epoch: int, gradient: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Updates the edge weights and adaptively, heuristically refined the learning rate such that (1) it is
         independent of the number of perturbations (assuming an undirected adjacency matrix) and (2) to decay learning
         rate during fine-tuning (i.e. fixed search space).
@@ -335,8 +327,7 @@ class PRBCD(ModificationAttack):
             values.data.copy_(torch.clamp(values, min=eps, max=1 - eps))
         return values
 
-    def resample_random_block(self, perturbed_edge_indices, perturbed_edge_weight,
-                              current_search_space):
+    def resample_random_block(self, perturbed_edge_indices, perturbed_edge_weight, current_search_space):
         sorted_idx = torch.argsort(perturbed_edge_weight)
         idx_keep = (perturbed_edge_weight <= self.eps).sum().long()
 
@@ -355,9 +346,7 @@ class PRBCD(ModificationAttack):
             lin_index = torch.randint(self.n_possible_edges, (n_edges_resample,), device=self.device)
 
             current_search_space, unique_idx = torch.unique(
-                torch.cat((current_search_space, lin_index)),
-                sorted=True,
-                return_inverse=True
+                torch.cat((current_search_space, lin_index)), sorted=True, return_inverse=True
             )
 
             if self.make_undirected:
@@ -368,9 +357,7 @@ class PRBCD(ModificationAttack):
             # Merge existing weights with new edge weights
             perturbed_edge_weight_old = perturbed_edge_weight.clone()
             perturbed_edge_weight = torch.full_like(current_search_space, self.eps, dtype=torch.float32)
-            perturbed_edge_weight[
-                unique_idx[:perturbed_edge_weight_old.size(0)]
-            ] = perturbed_edge_weight_old
+            perturbed_edge_weight[unique_idx[: perturbed_edge_weight_old.size(0)]] = perturbed_edge_weight_old
 
             if not self.make_undirected:
                 is_not_self_loop = perturbed_edge_indices[0] != perturbed_edge_indices[1]
@@ -380,17 +367,18 @@ class PRBCD(ModificationAttack):
 
             if current_search_space.size(0) > self.n_edge_mod:
                 return perturbed_edge_indices, perturbed_edge_weight, current_search_space
-        raise RuntimeError('Sampling random block was not successfull. Please decrease `n_perturbations`.')
+        raise RuntimeError("Sampling random block was not successfull. Please decrease `n_perturbations`.")
 
     @torch.no_grad()
-    def sample_final_edges(self, evaluate, adj, features, perturbed_edge_indices,
-                           perturbed_edge_weight) -> Tuple[torch.Tensor, torch.Tensor]:
-        best_test_score = float('Inf')
+    def sample_final_edges(
+        self, evaluate, adj, features, perturbed_edge_indices, perturbed_edge_weight
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        best_test_score = float("Inf")
         perturbed_edge_weight = perturbed_edge_weight.detach()
         perturbed_edge_weight[perturbed_edge_weight <= self.eps] = 0
 
         for i in range(self.max_final_samples):
-            if best_test_score == float('Inf'):
+            if best_test_score == float("Inf"):
                 # In first iteration employ top k heuristic instead of sampling
                 sampled_edges = torch.zeros_like(perturbed_edge_weight)
                 sampled_edges[torch.topk(perturbed_edge_weight, self.n_edge_mod).indices] = 1
@@ -414,29 +402,22 @@ class PRBCD(ModificationAttack):
 
         edge_mask = perturbed_edge_weight == 1
         modified_adj = self.get_modified_adj(
-            adj, perturbed_edge_indices[:, edge_mask], perturbed_edge_weight[edge_mask])
+            adj, perturbed_edge_indices[:, edge_mask], perturbed_edge_weight[edge_mask]
+        )
 
         allowed_perturbations = 2 * self.n_edge_mod if self.make_undirected else self.n_edge_mod
         edges_after_attack = len(modified_adj.values())
         clean_edges = len(adj.values())
-        assert (edges_after_attack >= clean_edges - allowed_perturbations
-                and edges_after_attack <= clean_edges + allowed_perturbations), \
-            f'{edges_after_attack} out of range with {clean_edges} clean edges and {self.n_edge_mod} pertutbations'
+        assert (
+            edges_after_attack >= clean_edges - allowed_perturbations
+            and edges_after_attack <= clean_edges + allowed_perturbations
+        ), f"{edges_after_attack} out of range with {clean_edges} clean edges and {self.n_edge_mod} pertutbations"
         return modified_adj
 
     @staticmethod
     def linear_to_triu_idx(n: int, lin_idx: torch.Tensor) -> torch.Tensor:
-        row_idx = (
-            n
-            - 2
-            - torch.floor(torch.sqrt(-8 * lin_idx.double() + 4 * n * (n - 1) - 7) / 2.0 - 0.5)
-        ).long()
-        col_idx = (
-            lin_idx
-            + row_idx
-            + 1 - n * (n - 1) // 2
-            + (n - row_idx) * ((n - row_idx) - 1) // 2
-        )
+        row_idx = (n - 2 - torch.floor(torch.sqrt(-8 * lin_idx.double() + 4 * n * (n - 1) - 7) / 2.0 - 0.5)).long()
+        col_idx = lin_idx + row_idx + 1 - n * (n - 1) // 2 + (n - row_idx) * ((n - row_idx) - 1) // 2
         return torch.stack((row_idx, col_idx))
 
     @staticmethod
@@ -446,20 +427,15 @@ class PRBCD(ModificationAttack):
         return torch.stack((row_idx, col_idx))
 
     @staticmethod
-    def to_symmetric(edge_index: torch.Tensor, edge_weight: torch.Tensor,
-                     n: int, op='mean') -> Tuple[torch.Tensor, torch.Tensor]:
-        symmetric_edge_index = torch.cat(
-            (edge_index, edge_index.flip(0)), dim=-1
-        )
+    def to_symmetric(
+        edge_index: torch.Tensor, edge_weight: torch.Tensor, n: int, op="mean"
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        symmetric_edge_index = torch.cat((edge_index, edge_index.flip(0)), dim=-1)
 
         symmetric_edge_weight = edge_weight.repeat(2)
 
         symmetric_edge_index, symmetric_edge_weight = torch_sparse.coalesce(
-            symmetric_edge_index,
-            symmetric_edge_weight,
-            m=n,
-            n=n,
-            op=op
+            symmetric_edge_index, symmetric_edge_weight, m=n, n=n, op=op
         )
         return symmetric_edge_index, symmetric_edge_weight
 
@@ -472,14 +448,14 @@ class PRBCD(ModificationAttack):
         for i in range(int(iter_max)):
             miu = (a + b) / 2
             # Check if middle point is root
-            if (func(miu) == 0.0):
+            if func(miu) == 0.0:
                 break
             # Decide the side to repeat the steps
-            if (func(miu) * func(a) < 0):
+            if func(miu) * func(a) < 0:
                 b = miu
             else:
                 a = miu
-            if ((b - a) <= epsilon):
+            if (b - a) <= epsilon:
                 break
 
         return miu

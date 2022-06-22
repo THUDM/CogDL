@@ -3,6 +3,8 @@ from cogdl.attack.modification import *
 from cogdl.attack.injection import *
 from cogdl.attack.modification import RAND as RAND_Modify
 from cogdl.attack.injection import RAND as RAND_Inject
+from cogdl.attack.modification import PGD as PGD_Modify
+from cogdl.attack.injection import PGD as PGD_Inject
 from cogdl.models.defense import *
 from cogdl.utils import set_random_seed
 from cogdl.utils.grb_utils import evaluate, GCNAdjNorm
@@ -228,7 +230,7 @@ def test_pgd_modification_attack():
     feat_lim_min = 0.0
     feat_lim_max = 1.0
     early_stop_patience = 2
-    attack = PGD(epsilon,
+    attack = PGD_Modify(epsilon,
                 n_epoch,
                 n_node_mod,
                 n_edge_mod,
@@ -321,7 +323,7 @@ def test_pgd_injection_attack():
     model_sur = init_surrogate_model(graph, dataset, test_mask, device, device_ids)
     model_target = init_target_model(graph, dataset, test_mask, device, device_ids)
     print("PGD injection attack...")
-    attack = PGD(epsilon=0.01,
+    attack = PGD_Inject(epsilon=0.01,
                 n_epoch=5,
                 n_inject_max=10,
                 n_edge_max=20,
@@ -398,7 +400,7 @@ def test_speit_injection_attack():
     print("Test score after attack for target model: {:.4f}.".format(test_score_target_attack))
 
 
-def test_tdgia_injection_attack():
+def test_tdgia_injection_attack(inject_mode="tdgia"):
     graph, dataset, test_mask, device, device_ids = init_dataset()
     model_sur = init_surrogate_model(graph, dataset, test_mask, device, device_ids)
     model_target = init_target_model(graph, dataset, test_mask, device, device_ids)
@@ -409,6 +411,7 @@ def test_tdgia_injection_attack():
                 n_edge_max=20,
                 feat_lim_min=-1,
                 feat_lim_max=1,
+                inject_mode=inject_mode,
                 early_stop=True,
                 early_stop_patience=2,
                 early_stop_epsilon=1e-4,
@@ -439,7 +442,7 @@ def apply_pgd_modification_attack(model_sur, model_target, graph, test_mask, dev
     feat_lim_min = 0.0
     feat_lim_max = 1.0
     early_stop_patience = 2
-    attack = PGD(epsilon,
+    attack = PGD_Modify(epsilon,
                 n_epoch,
                 n_node_mod,
                 n_edge_mod,
@@ -602,7 +605,9 @@ if __name__ == "__main__":
     test_pgd_injection_attack()
     test_rand_injection_attack()
     test_speit_injection_attack()
-    test_tdgia_injection_attack()
+    test_tdgia_injection_attack(inject_mode="tdgia")
+    test_tdgia_injection_attack(inject_mode="random")
+    test_tdgia_injection_attack(inject_mode="uniform")
     test_gcnsvd_defense()
     test_gatguard_defense()
     test_gcnguard_defense()

@@ -44,21 +44,23 @@ class GCNGuard(BaseModel):
             args.feat_norm,
             args.adj_norm,
             args.attention,
-            args.drop
+            args.drop,
         )
 
-    def __init__(self,
-                 in_feats,
-                 hidden_size,
-                 out_feats,
-                 num_layers,
-                 dropout=0.0,
-                 activation=F.relu,
-                 norm=None,
-                 feat_norm=None,
-                 adj_norm_func=utils.GCNAdjNorm,
-                 attention=True,
-                 drop=False):
+    def __init__(
+        self,
+        in_feats,
+        hidden_size,
+        out_feats,
+        num_layers,
+        dropout=0.0,
+        activation=F.relu,
+        norm=None,
+        feat_norm=None,
+        adj_norm_func=utils.GCNAdjNorm,
+        attention=True,
+        drop=False,
+    ):
         super(GCNGuard, self).__init__()
         self.in_features = in_feats
         self.out_features = out_feats
@@ -74,13 +76,15 @@ class GCNGuard(BaseModel):
         for i in range(num_layers):
             if norm == "layernorm" and i == 0:
                 self.layers.append(nn.LayerNorm(n_features[i]))
-            self.layers.append(GCNLayer(
-                in_features=n_features[i],
-                out_features=n_features[i + 1],
-                activation=activation if i != num_layers - 1 else None,
-                dropout=dropout if i != num_layers - 1 else 0.0,
-                norm=norm if i != num_layers - 1 else None
-            ))
+            self.layers.append(
+                GCNLayer(
+                    in_features=n_features[i],
+                    out_features=n_features[i + 1],
+                    activation=activation if i != num_layers - 1 else None,
+                    dropout=dropout if i != num_layers - 1 else 0.0,
+                    norm=norm if i != num_layers - 1 else None,
+                )
+            )
         self.reset_parameters()
         self.drop = drop
         self.drop_learn = torch.nn.Linear(2, 1)
@@ -119,12 +123,11 @@ class GCNGuard(BaseModel):
         if att_dense[0, 0] == 1:
             att_dense = att_dense - sp.diags(att_dense.diagonal(), offsets=0, format="lil")
         # normalization, make the sum of each row is 1
-        att_dense_norm = normalize(att_dense, axis=1, norm='l1')
+        att_dense_norm = normalize(att_dense, axis=1, norm="l1")
 
         """add learnable dropout, make character vector"""
         if self.drop:
-            character = np.vstack((att_dense_norm[row, col].A1,
-                                   att_dense_norm[col, row].A1))
+            character = np.vstack((att_dense_norm[row, col].A1, att_dense_norm[col, row].A1))
             character = torch.from_numpy(character.T).to(features.device)
             drop_score = self.drop_learn(character)
             drop_score = torch.sigmoid(drop_score)  # do not use softmax since we only have one element
@@ -191,22 +194,24 @@ class GATGuard(nn.Module):
             args.feat_norm,
             args.adj_norm,
             args.attention,
-            args.drop
+            args.drop,
         )
 
-    def __init__(self,
-                 in_feats,
-                 hidden_size,
-                 out_feats,
-                 num_layers,
-                 num_heads,
-                 dropout=0.0,
-                 activation=F.leaky_relu,
-                 norm=None,
-                 feat_norm=None,
-                 adj_norm_func=utils.GCNAdjNorm,
-                 attention=True,
-                 drop=False):
+    def __init__(
+        self,
+        in_feats,
+        hidden_size,
+        out_feats,
+        num_layers,
+        num_heads,
+        dropout=0.0,
+        activation=F.leaky_relu,
+        norm=None,
+        feat_norm=None,
+        adj_norm_func=utils.GCNAdjNorm,
+        attention=True,
+        drop=False,
+    ):
 
         super(GATGuard, self).__init__()
         self.in_features = in_feats
@@ -223,12 +228,14 @@ class GATGuard(nn.Module):
         for i in range(num_layers):
             if norm == "layernorm" and i == 0:
                 self.layers.append(nn.LayerNorm(n_features[i]))
-            self.layers.append(GATLayer(
-                in_feats=n_features[i] * num_heads if i != 0 else n_features[i],
-                out_feats=n_features[i + 1],
-                nhead=num_heads if i != num_layers - 1 else 1,
-                activation=activation if i != num_layers - 1 else None,
-                norm=norm if i != num_layers - 1 else None)
+            self.layers.append(
+                GATLayer(
+                    in_feats=n_features[i] * num_heads if i != 0 else n_features[i],
+                    out_feats=n_features[i + 1],
+                    nhead=num_heads if i != num_layers - 1 else 1,
+                    activation=activation if i != num_layers - 1 else None,
+                    norm=norm if i != num_layers - 1 else None,
+                )
             )
         self.drop = drop
         self.drop_learn = torch.nn.Linear(2, 1)
@@ -271,12 +278,11 @@ class GATGuard(nn.Module):
         if att_dense[0, 0] == 1:
             att_dense = att_dense - sp.diags(att_dense.diagonal(), offsets=0, format="lil")
         # normalization, make the sum of each row is 1
-        att_dense_norm = normalize(att_dense, axis=1, norm='l1')
+        att_dense_norm = normalize(att_dense, axis=1, norm="l1")
 
         """add learnable dropout, make character vector"""
         if self.drop:
-            character = np.vstack((att_dense_norm[row, col].A1,
-                                   att_dense_norm[col, row].A1))
+            character = np.vstack((att_dense_norm[row, col].A1, att_dense_norm[col, row].A1))
             character = torch.from_numpy(character.T).to(features.device)
             drop_score = self.drop_learn(character)
             drop_score = torch.sigmoid(drop_score)  # do not use softmax since we only have one element

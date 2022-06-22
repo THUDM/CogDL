@@ -53,23 +53,26 @@ class TDGIA(InjectionAttack):
         Device used to host data. Default: ``cpu``.
 
     """
-    def __init__(self,
-                 lr,
-                 n_epoch,
-                 n_inject_max,
-                 n_edge_max,
-                 feat_lim_min,
-                 feat_lim_max,
-                 loss=F.cross_entropy,
-                 eval_metric=eval_acc,
-                 inject_mode='tdgia',
-                 sequential_step=0.2,
-                 opt='sin',
-                 early_stop=None,
-                 early_stop_patience=1000,
-                 early_stop_epsilon=1e-5,
-                 verbose=True,
-                 device='cpu'):
+
+    def __init__(
+        self,
+        lr,
+        n_epoch,
+        n_inject_max,
+        n_edge_max,
+        feat_lim_min,
+        feat_lim_max,
+        loss=F.cross_entropy,
+        eval_metric=eval_acc,
+        inject_mode="tdgia",
+        sequential_step=0.2,
+        opt="sin",
+        early_stop=None,
+        early_stop_patience=1000,
+        early_stop_epsilon=1e-5,
+        verbose=True,
+        device="cpu",
+    ):
         self.device = device
         self.lr = lr
         self.n_epoch = n_epoch
@@ -89,16 +92,11 @@ class TDGIA(InjectionAttack):
             if isinstance(early_stop, EarlyStop):
                 self.early_stop = early_stop
             else:
-                self.early_stop = EarlyStop(patience=early_stop_patience,
-                                            epsilon=early_stop_epsilon)
+                self.early_stop = EarlyStop(patience=early_stop_patience, epsilon=early_stop_epsilon)
         else:
             self.early_stop = None
 
-    def attack(self,
-               model,
-               graph,
-               feat_norm=None,
-               adj_norm_func=None):
+    def attack(self, model, graph, feat_norm=None, adj_norm_func=None):
         r"""
 
         Description
@@ -129,12 +127,8 @@ class TDGIA(InjectionAttack):
         features = graph.x.clone()
         model.to(self.device)
         n_total, n_feat = features.shape
-        features = feat_preprocess(features=features,
-                                   feat_norm=feat_norm,
-                                   device=self.device)
-        adj_tensor = adj_preprocess(adj=adj,
-                                    adj_norm_func=adj_norm_func,
-                                    device=self.device)
+        features = feat_preprocess(features=features, feat_norm=feat_norm, device=self.device)
+        adj_tensor = adj_preprocess(adj=adj, adj_norm_func=adj_norm_func, device=self.device)
         pred_origin = model(getGraph(adj_tensor, features, device=self.device))
         labels_origin = torch.argmax(pred_origin, dim=1)
 
@@ -143,37 +137,39 @@ class TDGIA(InjectionAttack):
         """Sequential injection"""
         while n_inject < self.n_inject_max:
             with torch.no_grad():
-                adj_tensor = adj_preprocess(adj=adj,
-                                     adj_norm_func=adj_norm_func,
-                                     device=self.device)
+                adj_tensor = adj_preprocess(adj=adj, adj_norm_func=adj_norm_func, device=self.device)
                 current_labels = F.softmax(model(getGraph(adj_tensor, features_attack, device=self.device)), dim=1)
             n_inject_cur = self.n_inject_max - n_inject
             if n_inject_cur > self.n_inject_max * self.sequential_step:
                 n_inject_cur = int(self.n_inject_max * self.sequential_step)
             if self.verbose:
                 print("Attacking: Sequential inject {}/{} nodes".format(n_inject + n_inject_cur, self.n_inject_max))
-            adj_attack = self.injection(adj=adj,
-                                        n_inject=n_inject_cur,
-                                        n_origin=n_total,
-                                        n_current=n_total + n_inject,
-                                        labels_origin=labels_origin,
-                                        labels_current=current_labels,
-                                        target_mask=target_mask,
-                                        mode=self.inject_mode)
+            adj_attack = self.injection(
+                adj=adj,
+                n_inject=n_inject_cur,
+                n_origin=n_total,
+                n_current=n_total + n_inject,
+                labels_origin=labels_origin,
+                labels_current=current_labels,
+                target_mask=target_mask,
+                mode=self.inject_mode,
+            )
             if n_inject < self.n_inject_max:
                 n_inject += n_inject_cur
                 adj = adj_attack
                 features_attack_add = torch.randn((n_inject_cur, n_feat)).to(self.device)
-                features_attack_add = self.update_features(model=model,
-                                                           adj_attack=adj_attack,
-                                                           n_origin=n_total,
-                                                           features_current=features_attack,
-                                                           features_attack=features_attack_add,
-                                                           labels_origin=labels_origin,
-                                                           target_mask=target_mask,
-                                                           feat_norm=feat_norm,
-                                                           adj_norm_func=adj_norm_func,
-                                                           opt=self.opt)
+                features_attack_add = self.update_features(
+                    model=model,
+                    adj_attack=adj_attack,
+                    n_origin=n_total,
+                    features_current=features_attack,
+                    features_attack=features_attack_add,
+                    labels_origin=labels_origin,
+                    target_mask=target_mask,
+                    feat_norm=feat_norm,
+                    adj_norm_func=adj_norm_func,
+                    opt=self.opt,
+                )
                 features_attack = torch.cat((features, features_attack_add), dim=0)
 
         features_attack = features_attack[n_total:]
@@ -186,18 +182,20 @@ class TDGIA(InjectionAttack):
         return out_graph
 
     # flake8: noqa: C901
-    def injection(self,
-                  adj,
-                  n_inject,
-                  n_origin,
-                  n_current,
-                  labels_origin,
-                  labels_current,
-                  target_mask,
-                  self_connect_ratio=0.0,
-                  weight1=0.9,
-                  weight2=0.1,
-                  mode='tdgia'):
+    def injection(
+        self,
+        adj,
+        n_inject,
+        n_origin,
+        n_current,
+        labels_origin,
+        labels_current,
+        target_mask,
+        self_connect_ratio=0.0,
+        weight1=0.9,
+        weight2=0.1,
+        mode="tdgia",
+    ):
         r"""
 
         Description
@@ -247,7 +245,7 @@ class TDGIA(InjectionAttack):
         new_data = []
         test_index = torch.where(target_mask)[0].cpu()
 
-        if 'uniform' in mode:
+        if "uniform" in mode:
             for i in range(n_inject):
                 x = i + n_current
                 for j in range(n_connect):
@@ -268,7 +266,7 @@ class TDGIA(InjectionAttack):
 
             return adj_attack
 
-        if 'random' in mode:
+        if "random" in mode:
             for i in range(n_inject):
                 islinked = np.zeros(n_test)
                 for j in range(n_connect):
@@ -294,7 +292,7 @@ class TDGIA(InjectionAttack):
 
             return adj_attack
 
-        if 'tdgia' in mode:
+        if "tdgia" in mode:
             add_score = np.zeros(n_test)
             deg = np.array(adj.sum(axis=0))[0] + 1.0
             for i in range(n_test):
@@ -308,7 +306,7 @@ class TDGIA(InjectionAttack):
 
             # higher score is better
             sorted_rank = add_score.argsort()
-            sorted_rank = sorted_rank[-n_inject * n_connect:]
+            sorted_rank = sorted_rank[-n_inject * n_connect :]
             labelgroup = np.zeros(n_classes)
 
             # separate them by origin_labels
@@ -349,8 +347,9 @@ class TDGIA(InjectionAttack):
                     rnd_times = 100
                     yy = random.randint(0, n_inject - 1)
 
-                    while (np.sum(is_linked[yy]) >= n_self_connect or yy == i
-                            or is_linked[i][yy] == 1) and (rnd_times > 0):
+                    while (np.sum(is_linked[yy]) >= n_self_connect or yy == i or is_linked[i][yy] == 1) and (
+                        rnd_times > 0
+                    ):
                         yy = random.randint(0, n_inject - 1)
                         rnd_times -= 1
 
@@ -372,18 +371,20 @@ class TDGIA(InjectionAttack):
 
             return adj_attack
 
-    def update_features(self,
-                        model,
-                        adj_attack,
-                        features_current,
-                        features_attack,
-                        labels_origin,
-                        n_origin,
-                        target_mask,
-                        feat_norm=None,
-                        adj_norm_func=None,
-                        opt='sin',
-                        smooth_factor=4):
+    def update_features(
+        self,
+        model,
+        adj_attack,
+        features_current,
+        features_attack,
+        labels_origin,
+        n_origin,
+        target_mask,
+        feat_norm=None,
+        adj_norm_func=None,
+        opt="sin",
+        smooth_factor=4,
+    ):
         r"""
         Description
         -----------
@@ -427,45 +428,37 @@ class TDGIA(InjectionAttack):
 
         features_origin = features_current[:n_origin]
         features_added = features_current[n_origin:].cpu().data.numpy()
-        if opt == 'sin':
+        if opt == "sin":
             features_added = features_added / feat_lim_max
             features_added = np.arcsin(features_added)
-        features_added = feat_preprocess(features=features_added,
-                                         feat_norm=feat_norm,
-                                         device=self.device)
-        adj_attacked = adj_preprocess(adj=adj_attack,
-                                      adj_norm_func=adj_norm_func,
-                                      device=self.device)
+        features_added = feat_preprocess(features=features_added, feat_norm=feat_norm, device=self.device)
+        adj_attacked = adj_preprocess(adj=adj_attack, adj_norm_func=adj_norm_func, device=self.device)
 
         features_attack = feat_preprocess(features=features_attack, device=self.device)
         features_attack.requires_grad_(True)
         optimizer = torch.optim.Adam([features_added, features_attack], lr=lr)
-        loss_func = nn.CrossEntropyLoss(reduction='none')
+        loss_func = nn.CrossEntropyLoss(reduction="none")
         model.eval()
         epoch_bar = tqdm(range(n_epoch))
         for i in epoch_bar:
-            if opt == 'sin':
+            if opt == "sin":
                 features_add = torch.sin(features_added) * feat_lim_max
                 features_attacked = torch.sin(features_attack) * feat_lim_max
-            elif opt == 'clip':
+            elif opt == "clip":
                 features_add = torch.clamp(features_added, feat_lim_min, feat_lim_max)
                 features_attacked = torch.clamp(features_attack, feat_lim_min, feat_lim_max)
             features_concat = torch.cat((features_origin, features_add, features_attacked), dim=0)
             pred = model(getGraph(adj_attacked, features_concat, device=self.device))
-            pred_loss = loss_func(pred[:n_origin][target_mask],
-                                  labels_origin[target_mask]).to(self.device)
-            if opt == 'sin':
+            pred_loss = loss_func(pred[:n_origin][target_mask], labels_origin[target_mask]).to(self.device)
+            if opt == "sin":
                 pred_loss = F.relu(-pred_loss + smooth_factor) ** 2
-            elif opt == 'clip':
+            elif opt == "clip":
                 pred_loss = -pred_loss
             pred_loss = torch.mean(pred_loss)
             optimizer.zero_grad()
             pred_loss.backward(retain_graph=True)
             optimizer.step()
-            test_score = eval_acc(
-                pred[:n_origin][target_mask],
-                labels_origin[target_mask]
-            )
+            test_score = eval_acc(pred[:n_origin][target_mask], labels_origin[target_mask])
 
             if self.early_stop:
                 self.early_stop(test_score)
@@ -477,6 +470,7 @@ class TDGIA(InjectionAttack):
                     return features_concat[n_origin:].detach()
             if self.verbose:
                 epoch_bar.set_description(
-                    "Epoch {}, Loss: {:.4f}, Surrogate test score: {:.4f}".format(i, pred_loss, test_score))
+                    "Epoch {}, Loss: {:.4f}, Surrogate test score: {:.4f}".format(i, pred_loss, test_score)
+                )
 
         return features_concat[n_origin:].detach()

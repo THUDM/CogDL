@@ -83,7 +83,7 @@ class SpMM_CPU(torch.nn.Module):
 
 
 def spmm(graph, x, actnn=False, fast_spmm=None, fast_spmm_cpu=None):
-    if hasattr(graph, 'grb_adj') and graph.grb_adj is not None:
+    if hasattr(graph, "grb_adj") and graph.grb_adj is not None:
         if graph.grb_adj.is_sparse:
             x = torch.sparse.mm(graph.grb_adj, x)
         else:

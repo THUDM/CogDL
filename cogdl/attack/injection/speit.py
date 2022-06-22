@@ -52,21 +52,23 @@ class SPEIT(InjectionAttack):
 
     """
 
-    def __init__(self,
-                 lr,
-                 n_epoch,
-                 n_inject_max,
-                 n_edge_max,
-                 feat_lim_min,
-                 feat_lim_max,
-                 loss=F.cross_entropy,
-                 eval_metric=eval_acc,
-                 inject_mode='random',
-                 early_stop=None,
-                 early_stop_patience=1000,
-                 early_stop_epsilon=1e-5,
-                 verbose=True,
-                 device='cpu'):
+    def __init__(
+        self,
+        lr,
+        n_epoch,
+        n_inject_max,
+        n_edge_max,
+        feat_lim_min,
+        feat_lim_max,
+        loss=F.cross_entropy,
+        eval_metric=eval_acc,
+        inject_mode="random",
+        early_stop=None,
+        early_stop_patience=1000,
+        early_stop_epsilon=1e-5,
+        verbose=True,
+        device="cpu",
+    ):
         self.device = device
         self.lr = lr
         self.n_epoch = n_epoch
@@ -84,16 +86,11 @@ class SPEIT(InjectionAttack):
             if isinstance(early_stop, EarlyStop):
                 self.early_stop = early_stop
             else:
-                self.early_stop = EarlyStop(patience=early_stop_patience,
-                                            epsilon=early_stop_epsilon)
+                self.early_stop = EarlyStop(patience=early_stop_patience, epsilon=early_stop_epsilon)
         else:
             self.early_stop = None
 
-    def attack(self,
-               model,
-               graph,
-               feat_norm=None,
-               adj_norm_func=None):
+    def attack(self, model, graph, feat_norm=None, adj_norm_func=None):
         r"""
         Description
         -----------
@@ -123,29 +120,25 @@ class SPEIT(InjectionAttack):
         features = graph.x
         model.to(self.device)
         n_total, n_feat = features.shape
-        features = feat_preprocess(features=features,
-                                   feat_norm=feat_norm,
-                                   device=self.device)
-        adj_tensor = adj_preprocess(adj=adj,
-                                    adj_norm_func=adj_norm_func,
-                                    device=self.device)
+        features = feat_preprocess(features=features, feat_norm=feat_norm, device=self.device)
+        adj_tensor = adj_preprocess(adj=adj, adj_norm_func=adj_norm_func, device=self.device)
         pred_origin = model(getGraph(adj_tensor, features, device=self.device))
         labels_origin = torch.argmax(pred_origin, dim=1)
-        adj_attack = self.injection(adj=adj,
-                                    n_inject=self.n_inject_max,
-                                    n_node=n_total,
-                                    target_mask=target_mask,
-                                    mode=self.inject_mode)
+        adj_attack = self.injection(
+            adj=adj, n_inject=self.n_inject_max, n_node=n_total, target_mask=target_mask, mode=self.inject_mode
+        )
 
         features_attack = np.zeros([self.n_inject_max, n_feat])
-        features_attack = self.update_features(model=model,
-                                               adj_attack=adj_attack,
-                                               features_origin=features,
-                                               features_attack=features_attack,
-                                               labels_origin=labels_origin,
-                                               target_mask=target_mask,
-                                               feat_norm=feat_norm,
-                                               adj_norm_func=adj_norm_func)
+        features_attack = self.update_features(
+            model=model,
+            adj_attack=adj_attack,
+            features_origin=features,
+            features_attack=features_attack,
+            labels_origin=labels_origin,
+            target_mask=target_mask,
+            feat_norm=feat_norm,
+            adj_norm_func=adj_norm_func,
+        )
         out_features = torch.cat((features, features_attack), 0)
         time_end = time.time()
         if self.verbose:
@@ -155,13 +148,7 @@ class SPEIT(InjectionAttack):
         return out_graph
 
     # flake8: noqa: C901
-    def injection(self,
-                  adj,
-                  n_inject,
-                  n_node,
-                  target_mask,
-                  target_node=None,
-                  mode='random-inter'):
+    def injection(self, adj, n_inject, n_node, target_mask, target_node=None, mode="random-inter"):
         r"""
 
         Description
@@ -207,11 +194,11 @@ class SPEIT(InjectionAttack):
 
             return active_edges
 
-        def inject(target_node_list, n_inject, n_test, mode='random-inter'):
+        def inject(target_node_list, n_inject, n_test, mode="random-inter"):
             n_target = len(target_node_list)
             adj = np.zeros((n_inject, n_test + n_inject))
 
-            if mode == 'random-inter':
+            if mode == "random-inter":
                 # target_node_list: a list of target nodes to be attacked
                 n_inject_edges = np.zeros(n_inject)
                 active_edges = [i for i in range(n_inject)]
@@ -241,7 +228,7 @@ class SPEIT(InjectionAttack):
                         adj[inject_id, n_test + np.array(inject_list)] = 1
                         adj[inject_list, n_test + inject_id] = 1
 
-            elif mode == 'multi-layer':
+            elif mode == "multi-layer":
                 n_inject_edges = np.zeros(n_inject)
                 n_inject_layer_1, n_inject_layer_2 = int(n_inject * 0.9), int(n_inject * 0.1)
                 n_edge_max_layer_1 = int(self.n_edge_max * 0.9)
@@ -281,8 +268,9 @@ class SPEIT(InjectionAttack):
                         break
                     inject_list = np.random.choice(noise_active_layer2, 10)
                     noise_edge_layer2[inject_list] += 1
-                    noise_active_layer2 = update_active_edges(noise_active_layer2, noise_edge_layer2,
-                                                              threshold=self.n_edge_max)
+                    noise_active_layer2 = update_active_edges(
+                        noise_active_layer2, noise_edge_layer2, threshold=self.n_edge_max
+                    )
                     adj[inject_list + n_inject_layer_1, i + n_test] = 1
                     adj[i, inject_list + n_inject_layer_1 + n_test] = 1
             else:
@@ -290,7 +278,7 @@ class SPEIT(InjectionAttack):
 
             return adj
 
-        if mode == 'random':
+        if mode == "random":
             test_index = torch.where(target_mask)[0].cpu()
             n_test = test_index.shape[0]
             new_edges_x = []
@@ -333,15 +321,17 @@ class SPEIT(InjectionAttack):
 
             return adj_attack
 
-    def update_features(self,
-                        model,
-                        adj_attack,
-                        features_origin,
-                        features_attack,
-                        labels_origin,
-                        target_mask,
-                        feat_norm=None,
-                        adj_norm_func=None):
+    def update_features(
+        self,
+        model,
+        adj_attack,
+        features_origin,
+        features_attack,
+        labels_origin,
+        target_mask,
+        feat_norm=None,
+        adj_norm_func=None,
+    ):
         r"""
 
         Description
@@ -379,12 +369,8 @@ class SPEIT(InjectionAttack):
         feat_lim_min, feat_lim_max = self.feat_lim_min, self.feat_lim_max
 
         n_total = features_origin.shape[0]
-        features_attack = feat_preprocess(features=features_attack,
-                                          feat_norm=feat_norm,
-                                          device=self.device)
-        adj_attacked = adj_preprocess(adj=adj_attack,
-                                      adj_norm_func=adj_norm_func,
-                                      device=self.device)
+        features_attack = feat_preprocess(features=features_attack, feat_norm=feat_norm, device=self.device)
+        adj_attacked = adj_preprocess(adj=adj_attack, adj_norm_func=adj_norm_func, device=self.device)
         features_attack.requires_grad_(True)
         optimizer = torch.optim.Adam([features_attack], lr=lr)
         model.eval()
@@ -392,8 +378,7 @@ class SPEIT(InjectionAttack):
         for i in epoch_bar:
             features_concat = torch.cat((features_origin, features_attack), dim=0)
             pred = model(getGraph(adj_attacked, features_concat, device=self.device))
-            pred_loss = -self.loss(pred[:n_total][target_mask],
-                                   labels_origin[target_mask]).to(self.device)
+            pred_loss = -self.loss(pred[:n_total][target_mask], labels_origin[target_mask]).to(self.device)
             optimizer.zero_grad()
             pred_loss.backward(retain_graph=True)
             optimizer.step()
@@ -401,10 +386,7 @@ class SPEIT(InjectionAttack):
             with torch.no_grad():
                 features_attack.clamp_(feat_lim_min, feat_lim_max)
 
-            test_score = eval_acc(
-                pred[:n_total][target_mask],
-                labels_origin[target_mask]
-            )
+            test_score = eval_acc(pred[:n_total][target_mask], labels_origin[target_mask])
 
             if self.early_stop:
                 self.early_stop(test_score)
@@ -416,7 +398,8 @@ class SPEIT(InjectionAttack):
                     return features_attack
             if self.verbose:
                 epoch_bar.set_description(
-                    "Epoch {}, Loss: {:.4f}, Surrogate test score: {:.4f}".format(i, pred_loss, test_score))
+                    "Epoch {}, Loss: {:.4f}, Surrogate test score: {:.4f}".format(i, pred_loss, test_score)
+                )
         if self.verbose:
             print("Surrogate test score: {:.4f}".format(test_score))
 

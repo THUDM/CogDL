@@ -34,6 +34,7 @@ class RobustGCN(BaseModel):
             Rate of dropout. Default: ``0.0``.
 
     """
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
@@ -59,14 +60,9 @@ class RobustGCN(BaseModel):
             args.adj_norm,
         )
 
-    def __init__(self,
-                 in_feats,
-                 hidden_size,
-                 out_feats,
-                 num_layers,
-                 dropout=0.0,
-                 feat_norm=None,
-                 adj_norm_func=RobustGCNAdjNorm):
+    def __init__(
+        self, in_feats, hidden_size, out_feats, num_layers, dropout=0.0, feat_norm=None, adj_norm_func=RobustGCNAdjNorm
+    ):
         super(RobustGCN, self).__init__()
         self.in_features = in_feats
         self.out_features = out_feats
@@ -83,9 +79,16 @@ class RobustGCN(BaseModel):
 
         self.layers = nn.ModuleList()
         for i in range(num_layers):
-            self.layers.append(RobustGCNConv(n_features[i], n_features[i + 1], act0=self.act0, act1=self.act1,
-                                             initial=True if i == 0 else False,
-                                             dropout=dropout if i != num_layers - 1 else 0.0))
+            self.layers.append(
+                RobustGCNConv(
+                    n_features[i],
+                    n_features[i + 1],
+                    act0=self.act0,
+                    act1=self.act1,
+                    initial=True if i == 0 else False,
+                    dropout=dropout if i != num_layers - 1 else 0.0,
+                )
+            )
 
     def forward(self, graph):
         r"""

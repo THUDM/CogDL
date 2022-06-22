@@ -67,12 +67,7 @@ class SelfAuxiliaryModelWrapper(UnsupervisedModelWrapper):
             self.agent = AttributeMask(data, self.hidden_size, data.train_mask, self.mask_ratio, self.device)
         elif self.auxiliary_task == "pairwise_distance":
             self.agent = PairwiseDistance(
-                self.hidden_size,
-                [(1, 2), (2, 3), (3, 5)],
-                self.sampling,
-                self.dropedge_rate,
-                256,
-                self.device,
+                self.hidden_size, [(1, 2), (2, 3), (3, 5)], self.sampling, self.dropedge_rate, 256, self.device,
             )
         elif self.auxiliary_task == "distance2clusters":
             self.agent = Distance2Clusters(self.hidden_size, 30, self.device)

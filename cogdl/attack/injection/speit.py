@@ -114,7 +114,6 @@ class SPEIT(InjectionAttack):
 
         """
         time_start = time.time()
-        # adj, features = getGRBGraph(graph)
         adj = graph.to_scipy_csr()
         target_mask = graph.test_mask
         features = graph.x
@@ -148,7 +147,7 @@ class SPEIT(InjectionAttack):
         return out_graph
 
     # flake8: noqa: C901
-    def injection(self, adj, n_inject, n_node, target_mask, target_node=None, mode="random-inter"):
+    def injection(self, adj, n_inject, n_node, target_mask, mode="random-inter"):
         r"""
 
         Description
@@ -165,8 +164,6 @@ class SPEIT(InjectionAttack):
             Number of all nodes.
         target_mask : torch.Tensor
             Mask of attack target nodes in form of ``N * 1`` torch bool tensor.
-        target_node : np.ndarray
-            IDs of target nodes to attack with priority.
         mode : str, optional
             Mode of injection. Choose from ``["random", "random-inter", "multi-layer"]``. Default: ``random-inter``.
 
@@ -312,6 +309,7 @@ class SPEIT(InjectionAttack):
             # construct injected adjacency matrix
             test_index = torch.where(target_mask)[0]
             n_test = test_index.shape[0]
+            target_node = test_index.cpu().detach().numpy()
             adj_inject = inject(target_node, n_inject, n_test, mode)
             adj_inject = sp.hstack([sp.csr_matrix((n_inject, n_node - n_test)), adj_inject])
             adj_inject = sp.csr_matrix(adj_inject)

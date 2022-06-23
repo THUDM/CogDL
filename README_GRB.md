@@ -197,5 +197,5 @@ print(model)
 - [ ] betweenness Flip modification attack 卡住
 - [ ] PRBCD modification attack 不支持CUDA，且在cpu上非常慢，输出inf
 - [ ] FGSM injection attack 的 GRB 实现似乎采用了迭代梯度下降
-- [ ] SPEIT injection attack 中 inject_mode = "random-iter" 与 "multi-layer" GRB中似乎没有实现
+- [x] SPEIT injection attack 中 inject_mode = "random-iter" 与 "multi-layer" GRB中似乎没有实现
 - [ ] leaderboards

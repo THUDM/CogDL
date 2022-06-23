@@ -35,30 +35,30 @@ class RobustGCN(BaseModel):
 
     """
 
-    @staticmethod
-    def add_args(parser):
-        """Add model-specific arguments to the parser."""
-        # fmt: off
-        parser.add_argument("--num-features", type=int)
-        parser.add_argument("--num-classes", type=int)
-        parser.add_argument("--num-layers", type=int, default=2)
-        parser.add_argument("--hidden-size", type=int, default=64)
-        parser.add_argument("--dropout", type=float, default=0.5)
-        parser.add_argument("--feat-norm", type=types.FunctionType, default=None)
-        parser.add_argument("--adj-norm", type=types.FunctionType, default=RobustGCNAdjNorm)
-        # fmt: on
+    # @staticmethod
+    # def add_args(parser):
+    #     """Add model-specific arguments to the parser."""
+    #     # fmt: off
+    #     parser.add_argument("--num-features", type=int)
+    #     parser.add_argument("--num-classes", type=int)
+    #     parser.add_argument("--num-layers", type=int, default=2)
+    #     parser.add_argument("--hidden-size", type=int, default=64)
+    #     parser.add_argument("--dropout", type=float, default=0.5)
+    #     parser.add_argument("--feat-norm", type=types.FunctionType, default=None)
+    #     parser.add_argument("--adj-norm", type=types.FunctionType, default=RobustGCNAdjNorm)
+    #     # fmt: on
 
-    @classmethod
-    def build_model_from_args(cls, args):
-        return cls(
-            args.num_features,
-            args.hidden_size,
-            args.num_classes,
-            args.num_layers,
-            args.dropout,
-            args.feat_norm,
-            args.adj_norm,
-        )
+    # @classmethod
+    # def build_model_from_args(cls, args):
+    #     return cls(
+    #         args.num_features,
+    #         args.hidden_size,
+    #         args.num_classes,
+    #         args.num_layers,
+    #         args.dropout,
+    #         args.feat_norm,
+    #         args.adj_norm,
+    #     )
 
     def __init__(
         self, in_feats, hidden_size, out_feats, num_layers, dropout=0.0, feat_norm=None, adj_norm_func=RobustGCNAdjNorm

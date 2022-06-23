@@ -6,9 +6,9 @@ from cogdl.attack.injection import RAND as RAND_Inject
 from cogdl.attack.modification import PGD as PGD_Modify
 from cogdl.attack.injection import PGD as PGD_Inject
 from cogdl.models.defense import *
+from cogdl.models.nn import GCN
 from cogdl.utils import set_random_seed
 from cogdl.utils.grb_utils import evaluate, GCNAdjNorm
-from cogdl.models.nn import GCN
 from cogdl.trainer import Trainer
 from cogdl.wrappers import fetch_model_wrapper, fetch_data_wrapper
 import copy
@@ -279,13 +279,14 @@ def test_prbcd_modification_attack():
     feat_lim_min = 0.0
     feat_lim_max = 1.0
     early_stop_patience = 2
-    early_stop_epsilon = 0.001
+    early_stop_epsilon = 1e-3
     attack = PRBCD(epsilon,
                 n_epoch,
                 n_node_mod,
                 n_edge_mod,
                 feat_lim_min,
                 feat_lim_max,
+                early_stop=True,
                 early_stop_patience=early_stop_patience,
                 early_stop_epsilon=early_stop_epsilon,
                 device=device)
@@ -396,30 +397,34 @@ def test_speit_injection_attack():
     model_sur = init_surrogate_model(graph, dataset, test_mask, device, device_ids)
     model_target = init_target_model(graph, dataset, test_mask, device, device_ids)
     print("SPEIT injection attack...")
-    attack = SPEIT(lr=0.02,
+    inject_modes = ["random", "random-iter", "multi-layer"]
+    attacks = [SPEIT(lr=0.02,
                 n_epoch=5,
                 n_inject_max=10,
                 n_edge_max=20,
                 feat_lim_min=-1,
                 feat_lim_max=1,
+                inject_mode=inject_mode,
                 early_stop=True,
                 early_stop_patience=2,
                 early_stop_epsilon=1e-4,
                 device=device)
-    graph_attack = attack.attack(model=model_sur,
-                                graph=graph,
-                                adj_norm_func=GCNAdjNorm)
-    print(graph_attack)
-    test_score_sur = evaluate(model_sur,
-                            graph_attack,
-                            mask=test_mask,
-                            device=device)
-    print("Test score after attack for surrogate model: {:.4f}.".format(test_score_sur))
-    test_score_target_attack = evaluate(model_target,
-                                        graph_attack,
-                                        mask=test_mask,
-                                        device=device)
-    print("Test score after attack for target model: {:.4f}.".format(test_score_target_attack))
+                for inject_mode in inject_modes]
+    for attack in attacks:
+        graph_attack = attack.attack(model=model_sur,
+                                    graph=graph,
+                                    adj_norm_func=GCNAdjNorm)
+        print(graph_attack)
+        test_score_sur = evaluate(model_sur,
+                                graph_attack,
+                                mask=test_mask,
+                                device=device)
+        print("Test score after attack for surrogate model: {:.4f}.".format(test_score_sur))
+        test_score_target_attack = evaluate(model_target,
+                                            graph_attack,
+                                            mask=test_mask,
+                                            device=device)
+        print("Test score after attack for target model: {:.4f}.".format(test_score_target_attack))
 
 
 def test_tdgia_injection_attack():

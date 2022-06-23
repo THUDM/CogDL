@@ -75,10 +75,10 @@ class STACK(ModificationAttack):
         return adj_attack
 
 
-def sum_of_powers(x, power):
-    n = x.shape[0]
-    sum_powers = np.zeros((power, n))
-    for i, i_power in enumerate(range(1, power + 1)):
-        sum_powers[i] = np.power(x, i_power)
+# def sum_of_powers(x, power):
+#     n = x.shape[0]
+#     sum_powers = np.zeros((power, n))
+#     for i, i_power in enumerate(range(1, power + 1)):
+#         sum_powers[i] = np.power(x, i_power)
 
-    return sum_powers.sum(0)
+#     return sum_powers.sum(0)

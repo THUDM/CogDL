@@ -109,19 +109,22 @@ def test_fga_modification_attack():
     model_target = init_target_model(graph, dataset, test_mask, device, device_ids)
     print("FGA modification attack...")
     n_mod_ratio = 0.01
-    attack = FGA(int(graph.to_scipy_csr()[test_mask.cpu()].getnnz() * n_mod_ratio),
-                device=device)
-    graph_attack = attack.attack(model_sur, graph)
-    test_score = evaluate(model_sur, 
-                        graph_attack,
-                        mask=test_mask,
-                        device=device)
-    print("After attack, test score of surrogate model: {:.4f}".format(test_score))
-    test_score = evaluate(model_target, 
-                        graph_attack,
-                        mask=test_mask,
-                        device=device)
-    print("After attack, test score of surrogate model: {:.4f}".format(test_score))
+    attacks = [
+        FGA(int(graph.to_scipy_csr()[test_mask.cpu()].getnnz() * n_mod_ratio), allow_isolate=False, device=device),
+        FGA(int(graph.to_scipy_csr()[test_mask.cpu()].getnnz() * n_mod_ratio), allow_isolate=True, device=device)
+    ]
+    for attack in attacks:
+        graph_attack = attack.attack(model_sur, graph)
+        test_score = evaluate(model_sur, 
+                            graph_attack,
+                            mask=test_mask,
+                            device=device)
+        print("After attack, test score of surrogate model: {:.4f}".format(test_score))
+        test_score = evaluate(model_target, 
+                            graph_attack,
+                            mask=test_mask,
+                            device=device)
+        print("After attack, test score of surrogate model: {:.4f}".format(test_score))
 
 
 def test_flip_modification_attack():
@@ -158,19 +161,23 @@ def test_rand_modification_attack():
     print("RAND modification attack...")
     n_mod_ratio = 0.01
     n_edge_mod = int(graph.to_scipy_csr()[test_mask.cpu()].getnnz() * n_mod_ratio)
-    attack = RAND_Modify(n_edge_mod, device=device)
-    graph_attack = attack.attack(graph)
-    print(graph_attack)
-    test_score = evaluate(model_sur, 
-                        graph_attack,
-                        mask=test_mask,
-                        device=device)
-    print("After attack, test score of surrogate model: {:.4f}".format(test_score))
-    test_score = evaluate(model_target, 
-                        graph_attack,
-                        mask=test_mask,
-                        device=device)
-    print("After attack, test score of target model: {:.4f}".format(test_score))
+    attacks = [
+        RAND_Modify(n_edge_mod, allow_isolate=False, device=device),
+        RAND_Modify(n_edge_mod, allow_isolate=True, device=device)
+    ]
+    for attack in attacks:
+        graph_attack = attack.attack(graph)
+        print(graph_attack)
+        test_score = evaluate(model_sur, 
+                            graph_attack,
+                            mask=test_mask,
+                            device=device)
+        print("After attack, test score of surrogate model: {:.4f}".format(test_score))
+        test_score = evaluate(model_target, 
+                            graph_attack,
+                            mask=test_mask,
+                            device=device)
+        print("After attack, test score of target model: {:.4f}".format(test_score))
 
 
 def test_nea_modification_attack():
@@ -202,19 +209,23 @@ def test_stack_modification_attack():
     print("STACK modification attack...")
     n_mod_ratio = 0.01
     n_edge_mod = int(graph.to_scipy_csr()[test_mask.cpu()].getnnz() * n_mod_ratio)
-    attack = STACK(n_edge_mod, device=device)
-    graph_attack = attack.attack(graph)
-    print(graph_attack)
-    test_score = evaluate(model_sur, 
-                        graph_attack,
-                        mask=test_mask,
-                        device=device)
-    print("After attack, test score of surrogate model: {:.4f}".format(test_score))
-    test_score = evaluate(model_target, 
-                        graph_attack,
-                        mask=test_mask,
-                        device=device)
-    print("After attack, test score of target model: {:.4f}".format(test_score))
+    attacks = [
+        STACK(n_edge_mod, allow_isolate=False, device=device),
+        STACK(n_edge_mod, allow_isolate=True, device=device)
+    ]
+    for attack in attacks:
+        graph_attack = attack.attack(graph)
+        print(graph_attack)
+        test_score = evaluate(model_sur, 
+                            graph_attack,
+                            mask=test_mask,
+                            device=device)
+        print("After attack, test score of surrogate model: {:.4f}".format(test_score))
+        test_score = evaluate(model_target, 
+                            graph_attack,
+                            mask=test_mask,
+                            device=device)
+        print("After attack, test score of target model: {:.4f}".format(test_score))
 
 
 def test_pgd_modification_attack():
@@ -236,7 +247,9 @@ def test_pgd_modification_attack():
                 n_edge_mod,
                 feat_lim_min,
                 feat_lim_max,
+                early_stop=True,
                 early_stop_patience=early_stop_patience,
+                early_stop_epsilon=1e-3,
                 device=device)
     graph_attack = attack.attack(model_sur, graph)
     print(graph_attack)
@@ -301,6 +314,9 @@ def test_fgsm_injection_attack():
                 n_edge_max=20,
                 feat_lim_min=-1,
                 feat_lim_max=1,
+                early_stop=True,
+                early_stop_patience=2,
+                early_stop_epsilon=1e-4,
                 device=device)
     graph_attack = attack.attack(model=model_sur,
                                 graph=graph,
@@ -329,6 +345,9 @@ def test_pgd_injection_attack():
                 n_edge_max=20,
                 feat_lim_min=-1,
                 feat_lim_max=1,
+                early_stop=True,
+                early_stop_patience=2,
+                early_stop_epsilon=1e-4,
                 device=device)
     graph_attack = attack.attack(model=model_sur,
                                 graph=graph,
@@ -383,35 +402,6 @@ def test_speit_injection_attack():
                 n_edge_max=20,
                 feat_lim_min=-1,
                 feat_lim_max=1,
-                device=device)
-    graph_attack = attack.attack(model=model_sur,
-                                graph=graph,
-                                adj_norm_func=GCNAdjNorm)
-    print(graph_attack)
-    test_score_sur = evaluate(model_sur,
-                            graph_attack,
-                            mask=test_mask,
-                            device=device)
-    print("Test score after attack for surrogate model: {:.4f}.".format(test_score_sur))
-    test_score_target_attack = evaluate(model_target,
-                                        graph_attack,
-                                        mask=test_mask,
-                                        device=device)
-    print("Test score after attack for target model: {:.4f}.".format(test_score_target_attack))
-
-
-def test_tdgia_injection_attack(inject_mode="tdgia"):
-    graph, dataset, test_mask, device, device_ids = init_dataset()
-    model_sur = init_surrogate_model(graph, dataset, test_mask, device, device_ids)
-    model_target = init_target_model(graph, dataset, test_mask, device, device_ids)
-    print("TDGIA injection attack...")
-    attack = TDGIA(lr=0.01,
-                n_epoch=5,
-                n_inject_max=10,
-                n_edge_max=20,
-                feat_lim_min=-1,
-                feat_lim_max=1,
-                inject_mode=inject_mode,
                 early_stop=True,
                 early_stop_patience=2,
                 early_stop_epsilon=1e-4,
@@ -430,6 +420,43 @@ def test_tdgia_injection_attack(inject_mode="tdgia"):
                                         mask=test_mask,
                                         device=device)
     print("Test score after attack for target model: {:.4f}.".format(test_score_target_attack))
+
+
+def test_tdgia_injection_attack():
+    graph, dataset, test_mask, device, device_ids = init_dataset()
+    model_sur = init_surrogate_model(graph, dataset, test_mask, device, device_ids)
+    model_target = init_target_model(graph, dataset, test_mask, device, device_ids)
+    print("TDGIA injection attack...")
+    inject_modes = ["tdgia", "random", "uniform"]
+    attacks = []
+    for inject_mode in inject_modes:
+        attacks.append(TDGIA(lr=0.01,
+            n_epoch=5,
+            n_inject_max=10,
+            n_edge_max=20,
+            feat_lim_min=-1,
+            feat_lim_max=1,
+            inject_mode=inject_mode,
+            early_stop=True,
+            early_stop_patience=2,
+            early_stop_epsilon=1e-4,
+            device=device)
+        )
+    for attack in attacks:
+        graph_attack = attack.attack(model=model_sur,
+                                    graph=graph,
+                                    adj_norm_func=GCNAdjNorm)
+        print(graph_attack)
+        test_score_sur = evaluate(model_sur,
+                                graph_attack,
+                                mask=test_mask,
+                                device=device)
+        print("Test score after attack for surrogate model: {:.4f}.".format(test_score_sur))
+        test_score_target_attack = evaluate(model_target,
+                                            graph_attack,
+                                            mask=test_mask,
+                                            device=device)
+        print("Test score after attack for target model: {:.4f}.".format(test_score_target_attack))
 
 
 def apply_pgd_modification_attack(model_sur, model_target, graph, test_mask, device):
@@ -605,9 +632,7 @@ if __name__ == "__main__":
     test_pgd_injection_attack()
     test_rand_injection_attack()
     test_speit_injection_attack()
-    test_tdgia_injection_attack(inject_mode="tdgia")
-    test_tdgia_injection_attack(inject_mode="random")
-    test_tdgia_injection_attack(inject_mode="uniform")
+    test_tdgia_injection_attack()
     test_gcnsvd_defense()
     test_gatguard_defense()
     test_gcnguard_defense()

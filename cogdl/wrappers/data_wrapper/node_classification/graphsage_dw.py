@@ -20,10 +20,7 @@ class GraphSAGEDataWrapper(DataWrapper):
             dataset, sizes=sample_size, batch_size=batch_size * 2, mask=dataset.data.val_mask
         )
         self.test_dataset = NeighborSamplerDataset(
-            dataset=self.dataset,
-            mask=None,
-            sizes=[-1],
-            batch_size=batch_size * 2,
+            dataset=self.dataset, mask=None, sizes=[-1], batch_size=batch_size * 2,
         )
         self.x = self.dataset.data.x
         self.y = self.dataset.data.y

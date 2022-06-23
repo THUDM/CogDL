@@ -86,12 +86,7 @@ class GAT(BaseModel):
             )
         self.attentions.append(
             GATLayer(
-                hidden_size * nhead,
-                out_features,
-                attn_drop=attn_drop,
-                alpha=alpha,
-                nhead=last_nhead,
-                residual=False,
+                hidden_size * nhead, out_features, attn_drop=attn_drop, alpha=alpha, nhead=last_nhead, residual=False,
             )
         )
         self.num_layers = num_layers

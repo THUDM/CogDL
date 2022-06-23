@@ -139,12 +139,7 @@ class GATNE(BaseModel):
                     neighbors[i][r] = [i] * neighbor_samples
                 elif len(neighbors[i][r]) < neighbor_samples:
                     neighbors[i][r].extend(
-                        list(
-                            np.random.choice(
-                                neighbors[i][r],
-                                size=neighbor_samples - len(neighbors[i][r]),
-                            )
-                        )
+                        list(np.random.choice(neighbors[i][r], size=neighbor_samples - len(neighbors[i][r]),))
                     )
                 elif len(neighbors[i][r]) > neighbor_samples:
                     neighbors[i][r] = list(np.random.choice(neighbors[i][r], size=neighbor_samples))
@@ -171,11 +166,7 @@ class GATNE(BaseModel):
 
             for i, data in enumerate(data_iter):
                 optimizer.zero_grad()
-                embs = model(
-                    data[0].to(device),
-                    data[2].to(device),
-                    data[3].to(device),
-                )
+                embs = model(data[0].to(device), data[2].to(device), data[3].to(device),)
                 loss = nsloss(data[0].to(device), embs, data[1].to(device))
                 loss.backward()
                 optimizer.step()
@@ -230,8 +221,7 @@ class GATNEModel(nn.Module):
         node_embed = self.node_embeddings[train_inputs]
         node_embed_neighbors = self.node_type_embeddings[node_neigh]
         node_embed_tmp = torch.cat(
-            [node_embed_neighbors[:, i, :, i, :].unsqueeze(1) for i in range(self.edge_type_count)],
-            dim=1,
+            [node_embed_neighbors[:, i, :, i, :].unsqueeze(1) for i in range(self.edge_type_count)], dim=1,
         )
         node_type_embed = torch.sum(node_embed_tmp, dim=2)
 
@@ -321,13 +311,7 @@ class RWGraph:
                 else:
                     for schema_iter in schema_list:
                         if schema_iter.split("-")[0] == self.node_type[node]:
-                            walks.append(
-                                self.walk(
-                                    walk_length=walk_length,
-                                    start=node,
-                                    schema=schema_iter,
-                                )
-                            )
+                            walks.append(self.walk(walk_length=walk_length, start=node, schema=schema_iter,))
 
         return walks
 

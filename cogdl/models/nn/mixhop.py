@@ -20,13 +20,7 @@ class MixHop(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(
-            args.num_features,
-            args.num_classes,
-            args.dropout,
-            args.layer1_pows,
-            args.layer2_pows,
-        )
+        return cls(args.num_features, args.num_classes, args.dropout, args.layer1_pows, args.layer2_pows,)
 
     def __init__(self, num_features, num_classes, dropout, layer1_pows, layer2_pows):
         super(MixHop, self).__init__()

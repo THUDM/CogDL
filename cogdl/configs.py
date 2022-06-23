@@ -26,28 +26,12 @@ BEST_CONFIGS = {
             "epochs": 7000,
             # 78.04
         },
-        "flickr": {
-            "lr": 0.01,
-            "dropout": 0.5,
-            "weight_decay": 0.0,
-            "hidden_size": 256,
-        },
+        "flickr": {"lr": 0.01, "dropout": 0.5, "weight_decay": 0.0, "hidden_size": 256,},
     },
-    "sage": {
-        "general": {},
-    },
+    "sage": {"general": {},},
     "gcnii": {
-        "general": {
-            "epochs": 1000,
-            "dropout": 0.5,
-            "wd1": 0.001,
-            "wd2": 5e-4,
-        },
-        "cora": {
-            "num_layers": 64,
-            "hidden_size": 64,
-            "dropout": 0.6,
-        },
+        "general": {"epochs": 1000, "dropout": 0.5, "wd1": 0.001, "wd2": 5e-4,},
+        "cora": {"num_layers": 64, "hidden_size": 64, "dropout": 0.6,},
         "citeseer": {
             "num_layers": 32,
             "hidden_size": 256,
@@ -57,13 +41,7 @@ BEST_CONFIGS = {
             "lmbda": 0.6,
             "dropout": 0.7,
         },
-        "pubmed": {
-            "num_layers": 16,
-            "hidden_size": 256,
-            "lmbda": 0.4,
-            "dropout": 0.5,
-            "wd1": 5e-4,
-        },
+        "pubmed": {"num_layers": 16, "hidden_size": 256, "lmbda": 0.4, "dropout": 0.5, "wd1": 5e-4,},
         "reddit": {
             "num_layers": 3,
             "hidden_size": 256,
@@ -87,13 +65,9 @@ BEST_CONFIGS = {
         }
         # 52.54
     },
-    "gdc_gcn": {
-        "general": {"hidden_size": 16},
-    },
+    "gdc_gcn": {"general": {"hidden_size": 16},},
     "grand": {
-        "general": {
-            "epochs": 1000,
-        },
+        "general": {"epochs": 1000,},
         "cora": {
             "order": 8,
             "sample": 4,
@@ -126,15 +100,8 @@ BEST_CONFIGS = {
             "hidden_dropout": 0.8,
         },
     },
-    "graphsage": {
-        "general": {},
-    },
-    "sgc": {
-        "general": {
-            "hidden_size": 16,
-            "dropout": 0.5,
-        },
-    },
+    "graphsage": {"general": {},},
+    "sgc": {"general": {"hidden_size": 16, "dropout": 0.5,},},
     "sgcpn": {
         "general": {
             "lr": 0.005,
@@ -145,22 +112,8 @@ BEST_CONFIGS = {
             "dropout": 0.6,
         },
     },
-    "sign": {
-        "general": {
-            "lr": 0.00005,
-            "hidden_size": 2048,
-            "dropout": 0.5,
-            "dropedge_rate": 0.2,
-        },
-    },
-    "srgcn": {
-        "general": {
-            "lr": 0.005,
-            "epochs": 1000,
-        },
-        "cora": {"dropout": 0.6},
-        "citeseer": {"dropout": 0.6},
-    },
+    "sign": {"general": {"lr": 0.00005, "hidden_size": 2048, "dropout": 0.5, "dropedge_rate": 0.2,},},
+    "srgcn": {"general": {"lr": 0.005, "epochs": 1000,}, "cora": {"dropout": 0.6}, "citeseer": {"dropout": 0.6},},
     "unet": {
         "general": {
             "epochs": 1000,
@@ -254,13 +207,7 @@ BEST_CONFIGS = {
         },
     },
     "sagn": {
-        "general": {
-            "data_gpu": True,
-            "lr": 0.001,
-            "hidden-size": 512,
-            "attn-drop": 0.0,
-            "dropout": 0.7,
-        },
+        "general": {"data_gpu": True, "lr": 0.001, "hidden-size": 512, "attn-drop": 0.0, "dropout": 0.7,},
         "flickr": {
             "threshold": 0.5,
             "label-hop": 2,
@@ -279,9 +226,7 @@ BEST_CONFIGS = {
             "nstage": [500, 500, 500],
         },
     },
-    "deepwalk": {
-        "general": {},
-    },
+    "deepwalk": {"general": {},},
     "dngr": {
         "general": {
             "hidden_size": 128,
@@ -294,16 +239,9 @@ BEST_CONFIGS = {
             "step": 10,
         },
     },
-    "grarep": {
-        "general": {},
-    },
-    "hope": {
-        "general": {},
-    },
-    "line": {
-        "general": {},
-        "blogcatalog": {"walk_num": 40},
-    },
+    "grarep": {"general": {},},
+    "hope": {"general": {},},
+    "line": {"general": {}, "blogcatalog": {"walk_num": 40},},
     "netmf": {
         "general": {},
         "ppi-ne": {"window_size": 10, "is_large": True},
@@ -315,33 +253,19 @@ BEST_CONFIGS = {
         "wikipedia": {"window_size": 1},
         "blogcatalog": {"num_round": 10000},
     },
-    "node2vec": {
-        "general": {},
-    },
+    "node2vec": {"general": {},},
     "prone": {
         "general": {"step": 10},
         "ppi-ne": {"mu": 0.0},
         "wikipedia": {"mu": -4.0},
         "dblp-ne": {"mu": -1.2, "theta": 2.0},
     },
-    "sdne": {
-        "general": {},
-    },
-    "spectral": {
-        "general": {},
-    },
-    "dgi": {
-        "general": {"weight_decay": 0},
-    },
-    "gcc": {
-        "general": {},
-    },
+    "sdne": {"general": {},},
+    "spectral": {"general": {},},
+    "dgi": {"general": {"weight_decay": 0},},
+    "gcc": {"general": {},},
     "grace": {
-        "general": {
-            "weight_decay": 0,
-            "epochs": 1000,
-            "patience": 20,
-        },
+        "general": {"weight_decay": 0, "epochs": 1000, "patience": 20,},
         "cora": {
             "lr": 0.0005,
             "weight_decay": 0.00001,
@@ -372,11 +296,7 @@ BEST_CONFIGS = {
             "weight_decay": 0.00001,
         },
     },
-    "unsup_graphsage": {
-        "lr": 0.001,
-        "weight_decay": 0,
-        "epochs": 3000,
-    },
+    "unsup_graphsage": {"lr": 0.001, "weight_decay": 0, "epochs": 3000,},
     "revgcn": {
         "general": {},
         "cora": {
@@ -394,90 +314,33 @@ BEST_CONFIGS = {
         "imdb-b": {"degree_feature": True},
         "imdb-m": {"degree_feature": True},
         "collab": {"degree_feature": True},
-        "proteins": {
-            "num_layers": 5,
-            "dropout": 0.0,
-        },
-        "nci1": {
-            "num_layers": 5,
-            "dropout": 0.3,
-            "hidden_size": 64,
-        },
+        "proteins": {"num_layers": 5, "dropout": 0.0,},
+        "nci1": {"num_layers": 5, "dropout": 0.3, "hidden_size": 64,},
     },
     "infograph": {
-        "general": {
-            "lr": 0.0001,
-            "weight_decay": 5e-4,
-            "sup": False,
-        },
-        "mutag": {
-            "num_layers": 1,
-            "epochs": 20,
-        },
+        "general": {"lr": 0.0001, "weight_decay": 5e-4, "sup": False,},
+        "mutag": {"num_layers": 1, "epochs": 20,},
         "imdb-b": {"degree_feature": True},
         "imdb-m": {"degree_feature": True},
         "collab": {"degree_feature": True},
         "nci1": {"num_layers": 3},
     },
-    "sortpool": {
-        "nci1": {
-            "dropout": 0.3,
-            "hidden_size": 64,
-            "num_layers": 5,
-        },
-    },
+    "sortpool": {"nci1": {"dropout": 0.3, "hidden_size": 64, "num_layers": 5,},},
     "patchy_san": {
-        "general": {
-            "lr": 0.001,
-            "hidden_size": 32,
-            "gamma": 0.5,
-            "dropout": 0.5,
-        },
+        "general": {"lr": 0.001, "hidden_size": 32, "gamma": 0.5, "dropout": 0.5,},
         "imdb-b": {"degree_feature": True},
         "imdb-m": {"degree_feature": True},
         "collab": {"degree_feature": True},
     },
     "graph2vec": {
         "general": {},
-        "nci1": {
-            "lr": 0.001,
-            "window_size": 8,
-            "epochs": 10,
-            "iteration": 4,
-        },
-        "reddit-b": {
-            "lr": 0.01,
-            "degree_feature": True,
-            "hidden_size": 128,
-        },
+        "nci1": {"lr": 0.001, "window_size": 8, "epochs": 10, "iteration": 4,},
+        "reddit-b": {"lr": 0.01, "degree_feature": True, "hidden_size": 128,},
     },
-    "gatne": {
-        "general": {},
-        "twitter": {"eval_type": "1"},
-    },
-    "hin2vec": {
-        "general": {
-            "lr": 0.025,
-        },
-    },
-    "metapath2vec": {
-        "general": {
-            "walk_num": 40,
-        },
-    },
+    "gatne": {"general": {}, "twitter": {"eval_type": "1"},},
+    "hin2vec": {"general": {"lr": 0.025,},},
+    "metapath2vec": {"general": {"walk_num": 40,},},
     "pte": {},
-    "gtn": {
-        "general": {
-            "hidden_size": 128,
-            "lr": 0.005,
-            "weight_decay": 0.001,
-        },
-    },
-    "han": {
-        "general": {
-            "hidden_size": 128,
-            "lr": 0.005,
-            "weight_decay": 0.001,
-        }
-    },
+    "gtn": {"general": {"hidden_size": 128, "lr": 0.005, "weight_decay": 0.001,},},
+    "han": {"general": {"hidden_size": 128, "lr": 0.005, "weight_decay": 0.001,}},
 }

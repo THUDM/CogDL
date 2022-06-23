@@ -608,10 +608,7 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
                 for _input_ids, _masked_lm_labels, _masked_positions, _last_logprob in q:
                     print(
                         "  %8.4f, %s"
-                        % (
-                            _last_logprob,
-                            self._convert_token_ids_to_string(_input_ids[-decode_span_length:]),
-                        )
+                        % (_last_logprob, self._convert_token_ids_to_string(_input_ids[-decode_span_length:]),)
                     )
 
         results = []

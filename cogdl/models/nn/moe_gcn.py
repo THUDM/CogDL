@@ -111,13 +111,7 @@ class MoEGCN(BaseModel):
         }
         self.layers = nn.ModuleList(
             [
-                GraphConvBlock(
-                    conv_func,
-                    conv_params,
-                    shapes[i],
-                    shapes[i + 1],
-                    dropout=dropout,
-                )
+                GraphConvBlock(conv_func, conv_params, shapes[i], shapes[i + 1], dropout=dropout,)
                 for i in range(num_layers)
             ]
         )

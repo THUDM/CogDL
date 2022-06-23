@@ -148,11 +148,7 @@ class PPR(nn.Module):
 class HeatKernel(nn.Module):
     def __init__(self, in_feat):
         super(HeatKernel, self).__init__()
-        self.t = nn.Parameter(
-            torch.zeros(
-                1,
-            )
-        )
+        self.t = nn.Parameter(torch.zeros(1,))
 
     def forward(self, x, edge_index, edge_attr):
         row, col = edge_index

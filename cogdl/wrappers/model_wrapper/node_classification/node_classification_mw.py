@@ -34,7 +34,6 @@ class NodeClfModelWrapper(ModelWrapper):
         loss = self.default_loss_fn(pred[test_mask], batch.y[test_mask])
 
         metric = self.evaluate(pred[test_mask], batch.y[test_mask], metric="auto")
-
         self.note("test_loss", loss.item())
         self.note("test_metric", metric)
 

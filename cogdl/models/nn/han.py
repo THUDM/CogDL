@@ -21,12 +21,7 @@ class HAN(BaseModel):
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            args.num_edge,
-            args.num_features,
-            args.hidden_size,
-            args.num_classes,
-            args.num_nodes,
-            args.num_layers,
+            args.num_edge, args.num_features, args.hidden_size, args.num_classes, args.num_nodes, args.num_layers,
         )
 
     def __init__(self, num_edge, w_in, w_out, num_class, num_nodes, num_layers):

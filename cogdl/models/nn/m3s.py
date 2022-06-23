@@ -24,12 +24,7 @@ class M3S(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(
-            args.num_features,
-            args.hidden_size,
-            args.num_classes,
-            args.dropout,
-        )
+        return cls(args.num_features, args.hidden_size, args.num_classes, args.dropout,)
 
     def __init__(self, num_features, hidden_size, num_classes, dropout):
         super(M3S, self).__init__()

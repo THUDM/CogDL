@@ -20,13 +20,7 @@ class DrGAT(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(
-            args.num_features,
-            args.num_classes,
-            args.hidden_size,
-            args.nhead,
-            args.dropout,
-        )
+        return cls(args.num_features, args.num_classes, args.hidden_size, args.nhead, args.dropout,)
 
     def __init__(self, num_features, num_classes, hidden_size, num_heads, dropout):
         super(DrGAT, self).__init__()

@@ -46,13 +46,7 @@ class LINE(BaseModel):
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
-            args.hidden_size,
-            args.walk_length,
-            args.walk_num,
-            args.negative,
-            args.batch_size,
-            args.alpha,
-            args.order,
+            args.hidden_size, args.walk_length, args.walk_num, args.negative, args.batch_size, args.alpha, args.order,
         )
 
     def __init__(self, dimension, walk_length, walk_num, negative, batch_size, alpha, order):

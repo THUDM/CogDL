@@ -30,7 +30,7 @@ class AutoML(object):
 
     def __init__(self, args):
         self.search_space = args.search_space
-        self.metric = args.metric if hasattr(args, "metric") else None
+        self.metric = args.metric if hasattr(args, "metric") else "auto"
         self.n_trials = args.n_trials if hasattr(args, "n_trials") else 3
         self.best_value = None
         self.best_params = None
@@ -46,6 +46,7 @@ class AutoML(object):
         result_list = list(result_dict.values())[0]
         item = result_list[0]
         key = self.metric
+        print(key)
         if key is None:
             for _key in item.keys():
                 if "Val" in _key or "val" in _key:
@@ -210,6 +211,7 @@ def train(args):  # noqa: C901
         nstage=args.nstage,
         actnn=args.actnn,
         fp16=args.fp16,
+        metric=args.metric if hasattr(args, "metric") else "acc",
     )
 
     # Go!!!

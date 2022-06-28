@@ -2,7 +2,7 @@ from typing import Union, Callable
 from abc import abstractmethod
 import torch
 from cogdl.wrappers.tools.wrapper_utils import merge_batch_indexes
-from cogdl.utils.evaluator import setup_evaluator, Accuracy, MultiLabelMicroF1
+from cogdl.utils.evaluator import setup_evaluator, Accuracy, MultiLabelMicroF1,AUC
 
 
 class ModelWrapper(torch.nn.Module):
@@ -51,7 +51,8 @@ class ModelWrapper(torch.nn.Module):
                 else:
                     metric = "accuracy"
                     self._evaluator_metric = "acc"
-
+            if metric == "auc":
+                    self._evaluator_metric = "auc"
             self._evaluator = setup_evaluator(metric)
             # self._evaluator_metric = metric
         return self._evaluator(pred, labels)
@@ -153,6 +154,8 @@ class ModelWrapper(torch.nn.Module):
             self._evaluator_metric = "micro_f1"
         elif isinstance(self._evaluator, Accuracy):
             self._evaluator_metric = "acc"
+        elif isinstance(self._evaluator, AUC):
+            self._evaluator_metric = "auc"
         else:
             evaluation_metric = self.set_early_stopping()
             if not isinstance(evaluation_metric, str):

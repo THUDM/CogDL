@@ -5,18 +5,21 @@ import warnings
 import torch
 import torch.nn as nn
 
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, roc_auc_score
 
 
 def setup_evaluator(metric: Union[str, Callable]):
     if isinstance(metric, str):
         metric = metric.lower()
+        metric = str(metric)
         if metric == "acc" or metric == "accuracy":
             return Accuracy()
-        elif metric == "multilabel_microf1" or "microf1" or "micro_f1":
+        elif metric == "multilabel_microf1" or metric =="microf1" or metric =="micro_f1":
             return MultiLabelMicroF1()
         elif metric == "multiclass_microf1":
             return MultiClassMicroF1()
+        elif metric == "auc":
+            return AUC()
         else:
             raise NotImplementedError
     else:
@@ -68,6 +71,7 @@ class Accuracy(object):
 
         return tp / total
 
+
     def evaluate(self):
         if len(self.tp) > 0:
             tp = np.sum(self.tp)
@@ -75,7 +79,7 @@ class Accuracy(object):
             self.tp = list()
             self.total = list()
             return tp / total
-        warnings.warn("pre-computing list is empty")
+        #warnings.warn("pre-computing list is empty")
         return 0
 
     def clear(self):
@@ -164,6 +168,43 @@ def accuracy(y_pred, y_true):
     correct = correct.sum().item()
     return correct / len(y_true)
 
+class AUC(object):
+    def __init__(self, mini_batch=False):
+        super(AUC, self).__init__()
+        self.mini_batch = mini_batch
+        self.tp = list()
+        self.total = list()
+
+    def __call__(self, y_pred, y_true):
+        #print(y_true) 
+        #y_true = [np.argmax(i) for i in y_true.detach().numpy()] 
+        #print(y_true) 
+        #y_pred = [np.argmax(i) for i in y_pred.detach().numpy()]  
+        #print(sum(y_pred)) 
+        #if y_pred.shape[1] == 2:
+            #auc = roc_auc_score(y_true, y_pred[:, 1])
+        #else:
+        #y_pred[:,1]=torch.where(torch.isnan(y_pred[:,1]),torch.full_like(y_pred[:,1],0),y_pred[:,1])
+        if sum(y_true)==0:
+            y_true[0]=1
+        auc = roc_auc_score(y_true,  y_pred[:,1])
+            #auc = roc_auc_score(y_true,  y_pred)
+        return  auc
+
+
+    def evaluate(self):
+        if len(self.tp) > 0:
+            tp = np.sum(self.tp)
+            total = np.sum(self.total)
+            self.tp = list()
+            self.total = list()
+            return tp / total
+        #warnings.warn("pre-computing list is empty")
+        return 0
+
+    def clear(self):
+        self.tp = list()
+        self.total = list()
 
 def cross_entropy_loss(y_pred, y_true):
     y_true = y_true.long()

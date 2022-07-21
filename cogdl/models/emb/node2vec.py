@@ -82,12 +82,12 @@ class Node2vec(BaseModel):
         walks = [[str(node) for node in walk] for walk in walks]
         model = Word2Vec(
             walks,
-            size=self.dimension,
+            vector_size=self.dimension,
             window=self.window_size,
             min_count=0,
             sg=1,
             workers=self.worker,
-            iter=self.iteration,
+            epochs=self.iteration,
         )
         id2node = dict([(vid, node) for vid, node in enumerate(G.nodes())])
         embeddings = np.asarray([model.wv[str(id2node[i])] for i in range(len(id2node))])

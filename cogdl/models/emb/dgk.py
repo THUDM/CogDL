@@ -88,12 +88,12 @@ class DeepGraphKernel(BaseModel):
 
         model = Word2Vec(
             self.gl_collections,
-            size=self.hidden_dim,
+            vector_size=self.hidden_dim,
             window=self.window,
             min_count=self.min_count,
             sample=self.sampling_rate,
             workers=self.n_workers,
-            iter=self.epochs,
+            epochs=self.epochs,
             alpha=self.alpha,
         )
         vectors = np.asarray([model.wv[str(node)] for node in model.wv.index2word])

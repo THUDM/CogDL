@@ -245,12 +245,15 @@ class OGBLDataset(Dataset):
            - name (str): name of the dataset
             - root (str): root directory to store the dataset folder
         """        
-        self.name = name       
+        self.name = name
         root = os.path.join(root, name)
         super(OGBLDataset, self).__init__(root)
         self.transform = None
-        self.dataset = LinkPropPredDataset(self.name, root)
-        graph= self.dataset[0]
+        self.data = torch.load(self.processed_paths[1])
+        
+    def process(self):
+        dataset = LinkPropPredDataset(self.name, self.root)
+        graph= dataset[0]
         x = torch.tensor(graph["node_feat"]).contiguous() if graph["node_feat"] is not None else None
         row, col = graph["edge_index"][0], graph["edge_index"][1]
         row = torch.from_numpy(row)
@@ -264,9 +267,10 @@ class OGBLDataset(Dataset):
         row, col, _ = coalesce(row, col)
         edge_index = torch.stack([row, col], dim=0)
 
-        self.data = Graph(x=x, edge_index=edge_index, edge_attr=edge_attr, y=None)
-        self.data.num_nodes = graph["num_nodes"]
-        
+        data = Graph(x=x, edge_index=edge_index, edge_attr=edge_attr, y=None)
+        data.num_nodes = graph["num_nodes"]
+        torch.save(data, self.processed_paths[1])
+        return data
 
     def get(self, idx):
         assert idx == 0

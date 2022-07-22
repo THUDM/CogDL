@@ -23,7 +23,7 @@ def test_ogbl_ddi():
     assert args.dataset == "ogbl-ddi"
     dataset = build_dataset(args)
     data = dataset.data
-    assert data.num_nodes = 4267
+    assert data.num_nodes == 4267
 
 
 if __name__ == "__main__":

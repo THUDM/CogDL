@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-**[主页](https://cogdl.ai/zh)** | **[论文](https://arxiv.org/abs/2103.00959)** | **[100篇GNN论文](./gnn_papers.md)** | **[排行榜](./results.md)** | **[文档](https://cogdl.readthedocs.io)** | **[数据集](./cogdl/datasets/README.md)** | **[加入我们的Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[English](./README.md)**
+**[主页](https://cogdl.ai)** | **[论文](https://arxiv.org/abs/2103.00959)** | **[文档](https://cogdl.readthedocs.io)** | **[讨论区](https://discuss.cogdl.ai)** | **[数据集](./cogdl/datasets/README.md)** | **[English](./README.md)**
 
 CogDL是一款图深度学习工具包，基于[PyTorch](https://github.com/pytorch/pytorch)框架。CogDL允许研究人员和开发人员可以轻松地训练和比较基线算法或自定义模型，以进行结点分类，链接预测，图分类，社区发现等基于图结构的任务。 它提供了许多流行模型的实现，包括：非图神经网络算法例如Deepwalk、LINE、Node2vec、NetMF、ProNE、methpath2vec、PTE、graph2vec、DGK等；图神经网络算法例如GCN、GAT、GraphSAGE、FastGCN、GTN、HAN、GIN、DiffPool等。它也提供了一些下游任务，包括结点分类（分为是否具有节点属性），链接预测（分为同构和异构），图分类（分有监督和⽆监督）以及为这些任务构建各种算法效果的排行榜。
 
@@ -21,19 +21,21 @@ CogDL的特性包括：
 
 ## ❗ 最新
 
+- CogDL团队为大家开设了一门免费的GNN课程，大家可以访问[这个链接](https://cogdl.ai/gnn2022/)来获取。我们为大家提供了一个[讨论区](https://discuss.cogdl.ai)来进行交流。 
+
 - 最新的 **v0.5.3 release** 支持混合精度(fp16)训练，提供了[Jittor](https://github.com/Jittor/jittor)的初步支持（见[example](https://github.com/THUDM/cogdl/blob/master/examples/jittor/gcn.py)）。这个版本更新了文档中的使用教程，修复了一部分数据集的下载链接，修复了某些算子在不同环境下可能的问题。
 
 - 最新的 **v0.5.2 release** 给ogbn-products数据集添加了GNN样例，更新了geom数据集。这个版本同时修复了一些潜在的问题，包括设置不同device，使用cpu进行预测等。
 
 - 最新的 **v0.5.1 release** 添加了一些高效的算子，包括cpu版本的SpMM和cuda版本的scatter_max。这个版本同时增加了很多用于节点分类的[数据集](./cogdl/datasets/rd2cd_data.py)。 🎉
 
-- 最新的 **v0.5.0 release** 为图神经网络的训练设计了一套统一的流程. 这个版本去除了原先的`Task`类，引入了`DataWrapper`来准备training/validation/test过程中所需的数据，引入了`ModelWrapper`来定义模型training/validation/test的步骤. 🎉
-
 <details>
 <summary>
 历史
 </summary>
 <br/>
+
+- 最新的 **v0.5.0 release** 为图神经网络的训练设计了一套统一的流程. 这个版本去除了原先的`Task`类，引入了`DataWrapper`来准备training/validation/test过程中所需的数据，引入了`ModelWrapper`来定义模型training/validation/test的步骤. 🎉
 
 - 最新的 **v0.4.1 release** 增加了深层GNN的实现和推荐任务。这个版本同时提供了新的一些pipeline用于直接获取图表示和搭建推荐应用。欢迎大家参加我们在KDD 2021上的tutorial，时间是8月14号上午10:30 - 12:00（北京时间）。 更多的内容可以查看 https://kdd2021graph.github.io/. 🎉
 
@@ -107,18 +109,6 @@ def search_space(trial):
 
 experiment(dataset="cora", model="gcn", seed=[1, 2], search_space=search_space)
 ```
-
-您也可以通过`pipeline`接口来跑一些有趣的应用。下面这个例子能够在[pipeline.py](https://github.com/THUDM/cogdl/tree/master/examples/pipeline.py)文件中找到。
-
-```python
-from cogdl import pipeline
-
-# load OAGBert model and perform inference
-oagbert = pipeline("oagbert")
-outputs = oagbert(["CogDL is developed by KEG, Tsinghua.", "OAGBert is developed by KEG, Tsinghua."])
-```
-
-有关OAGBert更多的用法可以参见[这里](./cogdl/oag/README.md).
 
 ### 命令行
 基本用法可以使用 `python train.py --dataset example_dataset --model example_model` 来在 `example_data` 上运行 `example_model`。

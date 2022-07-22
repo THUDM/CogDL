@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/github/license/thudm/cogdl)](https://github.com/THUDM/cogdl/blob/master/LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-**[Homepage](https://cogdl.ai)** | **[Paper](https://arxiv.org/abs/2103.00959)** | **[100 GNN papers](./gnn_papers.md)** | **[Leaderboards](./results.md)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Datasets](./cogdl/datasets/README.md)** | **[Join our Slack](https://join.slack.com/t/cogdl/shared_invite/zt-b9b4a49j-2aMB035qZKxvjV4vqf0hEg)** | **[中文](./README_CN.md)**
+**[Homepage](https://cogdl.ai)** | **[Paper](https://arxiv.org/abs/2103.00959)** | **[Documentation](https://cogdl.readthedocs.io)** | **[Discussion Forum](https://discuss.cogdl.ai)** | **[Dataset](./cogdl/datasets/README.md)** | **[中文](./README_CN.md)**
 
 CogDL is a graph deep learning toolkit that allows researchers and developers to easily train and compare baseline or customized models for node classification, graph classification, and other important tasks in the graph domain. 
 
@@ -21,19 +21,21 @@ We summarize the contributions of CogDL as follows:
 
 ## ❗ News
 
+- A free GNN course provided by CogDL Team is present at [this link](https://cogdl.ai/gnn2022/). We also provide a [discussion forum](https://discuss.cogdl.ai) for Chinese users. 
+
 - The new **v0.5.3 release** supports mixed-precision training by setting \textit{fp16=True} and provides a basic [example](https://github.com/THUDM/cogdl/blob/master/examples/jittor/gcn.py) written by [Jittor](https://github.com/Jittor/jittor). It also updates the tutorial in the document, fixes downloading links of some datasets, and fixes potential bugs of operators. 
 
 - The new **v0.5.2 release** adds a GNN example for ogbn-products and updates geom datasets. It also fixes some potential bugs including setting devices, using cpu for inference, etc.
 
 - The new **v0.5.1 release** adds fast operators including SpMM (cpu version) and scatter_max (cuda version). It also adds lots of datasets for node classification which can be found in [this link](./cogdl/datasets/rd2cd_data.py). 🎉
 
-- The new **v0.5.0 release** designs and implements a unified training loop for GNN. It introduces `DataWrapper` to help prepare the training/validation/test data and `ModelWrapper` to define the training/validation/test steps. 🎉
-
 <details>
 <summary>
 News History
 </summary>
 <br/>
+
+- The new **v0.5.0 release** designs and implements a unified training loop for GNN. It introduces `DataWrapper` to help prepare the training/validation/test data and `ModelWrapper` to define the training/validation/test steps. 🎉
 
 - The new **v0.4.1 release** adds the implementation of Deep GNNs and the recommendation task. It also supports new pipelines for generating embeddings and recommendation. Welcome to join our tutorial on KDD 2021 at 10:30 am - 12:00 am, Aug. 14th (Singapore Time). More details can be found in https://kdd2021graph.github.io/. 🎉
 
@@ -109,18 +111,6 @@ def search_space(trial):
 
 experiment(dataset="cora", model="gcn", seed=[1, 2], search_space=search_space)
 ```
-
-Some interesting applications can be used through `pipeline` API. An example can be found in the [pipeline.py](https://github.com/THUDM/cogdl/tree/master/examples/pipeline.py). 
-
-```python
-from cogdl import pipeline
-
-# load OAGBert model and perform inference
-oagbert = pipeline("oagbert")
-outputs = oagbert(["CogDL is developed by KEG, Tsinghua.", "OAGBert is developed by KEG, Tsinghua."])
-```
-
-More details of the OAGBert usage can be found [here](./cogdl/oag/README.md).
 
 ### Command-Line Usage
 

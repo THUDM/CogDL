@@ -112,7 +112,7 @@ SUPPORTED_DATASETS = {
     "ogbl-ppa": "cogdl.datasets.ogb.OGBLPpaDataset",
     "ogbl-ddi": "cogdl.datasets.ogb.OGBLDdiDataset",
     "ogbl-collab": "cogdl.datasets.ogb.OGBLCollabDataset",
-    "ogbl-citation2": "cogdl.datasets.ogb.OGBLCitation2Dataset"
+    "ogbl-citation2": "cogdl.datasets.ogb.OGBLCitation2Dataset",
     "amazon": "cogdl.datasets.gatne.AmazonDataset",
     "twitter": "cogdl.datasets.gatne.TwitterDataset",
     "youtube": "cogdl.datasets.gatne.YouTubeDataset",

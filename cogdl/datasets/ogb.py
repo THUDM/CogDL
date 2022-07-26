@@ -249,7 +249,7 @@ class OGBLDataset(Dataset):
         root = os.path.join(root, name)
         super(OGBLDataset, self).__init__(root)
         self.transform = None
-        self.data = torch.load(self.processed_paths[1])
+        self.data = torch.load(self.processed_paths[0])
         
     def process(self):
         dataset = LinkPropPredDataset(self.name, self.root)
@@ -269,7 +269,7 @@ class OGBLDataset(Dataset):
 
         data = Graph(x=x, edge_index=edge_index, edge_attr=edge_attr, y=None)
         data.num_nodes = graph["num_nodes"]
-        torch.save(data, self.processed_paths[1])
+        torch.save(data, self.processed_paths[0])
         return data
 
     def get(self, idx):

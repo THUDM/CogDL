@@ -20,7 +20,7 @@ embed_2 = [0.2, 0.4, 0.6, -0.8]
 embed_3 = [0.3, 0.2, 0.1, -0.1]
 
 
-def creator(walks, size, window, min_count, sg, workers, iter):
+def creator(walks, vector_size, window, min_count, sg, workers, epochs):
     return Word2VecFake({"0": embed_1, "1": embed_2, "2": embed_3})
 
 
@@ -93,9 +93,9 @@ def test_will_pass_correct_number_of_walks():
     graph = Graph(edge_index=(torch.LongTensor([0, 1]), torch.LongTensor([1, 2])))
     captured_walks_no = []
 
-    def creator_mocked(walks, size, window, min_count, sg, workers, iter):
+    def creator_mocked(walks, vector_size, window, min_count, sg, workers, epochs):
         captured_walks_no.append(len(walks))
-        return creator(walks, size, window, min_count, sg, workers, iter)
+        return creator(walks, vector_size, window, min_count, sg, workers, epochs)
 
     model(graph, creator_mocked)
     assert captured_walks_no[0] == args.walk_num * graph.num_nodes

@@ -1,7 +1,8 @@
 import numpy as np
 import networkx as nx
 from collections import defaultdict
-from gensim.models.keyedvectors import Vocab
+from gensim.models.keyedvectors import Vocab  # Retained for now to ease the loading of older models.
+# See: https://radimrehurek.com/gensim/models/keyedvectors.html?highlight=vocab#gensim.models.keyedvectors.CompatVocab
 import random
 import math
 import tqdm
@@ -110,12 +111,12 @@ class GATNE(BaseModel):
     def forward(self, network_data):
         device = "cpu" if not torch.cuda.is_available() else "cuda"
         all_walks = generate_walks(network_data, self.walk_num, self.walk_length, schema=self.schema)
-        vocab, index2word = generate_vocab(all_walks)
+        vocab, index_to_key = generate_vocab(all_walks)
         train_pairs = generate_pairs(all_walks, vocab)
 
         edge_types = list(network_data.keys())
 
-        num_nodes = len(index2word)
+        num_nodes = len(index_to_key)
         edge_type_count = len(edge_types)
 
         epochs = self.epochs
@@ -189,7 +190,7 @@ class GATNE(BaseModel):
             node_neigh = torch.tensor([neighbors[i] for _ in range(edge_type_count)]).to(device)
             node_emb = model(train_inputs, train_types, node_neigh)
             for j in range(edge_type_count):
-                final_model[edge_types[j]][index2word[i]] = node_emb[j].cpu().detach().numpy()
+                final_model[edge_types[j]][index_to_key[i]] = node_emb[j].cpu().detach().numpy()
         return final_model
 
 
@@ -349,7 +350,7 @@ def generate_pairs(all_walks, vocab, window_size=5):
 
 
 def generate_vocab(all_walks):
-    index2word = []
+    index_to_key = []
     raw_vocab = defaultdict(int)
 
     for walks in all_walks:
@@ -359,14 +360,14 @@ def generate_vocab(all_walks):
 
     vocab = {}
     for word, v in raw_vocab.items():
-        vocab[word] = Vocab(count=v, index=len(index2word))
-        index2word.append(word)
+        vocab[word] = Vocab(count=v, index=len(index_to_key))
+        index_to_key.append(word)
 
-    index2word.sort(key=lambda word: vocab[word].count, reverse=True)
-    for i, word in enumerate(index2word):
+    index_to_key.sort(key=lambda word: vocab[word].count, reverse=True)
+    for i, word in enumerate(index_to_key):
         vocab[word].index = i
 
-    return vocab, index2word
+    return vocab, index_to_key
 
 
 def get_batches(pairs, neighbors, batch_size):

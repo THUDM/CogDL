@@ -245,14 +245,10 @@ class OGBLDataset(Dataset):
            - name (str): name of the dataset
             - root (str): root directory to store the dataset folder
         """        
-        self.name = name
-        root = os.path.join(root, name)
-        super(OGBLDataset, self).__init__(root)
-        self.transform = None
-        self.data = torch.load(self.processed_paths[0])
         
-    def process(self):
-        dataset = LinkPropPredDataset(self.name, self.root)
+        self.name = name
+        
+        dataset = LinkPropPredDataset(name, root)
         graph= dataset[0]
         x = torch.tensor(graph["node_feat"]).contiguous() if graph["node_feat"] is not None else None
         row, col = graph["edge_index"][0], graph["edge_index"][1]
@@ -267,11 +263,9 @@ class OGBLDataset(Dataset):
         row, col, _ = coalesce(row, col)
         edge_index = torch.stack([row, col], dim=0)
 
-        data = Graph(x=x, edge_index=edge_index, edge_attr=edge_attr, y=None)
-        data.num_nodes = graph["num_nodes"]
-        torch.save(data, self.processed_paths[0])
-        return data
-
+        self.data = Graph(x=x, edge_index=edge_index, edge_attr=edge_attr, y=None)
+        self.data.num_nodes = graph["num_nodes"]
+        
     def get(self, idx):
         assert idx == 0
         return self.data
@@ -300,26 +294,26 @@ class OGBLDataset(Dataset):
         return train_edge, val_edge, test_edge
 
 class OGBLPpaDataset(OGBLDataset):
-        def __init__(self, data_path="data"):
-            dataset = "ogbl-ppa"
-            super(OGBLPpaDataset, self).__init__(data_path, dataset)
+    def __init__(self, data_path="data"):
+        dataset = "ogbl-ppa"
+        super(OGBLPpaDataset, self).__init__(data_path, dataset)
         
         
 class OGBLCollabDataset(OGBLDataset):
-        def __init__(self, data_path="data"):
-            dataset = "ogbl-collab"
-            super(OGBLCollabDataset, self).__init__(data_path, dataset)
-            
+    def __init__(self, data_path="data"):
+        dataset = "ogbl-collab"
+        super(OGBLCollabDataset, self).__init__(data_path, dataset)
+        
 
 class OGBLDdiDataset(OGBLDataset):
-        def __init__(self, data_path="data"):
-            dataset = "ogbl-ddi"
-            super(OGBLDdiDataset, self).__init__(data_path, dataset)
- 
+    def __init__(self, data_path="data"):
+        dataset = "ogbl-ddi"
+        super(OGBLDdiDataset, self).__init__(data_path, dataset)
+
         
 class OGBLCitation2Dataset(OGBLDataset):
-        def __init__(self, data_path="data"):
-            dataset = "ogbl-citation2"
-            super(OGBLCitation2Dataset, self).__init__(data_path, dataset)
+    def __init__(self, data_path="data"):
+        dataset = "ogbl-citation2"
+        super(OGBLCitation2Dataset, self).__init__(data_path, dataset)
                            
 

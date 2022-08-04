@@ -78,7 +78,7 @@ setup(
         "tqdm",
         "numpy>=1.21",
         "scipy",
-        "gensim<4.0",
+        "gensim>=4.0",
         "grave",
         "scikit_learn",
         "tabulate",

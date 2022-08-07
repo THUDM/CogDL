@@ -12,6 +12,7 @@ from ogb.utils import smiles2graph
 from cogdl.data import Dataset, Graph, DataLoader
 from cogdl.utils import CrossEntropyLoss, Accuracy, remove_self_loops, coalesce, BCEWithLogitsLoss
 
+import warnings
 
 class OGBNDataset(Dataset):
     def __init__(self, root, name, transform=None):
@@ -209,7 +210,6 @@ class MultiGraphCode:
         edge_index = self._edge_index[self.e_s[n]:self.e_s[n+1]] if self._edge_index is not None else None
         edge_attr = self._edge_attr[self.e_s[n]:self.e_s[n+1]] if self._edge_attr is not None else None
 
-        num_nodes = x.shape[0]
         row, col = edge_index[:, 0], edge_index[:, 1]
         zero, one = torch.zeros_like(row), torch.ones_like(row)
         
@@ -220,7 +220,6 @@ class MultiGraphCode:
         edge_attr_ast_inverse = torch.stack([zero, one], dim=0).t()
 
         node_is_attributed = x[:, 2].clone()
-        node_dfs_order = x[:, 3].clone
         attributed_node_idx_in_dfs_order = torch.where(node_is_attributed.view(-1,) == 1)[0]
 
         edge_index_nextoken = torch.stack([attributed_node_idx_in_dfs_order[:-1], attributed_node_idx_in_dfs_order[1:]], dim = 0)

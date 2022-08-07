@@ -135,13 +135,18 @@ def train(args):  # noqa: C901
     for key in inspect.signature(dw_class).parameters.keys():
         if hasattr(args, key) and key != "dataset":
             data_wrapper_args[key] = getattr(args, key)
+
+    # setup data_wrapper
+    dataset_wrapper = dw_class(dataset, **data_wrapper_args)
+    if hasattr(args, 'scheduler_round') and args.scheduler_round == 'iteration':
+        args.num_iterations = dataset_wrapper.num_iterations()
+    else:
+        args.num_iterations = None
+    
     # unworthy code: share `args` between model and model_wrapper
     for key in inspect.signature(mw_class).parameters.keys():
         if hasattr(args, key) and key != "model":
             model_wrapper_args[key] = getattr(args, key)
-
-    # setup data_wrapper
-    dataset_wrapper = dw_class(dataset, **data_wrapper_args)
 
     args.num_features = dataset.num_features
     if hasattr(dataset, "num_nodes"):

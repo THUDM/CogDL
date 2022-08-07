@@ -19,7 +19,6 @@ from cogdl.trainer.embed_trainer import EmbeddingTrainer
 from cogdl.trainer.controller import DataController
 from cogdl.loggers import build_logger
 from cogdl.data import Graph
-from cogdl.utils.grb_utils import adj_preprocess, updateGraph, adj_to_tensor
 
 
 def move_to_device(batch, device):
@@ -75,8 +74,6 @@ class Trainer(object):
         actnn: bool = False,
         fp16: bool = False,
         rp_ratio: int = 1,
-        attack=None,
-        attack_mode="injection",
     ):
         self.epochs = epochs
         self.nstage = nstage
@@ -128,8 +125,6 @@ class Trainer(object):
         self.eval_data_back_to_cpu = False
 
         self.fp16 = fp16
-        self.attack = attack
-        self.attack_mode = attack_mode
 
         if actnn:
             try:
@@ -326,11 +321,6 @@ class Trainer(object):
 
             self.logger.start()
             print_str_dict = dict()
-            if self.attack is not None:
-                graph = dataset_w.dataset.data
-                graph_backup = copy.deepcopy(graph)
-                graph0 = copy.deepcopy(graph)
-                num_train = torch.sum(graph.train_mask).item()
             for epoch in epoch_iter:
                 for hook in self.pre_epoch_hooks:
                     hook(self)
@@ -343,23 +333,6 @@ class Trainer(object):
                     train_dataset.shuffle()
                 training_loss = self.train_step(model_w, train_loader, optimizers, lr_schedulers, rank, scaler)
 
-                if self.attack is not None:
-                    if self.attack_mode == "injection":
-                        graph0.test_mask = graph0.train_mask
-                    else:
-                        graph0.test_mask[torch.where(graph0.train_mask)[0].multinomial(int(num_train * 0.01))] = True
-                    graph_attack = self.attack.attack(model=model_w.model, graph=graph0, adj_norm_func=None)  # todo
-                    adj_attack = graph_attack.to_scipy_csr()
-                    features_attack = graph_attack.x
-                    adj_train = adj_preprocess(adj=adj_attack, adj_norm_func=None, device=rank)  # todo
-                    n_inject = graph_attack.num_nodes - graph.num_nodes
-                    updateGraph(graph, adj_train, features_attack)
-                    graph.edge_weight = torch.ones(graph.num_edges, device=rank)
-                    graph.train_mask = torch.cat((graph.train_mask, torch.zeros(n_inject, dtype=bool, device=rank)), 0)
-                    graph.val_mask = torch.cat((graph.val_mask, torch.zeros(n_inject, dtype=bool, device=rank)), 0)
-                    graph.test_mask = torch.cat((graph.test_mask, torch.zeros(n_inject, dtype=bool, device=rank)), 0)
-                    graph.y = torch.cat((graph.y, torch.zeros(n_inject, device=rank)), 0)
-                    graph.grb_adj = adj_to_tensor(adj_train).to(rank)
                 print_str_dict["Epoch"] = epoch
                 print_str_dict["train_loss"] = training_loss
 
@@ -380,8 +353,24 @@ class Trainer(object):
                             patience += 1
                             if self.early_stopping and patience >= self.patience:
                                 break
+                        if 'val_loss' in val_result:
+                            val_loss = val_result['val_loss']
+                            if type(val_loss)==torch.Tensor:
+                                val_loss = val_loss.item()
+                            if val_loss > 1e-4:
+                                val_loss = round(val_loss, 4)
+                            print_str_dict['val_loss'] = val_loss
                         print_str_dict[f"val_{self.evaluation_metric}"] = monitoring
-
+                
+                test_loader = dataset_w.on_test_wrapper()
+                if test_loader is not None and epoch % self.eval_step == 0:
+                    # inductive setting ..
+                    dataset_w.eval()
+                    # do validation in inference device
+                    test_result = self.test(model_w, dataset_w, rank)
+                    if test_result is not None and ('test'+self.monitor[3:]) in test_result:
+                        print_str_dict[f"test_{self.evaluation_metric}"] = test_result['test'+self.monitor[3:]]
+                
                 if self.distributed_training:
                     if rank == 0:
                         epoch_printer(print_str_dict)
@@ -400,8 +389,6 @@ class Trainer(object):
 
             if best_model_w is None:
                 best_model_w = copy.deepcopy(model_w)
-            if self.attack is not None:
-                dataset_w.dataset.data = graph_backup
 
         if self.distributed_training:
             if rank == 0:
@@ -482,6 +469,8 @@ class Trainer(object):
     def train_step(self, model_w, train_loader, optimizers, lr_schedulers, device, scaler):
         model_w.train()
         losses = []
+        losses_sum = 0.0
+        losses_cnt = 0
 
         if self.progress_bar == "iteration":
             train_loader = tqdm(train_loader)
@@ -515,9 +504,24 @@ class Trainer(object):
                 scaler.update()
 
             losses.append(loss.item())
+
+            if self.progress_bar == "iteration":
+                losses_sum += losses[-1]
+                losses_cnt += 1
+                train_loader.set_description("Train loss: %0.4f" % (losses_sum / losses_cnt))
+                # print (losses[-1])
+            
+            # print (optimizer)
+            if lr_schedulers is not None:
+                for lr_scheduler in lr_schedulers:
+                    if hasattr(lr_scheduler, 'scheduler_round') and lr_scheduler.scheduler_round == 'iteration':
+                        lr_scheduler.step()
+
         if lr_schedulers is not None:
-            for lr_schedular in lr_schedulers:
-                lr_schedular.step()
+            for lr_scheduler in lr_schedulers:
+                if hasattr(lr_scheduler, 'scheduler_round'):
+                    if lr_scheduler.scheduler_round is None or lr_scheduler.scheduler_round == 'epoch':
+                        lr_scheduler.step()
 
         return np.mean(losses)
 

@@ -155,11 +155,6 @@ class TripleWrapper(ModelWrapper):
         return "mrr", ">"
 
     
-def save_model(model, optimizer, save_variable_list, args):
-    """
-    Save the parameters of the model and the optimizer,
-    as well as some other variables such as step and learning_rate
-    """
 
 
 

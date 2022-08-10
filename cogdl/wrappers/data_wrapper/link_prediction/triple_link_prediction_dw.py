@@ -3,7 +3,7 @@ from cogdl.datasets.kg_data import BidirectionalOneShotIterator, TestDataset, Tr
 from torch.utils.data import DataLoader
 class TripleDataWrapper(DataWrapper):
 
-
+ 
     @classmethod
     def add_args(self, parser):
         # fmt: off

@@ -210,6 +210,8 @@ def train(args):  # noqa: C901
         nstage=args.nstage,
         actnn=args.actnn,
         fp16=args.fp16,
+        do_test=args.do_test,
+        do_valid=args.do_valid,
     )
 
     # Go!!!

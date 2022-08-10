@@ -31,6 +31,7 @@ def fetch_data_wrapper(name):
 
 
 SUPPORTED_DW = {
+    "triple_link_prediction_dw": "cogdl.wrappers.data_wrapper.link_prediction.TripleDataWrapper",
     "cluster_dw": "cogdl.wrappers.data_wrapper.node_classification.ClusterWrapper",
     "graphsage_dw": "cogdl.wrappers.data_wrapper.node_classification.GraphSAGEDataWrapper",
     "m3s_dw": "cogdl.wrappers.data_wrapper.node_classification.M3SDataWrapper",

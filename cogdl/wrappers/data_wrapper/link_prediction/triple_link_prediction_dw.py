@@ -1,7 +1,7 @@
 from .. import DataWrapper
 from cogdl.datasets.kg_data import BidirectionalOneShotIterator, TestDataset, TrainDataset
 from torch.utils.data import DataLoader
-
+ 
 
 class TripleDataWrapper(DataWrapper):
     @classmethod

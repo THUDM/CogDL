@@ -1,7 +1,7 @@
 from typing import Dict
 
 import numpy as np
-
+import os
 import torch
 import torch.distributed as dist
 
@@ -53,6 +53,16 @@ def evaluation_comp(monitor, compare="<"):
 def save_model(model, path, epoch):
     print(f"Saving {epoch}-th model to {path} ...")
     torch.save(model.state_dict(), path)
+
+    if hasattr(model, "entity_embedding"):
+        entity_embedding = model.entity_embedding.numpy()
+        print('Saving entity_embedding to ',path)
+        np.save(os.path.join(path, "entity_embedding"), entity_embedding) 
+
+    if hasattr(model, "relation_embedding"):
+        relation_embedding = model.relation_embedding.numpy()
+        print('Saving entity_embedding to ',path)
+        np.save(os.path.join(entity_embedding, "relation_embedding"), relation_embedding)
 
 
 def load_model(model, path):

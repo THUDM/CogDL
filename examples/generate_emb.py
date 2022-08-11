@@ -17,6 +17,6 @@ print(outputs)
 
 # build a pipeline for generating embeddings using unsupervised GNNs
 # pass model name and num_features with its hyper-parameters to this API
-generator = pipeline("generate-emb", model="mvgrl", no_test=True, num_features=8, hidden_size=4)
+generator = pipeline("generate-emb", model="mvgrl", return_model=True, num_features=8, hidden_size=4)
 outputs = generator(edge_index, x=np.random.randn(8, 8))
 print(outputs)

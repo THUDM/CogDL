@@ -14,7 +14,14 @@ from torch.cuda.amp import GradScaler, autocast
 
 from cogdl.wrappers.data_wrapper.base_data_wrapper import DataWrapper
 from cogdl.wrappers.model_wrapper.base_model_wrapper import ModelWrapper, EmbeddingModelWrapper
-from cogdl.trainer.trainer_utils import evaluation_comp, load_model, save_model, ddp_end, ddp_after_epoch, Printer
+from cogdl.trainer.trainer_utils import (
+    evaluation_comp,
+    load_model,
+    save_model,
+    ddp_end,
+    ddp_after_epoch,
+    Printer,
+)
 from cogdl.trainer.embed_trainer import EmbeddingTrainer
 from cogdl.trainer.controller import DataController
 from cogdl.loggers import build_logger
@@ -71,12 +78,14 @@ class Trainer(object):
         logger: str = None,
         log_path: str = "./runs",
         project: str = "cogdl-exp",
-        no_test: bool = False,
+        return_model: bool = False,
         actnn: bool = False,
         fp16: bool = False,
         rp_ratio: int = 1,
         attack=None,
         attack_mode="injection",
+        do_test: bool = True,
+        do_valid: bool = True,
     ):
         self.epochs = epochs
         self.nstage = nstage
@@ -104,7 +113,7 @@ class Trainer(object):
 
         self.cpu_inference = cpu_inference
 
-        self.no_test = no_test
+        self.return_model = return_model
 
         self.on_train_batch_transform = None
         self.on_eval_batch_transform = None
@@ -130,6 +139,8 @@ class Trainer(object):
         self.fp16 = fp16
         self.attack = attack
         self.attack_mode = attack_mode
+        self.do_test = do_test
+        self.do_valid = do_valid
 
         if actnn:
             try:
@@ -193,7 +204,7 @@ class Trainer(object):
             self.train(self.devices[0], model_w, dataset_w)
         best_model_w = load_model(model_w, self.checkpoint_path).to(self.devices[0])
 
-        if self.no_test:
+        if self.return_model:
             return best_model_w.model
 
         final_test = self.evaluate(best_model_w, dataset_w)
@@ -212,8 +223,14 @@ class Trainer(object):
         # disable `distributed` to inference once only
         self.distributed_training = False
         dataset_w.prepare_test_data()
-        final_val = self.validate(model_w, dataset_w, self.devices[0])
-        final_test = self.test(model_w, dataset_w, self.devices[0])
+        if self.do_valid:
+            final_val = self.validate(model_w, dataset_w, self.devices[0])
+        else:
+            final_val = {}
+        if self.do_test:
+            final_test = self.test(model_w, dataset_w, self.devices[0])
+        else:
+            final_test = {}
 
         if final_val is not None and "val_metric" in final_val:
             final_val[f"val_{self.evaluation_metric}"] = final_val["val_metric"]
@@ -364,23 +381,24 @@ class Trainer(object):
                 print_str_dict["train_loss"] = training_loss
 
                 val_loader = dataset_w.on_val_wrapper()
-                if val_loader is not None and epoch % self.eval_step == 0:
-                    # inductive setting ..
-                    dataset_w.eval()
-                    # do validation in inference device
-                    val_result = self.validate(model_w, dataset_w, rank)
-                    if val_result is not None:
-                        monitoring = val_result[self.monitor]
-                        if compare_fn(monitoring, best_index):
-                            best_index = monitoring
-                            best_epoch = epoch
-                            patience = 0
-                            best_model_w = copy.deepcopy(model_w)
-                        else:
-                            patience += 1
-                            if self.early_stopping and patience >= self.patience:
-                                break
-                        print_str_dict[f"val_{self.evaluation_metric}"] = monitoring
+                if self.do_valid is True:
+                    if val_loader is not None and epoch % self.eval_step == 0:
+                        # inductive setting ..
+                        dataset_w.eval()
+                        # do validation in inference device
+                        val_result = self.validate(model_w, dataset_w, rank)
+                        if val_result is not None:
+                            monitoring = val_result[self.monitor]
+                            if compare_fn(monitoring, best_index):
+                                best_index = monitoring
+                                best_epoch = epoch
+                                patience = 0
+                                best_model_w = copy.deepcopy(model_w)
+                            else:
+                                patience += 1
+                                if self.early_stopping and patience >= self.patience:
+                                    break
+                            print_str_dict[f"val_{self.evaluation_metric}"] = monitoring
 
                 if self.distributed_training:
                     if rank == 0:

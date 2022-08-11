@@ -37,7 +37,7 @@ def test_gen_emb():
     generator = pipeline(
         "generate-emb",
         model="mvgrl",
-        no_test=True,
+        return_model=True,
         num_features=8,
         hidden_size=10,
         sample_size=2,

@@ -211,10 +211,12 @@ def train(args):  # noqa: C901
         logger=args.logger,
         log_path=args.log_path,
         project=args.project,
-        no_test=args.no_test,
+        return_model=args.return_model,
         nstage=args.nstage,
         actnn=args.actnn,
         fp16=args.fp16,
+        do_test=args.do_test,
+        do_valid=args.do_valid,
     )
 
     # Go!!!

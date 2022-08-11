@@ -4,11 +4,10 @@ from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from .knowledge_base import KGEModel
 
 
-@register_model("rotate")
 class RotatE(KGEModel):
     r"""
     Implementation of RotatE model from the paper `"RotatE: Knowledge Graph Embedding by Relational Rotation in Complex Space"

@@ -194,7 +194,6 @@ def read_triplet_data(folder):
     relation_dic = {}
     for filename in filenames:
         with open(osp.join(folder, filename), "r") as f:
-            # _ = int(f.readline().strip())
             if "train" in filename:
                 train_start_idx = len(triples)
             elif "valid" in filename:
@@ -203,7 +202,7 @@ def read_triplet_data(folder):
                 test_start_idx = len(triples)
             for line in f:
                 items = line.strip().split()
-                if len(items)!=3:
+                if len(items) != 3:
                     continue  
                 edge_index.append([int(items[0]), int(items[1])])
                 edge_attr.append(int(items[2]))
@@ -239,7 +238,6 @@ def read_triplet_data(folder):
 
 
 class KnowledgeGraphDataset(Dataset):
-    # url = "https://raw.githubusercontent.com/thunlp/OpenKE/OpenKE-PyTorch/benchmarks"
     url = "https://cloud.tsinghua.edu.cn/d/d1c733373b014efab986/files/?p=%2F{}%2F{}&dl=1"
 
     def __init__(self, root, name):
@@ -289,7 +287,6 @@ class KnowledgeGraphDataset(Dataset):
 
     def download(self):
         for name in self.raw_file_names:
-            # download_url("{}/{}/{}".format(self.url, self.name, name), self.raw_dir)
             download_url(self.url.format(self.name, name), self.raw_dir, name=name)
     
     def process(self):

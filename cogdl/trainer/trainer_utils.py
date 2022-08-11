@@ -54,21 +54,16 @@ def save_model(model, path, epoch):
     print(f"Saving {epoch}-th model to {path} ...")
     torch.save(model.state_dict(), path)
 
+    if hasattr(model, "entity_embedding"):
+        entity_embedding = model.entity_embedding.numpy()
+        print('Saving entity_embedding to ',path)
+        np.save(os.path.join(path, "entity_embedding"), entity_embedding) 
 
-def triple_save_model(model, save_path):
-    """
-    Save the parameters of the model and the optimizer,
-    as well as some other variables such as step and learning_rate
-    """
+    if hasattr(model, "relation_embedding"):
+        relation_embedding = model.relation_embedding.numpy()
+        print('Saving entity_embedding to ',path)
+        np.save(os.path.join(entity_embedding, "relation_embedding"), relation_embedding)
 
-    entity_embedding = model.entity_embedding.detach().cpu().numpy()
-    print('Saving entity_embedding to ',save_path)
-    np.save(os.path.join(save_path, "entity_embedding"), entity_embedding) 
-
-    relation_embedding = model.relation_embedding.detach().cpu().numpy()
-    print('Saving entity_embedding to ',save_path)
-    np.save(os.path.join(save_path, "relation_embedding"), relation_embedding)
-    
 
 def load_model(model, path):
     print(f"Loading model from {path} ...")

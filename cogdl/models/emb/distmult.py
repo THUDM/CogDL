@@ -1,8 +1,7 @@
-from .. import BaseModel, register_model
+from .. import BaseModel
 from .knowledge_base import KGEModel
 
 
-@register_model("distmult")
 class DistMult(KGEModel):
     r"""The DistMult model from the ICLR 2015 paper `"EMBEDDING ENTITIES AND RELATIONS FOR LEARNING AND INFERENCE IN KNOWLEDGE BASES"
     <https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/ICLR2015_updated.pdf>`

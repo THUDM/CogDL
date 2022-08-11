@@ -10,7 +10,7 @@ from cogdl.datasets.kg_data import BidirectionalOneShotIterator, TestDataset, Tr
 import torch.nn.functional as F
 
 
-class TripleWrapper(ModelWrapper):
+class TripleModelWrapper(ModelWrapper):
     @classmethod
     def add_args(self, parser):
         # fmt: off
@@ -30,7 +30,7 @@ class TripleWrapper(ModelWrapper):
         # fmt: on
 
     def __init__(self, model, optimizer_cfg):
-        super(TripleWrapper, self).__init__()
+        super(TripleModelWrapper, self).__init__()
 
         self.model = model
         self.optimizer_cfg = optimizer_cfg

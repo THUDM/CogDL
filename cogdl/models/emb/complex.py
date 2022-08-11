@@ -3,11 +3,10 @@ from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .. import BaseModel, register_model
+from .. import BaseModel
 from .knowledge_base import KGEModel
 
 
-@register_model("complex")
 class ComplEx(KGEModel):
     r"""
     the implementation of ComplEx model from the paper `"Complex Embeddings for Simple Link Prediction"<http://proceedings.mlr.press/v48/trouillon16.pdf>`

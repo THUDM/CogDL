@@ -13,13 +13,11 @@ from torch.cuda.amp import GradScaler, autocast
 
 
 from cogdl.wrappers.data_wrapper.base_data_wrapper import DataWrapper
-from cogdl.wrappers.model_wrapper.link_prediction.triple_link_prediction_mw import TripleWrapper
 from cogdl.wrappers.model_wrapper.base_model_wrapper import ModelWrapper, EmbeddingModelWrapper
 from cogdl.trainer.trainer_utils import (
     evaluation_comp,
     load_model,
     save_model,
-    triple_save_model,
     ddp_end,
     ddp_after_epoch,
     Printer,
@@ -80,7 +78,7 @@ class Trainer(object):
         logger: str = None,
         log_path: str = "./runs",
         project: str = "cogdl-exp",
-        no_test: bool = False,
+        return_model: bool = False,
         actnn: bool = False,
         fp16: bool = False,
         rp_ratio: int = 1,
@@ -115,7 +113,7 @@ class Trainer(object):
 
         self.cpu_inference = cpu_inference
 
-        self.no_test = no_test
+        self.return_model = return_model
 
         self.on_train_batch_transform = None
         self.on_eval_batch_transform = None
@@ -206,7 +204,7 @@ class Trainer(object):
             self.train(self.devices[0], model_w, dataset_w)
         best_model_w = load_model(model_w, self.checkpoint_path).to(self.devices[0])
 
-        if self.no_test:
+        if self.return_model:
             return best_model_w.model
 
         final_test = self.evaluate(best_model_w, dataset_w)
@@ -228,14 +226,11 @@ class Trainer(object):
         if self.do_valid:
             final_val = self.validate(model_w, dataset_w, self.devices[0])
         else:
-            final_val = {"No val": 0}
+            final_val = {}
         if self.do_test:
             final_test = self.test(model_w, dataset_w, self.devices[0])
         else:
-            if self.do_valid:
-                final_test = {}
-            else:
-                final_test = {"No test": 0}
+            final_test = {}
 
         if final_val is not None and "val_metric" in final_val:
             final_val[f"val_{self.evaluation_metric}"] = final_val["val_metric"]
@@ -434,9 +429,6 @@ class Trainer(object):
                 dist.barrier()
         else:
             save_model(best_model_w.to("cpu"), self.checkpoint_path, best_epoch)
-
-        if isinstance(model_w, TripleWrapper):
-            triple_save_model(model_w.model, self.save_emb_path)
 
         for hook in self.training_end_hooks:
             hook(self)

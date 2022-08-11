@@ -194,7 +194,6 @@ def read_triplet_data(folder):
     relation_dic = {}
     for filename in filenames:
         with open(osp.join(folder, filename), "r") as f:
-            i=0
             # _ = int(f.readline().strip())
             if "train" in filename:
                 train_start_idx = len(triples)
@@ -204,9 +203,8 @@ def read_triplet_data(folder):
                 test_start_idx = len(triples)
             for line in f:
                 items = line.strip().split()
-                if i==0:
-                    if len(items)==1:
-                      _ = int(f.readline().strip())  
+                if len(items)!=3:
+                    continue  
                 edge_index.append([int(items[0]), int(items[1])])
                 edge_attr.append(int(items[2]))
                 triples.append((int(items[0]), int(items[2]), int(items[1])))

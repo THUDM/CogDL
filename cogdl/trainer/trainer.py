@@ -15,7 +15,15 @@ from torch.cuda.amp import GradScaler, autocast
 from cogdl.wrappers.data_wrapper.base_data_wrapper import DataWrapper
 from cogdl.wrappers.model_wrapper.link_prediction.triple_link_prediction_mw import TripleWrapper
 from cogdl.wrappers.model_wrapper.base_model_wrapper import ModelWrapper, EmbeddingModelWrapper
-from cogdl.trainer.trainer_utils import evaluation_comp, load_model, save_model,triple_save_model, ddp_end, ddp_after_epoch, Printer
+from cogdl.trainer.trainer_utils import (
+    evaluation_comp,
+    load_model,
+    save_model,
+    triple_save_model,
+    ddp_end,
+    ddp_after_epoch,
+    Printer,
+)
 from cogdl.trainer.embed_trainer import EmbeddingTrainer
 from cogdl.trainer.controller import DataController
 from cogdl.loggers import build_logger
@@ -133,7 +141,7 @@ class Trainer(object):
         self.fp16 = fp16
         self.attack = attack
         self.attack_mode = attack_mode
-        self.do_test= do_test
+        self.do_test = do_test
         self.do_valid = do_valid
 
         if actnn:
@@ -220,14 +228,14 @@ class Trainer(object):
         if self.do_valid:
             final_val = self.validate(model_w, dataset_w, self.devices[0])
         else:
-            final_val={"No val":0}
+            final_val = {"No val": 0}
         if self.do_test:
             final_test = self.test(model_w, dataset_w, self.devices[0])
         else:
             if self.do_valid:
-                final_test={}
+                final_test = {}
             else:
-                final_test={"No test":0}
+                final_test = {"No test": 0}
 
         if final_val is not None and "val_metric" in final_val:
             final_val[f"val_{self.evaluation_metric}"] = final_val["val_metric"]
@@ -378,7 +386,7 @@ class Trainer(object):
                 print_str_dict["train_loss"] = training_loss
 
                 val_loader = dataset_w.on_val_wrapper()
-                if self.do_valid==True:
+                if self.do_valid is True:
                     if val_loader is not None and epoch % self.eval_step == 0:
                         # inductive setting ..
                         dataset_w.eval()
@@ -396,7 +404,6 @@ class Trainer(object):
                                 if self.early_stopping and patience >= self.patience:
                                     break
                             print_str_dict[f"val_{self.evaluation_metric}"] = monitoring
-
 
                 if self.distributed_training:
                     if rank == 0:
@@ -427,9 +434,9 @@ class Trainer(object):
                 dist.barrier()
         else:
             save_model(best_model_w.to("cpu"), self.checkpoint_path, best_epoch)
-        
+
         if isinstance(model_w, TripleWrapper):
-            triple_save_model(model_w.model,self.save_emb_path)
+            triple_save_model(model_w.model, self.save_emb_path)
 
         for hook in self.training_end_hooks:
             hook(self)

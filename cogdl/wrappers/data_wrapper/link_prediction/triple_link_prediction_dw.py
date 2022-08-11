@@ -70,9 +70,6 @@ class TripleDataWrapper(DataWrapper):
     @staticmethod
     def output_iter(dataset, negative_sample_size, batch_size):
         train_triples = dataset.triples[dataset.train_start_idx : dataset.valid_start_idx]
-
-        valid_triples = dataset.triples[dataset.valid_start_idx : dataset.test_start_idx]
-
         nentity, nrelation = dataset._num_entities, dataset._num_relations
 
         # Set training dataloader iterator

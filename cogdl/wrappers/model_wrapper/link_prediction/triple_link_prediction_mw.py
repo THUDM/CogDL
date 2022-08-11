@@ -8,13 +8,15 @@ from .. import ModelWrapper
 from cogdl.utils.link_prediction_utils import cal_mrr, DistMultLayer, ConvELayer
 from cogdl.datasets.kg_data import BidirectionalOneShotIterator, TestDataset, TrainDataset
 import torch.nn.functional as F
+
+
 class TripleWrapper(ModelWrapper):
     @classmethod
-    def add_args(self,parser):
+    def add_args(self, parser):
         # fmt: off
         parser.add_argument("--negative_adversarial_sampling", default=False)
         parser.add_argument("--negative_sample_size", type=int , default=128)
-        parser.add_argument("--uni_weight", action="store_true",help="Otherwise use subsampling weighting like in word2vec")
+        parser.add_argument("--uni_weight", action="store_true", help="Otherwise use subsampling weighting like in word2vec")
         parser.add_argument("--regularization", default=1e-9, type=float)
         parser.add_argument('--lr', default=0.001, type=float)
         parser.add_argument("--adversarial_temperature", default=1.0, type=float)
@@ -32,13 +34,13 @@ class TripleWrapper(ModelWrapper):
 
         self.model = model
         self.optimizer_cfg = optimizer_cfg
-        self.args= self.parser.parse_args()
+        self.args = self.parser.parse_args()
 
-    def train_step(self,subgraph):
+    def train_step(self, subgraph):
         """
         A single train step. Apply back-propation and return the loss
         """
-        train_iterator=subgraph
+        train_iterator = subgraph
         positive_sample, negative_sample, subsampling_weight, mode = next(train_iterator)
 
         positive_sample = positive_sample.to(self.device)
@@ -49,10 +51,7 @@ class TripleWrapper(ModelWrapper):
 
         if self.args.negative_adversarial_sampling:
             # In self-adversarial sampling, we do not apply back-propagation on the sampling weight
-            negative_score = (
-                    F.softmax(negative_score * self.args.adversarial_temperature, dim=1).detach() * F.logsigmoid(
-                -negative_score)
-            ).sum(dim=1)
+            negative_score = (F.softmax(negative_score * self.args.adversarial_temperature, dim=1).detach() * F.logsigmoid(-negative_score)).sum(dim=1)
         else:
             negative_score = F.logsigmoid(-negative_score).mean(dim=1)
 
@@ -74,25 +73,21 @@ class TripleWrapper(ModelWrapper):
                 self.model.entity_embedding.norm(p=3) ** 3 + self.model.relation_embedding.norm(p=3).norm(p=3) ** 3
             )
             loss = loss + regularization
-            regularization_log = {"regularization": regularization.item()}
-        else:
-            regularization_log = {}
 
         return loss
 
-
     def test_step(self, subgraph):
         print("Test Dataset:")
-        metrics =self.eval_step(subgraph)
-        return dict(mrr=metrics["MRR"],mr=metrics["MR"],hits1=metrics["HITS@1"], hits3=metrics["HITS@3"], hits10=metrics["HITS@10"])
+        metrics = self.eval_step(subgraph)
+        return dict(mrr=metrics["MRR"], mr=metrics["MR"], hits1=metrics["HITS@1"], hits3=metrics["HITS@3"], hits10=metrics["HITS@10"])
+
     def val_step(self, subgraph):
         print("Val Dataset:")
-        metrics =self.eval_step(subgraph)
-        return dict(mrr=metrics["MRR"],mr=metrics["MR"],hits1=metrics["HITS@1"], hits3=metrics["HITS@3"], hits10=metrics["HITS@10"])
+        metrics = self.eval_step(subgraph)
+        return dict(mrr=metrics["MRR"], mr=metrics["MR"], hits1=metrics["HITS@1"], hits3=metrics["HITS@3"], hits10=metrics["HITS@10"])
 
-    def eval_step(self,subgraph):
-        
-        test_dataloader_head, test_dataloader_tail=subgraph
+    def eval_step(self, subgraph):        
+        test_dataloader_head, test_dataloader_tail = subgraph
         logs = []
         step = 0
         test_dataset_list = [test_dataloader_head, test_dataloader_tail]
@@ -144,7 +139,7 @@ class TripleWrapper(ModelWrapper):
         metrics = {}
         for metric in logs[0].keys():
             metrics[metric] = sum([log[metric] for log in logs]) / len(logs)
-        print("The Dataset metrics:",metrics)
+        print("The Dataset metrics:", metrics)
         return metrics
 
     def setup_optimizer(self):
@@ -153,9 +148,3 @@ class TripleWrapper(ModelWrapper):
 
     def set_early_stopping(self):
         return "mrr", ">"
-
-    
-
-
-
-    

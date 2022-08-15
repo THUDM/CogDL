@@ -25,7 +25,7 @@ class KGEModel(BaseModel):
         )
 
     def __init__(
-        self, nentity, nrelation, hidden_dim, gamma, double_entity_embedding=False, double_relation_embedding=False
+        self, nentity, nrelation, hidden_dim, gamma, double_entity_embedding, double_relation_embedding
     ):
 
         super(KGEModel, self).__init__()
@@ -39,7 +39,7 @@ class KGEModel(BaseModel):
         self.embedding_range = nn.Parameter(
             torch.Tensor([(self.gamma.item() + self.epsilon) / hidden_dim]), requires_grad=False
         )
-
+        
         self.entity_dim = hidden_dim * 2 if double_entity_embedding else hidden_dim
         self.relation_dim = hidden_dim * 2 if double_relation_embedding else hidden_dim
 

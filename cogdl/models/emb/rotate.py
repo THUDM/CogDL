@@ -22,9 +22,9 @@ class RotatE(KGEModel):
         parser.add_argument("--double_entity_embedding", default=True)
         parser.add_argument("--double_relation_embedding", action="store_true")
     def __init__(
-        self, nentity, nrelation, hidden_dim, gamma, double_entity_embedding=False, double_relation_embedding=False
+        self, nentity, nrelation, hidden_dim, gamma, double_entity_embedding, double_relation_embedding
     ):
-        super(RotatE, self).__init__(nentity, nrelation, hidden_dim, gamma, True, double_relation_embedding)
+        super(RotatE, self).__init__(nentity, nrelation, hidden_dim, gamma,double_entity_embedding, double_relation_embedding)
 
     def score(self, head, relation, tail, mode):
         pi = 3.14159265358979323846

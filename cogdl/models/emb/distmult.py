@@ -9,7 +9,7 @@ class DistMult(KGEModel):
     """
 
     def __init__(
-        self, nentity, nrelation, hidden_dim, gamma, double_entity_embedding=False, double_relation_embedding=False
+        self, nentity, nrelation, hidden_dim, gamma, double_entity_embedding, double_relation_embedding
     ):
         super(DistMult, self).__init__(
             nentity, nrelation, hidden_dim, gamma, double_entity_embedding, double_relation_embedding

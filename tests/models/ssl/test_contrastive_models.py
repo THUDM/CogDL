@@ -3,7 +3,6 @@ import torch
 from cogdl.experiments import train
 from cogdl.options import get_default_args
 
-
 default_dict = {
     "hidden_size": 16,
     "num_layers": 2,

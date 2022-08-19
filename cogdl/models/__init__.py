@@ -104,7 +104,7 @@ SUPPORTED_MODELS = {
     "sortpool": "cogdl.models.nn.sortpool.SortPool",
     "srgcn": "cogdl.models.nn.srgcn.SRGCN",
     "gcc": "cogdl.models.nn.gcc_model.GCCModel",
-    "unsup_graphsage": "cogdl.models.nn.unsup_graphsage.SAGE",
+    "unsup_graphsage": "cogdl.models.nn.graphsage.Graphsage",
     "graphsaint": "cogdl.models.nn.graphsaint.GraphSAINT",
     "m3s": "cogdl.models.nn.m3s.M3S",
     "moe_gcn": "cogdl.models.nn.moe_gcn.MoEGCN",

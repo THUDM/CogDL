@@ -102,6 +102,7 @@ def set_default_wrapper_config():
 
     node_classification_wrappers["m3s"]["dw"] = "m3s_dw"
     node_classification_wrappers["graphsage"]["dw"] = "graphsage_dw"
+    node_classification_wrappers["unsup_graphsage"]["dw"] = "unsup_graphsage_dw"
     node_classification_wrappers["pprgo"]["dw"] = "pprgo_dw"
     node_classification_wrappers["sagn"]["dw"] = "sagn_dw"
 

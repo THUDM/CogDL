@@ -40,8 +40,9 @@ def get_default_args_for_unsup_nn(dataset, model, dw="node_classification_dw", m
 
 
 def test_unsupervised_graphsage():
-    args = get_default_args_for_unsup_nn("cora", "unsup_graphsage", mw="unsup_graphsage_mw")
+    args = get_default_args_for_unsup_nn("cora", "unsup_graphsage",dw="unsup_graphsage_dw", mw="unsup_graphsage_mw")
     args.negative_samples = 10
+    args.hidden_size = [128]
     args.walk_length = 5
     args.sample_size = [5, 5]
     args.patience = 20

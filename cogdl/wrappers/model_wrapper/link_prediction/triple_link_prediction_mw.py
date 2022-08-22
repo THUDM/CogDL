@@ -3,6 +3,7 @@ import torch.nn as nn
 import os
 import json
 import numpy as np
+from tqdm import tqdm
 from .. import ModelWrapper
 
 from cogdl.utils.link_prediction_utils import cal_mrr, DistMultLayer, ConvELayer
@@ -89,12 +90,11 @@ class TripleModelWrapper(ModelWrapper):
     def eval_step(self, subgraph):        
         test_dataloader_head, test_dataloader_tail = subgraph
         logs = []
-        step = 0
         test_dataset_list = [test_dataloader_head, test_dataloader_tail]
-        total_steps = sum([len(dataset) for dataset in test_dataset_list])
-
         for test_dataset in test_dataset_list:
-            for positive_sample, negative_sample, filter_bias, mode in test_dataset:
+            pbar = tqdm(test_dataset)
+            for positive_sample, negative_sample, filter_bias, mode in pbar:
+                pbar.set_description("Evaluating the model: Use mode({})".format(mode))
                 positive_sample = positive_sample.to(self.device)
                 negative_sample = negative_sample.to(self.device)
                 filter_bias = filter_bias.to(self.device)
@@ -130,11 +130,6 @@ class TripleModelWrapper(ModelWrapper):
                             "HITS@10": 1.0 if ranking <= 10 else 0.0,
                         }
                     )
-
-                if step % 1000 == 0:
-                    print("Evaluating the model... (%d/%d)" % (step, total_steps))
-
-                step += 1
 
         metrics = {}
         for metric in logs[0].keys():

@@ -116,3 +116,6 @@ metis*
 *.csv
 *.sql
 *.pt
+
+#ZHJ
+data

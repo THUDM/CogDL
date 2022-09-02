@@ -10,11 +10,17 @@ class DataWrapper(object):
         pass
 
     def __init__(self, dataset=None):
-        if dataset is not None:
-            if hasattr(dataset, "get_loss_fn"):
-                self.__loss_fn__ = dataset.get_loss_fn()
-            if hasattr(dataset, "get_evaluator"):
-                self.__evaluator__ = dataset.get_evaluator()
+        if dataset is not None: #ZHJ
+            if isinstance(dataset, list):
+                if hasattr(dataset[0], "get_loss_fn"):
+                    self.__loss_fn__ = dataset[0].get_loss_fn()
+                if hasattr(dataset[0], "get_evaluator"):
+                    self.__evaluator__ = dataset[0].get_evaluator()
+            else:
+                if hasattr(dataset, "get_loss_fn"):
+                    self.__loss_fn__ = dataset.get_loss_fn()
+                if hasattr(dataset, "get_evaluator"):
+                    self.__evaluator__ = dataset.get_evaluator()
         else:
             self.__loss_fn__ = None
             self.__evaluator__ = None
@@ -154,8 +160,12 @@ class DataWrapper(object):
     def train(self):
         if self.__dataset__ is None:
             self.__dataset__ = getattr(self, "dataset", None)
-        if self.__dataset__ is not None and isinstance(self.__dataset__.data, Graph):
-            self.__dataset__.data.train()
+        if self.__dataset__ is not None: #ZHJ
+            if isinstance(self.__dataset__, list):
+                for ii in range(len(self.__dataset__)):
+                    self.__dataset__[ii].data.train()
+            elif isinstance(self.__dataset__.data, Graph):
+                self.__dataset__.data.train()
 
     def eval(self):
         if self.__dataset__ is None:
@@ -262,7 +272,7 @@ class OnLoadingWrapper(object):
         if isinstance(inputs, list):
             outputs = [0] * len(inputs)
             for i, item in enumerate(inputs):
-                inputs[i] = self.__get_min_len__(item)
+                outputs[i] = self.__get_min_len__(item)
             return np.min(outputs)
         # elif isinstance(inputs, dict):
         #     outputs = {key: 0 for key in inputs.keys()}

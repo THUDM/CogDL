@@ -96,6 +96,12 @@ def build_dataset_from_path(data_path, dataset=None):
 
 
 SUPPORTED_DATASETS = {
+    "gcc_academic": "cogdl.datasets.gcc_data.Academic_GCCDataset",
+    "gcc_dblp_netrep":"cogdl.datasets.gcc_data.DBLPNetrep_GCCDataset",
+    "gcc_dblp_snap":"cogdl.datasets.gcc_data.DBLPSnap_GCCDataset",
+    "gcc_facebook":"cogdl.datasets.gcc_data.Facebook_GCCDataset",
+    "gcc_imdb":"cogdl.datasets.gcc_data.IMDB_GCCDataset",
+    "gcc_livejournal":"cogdl.datasets.gcc_data.Livejournal_GCCDataset",
     "kdd_icdm": "cogdl.datasets.gcc_data.KDD_ICDM_GCCDataset",
     "sigir_cikm": "cogdl.datasets.gcc_data.SIGIR_CIKM_GCCDataset",
     "sigmod_icde": "cogdl.datasets.gcc_data.SIGMOD_ICDE_GCCDataset",

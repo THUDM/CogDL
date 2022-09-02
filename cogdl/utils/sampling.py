@@ -26,20 +26,28 @@ def random_walk(start, length, indptr, indices, p=0.0):
 
 
 @numba.njit(cache=True)
-def _random_walk(node, length, indptr, indices, p=0.0):
+def _random_walk(node, length, indptr, indices, p=0.0, first_restart=False):
     result = [numba.int32(0)] * length
     result[0] = numba.int32(node)
     i = numba.int32(1)
     _node = node
+    _start = indptr[_node] 
+    _end = indptr[_node + 1]
     while i < length:
-        start = indptr[node]
+        start = indptr[node] 
         end = indptr[node + 1]
         sample = random.randint(start, end - 1)
         node = indices[sample]
         if np.random.uniform(0, 1) > p:
             result[i] = node
         else:
-            result[i] = _node
+            if first_restart:
+                node = _node 
+                continue
+            else:
+                sample = random.randint(_start, _end - 1)
+                node = indices[sample]
+                result[i] = node
         i += 1
     return np.array(result, dtype=np.int32)
 

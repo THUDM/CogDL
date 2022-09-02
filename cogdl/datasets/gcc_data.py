@@ -96,7 +96,10 @@ class Edgelist(Dataset):
 
     @property
     def raw_file_names(self):
-        names = ["edgelist.txt", "nodelabel.txt"]
+        if self.name in UNLABELED_GCCDATASETS:
+            names = ["edgelist.txt"]
+        else:
+            names = ["edgelist.txt", "nodelabel.txt"]
         return names
 
     @property
@@ -142,11 +145,11 @@ class Edgelist(Dataset):
                 if label not in label2id:
                     label2id[label] = len(label2id)
                 nodes.append(node2id[x])
-                if "hindex" in self.name:
+                if "h-index" in self.name:
                     labels.append(label)
                 else:
                     labels.append(label2id[label])
-            if "hindex" in self.name:
+            if "h-index" in self.name:
                 median = np.median(labels)
                 labels = [int(label > median) for label in labels]
         assert num_nodes == len(set(nodes))
@@ -184,3 +187,52 @@ class USAAirportDataset(Edgelist):
         dataset = "usa-airport"
         path = osp.join(data_path, dataset)
         super(USAAirportDataset, self).__init__(path, dataset)
+
+class HIndexDataset(Edgelist):
+    def __init__(self, data_path="data"):
+        dataset = "h-index"
+        path = osp.join(data_path, dataset)
+        super(HIndexDataset, self).__init__(path, dataset)
+
+class Academic_GCCDataset(Edgelist):
+    def __init__(self, data_path="data"):
+        dataset = "gcc_academic"
+        path = osp.join(data_path, dataset)
+        super(Academic_GCCDataset, self).__init__(path, dataset)
+        
+class DBLPNetrep_GCCDataset(Edgelist):
+    def __init__(self, data_path="data"):
+        dataset = "gcc_dblp_netrep"
+        path = osp.join(data_path, dataset)
+        super(DBLPNetrep_GCCDataset, self).__init__(path, dataset)
+        
+class DBLPSnap_GCCDataset(Edgelist):
+    def __init__(self, data_path="data"):
+        dataset = "gcc_dblp_snap"
+        path = osp.join(data_path, dataset)
+        super(DBLPSnap_GCCDataset, self).__init__(path, dataset)
+        
+class Facebook_GCCDataset(Edgelist):
+    def __init__(self, data_path="data"):
+        dataset = "gcc_facebook"
+        path = osp.join(data_path, dataset)
+        super(Facebook_GCCDataset, self).__init__(path, dataset)
+
+class IMDB_GCCDataset(Edgelist):
+    def __init__(self, data_path="data"):
+        dataset = "gcc_imdb"
+        path = osp.join(data_path, dataset)
+        super(IMDB_GCCDataset, self).__init__(path, dataset)
+        
+class Livejournal_GCCDataset(Edgelist):
+    def __init__(self, data_path="data"):
+        dataset = "gcc_livejournal"
+        path = osp.join(data_path, dataset)
+        super(Livejournal_GCCDataset, self).__init__(path, dataset)
+
+UNLABELED_GCCDATASETS = ["gcc_academic", 
+                         "gcc_dblp_netrep",
+                         "gcc_dblp_snap",
+                         "gcc_facebook",
+                         "gcc_imdb",
+                         "gcc_livejournal"]

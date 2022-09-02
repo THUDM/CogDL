@@ -39,6 +39,7 @@ class MLP(nn.Module):
         self.activation = get_activation(activation)
         self.act_first = act_first
         self.dropout = dropout
+        self.output_dim = out_feats
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]
         self.mlp = nn.ModuleList(
             [nn.Linear(shapes[layer], shapes[layer + 1], bias=bias) for layer in range(num_layers)]

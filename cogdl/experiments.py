@@ -12,7 +12,7 @@ import torch.multiprocessing as mp
 import optuna
 from tabulate import tabulate
 
-from cogdl.utils import set_random_seed, tabulate_results
+from cogdl.utils import set_random_seed, tabulate_results, build_model_path
 from cogdl.configs import BEST_CONFIGS
 from cogdl.data import Dataset
 from cogdl.models import build_model
@@ -111,6 +111,9 @@ def train(args):  # noqa: C901
 |-------------------------------------{'-' * (len(str(args.dataset)) + len(model_name) + len(dw_name) + len(mw_name))}|"""
     )
 
+    if getattr(args, "model_path"):
+        args = build_model_path(args, model_name)
+
     if getattr(args, "use_best_config", False):
         args = set_best_config(args)
 
@@ -118,7 +121,14 @@ def train(args):  # noqa: C901
     if isinstance(args.dataset, Dataset):
         dataset = args.dataset
     else:
-        dataset = build_dataset(args)
+        if ' ' in args.dataset:
+            datasets = args.dataset.split(' ')
+            dataset = []
+            for dataset_ in datasets:
+                args.dataset = dataset_
+                dataset.append(build_dataset(args))
+        else:
+            dataset = build_dataset(args)
 
     mw_class = fetch_model_wrapper(args.mw)
     dw_class = fetch_data_wrapper(args.dw)
@@ -143,7 +153,8 @@ def train(args):  # noqa: C901
     # setup data_wrapper
     dataset_wrapper = dw_class(dataset, **data_wrapper_args)
 
-    args.num_features = dataset.num_features
+    if hasattr(dataset, "num_features"):
+        args.num_features = dataset.num_features
     if hasattr(dataset, "num_nodes"):
         args.num_nodes = dataset.num_nodes
     if hasattr(dataset, "num_edges"):
@@ -160,7 +171,7 @@ def train(args):  # noqa: C901
         args.num_classes = args.hidden_size
     else:
         args.num_classes = dataset.num_classes
-    if hasattr(dataset.data, "edge_attr") and dataset.data.edge_attr is not None:
+    if hasattr(dataset, "data") and hasattr(dataset.data, "edge_attr") and dataset.data.edge_attr is not None:
         args.num_entities = len(torch.unique(torch.stack(dataset.data.edge_index)))
         args.num_rels = len(torch.unique(dataset.data.edge_attr))
 
@@ -180,6 +191,12 @@ def train(args):  # noqa: C901
 
     if hasattr(args, "hidden_size"):
         optimizer_cfg["hidden_size"] = args.hidden_size
+
+    if hasattr(args, "beta1") and hasattr(args, "beta2"):
+        optimizer_cfg["betas"] = (args.beta1, args.beta2)
+
+    if hasattr(dataset_wrapper, "train_dataset"):
+        optimizer_cfg["total"] = len(dataset_wrapper.train_dataset)
 
     # setup model_wrapper
     if isinstance(args.mw, str) and "embedding" in args.mw:
@@ -212,6 +229,7 @@ def train(args):  # noqa: C901
         fp16=args.fp16,
         do_test=args.do_test,
         do_valid=args.do_valid,
+        clip_grad_norm=args.clip_grad_norm,
     )
 
     # Go!!!

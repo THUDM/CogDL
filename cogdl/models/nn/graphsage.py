@@ -85,6 +85,7 @@ class Graphsage(BaseModel):
             if i != self.num_layers - 1:
                 x = F.relu(x)
                 x = F.dropout(x, p=self.dropout, training=self.training)
+        self.adjlist.clear()
         return x
 
     def forward(self, *args):

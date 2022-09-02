@@ -32,7 +32,6 @@ def fetch_model_wrapper(name):
 
 
 SUPPORTED_MW = {
-    "triple_link_prediction_mw":"cogdl.wrappers.model_wrapper.link_prediction.TripleModelWrapper",
     "dgi_mw": "cogdl.wrappers.model_wrapper.node_classification.DGIModelWrapper",
     "gcnmix_mw": "cogdl.wrappers.model_wrapper.node_classification.GCNMixModelWrapper",
     "grace_mw": "cogdl.wrappers.model_wrapper.node_classification.GRACEModelWrapper",
@@ -60,4 +59,8 @@ SUPPORTED_MW = {
     "agc_mw": "cogdl.wrappers.model_wrapper.clustering.AGCModelWrapper",
     "daegc_mw": "cogdl.wrappers.model_wrapper.clustering.DAEGCModelWrapper",
     "gae_mw": "cogdl.wrappers.model_wrapper.clustering.GAEModelWrapper",
+    # Xiansgheng:start
+    "traffic_prediction_mw": "cogdl.wrappers.model_wrapper.traffic_prediction.STGCNModelWrapper",
+    "stgat_mw": "cogdl.wrappers.model_wrapper.traffic_prediction.STGATModelWrapper",
+    # end
 }

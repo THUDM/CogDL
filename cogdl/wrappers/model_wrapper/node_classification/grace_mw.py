@@ -54,7 +54,11 @@ class GRACEModelWrapper(UnsupervisedModelWrapper):
         self.note("test_acc", result)
 
     def prop(
-        self, graph: Graph, x: torch.Tensor, drop_feature_rate: float = 0.0, drop_edge_rate: float = 0.0,
+        self,
+        graph: Graph,
+        x: torch.Tensor,
+        drop_feature_rate: float = 0.0,
+        drop_edge_rate: float = 0.0,
     ):
         x = dropout_features(x, drop_feature_rate)
         with graph.local_graph():
@@ -77,7 +81,10 @@ class GRACEModelWrapper(UnsupervisedModelWrapper):
         return torch.mean(_loss)
 
     def batched_loss(
-        self, z1: torch.Tensor, z2: torch.Tensor, batch_size: int,
+        self,
+        z1: torch.Tensor,
+        z2: torch.Tensor,
+        batch_size: int,
     ):
         num_nodes = z1.shape[0]
         num_batches = (num_nodes - 1) // batch_size + 1

@@ -10,13 +10,18 @@ from cogdl.utils import makedirs
 from cogdl.utils import Accuracy, CrossEntropyLoss
 
 
+# <class 'list'>: ['ind.cora.x', 'ind.cora.tx', 'ind.cora.allx', 'ind.cora.y', 'ind.cora.ty', 'ind.cora.ally', 'ind.cora.graph', 'ind.cora.test.index']
+# 把路径都变为列表
 def to_list(x):
     if not isinstance(x, collections.Iterable) or isinstance(x, str):
         x = [x]
     return x
 
 
+# <class 'list'>: ['data\\Cora\\raw\\ind.cora.x', 'data\\Cora\\raw\\ind.cora.tx', 'data\\Cora\\raw\\ind.cora.allx', 'data\\Cora\\raw\\ind.cora.y', 'data\\Cora\\raw\\ind.cora.ty', 'data\\Cora\\raw\\ind.cora.ally', 'data\\Cora\\raw\\ind.cora.graph', 'data\\Cora\\raw\\ind.cora.test.index']
+# 对于 files 中的所有路径都存在，返回true
 def files_exist(files):
+    # 返回一个布尔变量
     return all([osp.exists(f) for f in files])
 
 
@@ -24,7 +29,7 @@ class Dataset(torch.utils.data.Dataset):
     r"""Dataset base class for creating graph datasets.
 
     Args:
-        root (string): Root directory where the dataset should be saved.
+        root (string): Root directory where the dataset should be saved.   # 数据集根目录
         transform (callable, optional): A function/transform that takes in an
             :obj:`cogdl.data.Data` object and returns a transformed
             version. The data object will be transformed before every access.
@@ -39,28 +44,35 @@ class Dataset(torch.utils.data.Dataset):
             final dataset. (default: :obj:`None`)
     """
 
+    # @ staticmethod 或 @ classmethod，就可以不需要实例化，直接类名.方法名()来调用。
     @staticmethod
     def add_args(parser):
         """Add dataset-specific arguments to the parser."""
         pass
 
+    # 只读属性
     @property
     def raw_file_names(self):
+        # 找到文件跳过下载
         r"""The name of the files to find in the :obj:`self.raw_dir` folder in
         order to skip the download."""
+        # 报错倒推
         raise NotImplementedError
 
     @property
     def processed_file_names(self):
+        # 跳过处理
         r"""The name of the files to find in the :obj:`self.processed_dir`
         folder in order to skip the processing."""
         raise NotImplementedError
 
     def download(self):
+        # 下载文件
         r"""Downloads the dataset to the :obj:`self.raw_dir` folder."""
         raise NotImplementedError
 
     def process(self):
+        # 处理文件
         r"""Processes the dataset to the :obj:`self.processed_dir` folder."""
         raise NotImplementedError
 
@@ -69,53 +81,72 @@ class Dataset(torch.utils.data.Dataset):
         return 1
 
     def get(self, idx):
+        # 获取数据索引
         r"""Gets the data object at index :obj:`idx`."""
         raise NotImplementedError
 
+    # 初始化
     def __init__(self, root, transform=None, pre_transform=None, pre_filter=None):
         super(Dataset, self).__init__()
 
+        # osp.normpath规范化路径 ，osp.expanduser 把~展开至用户名路径C:\Users\Administrator
         self.root = osp.expanduser(osp.normpath(root))
-        self.raw_dir = osp.join(self.root, "raw")
-        self.processed_dir = osp.join(self.root, "processed")
+        self.raw_dir = osp.join(self.root, "raw") # 链接raw路径
+        self.processed_dir = osp.join(self.root, "processed") # 链接processed路径
+
         self.transform = transform
         self.pre_transform = pre_transform
         self.pre_filter = pre_filter
 
-        self._download()
-        self._process()
+        self._download()  # 下载数据集函数
+        self._process()   # 处理数据集函数
 
+    # 特征维度
     @property
     def num_features(self):
         r"""Returns the number of features per node in the graph."""
+        # hasattr() 函数用于判断对象是否包含对应的属性。isinstance 判断类型是否相同
+
         if hasattr(self, "data") and isinstance(self.data, Graph):
+            # self.data 符合定义的Graph
             return self.data.num_features
         elif hasattr(self, "data") and isinstance(self.data, list):
+            # self.data 是列表形式，则可能是[Graph1, Graph2]
             return self.data[0].num_features
         else:
             return 0
 
+    # 跳过下载的路径
     @property
     def raw_paths(self):
         r"""The filepaths to find in order to skip the download."""
         files = to_list(self.raw_file_names)
         return [osp.join(self.raw_dir, f) for f in files]
 
+    # 跳过处理的路径
     @property
     def processed_paths(self):
         r"""The filepaths to find in the :obj:`self.processed_dir`
         folder in order to skip the processing."""
+        # self.processed_file_names = <class 'list'>: ['data.pt']
         files = to_list(self.processed_file_names)
+        # self.processed_dir = 'data\\Cora\\processed'
         return [osp.join(self.processed_dir, f) for f in files]
+        # 返回data.pt所在位置
 
+    # 下载
     def _download(self):
+        # 如果输入的路径都存在，跳过下载
         if files_exist(self.raw_paths):  # pragma: no cover
             return
-
+        # 创建目录
         makedirs(self.raw_dir)
+        # 执行下载
         self.download()
 
+    # 处理
     def _process(self):
+        # 如果路径都存在，跳过处理
         if files_exist(self.processed_paths):  # pragma: no cover
             return
 
@@ -126,12 +157,15 @@ class Dataset(torch.utils.data.Dataset):
 
         print("Done!")
 
+    # 获取评估器
     def get_evaluator(self):
         return Accuracy()
 
+    # 获取损失
     def get_loss_fn(self):
         return CrossEntropyLoss()
 
+    # 获取数据的索引
     def __getitem__(self, idx):  # pragma: no cover
         r"""Gets the data object at index :obj:`idx` and transforms it (in case
         a :obj:`self.transform` is given)."""
@@ -139,6 +173,7 @@ class Dataset(torch.utils.data.Dataset):
         data = self.data
         data = data if self.transform is None else self.transform(data)
         return data
+
 
     @property
     def num_classes(self):
@@ -169,6 +204,17 @@ class Dataset(torch.utils.data.Dataset):
 
     def __repr__(self):  # pragma: no cover
         return "{}".format(self.__class__.__name__)
+
+
+
+
+
+
+
+
+
+
+
 
 
 class MultiGraphDataset(Dataset):

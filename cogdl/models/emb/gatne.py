@@ -1,8 +1,7 @@
 import numpy as np
 import networkx as nx
 from collections import defaultdict
-from gensim.models.keyedvectors import Vocab  # Retained for now to ease the loading of older models.
-# See: https://radimrehurek.com/gensim/models/keyedvectors.html?highlight=vocab#gensim.models.keyedvectors.CompatVocab
+from gensim.models.keyedvectors import Vocab
 import random
 import math
 import tqdm
@@ -111,12 +110,12 @@ class GATNE(BaseModel):
     def forward(self, network_data):
         device = "cpu" if not torch.cuda.is_available() else "cuda"
         all_walks = generate_walks(network_data, self.walk_num, self.walk_length, schema=self.schema)
-        vocab, index_to_key = generate_vocab(all_walks)
+        vocab, index2word = generate_vocab(all_walks)
         train_pairs = generate_pairs(all_walks, vocab)
 
         edge_types = list(network_data.keys())
 
-        num_nodes = len(index_to_key)
+        num_nodes = len(index2word)
         edge_type_count = len(edge_types)
 
         epochs = self.epochs
@@ -140,7 +139,12 @@ class GATNE(BaseModel):
                     neighbors[i][r] = [i] * neighbor_samples
                 elif len(neighbors[i][r]) < neighbor_samples:
                     neighbors[i][r].extend(
-                        list(np.random.choice(neighbors[i][r], size=neighbor_samples - len(neighbors[i][r]),))
+                        list(
+                            np.random.choice(
+                                neighbors[i][r],
+                                size=neighbor_samples - len(neighbors[i][r]),
+                            )
+                        )
                     )
                 elif len(neighbors[i][r]) > neighbor_samples:
                     neighbors[i][r] = list(np.random.choice(neighbors[i][r], size=neighbor_samples))
@@ -167,7 +171,11 @@ class GATNE(BaseModel):
 
             for i, data in enumerate(data_iter):
                 optimizer.zero_grad()
-                embs = model(data[0].to(device), data[2].to(device), data[3].to(device),)
+                embs = model(
+                    data[0].to(device),
+                    data[2].to(device),
+                    data[3].to(device),
+                )
                 loss = nsloss(data[0].to(device), embs, data[1].to(device))
                 loss.backward()
                 optimizer.step()
@@ -190,7 +198,7 @@ class GATNE(BaseModel):
             node_neigh = torch.tensor([neighbors[i] for _ in range(edge_type_count)]).to(device)
             node_emb = model(train_inputs, train_types, node_neigh)
             for j in range(edge_type_count):
-                final_model[edge_types[j]][index_to_key[i]] = node_emb[j].cpu().detach().numpy()
+                final_model[edge_types[j]][index2word[i]] = node_emb[j].cpu().detach().numpy()
         return final_model
 
 
@@ -222,7 +230,8 @@ class GATNEModel(nn.Module):
         node_embed = self.node_embeddings[train_inputs]
         node_embed_neighbors = self.node_type_embeddings[node_neigh]
         node_embed_tmp = torch.cat(
-            [node_embed_neighbors[:, i, :, i, :].unsqueeze(1) for i in range(self.edge_type_count)], dim=1,
+            [node_embed_neighbors[:, i, :, i, :].unsqueeze(1) for i in range(self.edge_type_count)],
+            dim=1,
         )
         node_type_embed = torch.sum(node_embed_tmp, dim=2)
 
@@ -312,7 +321,13 @@ class RWGraph:
                 else:
                     for schema_iter in schema_list:
                         if schema_iter.split("-")[0] == self.node_type[node]:
-                            walks.append(self.walk(walk_length=walk_length, start=node, schema=schema_iter,))
+                            walks.append(
+                                self.walk(
+                                    walk_length=walk_length,
+                                    start=node,
+                                    schema=schema_iter,
+                                )
+                            )
 
         return walks
 
@@ -350,7 +365,7 @@ def generate_pairs(all_walks, vocab, window_size=5):
 
 
 def generate_vocab(all_walks):
-    index_to_key = []
+    index2word = []
     raw_vocab = defaultdict(int)
 
     for walks in all_walks:
@@ -360,14 +375,14 @@ def generate_vocab(all_walks):
 
     vocab = {}
     for word, v in raw_vocab.items():
-        vocab[word] = Vocab(count=v, index=len(index_to_key))
-        index_to_key.append(word)
+        vocab[word] = Vocab(count=v, index=len(index2word))
+        index2word.append(word)
 
-    index_to_key.sort(key=lambda word: vocab[word].count, reverse=True)
-    for i, word in enumerate(index_to_key):
+    index2word.sort(key=lambda word: vocab[word].count, reverse=True)
+    for i, word in enumerate(index2word):
         vocab[word].index = i
 
-    return vocab, index_to_key
+    return vocab, index2word
 
 
 def get_batches(pairs, neighbors, batch_size):

@@ -65,11 +65,20 @@ class RevGCN(BaseModel):
 
         for i in range(num_layers):
             if i == 0:
-                self.layers.append(GCNLayer(in_feats, hidden_size, residual=True,))
+                self.layers.append(
+                    GCNLayer(
+                        in_feats,
+                        hidden_size,
+                        residual=True,
+                    )
+                )
             elif i == num_layers - 1:
                 self.layers.append(GCNLayer(hidden_size, out_feats, residual=True))
             else:
-                conv = GCNLayer(hidden_size // group, hidden_size // group,)
+                conv = GCNLayer(
+                    hidden_size // group,
+                    hidden_size // group,
+                )
                 res_conv = ResGNNLayer(
                     conv,
                     hidden_size // group,
@@ -252,12 +261,25 @@ class RevGAT(BaseModel):
         self.act = get_activation(activation)
         for i in range(num_layers):
             if i == 0:
-                self.layers.append(GATLayer(in_feats, hidden_size, nhead, alpha, attn_drop, residual=True,))
+                self.layers.append(
+                    GATLayer(
+                        in_feats,
+                        hidden_size,
+                        nhead,
+                        alpha,
+                        attn_drop,
+                        residual=True,
+                    )
+                )
             elif i == num_layers - 1:
                 self.layers.append(GATLayer(hidden_size * nhead, out_feats, 1, alpha, attn_drop, residual=True))
             else:
                 conv = GATLayer(
-                    hidden_size * nhead // group, hidden_size // group, nhead=nhead, alpha=alpha, attn_drop=attn_drop,
+                    hidden_size * nhead // group,
+                    hidden_size // group,
+                    nhead=nhead,
+                    alpha=alpha,
+                    attn_drop=attn_drop,
                 )
                 res_conv = ResGNNLayer(
                     conv,

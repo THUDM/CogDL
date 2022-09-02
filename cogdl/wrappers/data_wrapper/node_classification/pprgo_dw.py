@@ -61,7 +61,9 @@ def setup_dataloader(ppr_dataset, batch_size):
     data_loader = torch.utils.data.DataLoader(
         dataset=ppr_dataset,
         sampler=torch.utils.data.BatchSampler(
-            torch.utils.data.SequentialSampler(ppr_dataset), batch_size=batch_size, drop_last=False,
+            torch.utils.data.SequentialSampler(ppr_dataset),
+            batch_size=batch_size,
+            drop_last=False,
         ),
         batch_size=None,
     )

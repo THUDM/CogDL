@@ -14,19 +14,11 @@ from torch.cuda.amp import GradScaler, autocast
 
 from cogdl.wrappers.data_wrapper.base_data_wrapper import DataWrapper
 from cogdl.wrappers.model_wrapper.base_model_wrapper import ModelWrapper, EmbeddingModelWrapper
-from cogdl.trainer.trainer_utils import (
-    evaluation_comp,
-    load_model,
-    save_model,
-    ddp_end,
-    ddp_after_epoch,
-    Printer,
-)
+from cogdl.trainer.trainer_utils import evaluation_comp, load_model, save_model, ddp_end, ddp_after_epoch, Printer
 from cogdl.trainer.embed_trainer import EmbeddingTrainer
 from cogdl.trainer.controller import DataController
 from cogdl.loggers import build_logger
 from cogdl.data import Graph
-from cogdl.utils.grb_utils import adj_preprocess, updateGraph, adj_to_tensor
 
 
 def move_to_device(batch, device):
@@ -53,6 +45,7 @@ def clip_grad_norm(params, max_norm):
         return torch.sqrt(sum(p.grad.data.norm() ** 2 for p in params if p.grad is not None))
 
 
+# 训练器
 class Trainer(object):
     def __init__(
         self,
@@ -78,14 +71,10 @@ class Trainer(object):
         logger: str = None,
         log_path: str = "./runs",
         project: str = "cogdl-exp",
-        return_model: bool = False,
+        no_test: bool = False,
         actnn: bool = False,
         fp16: bool = False,
         rp_ratio: int = 1,
-        attack=None,
-        attack_mode="injection",
-        do_test: bool = True,
-        do_valid: bool = True,
     ):
         self.epochs = epochs
         self.nstage = nstage
@@ -113,7 +102,7 @@ class Trainer(object):
 
         self.cpu_inference = cpu_inference
 
-        self.return_model = return_model
+        self.no_test = no_test
 
         self.on_train_batch_transform = None
         self.on_eval_batch_transform = None
@@ -137,10 +126,6 @@ class Trainer(object):
         self.eval_data_back_to_cpu = False
 
         self.fp16 = fp16
-        self.attack = attack
-        self.attack_mode = attack_mode
-        self.do_test = do_test
-        self.do_valid = do_valid
 
         if actnn:
             try:
@@ -193,6 +178,7 @@ class Trainer(object):
         model_w.default_loss_fn = dataset_w.get_default_loss_fn()
         model_w.default_evaluator = dataset_w.get_default_evaluator()
         model_w.set_evaluation_metric()
+        print(self.resume_training,"====================")
 
         if self.resume_training:
             model_w = load_model(model_w, self.checkpoint_path).to(self.devices[0])
@@ -204,7 +190,7 @@ class Trainer(object):
             self.train(self.devices[0], model_w, dataset_w)
         best_model_w = load_model(model_w, self.checkpoint_path).to(self.devices[0])
 
-        if self.return_model:
+        if self.no_test:
             return best_model_w.model
 
         final_test = self.evaluate(best_model_w, dataset_w)
@@ -223,14 +209,8 @@ class Trainer(object):
         # disable `distributed` to inference once only
         self.distributed_training = False
         dataset_w.prepare_test_data()
-        if self.do_valid:
-            final_val = self.validate(model_w, dataset_w, self.devices[0])
-        else:
-            final_val = {}
-        if self.do_test:
-            final_test = self.test(model_w, dataset_w, self.devices[0])
-        else:
-            final_test = {}
+        final_val = self.validate(model_w, dataset_w, self.devices[0])
+        final_test = self.test(model_w, dataset_w, self.devices[0])
 
         if final_val is not None and "val_metric" in final_val:
             final_val[f"val_{self.evaluation_metric}"] = final_val["val_metric"]
@@ -323,7 +303,6 @@ class Trainer(object):
         self.evaluation_metric = model_w.evaluation_metric
 
         best_model_w = None
-
         scaler = GradScaler() if self.fp16 else None
 
         patience = 0
@@ -343,11 +322,6 @@ class Trainer(object):
 
             self.logger.start()
             print_str_dict = dict()
-            if self.attack is not None:
-                graph = dataset_w.dataset.data
-                graph_backup = copy.deepcopy(graph)
-                graph0 = copy.deepcopy(graph)
-                num_train = torch.sum(graph.train_mask).item()
             for epoch in epoch_iter:
                 for hook in self.pre_epoch_hooks:
                     hook(self)
@@ -360,45 +334,27 @@ class Trainer(object):
                     train_dataset.shuffle()
                 training_loss = self.train_step(model_w, train_loader, optimizers, lr_schedulers, rank, scaler)
 
-                if self.attack is not None:
-                    if self.attack_mode == "injection":
-                        graph0.test_mask = graph0.train_mask
-                    else:
-                        graph0.test_mask[torch.where(graph0.train_mask)[0].multinomial(int(num_train * 0.01))] = True
-                    graph_attack = self.attack.attack(model=model_w.model, graph=graph0, adj_norm_func=None)  # todo
-                    adj_attack = graph_attack.to_scipy_csr()
-                    features_attack = graph_attack.x
-                    adj_train = adj_preprocess(adj=adj_attack, adj_norm_func=None, device=rank)  # todo
-                    n_inject = graph_attack.num_nodes - graph.num_nodes
-                    updateGraph(graph, adj_train, features_attack)
-                    graph.edge_weight = torch.ones(graph.num_edges, device=rank)
-                    graph.train_mask = torch.cat((graph.train_mask, torch.zeros(n_inject, dtype=bool, device=rank)), 0)
-                    graph.val_mask = torch.cat((graph.val_mask, torch.zeros(n_inject, dtype=bool, device=rank)), 0)
-                    graph.test_mask = torch.cat((graph.test_mask, torch.zeros(n_inject, dtype=bool, device=rank)), 0)
-                    graph.y = torch.cat((graph.y, torch.zeros(n_inject, device=rank)), 0)
-                    graph.grb_adj = adj_to_tensor(adj_train).to(rank)
                 print_str_dict["Epoch"] = epoch
                 print_str_dict["train_loss"] = training_loss
 
                 val_loader = dataset_w.on_val_wrapper()
-                if self.do_valid is True:
-                    if val_loader is not None and epoch % self.eval_step == 0:
-                        # inductive setting ..
-                        dataset_w.eval()
-                        # do validation in inference device
-                        val_result = self.validate(model_w, dataset_w, rank)
-                        if val_result is not None:
-                            monitoring = val_result[self.monitor]
-                            if compare_fn(monitoring, best_index):
-                                best_index = monitoring
-                                best_epoch = epoch
-                                patience = 0
-                                best_model_w = copy.deepcopy(model_w)
-                            else:
-                                patience += 1
-                                if self.early_stopping and patience >= self.patience:
-                                    break
-                            print_str_dict[f"val_{self.evaluation_metric}"] = monitoring
+                if val_loader is not None and epoch % self.eval_step == 0:
+                    # inductive setting ..
+                    dataset_w.eval()
+                    # do validation in inference device
+                    val_result = self.validate(model_w, dataset_w, rank)
+                    if val_result is not None:
+                        monitoring = val_result[self.monitor]
+                        if compare_fn(monitoring, best_index):
+                            best_index = monitoring
+                            best_epoch = epoch
+                            patience = 0
+                            best_model_w = copy.deepcopy(model_w)
+                        else:
+                            patience += 1
+                            if self.early_stopping and patience >= self.patience:
+                                break
+                        print_str_dict[f"val_{self.evaluation_metric}"] = monitoring
 
                 if self.distributed_training:
                     if rank == 0:
@@ -418,8 +374,6 @@ class Trainer(object):
 
             if best_model_w is None:
                 best_model_w = copy.deepcopy(model_w)
-            if self.attack is not None:
-                dataset_w.dataset.data = graph_backup
 
         if self.distributed_training:
             if rank == 0:

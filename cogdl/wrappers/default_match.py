@@ -79,12 +79,11 @@ def set_default_wrapper_config():
         "pte",
         "hin2vec",
     ]
-    triple_link_prediction_models=["transe","distmult", "rotate", "complex"]
-    triple_link_prediction_wrappers=dict()
-    for item in triple_link_prediction_models:
-        triple_link_prediction_wrappers[item] = {"mw": "triple_link_prediction_mw", "dw": "triple_link_prediction_dw"}
 
-
+    # Xiangsheng: start
+    traffic_prediction_models = ["stgcn"]
+    # end
+    
     node_classification_wrappers = dict()
     for item in node_classification_models:
         node_classification_wrappers[item] = {"mw": "node_classification_mw", "dw": "node_classification_dw"}
@@ -102,7 +101,6 @@ def set_default_wrapper_config():
 
     node_classification_wrappers["m3s"]["dw"] = "m3s_dw"
     node_classification_wrappers["graphsage"]["dw"] = "graphsage_dw"
-    node_classification_wrappers["unsup_graphsage"]["dw"] = "unsup_graphsage_dw"
     node_classification_wrappers["pprgo"]["dw"] = "pprgo_dw"
     node_classification_wrappers["sagn"]["dw"] = "sagn_dw"
 
@@ -140,8 +138,18 @@ def set_default_wrapper_config():
     for item in heterogeneous_emb_models:
         heterogeneous_emb_wrappers[item] = {"dw": "heterogeneous_embedding_dw", "mw": "heterogeneous_embedding_mw"}
 
+    
+    # Xiangsheng: start
+        traffic_prediction_wrappers = dict()
+    for item in traffic_prediction_models:
+        traffic_prediction_wrappers[item] = {"dw": "traffic_prediction_dw", "mw": "traffic_prediction_mw"}
+    traffic_prediction_wrappers["stgat"] = {"dw": "stgat_dw", "mw": "stgat_mw"}
+    # end
+    
+    
     other_wrappers = dict()
     other_wrappers["gatne"] = {"mw": "multiplex_embedding_mw", "dw": "multiplex_embedding_dw"}
+
 
     merged = dict()
     merged.update(node_classification_wrappers)
@@ -152,8 +160,8 @@ def set_default_wrapper_config():
     merged.update(graph_kg_link_prediction_wrappers)
     merged.update(heterogeneous_gnn_wrappers)
     merged.update(heterogeneous_emb_wrappers)
+    merged.update(traffic_prediction_wrappers)
     merged.update(other_wrappers)
-    merged.update(triple_link_prediction_wrappers)
     return merged
 
 

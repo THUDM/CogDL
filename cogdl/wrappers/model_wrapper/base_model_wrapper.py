@@ -2,7 +2,7 @@ from typing import Union, Callable
 from abc import abstractmethod
 import torch
 from cogdl.wrappers.tools.wrapper_utils import merge_batch_indexes
-from cogdl.utils.evaluator import setup_evaluator, Accuracy, MultiLabelMicroF1
+from cogdl.utils.evaluator import setup_evaluator, Accuracy, MultiLabelMicroF1, MAE
 
 
 class ModelWrapper(torch.nn.Module):
@@ -37,6 +37,9 @@ class ModelWrapper(torch.nn.Module):
     def test_step(self, subgraph):
         pass
 
+    def predict_step(self, subgraph):
+        pass
+
     def evaluate(self, pred: torch.Tensor, labels: torch.Tensor, metric: Union[str, Callable] = "auto"):
         """
         method: str or callable function,
@@ -51,6 +54,7 @@ class ModelWrapper(torch.nn.Module):
                 else:
                     metric = "accuracy"
                     self._evaluator_metric = "acc"
+
 
             self._evaluator = setup_evaluator(metric)
             # self._evaluator_metric = metric
@@ -153,6 +157,8 @@ class ModelWrapper(torch.nn.Module):
             self._evaluator_metric = "micro_f1"
         elif isinstance(self._evaluator, Accuracy):
             self._evaluator_metric = "acc"
+        elif isinstance(self._evaluator, MAE):
+            self._evaluator_metric = "mae"
         else:
             evaluation_metric = self.set_early_stopping()
             if not isinstance(evaluation_metric, str):

@@ -71,7 +71,9 @@ class GCCModelWrapper(ModelWrapper):
         assert feat_q.shape == (graph_q.batch_size, self.output_size)
         moment_update(self.model, self.model_ema, self.momentum)
 
-        loss = self.criterion(out,)
+        loss = self.criterion(
+            out,
+        )
         return loss
 
     def train_step_finetune(self, batch):

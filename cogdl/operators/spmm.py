@@ -33,7 +33,10 @@ except Exception:
 
 try:
     spmm_cpu = load(
-        name="spmm_cpu", extra_cflags=["-fopenmp"], sources=[os.path.join(path, "spmm/spmm_cpu.cpp")], verbose=False,
+        name="spmm_cpu",
+        extra_cflags=["-fopenmp"],
+        sources=[os.path.join(path, "spmm/spmm_cpu.cpp")],
+        verbose=False,
     )
     spmm_cpu = spmm_cpu.csr_spmm_cpu
 except Exception:

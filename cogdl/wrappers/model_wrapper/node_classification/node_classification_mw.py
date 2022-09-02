@@ -8,12 +8,14 @@ class NodeClfModelWrapper(ModelWrapper):
         self.optimizer_cfg = optimizer_cfg
         self.model = model
 
+
     def train_step(self, subgraph):
         graph = subgraph
         pred = self.model(graph)
         train_mask = graph.train_mask
         loss = self.default_loss_fn(pred[train_mask], graph.y[train_mask])
         return loss
+
 
     def val_step(self, subgraph):
         graph = subgraph
@@ -34,6 +36,7 @@ class NodeClfModelWrapper(ModelWrapper):
         loss = self.default_loss_fn(pred[test_mask], batch.y[test_mask])
 
         metric = self.evaluate(pred[test_mask], batch.y[test_mask], metric="auto")
+
         self.note("test_loss", loss.item())
         self.note("test_metric", metric)
 

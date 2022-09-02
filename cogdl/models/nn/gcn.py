@@ -43,7 +43,15 @@ class GCN(BaseModel):
         )
 
     def __init__(
-        self, in_feats, hidden_size, out_feats, num_layers, dropout, activation="relu", residual=False, norm=None,
+        self,
+        in_feats,
+        hidden_size,
+        out_feats,
+        num_layers,
+        dropout,
+        activation="relu",
+        residual=False,
+        norm=None,
     ):
         super(GCN, self).__init__()
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]

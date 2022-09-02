@@ -20,34 +20,41 @@ class UnsupGraphSAGEModelWrapper(UnsupervisedModelWrapper):
         self.optimizer_cfg = optimizer_cfg
         self.walk_length = walk_length
         self.num_negative_samples = negative_samples
-
+        self.random_walker = RandomWalker()
 
     def train_step(self, batch):
-        x_src, adjs = batch
-        out = self.model(x_src,adjs)  
-        out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
+        data = batch
+        x = self.model(data)
+        device = x.device
 
-        pos_loss = torch.log(torch.sigmoid((out * pos_out).sum(-1)).mean())
-        neg_loss = torch.log(torch.sigmoid(-(out * neg_out).sum(-1)).mean())
-        loss = -pos_loss - neg_loss
-        return loss
+        self.random_walker.build_up(data.edge_index, data.x.shape[0])
+        walk_res = self.random_walker.walk(
+            start=torch.arange(0, x.shape[0]).to(device), walk_length=self.walk_length + 1
+        )
+        self.walk_res = torch.as_tensor(walk_res)[:, 1:]
 
+        self.num_nodes = max(data.edge_index[0].max(), data.edge_index[1].max()).item() + 1
 
-    def test_step(self, batch):
-        dataset, test_loader = batch
-        graph = dataset.data
-        if hasattr(self.model, "inference"):
-            pred = self.model.inference(graph.x, test_loader)
-        else:
+        self.negative_samples = torch.from_numpy(
+            np.random.choice(self.num_nodes, (self.num_nodes, self.num_negative_samples))
+        ).to(device)
+
+        pos_loss = -torch.log(
+            torch.sigmoid(torch.sum(x.unsqueeze(1).repeat(1, self.walk_length, 1) * x[self.walk_res], dim=-1))
+        ).mean()
+        neg_loss = -torch.log(
+            torch.sigmoid(
+                -torch.sum(x.unsqueeze(1).repeat(1, self.num_negative_samples, 1) * x[self.negative_samples], dim=-1)
+            )
+        ).mean()
+        return (pos_loss + neg_loss) / 2
+
+    def test_step(self, graph):
+        with torch.no_grad():
             pred = self.model(graph)
-        pred= pred.split(pred.size(0) // 3, dim=0)[0]
-        pred = pred[graph.test_mask]
-        y = graph.y[graph.test_mask]
-
-        metric = self.evaluate(pred, y, metric="auto")
-        self.note("test_loss", self.default_loss_fn(pred, y))
-        self.note("test_metric", metric)
-
+        y = graph.y
+        result = evaluate_node_embeddings_using_logreg(pred, y, graph.train_mask, graph.test_mask)
+        self.note("test_acc", result)
 
     def setup_optimizer(self):
         cfg = self.optimizer_cfg

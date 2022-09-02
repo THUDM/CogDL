@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+
 from .. import DataWrapper
 
 
@@ -20,9 +21,10 @@ class GNNLinkPredictionDataWrapper(DataWrapper):
     def pre_transform(self):
         data = self.dataset.data
         num_nodes = data.x.shape[0]
-        ((train_edges, val_edges, test_edges), (val_false_edges, test_false_edges),) = self.train_test_edge_split(
-            data.edge_index, num_nodes
-        )
+        (
+            (train_edges, val_edges, test_edges),
+            (val_false_edges, test_false_edges),
+        ) = self.train_test_edge_split(data.edge_index, num_nodes)
         data.train_edges = train_edges
         data.val_edges = val_edges
         data.test_edges = test_edges

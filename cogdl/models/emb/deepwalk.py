@@ -40,7 +40,14 @@ class DeepWalk(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args) -> "DeepWalk":
-        return cls(args.hidden_size, args.walk_length, args.walk_num, args.window_size, args.worker, args.iteration,)
+        return cls(
+            args.hidden_size,
+            args.walk_length,
+            args.walk_num,
+            args.window_size,
+            args.worker,
+            args.iteration,
+        )
 
     def __init__(self, dimension, walk_length, walk_num, window_size, worker, iteration):
         super(DeepWalk, self).__init__()
@@ -59,12 +66,12 @@ class DeepWalk(BaseModel):
         print("training word2vec...")
         model = embedding_model_creator(
             walks,
-            vector_size=self.dimension,
+            size=self.dimension,
             window=self.window_size,
             min_count=0,
             sg=1,
             workers=self.worker,
-            epochs=self.iteration,
+            iter=self.iteration,
         )
         id2node = dict([(vid, node) for vid, node in enumerate(nx_g.nodes())])
         embeddings = np.asarray([model.wv[str(id2node[i])] for i in range(len(id2node))])

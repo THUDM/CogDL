@@ -6,13 +6,14 @@ import random
 import shutil
 from collections import defaultdict
 from urllib import request
+import requests
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from tabulate import tabulate
-
+from tqdm import tqdm
 from .graph_utils import coo2csr_index
 
 
@@ -34,6 +35,7 @@ def update_args_from_dict(args, dic):
     return args
 
 
+# 设置随机种子
 def set_random_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -79,7 +81,10 @@ def download_url(url, folder, name=None, log=True):
     makedirs(folder)
 
     try:
-        data = request.urlopen(url)
+        # data = request.urlopen(url)
+
+        data = requests.get(url, stream=True)
+        total = int(data.headers.get('content-length', 0))
     except Exception as e:
         print(e)
         print("Failed to download the dataset.")
@@ -92,8 +97,10 @@ def download_url(url, folder, name=None, log=True):
         filename = name
     path = osp.join(folder, filename)
 
-    with open(path, "wb") as f:
-        f.write(data.read())
+    with open(path, "wb") as f, tqdm(desc=path,total=total,unit='iB',unit_scale=True,unit_divisor=1024) as bar:
+        for da in data.iter_content(chunk_size=1024):
+            size = f.write(da)
+            bar.update(size)
 
     return path
 
@@ -234,7 +241,10 @@ def tabulate_results(results_dict):
             + list(
                 itertools.starmap(
                     lambda x, y: f"{x:.4f}±{y:.4f}",
-                    zip(np.mean(results, axis=0).tolist(), np.std(results, axis=0).tolist(),),
+                    zip(
+                        np.mean(results, axis=0).tolist(),
+                        np.std(results, axis=0).tolist(),
+                    ),
                 )
             )
         )

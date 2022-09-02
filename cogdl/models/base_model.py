@@ -2,6 +2,8 @@ from typing import Optional, Type, Any
 import torch.nn as nn
 
 
+
+#  一些基础模型
 class BaseModel(nn.Module):
     @staticmethod
     def add_args(parser):

@@ -17,6 +17,8 @@ def setup_evaluator(metric: Union[str, Callable]):
             return MultiLabelMicroF1()
         elif metric == "multiclass_microf1":
             return MultiClassMicroF1()
+        elif metric == "mae":
+            return MAE()
         else:
             raise NotImplementedError
     else:
@@ -46,6 +48,29 @@ class BaseEvaluator(object):
             self.clear()
             return self.eval_func(y_pred, y_true)
         return 0
+
+
+class MAE(object):
+    def __init__(self):
+        super(MAE, self).__init__()
+        self.MAE = list()
+
+    def __call__(self, y_pred, y_true):
+
+        d = np.abs(y_true - y_pred)
+        mae = d.tolist()
+        MAE = np.array(mae).mean()
+        self.MAE.append(MAE)
+        return MAE
+
+    def evaluate(self):
+        if len(self.MAE) > 0:
+            return np.sum(self.MAE) / len(self.MAE)
+        warnings.warn("pre-computing list is empty")
+        return 0
+
+    def clear(self):
+        self.MAE = list()
 
 
 class Accuracy(object):

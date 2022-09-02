@@ -38,31 +38,56 @@ def try_adding_dataset_args(dataset, parser):
             dataset_class.add_args(parser)
 
 
+# 根据 数据集名称 构建数据集
 def build_dataset_from_name(dataset, split=0):
     if isinstance(dataset, list):
         dataset = dataset[0]
     if isinstance(split, list):
         split = split[0]
+
+
+
+    """     构建数据集核心代码     """
+
+    # 如果仓库支持数据集
     if dataset in SUPPORTED_DATASETS:
-        path = ".".join(SUPPORTED_DATASETS[dataset].split(".")[:-1])
+        "SUPPORTED_DATASETS['cora'] = cogdl.datasets.planetoid_data.CoraDataset"
+        # 先用 . 切分， 在用 . 链接
+        path = ".".join(SUPPORTED_DATASETS[dataset].split(".")[:-1]) # cogdl.datasets.planetoid_data
+
+
+        # 想通过动态的 字符串名称 引入 模块 module
         module = importlib.import_module(path)
+        # <module 'cogdl.datasets.planetoid_data' from 'F:\\CogDL\\cogdl-master\\cogdl\\datasets\\planetoid_data.py'>
+
+
+    # 如果仓库不支持数据集，则从一些已有路径进行构建
     else:
         dataset = build_dataset_from_path(dataset)
         if dataset is not None:
             return dataset
         raise NotImplementedError(f"Failed to import {dataset} dataset.")
-    class_name = SUPPORTED_DATASETS[dataset].split(".")[-1]
-    dataset_class = getattr(module, class_name)
+
+
+    # 以下是基于 仓库存在数据集 实现的
+    class_name = SUPPORTED_DATASETS[dataset].split(".")[-1] # CoraDataset
+    # getattr() 函数用于返回一个对象属性值。可动态
+    dataset_class = getattr(module, class_name) # cogdl.datasets.planetoid_data.CoraDataset
     for key in inspect.signature(dataset_class.__init__).parameters.keys():
         if key == "split":
             return dataset_class(split=split)
 
+    # 返回一个类的实例化，类的属性中有data
     return dataset_class()
+
+
 
 
 def build_dataset(args):
     if not hasattr(args, "split"):
         args.split = 0
+
+
     dataset = build_dataset_from_name(args.dataset, args.split)
 
     if hasattr(dataset, "num_classes") and dataset.num_classes > 0:
@@ -70,10 +95,20 @@ def build_dataset(args):
     if hasattr(dataset, "num_features") and dataset.num_features > 0:
         args.num_features = dataset.num_features
 
+    # 由类的实例化更新一些参数
+
+    # print("======================================================================")
+    # print(args.dataset)
+    # print(args)
+    # print("======================================================================")
+
+    # 返回类的实例化
     return dataset
 
 
+
 def build_dataset_from_path(data_path, dataset=None):
+    print(data_path,"==================")
     if dataset is not None and dataset in SUPPORTED_DATASETS:
         path = ".".join(SUPPORTED_DATASETS[dataset].split(".")[:-1])
         module = importlib.import_module(path)
@@ -85,6 +120,7 @@ def build_dataset_from_path(data_path, dataset=None):
         elif "root" in keys:
             dataset = dataset_class(root=data_path)
         return dataset
+
 
     if dataset is None:
         try:
@@ -109,10 +145,6 @@ SUPPORTED_DATASETS = {
     "ogbg-molpcba": "cogdl.datasets.ogb.OGBMolpcbaDataset",
     "ogbg-ppa": "cogdl.datasets.ogb.OGBPpaDataset",
     "ogbg-code": "cogdl.datasets.ogb.OGBCodeDataset",
-    "ogbl-ppa": "cogdl.datasets.ogb.OGBLPpaDataset",
-    "ogbl-ddi": "cogdl.datasets.ogb.OGBLDdiDataset",
-    "ogbl-collab": "cogdl.datasets.ogb.OGBLCollabDataset",
-    "ogbl-citation2": "cogdl.datasets.ogb.OGBLCitation2Dataset",
     "amazon": "cogdl.datasets.gatne.AmazonDataset",
     "twitter": "cogdl.datasets.gatne.TwitterDataset",
     "youtube": "cogdl.datasets.gatne.YouTubeDataset",
@@ -186,9 +218,7 @@ SUPPORTED_DATASETS = {
     "Aids": "cogdl.datasets.rd2cd_data.Aids",
     "Nba": "cogdl.datasets.rd2cd_data.Nba",
     "Pokec_z": "cogdl.datasets.rd2cd_data.Pokec_z",
-    "grb-cora": "cogdl.datasets.grb_data.Cora_GRBDataset",
-    "grb-citeseer": "cogdl.datasets.grb_data.Citeseer_GRBDataset",
-    "grb-reddit": "cogdl.datasets.grb_data.Reddit_GRBDataset",
-    "grb-aminer": "cogdl.datasets.grb_data.Aminer_GRBDataset",
-    "grb-flickr": "cogdl.datasets.grb_data.Flickr_GRBDataset",
+    "pems-stgcn": f"cogdl.datasets.stgcn_data.PeMS_Dataset",
+    "pems-stgat": "cogdl.datasets.stgat_data.PeMS_Dataset",
+
 }

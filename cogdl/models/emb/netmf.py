@@ -108,7 +108,9 @@ class NetMF(BaseModel):
             evals[i] = 1.0 if x >= 1 else x * (1 - x ** window) / (1 - x) / window
         evals = np.maximum(evals, 0)
         print(
-            "After filtering, max eigenvalue=%f, min eigenvalue=%f", np.max(evals), np.min(evals),
+            "After filtering, max eigenvalue=%f, min eigenvalue=%f",
+            np.max(evals),
+            np.min(evals),
         )
         return evals
 

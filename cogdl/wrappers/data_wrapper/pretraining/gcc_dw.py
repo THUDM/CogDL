@@ -249,7 +249,12 @@ class NodeClassificationDatasetLabeled(NodeClassificationDataset):
         step_dist=[1.0, 0.0, 0.0],
     ):
         super(NodeClassificationDatasetLabeled, self).__init__(
-            data, rw_hops, subgraph_size, restart_prob, positional_embedding_size, step_dist,
+            data,
+            rw_hops,
+            subgraph_size,
+            restart_prob,
+            positional_embedding_size,
+            step_dist,
         )
         assert len(self.graphs) == 1
         self.num_classes = self.data.num_classes
@@ -268,7 +273,10 @@ class NodeClassificationDatasetLabeled(NodeClassificationDataset):
         traces = g.random_walk_with_restart([node_idx], self.rw_hops, self.restart_prob)
 
         graph_q = _rwr_trace_to_cogdl_graph(
-            g=g, seed=node_idx, trace=torch.Tensor(traces[0]), positional_embedding_size=self.positional_embedding_size,
+            g=g,
+            seed=node_idx,
+            trace=torch.Tensor(traces[0]),
+            positional_embedding_size=self.positional_embedding_size,
         )
         graph_q.y = self.data.y[idx].y
         return graph_q

@@ -1,5 +1,6 @@
 import os.path as osp
 import pickle
+import scipy.sparse as sp
 
 import numpy as np
 import torch
@@ -41,6 +42,7 @@ class GTNDataset(Dataset):
 
     def read_gtn_data(self, folder):
         edges = pickle.load(open(osp.join(folder, "edges.pkl"), "rb"))
+        print(edges,"==============")
         labels = pickle.load(open(osp.join(folder, "labels.pkl"), "rb"))
         node_features = pickle.load(open(osp.join(folder, "node_features.pkl"), "rb"))
 
@@ -147,3 +149,5 @@ class IMDB_GTNDataset(GTNDataset):
         dataset = "gtn-imdb"
         path = osp.join(data_path, dataset)
         super(IMDB_GTNDataset, self).__init__(path, dataset)
+
+

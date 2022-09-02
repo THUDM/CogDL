@@ -20,6 +20,7 @@ from cogdl.operators.sample import sample_adj_c, subgraph_c
 subgraph_c = None  # noqa: F811
 
 
+
 class BaseGraph(object):
     def __init__(self):
         pass
@@ -30,37 +31,48 @@ class BaseGraph(object):
     def train(self):
         pass
 
+    # 如果给类定义了__getitem__方法，则当按照键取值时，可以直接返回__getitem__方法执行的结果。
     def __getitem__(self, key):
         r"""Gets the data of the attribute :obj:`key`."""
+        # 可以用getattr(alex,“height”)来取出身高的值，而 height 由用户输入决定
         return getattr(self, key)
 
+    # __setitem__(self,key,value)：该方法应该按一定的方式存储和key相关的value。在设置类实例属性时自动调用的。
     def __setitem__(self, key, value):
         """Sets the attribute :obj:`key` to :obj:`value`."""
+        # 由用户输入
         setattr(self, key, value)
 
     @property
     def keys(self):
+        # 返回所有的图属性
         r"""Returns all names of graph attributes."""
         keys = [key for key in self.__dict__.keys() if self[key] is not None]
         keys = [key for key in keys if key[:2] != "__" and key[-2:] != "__"]
         return keys
 
     def __len__(self):
+        # 返回元素个数
         r"""Returns the number of all present attributes."""
         # return len(self.keys)
         return 1
 
+    # 判断键是否存在于字典中，如果键在字典dict里返回true，否则返回false
     def __contains__(self, key):
+        # 返回布尔值 key 是否在 keys中
         r"""Returns :obj:`True`, if the attribute :obj:`key` is present in the
         data."""
         return key in self.keys
 
+    # 迭代器
     def __iter__(self):
+        # 获取所有属性所在的目录
         r"""Iterates over all present attributes in the data, yielding their
         attribute names and content."""
         for key in sorted(self.keys):
             yield key, self[key]
 
+    # say() ，say.__call__() 两者等价
     def __call__(self, *keys):
         r"""Iterates over all attributes :obj:`*keys` in the data, yielding
         their attribute names and content.
@@ -70,6 +82,7 @@ class BaseGraph(object):
             if self[key] is not None:
                 yield key, self[key]
 
+    # ？？？？？？？？？？？？？？
     def cat_dim(self, key, value):
         r"""Returns the dimension in which the attribute :obj:`key` with
         content :obj:`value` gets concatenated when creating batches.
@@ -131,12 +144,13 @@ class BaseGraph(object):
         return self.apply(lambda x: x.cuda(), *keys)
 
 
+# 邻接矩阵
 class Adjacency(BaseGraph):
     def __init__(self, row=None, col=None, row_ptr=None, weight=None, attr=None, num_nodes=None, types=None, **kwargs):
         super(Adjacency, self).__init__()
-        self.row = row
-        self.col = col
-        self.row_ptr = row_ptr
+        self.row = row # 行
+        self.col = col # 列
+        self.row_ptr = row_ptr # ？？、
         self.weight = weight
         self.attr = attr
         self.types = types
@@ -191,6 +205,7 @@ class Adjacency(BaseGraph):
         self.col = self.col[reindex]
 
     def padding_self_loops(self):
+        #  填充自环
         device = self.row.device
         row, col = torch.arange(self.num_nodes, device=device), torch.arange(self.num_nodes, device=device)
         self.row = torch.cat((self.row, row))
@@ -207,6 +222,7 @@ class Adjacency(BaseGraph):
         self.col = self.col[reindex]
 
     def remove_self_loops(self):
+        # 移除自环
         mask = self.row == self.col
         inv_mask = ~mask
         self.row = self.row[inv_mask]
@@ -258,6 +274,7 @@ class Adjacency(BaseGraph):
         self.__normed__ = norm
 
     def normalize_adj(self, norm="sym"):
+        # 归一化领接矩阵
         if self.__normed__:
             return
         if self.weight is None or self.weight.shape[0] != self.col.shape[0]:
@@ -451,6 +468,7 @@ class Adjacency(BaseGraph):
         return data
 
 
+# edge_attr > time
 KEY_MAP = {"edge_weight": "weight", "edge_attr": "attr", "edge_types": "types"}
 EDGE_INDEX = "edge_index"
 EDGE_WEIGHT = "edge_weight"
@@ -471,21 +489,20 @@ def is_read_adj_key(key):
     return sum([x in key for x in [EDGE_INDEX, EDGE_WEIGHT, EDGE_ATTR]]) > 0 or is_adj_key(key)
 
 
+
+# 构件图
 class Graph(BaseGraph):
     def __init__(self, x=None, y=None, **kwargs):
         super(Graph, self).__init__()
         if x is not None:
             if not torch.is_tensor(x):
                 raise ValueError("Node features must be Tensor")
-        self.x = x
-        self.y = y
-        self.grb_adj = None
+        self.x = x # 特征矩阵
+        self.y = y # 标签矩阵
 
         for key, item in kwargs.items():
             if key == "num_nodes":
-                self.__num_nodes__ = item
-            elif key == "grb_adj":
-                self.grb_adj = item
+                self.__num_nodes__ = item # 节点总数
             elif not is_read_adj_key(key):
                 self[key] = item
 
@@ -544,7 +561,7 @@ class Graph(BaseGraph):
             self._adj_train.remove_self_loops()
 
     def row_norm(self):
-        self._adj.row_norm()
+        self._adj.row_norm() # 行归一
 
     def col_norm(self):
         self._adj.col_norm()
@@ -937,9 +954,6 @@ class Graph(BaseGraph):
 
     def nodes(self):
         return torch.arange(self.num_nodes)
-
-    def set_grb_adj(self, adj):
-        self.grb_adj = adj
 
     # @property
     # def requires_grad(self):

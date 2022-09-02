@@ -31,6 +31,7 @@ def read_gatne_data(folder):
                 test_data[items[0]] = [[], []]
             test_data[items[0]][1 - int(items[3])].append([int(items[1]), int(items[2])])
 
+    # 也是将数据保存为 Graph 类文件， 格式为 data.pt
     data = Graph()
     data.train_data = train_data
     data.valid_data = valid_data

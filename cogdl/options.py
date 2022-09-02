@@ -10,11 +10,11 @@ from cogdl.utils import build_args_from_dict
 from cogdl.wrappers.default_match import get_wrappers_name
 
 
+# 基本参数
 def get_parser():
     parser = argparse.ArgumentParser(conflict_handler="resolve")
     # fmt: off
-    parser.add_argument("--seed", default=[1], type=int, nargs="+", metavar="N",
-                        help="pseudo random number generator seed")
+    parser.add_argument("--seed", default=[1], type=int, nargs="+", metavar="N",help="pseudo random number generator seed")
     parser.add_argument("--epochs", default=500, type=int)
     parser.add_argument("--max-epoch", default=None, type=int)
     parser.add_argument("--patience", type=int, default=100)
@@ -46,13 +46,11 @@ def get_parser():
     parser.add_argument("--master-port", type=int, default=13425)
     parser.add_argument("--master-addr", type=str, default="localhost")
 
-    parser.add_argument("--return_model", action="store_true")
+    parser.add_argument("--no-test", action="store_true")
 
     parser.add_argument("--actnn", action="store_true")
     parser.add_argument("--fp16", action="store_true")
     parser.add_argument("--rp-ratio", type=int, default=1)
-    parser.add_argument("--do_test", default=True)
-    parser.add_argument("--do_valid", default=True)
     # fmt: on
     return parser
 
@@ -75,6 +73,7 @@ def add_model_wrapper_args(parser):
     return group
 
 
+# 添加参数
 def add_dataset_args(parser):
     group = parser.add_argument_group("Dataset and data loading")
     # fmt: off
@@ -122,6 +121,7 @@ def get_default_args(dataset, model, **kwargs):
         dataset = [dataset]
     if not isinstance(model, list):
         model = [model]
+    # sys.argv = ['F:/CogDL/cogdl-master/examples/STGCN_example.py', '-m', 'gcn', '-dt', 'cora']
     sys.argv = [sys.argv[0], "-m"] + model + ["-dt"] + dataset
     if "mw" in kwargs and kwargs["mw"] is not None:
         sys.argv += ["--mw"] + [kwargs["mw"]]
@@ -129,8 +129,10 @@ def get_default_args(dataset, model, **kwargs):
         sys.argv += ["--dw"] + [kwargs["dw"]]
 
     # The parser doesn"t know about specific args, so we parse twice.
+    # 训练参数
     parser = get_training_parser()
     args, _ = parser.parse_known_args()
+    # 基本参数
     args = parse_args_and_arch(parser, args)
     for key, value in kwargs.items():
         args.__setattr__(key, value)
@@ -156,6 +158,7 @@ def parse_args_and_arch(parser, args):
     if len(args.model) > 1:
         warnings.warn("Please ensure that models could use the same model wrapper!")
     default_wrappers = get_wrappers_name(args.model[0])
+    # 获取任务名称
     if default_wrappers is not None:
         mw, dw = default_wrappers
     else:
@@ -164,16 +167,17 @@ def parse_args_and_arch(parser, args):
     if args.dw is not None:
         dw = args.dw
     if dw is None:
-        # warnings.warn("Using default data wrapper ('node_classification_dw') for training!")
-        dw = "node_classification_dw"
+        warnings.warn("Using default data wrapper ('node_classification_dw') for training!")
+        #dw = "node_classification_dw"
+    # 根据具体任务和模型添加参数
     if hasattr(fetch_data_wrapper(dw), "add_args"):
         fetch_data_wrapper(dw).add_args(parser)
 
     if args.mw is not None:
         mw = args.mw
     if mw is None:
-        # warnings.warn("Using default model wrapper ('node_classification_mw') for training!")
-        mw = "node_classification_mw"
+        warnings.warn("Using default model wrapper ('node_classification_mw') for training!")
+        #mw = "node_classification_mw"
     if hasattr(fetch_model_wrapper(mw), "add_args"):
         fetch_model_wrapper(mw).add_args(parser)
 

@@ -5,6 +5,7 @@ path = os.path.join(os.path.dirname(__file__))
 
 # subgraph and sample_adj
 try:
+    renxs
     sample = load(name="sampler", sources=[os.path.join(path, "sample/sample.cpp")], verbose=False)
     subgraph_c = sample.subgraph
     sample_adj_c = sample.sample_adj

@@ -88,17 +88,17 @@ class DeepGraphKernel(BaseModel):
 
         model = Word2Vec(
             self.gl_collections,
-            vector_size=self.hidden_dim,
+            size=self.hidden_dim,
             window=self.window,
             min_count=self.min_count,
             sample=self.sampling_rate,
             workers=self.n_workers,
-            epochs=self.epochs,
+            iter=self.epochs,
             alpha=self.alpha,
         )
-        vectors = np.asarray([model.wv[str(node)] for node in model.wv.index_to_key])
+        vectors = np.asarray([model.wv[str(node)] for node in model.wv.index2word])
         S = vectors.dot(vectors.T)
-        node2id = dict(zip(model.wv.index_to_key, range(len(model.wv.index_to_key))))
+        node2id = dict(zip(model.wv.index2word, range(len(model.wv.index2word))))
 
         num_graph, size_vocab = len(graphs), len(node2id)
         norm_prob = np.zeros((num_graph, size_vocab))

@@ -85,25 +85,3 @@ class RandomWalker(object):
         result = random_walk(start, walk_length, self.indptr, self.indices, restart_p)
         result = np.array(result, dtype=np.int64)
         return result
-
-    def walk_one(self,start,length,p):
-        walk_res = [np.zeros(length, dtype=np.int32)] * len(start)
-        p=0.0
-        for i in range(len(start)):
-            node=start[i]
-            result = [np.int32(0)] * length
-            index = np.int32(0)
-            _node = node
-            while index < length:
-                start1 = self.indptr[node]
-                end1 = self.indptr[node + 1]
-                sample1 = random.randint(start1, end1 - 1)
-                node = self.indices[sample1]
-                if np.random.uniform(0, 1) > p:
-                    result[index] = node
-                else:
-                    result[index] = _node
-                index += 1
-            k = int(np.floor(np.random.rand() * len(result)))
-            walk_res[i] = result[k]
-        return walk_res

@@ -40,7 +40,14 @@ class PTE(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.hidden_size, args.walk_length, args.walk_num, args.negative, args.batch_size, args.alpha,)
+        return cls(
+            args.hidden_size,
+            args.walk_length,
+            args.walk_num,
+            args.negative,
+            args.batch_size,
+            args.alpha,
+        )
 
     def __init__(self, dimension, walk_length, walk_num, negative, batch_size, alpha):
         super(PTE, self).__init__()
@@ -113,7 +120,9 @@ class PTE(BaseModel):
         vec_error += g * vec_v
         vec_v += g * vec_u
 
-    def _train_line(self,):
+    def _train_line(
+        self,
+    ):
         # train Line model with order
         self.alpha = self.init_alpha
         batch_size = self.batch_size

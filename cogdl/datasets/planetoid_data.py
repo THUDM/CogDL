@@ -1,3 +1,4 @@
+# Cora 数据集
 import os.path as osp
 import pickle as pkl
 import sys
@@ -9,6 +10,7 @@ from cogdl.data import Dataset, Graph
 from cogdl.utils import remove_self_loops, download_url, untar, coalesce, Accuracy, CrossEntropyLoss
 
 
+#
 def parse_index_file(filename):
     index = []
     for line in open(filename):
@@ -52,8 +54,11 @@ def edge_index_from_dict(graph_dict, num_nodes=None):
     return edge_index
 
 
+# folder = 'data\\Cora\\raw'， prefix = Cora
 def read_planetoid_data(folder, prefix):
+    # 小写化
     prefix = prefix.lower()
+    # 文件后缀
     names = ["x", "tx", "allx", "y", "ty", "ally", "graph", "test.index"]
     objects = []
     for item in names[:-1]:
@@ -62,6 +67,7 @@ def read_planetoid_data(folder, prefix):
                 objects.append(pkl.load(f, encoding="latin1"))
             else:
                 objects.append(pkl.load(f))
+    # 依次打开文件将所有文件放入 objects 中
     test_index = parse_index_file(f"{folder}/ind.{prefix}.{names[-1]}")
     test_index = torch.Tensor(test_index).long()
     test_index_reorder = test_index.sort()[0]
@@ -92,20 +98,26 @@ def read_planetoid_data(folder, prefix):
     x[test_index] = x[test_index_reorder]
     y[test_index] = y[test_index_reorder]
 
-    train_mask = index_to_mask(train_index, size=y.size(0))
-    val_mask = index_to_mask(val_index, size=y.size(0))
-    test_mask = index_to_mask(test_index, size=y.size(0))
+    # mask 都是 True and False  大小 1*2708
+    train_mask = index_to_mask(train_index, size=y.size(0)) # train_index = 1*140
+    val_mask = index_to_mask(val_index, size=y.size(0)) # val_index = 1*500
+    test_mask = index_to_mask(test_index, size=y.size(0)) # 剩余 取 1000 个点 做测试 [1708--2707]
 
     edge_index = edge_index_from_dict(graph, num_nodes=y.size(0))
 
+    # 构建 Graph 需要 x，edge_index， y ？？？？？？？？？？
+
+    # x = tensor([2708,1433]) 的 特征矩阵   y = tensor([1,2708]) 的 标签矩阵  edge_index = 2*10556 的连边矩阵 即领接矩阵
     data = Graph(x=x, edge_index=edge_index, y=y)
     data.train_mask = train_mask
     data.val_mask = val_mask
     data.test_mask = test_mask
+    # 给 data 额外添加的属性
 
     return data
 
-
+# 0 代表Cora数据集
+# 数据集的子类
 class Planetoid(Dataset):
     r"""The citation network datasets "Cora", "CiteSeer" and "PubMed" from the
     `"Revisiting Semi-Supervised Learning with Graph Embeddings"
@@ -115,10 +127,13 @@ class Planetoid(Dataset):
     url = "https://cloud.tsinghua.edu.cn/d/6808093f7f8042bfa1f0/files/?p=%2F"
 
     def __init__(self, root, name, split="public", num_train_per_class=20, num_val=500, num_test=1000):
+        # 数据集名字 'str'
         self.name = name
 
         super(Planetoid, self).__init__(root)
-        self.data = torch.load(self.processed_paths[0])
+        # self.processed_paths  = <class 'list'>: ['data\\Cora\\processed\\data.pt']
+        # 加载 "data.pt"
+        self.data = torch.load(self.processed_paths[0]) # 跳过处理的数据路径
 
         self.split = split
 
@@ -148,13 +163,16 @@ class Planetoid(Dataset):
         return self.data.y.shape[0]
 
     def download(self):
+        # 子类执行下载，父类也执行下载
         fname = "{}.zip".format(self.name.lower())
         download_url("{}{}.zip&dl=1".format(self.url, self.name.lower()), self.raw_dir, fname)
         untar(self.raw_dir, fname)
 
     def process(self):
+        # self.raw_dir = 'data\\Cora\\raw'， self.name = Cora
         data = read_planetoid_data(self.raw_dir, self.name)
         torch.save(data, self.processed_paths[0])
+        # 将 Graph 数据保存为 data.pt 文件
 
     def get(self, idx):
         return self.data
@@ -172,11 +190,16 @@ class Planetoid(Dataset):
         return CrossEntropyLoss()
 
 
+# 特征按行归一化
 def normalize_feature(data):
+    # 按行求和
     x_sum = torch.sum(data.x, dim=1)
+    # pow n次幂  flatten() 按行降维铺平
     x_rev = x_sum.pow(-1).flatten()
     x_rev[torch.isnan(x_rev)] = 0.0
     x_rev[torch.isinf(x_rev)] = 0.0
+    # 去掉 'nan inf'
+    # unsqueeze 可以用为 [1,2,3] 变为 [[1,2,3]]
     data.x = data.x * x_rev.unsqueeze(-1).expand_as(data.x)
     return data
 
@@ -184,10 +207,13 @@ def normalize_feature(data):
 class CoraDataset(Planetoid):
     def __init__(self, data_path="data"):
         dataset = "Cora"
-        path = osp.join(data_path, dataset)
+        path = osp.join(data_path, dataset)  # 链接路径 data\Cora
         if not osp.exists(path):
+            # 下载数据集 预处理
             Planetoid(path, dataset)
+
         super(CoraDataset, self).__init__(path, dataset)
+        # 初始化特征
         self.data = normalize_feature(self.data)
 
 

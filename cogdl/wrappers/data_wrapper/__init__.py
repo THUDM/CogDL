@@ -31,10 +31,8 @@ def fetch_data_wrapper(name):
 
 
 SUPPORTED_DW = {
-    "triple_link_prediction_dw": "cogdl.wrappers.data_wrapper.link_prediction.TripleDataWrapper",
     "cluster_dw": "cogdl.wrappers.data_wrapper.node_classification.ClusterWrapper",
     "graphsage_dw": "cogdl.wrappers.data_wrapper.node_classification.GraphSAGEDataWrapper",
-    "unsup_graphsage_dw": "cogdl.wrappers.data_wrapper.node_classification.UnsupGraphSAGEDataWrapper",
     "m3s_dw": "cogdl.wrappers.data_wrapper.node_classification.M3SDataWrapper",
     "network_embedding_dw": "cogdl.wrappers.data_wrapper.node_classification.NetworkEmbeddingDataWrapper",
     "node_classification_dw": "cogdl.wrappers.data_wrapper.node_classification.FullBatchNodeClfDataWrapper",
@@ -51,4 +49,9 @@ SUPPORTED_DW = {
     "graph_embedding_dw": "cogdl.wrappers.data_wrapper.graph_classification.GraphEmbeddingDataWrapper",
     "infograph_dw": "cogdl.wrappers.data_wrapper.graph_classification.InfoGraphDataWrapper",
     "patchy_san_dw": "cogdl.wrappers.data_wrapper.graph_classification.PATCHY_SAN_DataWrapper",
+    
+    # Xiansgheng: start
+    "traffic_prediction_dw": "cogdl.wrappers.data_wrapper.traffic_prediction.STGCNDataWrapper",
+    "stgat_dw": "cogdl.wrappers.data_wrapper.traffic_prediction.STGATDataWrapper",
+    # end
 }

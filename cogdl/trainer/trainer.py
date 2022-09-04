@@ -11,6 +11,7 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel
 from torch.cuda.amp import GradScaler, autocast
+from cogdl import data
 
 
 from cogdl.wrappers.data_wrapper.base_data_wrapper import DataWrapper
@@ -212,7 +213,10 @@ class Trainer(object):
 
         # clear the GPU memory
         dataset = dataset_w.get_dataset()
-        if isinstance(dataset.data, Graph):
+        if isinstance(dataset, list):
+            for dataset_ in dataset:
+                dataset_.data.to("cpu")
+        elif isinstance(dataset.data, Graph):
             dataset.data.to("cpu")
 
         return final_test
@@ -527,8 +531,8 @@ class Trainer(object):
 
             # lr_ = optimizers[0]._optimizer.param_groups[0]['lr']
             # wandb log ZHJ
-            # wandb.log({"loss":loss.item(), 
-            #            },step=global_step)
+            wandb.log({"loss":loss.item(), 
+                       },step=global_step)
 
             for optimizer in optimizers:
                 optimizer.zero_grad()

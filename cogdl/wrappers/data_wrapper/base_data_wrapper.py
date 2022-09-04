@@ -170,8 +170,12 @@ class DataWrapper(object):
     def eval(self):
         if self.__dataset__ is None:
             self.__dataset__ = getattr(self, "dataset", None)
-        if self.__dataset__ is not None and isinstance(self.__dataset__.data, Graph):
-            self.__dataset__.data.eval()
+        if self.__dataset__ is not None:
+            if isinstance(self.__dataset__, list):
+                for ii in range(len(self.__dataset__)):
+                    self.__dataset__[ii].data.eval()
+            elif isinstance(self.__dataset__.data, Graph):
+                self.__dataset__.data.eval()
 
 
 class OnLoadingWrapper(object):

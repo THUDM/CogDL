@@ -142,6 +142,7 @@ def set_default_wrapper_config():
 
     other_wrappers = dict()
     other_wrappers["gatne"] = {"mw": "multiplex_embedding_mw", "dw": "multiplex_embedding_dw"}
+    other_wrappers["gcc"] = {"mw": "gcc_mw", "dw": "gcc_dw"}
 
     merged = dict()
     merged.update(node_classification_wrappers)

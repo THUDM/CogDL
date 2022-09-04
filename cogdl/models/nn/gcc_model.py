@@ -156,9 +156,13 @@ class GCCModel(BaseModel):
         parser.add_argument("--max-edge-freq", type=int, default=16)
         parser.add_argument("--max-degree", type=int, default=512)
         parser.add_argument("--freq-embedding-size", type=int, default=16)
-        parser.add_argument("--num-layers", type=int, default=2)
+        parser.add_argument("--num-layers", type=int, default=5)
         parser.add_argument("--num-heads", type=int, default=2)
-        parser.add_argument("--output-size", type=int, default=32)
+        parser.add_argument("--output-size", type=int, default=64)
+        parser.add_argument("--norm", type=bool, default=True)
+        parser.add_argument("--gnn-model", type=str, default="gin")
+        parser.add_argument("--degree-input", type=bool, default=True)
+
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -174,6 +178,7 @@ class GCCModel(BaseModel):
             norm = args.norm,
             gnn_model = args.gnn_model,
             output_dim=args.output_size,
+            degree_input=args.degree_input
         )
 
     def __init__(

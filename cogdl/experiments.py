@@ -111,7 +111,7 @@ def train(args):  # noqa: C901
 |-------------------------------------{'-' * (len(str(args.dataset)) + len(model_name) + len(dw_name) + len(mw_name))}|"""
     )
 
-    if getattr(args, "model_path"):
+    if hasattr(args, "save_model_path"):
         args = build_model_path(args, model_name)
 
     if getattr(args, "use_best_config", False):

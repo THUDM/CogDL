@@ -106,6 +106,7 @@ SUPPORTED_DATASETS = {
     "sigir_cikm": "cogdl.datasets.gcc_data.SIGIR_CIKM_GCCDataset",
     "sigmod_icde": "cogdl.datasets.gcc_data.SIGMOD_ICDE_GCCDataset",
     "usa-airport": "cogdl.datasets.gcc_data.USAAirportDataset",
+    "h-index": "cogdl.datasets.gcc_data.HIndexDataset",
     "ogbn-arxiv": "cogdl.datasets.ogb.OGBArxivDataset",
     "ogbn-products": "cogdl.datasets.ogb.OGBProductsDataset",
     "ogbn-proteins": "cogdl.datasets.ogb.OGBProteinsDataset",

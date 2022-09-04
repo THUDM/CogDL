@@ -20,13 +20,16 @@ class GCCModelWrapper(ModelWrapper):
     @staticmethod
     def add_args(parser):
         # loss function
-        parser.add_argument("--nce-k", type=int, default=32)
+        parser.add_argument("--nce-k", type=int, default=16384)
         parser.add_argument("--nce-t", type=float, default=0.07)
         parser.add_argument("--finetune", action="store_true")
-        parser.add_argument("--momentum", type=float, default=0.96)
+        parser.add_argument("--pretrain", action="store_true")
+        parser.add_argument("--freeze", action="store_true")
+        parser.add_argument("--momentum", type=float, default=0.999)
 
         # specify folder
-        parser.add_argument("--model-path", type=str, default="gcc_pretrain.pt", help="path to save model")
+        parser.add_argument("--save-model-path", type=str, default="saved", help="path to save model")
+        parser.add_argument("--load-model-path", type=str, default="", help="path to load model")
 
     def __init__(
         self,
@@ -112,8 +115,9 @@ class GCCModelWrapper(ModelWrapper):
     
     def ge_step(self, batch):
         graph_q, graph_k = batch
-        feat_q = self.model(graph_q)
-        feat_k = self.model(graph_k)
+        with torch.no_grad():
+            feat_q = self.model(graph_q)
+            feat_k = self.model(graph_k)
         bsz = graph_q.batch_size
         assert feat_q.shape == (bsz, self.output_size)
         emb = ((feat_q + feat_k) / 2).detach().cpu()
@@ -193,9 +197,10 @@ class GCCModelWrapper(ModelWrapper):
         self.contrast.load_state_dict(state["contrast"])
 
     def pre_stage(self, stage, data_w):
-        if self.finetune:
+        if self.freeze or self.finetune:
             self.load_checkpoint(self.load_model_path)
-            self.model.apply(clear_bn)
+            if self.finetune:
+                self.model.apply(clear_bn)
 
     def post_stage(self, stage, data_w, epoch):
         if self.pretrain:

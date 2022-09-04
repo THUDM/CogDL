@@ -23,15 +23,19 @@ class GCCDataWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):
         # random walk
-        parser.add_argument("--batch-size", type=int, default=128)
-        parser.add_argument("--rw-hops", type=int, default=64)
+        parser.add_argument("--batch-size", type=int, default=32)
+        parser.add_argument("--rw-hops", type=int, default=256)
         parser.add_argument("--subgraph-size", type=int, default=128)
         parser.add_argument("--restart-prob", type=float, default=0.8)
         parser.add_argument("--positional-embedding-size", type=int, default=32)
         parser.add_argument(
             "--task", type=str, default="node_classification", choices=["node_classification, graph_classification"]
         )
-        parser.add_argument("--num-workers", type=int, default=4)
+        parser.add_argument("--num-workers", type=int, default=12)
+        parser.add_argument("--num-copies", type=int, default=6)
+        parser.add_argument("--num-samples", type=int, default=2000)
+        parser.add_argument("--aug", type=str, default="rwr")
+
 
     def __init__(
         self,
@@ -44,7 +48,6 @@ class GCCDataWrapper(DataWrapper):
         restart_prob=0.8,
         positional_embedding_size=32,
         task="node_classification",
-        #ZHJ
         freeze=False,
         pretrain=False,
         # no_test = True,
@@ -83,12 +86,18 @@ class GCCDataWrapper(DataWrapper):
 
         if finetune:
             graph = dataset.data
-            labels = graph.y.argmax(dim=1).tolist()
-            skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=0)
-            idx_list = []
-            for idx in skf.split(np.zeros(len(labels)), labels):
-                idx_list.append(idx)
-            train_idx, test_idx = idx_list[0]
+            labels = graph.y
+            if len(labels.shape) != 1:
+                labels = graph.y.argmax(dim=1).tolist()
+            if hasattr(graph, "train_mask") and hasattr(graph, "test_mask"):
+                train_idx = torch.where(graph.train_mask==True)[0]
+                test_idx = torch.where(graph.test_mask==True)[0]
+            else:
+                skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=0)
+                idx_list = []
+                for idx in skf.split(np.zeros(len(labels)), labels):
+                    idx_list.append(idx)
+                train_idx, test_idx = idx_list[0]
             self.train_dataset= torch.utils.data.Subset(finetune_dataset, train_idx)
             self.test_dataset = torch.utils.data.Subset(finetune_dataset, test_idx)
         
@@ -125,7 +134,7 @@ class GCCDataWrapper(DataWrapper):
             collate_fn=batcher_,
             shuffle=True if self.finetune else False,
             num_workers=self.num_workers,
-            worker_init_fn=None if self.finetune or self.freeze
+            worker_init_fn=None if not self.pretrain
                     else worker_init_fn,
         )
         return train_loader
@@ -429,9 +438,6 @@ class NodeClassificationDataset(object): #for freeze
         return graph_idx, node_idx
 
     def __getitem__(self, idx):
-        # print(idx)
-        # if idx == 2338:
-        #     print()
         graph_idx, node_idx = self._convert_idx(idx)
 
         step = np.random.choice(len(self.step_dist), 1, p=self.step_dist)[0]
@@ -446,7 +452,6 @@ class NodeClassificationDataset(object): #for freeze
             self.rw_hops,
             int((self.graphs[graph_idx].degrees()[node_idx] * math.e / (math.e - 1) / self.restart_prob) + 0.5),
         )
-        # dg = dgl.graph(g.edges())
         # TODO: `num_workers > 0` is not compatible with `numba`
         traces = g.random_walk_with_restart([node_idx, other_node_idx], max_nodes_per_seed, self.restart_prob)
 
@@ -466,7 +471,8 @@ class NodeClassificationDataset(object): #for freeze
             positional_embedding_size=self.positional_embedding_size,
             entire_graph=hasattr(self, "entire_graph") and self.entire_graph,
         )
-        return graph_q, graph_k, self.data.y[idx].argmax().item()
+        y = self.data.y[idx].argmax().item() if len(self.data.y.shape) != 1 else self.data.y[idx]
+        return graph_q, graph_k, y
 
 
 class NodeClassificationDatasetLabeled(NodeClassificationDataset): #for finetune
@@ -501,6 +507,5 @@ class NodeClassificationDatasetLabeled(NodeClassificationDataset): #for finetune
         graph_q = _rwr_trace_to_cogdl_graph(
             g=g, seed=node_idx, trace=torch.Tensor(traces[0]), positional_embedding_size=self.positional_embedding_size,
         )
-        # graph_q.y = self.data.y[idx].y #ZHJ
-        # return graph_q, 
-        return graph_q, self.data.y[idx].argmax().item()
+        y = self.data.y[idx].argmax().item() if len(self.data.y.shape) != 1 else self.data.y[idx]
+        return graph_q, y

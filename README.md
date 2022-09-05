@@ -18,4 +18,5 @@
 - numba == 0.54.1
 
 2. 当执行freeze操作时，请确保参数epochs=0
-3. 我们提供已经训练好的参数模型，可直接用于freeze及finetune，路径：./saved/already_trained_model/gcc_pretrain.pt
+3. 我们提供已经训练好的参数模型，可直接用于freeze及finetune，路径：/home/huanjing/work_document/NE/cogdl_gcc_revision/saved/already_trained_model/gcc_pretrain.pt
+4. 项目数据位于服务器 /home/huanjing/work_document/NE/cogdl_gcc_revision/data 文件下

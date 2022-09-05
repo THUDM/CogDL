@@ -5,8 +5,6 @@ Created on Thu Jul 21 22:57:47 2022
 @author: Yangshan
 
 """
-# import wandb
-import socket
 import sys, os
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+'/'+'..'+'/'+'..'))
 
@@ -32,34 +30,34 @@ default_dict = {
     "eval_step": 1,
     "activation": "relu",
     "residual": False,
-    "num_workers": 1,-
+    "num_workers": 1,
     "unsup" : True,
     
-    "pretrain": False,-
-    "freeze": False,-
-    "finetune": False,-
+    "pretrain": False,
+    "freeze": False,
+    "finetune": False,
     "devices":[0],
-    "hidden_size": 64,-
-    "output_size": 64,-
-    "positional_embedding_size":32,-
-    "degree_embedding_size": 16,-
-    "gnn_model": "gin",-
-    "num_layers": 5,-
-    "aug": "rwr",-
-    "rw_hops": 256,-
-    "num_samples": 2000,-
-    "nce_k": 16384,-
-    "nce_t": 0.07,-
-    "norm": True,-
-    "momentum": 0.999,-
+    "hidden_size": 64,
+    "output_size": 64,
+    "positional_embedding_size":32,
+    "degree_embedding_size": 16,
+    "gnn_model": "gin",
+    "num_layers": 5,
+    "aug": "rwr",
+    "rw_hops": 256,
+    "num_samples": 2000,
+    "nce_k": 16384,
+    "nce_t": 0.07,
+    "norm": True,
+    "momentum": 0.999,
     "lr": 0.005,
     "weight_decay": 1e-05,
     "beta1": 0.9,
     "beta2": 0.999,
     "clip_grad_norm": 1.,
-    "norm": True,-
+    "norm": True,
     "n_warmup_steps": 0.1,
-    "save_model_path":"saved"-
+    "save_model_path":"saved"
 }
 # Pretrain_moco_True_dgl_gin_layer_5_lr_0.005_decay_1e-05_bsz_32_hid_64_samples_2000_nce_t_0.07_nce_k_16384_rw_hops_256_restart_prob_0.8_aug_1st_ft_False_deg_16_pos_32_momentum_0.999
 

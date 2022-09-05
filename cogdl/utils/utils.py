@@ -285,7 +285,7 @@ def get_memory_usage(print_info=False):
     return allocated
 
 def build_model_path(args, model_name):
-    if not hasattr(args, "model_path"):
+    if not hasattr(args, "save_model_path"):
         args.save_model_path = ""
     if model_name == "gcc":
         if args.pretrain or args.finetune:

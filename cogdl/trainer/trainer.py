@@ -4,7 +4,6 @@ from typing import Optional
 import numpy as np
 from tqdm import tqdm
 import os
-import wandb #ZHZJ
 
 import torch
 import torch.distributed as dist
@@ -363,7 +362,7 @@ class Trainer(object):
                 train_dataset = train_loader.get_dataset_from_loader()
                 if hasattr(train_dataset, "shuffle"):
                     train_dataset.shuffle()
-                training_loss = self.train_step(model_w, train_loader, optimizers, lr_schedulers, rank, scaler, epoch) #ZHJ
+                training_loss = self.train_step(model_w, train_loader, optimizers, lr_schedulers, rank, scaler)
 
                 if self.attack is not None:
                     if self.attack_mode == "injection":
@@ -507,7 +506,7 @@ class Trainer(object):
         dist.broadcast_object_list(object_list, src=0)
         return object_list[0]
 
-    def train_step(self, model_w, train_loader, optimizers, lr_schedulers, device, scaler, epoch):
+    def train_step(self, model_w, train_loader, optimizers, lr_schedulers, device, scaler):
         model_w.train()
         losses = []
 
@@ -523,16 +522,6 @@ class Trainer(object):
                     loss = model_w.on_train_step(batch)
             else:
                 loss = model_w.on_train_step(batch)
-
-            global_step = epoch * 750 + idx
-            # print(global_step)
-            # lr_this_step = self.learning_rate * warmup_linear(
-            #     global_step / (self.epochs * n_batch), 0.1)
-
-            # lr_ = optimizers[0]._optimizer.param_groups[0]['lr']
-            # wandb log ZHJ
-            wandb.log({"loss":loss.item(), 
-                       },step=global_step)
 
             for optimizer in optimizers:
                 optimizer.zero_grad()

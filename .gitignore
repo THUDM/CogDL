@@ -117,5 +117,5 @@ metis*
 *.sql
 *.pt
 
-#ZHJ
 data
+nohup.out

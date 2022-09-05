@@ -10,7 +10,7 @@ class DataWrapper(object):
         pass
 
     def __init__(self, dataset=None):
-        if dataset is not None: #ZHJ
+        if dataset is not None:
             if isinstance(dataset, list):
                 if hasattr(dataset[0], "get_loss_fn"):
                     self.__loss_fn__ = dataset[0].get_loss_fn()
@@ -160,7 +160,7 @@ class DataWrapper(object):
     def train(self):
         if self.__dataset__ is None:
             self.__dataset__ = getattr(self, "dataset", None)
-        if self.__dataset__ is not None: #ZHJ
+        if self.__dataset__ is not None:
             if isinstance(self.__dataset__, list):
                 for ii in range(len(self.__dataset__)):
                     self.__dataset__[ii].data.train()

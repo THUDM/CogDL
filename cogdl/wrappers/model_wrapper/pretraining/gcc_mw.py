@@ -123,22 +123,12 @@ class GCCModelWrapper(ModelWrapper):
         emb = ((feat_q + feat_k) / 2).detach().cpu()
         return emb
 
-    def test_step(self, batch): #ZHJ
-        # assert self.load_emb_path
+    def test_step(self, batch):
         if self.freeze:
             graph_q, graph_k, y = batch
             embeddings = self.ge_step((graph_q, graph_k))    
-            #评估
-            # Map node2id
-            # features_matrix = np.zeros((graph.num_nodes, self.model.output_dim))
-            # for vid, node in enumerate(graph.nodes()):
-            #     features_matrix[node] = embeddings[vid]
-            
-            #整理标签
             
             if len(y.shape) == 1: 
-                #除乐GCC_data.py处理的数据之外,其他数据的标签存储格式
-                #为([4019]),这里需转换成矩阵形式
                 num_classes = y.max().cpu().item() + 1
                 y = nn.functional.one_hot(y, num_classes)
         
@@ -166,7 +156,8 @@ class GCCModelWrapper(ModelWrapper):
         warm_steps = cfg["n_warmup_steps"]
         epochs = cfg["epochs"]
         batch_size = cfg["batch_size"]
-        betas = cfg["betas"]
+        if hasattr(cfg, "betas"):
+            betas = cfg["betas"]
         total = cfg["total"]
         if warm_steps > 0 and warm_steps < 1:
             warm_steps = warm_steps * total
@@ -178,7 +169,7 @@ class GCCModelWrapper(ModelWrapper):
                 weight_decay=weight_decay,
             )
         else:
-            optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay, betas=betas)
+            optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay, betas=betas if self.pretrain else (0.9, 0.999))
         optimizer = LinearOptimizer(optimizer, warm_steps, epochs * (total // batch_size), init_lr=lr)
         return optimizer
 

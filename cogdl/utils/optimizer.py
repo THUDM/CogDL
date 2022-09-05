@@ -1,7 +1,6 @@
 """A wrapper class for optimizer """
 import numpy as np
 import torch.nn as nn
-import wandb #ZHJ
 
 class NoamOptimizer(nn.Module):
     """A simple wrapper class for learning rate scheduling"""
@@ -73,9 +72,6 @@ class LinearOptimizer(nn.Module):
 
         self.n_current_steps += 1
         lr = self.init_lr * self._get_lr_scale()
-
-        wandb.log({"lr":lr,  #ZHJ
-                            },step=self.n_current_steps+750)
 
         for param_group in self._optimizer.param_groups:
             param_group["lr"] = lr

@@ -1,7 +1,7 @@
 ![CogDL](./docs/source/_static/cogdl-logo.png)
 ===
 
-## fork form Cogdl
+## fork form CogDL
 
 在根目录下的try_gcc文件中运行gcc，其中配置了三种参数
 - pretrain 预训练

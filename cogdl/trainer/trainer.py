@@ -4,7 +4,6 @@ from typing import Optional
 import numpy as np
 from tqdm import tqdm
 import os
-import wandb #ZHZJ
 
 import torch
 import torch.distributed as dist
@@ -359,7 +358,7 @@ class Trainer(object):
                 train_dataset = train_loader.get_dataset_from_loader()
                 if hasattr(train_dataset, "shuffle"):
                     train_dataset.shuffle()
-                training_loss = self.train_step(model_w, train_loader, optimizers, lr_schedulers, rank, scaler, epoch) #ZHJ
+                training_loss = self.train_step(model_w, train_loader, optimizers, lr_schedulers, rank, scaler)
 
                 if self.attack is not None:
                     if self.attack_mode == "injection":
@@ -412,14 +411,9 @@ class Trainer(object):
                 for hook in self.after_epoch_hooks:
                     hook(self)
 
-                with torch.no_grad():
-                    model_w.eval()
-                    post_stage_out = model_w.post_stage(stage, dataset_w, epoch) #ZHJ 此处改变了传递参数的个数，可能会导致其他方法调用时出错
-                    dataset_w.post_stage(stage, post_stage_out)
-
             with torch.no_grad():
                 model_w.eval()
-                post_stage_out = model_w.post_stage(stage, dataset_w, -1) #ZHJ 此处改变了传递参数的个数，可能会导致其他方法调用时出错
+                post_stage_out = model_w.post_stage(stage, dataset_w)
                 dataset_w.post_stage(stage, post_stage_out)
 
             if best_model_w is None:
@@ -503,7 +497,7 @@ class Trainer(object):
         dist.broadcast_object_list(object_list, src=0)
         return object_list[0]
 
-    def train_step(self, model_w, train_loader, optimizers, lr_schedulers, device, scaler, epoch):
+    def train_step(self, model_w, train_loader, optimizers, lr_schedulers, device, scaler):
         model_w.train()
         losses = []
 
@@ -519,16 +513,6 @@ class Trainer(object):
                     loss = model_w.on_train_step(batch)
             else:
                 loss = model_w.on_train_step(batch)
-
-            # global_step = epoch * 750 + idx
-            # # print(global_step)
-            # # lr_this_step = self.learning_rate * warmup_linear(
-            # #     global_step / (self.epochs * n_batch), 0.1)
-
-            # # lr_ = optimizers[0]._optimizer.param_groups[0]['lr']
-            # # wandb log ZHJ
-            # wandb.log({"loss":loss.item(), 
-            #            },step=global_step)
 
             for optimizer in optimizers:
                 optimizer.zero_grad()

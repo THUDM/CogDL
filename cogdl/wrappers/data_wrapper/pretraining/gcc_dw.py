@@ -50,7 +50,6 @@ class GCCDataWrapper(DataWrapper):
         task="node_classification",
         freeze=False,
         pretrain=False,
-        # no_test = True,
         num_samples=0,
         num_copies=1,
         aug="rwr",
@@ -149,32 +148,20 @@ class GCCDataWrapper(DataWrapper):
             return test_loader
     
     def ge_wrapper(self):
-        # ge_loader = DataLoader(
-        #     dataset=self.train_dataset,
-        #     batch_size=self.batch_size,
-        #     collate_fn=labeled_batcher() if self.finetune else batcher(),
-        #     shuffle=False,
-        #     num_workers=self.num_workers,
-        #     # worker_init_fn=None,
-        # )
        return  self.train_wrapper()    
         
 def worker_init_fn(worker_id):
-    # print('worder_id {} start'.format(worker_id))
     worker_info = torch.utils.data.get_worker_info()
-    dataset = worker_info.dataset #取出自定义的dataset
-    graphs = dataset.graphs #从内存取出graphs（自定义的dataset中）
-    # print('dataset.graph id', id(graphs[0]))
-    # print(len(graphs))
+    dataset = worker_info.dataset
+    graphs = dataset.graphs
     selected_graphids = dataset.jobs[worker_id]
-    # print(selected_graphids)
     dataset.step_graphs = []
     for graphid in selected_graphids:
         # g = copy.deepcopy(graphs[graphid])
         g = graphs[graphid]
         dataset.step_graphs.append(g)
     dataset.length = sum([g.num_nodes for g in dataset.step_graphs])
-    dataset.degrees = [g.degrees() for g in dataset.step_graphs] #该过程耗时,统计后,后续直接调用
+    dataset.degrees = [g.degrees() for g in dataset.step_graphs]
     np.random.seed(worker_info.seed % (2 ** 32))
 
 def labeled_batcher_single_graph(): #for finetune
@@ -198,8 +185,6 @@ def batcher(): #for pretrain
         graph_q_, graph_k_ = zip(*batch)
         graph_q, graph_k = batch_graphs(graph_q_), batch_graphs(graph_k_)
         graph_q.batch_size = len(graph_q_)
-        # time2 = time.time()
-        # print('耗时 {:.2f} s'.format(time2-time1))
         return graph_q, graph_k
     return batcher_dev
 
@@ -277,7 +262,6 @@ class LoadBalanceGraphDataset(torch.utils.data.IterableDataset): #for pretrain
         restart_prob=0.8,
         positional_embedding_size=32,
         num_workers=1,
-        # dgl_graphs_file="./data/small.bin",
         num_samples=10000,
         num_copies=1,
         aug="rwr",
@@ -295,7 +279,6 @@ class LoadBalanceGraphDataset(torch.utils.data.IterableDataset): #for pretrain
         self.num_samples = num_samples
         assert sum(step_dist) == 1.0
         assert positional_embedding_size > 1
-        # self.dgl_graphs_file = dgl_graphs_file
         graph_sizes = [graph.num_nodes for graph in self.graphs]
 
         # print("load graph done")
@@ -324,21 +307,15 @@ class LoadBalanceGraphDataset(torch.utils.data.IterableDataset): #for pretrain
         return self.num_samples * self.num_workers
 
     def __iter__(self):
-        # print(len(self.step_graphs))
-        degrees = torch.cat([g.degrees().double() ** 0.75 for g in self.step_graphs]) #计算所有图中每个节点的度
-        prob = degrees / torch.sum(degrees) #归一化,所有图，所有点的度
+        degrees = torch.cat([g.degrees().double() ** 0.75 for g in self.step_graphs])
+        prob = degrees / torch.sum(degrees)
         samples = np.random.choice(
             self.length, size=self.num_samples, replace=True, p=prob.numpy()
         ) #根据概率选这些点
         for idx in samples:
             yield self.__getitem__(idx)
 
-        # for idx in np.array([1,2,3,4,5]):
-        #     yield self.__getitem__(idx)
-
     def __getitem__(self, idx):
-        # return self.graphs[0], self.graphs[0]
-        
         graph_idx = 0
         node_idx = idx
         for i in range(len(self.step_graphs)):
@@ -349,7 +326,6 @@ class LoadBalanceGraphDataset(torch.utils.data.IterableDataset): #for pretrain
                 node_idx -= self.step_graphs[i].num_nodes
         
         g = self.step_graphs[graph_idx]
-        # print(id(g))
         step = np.random.choice(len(self.step_dist), 1, p=self.step_dist)[0]
         if step == 0:
             other_node_idx = node_idx
@@ -357,20 +333,12 @@ class LoadBalanceGraphDataset(torch.utils.data.IterableDataset): #for pretrain
             other_node_idx =  g.random_walk([node_idx], step)[-1]
 
         if self.aug == "rwr":
-            # time1 = time.time()
             max_nodes_per_seed = max(
                 self.rw_hops,
                 int((self.degrees[graph_idx][node_idx] * math.e / (math.e - 1) / self.restart_prob) + 0.5),
             )
-            # time2 = time.time()
-            # print('耗时 {:.2f} s'.format(time2-time1))
-            # traces = g.random_walk_with_restart([node_idx], max_nodes_per_seed, self.restart_prob)
-            # dg = dgl.graph(g.edges())
             traces = g.random_walk_with_restart([node_idx, other_node_idx], max_nodes_per_seed, self.restart_prob)
 
-        # return self.graphs[0], self.graphs[0]
-
-        # time1 = time.time()
         graph_q = _rwr_trace_to_cogdl_graph(
             g=g,
             seed=node_idx,
@@ -385,8 +353,6 @@ class LoadBalanceGraphDataset(torch.utils.data.IterableDataset): #for pretrain
             positional_embedding_size=self.positional_embedding_size,
             entire_graph=hasattr(self, "entire_graph") and self.entire_graph,
         )
-        # time2 = time.time()
-        # print('耗时 {:.2f} s'.format(time2-time1))
         if self.graph_transform:
             graph_q = self.graph_transform(graph_q)
             graph_k = self.graph_transform(graph_k)
@@ -414,7 +380,6 @@ class NodeClassificationDataset(object): #for freeze
         self.data = data.data
         self.graphs = self.data if isinstance(self.data, list) else [self.data]
         self.length = sum([g.num_nodes for g in self.graphs])
-        # self.length = 100
         self.total = self.length
 
     def __len__(self):
@@ -446,7 +411,7 @@ class NodeClassificationDataset(object): #for freeze
             self.rw_hops,
             int((self.graphs[graph_idx].degrees()[node_idx] * math.e / (math.e - 1) / self.restart_prob) + 0.5),
         )
-        # TODO: `num_workers > 0` is not compatible with `numba`
+        # NOTICE: Please check the version of numpy and numba in README
         traces = g.random_walk_with_restart([node_idx, other_node_idx], max_nodes_per_seed, self.restart_prob)
 
         # traces = [[0,1,2,3], [1,2,3,4]]

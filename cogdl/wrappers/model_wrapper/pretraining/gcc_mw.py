@@ -46,7 +46,6 @@ class GCCModelWrapper(ModelWrapper):
         load_model_path = "",
         freeze=False,
         pretrain=False
-        # load_model_path = None,
     ):
         super(GCCModelWrapper, self).__init__()
         self.model = model
@@ -68,7 +67,6 @@ class GCCModelWrapper(ModelWrapper):
         self.save_model_path = save_model_path
         self.load_model_path = load_model_path
         
-        # self.load_emb_path = load_emb_path
         if finetune:
             self.linear = nn.Linear(self.output_size, num_classes)
         else:
@@ -123,22 +121,13 @@ class GCCModelWrapper(ModelWrapper):
         emb = ((feat_q + feat_k) / 2).detach().cpu()
         return emb
 
-    def test_step(self, batch): #ZHJ
+    def test_step(self, batch):
         # assert self.load_emb_path
         if self.freeze:
             graph_q, graph_k, y = batch
-            embeddings = self.ge_step((graph_q, graph_k))    
-            #评估
-            # Map node2id
-            # features_matrix = np.zeros((graph.num_nodes, self.model.output_dim))
-            # for vid, node in enumerate(graph.nodes()):
-            #     features_matrix[node] = embeddings[vid]
-            
-            #整理标签
+            embeddings = self.ge_step((graph_q, graph_k))
             
             if len(y.shape) == 1: 
-                #除乐GCC_data.py处理的数据之外,其他数据的标签存储格式
-                #为([4019]),这里需转换成矩阵形式
                 num_classes = y.max().cpu().item() + 1
                 y = nn.functional.one_hot(y, num_classes)
         
@@ -205,12 +194,9 @@ class GCCModelWrapper(ModelWrapper):
             if self.finetune:
                 self.model.apply(clear_bn)
 
-    def post_stage(self, stage, data_w, epoch):
+    def post_stage(self, stage, data_w):
         if self.pretrain:
-            if epoch >= 0:
-                filepath = os.path.join(self.save_model_path, "gcc_pretrain_epoch_{}.pt".format(epoch))
-            else:
-                filepath = os.path.join(self.save_model_path, "gcc_pretrain.pt")
+            filepath = os.path.join(self.save_model_path, "gcc_pretrain.pt")
             self.save_checkpoint(filepath)
         else:
             pass

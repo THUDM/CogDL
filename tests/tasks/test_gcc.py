@@ -61,7 +61,6 @@ default_dict = {
     "n_warmup_steps": 0.1,
     "save_model_path":"saved"
 }
-# Pretrain_moco_True_dgl_gin_layer_5_lr_0.005_decay_1e-05_bsz_32_hid_64_samples_2000_nce_t_0.07_nce_k_16384_rw_hops_256_restart_prob_0.8_aug_1st_ft_False_deg_16_pos_32_momentum_0.999
 
 def get_default_args_for_nc(dataset, model, dw="node_classification_dw", mw="node_classification_mw"):
     args = get_default_args(dataset=dataset, model=model, dw=dw, mw=mw)
@@ -80,7 +79,7 @@ if __name__ == "__main__":
     args.pretrain = True
     args.no_test = True
     
-    args.devices = [2]
+    args.devices = [0]
     args.epochs = 1
     args.num_copies = 6
     args.num_workers = 12

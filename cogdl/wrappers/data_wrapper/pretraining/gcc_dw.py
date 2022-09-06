@@ -59,13 +59,7 @@ class GCCDataWrapper(DataWrapper):
         super(GCCDataWrapper, self).__init__(dataset)
         
         if pretrain:
-            if isinstance(dataset, list):
-                data = [dataset_.data for dataset_ in dataset]
-                for graph in data:
-                    graph.y = None
-            else:
-                dataset.data.y = None
-                data = [dataset.data]
+            data = dataset.data.graphs
         else:
             data = dataset
     

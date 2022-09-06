@@ -166,7 +166,10 @@ class GCCModelWrapper(ModelWrapper):
         warm_steps = cfg["n_warmup_steps"]
         epochs = cfg["epochs"]
         batch_size = cfg["batch_size"]
-        betas = cfg["betas"]
+        if "betas" in cfg:
+            betas = cfg["betas"]
+        else:
+            betas = None
         total = cfg["total"]
         if warm_steps > 0 and warm_steps < 1:
             warm_steps = warm_steps * total
@@ -178,7 +181,7 @@ class GCCModelWrapper(ModelWrapper):
                 weight_decay=weight_decay,
             )
         else:
-            optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay, betas=betas)
+            optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay, betas=betas if betas else (0.9, 0.999))
         optimizer = LinearOptimizer(optimizer, warm_steps, epochs * (total // batch_size), init_lr=lr)
         return optimizer
 

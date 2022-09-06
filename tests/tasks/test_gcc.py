@@ -32,34 +32,34 @@ default_dict = {
     "eval_step": 1,
     "activation": "relu",
     "residual": False,
-    "num_workers": 1,-
+    "num_workers": 1,
     "unsup" : True,
     
-    "pretrain": False,-
-    "freeze": False,-
-    "finetune": False,-
+    "pretrain": False,
+    "freeze": False,
+    "finetune": False,
     "devices":[0],
-    "hidden_size": 64,-
-    "output_size": 64,-
-    "positional_embedding_size":32,-
-    "degree_embedding_size": 16,-
-    "gnn_model": "gin",-
-    "num_layers": 5,-
-    "aug": "rwr",-
-    "rw_hops": 256,-
-    "num_samples": 2000,-
-    "nce_k": 16384,-
-    "nce_t": 0.07,-
-    "norm": True,-
-    "momentum": 0.999,-
+    "hidden_size": 64,
+    "output_size": 64,
+    "positional_embedding_size":32,
+    "degree_embedding_size": 16,
+    "gnn_model": "gin",
+    "num_layers": 5,
+    "aug": "rwr",
+    "rw_hops": 256,
+    "num_samples": 2000,
+    "nce_k": 16384,
+    "nce_t": 0.07,
+    "norm": True,
+    "momentum": 0.999,
     "lr": 0.005,
     "weight_decay": 1e-05,
     "beta1": 0.9,
     "beta2": 0.999,
     "clip_grad_norm": 1.,
-    "norm": True,-
+    "norm": True,
     "n_warmup_steps": 0.1,
-    "save_model_path":"saved"-
+    "save_model_path":"saved"
 }
 # Pretrain_moco_True_dgl_gin_layer_5_lr_0.005_decay_1e-05_bsz_32_hid_64_samples_2000_nce_t_0.07_nce_k_16384_rw_hops_256_restart_prob_0.8_aug_1st_ft_False_deg_16_pos_32_momentum_0.999
 
@@ -74,13 +74,14 @@ if __name__ == "__main__":
     method = 'gcc'
 
     #pretrain
+    # dataset_name = 'gcc_academic'
     dataset_name = 'gcc_academic gcc_dblp_netrep gcc_dblp_snap gcc_facebook gcc_imdb gcc_livejournal'
     args = get_default_args_for_nc(dataset_name, method, mw="gcc_mw", dw="gcc_dw")
     args.pretrain = True
     args.no_test = True
     
     args.devices = [2]
-    args.epochs = 100
+    args.epochs = 1
     args.num_copies = 6
     args.num_workers = 12
     args.batch_size = 32

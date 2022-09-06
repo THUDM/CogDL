@@ -7,6 +7,7 @@ import torch
 
 from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
+from cogdl.utils import Accuracy, CrossEntropyLoss
 
 
 class GCCDataset(Dataset):
@@ -161,6 +162,45 @@ class Edgelist(Dataset):
         torch.save(data, self.processed_paths[0])
 
 
+class PretrainDataset(object):
+
+    class DataList(object):
+
+        def __init__(self, graphs):
+            for graph in graphs:
+                graph.y = None
+            self.graphs = graphs
+
+        def to(self, device):
+            return [graph.to(device) for graph in self.graphs]
+
+        def train(self):
+            return [graph.train() for graph in self.graphs]
+
+        def eval(self):
+            return [graph.eval() for graph in self.graphs]
+
+    def __init__(self, name, data):
+        super(PretrainDataset, self).__init__()
+        self.name = name
+        # self.data = data
+        self.data = self.DataList(data)
+
+    def get_evaluator(self):
+        return Accuracy()
+
+    def get_loss_fn(self):
+        return CrossEntropyLoss()
+
+    @property
+    def num_features(self):
+        return 0
+
+    def get(self, idx):
+        assert idx == 0
+        return self.data.graphs
+
+
 class KDD_ICDM_GCCDataset(GCCDataset):
     def __init__(self, data_path="data"):
         dataset = "kdd_icdm"
@@ -235,4 +275,4 @@ UNLABELED_GCCDATASETS = ["gcc_academic",
                          "gcc_dblp_snap",
                          "gcc_facebook",
                          "gcc_imdb",
-                         "gcc_livejournal"]
+                         "gcc_livejournal"]             

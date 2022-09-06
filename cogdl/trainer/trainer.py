@@ -11,7 +11,6 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel
 from torch.cuda.amp import GradScaler, autocast
-from cogdl import data
 
 
 from cogdl.wrappers.data_wrapper.base_data_wrapper import DataWrapper
@@ -213,10 +212,7 @@ class Trainer(object):
 
         # clear the GPU memory
         dataset = dataset_w.get_dataset()
-        if isinstance(dataset, list):
-            for dataset_ in dataset:
-                dataset_.data.to("cpu")
-        elif isinstance(dataset.data, Graph):
+        if isinstance(dataset.data, Graph) or hasattr(dataset.data, "graphs"):
             dataset.data.to("cpu")
 
         return final_test
@@ -524,15 +520,15 @@ class Trainer(object):
             else:
                 loss = model_w.on_train_step(batch)
 
-            global_step = epoch * 750 + idx
-            # print(global_step)
-            # lr_this_step = self.learning_rate * warmup_linear(
-            #     global_step / (self.epochs * n_batch), 0.1)
+            # global_step = epoch * 750 + idx
+            # # print(global_step)
+            # # lr_this_step = self.learning_rate * warmup_linear(
+            # #     global_step / (self.epochs * n_batch), 0.1)
 
-            # lr_ = optimizers[0]._optimizer.param_groups[0]['lr']
-            # wandb log ZHJ
-            wandb.log({"loss":loss.item(), 
-                       },step=global_step)
+            # # lr_ = optimizers[0]._optimizer.param_groups[0]['lr']
+            # # wandb log ZHJ
+            # wandb.log({"loss":loss.item(), 
+            #            },step=global_step)
 
             for optimizer in optimizers:
                 optimizer.zero_grad()
@@ -551,9 +547,6 @@ class Trainer(object):
                     optimizer.step()
             if scaler is not None:
                 scaler.update()
-
-            # from cogdl.wrappers.tools.memory_moco import moment_update
-            # moment_update(model_w.model, model_w.model_ema, model_w.momentum)
 
             losses.append(loss.item())
         if lr_schedulers is not None:

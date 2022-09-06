@@ -10,13 +10,7 @@ class DataWrapper(object):
         pass
 
     def __init__(self, dataset=None):
-        if dataset is not None: #ZHJ
-            if isinstance(dataset, list):
-                if hasattr(dataset[0], "get_loss_fn"):
-                    self.__loss_fn__ = dataset[0].get_loss_fn()
-                if hasattr(dataset[0], "get_evaluator"):
-                    self.__evaluator__ = dataset[0].get_evaluator()
-            else:
+        if dataset is not None:
                 if hasattr(dataset, "get_loss_fn"):
                     self.__loss_fn__ = dataset.get_loss_fn()
                 if hasattr(dataset, "get_evaluator"):
@@ -160,21 +154,17 @@ class DataWrapper(object):
     def train(self):
         if self.__dataset__ is None:
             self.__dataset__ = getattr(self, "dataset", None)
-        if self.__dataset__ is not None: #ZHJ
-            if isinstance(self.__dataset__, list):
-                for ii in range(len(self.__dataset__)):
-                    self.__dataset__[ii].data.train()
-            elif isinstance(self.__dataset__.data, Graph):
+        if self.__dataset__ is not None and \
+                (isinstance(self.__dataset__.data, Graph) \
+                or hasattr(self.__dataset__.data, "graphs")):
                 self.__dataset__.data.train()
 
     def eval(self):
         if self.__dataset__ is None:
             self.__dataset__ = getattr(self, "dataset", None)
-        if self.__dataset__ is not None:
-            if isinstance(self.__dataset__, list):
-                for ii in range(len(self.__dataset__)):
-                    self.__dataset__[ii].data.eval()
-            elif isinstance(self.__dataset__.data, Graph):
+        if self.__dataset__ is not None and \
+                (isinstance(self.__dataset__.data, Graph) \
+                or hasattr(self.__dataset__.data, "graphs")):
                 self.__dataset__.data.eval()
 
 

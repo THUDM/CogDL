@@ -59,11 +59,30 @@ def build_dataset_from_name(dataset, split=0):
 
     return dataset_class()
 
+def build_dataset_pretrain(args):
+    args.pretrain = False
+    dataset_names = args.dataset
+    if ' ' in args.dataset:
+        datasets_name = args.dataset.split(' ')
+        dataset = []
+        for dataset_ in datasets_name:
+            args.dataset = dataset_
+            dataset.append(build_dataset(args))
+    else:
+        dataset = [build_dataset(args)]
+    args.pretrain = True
+    args.dataset = dataset_names
+    dataset_class = getattr(importlib.import_module("cogdl.datasets.gcc_data"), "PretrainDataset")
+    return dataset_class(args.dataset, [x.data for x in dataset])
+
 
 def build_dataset(args):
     if not hasattr(args, "split"):
         args.split = 0
-    dataset = build_dataset_from_name(args.dataset, args.split)
+    if not args.pretrain:
+        dataset = build_dataset_from_name(args.dataset, args.split)
+    else:
+        dataset = build_dataset_pretrain(args)
 
     if hasattr(dataset, "num_classes") and dataset.num_classes > 0:
         args.num_classes = dataset.num_classes

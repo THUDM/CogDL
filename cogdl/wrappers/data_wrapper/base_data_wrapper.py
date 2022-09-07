@@ -11,10 +11,10 @@ class DataWrapper(object):
 
     def __init__(self, dataset=None):
         if dataset is not None:
-                if hasattr(dataset, "get_loss_fn"):
-                    self.__loss_fn__ = dataset.get_loss_fn()
-                if hasattr(dataset, "get_evaluator"):
-                    self.__evaluator__ = dataset.get_evaluator()
+            if hasattr(dataset, "get_loss_fn"):
+                self.__loss_fn__ = dataset.get_loss_fn()
+            if hasattr(dataset, "get_evaluator"):
+                self.__evaluator__ = dataset.get_evaluator()
         else:
             self.__loss_fn__ = None
             self.__evaluator__ = None

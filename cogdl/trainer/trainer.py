@@ -504,7 +504,7 @@ class Trainer(object):
         if self.progress_bar == "iteration":
             train_loader = tqdm(train_loader)
 
-        for idx, batch in enumerate(train_loader):
+        for batch in train_loader:
             batch = move_to_device(batch, device)
             if hasattr(batch, "train_mask") and batch.train_mask.sum().item() == 0:
                 continue

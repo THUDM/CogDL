@@ -36,7 +36,6 @@ class GCCDataWrapper(DataWrapper):
         parser.add_argument("--num-samples", type=int, default=2000)
         parser.add_argument("--aug", type=str, default="rwr")
 
-
     def __init__(
         self,
         dataset,
@@ -83,15 +82,15 @@ class GCCDataWrapper(DataWrapper):
             if len(labels.shape) != 1:
                 labels = graph.y.argmax(dim=1).tolist()
             if hasattr(graph, "train_mask") and hasattr(graph, "test_mask"):
-                train_idx = torch.where(graph.train_mask==True)[0]
-                test_idx = torch.where(graph.test_mask==True)[0]
+                train_idx = torch.where(graph.train_mask == 1)[0]
+                test_idx = torch.where(graph.test_mask == 1)[0]
             else:
                 skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=0)
                 idx_list = []
                 for idx in skf.split(np.zeros(len(labels)), labels):
                     idx_list.append(idx)
                 train_idx, test_idx = idx_list[0]
-            self.train_dataset= torch.utils.data.Subset(finetune_dataset, train_idx)
+            self.train_dataset = torch.utils.data.Subset(finetune_dataset, train_idx)
             self.test_dataset = torch.utils.data.Subset(finetune_dataset, test_idx)
         
         elif task == "graph_classification":
@@ -127,8 +126,7 @@ class GCCDataWrapper(DataWrapper):
             collate_fn=batcher_,
             shuffle=True if self.finetune else False,
             num_workers=self.num_workers,
-            worker_init_fn=None if not self.pretrain
-                    else worker_init_fn,
+            worker_init_fn=None if not self.pretrain else worker_init_fn,
         )
         return train_loader
     
@@ -148,8 +146,9 @@ class GCCDataWrapper(DataWrapper):
             return test_loader
     
     def ge_wrapper(self):
-       return  self.train_wrapper()    
-        
+        return self.train_wrapper()    
+
+
 def worker_init_fn(worker_id):
     worker_info = torch.utils.data.get_worker_info()
     dataset = worker_info.dataset
@@ -164,7 +163,8 @@ def worker_init_fn(worker_id):
     dataset.degrees = [g.degrees() for g in dataset.step_graphs]
     np.random.seed(worker_info.seed % (2 ** 32))
 
-def labeled_batcher_single_graph(): #for finetune
+
+def labeled_batcher_single_graph():  # for finetune
     def batcher_dev(batch):
         graph_q_, label_ = zip(*batch)
         graph_q = batch_graphs(graph_q_)
@@ -172,7 +172,8 @@ def labeled_batcher_single_graph(): #for finetune
         return graph_q, torch.LongTensor(label_)
     return batcher_dev
 
-def labeled_batcher_double_graphs(): #for freeze
+
+def labeled_batcher_double_graphs():  # for freeze
     def batcher_dev(batch):
         graph_q_, graph_k_, label_ = zip(*batch)
         graph_q, graph_k = batch_graphs(graph_q_), batch_graphs(graph_k_)
@@ -180,7 +181,8 @@ def labeled_batcher_double_graphs(): #for freeze
         return graph_q, graph_k, torch.LongTensor(label_)
     return batcher_dev
 
-def batcher(): #for pretrain
+
+def batcher():  # for pretrain
     def batcher_dev(batch):
         graph_q_, graph_k_ = zip(*batch)
         graph_q, graph_k = batch_graphs(graph_q_), batch_graphs(graph_k_)
@@ -254,7 +256,8 @@ def _rwr_trace_to_cogdl_graph(
         subg.seed[0] = 1
     return subg
 
-class LoadBalanceGraphDataset(torch.utils.data.IterableDataset): #for pretrain
+
+class LoadBalanceGraphDataset(torch.utils.data.IterableDataset):  # for pretrain
     def __init__(
         self,
         data,
@@ -311,7 +314,7 @@ class LoadBalanceGraphDataset(torch.utils.data.IterableDataset): #for pretrain
         prob = degrees / torch.sum(degrees)
         samples = np.random.choice(
             self.length, size=self.num_samples, replace=True, p=prob.numpy()
-        ) #根据概率选这些点
+        )
         for idx in samples:
             yield self.__getitem__(idx)
 
@@ -330,7 +333,7 @@ class LoadBalanceGraphDataset(torch.utils.data.IterableDataset): #for pretrain
         if step == 0:
             other_node_idx = node_idx
         else:
-            other_node_idx =  g.random_walk([node_idx], step)[-1]
+            other_node_idx = g.random_walk([node_idx], step)[-1]
 
         if self.aug == "rwr":
             max_nodes_per_seed = max(
@@ -355,15 +358,14 @@ class LoadBalanceGraphDataset(torch.utils.data.IterableDataset): #for pretrain
         )
         if self.graph_transform:
             graph_q = self.graph_transform(graph_q)
-            graph_k = self.graph_transform(graph_k)
-        
+            graph_k = self.graph_transform(graph_k)    
         return graph_q, graph_k
 
 
-class NodeClassificationDataset(object): #for freeze
+class NodeClassificationDataset(object):  # for freeze
     def __init__(
         self,
-        data, #Graph
+        data,  # Graph
         rw_hops: int = 64,
         subgraph_size: int = 64,
         restart_prob: float = 0.8,
@@ -434,7 +436,7 @@ class NodeClassificationDataset(object): #for freeze
         return graph_q, graph_k, y
 
 
-class NodeClassificationDatasetLabeled(NodeClassificationDataset): #for finetune
+class NodeClassificationDatasetLabeled(NodeClassificationDataset):  # for finetune
     def __init__(
         self,
         data,

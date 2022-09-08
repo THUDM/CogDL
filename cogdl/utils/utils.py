@@ -284,14 +284,15 @@ def get_memory_usage(print_info=False):
         print("reserved:  %.2f MB" % (reserved / 1024 / 1024), flush=True)
     return allocated
 
+
 def build_model_path(args, model_name):
     if not hasattr(args, "save_model_path"):
         args.save_model_path = ""
     if model_name == "gcc":
         if args.pretrain:
             model_name_path = "{}_{}_{}_layer_{}_lr_{}_decay_{}_bsz_{}_hid_{}_samples_{}_nce_t_{}_nce_k_{}_rw_hops_{}_restart_prob_{}_aug_{}_ft_{}_deg_{}_pos_{}_momentum_{}".format(
-                "Pretrain" if not args.finetune else "FT",
-                '_'.join([x.replace('gcc_', '').replace('_','-') for x in args.dataset.split(' ')]),
+                "Pretrain" if not args.finetune else "FT", 
+                '_'.join([x.replace('gcc_', '').replace('_', '-') for x in args.dataset.split(' ')]),
                 args.gnn_model,
                 args.num_layers,
                 args.lr,
@@ -313,6 +314,7 @@ def build_model_path(args, model_name):
             args.save_model_path = os.path.join(args.save_model_path, model_name_path)
             os.makedirs(args.save_model_path, exist_ok=True)
     return args
+
 
 if __name__ == "__main__":
     args = build_args_from_dict({"a": 1, "b": 2})

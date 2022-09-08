@@ -155,17 +155,17 @@ class DataWrapper(object):
         if self.__dataset__ is None:
             self.__dataset__ = getattr(self, "dataset", None)
         if self.__dataset__ is not None and \
-                (isinstance(self.__dataset__.data, Graph) \
-                or hasattr(self.__dataset__.data, "graphs")):
-                self.__dataset__.data.train()
+                (isinstance(self.__dataset__.data, Graph) 
+                    or hasattr(self.__dataset__.data, "graphs")):
+            self.__dataset__.data.train()
 
     def eval(self):
         if self.__dataset__ is None:
             self.__dataset__ = getattr(self, "dataset", None)
         if self.__dataset__ is not None and \
-                (isinstance(self.__dataset__.data, Graph) \
-                or hasattr(self.__dataset__.data, "graphs")):
-                self.__dataset__.data.eval()
+                (isinstance(self.__dataset__.data, Graph) 
+                    or hasattr(self.__dataset__.data, "graphs")):
+            self.__dataset__.data.eval()
 
 
 class OnLoadingWrapper(object):

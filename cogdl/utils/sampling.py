@@ -94,11 +94,11 @@ class RandomWalker(object):
         result = np.array(result, dtype=np.int64)
         return result
 
-    def walk_one(self,start,length,p):
+    def walk_one(self, start, length, p):
         walk_res = [np.zeros(length, dtype=np.int32)] * len(start)
-        p=0.0
+        p = 0.0
         for i in range(len(start)):
-            node=start[i]
+            node = start[i]
             result = [np.int32(0)] * length
             index = np.int32(0)
             _node = node

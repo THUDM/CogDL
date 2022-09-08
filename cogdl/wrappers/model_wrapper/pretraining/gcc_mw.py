@@ -16,6 +16,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 import scipy.sparse as sp
 
+
 class GCCModelWrapper(ModelWrapper):
     @staticmethod
     def add_args(parser):
@@ -43,7 +44,7 @@ class GCCModelWrapper(ModelWrapper):
         num_classes=1,
         num_shuffle=10,
         save_model_path="saved",
-        load_model_path = "",
+        load_model_path="",
         freeze=False,
         pretrain=False
     ):
@@ -139,15 +140,13 @@ class GCCModelWrapper(ModelWrapper):
             bsz = graph_q.batch_size
             with torch.no_grad():
                 feat_q = self.model(graph_q)
-                assert feat_q.shape == (graph_q.batch_size, self.output_size)
+                assert feat_q.shape == (bsz, self.output_size)
                 out = self.linear(feat_q)
             # loss = self.criterion(out, y)
             preds = out.argmax(dim=1)
             f1 = f1_score(y.cpu().numpy(), preds.cpu().numpy(), average="micro")
             self.note("Micro-F1", f1)
 
-        
-    
     def setup_optimizer(self):
         cfg = self.optimizer_cfg
         lr = cfg["lr"]
@@ -200,13 +199,13 @@ class GCCModelWrapper(ModelWrapper):
             self.save_checkpoint(filepath)
         else:
             pass
-        
 
 
 def clear_bn(m):
     classname = m.__class__.__name__
     if classname.find("BatchNorm") != -1:
         m.reset_running_stats()
+
 
 class TopKRanker(OneVsRestClassifier):
     def predict(self, X, top_k_list):
@@ -220,6 +219,7 @@ class TopKRanker(OneVsRestClassifier):
             for label in labels:
                 all_labels[i, label] = 1
         return all_labels
+
 
 def evaluate_nc(features_matrix, label_matrix, num_shuffle):
     # shuffle, to create train/test groups
@@ -240,7 +240,7 @@ def evaluate_nc(features_matrix, label_matrix, num_shuffle):
         X_test = features_matrix[test_idx]
         y_test = label_matrix[test_idx]
 
-        clf = TopKRanker(LogisticRegression(solver='liblinear',C=1000)) #max_iter=1000
+        clf = TopKRanker(LogisticRegression(solver='liblinear', C=1000))  # max_iter=1000
         clf.fit(X_train, y_train)
 
         # find out how many labels should be predicted

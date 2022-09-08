@@ -68,7 +68,7 @@ class GINModel(nn.Module):
         train_eps=False,
         dropout=0.5,
         final_dropout=0.2,
-        use_selayer = False,
+        use_selayer=False,
     ):
         super(GINModel, self).__init__()
         self.gin_layers = nn.ModuleList()
@@ -163,7 +163,6 @@ class GCCModel(BaseModel):
         parser.add_argument("--gnn-model", type=str, default="gin")
         parser.add_argument("--degree-input", type=bool, default=True)
 
-
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
@@ -175,8 +174,8 @@ class GCCModel(BaseModel):
             num_heads=args.num_heads,
             degree_embedding_size=args.degree_embedding_size,
             node_hidden_dim=args.hidden_size,
-            norm = args.norm,
-            gnn_model = args.gnn_model,
+            norm=args.norm,
+            gnn_model=args.gnn_model,
             output_dim=args.output_size,
             degree_input=args.degree_input
         )

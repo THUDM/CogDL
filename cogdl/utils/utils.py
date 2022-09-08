@@ -289,7 +289,7 @@ def build_model_path(args, model_name):
     if not hasattr(args, "save_model_path"):
         args.save_model_path = ""
     if model_name == "gcc":
-        if args.pretrain:
+        if hasattr(args, "pretrain") and args.pretrain:
             model_name_path = "{}_{}_{}_layer_{}_lr_{}_decay_{}_bsz_{}_hid_{}_samples_{}_nce_t_{}_nce_k_{}_rw_hops_{}_restart_prob_{}_aug_{}_ft_{}_deg_{}_pos_{}_momentum_{}".format(
                 "Pretrain" if not args.finetune else "FT", 
                 '_'.join([x.replace('gcc_', '').replace('_', '-') for x in args.dataset.split(' ')]),

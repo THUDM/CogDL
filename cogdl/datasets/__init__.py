@@ -80,7 +80,7 @@ def build_dataset_pretrain(args):
 def build_dataset(args):
     if not hasattr(args, "split"):
         args.split = 0
-    if not args.pretrain:
+    if not hasattr(args, "pretrain") or not args.pretrain:
         dataset = build_dataset_from_name(args.dataset, args.split)
     else:
         dataset = build_dataset_pretrain(args)

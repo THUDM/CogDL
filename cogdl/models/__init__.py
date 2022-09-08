@@ -44,10 +44,10 @@ def build_model(args):
 
 
 SUPPORTED_MODELS = {
-    "transe":"cogdl.models.emb.transe.TransE",
-    "complex":"cogdl.models.emb.complex.ComplEx",
-    "distmult":"cogdl.models.emb.distmult.DistMult",
-    "rotate":"cogdl.models.emb.rotate.RotatE",
+    "transe": "cogdl.models.emb.transe.TransE",
+    "complex": "cogdl.models.emb.complex.ComplEx",
+    "distmult": "cogdl.models.emb.distmult.DistMult",
+    "rotate": "cogdl.models.emb.rotate.RotatE",
     "hope": "cogdl.models.emb.hope.HOPE",
     "spectral": "cogdl.models.emb.spectral.Spectral",
     "hin2vec": "cogdl.models.emb.hin2vec.Hin2vec",

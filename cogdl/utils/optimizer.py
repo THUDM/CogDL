@@ -2,6 +2,7 @@
 import numpy as np
 import torch.nn as nn
 
+
 class NoamOptimizer(nn.Module):
     """A simple wrapper class for learning rate scheduling"""
 

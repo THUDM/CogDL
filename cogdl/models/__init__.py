@@ -44,10 +44,6 @@ def build_model(args):
 
 
 SUPPORTED_MODELS = {
-    "transe":"cogdl.models.emb.transe.TransE",
-    "complex":"cogdl.models.emb.complex.ComplEx",
-    "distmult":"cogdl.models.emb.distmult.DistMult",
-    "rotate":"cogdl.models.emb.rotate.RotatE",
     "hope": "cogdl.models.emb.hope.HOPE",
     "spectral": "cogdl.models.emb.spectral.Spectral",
     "hin2vec": "cogdl.models.emb.hin2vec.Hin2vec",
@@ -104,7 +100,7 @@ SUPPORTED_MODELS = {
     "sortpool": "cogdl.models.nn.sortpool.SortPool",
     "srgcn": "cogdl.models.nn.srgcn.SRGCN",
     "gcc": "cogdl.models.nn.gcc_model.GCCModel",
-    "unsup_graphsage": "cogdl.models.nn.graphsage.Graphsage",
+    "unsup_graphsage": "cogdl.models.nn.unsup_graphsage.SAGE",
     "graphsaint": "cogdl.models.nn.graphsaint.GraphSAINT",
     "m3s": "cogdl.models.nn.m3s.M3S",
     "moe_gcn": "cogdl.models.nn.moe_gcn.MoEGCN",
@@ -116,4 +112,7 @@ SUPPORTED_MODELS = {
     "revgen": "cogdl.models.nn.revgcn.RevGEN",
     "sage": "cogdl.models.nn.graphsage.SAGE",
     "autognn": "cogdl.models.nn.autognn.AutoGNN",
+    "stgcn": "cogdl.models.nn.stgcn.STGCN",
+    "stgat": "cogdl.models.nn.stgat.STGAT",
+
 }

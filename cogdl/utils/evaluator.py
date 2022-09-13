@@ -8,6 +8,7 @@ import torch.nn as nn
 from sklearn.metrics import f1_score
 
 
+
 def setup_evaluator(metric: Union[str, Callable]):
     if isinstance(metric, str):
         metric = metric.lower()
@@ -17,11 +18,34 @@ def setup_evaluator(metric: Union[str, Callable]):
             return MultiLabelMicroF1()
         elif metric == "multiclass_microf1":
             return MultiClassMicroF1()
+        elif metric == "mae":
+            return MAE()
         else:
             raise NotImplementedError
     else:
         return BaseEvaluator(metric)
 
+class MAE(object):
+    def __init__(self):
+        super(MAE, self).__init__()
+        self.MAE = list()
+
+    def __call__(self, y_pred, y_true):
+
+        d = np.abs(y_true - y_pred)
+        mae = d.tolist()
+        MAE = np.array(mae).mean()
+        self.MAE.append(MAE)
+        return MAE
+
+    def evaluate(self):
+        if len(self.MAE) > 0:
+            return np.sum(self.MAE) / len(self.MAE)
+        warnings.warn("pre-computing list is empty")
+        return 0
+
+    def clear(self):
+        self.MAE = list()
 
 class BaseEvaluator(object):
     def __init__(self, eval_func):

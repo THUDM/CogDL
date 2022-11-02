@@ -52,6 +52,7 @@ class Batch(Graph):
         batch.batch = []
         num_nodes_cum = [0]
         num_edges_cum = [0]
+
         for i, data in enumerate(data_list):
             for key in data.keys:
                 item = data[key]

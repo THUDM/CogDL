@@ -19,6 +19,10 @@ from cogdl.operators.sample import sample_adj_c, subgraph_c
 
 subgraph_c = None  # noqa: F811
 
+import dgl, torch_geometric
+
+# https://zhuanlan.zhihu.com/p/329962624
+
 
 class BaseGraph(object):
     def __init__(self):
@@ -132,8 +136,15 @@ class BaseGraph(object):
 
 
 class Adjacency(BaseGraph):
+    r"""
+    该类主要是通过定义稀疏矩阵从而实现邻接矩阵，这里的稀疏矩阵主要从两个角度定义：CSR & COO
+    参考：https://blog.csdn.net/power0405hf/article/details/47789481
+    - row col weight: COO
+    - row_ptr col weight: CSR
+    """
     def __init__(self, row=None, col=None, row_ptr=None, weight=None, attr=None, num_nodes=None, types=None, **kwargs):
         super(Adjacency, self).__init__()
+        # row
         self.row = row
         self.col = col
         self.row_ptr = row_ptr
@@ -147,12 +158,14 @@ class Adjacency(BaseGraph):
         for key, item in kwargs.items():
             self[key] = item
 
+    # 设置各个边的权重
     def set_weight(self, weight):
         self.weight = weight
         self.__normed__ = None
         self.__in_norm__ = self.__out_norm__ = None
         self.__symmetric__ = False
 
+    # 获取各个边的权重，其中indicator表征是否对获取的边的权重做初始化
     def get_weight(self, indicator=None):
         """If `indicator` is not None, the normalization will not be implemented"""
         if self.weight is None or self.weight.shape[0] != self.col.shape[0]:
@@ -172,6 +185,7 @@ class Adjacency(BaseGraph):
             weight = self.__out_norm__[self.col].view(-1)
         return weight
 
+    # 为图中还没有自环的节点添加自环
     def add_remaining_self_loops(self):
         if self.attr is not None and len(self.attr.shape) == 1:
             edge_index, weight_attr = add_remaining_self_loops(
@@ -190,6 +204,7 @@ class Adjacency(BaseGraph):
         self.row = self.row[reindex]
         self.col = self.col[reindex]
 
+    #
     def padding_self_loops(self):
         device = self.row.device
         row, col = torch.arange(self.num_nodes, device=device), torch.arange(self.num_nodes, device=device)
@@ -408,6 +423,7 @@ class Adjacency(BaseGraph):
     def clone(self):
         return Adjacency.from_dict({k: v.clone() for k, v in self})
 
+    # 将该邻接矩阵转化成CSR的稀疏矩阵
     def to_scipy_csr(self):
         data = self.get_weight().cpu().numpy()
         num_nodes = int(self.num_nodes)
@@ -421,6 +437,7 @@ class Adjacency(BaseGraph):
             mx = sp.csr_matrix((data, col_ind, row_ptr), shape=(num_nodes, num_nodes))
         return mx
 
+    # 将邻接矩阵转化为networkx的稀疏矩阵
     def to_networkx(self, weighted=True):
         gnx = nx.Graph()
         gnx.add_nodes_from(np.arange(self.num_nodes))
@@ -436,6 +453,7 @@ class Adjacency(BaseGraph):
             gnx.add_edges_from(edges)
         return gnx
 
+    # 在该邻接矩阵上进行随机游走
     def random_walk(self, seeds, length=1, restart_p=0.0):
         if not hasattr(self, "__walker__"):
             scipy_adj = self.to_scipy_csr()
@@ -473,6 +491,8 @@ def is_read_adj_key(key):
 
 class Graph(BaseGraph):
     def __init__(self, x=None, y=None, **kwargs):
+        # 这里的 x 是 节点特征矩阵
+        # 这里的 y 是 每个节点的目标标签
         super(Graph, self).__init__()
         if x is not None:
             if not torch.is_tensor(x):
@@ -490,6 +510,7 @@ class Graph(BaseGraph):
                 self[key] = item
 
         num_nodes = x.shape[0] if x is not None else None
+
         if "edge_index_train" in kwargs:
             self._adj_train = Adjacency(num_nodes=num_nodes)
             for key, item in kwargs.items():
@@ -504,6 +525,7 @@ class Graph(BaseGraph):
         else:
             self._adj_train = None
 
+        # 创建邻接矩阵
         self._adj_full = Adjacency(num_nodes=num_nodes)
         for key, item in kwargs.items():
             if is_read_adj_key(key) and not is_adj_key_train(key):
@@ -575,6 +597,7 @@ class Graph(BaseGraph):
                 return torch.where(mask)[0]
             return mask
 
+    # 下面的三个方法都是对node id进行掩盖，用于训练、验证和测试
     @property
     def train_nid(self):
         return self.mask2nid("train")
@@ -587,6 +610,20 @@ class Graph(BaseGraph):
     def test_nid(self):
         return self.mask2nid("test")
 
+    # 提供了 graph.local_graph 来设置local scape：
+    # 任何out-of-place 操作都不会反映到原始图上；in-place操作会影响原始图形
+    """ Example
+    graph = build_dataset_from_name("cora")[0]
+    graph.num_edges
+    >> 10556
+    
+    with graph.local_graph():
+        mask = torch.arange(100)
+        row, col = graph.edge_index
+        graph.edge_index = (row[mask], col[mask])
+        graph.num_edges
+    >> 100
+    """
     @contextmanager
     def local_graph(self):
         self.__temp_adj_stack__.append(self._adj)
@@ -660,6 +697,12 @@ class Graph(BaseGraph):
         if self._adj.row_ptr is None:
             self._adj._to_csr()
         return self._adj.col
+
+    @property
+    def row_indices(self):
+        if self._adj.row_ptr is None:
+            self._adj._to_csr()
+        return self._adj.row
 
     @row_indptr.setter
     def row_indptr(self, row_ptr):
@@ -749,11 +792,6 @@ class Graph(BaseGraph):
     @num_nodes.setter
     def num_nodes(self, num_nodes):
         self.__num_nodes__ = num_nodes
-
-    @staticmethod
-    def from_pyg_data(data):
-        val = {k: v for k, v in data}
-        return Graph(**val)
 
     def clone(self):
         return Graph.from_dict({k: v.clone() for k, v in self})
@@ -921,9 +959,11 @@ class Graph(BaseGraph):
     def random_walk_with_restart(self, seeds, max_nodes_per_seed, restart_p=0.0):
         return self._adj.random_walk(seeds, max_nodes_per_seed, restart_p)
 
+    # 将图网络转为CSR格式的稀疏矩阵
     def to_scipy_csr(self):
         return self._adj.to_scipy_csr()
 
+    # 将图网络转为netwokx格式的数据
     def to_networkx(self):
         return self._adj.to_networkx()
 
@@ -941,10 +981,24 @@ class Graph(BaseGraph):
     def set_grb_adj(self, adj):
         self.grb_adj = adj
 
-    # @property
-    # def requires_grad(self):
-    #     return False
-    #
-    # @requires_grad.setter
-    # def requires_grad(self, x):
-    #     print(f"Set `requires_grad` to {x}")
+    def to_dgl_graph(self):
+        csr_matrix = self._adj.to_scipy_csr()
+        dgl_graph = dgl.from_scipy(csr_matrix)
+        return dgl_graph
+
+    @staticmethod
+    def from_dgl_graph(data: dgl.DGLGraph):
+        if len(data.ntypes) > 1 or len(data.etypes) > 1:
+            raise NotImplementedError("Now Just Applicable for Homogeneous Graph")
+        return Graph(edge_index=data.edges())
+
+    def to_pyg_graph(self):
+        edge_index = torch.stack((self.row_indices(), self.col_indices()), 0)
+        return torch_geometric.data.Data(edge_index=edge_index)
+
+    @staticmethod
+    def from_pyg_graph(data: torch_geometric.data.Data):
+        val = {k: v for k, v in data}
+        return Graph(**val)
+
+

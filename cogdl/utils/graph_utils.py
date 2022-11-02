@@ -1,6 +1,5 @@
 import random
 from typing import Optional, Tuple, Union
-
 import numpy as np
 import scipy.sparse as sp
 import torch

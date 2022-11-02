@@ -59,6 +59,8 @@ class UnsupNeighborSampler(DataLoader):
     def shuffle(self):
         self.dataset.shuffle()
 
+
+
 class NeighborSamplerDataset(torch.utils.data.Dataset):
     def __init__(self, dataset, sizes: List[int], batch_size: int, mask=None):
         super(NeighborSamplerDataset, self).__init__()
@@ -67,6 +69,7 @@ class NeighborSamplerDataset(torch.utils.data.Dataset):
         self.y = self.data.y
         self.sizes = sizes
         self.batch_size = batch_size
+
         self.node_idx = torch.arange(0, self.data.x.shape[0], dtype=torch.long)
         if mask is not None:
             self.node_idx = self.node_idx[mask]
@@ -158,13 +161,13 @@ class UnsupNeighborSamplerDataset(torch.utils.data.Dataset):
                     sampled_adjs: List[Tuple(Tensor, Tensor, Tuple[int]]
                 )
         """
-        batch = self.node_idx[idx * self.batch_size : (idx + 1) * self.batch_size]
+        batch = self.node_idx[idx * self.batch_size: (idx + 1) * self.batch_size]
         self.random_walker.build_up(self.edge_index, self.total_num_nodes)
-        walk_res=self.random_walker.walk_one(batch,length=1,p=0.0)
+        walk_res = self.random_walker.walk_one(batch,length=1,p=0.0)
 
         neg_batch = torch.randint(0, self.total_num_nodes, (batch.numel(), ),
                                   dtype=torch.int64)        
-        pos_batch=torch.tensor(walk_res)
+        pos_batch = torch.tensor(walk_res)
         batch = torch.cat([batch, pos_batch, neg_batch], dim=0)
         node_id = batch
         adj_list = []

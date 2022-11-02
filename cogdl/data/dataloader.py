@@ -47,6 +47,8 @@ class DataLoader(torch.utils.data.DataLoader, metaclass=GenericRecordParameters)
         )
 
     @staticmethod
+    # 如何取样本的，我们可以定义自己的函数来准确地实现想要的功能。
+    # 也即对采样的样本之后，对采样的样本如何拼接返回相关的数据值
     def collate_fn(batch):
         item = batch[0]
         if isinstance(item, Graph):
@@ -55,7 +57,6 @@ class DataLoader(torch.utils.data.DataLoader, metaclass=GenericRecordParameters)
             return default_collate(batch)
         elif isinstance(item, float):
             return torch.tensor(batch, dtype=torch.float)
-
         raise TypeError("DataLoader found invalid type: {}".format(type(item)))
 
     def get_parameters(self):

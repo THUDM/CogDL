@@ -119,5 +119,4 @@ metis*
 *.npz
 
 
-tests/tasks/test_gcc.py
 tests/tasks/test_gcc_.py

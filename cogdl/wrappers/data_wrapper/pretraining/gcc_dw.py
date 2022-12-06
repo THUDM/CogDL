@@ -35,6 +35,7 @@ class GCCDataWrapper(DataWrapper):
         parser.add_argument("--num-copies", type=int, default=6)
         parser.add_argument("--num-samples", type=int, default=2000)
         parser.add_argument("--aug", type=str, default="rwr")
+        parser.add_argument("--parallel", type=bool, default=True)
 
     def __init__(
         self,
@@ -53,6 +54,7 @@ class GCCDataWrapper(DataWrapper):
         num_copies=1,
         aug="rwr",
         num_neighbors=5,
+        parallel=True
     ):
         super(GCCDataWrapper, self).__init__(dataset)
         
@@ -73,7 +75,7 @@ class GCCDataWrapper(DataWrapper):
             else:
                 self.train_dataset = LoadBalanceGraphDataset(
                     data, rw_hops, restart_prob, positional_embedding_size,
-                    num_workers, num_samples, num_copies, aug, num_neighbors
+                    num_workers, num_samples, num_copies, aug, num_neighbors, parallel
                 )
 
         if finetune:
@@ -269,6 +271,7 @@ class LoadBalanceGraphDataset(torch.utils.data.IterableDataset):  # for pretrain
         num_copies=1,
         aug="rwr",
         num_neighbors=5,
+        parallel=True,
         graph_transform=None,
         step_dist=[1.0, 0.0, 0.0],
     ):
@@ -280,6 +283,7 @@ class LoadBalanceGraphDataset(torch.utils.data.IterableDataset):  # for pretrain
         self.positional_embedding_size = positional_embedding_size
         self.step_dist = step_dist
         self.num_samples = num_samples
+        self.parallel = parallel
         assert sum(step_dist) == 1.0
         assert positional_embedding_size > 1
         graph_sizes = [graph.num_nodes for graph in self.graphs]
@@ -340,7 +344,7 @@ class LoadBalanceGraphDataset(torch.utils.data.IterableDataset):  # for pretrain
                 self.rw_hops,
                 int((self.degrees[graph_idx][node_idx] * math.e / (math.e - 1) / self.restart_prob) + 0.5),
             )
-            traces = g.random_walk_with_restart([node_idx, other_node_idx], max_nodes_per_seed, self.restart_prob)
+            traces = g.random_walk_with_restart([node_idx, other_node_idx], max_nodes_per_seed, self.restart_prob, self.parallel)
 
         graph_q = _rwr_trace_to_cogdl_graph(
             g=g,

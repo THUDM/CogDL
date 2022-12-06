@@ -116,3 +116,7 @@ metis*
 *.csv
 *.sql
 *.pt
+*.npz
+
+
+tests/tasks/test_gcc.py

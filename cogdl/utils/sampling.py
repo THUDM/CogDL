@@ -8,7 +8,25 @@ import random
 
 
 @numba.njit(cache=True, parallel=True)
-def random_walk(start, length, indptr, indices, p=0.0):
+def random_walk_parallel(start, length, indptr, indices, p=0.0):
+    """
+    Parameters:
+        start : np.array(dtype=np.int32)
+        length : int
+        indptr : np.array(dtype=np.int32)
+        indices : np.array(dtype=np.int32)
+        p : float
+    Return:
+        list(np.array(dtype=np.int32))
+    """
+    result = [np.zeros(length, dtype=np.int32)] * len(start)
+    for i in numba.prange(len(start)):
+        result[i] = _random_walk(start[i], length, indptr, indices, p)
+    return result
+
+
+@numba.njit(cache=True)
+def random_walk_single(start, length, indptr, indices, p=0.0):
     """
     Parameters:
         start : np.array(dtype=np.int32)
@@ -84,13 +102,16 @@ class RandomWalker(object):
         self.indptr = adj.indptr
         self.indices = adj.indices
 
-    def walk(self, start, walk_length, restart_p=0.0):
+    def walk(self, start, walk_length, restart_p=0.0, parallel=True):
         assert self.indptr is not None, "Please build the adj_list first"
         if isinstance(start, torch.Tensor):
             start = start.cpu().numpy()
         if isinstance(start, list):
             start = np.asarray(start, dtype=np.int32)
-        result = random_walk(start, walk_length, self.indptr, self.indices, restart_p)
+        if parallel:
+            result = random_walk_parallel(start, walk_length, self.indptr, self.indices, restart_p)
+        else:
+            result = random_walk_single(start, walk_length, self.indptr, self.indices, restart_p)
         result = np.array(result, dtype=np.int64)
         return result
 

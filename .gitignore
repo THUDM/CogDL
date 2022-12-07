@@ -117,6 +117,3 @@ metis*
 *.sql
 *.pt
 *.npz
-
-
-tests/tasks/test_gcc_.py

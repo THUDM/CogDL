@@ -154,13 +154,17 @@ class DataWrapper(object):
     def train(self):
         if self.__dataset__ is None:
             self.__dataset__ = getattr(self, "dataset", None)
-        if self.__dataset__ is not None and isinstance(self.__dataset__.data, Graph):
+        if self.__dataset__ is not None and \
+                (isinstance(self.__dataset__.data, Graph) 
+                    or hasattr(self.__dataset__.data, "graphs")):
             self.__dataset__.data.train()
 
     def eval(self):
         if self.__dataset__ is None:
             self.__dataset__ = getattr(self, "dataset", None)
-        if self.__dataset__ is not None and isinstance(self.__dataset__.data, Graph):
+        if self.__dataset__ is not None and \
+                (isinstance(self.__dataset__.data, Graph) 
+                    or hasattr(self.__dataset__.data, "graphs")):
             self.__dataset__.data.eval()
 
 
@@ -262,7 +266,7 @@ class OnLoadingWrapper(object):
         if isinstance(inputs, list):
             outputs = [0] * len(inputs)
             for i, item in enumerate(inputs):
-                inputs[i] = self.__get_min_len__(item)
+                outputs[i] = self.__get_min_len__(item)
             return np.min(outputs)
         # elif isinstance(inputs, dict):
         #     outputs = {key: 0 for key in inputs.keys()}

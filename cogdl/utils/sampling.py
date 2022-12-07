@@ -8,7 +8,25 @@ import random
 
 
 @numba.njit(cache=True, parallel=True)
-def random_walk(start, length, indptr, indices, p=0.0):
+def random_walk_parallel(start, length, indptr, indices, p=0.0):
+    """
+    Parameters:
+        start : np.array(dtype=np.int32)
+        length : int
+        indptr : np.array(dtype=np.int32)
+        indices : np.array(dtype=np.int32)
+        p : float
+    Return:
+        list(np.array(dtype=np.int32))
+    """
+    result = [np.zeros(length, dtype=np.int32)] * len(start)
+    for i in numba.prange(len(start)):
+        result[i] = _random_walk(start[i], length, indptr, indices, p)
+    return result
+
+
+@numba.njit(cache=True)
+def random_walk_single(start, length, indptr, indices, p=0.0):
     """
     Parameters:
         start : np.array(dtype=np.int32)
@@ -31,15 +49,19 @@ def _random_walk(node, length, indptr, indices, p=0.0):
     result[0] = numba.int32(node)
     i = numba.int32(1)
     _node = node
+    _start = indptr[_node] 
+    _end = indptr[_node + 1]
     while i < length:
-        start = indptr[node]
+        start = indptr[node] 
         end = indptr[node + 1]
         sample = random.randint(start, end - 1)
         node = indices[sample]
         if np.random.uniform(0, 1) > p:
             result[i] = node
         else:
-            result[i] = _node
+            sample = random.randint(_start, _end - 1)
+            node = indices[sample]
+            result[i] = node
         i += 1
     return np.array(result, dtype=np.int32)
 
@@ -76,21 +98,24 @@ class RandomWalker(object):
         self.indptr = adj.indptr
         self.indices = adj.indices
 
-    def walk(self, start, walk_length, restart_p=0.0):
+    def walk(self, start, walk_length, restart_p=0.0, parallel=True):
         assert self.indptr is not None, "Please build the adj_list first"
         if isinstance(start, torch.Tensor):
             start = start.cpu().numpy()
         if isinstance(start, list):
             start = np.asarray(start, dtype=np.int32)
-        result = random_walk(start, walk_length, self.indptr, self.indices, restart_p)
+        if parallel:
+            result = random_walk_parallel(start, walk_length, self.indptr, self.indices, restart_p)
+        else:
+            result = random_walk_single(start, walk_length, self.indptr, self.indices, restart_p)
         result = np.array(result, dtype=np.int64)
         return result
 
-    def walk_one(self,start,length,p):
+    def walk_one(self, start, length, p):
         walk_res = [np.zeros(length, dtype=np.int32)] * len(start)
-        p=0.0
+        p = 0.0
         for i in range(len(start)):
-            node=start[i]
+            node = start[i]
             result = [np.int32(0)] * length
             index = np.int32(0)
             _node = node

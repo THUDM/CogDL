@@ -436,11 +436,11 @@ class Adjacency(BaseGraph):
             gnx.add_edges_from(edges)
         return gnx
 
-    def random_walk(self, seeds, length=1, restart_p=0.0):
+    def random_walk(self, seeds, length=1, restart_p=0.0, parallel=True):
         if not hasattr(self, "__walker__"):
             scipy_adj = self.to_scipy_csr()
             self.__walker__ = RandomWalker(scipy_adj)
-        return self.__walker__.walk(seeds, length, restart_p=restart_p)
+        return self.__walker__.walk(seeds, length, restart_p=restart_p, parallel=parallel)
 
     @staticmethod
     def from_dict(dictionary):
@@ -915,11 +915,11 @@ class Graph(BaseGraph):
         else:
             return g
 
-    def random_walk(self, seeds, max_nodes_per_seed, restart_p=0.0):
-        return self._adj.random_walk(seeds, max_nodes_per_seed, restart_p)
+    def random_walk(self, seeds, max_nodes_per_seed, restart_p=0.0, parallel=True):
+        return self._adj.random_walk(seeds, max_nodes_per_seed, restart_p, parallel)
 
-    def random_walk_with_restart(self, seeds, max_nodes_per_seed, restart_p=0.0):
-        return self._adj.random_walk(seeds, max_nodes_per_seed, restart_p)
+    def random_walk_with_restart(self, seeds, max_nodes_per_seed, restart_p=0.0, parallel=True):
+        return self._adj.random_walk(seeds, max_nodes_per_seed, restart_p, parallel)
 
     def to_scipy_csr(self):
         return self._adj.to_scipy_csr()

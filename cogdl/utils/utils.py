@@ -285,6 +285,37 @@ def get_memory_usage(print_info=False):
     return allocated
 
 
+def build_model_path(args, model_name):
+    if not hasattr(args, "save_model_path"):
+        args.save_model_path = ""
+    if model_name == "gcc":
+        if hasattr(args, "pretrain") and args.pretrain:
+            model_name_path = "{}_{}_{}_layer_{}_lr_{}_decay_{}_bsz_{}_hid_{}_samples_{}_nce_t_{}_nce_k_{}_rw_hops_{}_restart_prob_{}_aug_{}_ft_{}_deg_{}_pos_{}_momentum_{}".format(
+                "Pretrain" if not args.finetune else "FT", 
+                '_'.join([x.replace('gcc_', '').replace('_', '-') for x in args.dataset.split(' ')]),
+                args.gnn_model,
+                args.num_layers,
+                args.lr,
+                args.weight_decay,
+                args.batch_size,
+                args.hidden_size,
+                args.num_samples,
+                args.nce_t,
+                args.nce_k,
+                args.rw_hops,
+                args.restart_prob,
+                args.aug,
+                args.finetune,
+                args.degree_embedding_size,
+                args.positional_embedding_size,
+                args.momentum,
+            )
+
+            args.save_model_path = os.path.join(args.save_model_path, model_name_path)
+            os.makedirs(args.save_model_path, exist_ok=True)
+    return args
+
+
 if __name__ == "__main__":
     args = build_args_from_dict({"a": 1, "b": 2})
     print(args.a, args.b)

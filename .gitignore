@@ -116,3 +116,4 @@ metis*
 *.csv
 *.sql
 *.pt
+*.npz

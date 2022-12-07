@@ -1,8 +1,10 @@
 import copy
 import math
+import operator
 from typing import Tuple
 
 from scipy.sparse import linalg
+from sklearn.model_selection import StratifiedKFold
 
 import numpy as np
 import scipy.sparse as sparse
@@ -11,6 +13,7 @@ import torch
 import torch.nn.functional as F
 
 from torch.utils.data import DataLoader
+from torch.utils.data import Sampler, BatchSampler
 
 from .. import DataWrapper
 from cogdl.data import batch_graphs, Graph
@@ -20,15 +23,19 @@ class GCCDataWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):
         # random walk
-        parser.add_argument("--batch-size", type=int, default=128)
-        parser.add_argument("--rw-hops", type=int, default=64)
+        parser.add_argument("--batch-size", type=int, default=32)
+        parser.add_argument("--rw-hops", type=int, default=256)
         parser.add_argument("--subgraph-size", type=int, default=128)
         parser.add_argument("--restart-prob", type=float, default=0.8)
-        parser.add_argument("--positional-embedding-size", type=int, default=128)
+        parser.add_argument("--positional-embedding-size", type=int, default=32)
         parser.add_argument(
             "--task", type=str, default="node_classification", choices=["node_classification, graph_classification"]
         )
-        parser.add_argument("--num-workers", type=int, default=4)
+        parser.add_argument("--num-workers", type=int, default=12)
+        parser.add_argument("--num-copies", type=int, default=6)
+        parser.add_argument("--num-samples", type=int, default=2000)
+        parser.add_argument("--aug", type=str, default="rwr")
+        parser.add_argument("--parallel", type=bool, default=True)
 
     def __init__(
         self,
@@ -36,66 +43,153 @@ class GCCDataWrapper(DataWrapper):
         batch_size,
         finetune=False,
         num_workers=4,
-        rw_hops=64,
+        rw_hops=256,
         subgraph_size=128,
         restart_prob=0.8,
-        positional_embedding_size=128,
+        positional_embedding_size=32,
         task="node_classification",
+        freeze=False,
+        pretrain=False,
+        num_samples=0,
+        num_copies=1,
+        aug="rwr",
+        num_neighbors=5,
+        parallel=True
     ):
         super(GCCDataWrapper, self).__init__(dataset)
-
-        data = dataset.data
-        data.add_remaining_self_loops()
+        
+        if pretrain:
+            data = dataset.data.graphs
+        else:
+            data = dataset
+    
         if task == "node_classification":
             if finetune:
-                self.train_dataset = NodeClassificationDatasetLabeled(
+                finetune_dataset = NodeClassificationDatasetLabeled(
                     data, rw_hops, subgraph_size, restart_prob, positional_embedding_size
                 )
-            else:
+            elif freeze:
                 self.train_dataset = NodeClassificationDataset(
                     data, rw_hops, subgraph_size, restart_prob, positional_embedding_size
                 )
+            else:
+                self.train_dataset = LoadBalanceGraphDataset(
+                    data, rw_hops, restart_prob, positional_embedding_size,
+                    num_workers, num_samples, num_copies, aug, num_neighbors, parallel
+                )
+
+        if finetune:
+            graph = dataset.data
+            labels = graph.y
+            if len(labels.shape) != 1:
+                labels = graph.y.argmax(dim=1).tolist()
+            if hasattr(graph, "train_mask") and hasattr(graph, "test_mask"):
+                train_idx = torch.where(graph.train_mask == 1)[0]
+                test_idx = torch.where(graph.test_mask == 1)[0]
+            else:
+                skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=0)
+                idx_list = []
+                for idx in skf.split(np.zeros(len(labels)), labels):
+                    idx_list.append(idx)
+                train_idx, test_idx = idx_list[0]
+            self.train_dataset = torch.utils.data.Subset(finetune_dataset, train_idx)
+            self.test_dataset = torch.utils.data.Subset(finetune_dataset, test_idx)
+        
         elif task == "graph_classification":
             if finetune:
                 pass
             else:
                 pass
-        self.batch_size = batch_size
+        
+        self.batch_size = dataset.data.num_nodes if freeze else batch_size
         self.num_workers = num_workers
         self.finetune = finetune
 
         self.rw_hops = rw_hops
         self.subgraph_size = subgraph_size
         self.restart_prob = restart_prob
-
+        
+        # self.num_nodes = data.num_nodes
+        self.num_nodes = len(self.train_dataset)
+        self.freeze = freeze 
+        self.pretrain = pretrain
+        self.num_samples = num_samples
+        
     def train_wrapper(self):
+        if self.pretrain:
+            batcher_ = batcher()
+        elif self.freeze:
+            batcher_ = labeled_batcher_double_graphs()
+        elif self.finetune:
+            batcher_ = labeled_batcher_single_graph()
         train_loader = DataLoader(
             dataset=self.train_dataset,
             batch_size=self.batch_size,
-            collate_fn=labeled_batcher() if self.finetune else batcher(),
+            collate_fn=batcher_,
             shuffle=True if self.finetune else False,
             num_workers=self.num_workers,
-            worker_init_fn=None,
+            worker_init_fn=None if not self.pretrain else worker_init_fn,
         )
         return train_loader
+    
+    def test_wrapper(self):
+        if self.pretrain:
+            pass
+        elif self.freeze:
+            return self.ge_wrapper()
+        elif self.finetune:
+            test_loader = torch.utils.data.DataLoader(
+                dataset=self.test_dataset,
+                batch_size=self.batch_size,
+                collate_fn=labeled_batcher_single_graph(),
+                shuffle=True,
+                num_workers=self.num_workers,
+            )
+            return test_loader
+    
+    def ge_wrapper(self):
+        return self.train_wrapper()    
 
 
-def labeled_batcher():
+def worker_init_fn(worker_id):
+    worker_info = torch.utils.data.get_worker_info()
+    dataset = worker_info.dataset
+    graphs = dataset.graphs
+    selected_graphids = dataset.jobs[worker_id]
+    dataset.step_graphs = []
+    for graphid in selected_graphids:
+        # g = copy.deepcopy(graphs[graphid])
+        g = graphs[graphid]
+        dataset.step_graphs.append(g)
+    dataset.length = sum([g.num_nodes for g in dataset.step_graphs])
+    dataset.degrees = [g.degrees() for g in dataset.step_graphs]
+    np.random.seed(worker_info.seed % (2 ** 32))
+
+
+def labeled_batcher_single_graph():  # for finetune
     def batcher_dev(batch):
-        graph_q, label = zip(*batch)
-        graph_q = batch_graphs(graph_q)
-        return graph_q, torch.LongTensor(label)
-
+        graph_q_, label_ = zip(*batch)
+        graph_q = batch_graphs(graph_q_)
+        graph_q.batch_size = len(graph_q_)
+        return graph_q, torch.LongTensor(label_)
     return batcher_dev
 
 
-def batcher():
+def labeled_batcher_double_graphs():  # for freeze
+    def batcher_dev(batch):
+        graph_q_, graph_k_, label_ = zip(*batch)
+        graph_q, graph_k = batch_graphs(graph_q_), batch_graphs(graph_k_)
+        graph_q.batch_size = len(graph_q_)
+        return graph_q, graph_k, torch.LongTensor(label_)
+    return batcher_dev
+
+
+def batcher():  # for pretrain
     def batcher_dev(batch):
         graph_q_, graph_k_ = zip(*batch)
         graph_q, graph_k = batch_graphs(graph_q_), batch_graphs(graph_k_)
         graph_q.batch_size = len(graph_q_)
         return graph_q, graph_k
-
     return batcher_dev
 
 
@@ -165,10 +259,117 @@ def _rwr_trace_to_cogdl_graph(
     return subg
 
 
-class NodeClassificationDataset(object):
+class LoadBalanceGraphDataset(torch.utils.data.IterableDataset):  # for pretrain
     def __init__(
         self,
-        data: Graph,
+        data,
+        rw_hops=256,
+        restart_prob=0.8,
+        positional_embedding_size=32,
+        num_workers=1,
+        num_samples=10000,
+        num_copies=1,
+        aug="rwr",
+        num_neighbors=5,
+        parallel=True,
+        graph_transform=None,
+        step_dist=[1.0, 0.0, 0.0],
+    ):
+        super(LoadBalanceGraphDataset).__init__()
+        self.graphs = data
+        self.rw_hops = rw_hops
+        self.num_neighbors = num_neighbors
+        self.restart_prob = restart_prob
+        self.positional_embedding_size = positional_embedding_size
+        self.step_dist = step_dist
+        self.num_samples = num_samples
+        self.parallel = parallel
+        assert sum(step_dist) == 1.0
+        assert positional_embedding_size > 1
+        graph_sizes = [graph.num_nodes for graph in self.graphs]
+
+        # print("load graph done")
+
+        # a simple greedy algorithm for load balance
+        # sorted graphs w.r.t its size in decreasing order
+        # for each graph, assign it to the worker with least workload
+        assert num_workers % num_copies == 0
+        jobs = [list() for i in range(num_workers // num_copies)]
+        workloads = [0] * (num_workers // num_copies)
+        graph_sizes = sorted(
+            enumerate(graph_sizes), key=operator.itemgetter(1), reverse=True
+        )
+        for idx, size in graph_sizes:
+            argmin = workloads.index(min(workloads))
+            workloads[argmin] += size
+            jobs[argmin].append(idx)
+        self.jobs = jobs * num_copies
+        self.total = self.num_samples * num_workers
+        self.graph_transform = graph_transform
+        assert aug in ("rwr", "ns")
+        self.aug = aug
+        self.num_workers = num_workers
+
+    def __len__(self):
+        return self.num_samples * self.num_workers
+
+    def __iter__(self):
+        degrees = torch.cat([g.degrees().double() ** 0.75 for g in self.step_graphs])
+        prob = degrees / torch.sum(degrees)
+        samples = np.random.choice(
+            self.length, size=self.num_samples, replace=True, p=prob.numpy()
+        )
+        for idx in samples:
+            yield self.__getitem__(idx)
+
+    def __getitem__(self, idx):
+        graph_idx = 0
+        node_idx = idx
+        for i in range(len(self.step_graphs)):
+            if node_idx < self.step_graphs[i].num_nodes:
+                graph_idx = i
+                break
+            else:
+                node_idx -= self.step_graphs[i].num_nodes
+        
+        g = self.step_graphs[graph_idx]
+        step = np.random.choice(len(self.step_dist), 1, p=self.step_dist)[0]
+        if step == 0:
+            other_node_idx = node_idx
+        else:
+            other_node_idx = g.random_walk([node_idx], step)[-1]
+
+        if self.aug == "rwr":
+            max_nodes_per_seed = max(
+                self.rw_hops,
+                int((self.degrees[graph_idx][node_idx] * math.e / (math.e - 1) / self.restart_prob) + 0.5),
+            )
+            traces = g.random_walk_with_restart([node_idx, other_node_idx], max_nodes_per_seed, self.restart_prob, self.parallel)
+
+        graph_q = _rwr_trace_to_cogdl_graph(
+            g=g,
+            seed=node_idx,
+            trace=torch.Tensor(traces[0]),
+            positional_embedding_size=self.positional_embedding_size,
+            entire_graph=hasattr(self, "entire_graph") and self.entire_graph,
+        )
+        graph_k = _rwr_trace_to_cogdl_graph(
+            g=g,
+            seed=other_node_idx,
+            trace=torch.Tensor(traces[1]),
+            positional_embedding_size=self.positional_embedding_size,
+            entire_graph=hasattr(self, "entire_graph") and self.entire_graph,
+        )
+        if self.graph_transform:
+            graph_q = self.graph_transform(graph_q)
+            graph_k = self.graph_transform(graph_k)    
+        return graph_q, graph_k
+
+
+class NodeClassificationDataset(object):  # for freeze
+    def __init__(
+        self,
+        data,  # Graph
         rw_hops: int = 64,
         subgraph_size: int = 64,
         restart_prob: float = 0.8,
@@ -182,8 +383,8 @@ class NodeClassificationDataset(object):
         self.step_dist = step_dist
         assert positional_embedding_size > 1
 
-        self.data = data
-        self.graphs = [self.data]
+        self.data = data.data
+        self.graphs = self.data if isinstance(self.data, list) else [self.data]
         self.length = sum([g.num_nodes for g in self.graphs])
         self.total = self.length
 
@@ -216,7 +417,7 @@ class NodeClassificationDataset(object):
             self.rw_hops,
             int((self.graphs[graph_idx].degrees()[node_idx] * math.e / (math.e - 1) / self.restart_prob) + 0.5),
         )
-        # TODO: `num_workers > 0` is not compatible with `numba`
+        # NOTICE: Please check the version of numpy and numba in README
         traces = g.random_walk_with_restart([node_idx, other_node_idx], max_nodes_per_seed, self.restart_prob)
 
         # traces = [[0,1,2,3], [1,2,3,4]]
@@ -235,10 +436,11 @@ class NodeClassificationDataset(object):
             positional_embedding_size=self.positional_embedding_size,
             entire_graph=hasattr(self, "entire_graph") and self.entire_graph,
         )
-        return graph_q, graph_k
+        y = self.data.y[idx].argmax().item() if len(self.data.y.shape) != 1 else self.data.y[idx]
+        return graph_q, graph_k, y
 
 
-class NodeClassificationDatasetLabeled(NodeClassificationDataset):
+class NodeClassificationDatasetLabeled(NodeClassificationDataset):  # for finetune
     def __init__(
         self,
         data,
@@ -270,6 +472,5 @@ class NodeClassificationDatasetLabeled(NodeClassificationDataset):
         graph_q = _rwr_trace_to_cogdl_graph(
             g=g, seed=node_idx, trace=torch.Tensor(traces[0]), positional_embedding_size=self.positional_embedding_size,
         )
-        graph_q.y = self.data.y[idx].y
-        return graph_q
-        # return graph_q, self.data.y[idx].argmax().item()
+        y = self.data.y[idx].argmax().item() if len(self.data.y.shape) != 1 else self.data.y[idx]
+        return graph_q, y

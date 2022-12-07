@@ -501,8 +501,12 @@ def test_revnets_cora():
 
 def test_gcc_cora():
     args = get_default_args_for_nc("cora", "gcc", mw="gcc_mw", dw="gcc_dw")
+    args.pretrain = True
+    args.unsup = True
+    args.parallel = False
     args.epochs = 1
-    args.num_workers = 0
+    args.num_workers = 1
+    args.num_copies = 1
     args.batch_size = 16
     args.rw_hops = 8
     args.subgraph_size = 16

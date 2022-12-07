@@ -211,7 +211,7 @@ class Trainer(object):
 
         # clear the GPU memory
         dataset = dataset_w.get_dataset()
-        if isinstance(dataset.data, Graph):
+        if isinstance(dataset.data, Graph) or hasattr(dataset.data, "graphs"):
             dataset.data.to("cpu")
 
         return final_test

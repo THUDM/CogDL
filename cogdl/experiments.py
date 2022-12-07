@@ -12,7 +12,7 @@ import torch.multiprocessing as mp
 import optuna
 from tabulate import tabulate
 
-from cogdl.utils import set_random_seed, tabulate_results
+from cogdl.utils import set_random_seed, tabulate_results, build_model_path
 from cogdl.configs import BEST_CONFIGS
 from cogdl.data import Dataset
 from cogdl.models import build_model
@@ -111,6 +111,9 @@ def train(args):  # noqa: C901
 |-------------------------------------{'-' * (len(str(args.dataset)) + len(model_name) + len(dw_name) + len(mw_name))}|"""
     )
 
+    if hasattr(args, "save_model_path"):
+        args = build_model_path(args, model_name)
+
     if getattr(args, "use_best_config", False):
         args = set_best_config(args)
 
@@ -181,6 +184,12 @@ def train(args):  # noqa: C901
     if hasattr(args, "hidden_size"):
         optimizer_cfg["hidden_size"] = args.hidden_size
 
+    if hasattr(args, "beta1") and hasattr(args, "beta2"):
+        optimizer_cfg["betas"] = (args.beta1, args.beta2)
+
+    if hasattr(dataset_wrapper, "train_dataset"):
+        optimizer_cfg["total"] = len(dataset_wrapper.train_dataset)
+
     # setup model_wrapper
     if isinstance(args.mw, str) and "embedding" in args.mw:
         model_wrapper = mw_class(model, **model_wrapper_args)
@@ -212,6 +221,7 @@ def train(args):  # noqa: C901
         fp16=args.fp16,
         do_test=args.do_test,
         do_valid=args.do_valid,
+        clip_grad_norm=args.clip_grad_norm,
     )
 
     # Go!!!

@@ -60,10 +60,30 @@ def build_dataset_from_name(dataset, split=0):
     return dataset_class()
 
 
+def build_dataset_pretrain(args):
+    args.pretrain = False
+    dataset_names = args.dataset
+    if ' ' in args.dataset:
+        datasets_name = args.dataset.split(' ')
+        dataset = []
+        for dataset_ in datasets_name:
+            args.dataset = dataset_
+            dataset.append(build_dataset(args))
+    else:
+        dataset = [build_dataset(args)]
+    args.pretrain = True
+    args.dataset = dataset_names
+    dataset_class = getattr(importlib.import_module("cogdl.datasets.gcc_data"), "PretrainDataset")
+    return dataset_class(args.dataset, [x.data for x in dataset])
+
+
 def build_dataset(args):
     if not hasattr(args, "split"):
         args.split = 0
-    dataset = build_dataset_from_name(args.dataset, args.split)
+    if not hasattr(args, "pretrain") or not args.pretrain:
+        dataset = build_dataset_from_name(args.dataset, args.split)
+    else:
+        dataset = build_dataset_pretrain(args)
 
     if hasattr(dataset, "num_classes") and dataset.num_classes > 0:
         args.num_classes = dataset.num_classes
@@ -96,10 +116,17 @@ def build_dataset_from_path(data_path, dataset=None):
 
 
 SUPPORTED_DATASETS = {
+    "gcc_academic": "cogdl.datasets.gcc_data.Academic_GCCDataset",
+    "gcc_dblp_netrep": "cogdl.datasets.gcc_data.DBLPNetrep_GCCDataset",
+    "gcc_dblp_snap": "cogdl.datasets.gcc_data.DBLPSnap_GCCDataset",
+    "gcc_facebook": "cogdl.datasets.gcc_data.Facebook_GCCDataset",
+    "gcc_imdb": "cogdl.datasets.gcc_data.IMDB_GCCDataset",
+    "gcc_livejournal": "cogdl.datasets.gcc_data.Livejournal_GCCDataset",
     "kdd_icdm": "cogdl.datasets.gcc_data.KDD_ICDM_GCCDataset",
     "sigir_cikm": "cogdl.datasets.gcc_data.SIGIR_CIKM_GCCDataset",
     "sigmod_icde": "cogdl.datasets.gcc_data.SIGMOD_ICDE_GCCDataset",
     "usa-airport": "cogdl.datasets.gcc_data.USAAirportDataset",
+    "h-index": "cogdl.datasets.gcc_data.HIndexDataset",
     "ogbn-arxiv": "cogdl.datasets.ogb.OGBArxivDataset",
     "ogbn-products": "cogdl.datasets.ogb.OGBProductsDataset",
     "ogbn-proteins": "cogdl.datasets.ogb.OGBProteinsDataset",

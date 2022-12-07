@@ -32,7 +32,7 @@ def fetch_model_wrapper(name):
 
 
 SUPPORTED_MW = {
-    "triple_link_prediction_mw":"cogdl.wrappers.model_wrapper.link_prediction.TripleModelWrapper",
+    "triple_link_prediction_mw": "cogdl.wrappers.model_wrapper.link_prediction.TripleModelWrapper",
     "dgi_mw": "cogdl.wrappers.model_wrapper.node_classification.DGIModelWrapper",
     "gcnmix_mw": "cogdl.wrappers.model_wrapper.node_classification.GCNMixModelWrapper",
     "grace_mw": "cogdl.wrappers.model_wrapper.node_classification.GRACEModelWrapper",

@@ -68,6 +68,7 @@ class GINModel(nn.Module):
         train_eps=False,
         dropout=0.5,
         final_dropout=0.2,
+        use_selayer=False,
     ):
         super(GINModel, self).__init__()
         self.gin_layers = nn.ModuleList()
@@ -78,7 +79,7 @@ class GINModel(nn.Module):
                 mlp = MLP(in_feats, hidden_dim, hidden_dim, num_mlp_layers, norm="batchnorm")
             else:
                 mlp = MLP(hidden_dim, hidden_dim, hidden_dim, num_mlp_layers, norm="batchnorm")
-            self.gin_layers.append(GINLayer(mlp, eps, train_eps))
+            self.gin_layers.append(GINLayer(ApplyNodeFunc(mlp, use_selayer), eps, train_eps))
             self.batch_norm.append(nn.BatchNorm1d(hidden_dim))
 
         self.linear_prediction = nn.ModuleList()
@@ -155,9 +156,12 @@ class GCCModel(BaseModel):
         parser.add_argument("--max-edge-freq", type=int, default=16)
         parser.add_argument("--max-degree", type=int, default=512)
         parser.add_argument("--freq-embedding-size", type=int, default=16)
-        parser.add_argument("--num-layers", type=int, default=2)
+        parser.add_argument("--num-layers", type=int, default=5)
         parser.add_argument("--num-heads", type=int, default=2)
-        parser.add_argument("--output-size", type=int, default=32)
+        parser.add_argument("--output-size", type=int, default=64)
+        parser.add_argument("--norm", type=bool, default=True)
+        parser.add_argument("--gnn-model", type=str, default="gin")
+        parser.add_argument("--degree-input", type=bool, default=True)
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -170,7 +174,10 @@ class GCCModel(BaseModel):
             num_heads=args.num_heads,
             degree_embedding_size=args.degree_embedding_size,
             node_hidden_dim=args.hidden_size,
+            norm=args.norm,
+            gnn_model=args.gnn_model,
             output_dim=args.output_size,
+            degree_input=args.degree_input
         )
 
     def __init__(
@@ -190,7 +197,7 @@ class GCCModel(BaseModel):
         num_layer_set2set=3,
         norm=False,
         gnn_model="gin",
-        degree_input=False,
+        degree_input=True,
     ):
         super(GCCModel, self).__init__()
 
@@ -229,6 +236,8 @@ class GCCModel(BaseModel):
         self.max_edge_freq = max_edge_freq
         self.max_degree = max_degree
         self.degree_input = degree_input
+        self.output_dim = output_dim
+        self.hidden_size = node_hidden_dim
 
         # self.node_freq_embedding = nn.Embedding(
         #     num_embeddings=max_node_freq + 1, embedding_dim=freq_embedding_size
@@ -277,6 +286,7 @@ class GCCModel(BaseModel):
             if device != torch.device("cpu"):
                 degrees = degrees.cuda(device)
 
+            degrees = degrees.long()
             deg_emb = self.degree_embedding(degrees.clamp(0, self.max_degree))
 
             n_feat = torch.cat((pos_undirected, deg_emb, seed_emb), dim=-1)

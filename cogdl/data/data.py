@@ -1,6 +1,8 @@
 import re
 import copy
 from contextlib import contextmanager
+from inspect import isfunction
+
 import scipy.sparse as sp
 import networkx as nx
 
@@ -16,6 +18,7 @@ from cogdl.utils import (
 )
 from cogdl.utils import RandomWalker
 from cogdl.operators.sample import sample_adj_c, subgraph_c
+from cogdl.utils.message_aggregate_utils import MessageBuiltinFunction, AggregateBuiltinFunction
 
 subgraph_c = None  # noqa: F811
 
@@ -948,3 +951,31 @@ class Graph(BaseGraph):
     # @requires_grad.setter
     # def requires_grad(self, x):
     #     print(f"Set `requires_grad` to {x}")
+
+    def message_passing(self, msg_func, x, edge_weight=None):
+        src_node_id = self.edge_index[0]
+        dst_node_id = self.edge_index[1]
+        if not isfunction(msg_func) and not isinstance(msg_func, str):
+            raise RuntimeError('Only Support Message Functions and String Prompt')
+        if isinstance(msg_func, str):
+            if not hasattr(MessageBuiltinFunction, msg_func):
+                raise NotImplementedError
+            msg_func = getattr(MessageBuiltinFunction, msg_func)
+        if edge_weight is None:
+            edge_weight = torch.ones(len(src_node_id), x.shape[1])
+        m = msg_func(x, src_node_id, dst_node_id, edge_weight)
+        return m
+
+    def aggregate(self, agg_func, x, m):
+        dst_node_id = self.edge_index[1]
+        out = torch.zeros(x.shape[0], m.shape[1], dtype=x.dtype).to(x.device)
+        index = dst_node_id.unsqueeze(1).expand(-1, m.shape[1])
+        src = m
+        if not isfunction(agg_func) and not isinstance(agg_func, str):
+            raise RuntimeError('Only Support Message Functions and String Prompt')
+        if isinstance(agg_func, str):
+            if not hasattr(AggregateBuiltinFunction, agg_func):
+                raise NotImplementedError
+            agg_func = getattr(AggregateBuiltinFunction, agg_func)
+        h = agg_func(src, index, out=out)
+        return h

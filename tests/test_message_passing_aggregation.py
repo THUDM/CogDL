@@ -6,7 +6,7 @@
 #     x = torch.rand(node_num, node_feats)
 #     edge_index = (torch.randint(0, node_num, (edge_num, )), torch.randint(0, node_num, (edge_num, )))
 #     graph = Graph(x=x, edge_index=edge_index)
-#     # m = graph.message_passing('u_add_v', x)
+#     # m = graph.messagegit _passing('u_add_v', x)
 #     m = graph.message_passing('u_mul_e', x)
 #     x = graph.aggregate('sum', x, m)
 #     print(x)

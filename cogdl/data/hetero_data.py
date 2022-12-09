@@ -1,59 +1,13 @@
 import re
 import torch
 from inspect import isfunction
-from cogdl.data.data import Graph, is_read_adj_key, Adjacency, is_adj_key_train
+from cogdl.data.data import Graph
 from cogdl.utils.message_aggregate_utils import MessageBuiltinFunction, AggregateBuiltinFunction
 
 
 class HeteroGraph(Graph):
     def __init__(self, x=None, y=None, **kwargs):
-        super(Graph, self).__init__()
-        if x is not None:
-            if not torch.is_tensor(x):
-                raise ValueError("Node features must be Tensor")
-        self.x = x
-        self.y = y
-        self.grb_adj = None
-
-        for key, item in kwargs.items():
-            if key == "num_nodes":
-                self.__num_nodes__ = item
-            elif key == "grb_adj":
-                self.grb_adj = item
-            elif not is_read_adj_key(key):
-                self[key] = item
-
-        num_nodes = x.shape[0] if x is not None else None
-        if "edge_index_train" in kwargs:
-            self._adj_train = Adjacency(num_nodes=num_nodes)
-            for key, item in kwargs.items():
-                if is_adj_key_train(key):
-                    _key = re.search(r"(.*)_train", key).group(1)
-                    if _key.startswith("edge_"):
-                        _key = _key.split("edge_")[1]
-                    if _key == "index":
-                        self._adj_train.edge_index = item
-                    else:
-                        self._adj_train[_key] = item
-        else:
-            self._adj_train = None
-
-        self._adj_full = Adjacency(num_nodes=num_nodes)
-        for key, item in kwargs.items():
-            if is_read_adj_key(key) and not is_adj_key_train(key):
-                if key.startswith("edge_"):
-                    key = key.split("edge_")[-1]
-                if key == "index":
-                    self._adj_full.edge_index = item
-                else:
-                    self._adj_full[key] = item
-
-        self._adj = self._adj_full
-        self.__is_train__ = False
-        self.__temp_adj_stack__ = list()
-        self.__temp_storage__ = dict()
-
-        # 异构图上对点的定义
+        super(HeteroGraph, self).__init__(x, y, **kwargs)
         if 'node_type' in kwargs.keys():
             self.node_type = kwargs['node_type']
             assert isinstance(self.node_type, dict)

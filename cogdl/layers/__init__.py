@@ -42,4 +42,8 @@ __all__ = [
     "MLP",
     "RevGNNLayer",
     "Set2Set",
+    "STConvLayer",
+    "STGATConvLayer",
+    "GCNLayerST",
+    "GATLayerST",
 ]

@@ -6,18 +6,12 @@ import numpy as np
 import torch
 from cogdl.data import Dataset, Graph
 from cogdl.utils import remove_self_loops, download_url, untar, coalesce, MAE, CrossEntropyLoss
-#import numpy as np
 import os
-#import pandas as pd
 import scipy.sparse as sp
 from sklearn.preprocessing import StandardScaler
-#import torch
 from datetime import datetime
 import geopy.distance # to compute distances between stations
-import glob
-#import numpy as np
-#import os
-#import pandas as pd
+import globd
 from tqdm import tqdm
 import warnings
 from numpy.core.umath_tests import inner1d
@@ -187,7 +181,7 @@ class STGATDataset(Dataset):
 
     @property
     def raw_file_names(self):
-        names = ["station_meta_{}.csv".format(self.num_stations), f"V_{}.csv".format(self.num_stations), f"W_{}.csv".format(self.num_stations)]
+        names = ["station_meta_{}.csv".format(self.num_stations), "V_{}.csv".format(self.num_stations), "W_{}.csv".format(self.num_stations)]
         return names
 
     @property

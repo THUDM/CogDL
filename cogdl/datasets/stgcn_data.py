@@ -7,17 +7,11 @@ import torch
 from cogdl.data import Dataset, Graph
 from cogdl.utils import remove_self_loops, download_url, untar, coalesce, MAE, CrossEntropyLoss
 import os
-
-
 import scipy.sparse as sp
 from sklearn.preprocessing import StandardScaler
-
 from datetime import datetime
 import geopy.distance # to compute distances between stations
 import glob
-
-
-
 from tqdm import tqdm
 import warnings
 from numpy.core.umath_tests import inner1d

@@ -91,21 +91,21 @@ class STGCNDataWrapper(DataWrapper):
 
         # create torch data iterables for training
         train_data = TensorDataset(x_train, y_train)
-        train_iter = DataLoader(train_data, self.batch_size, shuffle=True)
+        # train_iter = DataLoader(train_data, self.batch_size, shuffle=True)
         val_data = TensorDataset(x_val, y_val)
-        val_iter = DataLoader(val_data, self.batch_size, shuffle=False)
+        # val_iter = DataLoader(val_data, self.batch_size, shuffle=False)
         test_data = TensorDataset(x_test, y_test)
-        test_iter = DataLoader(test_data, self.batch_size, shuffle=False)
+        # test_iter = DataLoader(test_data, self.batch_size, shuffle=False)
 
         pred_data = TensorDataset(x_pred, y_pred)
-        pred_iter = DataLoader(pred_data, self.n_his + self.n_pred + 1, shuffle=False)
+        # pred_iter = DataLoader(pred_data, self.n_his + self.n_pred + 1, shuffle=False)
 
         return [train_data, val_data, test_data, pred_data]
 
 
     def get_pre_timestamp(self):
-        len_train = round(self.dataset.data.num_samples * self.train_prop)
-        len_val = round(self.dataset.data.num_samples * self.val_prop)
+        # len_train = round(self.dataset.data.num_samples * self.train_prop)
+        # len_val = round(self.dataset.data.num_samples * self.val_prop)
         # pred_set_timestamp = self.dataset.data.timestamp[len_train + len_val: len_train + len_val + self.pred_length][-self.pred_length:]
         pred_set_timestamp = self.dataset.data.timestamp[-self.pred_length:]
         return pred_set_timestamp

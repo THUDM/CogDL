@@ -55,10 +55,10 @@ class STGCN(BaseModel):
         super(STGCN, self).__init__()
         self.layers = nn.ModuleList([])
         # add STConv blocks
-        for _ in range(num_layers):
+        for layer in range(num_layers):
             input_size, hidden_size, output_size = \
-            channel_size_list[l][0], channel_size_list[l][1], \
-            channel_size_list[l][2]
+            channel_size_list[layer][0], channel_size_list[layer][1], \
+            channel_size_list[layer][2]
             self.layers.append(STConvLayer(num_nodes, input_size, hidden_size, \
                                       output_size, kernel_size, K, \
                                       normalization, bias))

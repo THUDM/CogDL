@@ -11,7 +11,7 @@ import scipy.sparse as sp
 from sklearn.preprocessing import StandardScaler
 from datetime import datetime
 import geopy.distance # to compute distances between stations
-import globd
+import glob
 from tqdm import tqdm
 import warnings
 from numpy.core.umath_tests import inner1d

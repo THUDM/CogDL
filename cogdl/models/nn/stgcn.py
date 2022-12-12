@@ -5,6 +5,7 @@ from .. import BaseModel
 
 
 class STGCN(BaseModel):
+    """
     Args:
         in_features (int) : Number of input features.
         out_features (int) : Number of classes.

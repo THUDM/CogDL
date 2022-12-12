@@ -19,8 +19,8 @@ class STGCN(BaseModel):
         # fmt: off
         # model parameters
 
-        parser.add_argument("--channel_size_list", default = np.array([[1, 16, 64], [64, 16, 64]]))
-        parser.add_argument("--kernel_size", type=int, default = 3)
+        parser.add_argument("--channel_size_list", default=np.array([[1, 16, 64], [64, 16, 64]]))
+        parser.add_argument("--kernel_size", type=int, default=3)
         parser.add_argument("--num_layers", type=int, default=2)
         parser.add_argument("--K", type=int, default=3)
         parser.add_argument("--normalization", type=str, default='sym')
@@ -55,7 +55,7 @@ class STGCN(BaseModel):
         super(STGCN, self).__init__()
         self.layers = nn.ModuleList([])
         # add STConv blocks
-        for l in range(num_layers):
+        for _ in range(num_layers):
             input_size, hidden_size, output_size = \
             channel_size_list[l][0], channel_size_list[l][1], \
             channel_size_list[l][2]
@@ -73,7 +73,6 @@ class STGCN(BaseModel):
 
 
     def forward(self, x, edge_index, edge_weight):
-        a = x
         for layer in self.layers[:-1]:
           x = layer(x, edge_index, edge_weight)
         out_layer = self.layers[-1]

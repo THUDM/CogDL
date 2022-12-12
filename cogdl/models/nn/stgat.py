@@ -20,8 +20,8 @@ class STGAT(BaseModel):
         # fmt: off
         # model parameters
 
-        parser.add_argument("--channel_size_list", default = np.array([[1, 16, 64], [64, 16, 64]]))
-        parser.add_argument("--kernel_size", type=int, default = 3)
+        parser.add_argument("--channel_size_list", default=np.array([[1, 16, 64], [64, 16, 64]]))
+        parser.add_argument("--kernel_size", type=int, default=3)
         parser.add_argument("--num_layers", type=int, default=2)
         parser.add_argument("--K", type=int, default=3)
         parser.add_argument("--normalization", type=str, default='sym')

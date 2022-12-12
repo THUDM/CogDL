@@ -6,18 +6,18 @@ import numpy as np
 import torch
 from cogdl.data import Dataset, Graph
 from cogdl.utils import remove_self_loops, download_url, untar, coalesce, MAE, CrossEntropyLoss
-import numpy as np
+#import numpy as np
 import os
-import pandas as pd
+#import pandas as pd
 import scipy.sparse as sp
 from sklearn.preprocessing import StandardScaler
-import torch
+#import torch
 from datetime import datetime
 import geopy.distance # to compute distances between stations
 import glob
-import numpy as np
-import os
-import pandas as pd
+#import numpy as np
+#import os
+#import pandas as pd
 from tqdm import tqdm
 import warnings
 from numpy.core.umath_tests import inner1d
@@ -25,6 +25,15 @@ from numpy.core.umath_tests import inner1d
 def files_exist(files):
     return all([osp.exists(f) for f in files])
 
+def PeMS_lane_columns(x):
+     tmp = [
+             'lane_N_samples_{}'.format(x),
+             'lane_N_flow_{}'.format(x),
+             'lane_N_avg_occ_{}'.format(x),
+             'lane_N_avg_speed_{}'.format(x),
+             'lane_N_observed_{}'.format(x)
+             ]
+     return tmp
 
 def raw_data_processByNumNodes(raw_dir, num_nodes, meta_file_name):
 
@@ -41,11 +50,12 @@ def raw_data_processByNumNodes(raw_dir, num_nodes, meta_file_name):
                     'direction_travel', 'lane_type', 'station_length',
                     'samples', 'perc_observed', 'total_flow', 'avg_occupancy',
                     'avg_speed']
-    PeMS_lane_columns = lambda x: ['lane_N_samples_{}'.format(x),
-                                   'lane_N_flow_{}'.format(x),
-                                   'lane_N_avg_occ_{}'.format(x),
-                                   'lane_N_avg_speed_{}'.format(x),
-                                   'lane_N_observed_{}'.format(x)]
+    #PeMS_lane_columns = lambda x: ['lane_N_samples_{}'.format(x),
+    #                               'lane_N_flow_{}'.format(x),
+    #                               'lane_N_avg_occ_{}'.format(x),
+    #                               'lane_N_avg_speed_{}'.format(x),
+    #                               'lane_N_observed_{}'.format(x)]
+    
     PeMS_all_columns = PeMS_columns.copy()
     for i in range(1, 9):
         PeMS_all_columns += PeMS_lane_columns(i)
@@ -139,8 +149,8 @@ def raw_data_processByNumNodes(raw_dir, num_nodes, meta_file_name):
 
 def read_stgcn_data(folder, num_nodes):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    W = pd.read_csv(osp.join(folder, f"W_{num_nodes}.csv"))
-    T_V = pd.read_csv(osp.join(folder, f"V_{num_nodes}.csv"))
+    W = pd.read_csv(osp.join(folder, "W_{}.csv".format(num_nodes)))
+    T_V = pd.read_csv(osp.join(folder, "V_{}.csv".format(num_nodes)))
     V = T_V.drop('timestamp',axis=1)
     num_samples, num_nodes = V.shape
     scaler = StandardScaler()
@@ -168,7 +178,7 @@ class STGATDataset(Dataset):
     def __init__(self, root, name, num_stations, meta_file_name):
         self.name = name
         self.meta_file_name = meta_file_name
-        self.url = f"https://cloud.tsinghua.edu.cn/f/5af7ea1a7d064c5ba6c8/?dl=1"
+        self.url = "https://cloud.tsinghua.edu.cn/f/5af7ea1a7d064c5ba6c8/?dl=1"
         self.num_stations = num_stations
         super(STGATDataset, self).__init__(root)
         print(self.processed_paths[0])
@@ -177,13 +187,12 @@ class STGATDataset(Dataset):
 
     @property
     def raw_file_names(self):
-        names = [f"station_meta_{self.num_stations}.csv", f"V_{self.num_stations}.csv", f"W_{self.num_stations}.csv"]
+        names = ["station_meta_{}.csv".format(self.num_stations), f"V_{}.csv".format(self.num_stations), f"W_{}.csv".format(self.num_stations)]
         return names
 
     @property
     def processed_file_names(self):
         return ["data.pt"]
-
 
     def get(self, idx):
         assert idx == 0

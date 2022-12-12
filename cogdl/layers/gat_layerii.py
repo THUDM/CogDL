@@ -8,7 +8,6 @@ from cogdl.utils import spmm_scatter, get_activation
 from cogdl.utils import (
     EdgeSoftmax,
     MultiHeadSpMM,
-    get_activation,
     get_norm_layer,
     check_fused_gat,
     fused_gat_op,

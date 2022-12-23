@@ -8,7 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
 
 from cogdl.layers import GCNLayer, GATLayer
-from .. import BaseModel
+from cogdl.models import BaseModel
 import cogdl.utils.grb_utils as utils
 import types
 

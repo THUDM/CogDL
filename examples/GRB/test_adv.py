@@ -59,7 +59,7 @@ model_target = GCN(
     activation=None,
     norm="layernorm"
 )
-from cogdl.attack.injection import FGSM
+from attack.injection import FGSM
 attack = FGSM(epsilon=0.01,
               n_epoch=10,
               n_inject_max=10,
@@ -94,7 +94,7 @@ print("Test score before attack for target model: {:.4f}.".format(test_score))
 
 
 # FGSM attack
-from cogdl.attack.injection import FGSM
+from attack.injection import FGSM
 attack = FGSM(epsilon=0.01,
               n_epoch=10,
               n_inject_max=10,

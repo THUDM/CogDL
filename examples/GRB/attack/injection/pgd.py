@@ -7,16 +7,16 @@ import torch
 import torch.nn.functional as F
 from tqdm.auto import tqdm
 
-from cogdl.attack.base import InjectionAttack, EarlyStop
+from ..base import InjectionAttack, EarlyStop
 from cogdl.utils.grb_utils import eval_acc, feat_preprocess, adj_preprocess, getGraph, getGRBGraph
 
 
-class FGSM(InjectionAttack):
+class PGD(InjectionAttack):
     r"""
 
     Description
     -----------
-    Graph injection attack version of Fast Gradient Sign Method (`FGSM <https://arxiv.org/abs/1412.6572>`__).
+    Graph injection attack version of Projected Gradient Descent attack (`PGD <https://arxiv.org/abs/1706.06083>`__).
 
     Parameters
     ----------
@@ -42,6 +42,8 @@ class FGSM(InjectionAttack):
         Patience of early_stop. Only enabled when ``early_stop is not None``. Default: ``1000``.
     early_stop_epsilon : float, optional
         Tolerance of early_stop. Only enabled when ``early_stop is not None``. Default: ``1e-5``.
+    early_stop : bool, optional
+        Whether to early stop. Default: ``False``.
     verbose : bool, optional
         Whether to display logs. Default: ``True``.
     device : str, optional
@@ -110,10 +112,10 @@ class FGSM(InjectionAttack):
 
         """
         time_start = time.time()
+        # adj, features = getGRBGraph(graph)
         adj = graph.to_scipy_csr()
         target_mask = graph.test_mask
         features = graph.x
-        # adj, features = getGRBGraph(graph)
         model.to(self.device)
         n_total, n_feat = features.shape
         features = feat_preprocess(features=features, feat_norm=feat_norm, device=self.device)
@@ -121,7 +123,9 @@ class FGSM(InjectionAttack):
         pred_origin = model(getGraph(adj_tensor, features, device=self.device))
         labels_origin = torch.argmax(pred_origin, dim=1)
         adj_attack = self.injection(adj=adj, n_inject=self.n_inject_max, n_node=n_total, target_mask=target_mask)
-        features_attack = np.zeros((self.n_inject_max, n_feat))
+
+        # Random initialization
+        features_attack = np.random.normal(loc=0, scale=self.feat_lim_max / 10, size=(self.n_inject_max, n_feat))
         features_attack = self.update_features(
             model=model,
             adj_attack=adj_attack,
@@ -228,8 +232,8 @@ class FGSM(InjectionAttack):
             Mask of target nodes in form of ``N * 1`` torch bool tensor.
         feat_norm : str, optional
             Type of feature normalization, ['arctan', 'tanh']. Default: ``None``.
-        adj_norm_func : func of grb_utils.normalize, optional
-            Function that normalizes adjacency matrix. Default: ``None``.
+        adj_norm_func : func of grb_utils.normalize
+            Function that normalizes adjacency matrix.
 
         Returns
         -------

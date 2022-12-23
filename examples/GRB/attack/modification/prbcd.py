@@ -7,7 +7,7 @@ import torch
 import torch_sparse
 from tqdm.auto import tqdm
 
-from cogdl.attack.base import ModificationAttack, EarlyStop
+from ..base import ModificationAttack, EarlyStop
 from cogdl.data import Graph
 from cogdl.utils.grb_utils import (
     eval_acc,

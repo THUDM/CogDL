@@ -54,7 +54,9 @@ def train(args):  # noqa: C901
     model_name = args.model if isinstance(args.model, str) else args.model.model_name
     dw_name = args.dw if isinstance(args.dw, str) else args.dw.__name__
     mw_name = args.mw if isinstance(args.mw, str) else args.mw.__name__
-
+    print(model_name)
+    print(dw_name)
+    print(mw_name)
 
     print(
         f""" 
@@ -67,7 +69,7 @@ def train(args):  # noqa: C901
 
     dataset = build_dataset(args)
     mw_class = fetch_model_wrapper(args.mw)
-    dw_class = fetch_data_wrapper(args.dw)  # node_classification_dw
+    dw_class = fetch_data_wrapper(args.dw)
 
     if mw_class is None:
         raise NotImplementedError("`model wrapper(--mw)` must be specified.")
@@ -158,7 +160,6 @@ def train(args):  # noqa: C901
         logger=args.logger,
         log_path=args.log_path,
         project=args.project,
-        no_test=args.no_test,
         nstage=args.nstage,
         actnn=args.actnn,
         fp16=args.fp16,
@@ -200,7 +201,9 @@ def raw_experiment(args):
 def experiment(dataset, model=None, **kwargs):
     dataset = [dataset]
     model = [model]
+    print(dataset)
     args = get_default_args(dataset=[str(x) for x in dataset], model=[str(x) for x in model], **kwargs)
+    print(args)
     args.dataset = dataset
     args.model = model
     return raw_experiment(args)
@@ -215,12 +218,13 @@ if __name__ == "__main__":
               "kernel_size":3,
               "n_his":20,
               "n_pred":1,
-              "channel_size_list":np.array([[ 1, 16, 64],[64, 64, 64],[64, 16, 64]]),
+              "channel_size_list":np.array([[ 1, 4, 8],[8, 8, 8],[8, 4, 8]]),
               "num_layers":3,
               "num_nodes":288,
-              "train_prop": 0.8,
+              "train_prop": 0.1,
               "val_prop": 0.1,
               "test_prop": 0.1,
               "pred_length":288,}
 
-    experiment(dataset="pems-stgat", model="stgat", resume_training=False, **kwargs)
+    experiment(dataset="pems-stgcn", model="stgcn", resume_training=False, **kwargs)
+    # experiment(dataset="pems-stgat", model="stgat", resume_training=False, **kwargs)

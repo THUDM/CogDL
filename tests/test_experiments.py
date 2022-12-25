@@ -1,5 +1,8 @@
-from cogdl.experiments import experiment, gen_variants, train, set_best_config
+from examples.simple_stgcn.example import experiment as stgcn_exp
 from cogdl.options import get_default_args
+import numpy as np
+import shutil
+
 
 
 def test_set_best_config():
@@ -72,10 +75,43 @@ def test_autognn_experiment():
     assert results[("cora", "autognn")][0]["test_acc"] > 0
 
 
+def test_stgcn_experiment():
+    
+    source_path = os.path.dirname(os.path.abspath(__file__)).split("tests")[0]+"examples/simple_stgcn/test_data"
+    target_path = os.path.dirname(os.path.abspath(__file__))+"/data"
+    if os.path.exists(target_path):
+        shutil.rmtree(target_path)
+    shutil.copytree(source_path, target_path)
+    kwargs = {"epochs":1,
+              "kernel_size":3,
+              "n_his":20,
+              "n_pred":1,
+              "channel_size_list":np.array([[ 1, 4, 4],[4, 4, 4],[4, 4, 4]]),
+              "num_layers":3,
+              "num_nodes":288,
+              "train_prop": 0.1,
+              "val_prop": 0.1,
+              "test_prop": 0.1,
+              "pred_length":288,}
+
+    results =stgcn_exp(
+        dataset="pems-stgcn",
+        model="stgcn",
+        resume_training=False,
+        **kwargs
+    )
+    assert ("pems-stgcn", "stgcn") in results
+    assert results[("pems-stgcn", "stgcn")][0]["test__metric"] > 0
+    shutil.rmtree(target_path)
+    shutil.rmtree(os.path.dirname(os.path.abspath(__file__))+"/checkpoints")
+
+
 if __name__ == "__main__":
+   
     test_set_best_config()
     test_train()
     test_gen_variants()
     test_experiment()
     test_auto_experiment()
     test_autognn_experiment()
+    test_stgcn_experiment()

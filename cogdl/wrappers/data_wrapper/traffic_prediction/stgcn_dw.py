@@ -20,6 +20,8 @@ class STGCNDataWrapper(DataWrapper):
     def __init__(self, dataset, **args):
         super(STGCNDataWrapper, self).__init__(dataset)
         self.dataset = dataset
+        print(args)
+        print(args['train_prop'])
         self.train_prop = args['train_prop']
         self.val_prop = args['val_prop']
         self.test_prop = args['test_prop']

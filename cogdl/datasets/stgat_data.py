@@ -193,7 +193,7 @@ class STGATDataset(Dataset):
         return self.data
 
     def download(self):
-        if os.path.exists(self.raw_dir):  # auto_traffic
+        if os.path.exists(self.raw_dir):
             return
         download_url(self.url, self.raw_dir, name=self.name + ".zip")
         untar(self.raw_dir, self.name + ".zip")

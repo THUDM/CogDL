@@ -79,6 +79,7 @@ def set_default_wrapper_config():
         "pte",
         "hin2vec",
     ]
+
     triple_link_prediction_models=["transe","distmult", "rotate", "complex"]
     triple_link_prediction_wrappers=dict()
     for item in triple_link_prediction_models:
@@ -139,6 +140,13 @@ def set_default_wrapper_config():
     heterogeneous_emb_wrappers = dict()
     for item in heterogeneous_emb_models:
         heterogeneous_emb_wrappers[item] = {"dw": "heterogeneous_embedding_dw", "mw": "heterogeneous_embedding_mw"}
+    
+
+    traffic_prediction_models = ["stgcn", "stgat"]
+    traffic_prediction_wrappers = dict()
+    for item in traffic_prediction_models:
+        traffic_prediction_wrappers[item] = {"dw": "{}_dw".format(item), "mw": "{}_mw".format(item)}
+    
 
     other_wrappers = dict()
     other_wrappers["gatne"] = {"mw": "multiplex_embedding_mw", "dw": "multiplex_embedding_dw"}
@@ -155,6 +163,7 @@ def set_default_wrapper_config():
     merged.update(heterogeneous_emb_wrappers)
     merged.update(other_wrappers)
     merged.update(triple_link_prediction_wrappers)
+    merged.update(traffic_prediction_wrappers)
     return merged
 
 

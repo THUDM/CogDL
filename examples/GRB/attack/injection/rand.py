@@ -1,29 +1,23 @@
 import random
 import time
-
 import numpy as np
 import scipy.sparse as sp
 import torch
 import torch.nn.functional as F
-from tqdm.auto import tqdm
 
-from cogdl.attack.base import InjectionAttack, EarlyStop
+from ..base import InjectionAttack
 from cogdl.utils.grb_utils import eval_acc, feat_preprocess, adj_preprocess, getGraph, getGRBGraph
 
 
-class PGD(InjectionAttack):
+class RAND(InjectionAttack):
     r"""
 
     Description
     -----------
-    Graph injection attack version of Projected Gradient Descent attack (`PGD <https://arxiv.org/abs/1706.06083>`__).
+    Simple random graph injection attack.
 
     Parameters
     ----------
-    epsilon : float
-        Perturbation level on features.
-    n_epoch : int
-        Epoch of perturbations.
     n_inject_max : int
         Maximum number of injected nodes.
     n_edge_max : int
@@ -36,40 +30,25 @@ class PGD(InjectionAttack):
         Loss function compatible with ``torch.nn.functional``. Default: ``F.cross_entropy``.
     eval_metric : func of grb_utils, optional
         Evaluation metric. Default: ``eval_acc``.
-    early_stop : bool or instance of EarlyStop, optional
-        Whether to early stop. Default: ``None``.
-    early_stop_patience : int, optional
-        Patience of early_stop. Only enabled when ``early_stop is not None``. Default: ``1000``.
-    early_stop_epsilon : float, optional
-        Tolerance of early_stop. Only enabled when ``early_stop is not None``. Default: ``1e-5``.
-    early_stop : bool, optional
-        Whether to early stop. Default: ``False``.
-    verbose : bool, optional
-        Whether to display logs. Default: ``True``.
     device : str, optional
         Device used to host data. Default: ``cpu``.
+    verbose : bool, optional
+        Whether to display logs. Default: ``True``.
 
     """
 
     def __init__(
         self,
-        epsilon,
-        n_epoch,
         n_inject_max,
         n_edge_max,
         feat_lim_min,
         feat_lim_max,
         loss=F.cross_entropy,
         eval_metric=eval_acc,
-        early_stop=None,
-        early_stop_patience=1000,
-        early_stop_epsilon=1e-5,
-        verbose=True,
         device="cpu",
+        verbose=True,
     ):
         self.device = device
-        self.epsilon = epsilon
-        self.n_epoch = n_epoch
         self.n_inject_max = n_inject_max
         self.n_edge_max = n_edge_max
         self.feat_lim_min = feat_lim_min
@@ -78,16 +57,7 @@ class PGD(InjectionAttack):
         self.eval_metric = eval_metric
         self.verbose = verbose
 
-        # Early stop
-        if early_stop:
-            if isinstance(early_stop, EarlyStop):
-                self.early_stop = early_stop
-            else:
-                self.early_stop = EarlyStop(patience=early_stop_patience, epsilon=early_stop_epsilon)
-        else:
-            self.early_stop = None
-
-    def attack(self, model, graph, feat_norm=None, adj_norm_func=None):
+    def attack(self, model, graph, adj_norm_func):
         r"""
 
         Description
@@ -100,10 +70,8 @@ class PGD(InjectionAttack):
             Model implemented based on ``torch.nn.module``.
         graph : cogdl.data.Graph
             Graph to attcak.
-        feat_norm : str, optional
-            Type of feature normalization, ['arctan', 'tanh']. Default: ``None``.
-        adj_norm_func : func of grb_utils.normalize, optional
-            Function that normalizes adjacency matrix. Default: ``None``.
+        adj_norm_func : func of utils.normalize
+            Function that normalizes adjacency matrix.
 
         Returns
         -------
@@ -118,14 +86,13 @@ class PGD(InjectionAttack):
         features = graph.x
         model.to(self.device)
         n_total, n_feat = features.shape
-        features = feat_preprocess(features=features, feat_norm=feat_norm, device=self.device)
+        features = feat_preprocess(features=features, device=self.device)
         adj_tensor = adj_preprocess(adj=adj, adj_norm_func=adj_norm_func, device=self.device)
         pred_origin = model(getGraph(adj_tensor, features, device=self.device))
         labels_origin = torch.argmax(pred_origin, dim=1)
         adj_attack = self.injection(adj=adj, n_inject=self.n_inject_max, n_node=n_total, target_mask=target_mask)
 
-        # Random initialization
-        features_attack = np.random.normal(loc=0, scale=self.feat_lim_max / 10, size=(self.n_inject_max, n_feat))
+        features_attack = np.zeros((self.n_inject_max, n_feat))
         features_attack = self.update_features(
             model=model,
             adj_attack=adj_attack,
@@ -133,7 +100,6 @@ class PGD(InjectionAttack):
             features_attack=features_attack,
             labels_origin=labels_origin,
             target_mask=target_mask,
-            feat_norm=feat_norm,
             adj_norm_func=adj_norm_func,
         )
         out_features = torch.cat((features, features_attack), 0)
@@ -211,7 +177,6 @@ class PGD(InjectionAttack):
         adj_norm_func=None,
     ):
         r"""
-
         Description
         -----------
         Update features of injected nodes.
@@ -232,8 +197,8 @@ class PGD(InjectionAttack):
             Mask of target nodes in form of ``N * 1`` torch bool tensor.
         feat_norm : str, optional
             Type of feature normalization, ['arctan', 'tanh']. Default: ``None``.
-        adj_norm_func : func of grb_utils.normalize
-            Function that normalizes adjacency matrix.
+        adj_norm_func : func of utils.normalize, optional
+            Function that normalizes adjacency matrix. Default: ``None``.
 
         Returns
         -------
@@ -242,44 +207,24 @@ class PGD(InjectionAttack):
 
         """
 
-        epsilon = self.epsilon
-        n_epoch = self.n_epoch
         feat_lim_min, feat_lim_max = self.feat_lim_min, self.feat_lim_max
-
         n_total = features_origin.shape[0]
-        features_attack = feat_preprocess(features=features_attack, feat_norm=feat_norm, device=self.device)
+
         adj_attacked = adj_preprocess(adj=adj_attack, adj_norm_func=adj_norm_func, device=self.device)
+        features_attack = np.random.normal(
+            loc=0, scale=feat_lim_max, size=(self.n_inject_max, features_origin.shape[1])
+        )
+        features_attack = np.clip(features_attack, feat_lim_min, feat_lim_max)
+        features_attack = feat_preprocess(features=features_attack, feat_norm=feat_norm, device=self.device)
         model.eval()
-        epoch_bar = tqdm(range(n_epoch), disable=not self.verbose)
-        for i in epoch_bar:
-            features_attack.requires_grad_(True)
-            features_attack.retain_grad()
-            features_concat = torch.cat((features_origin, features_attack), dim=0)
-            pred = model(getGraph(adj_attacked, features_concat, device=self.device))
-            pred_loss = self.loss(pred[:n_total][target_mask], labels_origin[target_mask]).to(self.device)
 
-            model.zero_grad()
-            pred_loss.backward()
-            grad = features_attack.grad.data
-            features_attack = features_attack.clone() + epsilon * grad.sign()
-            features_attack = torch.clamp(features_attack, feat_lim_min, feat_lim_max)
-            features_attack = features_attack.detach()
+        features_concat = torch.cat((features_origin, features_attack), dim=0)
+        pred = model(getGraph(adj_attacked, features_concat, device=self.device))
+        pred_loss = -self.loss(pred[:n_total][target_mask], labels_origin[target_mask]).to(self.device)
 
-            test_score = self.eval_metric(pred[:n_total][target_mask], labels_origin[target_mask])
+        test_acc = self.eval_metric(pred[:n_total][target_mask], labels_origin[target_mask])
 
-            if self.early_stop:
-                self.early_stop(test_score)
-                if self.early_stop.stop:
-                    if self.verbose:
-                        print("Attack early stopped.Surrogate test score: {:.4f}".format(test_score))
-                    self.early_stop = EarlyStop()
-
-                    return features_attack
-            if self.verbose:
-                epoch_bar.set_description(
-                    "Epoch {}, Loss: {:.4f}, Surrogate test score: {:.4f}".format(i, pred_loss, test_score)
-                )
         if self.verbose:
-            print("Surrogate test score: {:.4f}".format(test_score))
+            print("Loss: {:.4f}, Surrogate test acc: {:.4f}".format(pred_loss, test_acc))
 
         return features_attack

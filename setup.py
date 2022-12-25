@@ -73,6 +73,7 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
         "torch",
+        "importlib-metadata<5.0",
         "networkx",
         "matplotlib",
         "tqdm",

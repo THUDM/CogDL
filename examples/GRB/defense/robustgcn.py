@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from cogdl.layers import GCNLayer
-from .. import BaseModel
+from cogdl.models import BaseModel
 import cogdl.utils.grb_utils as utils
 from cogdl.utils.grb_utils import getGRBGraph, updateGraph, RobustGCNAdjNorm
 import copy

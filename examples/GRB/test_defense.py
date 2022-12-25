@@ -48,8 +48,8 @@ test_score = evaluate(model,
                       device=device)
 print("Test score before attack for surrogate model: {:.4f}.".format(test_score))
 
-# defnese model: GATGuard
-from cogdl.models.defense import GATGuard
+# defense model: GATGuard
+from defense import GATGuard
 model_target = GATGuard(in_feats=graph.num_features,
                         hidden_size=64,
                         out_feats=graph.num_classes,
@@ -81,7 +81,7 @@ test_score = evaluate(model_target,
 print("Test score before attack for target model: {:.4f}.".format(test_score))
 
 
-from cogdl.attack.modification import PGD
+from attack.modification import PGD
 epsilon = 0.1
 n_epoch = 500
 n_mod_ratio = 0.01

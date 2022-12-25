@@ -1,11 +1,11 @@
 from cogdl.datasets.grb_data import Cora_GRBDataset
-from cogdl.attack.modification import *
-from cogdl.attack.injection import *
-from cogdl.attack.modification import RAND as RAND_Modify
-from cogdl.attack.injection import RAND as RAND_Inject
-from cogdl.attack.modification import PGD as PGD_Modify
-from cogdl.attack.injection import PGD as PGD_Inject
-from cogdl.models.defense import *
+from attack.modification import *
+from attack.injection import *
+from attack.modification import RAND as RAND_Modify
+from attack.injection import RAND as RAND_Inject
+from attack.modification import PGD as PGD_Modify
+from attack.injection import PGD as PGD_Inject
+from defense import *
 from cogdl.models.nn import GCN
 from cogdl.utils import set_random_seed
 from cogdl.utils.grb_utils import evaluate, GCNAdjNorm

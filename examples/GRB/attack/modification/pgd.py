@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from tqdm.auto import tqdm
 
-from cogdl.attack.base import ModificationAttack, EarlyStop
+from attack.base import ModificationAttack, EarlyStop
 from cogdl.data import Graph
 from cogdl.utils.grb_utils import eval_acc, feat_preprocess, adj_preprocess, getGraph, getGRBGraph
 

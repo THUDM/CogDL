@@ -1,11 +1,9 @@
-import sys,os
-add_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(add_path)
 from examples.simple_trafficPre.example import experiment as traffic_experiment
 from cogdl.experiments import experiment, gen_variants, train, set_best_config
 from cogdl.options import get_default_args
 import numpy as np
-import shutil, os
+import shutil
+import os
 
 
 

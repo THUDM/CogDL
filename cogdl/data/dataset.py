@@ -77,6 +77,7 @@ class Dataset(torch.utils.data.Dataset):
         super(Dataset, self).__init__()
 
         self.root = osp.expanduser(osp.normpath(root))
+        print(self.root,"-----------------")
         self.raw_dir = osp.join(self.root, "raw")
         self.processed_dir = osp.join(self.root, "processed")
         self.transform = transform
@@ -117,6 +118,7 @@ class Dataset(torch.utils.data.Dataset):
         self.download()
 
     def _process(self):
+        print(self.processed_paths,"====================")
         if files_exist(self.processed_paths):  # pragma: no cover
             return
 

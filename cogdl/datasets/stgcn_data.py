@@ -204,6 +204,7 @@ class STGCNDataset(Dataset):
 
     def process(self):
         files = self.raw_paths
+        print(files,"-=-=-=-=-=-=-=-=-=")
         if not files_exist(files):
             raw_data_processByNumNodes(self.raw_dir, self.num_stations, self.meta_file_name)
         data = read_stgcn_data(self.raw_dir, self.num_stations)

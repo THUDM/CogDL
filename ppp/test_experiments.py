@@ -1,10 +1,14 @@
+import sys,os
+add_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(add_path.split('examples')[0])
+print(add_path.split('examples')[0])
+
 from examples.simple_trafficPre.example import experiment as traffic_experiment
 from cogdl.experiments import experiment, gen_variants, train, set_best_config
 from cogdl.options import get_default_args
 from cogdl.utils import download_url, untar, makedirs
 import numpy as np
 import os, shutil
-
 
 def test_set_best_config():
     args = get_default_args(task="node_classification", dataset="citeseer", model="gat")
@@ -77,7 +81,6 @@ def test_autognn_experiment():
 
 
 def test_stgcn_experiment():   
-    from cogdl.datasets.stgcn_data import raw_data_processByNumNodes
     root_path = os.path.dirname(os.path.abspath(__file__))
     data_path = root_path + "/data"
     raw_path = root_path + "/data/pems-stgcn/raw/"
@@ -89,9 +92,6 @@ def test_stgcn_experiment():
 
     download_url("https://cloud.tsinghua.edu.cn/f/a39effe167df447eab80/?dl=1", raw_path, "trafficPre_testData.zip")
     untar(raw_path, "trafficPre_testData.zip")
-    print("Processing...")
-    raw_data_processByNumNodes(raw_path, 288, 'd07_text_meta.txt')
-    print("Done!")
     
     kwargs = {"epochs":1,
               "kernel_size":3,
@@ -119,7 +119,6 @@ def test_stgcn_experiment():
 
 
 def test_stgat_experiment():    
-    from cogdl.datasets.stgat_data import raw_data_processByNumNodes
     root_path = os.path.dirname(os.path.abspath(__file__))
     data_path = root_path + "/data"
     raw_path = root_path + "/data/pems-stgat/raw/"
@@ -131,10 +130,7 @@ def test_stgat_experiment():
 
     download_url("https://cloud.tsinghua.edu.cn/f/a39effe167df447eab80/?dl=1", raw_path, "trafficPre_testData.zip")
     untar(raw_path, "trafficPre_testData.zip")
-    print("Processing...")
-    raw_data_processByNumNodes(raw_path, 288, 'd07_text_meta.txt')
-    print("Done!") 
-    
+
     kwargs = {"epochs":1,
               "kernel_size":3,
               "n_his":20,
@@ -162,11 +158,11 @@ def test_stgat_experiment():
 
 
 if __name__ == "__main__":
-    test_set_best_config()
-    test_train()
-    test_gen_variants()
-    test_experiment()
-    test_auto_experiment()
-    test_autognn_experiment()
+    #test_set_best_config()
+    #test_train()
+    #test_gen_variants()
+    #test_experiment()
+    #test_auto_experiment()
+    #test_autognn_experiment()
     test_stgcn_experiment()
     test_stgat_experiment()

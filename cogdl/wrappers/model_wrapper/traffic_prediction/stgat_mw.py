@@ -86,7 +86,7 @@ class STGATModelWrapper(ModelWrapper):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 pre_pd[self.node_ids[i]] = list(pre_y[:,i])
-        pre_pd.to_csv('./data/pems-stgcn/stgcn_prediction.csv',index=False)
+        pre_pd.to_csv('./data/pems-stgat/stgat_prediction.csv',index=False)
 
 
 

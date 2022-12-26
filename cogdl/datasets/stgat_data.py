@@ -67,7 +67,6 @@ def raw_data_processByNumNodes(raw_dir, num_nodes, meta_file_name):
     for station_file in tqdm(files):
         # Get file date
         file_date_str = station_file.split(os.path.sep)[-1].split('.')[0]
-        print(file_date_str)
         file_date = datetime(int(file_date_str.split('_')[-3]), int(file_date_str.split('_')[-2]),
                              int(file_date_str.split('_')[-1]))
         # Check if weekday
@@ -173,9 +172,9 @@ class STGATDataset(Dataset):
         self.name = name
         self.meta_file_name = meta_file_name
         self.url = "https://cloud.tsinghua.edu.cn/f/5af7ea1a7d064c5ba6c8/?dl=1"
+        # self.url_test = "https://cloud.tsinghua.edu.cn/f/a39effe167df447eab80/?dl=1"
         self.num_stations = num_stations
         super(STGATDataset, self).__init__(root)
-        print(self.processed_paths[0])
         self.data = torch.load(self.processed_paths[0])
         self.num_nodes = self.data.num_nodes
 
@@ -193,14 +192,17 @@ class STGATDataset(Dataset):
         return self.data
 
     def download(self):
-        if os.path.exists(self.raw_dir):
-            return
+        # if os.path.exists(self.raw_dir+r'\PeMS_20210501_20210630'):  # pragma: no cover
+
+        # TODO: Auto Traffic pipeline support
+        # if os.path.exists(self.raw_dir):  # auto_traffic
+        #     return
+
         download_url(self.url, self.raw_dir, name=self.name + ".zip")
         untar(self.raw_dir, self.name + ".zip")
 
     def process(self):
         files = self.raw_paths
-        print(files)
         if not files_exist(files):
             raw_data_processByNumNodes(self.raw_dir, self.num_stations, self.meta_file_name)
         data = read_stgcn_data(self.raw_dir, self.num_stations)

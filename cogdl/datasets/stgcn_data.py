@@ -68,7 +68,6 @@ def raw_data_processByNumNodes(raw_dir, num_nodes, meta_file_name):
     for station_file in tqdm(files):
         # Get file date
         file_date_str = station_file.split(os.path.sep)[-1].split('.')[0]
-        print(file_date_str)
         file_date = datetime(int(file_date_str.split('_')[-3]), int(file_date_str.split('_')[-2]),
                              int(file_date_str.split('_')[-1]))
         # Check if weekday
@@ -174,6 +173,7 @@ class STGCNDataset(Dataset):
         self.name = name
         self.meta_file_name = meta_file_name
         self.url = "https://cloud.tsinghua.edu.cn/f/5af7ea1a7d064c5ba6c8/?dl=1"
+        # self.url_test = "https://cloud.tsinghua.edu.cn/f/a39effe167df447eab80/?dl=1"
         self.num_stations = num_stations
         super(STGCNDataset, self).__init__(root)
         self.data = torch.load(self.processed_paths[0])
@@ -194,14 +194,16 @@ class STGCNDataset(Dataset):
 
     def download(self):
         # if os.path.exists(self.raw_dir+r'\PeMS_20210501_20210630'):  # pragma: no cover
-        if os.path.exists(self.raw_dir):  # auto_traffic
-            return
+        
+        # TODO: Auto Traffic pipeline support
+        # if os.path.exists(self.raw_dir):  # auto_traffic
+        #     return
+        
         download_url(self.url, self.raw_dir, name=self.name + ".zip")
         untar(self.raw_dir, self.name + ".zip")
 
     def process(self):
         files = self.raw_paths
-        print(files)
         if not files_exist(files):
             raw_data_processByNumNodes(self.raw_dir, self.num_stations, self.meta_file_name)
         data = read_stgcn_data(self.raw_dir, self.num_stations)
@@ -222,5 +224,5 @@ class STGCNDataset(Dataset):
 class PeMS_Dataset(STGCNDataset):
     def __init__(self, data_path="data"):
         dataset = "pems-stgcn"
-        path = osp.join(data_path, dataset)
-        super(PeMS_Dataset, self).__init__(path, dataset, num_stations=288, meta_file_name= 'd07_text_meta.txt')
+        root = osp.join(data_path, dataset)
+        super(PeMS_Dataset, self).__init__(root, dataset, num_stations=288, meta_file_name= 'd07_text_meta.txt')

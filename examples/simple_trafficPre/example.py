@@ -221,5 +221,5 @@ if __name__ == "__main__":
               "test_prop": 0.1,
               "pred_length":288,}
 
-    experiment(dataset="pems-stgcn", model="stgcn", resume_training=False, **kwargs)
-    # experiment(dataset="pems-stgat", model="stgat", resume_training=False, **kwargs)
+    # experiment(dataset="pems-stgcn", model="stgcn", resume_training=False, **kwargs)
+    experiment(dataset="pems-stgat", model="stgat", resume_training=False, **kwargs)

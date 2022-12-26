@@ -78,12 +78,14 @@ def test_autognn_experiment():
 
 
 def test_stgcn_experiment():
-    
+     
     source_path = os.path.dirname(os.path.abspath(__file__)).split("tests")[0]+"examples/simple_trafficPre/test_data"
     target_path = os.path.dirname(os.path.abspath(__file__))+"/data"
     if os.path.exists(target_path):
-        shutil.rmtree(target_path)
-    shutil.copytree(source_path, target_path)
+        os.system('rm -rf {}'.format(target_path))
+    #os.system('cp -r {} {}'.format(source_path, target_path))
+        #shutil.rmtree(target_path)
+    #shutil.copytree(source_path, target_path)
     kwargs = {"epochs":1,
               "kernel_size":3,
               "n_his":20,
@@ -104,16 +106,16 @@ def test_stgcn_experiment():
     )
     assert ("pems-stgcn", "stgcn") in results
     assert results[("pems-stgcn", "stgcn")][0]["test__metric"] > 0
-    shutil.rmtree(target_path)
-    shutil.rmtree(os.path.dirname(os.path.abspath(__file__))+"/checkpoints")
+    #shutil.rmtree(target_path)
+    #shutil.rmtree(os.path.dirname(os.path.abspath(__file__))+"/checkpoints")
 
 def test_stgat_experiment():
 
-    source_path = os.path.dirname(os.path.abspath(__file__)).split("tests")[0]+"examples/simple_trafficPre/test_data"
-    target_path = os.path.dirname(os.path.abspath(__file__))+"/data"
-    if os.path.exists(target_path):
-        shutil.rmtree(target_path)
-    shutil.copytree(source_path, target_path)
+    #source_path = os.path.dirname(os.path.abspath(__file__)).split("tests")[0]+"examples/simple_trafficPre/test_data"
+    #target_path = os.path.dirname(os.path.abspath(__file__))+"/data"
+    #if os.path.exists(target_path):
+    #    shutil.rmtree(target_path)
+    #shutil.copytree(source_path, target_path)
     kwargs = {"epochs":1,
               "kernel_size":3,
               "n_his":20,
@@ -146,4 +148,4 @@ if __name__ == "__main__":
     test_auto_experiment()
     test_autognn_experiment()
     test_stgcn_experiment()
-    test_stgat_experiment()
+    #test_stgat_experiment()

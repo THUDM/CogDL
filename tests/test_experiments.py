@@ -83,7 +83,7 @@ def test_stgcn_experiment():
     target_path = os.path.dirname(os.path.abspath(__file__))+"/data"
     if os.path.exists(target_path):
         os.system('rm -rf {}'.format(target_path))
-    #os.system('cp -r {} {}'.format(source_path, target_path))
+    os.system('cp -r {} {}'.format(source_path, target_path))
         #shutil.rmtree(target_path)
     #shutil.copytree(source_path, target_path)
     kwargs = {"epochs":1,
@@ -148,4 +148,4 @@ if __name__ == "__main__":
     test_auto_experiment()
     test_autognn_experiment()
     test_stgcn_experiment()
-    #test_stgat_experiment()
+    # test_stgat_experiment()

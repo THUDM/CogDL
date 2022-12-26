@@ -3,7 +3,7 @@ from cogdl.experiments import experiment, gen_variants, train, set_best_config
 from cogdl.options import get_default_args
 import numpy as np
 import os
-
+import shutil
 
 
 def test_set_best_config():

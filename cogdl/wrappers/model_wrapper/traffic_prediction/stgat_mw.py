@@ -87,14 +87,14 @@ class STGATModelWrapper(ModelWrapper):
 
 
 
-    def predict_step(self, batch):
-        batch_x, y = batch
-        batch_size, num_feature, _, _ = batch_x.size()
-        pred = self.model(batch_x.view(-1, num_feature), self.edge_index, self.edge_weight,batch_size,num_feature)
+    # def predict_step(self, batch):
+    #     batch_x, y = batch
+    #     batch_size, num_feature, _, _ = batch_x.size()
+    #     pred = self.model(batch_x.view(-1, num_feature), self.edge_index, self.edge_weight,batch_size,num_feature)
 
 
-        _y = self.scaler.inverse_transform(y.cpu()).reshape(-1)
-        _pred = self.scaler.inverse_transform(pred.view(len(batch_x), -1).cpu().numpy()).reshape(-1)
+    #     _y = self.scaler.inverse_transform(y.cpu()).reshape(-1)
+    #     _pred = self.scaler.inverse_transform(pred.view(len(batch_x), -1).cpu().numpy()).reshape(-1)
 
 
     def pre_stage(self, stage, data_w):
@@ -131,8 +131,8 @@ def evaluate_model(model, loss, x, y, edge_index, edge_weight):
     l_sum, n = 0.0, 0
     with torch.no_grad():
         y_pred = model(x, edge_index, edge_weight).view(len(x), -1)
-        l = loss(y_pred, y)
-        l_sum += l.item() * y.shape[0]
+        tmp_loss = loss(y_pred, y)
+        l_sum += tmp_loss.item() * y.shape[0]
         n += y.shape[0]
         return l_sum / n
 

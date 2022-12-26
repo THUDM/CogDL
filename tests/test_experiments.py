@@ -1,4 +1,5 @@
 from examples.simple_stgcn.example import experiment as stgcn_exp
+from cogdl.experiments import experiment, gen_variants, train, set_best_config
 from cogdl.options import get_default_args
 import numpy as np
 import shutil

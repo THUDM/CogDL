@@ -93,6 +93,7 @@ def test_stgcn_experiment():
     raw_data_processByNumNodes(raw_path, 288, 'd07_text_meta.txt')
     print("Done!")
     
+    print(raw_path,"raw_path=====================")
     kwargs = {"epochs":1,
               "kernel_size":3,
               "n_his":20,

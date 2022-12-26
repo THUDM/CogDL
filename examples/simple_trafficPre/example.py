@@ -54,9 +54,6 @@ def train(args):  # noqa: C901
     model_name = args.model if isinstance(args.model, str) else args.model.model_name
     dw_name = args.dw if isinstance(args.dw, str) else args.dw.__name__
     mw_name = args.mw if isinstance(args.mw, str) else args.mw.__name__
-    print(model_name)
-    print(dw_name)
-    print(mw_name)
 
     print(
         f""" 
@@ -201,9 +198,7 @@ def raw_experiment(args):
 def experiment(dataset, model=None, **kwargs):
     dataset = [dataset]
     model = [model]
-    print(dataset)
     args = get_default_args(dataset=[str(x) for x in dataset], model=[str(x) for x in model], **kwargs)
-    print(args)
     args.dataset = dataset
     args.model = model
     return raw_experiment(args)

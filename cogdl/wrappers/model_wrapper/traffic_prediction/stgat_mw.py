@@ -1,6 +1,7 @@
 import torch
 from .. import ModelWrapper
 import numpy as np
+import warnings
 
 
 class STGATModelWrapper(ModelWrapper):
@@ -82,7 +83,9 @@ class STGATModelWrapper(ModelWrapper):
         pre_y = self.scaler.inverse_transform(all_pre_y.cpu().numpy()).reshape(-1, len(self.node_ids))
         pre_pd['timestamp'] = timestamp
         for i in range(len(self.node_ids)):
-            pre_pd[self.node_ids[i]] = list(pre_y[:,i])
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                pre_pd[self.node_ids[i]] = list(pre_y[:,i])
         pre_pd.to_csv('./data/pems-stgcn/stgcn_prediction.csv',index=False)
 
 

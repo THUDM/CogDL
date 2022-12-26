@@ -1,4 +1,7 @@
-from examples.simple_stgcn.example import experiment as stgcn_exp
+import sys,os
+add_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(add_path)
+from examples.simple_trafficPre.example import experiment as traffic_experiment
 from cogdl.experiments import experiment, gen_variants, train, set_best_config
 from cogdl.options import get_default_args
 import numpy as np
@@ -78,7 +81,7 @@ def test_autognn_experiment():
 
 def test_stgcn_experiment():
     
-    source_path = os.path.dirname(os.path.abspath(__file__)).split("tests")[0]+"examples/simple_stgcn/test_data"
+    source_path = os.path.dirname(os.path.abspath(__file__)).split("tests")[0]+"examples/simple_trafficPre/test_data"
     target_path = os.path.dirname(os.path.abspath(__file__))+"/data"
     if os.path.exists(target_path):
         shutil.rmtree(target_path)
@@ -95,7 +98,7 @@ def test_stgcn_experiment():
               "test_prop": 0.1,
               "pred_length":288,}
 
-    results =stgcn_exp(
+    results =traffic_experiment(
         dataset="pems-stgcn",
         model="stgcn",
         resume_training=False,
@@ -106,6 +109,35 @@ def test_stgcn_experiment():
     shutil.rmtree(target_path)
     shutil.rmtree(os.path.dirname(os.path.abspath(__file__))+"/checkpoints")
 
+def test_stgat_experiment():
+
+    source_path = os.path.dirname(os.path.abspath(__file__)).split("tests")[0]+"examples/simple_trafficPre/test_data"
+    target_path = os.path.dirname(os.path.abspath(__file__))+"/data"
+    if os.path.exists(target_path):
+        shutil.rmtree(target_path)
+    shutil.copytree(source_path, target_path)
+    kwargs = {"epochs":1,
+              "kernel_size":3,
+              "n_his":20,
+              "n_pred":1,
+              "channel_size_list":np.array([[ 1, 4, 4],[4, 4, 4],[4, 4, 4]]),
+              "num_layers":3,
+              "num_nodes":288,
+              "train_prop": 0.1,
+              "val_prop": 0.1,
+              "test_prop": 0.1,
+              "pred_length":288,}
+
+    results =traffic_experiment(
+        dataset="pems-stgat",
+        model="stgat",
+        resume_training=False,
+        **kwargs
+    )
+    assert ("pems-stgat", "stgat") in results
+    assert results[("pems-stgat", "stgat")][0]["test__metric"] > 0
+    shutil.rmtree(target_path)
+    shutil.rmtree(os.path.dirname(os.path.abspath(__file__))+"/checkpoints")
 
 if __name__ == "__main__":
    
@@ -116,3 +148,4 @@ if __name__ == "__main__":
     test_auto_experiment()
     test_autognn_experiment()
     test_stgcn_experiment()
+    test_stgat_experiment()

@@ -199,7 +199,9 @@ class STGCNDataset(Dataset):
         # if os.path.exists(self.raw_dir):  # auto_traffic
         #     return
         
-        if os.path.exists("/home/travis/build/THUDM/cogdl/"):
+        _test_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        test_path = _test_path[:(len(_test_path)-len("/cogdl"))]+"/tests/test_stgcn/"
+        if os.path.exists(test_path):
             download_url(self.url_test, self.raw_dir, name=self.name + ".zip")
         else:
             download_url(self.url, self.raw_dir, name=self.name + ".zip")

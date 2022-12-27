@@ -89,7 +89,7 @@ class STGAT(BaseModel):
         :param device Device to operate on
         """
         # apply dropout
-        x = torch.cuda.FloatTensor(x)
+        x = torch.FloatTensor(x)
 
 
         x = self.gat(x, edge_index, edge_weight)

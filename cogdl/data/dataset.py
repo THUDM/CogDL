@@ -118,7 +118,7 @@ class Dataset(torch.utils.data.Dataset):
         self.download()
 
     def _process(self):
-        if files_exist(self.processed_paths) or :  # pragma: no cover
+        if files_exist(self.processed_paths):  # pragma: no cover
             return
 
         print("Processing...")

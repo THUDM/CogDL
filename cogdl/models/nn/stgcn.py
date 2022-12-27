@@ -69,7 +69,7 @@ class STGCN(BaseModel):
                                        window_size - 2 * num_layers * (kernel_size - 1), \
                                        num_nodes))
         # CUDA if available
-        if torch.cuda.is_available()
+        if torch.cuda.is_available():
             for layer in self.layers:
                 layer = layer.to(device)
 

@@ -143,7 +143,6 @@ def raw_data_processByNumNodes(raw_dir, num_nodes, meta_file_name):
 
 def read_stgcn_data(folder, num_nodes):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    if 
     W = pd.read_csv(osp.join(folder, "W_{}.csv".format(num_nodes)))
     T_V = pd.read_csv(osp.join(folder, "V_{}.csv".format(num_nodes)))
     V = T_V.drop('timestamp',axis=1)

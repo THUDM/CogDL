@@ -105,7 +105,6 @@ def test_stgcn_experiment():
     assert ("pems-stgcn", "stgcn") in results
     assert results[("pems-stgcn", "stgcn")][0]["test__metric"] > 0
 
-    #shutil.rmtree(test_path)
 
 
 def test_stgat_experiment():    
@@ -137,7 +136,6 @@ def test_stgat_experiment():
     assert ("pems-stgat", "stgat") in results
     assert results[("pems-stgat", "stgat")][0]["test__metric"] > 0
     
-    #shutil.rmtree(test_path)
 
 
 

@@ -81,11 +81,13 @@ def test_stgcn_experiment():
     root_path = os.path.dirname(os.path.abspath(__file__))
     data_path = root_path + "/data"
     raw_path = root_path + "/data/pems-stgcn/raw/"
+    process_path = root_path + "/data/pems-stgcn/processed/"
     ckp_path = root_path + "/checkpoints"
 
     if os.path.exists(data_path):
         shutil.rmtree(data_path)
         makedirs(raw_path)
+        makedirs(processed_path)
 
     download_url("https://cloud.tsinghua.edu.cn/f/a39effe167df447eab80/?dl=1", raw_path, "trafficPre_testData.zip")
     untar(raw_path, "trafficPre_testData.zip")
@@ -124,11 +126,13 @@ def test_stgat_experiment():
     root_path = os.path.dirname(os.path.abspath(__file__))
     data_path = root_path + "/data"
     raw_path = root_path + "/data/pems-stgat/raw/"
+    process_path = root_path + "/data/pems-stgat/processed/"
     ckp_path = root_path + "/checkpoints"
 
     if os.path.exists(data_path):
         shutil.rmtree(data_path)
         makedirs(raw_path)
+        makedirs(processed_path)
 
     download_url("https://cloud.tsinghua.edu.cn/f/a39effe167df447eab80/?dl=1", raw_path, "trafficPre_testData.zip")
     untar(raw_path, "trafficPre_testData.zip")

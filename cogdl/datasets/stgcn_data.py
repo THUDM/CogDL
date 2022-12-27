@@ -143,6 +143,7 @@ def raw_data_processByNumNodes(raw_dir, num_nodes, meta_file_name):
 
 def read_stgcn_data(folder, num_nodes):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    if 
     W = pd.read_csv(osp.join(folder, "W_{}.csv".format(num_nodes)))
     T_V = pd.read_csv(osp.join(folder, "V_{}.csv".format(num_nodes)))
     V = T_V.drop('timestamp',axis=1)
@@ -206,10 +207,14 @@ class STGCNDataset(Dataset):
 
     def process(self):
         files = self.raw_paths
-        if not files_exist(files) and (not os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgcn/raw/")):
-            raw_data_processByNumNodes(self.raw_dir, self.num_stations, self.meta_file_name)
-        data = read_stgcn_data(self.raw_dir, self.num_stations)
-        torch.save(data, self.processed_paths[0])
+        if os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgcn/raw/"):
+            data = read_stgcn_data("/home/travis/build/THUDM/cogdl/tests/data/pems-stgcn/raw/", self.num_stations)
+            torch.save(data, "/home/travis/build/THUDM/cogdl/tests/data/pems-stgcn/raw/processed/data.pt")
+        else:
+            if not files_exist(files):
+                raw_data_processByNumNodes(self.raw_dir, self.num_stations, self.meta_file_name)
+            data = read_stgcn_data(self.raw_dir, self.num_stations)
+            torch.save(data, self.processed_paths[0])
 
 
     def __repr__(self):

@@ -140,7 +140,7 @@ def raw_data_processByNumNodes(raw_dir, num_nodes, meta_file_name):
     station_metadata.to_csv(os.path.join(output_dir, 'station_meta_{}.csv'.format(num_nodes)), index=False)
 
 
-def read_stgcn_data(folder, num_nodes):
+def read_stgat_data(folder, num_nodes):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     W = pd.read_csv(osp.join(folder, "W_{}.csv".format(num_nodes)))
     T_V = pd.read_csv(osp.join(folder, "V_{}.csv".format(num_nodes)))
@@ -193,21 +193,26 @@ class STGATDataset(Dataset):
 
     def download(self):
         # if os.path.exists(self.raw_dir+r'\PeMS_20210501_20210630'):  # pragma: no cover
-
+        
         # TODO: Auto Traffic pipeline support
         # if os.path.exists(self.raw_dir):  # auto_traffic
         #     return
-        if os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgcn/raw/"):
+        
+        if os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgat/raw/"):
             return
         download_url(self.url, self.raw_dir, name=self.name + ".zip")
         untar(self.raw_dir, self.name + ".zip")
 
     def process(self):
         files = self.raw_paths
-        if not files_exist(files) and (not os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgcn/raw/")):
-            raw_data_processByNumNodes(self.raw_dir, self.num_stations, self.meta_file_name)
-        data = read_stgcn_data(self.raw_dir, self.num_stations)
-        torch.save(data, self.processed_paths[0])
+        if os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgat/raw/"):
+            data = read_stgat_data("/home/travis/build/THUDM/cogdl/tests/data/pems-stgat/raw/", self.num_stations)
+            torch.save(data, "/home/travis/build/THUDM/cogdl/tests/data/pems-stgat/raw/processed/data.pt")
+        else:
+            if not files_exist(files):
+                raw_data_processByNumNodes(self.raw_dir, self.num_stations, self.meta_file_name)
+            data = read_stgat_data(self.raw_dir, self.num_stations)
+            torch.save(data, self.processed_paths[0])
 
 
     def __repr__(self):

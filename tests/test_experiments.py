@@ -169,3 +169,5 @@ if __name__ == "__main__":
     test_experiment()
     test_auto_experiment()
     test_autognn_experiment()
+    test_stgcn_experiment()
+    test_stgat_experiment()

@@ -1,7 +1,7 @@
 import collections
 import os.path as osp
 from itertools import repeat
-
+import os
 import numpy as np
 
 import torch.utils.data
@@ -118,7 +118,7 @@ class Dataset(torch.utils.data.Dataset):
         self.download()
 
     def _process(self):
-        if files_exist(self.processed_paths):  # pragma: no cover
+        if files_exist(self.processed_paths) or :  # pragma: no cover
             return
 
         print("Processing...")

@@ -197,13 +197,14 @@ class STGATDataset(Dataset):
         # TODO: Auto Traffic pipeline support
         # if os.path.exists(self.raw_dir):  # auto_traffic
         #     return
-
+        if os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgcn/raw/")：
+            return
         download_url(self.url, self.raw_dir, name=self.name + ".zip")
         untar(self.raw_dir, self.name + ".zip")
 
     def process(self):
         files = self.raw_paths
-        if not files_exist(files):
+        if not files_exist(files) and (not os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgcn/raw/")):
             raw_data_processByNumNodes(self.raw_dir, self.num_stations, self.meta_file_name)
         data = read_stgcn_data(self.raw_dir, self.num_stations)
         torch.save(data, self.processed_paths[0])

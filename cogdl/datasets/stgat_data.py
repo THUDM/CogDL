@@ -207,7 +207,7 @@ class STGATDataset(Dataset):
         files = self.raw_paths
         if os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgat/raw/"):
             data = read_stgat_data("/home/travis/build/THUDM/cogdl/tests/data/pems-stgat/raw/", self.num_stations)
-            torch.save(data, "/home/travis/build/THUDM/cogdl/tests/data/pems-stgat/raw/processed/data.pt")
+            torch.save(data, "/home/travis/build/THUDM/cogdl/tests/data/pems-stgat/processed/data.pt")
         else:
             if not files_exist(files):
                 raw_data_processByNumNodes(self.raw_dir, self.num_stations, self.meta_file_name)

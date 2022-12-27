@@ -163,11 +163,9 @@ def test_stgat_experiment():
 
 
 if __name__ == "__main__":
-    #test_set_best_config()
-    #test_train()
-    #test_gen_variants()
-    #test_experiment()
-    #test_auto_experiment()
-    #test_autognn_experiment()
-    test_stgcn_experiment()
-    test_stgat_experiment()
+    test_set_best_config()
+    test_train()
+    test_gen_variants()
+    test_experiment()
+    test_auto_experiment()
+    test_autognn_experiment()

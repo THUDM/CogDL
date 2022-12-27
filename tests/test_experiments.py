@@ -81,7 +81,7 @@ def test_stgcn_experiment():
     root_path = os.path.dirname(os.path.abspath(__file__))
     data_path = root_path + "/data"
     raw_path = root_path + "/data/pems-stgcn/raw/"
-    process_path = root_path + "/data/pems-stgcn/processed/"
+    processed_path = root_path + "/data/pems-stgcn/processed/"
     ckp_path = root_path + "/checkpoints"
 
     if os.path.exists(data_path):
@@ -126,7 +126,7 @@ def test_stgat_experiment():
     root_path = os.path.dirname(os.path.abspath(__file__))
     data_path = root_path + "/data"
     raw_path = root_path + "/data/pems-stgat/raw/"
-    process_path = root_path + "/data/pems-stgat/processed/"
+    processed_path = root_path + "/data/pems-stgat/processed/"
     ckp_path = root_path + "/checkpoints"
 
     if os.path.exists(data_path):

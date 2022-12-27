@@ -2,6 +2,7 @@ import numpy as np
 import torch.nn as nn
 from cogdl.layers import STConvLayer
 from .. import BaseModel
+import torch
 
 
 class STGCN(BaseModel):
@@ -68,8 +69,9 @@ class STGCN(BaseModel):
                                        window_size - 2 * num_layers * (kernel_size - 1), \
                                        num_nodes))
         # CUDA if available
-        for layer in self.layers:
-            layer = layer.to(device)
+        if torch.cuda.is_available()
+            for layer in self.layers:
+                layer = layer.to(device)
 
 
     def forward(self, x, edge_index, edge_weight):

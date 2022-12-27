@@ -172,7 +172,7 @@ class STGCNDataset(Dataset):
     def __init__(self, root, name, num_stations, meta_file_name):
         self.name = name
         self.meta_file_name = meta_file_name
-        self.url = "https://cloud.tsinghua.edu.cn/f/5af7ea1a7d064c5ba6c8/?dl=1"
+        # self.url = "https://cloud.tsinghua.edu.cn/f/5af7ea1a7d064c5ba6c8/?dl=1"
         # self.url_test = "https://cloud.tsinghua.edu.cn/f/a39effe167df447eab80/?dl=1"
         self.num_stations = num_stations
         super(STGCNDataset, self).__init__(root)

@@ -199,7 +199,7 @@ class STGCNDataset(Dataset):
         # if os.path.exists(self.raw_dir):  # auto_traffic
         #     return
         
-        if os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgcn/raw/")：
+        if os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgcn/raw/"):
             return
         download_url(self.url, self.raw_dir, name=self.name + ".zip")
         untar(self.raw_dir, self.name + ".zip")

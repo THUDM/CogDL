@@ -100,7 +100,6 @@ class Dataset(torch.utils.data.Dataset):
     def raw_paths(self):
         r"""The filepaths to find in order to skip the download."""
         files = to_list(self.raw_file_names)
-        print("self.raw_dir",self.raw_dir)
         return [osp.join(self.raw_dir, f) for f in files]
 
     @property

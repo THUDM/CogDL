@@ -172,7 +172,7 @@ class STGATDataset(Dataset):
         self.name = name
         self.meta_file_name = meta_file_name
         # self.url = "https://cloud.tsinghua.edu.cn/f/5af7ea1a7d064c5ba6c8/?dl=1"
-        # self.url_test = "https://cloud.tsinghua.edu.cn/f/a39effe167df447eab80/?dl=1"
+        self.url_test = "https://cloud.tsinghua.edu.cn/f/a39effe167df447eab80/?dl=1"
         self.num_stations = num_stations
         super(STGATDataset, self).__init__(root)
         self.data = torch.load(self.processed_paths[0])
@@ -198,24 +198,18 @@ class STGATDataset(Dataset):
         # if os.path.exists(self.raw_dir):  # auto_traffic
         #     return
         
-        if os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgat/raw/"):
-            return
-        download_url(self.url, self.raw_dir, name=self.name + ".zip")
+        if os.path.exists("/home/travis/build/THUDM/cogdl/"):
+            download_url(self.url_test, self.raw_dir, name=self.name + ".zip")
+        else:
+            download_url(self.url, self.raw_dir, name=self.name + ".zip")
         untar(self.raw_dir, self.name + ".zip")
 
     def process(self):
         files = self.raw_paths
-        if os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgat/raw/"):
-            data = read_stgat_data("/home/travis/build/THUDM/cogdl/tests/data/pems-stgat/raw/", self.num_stations)
-            if os.path.exists("/home/travis/build/THUDM/cogdl/tests/data/pems-stgat/processed/"):
-                torch.save(data, "/home/travis/build/THUDM/cogdl/tests/data/pems-stgat/processed/data.pt")
-            else:
-                torch.save(data, "/home/travis/build/THUDM/cogdl/tests/data/data.pt")
-        else:
-            if not files_exist(files):
-                raw_data_processByNumNodes(self.raw_dir, self.num_stations, self.meta_file_name)
-            data = read_stgat_data(self.raw_dir, self.num_stations)
-            torch.save(data, self.processed_paths[0])
+        if not files_exist(files):
+            raw_data_processByNumNodes(self.raw_dir, self.num_stations, self.meta_file_name)
+        data = read_stgat_data(self.raw_dir, self.num_stations)
+        torch.save(data, self.processed_paths[0])
 
 
     def __repr__(self):

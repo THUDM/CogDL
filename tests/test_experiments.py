@@ -1,3 +1,7 @@
+import sys,os
+add_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(add_path)
+
 from examples.simple_trafficPre.example import experiment as traffic_experiment
 from cogdl.experiments import experiment, gen_variants, train, set_best_config
 from cogdl.options import get_default_args
@@ -84,18 +88,19 @@ def test_stgcn_experiment():
     processed_path = root_path + "/data/pems-stgcn/processed/"
     ckp_path = root_path + "/checkpoints"
 
-    if os.path.exists(data_path):
-        shutil.rmtree(data_path)
-        makedirs(raw_path)
-        makedirs(processed_path)
+    if not os.path.exists(data_path):
+    #    shutil.rmtree(data_path)
+        makedirs(data_path)
+    #makedirs(processed_path)
 
-    download_url("https://cloud.tsinghua.edu.cn/f/a39effe167df447eab80/?dl=1", raw_path, "trafficPre_testData.zip")
-    untar(raw_path, "trafficPre_testData.zip")
-    print("Processing...")
-    raw_data_processByNumNodes(raw_path, 288, 'd07_text_meta.txt')
-    print("Done!")
+    #download_url("https://cloud.tsinghua.edu.cn/f/a39effe167df447eab80/?dl=1", raw_path, "trafficPre_testData.zip")
+    #untar(raw_path, "trafficPre_testData.zip")
+    #print("Processing...")
+    #raw_data_processByNumNodes(raw_path, 288, 'd07_text_meta.txt')
+    #print("Done!")
     
-    print(raw_path,"raw_path=====================")
+    #print(raw_path,"raw_path=====================")
+    
     kwargs = {"epochs":1,
               "kernel_size":3,
               "n_his":20,
@@ -117,8 +122,8 @@ def test_stgcn_experiment():
     assert ("pems-stgcn", "stgcn") in results
     assert results[("pems-stgcn", "stgcn")][0]["test__metric"] > 0
 
-    shutil.rmtree(data_path)
-    shutil.rmtree(ckp_path)
+    #shutil.rmtree(data_path)
+    #shutil.rmtree(ckp_path)
 
 
 def test_stgat_experiment():    
@@ -129,16 +134,16 @@ def test_stgat_experiment():
     processed_path = root_path + "/data/pems-stgat/processed/"
     ckp_path = root_path + "/checkpoints"
 
-    if os.path.exists(data_path):
-        shutil.rmtree(data_path)
-        makedirs(raw_path)
-        makedirs(processed_path)
+    if not os.path.exists(data_path):
+    #    shutil.rmtree(data_path)
+        makedirs(data_path)
+    # makedirs(processed_path)
 
-    download_url("https://cloud.tsinghua.edu.cn/f/a39effe167df447eab80/?dl=1", raw_path, "trafficPre_testData.zip")
-    untar(raw_path, "trafficPre_testData.zip")
-    print("Processing...")
-    raw_data_processByNumNodes(raw_path, 288, 'd07_text_meta.txt')
-    print("Done!") 
+    # download_url("https://cloud.tsinghua.edu.cn/f/a39effe167df447eab80/?dl=1", raw_path, "trafficPre_testData.zip")
+    # untar(raw_path, "trafficPre_testData.zip")
+    # print("Processing...")
+    # raw_data_processByNumNodes(raw_path, 288, 'd07_text_meta.txt')
+    # print("Done!") 
     
     kwargs = {"epochs":1,
               "kernel_size":3,
@@ -161,8 +166,8 @@ def test_stgat_experiment():
     assert ("pems-stgat", "stgat") in results
     assert results[("pems-stgat", "stgat")][0]["test__metric"] > 0
     
-    shutil.rmtree(data_path)
-    shutil.rmtree(ckp_path)
+    # shutil.rmtree(data_path)
+    # shutil.rmtree(ckp_path)
 
 
 

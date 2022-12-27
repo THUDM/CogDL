@@ -140,6 +140,7 @@ def test_stgat_experiment():
     shutil.rmtree(test_path)
 
 
+
 if __name__ == "__main__":
     test_set_best_config()
     test_train()

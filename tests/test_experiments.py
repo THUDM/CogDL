@@ -1,9 +1,9 @@
 from examples.simple_trafficPre.example import experiment as traffic_experiment
 from cogdl.experiments import experiment, gen_variants, train, set_best_config
 from cogdl.options import get_default_args
-from cogdl.utils import download_url, untar, makedirs
+from cogdl.utils import makedirs
 import numpy as np
-import os, shutil
+import os
 
 
 def test_set_best_config():
@@ -106,39 +106,6 @@ def test_stgcn_experiment():
     assert results[("pems-stgcn", "stgcn")][0]["test__metric"] > 0
 
 
-
-def test_stgat_experiment():    
-    root_path = os.path.dirname(os.path.abspath(__file__))
-    test_path = root_path + "/test_stgat/"
-
-    if not os.path.exists(test_path):
-        makedirs(test_path)
-    
-    kwargs = {"epochs":1,
-              "kernel_size":3,
-              "n_his":20,
-              "n_pred":1,
-              "channel_size_list":np.array([[ 1, 4, 4],[4, 4, 4],[4, 4, 4]]),
-              "num_layers":3,
-              "num_nodes":288,
-              "train_prop": 0.1,
-              "val_prop": 0.1,
-              "test_prop": 0.1,
-              "pred_length":288,}
-
-    results =traffic_experiment(
-        dataset="pems-stgat",
-        model="stgat",
-        resume_training=False,
-        cpu=True,
-        **kwargs
-    )
-    assert ("pems-stgat", "stgat") in results
-    assert results[("pems-stgat", "stgat")][0]["test__metric"] > 0
-    
-
-
-
 if __name__ == "__main__":
     test_set_best_config()
     test_train()
@@ -147,4 +114,3 @@ if __name__ == "__main__":
     test_auto_experiment()
     test_autognn_experiment()
     test_stgcn_experiment()
-    test_stgat_experiment()

@@ -218,4 +218,6 @@ SUPPORTED_DATASETS = {
     "grb-reddit": "cogdl.datasets.grb_data.Reddit_GRBDataset",
     "grb-aminer": "cogdl.datasets.grb_data.Aminer_GRBDataset",
     "grb-flickr": "cogdl.datasets.grb_data.Flickr_GRBDataset",
+    "pems-stgcn": "cogdl.datasets.stgcn_data.PeMS_Dataset",
+    "pems-stgat": "cogdl.datasets.stgat_data.PeMS_Dataset",
 }

@@ -116,4 +116,6 @@ SUPPORTED_MODELS = {
     "revgen": "cogdl.models.nn.revgcn.RevGEN",
     "sage": "cogdl.models.nn.graphsage.SAGE",
     "autognn": "cogdl.models.nn.autognn.AutoGNN",
+    "stgcn": "cogdl.models.nn.stgcn.STGCN",
+    "stgat": "cogdl.models.nn.stgat.STGAT",
 }

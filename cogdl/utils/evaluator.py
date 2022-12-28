@@ -47,6 +47,27 @@ class BaseEvaluator(object):
             return self.eval_func(y_pred, y_true)
         return 0
 
+class MAE(object):
+    def __init__(self):
+        super(MAE, self).__init__()
+        self.MAE = list()
+
+    def __call__(self, y_pred, y_true):
+
+        d = np.abs(y_true - y_pred)
+        mae = d.tolist()
+        MAE = np.array(mae).mean()
+        self.MAE.append(MAE)
+        return MAE
+
+    def evaluate(self):
+        if len(self.MAE) > 0:
+            return np.sum(self.MAE) / len(self.MAE)
+        warnings.warn("pre-computing list is empty")
+        return 0
+
+    def clear(self):
+        self.MAE = list()
 
 class Accuracy(object):
     def __init__(self, mini_batch=False):

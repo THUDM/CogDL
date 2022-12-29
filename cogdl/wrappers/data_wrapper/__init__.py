@@ -51,4 +51,6 @@ SUPPORTED_DW = {
     "graph_embedding_dw": "cogdl.wrappers.data_wrapper.graph_classification.GraphEmbeddingDataWrapper",
     "infograph_dw": "cogdl.wrappers.data_wrapper.graph_classification.InfoGraphDataWrapper",
     "patchy_san_dw": "cogdl.wrappers.data_wrapper.graph_classification.PATCHY_SAN_DataWrapper",
+    "stgcn_dw": "cogdl.wrappers.data_wrapper.traffic_prediction.STGCNDataWrapper",
+    "stgat_dw": "cogdl.wrappers.data_wrapper.traffic_prediction.STGATDataWrapper",
 }

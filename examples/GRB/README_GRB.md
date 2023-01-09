@@ -83,7 +83,7 @@ model_target.to(device)
 
 ```python
 # FGSM attack
-from cogdl.attack.injection import FGSM
+from attack.injection import FGSM
 from cogdl.utils.grb_utils import GCNAdjNorm
 attack = FGSM(epsilon=0.01,
               n_epoch=1000,
@@ -140,7 +140,7 @@ model = GCN(
     activation=None,
     norm="layernorm"
 )
-from cogdl.attack.injection import FGSM
+from attack.injection import FGSM
 attack = FGSM(epsilon=0.01,
               n_epoch=10,
               n_inject_max=10,
@@ -178,7 +178,7 @@ An example of GATGuard (a defense model).
 
 ```python
 # defnese model: GATGuard
-from cogdl.models.defense import GATGuard
+from defense import GATGuard
 model = GATGuard(in_feats=graph.num_features,
                         hidden_size=64,
                         out_feats=graph.num_classes,

@@ -60,4 +60,6 @@ SUPPORTED_MW = {
     "agc_mw": "cogdl.wrappers.model_wrapper.clustering.AGCModelWrapper",
     "daegc_mw": "cogdl.wrappers.model_wrapper.clustering.DAEGCModelWrapper",
     "gae_mw": "cogdl.wrappers.model_wrapper.clustering.GAEModelWrapper",
+    "stgcn_mw": "cogdl.wrappers.model_wrapper.traffic_prediction.STGCNModelWrapper",
+    "stgat_mw": "cogdl.wrappers.model_wrapper.traffic_prediction.STGATModelWrapper",
 }

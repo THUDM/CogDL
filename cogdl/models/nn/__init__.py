@@ -13,6 +13,8 @@ from .rgcn import RGCN
 from .sgc import sgc
 from .revgcn import RevGCN, RevGEN, RevGAT
 from .deepergcn import DeeperGCN, ResGNNLayer
+from .stgcn import STGCN
+from .stgat import STGAT
 
 __all__ = [
     "CompGCN",
@@ -34,4 +36,6 @@ __all__ = [
     "DeeperGCN",
     "ResGNNLayer",
     "SAGE",
+    "STGCN",
+    "STGAT",
 ]

@@ -82,7 +82,7 @@ test_score = evaluate(model_target,
 print("Test score before attack for target model: {:.4f}.".format(test_score))
 
 
-from cogdl.attack.modification import PGD
+from attack.modification import PGD
 epsilon = 0.1
 n_epoch = 500
 n_mod_ratio = 0.01

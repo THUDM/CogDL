@@ -342,14 +342,15 @@ class OAGMetaInfoBertModel(DualPositionBertForPreTrainingPreLN):
 
         split_index = {"text": [], "venue": [], "authors": [], "concepts": [], "affiliations": []}
 
+        device = next(self.parameters()).device
         sequence_output, pooled_output = self.bert.forward(
-            input_ids=torch.LongTensor(input_ids).unsqueeze(0),
-            token_type_ids=torch.LongTensor(token_type_ids).unsqueeze(0),
-            attention_mask=torch.LongTensor(input_masks).unsqueeze(0),
+            input_ids=torch.LongTensor(input_ids).unsqueeze(0).to(device),
+            token_type_ids=torch.LongTensor(token_type_ids).unsqueeze(0).to(device),
+            attention_mask=torch.LongTensor(input_masks).unsqueeze(0).to(device),
             output_all_encoded_layers=False,
             checkpoint_activations=False,
-            position_ids=torch.LongTensor(position_ids).unsqueeze(0),
-            position_ids_second=torch.LongTensor(position_ids_second).unsqueeze(0),
+            position_ids=torch.LongTensor(position_ids).unsqueeze(0).to(device),
+            position_ids_second=torch.LongTensor(position_ids_second).unsqueeze(0).to(device),
         )
 
         entities = {0: "text", 2: "venue", 1: "authors", 4: "concepts", 3: "affiliations"}

@@ -3,6 +3,7 @@ sphinx_rtd_theme==1.0.0
 markdown==3.3.4
 sphinx-markdown-tables==0.0.15
 recommonmark==0.7.1
+importlib-metadata<5.0
 networkx
 matplotlib
 tqdm
@@ -24,3 +25,4 @@ numba
 transformers
 sentencepiece
 sphinx-gallery==0.10.0
+geopy==2.2.0

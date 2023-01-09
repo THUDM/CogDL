@@ -5,9 +5,7 @@ This code is borrowed from https://github.com/Namkyeong/BGRL_Pytorch
 import numpy as np
 
 import torch
-from torch import optim
-from tensorboardX import SummaryWriter
-torch.manual_seed(0)
+
 
 import models
 import utils
@@ -15,13 +13,18 @@ import data
 import os
 import sys
 import warnings
-warnings.filterwarnings("ignore")
+
+from torch import optim
+from tensorboardX import SummaryWriter
 
 from sklearn import metrics
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV, ShuffleSplit, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import OneHotEncoder, normalize
+
+warnings.filterwarnings("ignore")
+torch.manual_seed(0)
 
 
 class ModelTrainer:
@@ -30,7 +33,7 @@ class ModelTrainer:
         self._args = args
 
         self._init()
-        self.writer = SummaryWriter(log_dir="runs/BGRL_dataset({})".format(args.name))
+        self.writer = SummaryWriter(log_dir="saved/BGRL_dataset({})".format(args.name))
 
     def _init(self):
         args = self._args
@@ -39,18 +42,23 @@ class ModelTrainer:
         # self._dataset = data.Dataset(root=args.root, name=args.name)[0]
         self._dataset = data.get_data(args.name)
         print(f"Data: {self._dataset}")
-        hidden_layers = [int(l) for l in args.layers]
+        hidden_layers = [int(dim) for dim in args.layers]
         layers = [self._dataset.x.shape[1]] + hidden_layers
         self._model = models.BGRL(layer_config=layers, pred_hid=args.pred_hid, dropout=args.dropout, epochs=args.epochs).to(self._device)
         print(self._model)
 
-        self._optimizer = optim.AdamW(params=self._model.parameters(), lr=args.lr, weight_decay= 1e-5)
+        self._optimizer = optim.AdamW(params=self._model.parameters(), lr=args.lr, weight_decay=1e-5)
 
         # learning rate
-        lr_scheduler = lambda epoch: epoch / args.warmup_epochs if epoch <= args.warmup_epochs \
-                    else ( 1 + np.cos((epoch-args.warmup_epochs) * np.pi / (self._args.epochs - args.warmup_epochs))) * 0.5
+        def lr_scheduler(epoch):
+            if epoch <= args.warmup_epochs:
+                return epoch / args.warmup_epochs
+            else:
+                return (1 + np.cos((epoch - args.warmup_epochs) * np.pi / (self._args.epochs - args.warmup_epochs))) * 0.5
+        # lr_scheduler = lambda epoch: epoch / args.warmup_epochs if epoch <= args.warmup_epochs \
+        #             else ( 1 + np.cos((epoch - args.warmup_epochs) * np.pi / (self._args.epochs - args.warmup_epochs))) * 0.5
 
-        self._scheduler = optim.lr_scheduler.LambdaLR(self._optimizer, lr_lambda = lr_scheduler)
+        self._scheduler = optim.lr_scheduler.LambdaLR(self._optimizer, lr_lambda=lr_scheduler)
 
     def train(self):
         # get initial test results
@@ -68,7 +76,7 @@ class ModelTrainer:
             
             self._dataset.to(self._device)
 
-            augmentation = utils.Augmentation(float(self._args.aug_params[0]),float(self._args.aug_params[1]),float(self._args.aug_params[2]),float(self._args.aug_params[3]))
+            augmentation = utils.Augmentation(float(self._args.aug_params[0]), float(self._args.aug_params[1]), float(self._args.aug_params[2]), float(self._args.aug_params[3]))
             view1, view2 = augmentation._feature_masking(self._dataset, self._device)
 
             v1_output, v2_output, loss = self._model(
@@ -93,13 +101,9 @@ class ModelTrainer:
                 self.writer.add_scalar("stats/learning_rate", self._optimizer.param_groups[0]["lr"] , epoch + 1)
                 self.writer.add_scalar("accs/test_acc", test_acc, epoch + 1)
                 print("test: {:.4f} \n".format(test_acc))
-                
-        f = open("BGRL_dataset({})_node.txt".format(self._args.name), "a")
-        f.close()
 
         print()
         print("Training Done!")
-
 
     def infer_embeddings(self):
         
@@ -121,7 +125,6 @@ class ModelTrainer:
             self._embeddings = torch.cat([self._embeddings, emb])
             self._labels = torch.cat([self._labels, y])
                 
-
     def evaluate(self):
         """
         Used for producing the results of Experiment 3.2 in the BGRL paper. 

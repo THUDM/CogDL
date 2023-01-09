@@ -12,9 +12,11 @@ import torch
 """
 The Following code is borrowed from SelfGNN
 """
+
+
 class Augmentation:
 
-    def __init__(self, p_f1 = 0.2, p_f2 = 0.1, p_e1 = 0.2, p_e2 = 0.3):
+    def __init__(self, p_f1=0.2, p_f2=0.1, p_e1=0.2, p_e2=0.3):
         """
         two simple graph augmentation functions --> "Node feature masking" and "Edge masking"
         Random binary node feature mask following Bernoulli distribution with parameter p_f
@@ -33,8 +35,8 @@ class Augmentation:
         x1, x2 = data.x.clone(), data.x.clone()
         x1, x2 = x1 * feat_mask1, x2 * feat_mask2
 
-        edge_index1, edge_attr1 = dropout_adj(data.edge_index, data.edge_attr, drop_rate = self.p_e1)
-        edge_index2, edge_attr2 = dropout_adj(data.edge_index, data.edge_attr, drop_rate = self.p_e2)
+        edge_index1, edge_attr1 = dropout_adj(data.edge_index, data.edge_attr, drop_rate=self.p_e1)
+        edge_index2, edge_attr2 = dropout_adj(data.edge_index, data.edge_attr, drop_rate=self.p_e2)
 
         new_data1, new_data2 = data.clone(), data.clone()
         new_data1.x, new_data2.x = x1, x2
@@ -52,7 +54,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", "-r", type=str, default="data",
                         help="Path to data directory, where all the datasets will be placed. Default is 'data'")
-    parser.add_argument("--name", "-n",type=str, default="WikiCS",
+    parser.add_argument("--name", "-n", type=str, default="WikiCS",
                         help="Name of the dataset. Supported names are: cora, citeseer, pubmed, photo, computers, cs, WikiCS, and physics")
     parser.add_argument("--layers", "-l", nargs="+", default=[
                         512, 256], help="The number of units of each layer of the GNN. Default is [512, 128]")
@@ -107,7 +109,7 @@ def create_masks(data):
 
             perm = np.random.permutation(labels.shape[0])
             test_index = perm[:test_size]
-            dev_index = perm[test_size:test_size+dev_size]
+            dev_index = perm[test_size:test_size + dev_size]
             
             data_index = np.arange(labels.shape[0])
             test_mask = torch.tensor(np.in1d(data_index, test_index), dtype=torch.bool)
@@ -118,9 +120,9 @@ def create_masks(data):
             train_mask = train_mask.reshape(1, -1)
             
             if hasattr(data, "train_mask") and data.train_mask is not None:
-                data.train_mask = torch.cat((data.train_mask, train_mask), dim = 0)
-                data.val_mask = torch.cat((data.val_mask, dev_mask), dim = 0)
-                data.test_mask = torch.cat((data.test_mask, test_mask), dim = 0)
+                data.train_mask = torch.cat((data.train_mask, train_mask), dim=0)
+                data.val_mask = torch.cat((data.val_mask, dev_mask), dim=0)
+                data.test_mask = torch.cat((data.test_mask, test_mask), dim=0)
             else:
                 data.train_mask = train_mask
                 data.val_mask = dev_mask

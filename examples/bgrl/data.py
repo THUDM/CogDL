@@ -12,10 +12,10 @@ from cogdl.utils.graph_utils import to_undirected, remove_self_loops
 import utils
 import json
 
+
 def process_npz(path):
     with np.load(path) as f:
-        x = sp.csr_matrix((f['attr_data'], f['attr_indices'], f['attr_indptr']),
-                      f['attr_shape']).todense()
+        x = sp.csr_matrix((f['attr_data'], f['attr_indices'], f['attr_indptr']), f['attr_shape']).todense()
         x = torch.from_numpy(x).to(torch.float)
         x[x > 0] = 1
 
@@ -30,6 +30,7 @@ def process_npz(path):
         y = torch.from_numpy(f['labels']).to(torch.long)
 
         return Graph(x=x, edge_index=edge_index, y=y)
+
 
 def process_json(path):
     with open(path, 'r') as f:
@@ -54,17 +55,18 @@ def process_json(path):
         stopping_mask = torch.tensor(data['stopping_masks'], dtype=torch.bool)
         stopping_mask = stopping_mask.t().contiguous()
 
-        return Graph(x=x, y=y, edge_index=edge_index, train_mask=train_mask,
-                    val_mask=val_mask, test_mask=test_mask,
-                    stopping_mask=stopping_mask)
+        return Graph(
+            x=x, 
+            y=y, 
+            edge_index=edge_index, 
+            train_mask=train_mask,
+            val_mask=val_mask, 
+            test_mask=test_mask,
+            stopping_mask=stopping_mask
+        )
 
-        # if self.pre_transform is not None:
-        #     data = self.pre_transform(data)
-
-        # torch.save(self.collate([data]), self.processed_paths[0])
 
 def normalize_feature(data):
-    # data.x = F.normalize(data.x,p=1,dim=1)
     feature = data.x
     feature = feature - feature.min()
     data.x = feature / feature.sum(dim=-1, keepdim=True).clamp_(min=1.)

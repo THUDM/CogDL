@@ -7,7 +7,7 @@ import torch
 import numpy as np
 
 import copy
-# from torch_geometric.nn import BatchNorm
+
 """
 The following code is borrowed from BYOL, SelfGNN
 and slightly modified for BGRL
@@ -51,13 +51,11 @@ class Encoder(nn.Module):
     def __init__(self, layer_config, dropout=None, project=False, **kwargs):
         super().__init__()
         
-        self.conv1 = GCNLayer(layer_config[0], layer_config[1], bias=False, norm=None) #layernorm batchnorm
-        # self.conv1 = SAGELayer(layer_config[0], layer_config[1])
-        self.bn1 = nn.BatchNorm1d(layer_config[1], momentum = 0.99)
+        self.conv1 = GCNLayer(layer_config[0], layer_config[1], bias=False, norm=None)
+        self.bn1 = nn.BatchNorm1d(layer_config[1], momentum=0.99)
         self.prelu1 = nn.PReLU()
-        self.conv2 = GCNLayer(layer_config[1],layer_config[2], bias=False, norm=None)
-        # self.conv2 = SAGELayer(layer_config[1], layer_config[2])
-        self.bn2 = nn.BatchNorm1d(layer_config[2], momentum = 0.99)
+        self.conv2 = GCNLayer(layer_config[1], layer_config[2], bias=False, norm=None)
+        self.bn2 = nn.BatchNorm1d(layer_config[2], momentum=0.99)
         self.prelu2 = nn.PReLU()
 
     def forward(self, x, graph, edge_weight=None):

@@ -1,6 +1,10 @@
 import torch
 import torch.nn.functional as F
 
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/' + '..' + '/' + '..'))
+
 from cogdl.options import get_default_args
 from cogdl.experiments import train
 
@@ -516,30 +520,30 @@ def test_gcc_cora():
 
 
 if __name__ == "__main__":
-    test_gdc_gcn_cora()
+    # test_gdc_gcn_cora()
     test_gcn_cora()
-    test_gat_cora()
-    test_sgc_cora()
-    test_mlp_pubmed()
-    test_mixhop_citeseer()
-    test_graphsage_cora()
-    test_disengcn_cora()
-    test_graph_mix()
-    test_srgcn_cora()
-    test_gcnii_cora()
-    test_deepergcn_cora()
-    test_grand_cora()
-    test_graphsaint_cora()
-    test_sign_cora()
-    test_ppnp_cora()
-    test_appnp_cora()
-    test_dropedge_gcn_cora()
-    test_dropedge_resgcn_cora()
-    test_dropedge_inceptiongcn_cora()
-    test_dropedge_densegcn_cora()
-    test_revnets_cora()
-    test_gcn_ppi()
-    test_gcc_cora()
-    test_pprgo_cora()
-    test_sagn_cora()
-    test_clustergcn_pubmed()
+    # test_gat_cora()
+    # test_sgc_cora()
+    # test_mlp_pubmed()
+    # test_mixhop_citeseer()
+    # test_graphsage_cora()
+    # test_disengcn_cora()
+    # test_graph_mix()
+    # test_srgcn_cora()
+    # test_gcnii_cora()
+    # test_deepergcn_cora()
+    # test_grand_cora()
+    # test_graphsaint_cora()
+    # test_sign_cora()
+    # test_ppnp_cora()
+    # test_appnp_cora()
+    # test_dropedge_gcn_cora()
+    # test_dropedge_resgcn_cora()
+    # test_dropedge_inceptiongcn_cora()
+    # test_dropedge_densegcn_cora()
+    # test_revnets_cora()
+    # test_gcn_ppi()
+    # test_gcc_cora()
+    # test_pprgo_cora()
+    # test_sagn_cora()
+    # test_clustergcn_pubmed()

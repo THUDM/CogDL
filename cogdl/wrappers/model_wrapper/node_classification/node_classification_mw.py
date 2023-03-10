@@ -1,4 +1,8 @@
-import torch
+from cogdl.backend import BACKEND
+if BACKEND == 'jittor':
+    import jittor as tj
+elif BACKEND == 'torch':
+    import torch as tj
 from cogdl.wrappers.model_wrapper import ModelWrapper
 
 
@@ -43,7 +47,7 @@ class NodeClfModelWrapper(ModelWrapper):
             model_spec_optim = self.model.setup_optimizer(cfg)
             if model_spec_optim is not None:
                 return model_spec_optim
-        return torch.optim.Adam(self.model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
+        return tj.optim.Adam(self.model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
 
     def set_early_stopping(self):
         return "val_metric", ">"

@@ -1,6 +1,10 @@
 import copy
 
-import torch
+from cogdl.backend import BACKEND
+if BACKEND == 'jittor':
+    import jittor as tj
+elif BACKEND == 'torch':
+    import torch as tj
 import numpy as np
 from sklearn.cluster import KMeans
 
@@ -35,7 +39,7 @@ class M3SModelWrapper(NodeClfModelWrapper):
             num_classes = graph.num_classes
             num_nodes = graph.num_nodes
 
-            with torch.no_grad():
+            with tj.no_grad():
                 emb = self.model.embed(graph)
 
             confidence_ranking = np.zeros([num_classes, num_nodes], dtype=int)

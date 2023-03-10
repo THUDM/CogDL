@@ -3,7 +3,7 @@ from collections import defaultdict
 
 import numpy as np
 import scipy.sparse as sp
-import torch
+from cogdl import function as BF
 
 from cogdl.data import Dataset, Graph
 from cogdl.utils import download_url, untar
@@ -144,7 +144,7 @@ class RecDataset(Dataset):
         self.name = name
 
         super(RecDataset, self).__init__(root)
-        self.data = torch.load(self.processed_paths[0])
+        self.data = BF.load(self.processed_paths[0])
 
         self.raw_dir = osp.join(self.root, self.name, "raw")
         self.processed_dir = osp.join(self.root, self.name, "processed")
@@ -165,7 +165,7 @@ class RecDataset(Dataset):
 
     def process(self):
         data = read_recommendation_data(self.raw_dir, self.name)
-        torch.save(data, self.processed_paths[0])
+        BF.save(data, self.processed_paths[0])
 
     def get(self, idx):
         return self.data

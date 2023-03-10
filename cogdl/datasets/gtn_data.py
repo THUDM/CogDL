@@ -2,10 +2,9 @@ import os.path as osp
 import pickle
 
 import numpy as np
-import torch
 from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url, untar
-
+from cogdl import function as BF
 
 class GTNDataset(Dataset):
     r"""The network datasets "ACM", "DBLP" and "IMDB" from the
@@ -22,7 +21,7 @@ class GTNDataset(Dataset):
         self.name = name
         self.url = f"https://github.com/cenyk1230/gtn-data/blob/master/{name}.zip?raw=true"
         super(GTNDataset, self).__init__(root)
-        self.data = torch.load(self.processed_paths[0])
+        self.data = BF.load(self.processed_paths[0])
         self.num_edge = len(self.data.adj)
         self.num_nodes = self.data.x.shape[0]
 
@@ -37,7 +36,7 @@ class GTNDataset(Dataset):
 
     @property
     def num_classes(self):
-        return torch.max(self.data.train_target).item() + 1
+        return BF.max(self.data.train_target).item() + 1
 
     def read_gtn_data(self, folder):
         edges = pickle.load(open(osp.join(folder, "edges.pkl"), "rb"))
@@ -45,7 +44,7 @@ class GTNDataset(Dataset):
         node_features = pickle.load(open(osp.join(folder, "node_features.pkl"), "rb"))
 
         data = Graph()
-        data.x = torch.from_numpy(node_features).type(torch.FloatTensor)
+        data.x = BF.from_numpy(node_features).float()
 
         num_nodes = edges[0].shape[0]
 
@@ -63,36 +62,36 @@ class GTNDataset(Dataset):
         node_type[edges[3].nonzero()[1]] = 0
 
         print(node_type)
-        data.pos = torch.from_numpy(node_type)
+        data.pos = BF.from_numpy(node_type)
 
         edge_list = []
         for i, edge in enumerate(edges):
-            edge_tmp = torch.from_numpy(np.vstack((edge.nonzero()[0], edge.nonzero()[1]))).type(torch.LongTensor)
+            edge_tmp = BF.from_numpy(np.vstack((edge.nonzero()[0], edge.nonzero()[1]))).long()
             edge_list.append(edge_tmp)
-        data.edge_index = torch.cat(edge_list, 1)
+        data.edge_index = BF.cat(edge_list, 1)
 
         A = []
         for i, edge in enumerate(edges):
-            edge_tmp = torch.from_numpy(np.vstack((edge.nonzero()[0], edge.nonzero()[1]))).type(torch.LongTensor)
-            value_tmp = torch.ones(edge_tmp.shape[1]).type(torch.FloatTensor)
+            edge_tmp = BF.from_numpy(np.vstack((edge.nonzero()[0], edge.nonzero()[1]))).long()
+            value_tmp = BF.ones(edge_tmp.shape[1]).float()
             A.append((edge_tmp, value_tmp))
-        edge_tmp = torch.stack((torch.arange(0, num_nodes), torch.arange(0, num_nodes))).type(torch.LongTensor)
-        value_tmp = torch.ones(num_nodes).type(torch.FloatTensor)
+        edge_tmp = BF.stack((BF.arange(0, num_nodes), BF.arange(0, num_nodes))).long()
+        value_tmp = BF.ones(num_nodes).float()
         A.append((edge_tmp, value_tmp))
         data.adj = A
 
-        data.train_node = torch.from_numpy(np.array(labels[0])[:, 0]).type(torch.LongTensor)
-        data.train_target = torch.from_numpy(np.array(labels[0])[:, 1]).type(torch.LongTensor)
-        data.valid_node = torch.from_numpy(np.array(labels[1])[:, 0]).type(torch.LongTensor)
-        data.valid_target = torch.from_numpy(np.array(labels[1])[:, 1]).type(torch.LongTensor)
-        data.test_node = torch.from_numpy(np.array(labels[2])[:, 0]).type(torch.LongTensor)
-        data.test_target = torch.from_numpy(np.array(labels[2])[:, 1]).type(torch.LongTensor)
+        data.train_node = BF.from_numpy(np.array(labels[0])[:, 0]).long()
+        data.train_target = BF.from_numpy(np.array(labels[0])[:, 1]).long()
+        data.valid_node = BF.from_numpy(np.array(labels[1])[:, 0]).long()
+        data.valid_target = BF.from_numpy(np.array(labels[1])[:, 1]).long()
+        data.test_node = BF.from_numpy(np.array(labels[2])[:, 0]).long()
+        data.test_target = BF.from_numpy(np.array(labels[2])[:, 1]).long()
 
         y = np.zeros((num_nodes), dtype=int)
-        x_index = torch.cat((data.train_node, data.valid_node, data.test_node))
-        y_index = torch.cat((data.train_target, data.valid_target, data.test_target))
+        x_index = BF.cat((data.train_node, data.valid_node, data.test_node))
+        y_index = BF.cat((data.train_target, data.valid_target, data.test_target))
         y[x_index.numpy()] = y_index.numpy()
-        data.y = torch.from_numpy(y)
+        data.y = BF.from_numpy(y)
         self.data = data
 
     def get(self, idx):
@@ -122,7 +121,7 @@ class GTNDataset(Dataset):
 
     def process(self):
         self.read_gtn_data(self.raw_dir)
-        torch.save(self.data, self.processed_paths[0])
+        BF.save(self.data, self.processed_paths[0])
 
     def __repr__(self):
         return "{}".format(self.name)

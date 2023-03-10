@@ -1,9 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import scipy.sparse.linalg as slinalg
-
-import torch
-
+from cogdl import function as BF
 from .node_classification_dw import FullBatchNodeClfDataWrapper
 
 
@@ -29,13 +27,13 @@ class M3SDataWrapper(FullBatchNodeClfDataWrapper):
         num_classes = data.num_classes
 
         data.add_remaining_self_loops()
-        train_nodes = torch.where(data.train_mask)[0]
+        train_nodes = BF.where(data.train_mask)[0]
         if len(train_nodes) / num_nodes > self.label_rate:
             perm = np.random.permutation(train_nodes.shape[0])
             preserve_nnz = int(num_nodes * self.label_rate)
             preserved = train_nodes[perm[:preserve_nnz]]
             masked = train_nodes[perm[preserve_nnz:]]
-            data.train_mask = torch.full((data.train_mask.shape[0],), False, dtype=torch.bool)
+            data.train_mask = BF.full((data.train_mask.shape[0],), False, dtype=BF.dtype_dict("bool"))
             data.train_mask[preserved] = True
             data.test_mask[masked] = True
 
@@ -49,7 +47,7 @@ class M3SDataWrapper(FullBatchNodeClfDataWrapper):
         if self.approximate:
             eps = 1e-2
             for i in range(num_classes):
-                q = list(torch.where(data.y == i)[0].numpy())
+                q = list(BF.where(data.y == i)[0].numpy())
                 q = list(filter(lambda x: data.train_mask[x], q))
                 r = {idx: 1 for idx in q}
                 while len(q) > 0:

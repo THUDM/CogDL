@@ -1,6 +1,9 @@
 from .. import DataWrapper
-from cogdl.data.sampler import NeighborSampler, NeighborSamplerDataset
-
+from cogdl.backend import BACKEND
+if BACKEND == 'jittor':
+    from cogdl.data.sampler_jt import NeighborSamplerDataset
+elif BACKEND == 'torch':
+    from cogdl.data.sampler import NeighborSampler, NeighborSamplerDataset
 
 class GraphSAGEDataWrapper(DataWrapper):
     @staticmethod
@@ -9,59 +12,89 @@ class GraphSAGEDataWrapper(DataWrapper):
         parser.add_argument("--batch-size", type=int, default=128)
         parser.add_argument("--sample-size", type=int, nargs='+', default=[10, 10])
         # fmt: on
+    if BACKEND == 'jittor':
+        def __init__(self, dataset, batch_size: int, sample_size: list):
+            super(GraphSAGEDataWrapper, self).__init__(dataset)
+            self.dataset = dataset
+            self.train_dataset = NeighborSamplerDataset(
+                dataset, sizes=sample_size, batch_size=batch_size, mask=dataset.data.train_mask, shuffle=False, data_shuffle=False,
 
-    def __init__(self, dataset, batch_size: int, sample_size: list):
-        super(GraphSAGEDataWrapper, self).__init__(dataset)
-        self.dataset = dataset
-        self.train_dataset = NeighborSamplerDataset(
-            dataset, sizes=sample_size, batch_size=batch_size, mask=dataset.data.train_mask
-        )
-        self.val_dataset = NeighborSamplerDataset(
-            dataset, sizes=sample_size, batch_size=batch_size * 2, mask=dataset.data.val_mask
-        )
-        self.test_dataset = NeighborSamplerDataset(
-            dataset=self.dataset, mask=None, sizes=[-1], batch_size=batch_size * 2,
-        )
-        self.x = self.dataset.data.x
-        self.y = self.dataset.data.y
-        self.batch_size = batch_size
-        self.sample_size = sample_size
+            )
+            self.val_dataset = NeighborSamplerDataset(
+                dataset, sizes=sample_size, batch_size=batch_size * 2, mask=dataset.data.val_mask, shuffle=False, data_shuffle=False,
+            )
+            self.test_dataset = NeighborSamplerDataset(
+                dataset=self.dataset, mask=None, sizes=[-1], batch_size=batch_size * 2, shuffle=False, data_shuffle=False,
+            )
+            self.x = self.dataset.data.x
+            self.y = self.dataset.data.y
+            self.batch_size = batch_size
+            self.sample_size = sample_size
 
-    def train_wrapper(self):
-        self.dataset.data.train()
-        return NeighborSampler(
-            dataset=self.train_dataset,
-            mask=self.dataset.data.train_mask,
-            sizes=self.sample_size,
-            num_workers=4,
-            shuffle=False,
-            batch_size=self.batch_size,
-        )
+    
+        def train_wrapper(self):
+            self.dataset.data.train()
+            return self.train_dataset
 
-    def val_wrapper(self):
-        self.dataset.data.eval()
+        def val_wrapper(self):
+            self.dataset.data.eval()
+            return self.val_dataset
 
-        return NeighborSampler(
-            dataset=self.val_dataset,
-            mask=self.dataset.data.val_mask,
-            sizes=self.sample_size,
-            batch_size=self.batch_size * 2,
-            shuffle=False,
-            num_workers=4,
-        )
+        def test_wrapper(self):
+            return (self.dataset,self.test_dataset)
+    elif BACKEND == 'torch':
+        def __init__(self, dataset, batch_size: int, sample_size: list):
+            super(GraphSAGEDataWrapper, self).__init__(dataset)
+            self.dataset = dataset
+            self.train_dataset = NeighborSamplerDataset(
+                dataset, sizes=sample_size, batch_size=batch_size, mask=dataset.data.train_mask
 
-    def test_wrapper(self):
-        return (
-            self.dataset,
-            NeighborSampler(
-                dataset=self.test_dataset,
-                mask=None,
-                sizes=[-1],
+            )
+            self.val_dataset = NeighborSamplerDataset(
+                dataset, sizes=sample_size, batch_size=batch_size * 2, mask=dataset.data.val_mask
+            )
+            self.test_dataset = NeighborSamplerDataset(
+                dataset=self.dataset, mask=None, sizes=[-1], batch_size=batch_size * 2
+            )
+            self.x = self.dataset.data.x
+            self.y = self.dataset.data.y
+            self.batch_size = batch_size
+            self.sample_size = sample_size
+        def train_wrapper(self):
+            self.dataset.data.train()
+            return NeighborSampler(
+                dataset=self.train_dataset,
+                mask=self.dataset.data.train_mask,
+                sizes=self.sample_size,
+                num_workers=4,
+                shuffle=False,
+                batch_size=self.batch_size,
+            )
+
+        def val_wrapper(self):
+            self.dataset.data.eval()
+
+            return NeighborSampler(
+                dataset=self.val_dataset,
+                mask=self.dataset.data.val_mask,
+                sizes=self.sample_size,
                 batch_size=self.batch_size * 2,
                 shuffle=False,
                 num_workers=4,
-            ),
-        )
+            )
+
+        def test_wrapper(self):
+            return (
+                self.dataset,
+                NeighborSampler(
+                    dataset=self.test_dataset,
+                    mask=None,
+                    sizes=[-1],
+                    batch_size=self.batch_size * 2,
+                    shuffle=False,
+                    num_workers=4,
+                ),
+            )
 
     def train_transform(self, batch):
         target_id, n_id, adjs = batch

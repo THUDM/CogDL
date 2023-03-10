@@ -3,12 +3,11 @@ import os.path as osp
 import numpy as np
 from collections import defaultdict
 
-import torch
+from cogdl import function as BF
 
 from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 from cogdl.utils import Accuracy, CrossEntropyLoss
-
 
 class GCCDataset(Dataset):
     url = "https://github.com/cenyk1230/gcc-data/raw/master"
@@ -70,7 +69,7 @@ class GCCDataset(Dataset):
                     # to undirected
                     edge_list.append([node2id[x], node2id[y]])
                     edge_list.append([node2id[y], node2id[x]])
-        edge_list = torch.LongTensor(edge_list).t()
+        edge_list = BF.tensor(edge_list, dtype=BF.dtype_dict["long"]).t()
 
         name_dict = dict()
         with open(dict_path) as f:
@@ -93,14 +92,11 @@ class Edgelist(Dataset):
     def __init__(self, root, name):
         self.name = name
         super(Edgelist, self).__init__(root)
-        self.data = torch.load(self.processed_paths[0])
+        self.data = BF.load(self.processed_paths[0])
 
     @property
     def raw_file_names(self):
-        if self.name in UNLABELED_GCCDATASETS:
-            names = ["edgelist.txt"]
-        else:
-            names = ["edgelist.txt", "nodelabel.txt"]
+        names = ["edgelist.txt", "nodelabel.txt"]
         return names
 
     @property
@@ -146,20 +142,20 @@ class Edgelist(Dataset):
                 if label not in label2id:
                     label2id[label] = len(label2id)
                 nodes.append(node2id[x])
-                if "h-index" in self.name:
+                if "hindex" in self.name:
                     labels.append(label)
                 else:
                     labels.append(label2id[label])
-            if "h-index" in self.name:
+            if "hindex" in self.name:
                 median = np.median(labels)
                 labels = [int(label > median) for label in labels]
         assert num_nodes == len(set(nodes))
-        y = torch.zeros(num_nodes, len(label2id))
+        y = BF.zeros(num_nodes, len(label2id))
         y[nodes, labels] = 1
 
-        data = Graph(edge_index=torch.LongTensor(edge_list).t(), x=None, y=y)
+        data = Graph(edge_index=BF.tensor(edge_list, dtype=BF.dtype_dict["long"]).t(), x=None, y=y)
 
-        torch.save(data, self.processed_paths[0])
+        BF.save(data, self.processed_paths[0])
 
 
 class PretrainDataset(object):

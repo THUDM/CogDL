@@ -1,7 +1,13 @@
 import numpy as np
-
-import torch
-import torch.nn as nn
+from cogdl import function as BF
+from cogdl.backend import BACKEND
+if BACKEND == 'jittor':
+    import jittor as tj
+    from jittor import nn, Module
+elif BACKEND == 'torch':
+    import torch as tj
+    from torch import nn
+    from torch.nn import Module
 
 from .. import UnsupervisedModelWrapper
 from cogdl.wrappers.tools.wrapper_utils import evaluate_node_embeddings_using_logreg
@@ -24,7 +30,7 @@ class DGIModelWrapper(UnsupervisedModelWrapper):
         hidden_size = optimizer_cfg["hidden_size"]
         assert hidden_size > 0
         self.disc = Discriminator(hidden_size)
-        self.loss_fn = torch.nn.BCEWithLogitsLoss()
+        self.loss_fn = nn.BCEWithLogitsLoss()
         self.act = nn.PReLU()
 
     def train_step(self, subgraph):
@@ -44,13 +50,14 @@ class DGIModelWrapper(UnsupervisedModelWrapper):
         graph.x = x
 
         num_nodes = x.shape[0]
-        labels = torch.zeros((num_nodes * 2,), device=x.device)
+        labels = BF.zeros(num_nodes * 2, device=BF.device(x))
+        # labels = tj.zeros((num_nodes * 2,), device=x.device)
         labels[:num_nodes] = 1
         loss = self.loss_fn(logits, labels)
         return loss
 
     def test_step(self, graph):
-        with torch.no_grad():
+        with tj.no_grad():
             pred = self.act(self.model(graph))
         y = graph.y
         result = evaluate_node_embeddings_using_logreg(pred, y, graph.train_mask, graph.test_mask)
@@ -64,24 +71,33 @@ class DGIModelWrapper(UnsupervisedModelWrapper):
 
     def setup_optimizer(self):
         cfg = self.optimizer_cfg
-        return torch.optim.Adam(self.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
+        return tj.optim.Adam(self.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
 
 
 # Borrowed from https://github.com/PetarV-/DGI
-class AvgReadout(nn.Module):
+class AvgReadout(Module):
     def __init__(self):
         super(AvgReadout, self).__init__()
-
-    def forward(self, seq, msk=None):
-        dim = len(seq.shape) - 2
-        if msk is None:
-            return torch.mean(seq, dim)
-        else:
-            return torch.sum(seq * msk, dim) / torch.sum(msk)
+    
+    if BACKEND == 'jittor':
+        def execute(self, seq, msk=None):
+            dim = len(seq.shape) - 2
+            if msk is None:
+                return BF.mean(seq, dim)
+            else:
+                return BF.sum(seq * msk, dim) / BF.sum(msk)
+    elif BACKEND == 'torch':
+        def forward(self, seq, msk=None):
+            dim = len(seq.shape) - 2
+            if msk is None:
+                return BF.mean(seq, dim)
+            else:
+                return BF.sum(seq * msk, dim) / BF.sum(msk)
+        
 
 
 # Borrowed from https://github.com/PetarV-/DGI
-class Discriminator(nn.Module):
+class Discriminator(Module):
     def __init__(self, n_h):
         super(Discriminator, self).__init__()
         self.f_k = nn.Bilinear(n_h, n_h, 1)
@@ -91,22 +107,30 @@ class Discriminator(nn.Module):
 
     def weights_init(self, m):
         if isinstance(m, nn.Bilinear):
-            torch.nn.init.xavier_uniform_(m.weight.data)
+            BF.xavier_uniform_(m.weight)
             if m.bias is not None:
-                m.bias.data.fill_(0.0)
+                BF.fill_(m.bias, 0.0)
+            
 
-    def forward(self, c, h_pl, h_mi, s_bias1=None, s_bias2=None):
-        c_x = torch.unsqueeze(c, 0)
+    def temp(self, c, h_pl, h_mi, s_bias1=None, s_bias2=None):
+        c_x = BF.unsqueeze(c, 0)
         c_x = c_x.expand_as(h_pl)
 
-        sc_1 = torch.squeeze(self.f_k(h_pl, c_x), 1)
-        sc_2 = torch.squeeze(self.f_k(h_mi, c_x), 1)
+        sc_1 = BF.squeeze(self.f_k(h_pl, c_x), 1)
+        sc_2 = BF.squeeze(self.f_k(h_mi, c_x), 1)
 
         if s_bias1 is not None:
             sc_1 += s_bias1
         if s_bias2 is not None:
             sc_2 += s_bias2
 
-        logits = torch.cat((sc_1, sc_2))
-
+        logits = BF.cat((sc_1, sc_2))
         return logits
+
+    if BACKEND == 'jittor':
+        def execute(self, c, h_pl, h_mi, s_bias1=None, s_bias2=None):
+             return self.temp(c, h_pl, h_mi, s_bias1=None, s_bias2=None)
+    elif BACKEND == 'torch':
+        def forward(self, c, h_pl, h_mi, s_bias1=None, s_bias2=None):
+            return self.temp(c, h_pl, h_mi, s_bias1=None, s_bias2=None)
+

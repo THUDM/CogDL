@@ -1,12 +1,10 @@
 import jittor as jt
 jt.flags.use_cuda = 1
-
 from jittor import nn, Module, init
 from jittor import optim
 from jittor.contrib import slice_var_index
 
 from tqdm import tqdm
-
 from cogdl.layers.jittor import GCNLayer
 from cogdl.datasets.planetoid_data import CoraDataset
 

@@ -1,6 +1,6 @@
 import numba
 import numpy as np
-import torch
+from cogdl import function as BF
 import scipy.sparse as sp
 import random
 
@@ -72,10 +72,10 @@ class RandomWalker(object):
             self.indptr = None
             self.indices = None
         else:
-            if isinstance(adj, torch.Tensor):
+            if BF.is_tensor(adj):
                 if num_nodes is None:
-                    num_nodes = int(torch.max(adj)) + 1
-                row, col = adj.cpu().numpy()
+                    num_nodes = int(BF.max(adj)) + 1
+                row, col = BF.cpu(adj).numpy()
                 data = np.ones(row.shape[0])
                 adj = sp.csr_matrix((data, (row, col)), shape=(num_nodes, num_nodes))
             adj = adj.tocsr()
@@ -86,11 +86,11 @@ class RandomWalker(object):
     def build_up(self, adj, num_nodes):
         if self.indptr is not None:
             return
-        if isinstance(adj, torch.Tensor) or isinstance(adj, tuple):
+        if BF.is_tensor(adj) or isinstance(adj, tuple):
             row, col = adj
             if num_nodes is None:
                 num_nodes = int(max(row.max(), col.max())) + 1
-            row, col = row.cpu().numpy(), col.cpu().numpy()
+            row, col = BF.cpu(row).numpy(), BF.cpu(col).numpy()
             data = np.ones(row.shape[0])
             adj = sp.csr_matrix((data, (row, col)), shape=(num_nodes, num_nodes))
         adj = adj.tocsr()
@@ -100,8 +100,8 @@ class RandomWalker(object):
 
     def walk(self, start, walk_length, restart_p=0.0, parallel=True):
         assert self.indptr is not None, "Please build the adj_list first"
-        if isinstance(start, torch.Tensor):
-            start = start.cpu().numpy()
+        if BF.is_tensor(start):
+            start = BF.cpu(start).numpy()
         if isinstance(start, list):
             start = np.asarray(start, dtype=np.int32)
         if parallel:

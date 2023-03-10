@@ -1,6 +1,17 @@
 import os
 import scipy.sparse as sp
-import torch
+from cogdl import function as BF
+from cogdl.backend import BACKEND
+if BACKEND == 'jittor':
+    from  jittor.dataset import Dataset
+    from  jittor.dataset import Dataset as DataLoader
+    from  jittor.dataset import BatchSampler
+    from  jittor.dataset import SequentialSampler
+elif BACKEND == 'torch':
+    from  torch.utils.data import Dataset
+    from  torch.utils.data import DataLoader
+    from  torch.utils.data import BatchSampler
+    from  torch.utils.data import SequentialSampler
 
 from .. import DataWrapper
 from cogdl.utils.ppr_utils import build_topk_ppr_matrix_from_data
@@ -58,10 +69,11 @@ class PPRGoDataWrapper(DataWrapper):
 
 
 def setup_dataloader(ppr_dataset, batch_size):
-    data_loader = torch.utils.data.DataLoader(
+
+    data_loader = DataLoader(
         dataset=ppr_dataset,
-        sampler=torch.utils.data.BatchSampler(
-            torch.utils.data.SequentialSampler(ppr_dataset), batch_size=batch_size, drop_last=False,
+        sampler=BatchSampler(
+            SequentialSampler(ppr_dataset), batch_size=batch_size, drop_last=False,
         ),
         batch_size=None,
     )
@@ -72,7 +84,7 @@ def pre_transform(dataset, topk, alpha, epsilon, normalization, mode="train"):
     dataset_name = dataset.__class__.__name__
     data = dataset[0]
     num_nodes = data.x.shape[0]
-    nodes = torch.arange(num_nodes)
+    nodes = BF.arange(num_nodes)
 
     mask = getattr(data, f"{mode}_mask")
     index = nodes[mask].numpy()
@@ -97,13 +109,13 @@ def pre_transform(dataset, topk, alpha, epsilon, normalization, mode="train"):
     return result
 
 
-class PPRGoDataset(torch.utils.data.Dataset):
+class PPRGoDataset(Dataset):
     def __init__(
         self,
-        features: torch.Tensor,
+        features: BF.dtype_dict("tensor"),
         ppr_matrix: sp.csr_matrix,
-        node_indices: torch.Tensor,
-        labels_all: torch.Tensor = None,
+        node_indices: BF.dtype_dict("tensor"),
+        labels_all: BF.dtype_dict("tensor") = None,
     ):
         self.features = features
         self.matrix = ppr_matrix
@@ -119,10 +131,10 @@ class PPRGoDataset(torch.utils.data.Dataset):
         if key not in self.cache:
             sample_matrix = self.matrix[items]
             source, neighbor = sample_matrix.nonzero()
-            ppr_scores = torch.from_numpy(sample_matrix.data).float()
+            ppr_scores = BF.from_numpy(sample_matrix.data).float()
 
             features = self.features[neighbor].float()
-            targets = torch.from_numpy(source).long()
+            targets = BF.from_numpy(source).long()
             labels = self.labels_all[self.node_indices[items]]
             self.cache[key] = (features, targets, ppr_scores, labels)
         return self.cache[key]

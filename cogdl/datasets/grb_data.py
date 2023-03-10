@@ -4,7 +4,7 @@ import numpy as np
 from collections import defaultdict
 import scipy.sparse as sp
 
-import torch
+from cogdl import function as BF
 
 from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
@@ -66,7 +66,7 @@ class GRBDataset(Dataset):
         self.mode = mode
         self.feat_norm = feat_norm
         super(GRBDataset, self).__init__(root)
-        self.data = torch.load(self.processed_paths[0])
+        self.data = BF.load(self.processed_paths[0])
 
     @property
     def raw_file_names(self):
@@ -100,13 +100,13 @@ class GRBDataset(Dataset):
         labels = np.load(osp.join(folder, "labels.npz")).get("data")
         index = np.load(os.path.join(folder, "index.npz"))
         index_train = index.get("index_train")
-        train_mask = torch.zeros(num_nodes, dtype=bool)
+        train_mask = BF.zeros(num_nodes, dtype=bool)
         train_mask[index_train] = True
         self.index_train = index_train
         self.train_mask = train_mask
 
         index_val = index.get("index_val")
-        val_mask = torch.zeros(num_nodes, dtype=bool)
+        val_mask = BF.zeros(num_nodes, dtype=bool)
         val_mask[index_val] = True
         self.index_val = index_val
         self.val_mask = val_mask
@@ -122,15 +122,15 @@ class GRBDataset(Dataset):
         else:
             index_test = index.get("index_test")
 
-        test_mask = torch.zeros(num_nodes, dtype=bool)
+        test_mask = BF.zeros(num_nodes, dtype=bool)
         test_mask[index_test] = True
         self.index_test = index_test
         self.test_mask = test_mask
         edge_index, edge_attr = adj2edge(adj)
 
         data = Graph(
-            x=torch.from_numpy(features).type(torch.FloatTensor),
-            y=torch.from_numpy(labels),
+            x=BF.from_numpy(features).float(),
+            y=BF.from_numpy(labels),
             grb_adj=adj_to_tensor(adj),
             edge_index=edge_index,
             edge_attr=edge_attr,
@@ -142,7 +142,7 @@ class GRBDataset(Dataset):
 
     def process(self):
         data = self.read_grb_data(self.raw_dir, self.mode, self.feat_norm)
-        torch.save(data, self.processed_paths[0])
+        BF.save(data, self.processed_paths[0])
 
 
 class Cora_GRBDataset(GRBDataset):
@@ -173,10 +173,10 @@ class Flickr_GRBDataset(GRBDataset):
 def adj2edge(adj: sp.csr.csr_matrix):
     row, col = adj.nonzero()
     data = adj.data
-    row = torch.tensor(row, dtype=torch.long)
-    col = torch.tensor(col, dtype=torch.long)
-    edge_index = torch.stack([row, col], dim=0)
-    edge_attr = torch.tensor(data, dtype=torch.float)
+    row = BF.tensor(row, dtype=BF.dtype_dict('long'))
+    col = BF.tensor(col, dtype=BF.dtype_dict('long'))
+    edge_index = BF.stack([row, col], dim=0)
+    edge_attr = BF.tensor(data, dtype=BF.dtype_dict('long'))
     return edge_index, edge_attr
 
 

@@ -1,8 +1,7 @@
 import importlib
-import torch
 import inspect
-
-from cogdl.data.dataset import Dataset
+from cogdl import function as BF
+from cogdl.data import Dataset
 from .customized_data import NodeDataset, GraphDataset, generate_random_graph
 
 
@@ -108,7 +107,7 @@ def build_dataset_from_path(data_path, dataset=None):
 
     if dataset is None:
         try:
-            return torch.load(data_path)
+            return BF.load(data_path)
         except Exception as e:
             print(e)
             exit(0)
@@ -221,3 +220,4 @@ SUPPORTED_DATASETS = {
     "pems-stgcn": "cogdl.datasets.stgcn_data.PeMS_Dataset",
     "pems-stgat": "cogdl.datasets.stgat_data.PeMS_Dataset",
 }
+

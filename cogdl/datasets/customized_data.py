@@ -1,11 +1,8 @@
 import os
-
-import torch
 from sklearn.preprocessing import StandardScaler
-
+from cogdl import function as BF
 from cogdl.data import Dataset, Graph, MultiGraphDataset
 from cogdl.utils import Accuracy, MultiLabelMicroF1, MultiClassMicroF1, CrossEntropyLoss, BCEWithLogitsLoss
-
 
 def _get_evaluator(metric):
     if metric == "accuracy":
@@ -31,23 +28,23 @@ def scale_feats(data):
     scaler = StandardScaler()
     feats = data.x.numpy()
     scaler.fit(feats)
-    feats = torch.from_numpy(scaler.transform(feats)).float()
+    feats = BF.from_numpy(scaler.transform(feats)).float()
     data.x = feats
     return data
 
 
 def generate_random_graph(num_nodes=100, num_edges=1000, num_feats=64):
     # load or generate your dataset
-    edge_index = torch.randint(0, num_nodes, (2, num_edges))
-    x = torch.randn(num_nodes, num_feats)
-    y = torch.randint(0, 2, (num_nodes,))
+    edge_index = BF.randint(0, num_nodes, (2, num_edges))
+    x = BF.randn(num_nodes, num_feats)
+    y = BF.randint(0, 2, (num_nodes,))
 
     # set train/val/test mask in node_classification task
-    train_mask = torch.zeros(num_nodes).bool()
+    train_mask = BF.zeros(num_nodes).bool()
     train_mask[0 : int(0.3 * num_nodes)] = True
-    val_mask = torch.zeros(num_nodes).bool()
+    val_mask = BF.zeros(num_nodes).bool()
     val_mask[int(0.3 * num_nodes) : int(0.7 * num_nodes)] = True
-    test_mask = torch.zeros(num_nodes).bool()
+    test_mask = BF.zeros(num_nodes).bool()
     test_mask[int(0.7 * num_nodes) :] = True
     data = Graph(x=x, edge_index=edge_index, y=y, train_mask=train_mask, val_mask=val_mask, test_mask=test_mask)
 
@@ -66,7 +63,7 @@ class NodeDataset(Dataset):
         super(NodeDataset, self).__init__(root=path)
         if self.data is None:
             try:
-                self.data = torch.load(path)
+                self.data = BF.load(path)
             except Exception as e:
                 print(e)
                 exit(1)
@@ -104,7 +101,7 @@ class NodeDataset(Dataset):
     def _process(self):
         if not os.path.exists(self.path):
             data = self.process()
-            torch.save(data, self.path)
+            BF.save(data, self.path)
 
     def __repr__(self):
         return "{}".format(self.path)
@@ -115,9 +112,9 @@ class GraphDataset(MultiGraphDataset):
         self.path = path
         super(GraphDataset, self).__init__(root=path)
         # try:
-        data = torch.load(path)
+        data = BF.load(path)
         if hasattr(data[0], "y") and data[0].y is None:
-            self.y = torch.cat([idata.y for idata in data])
+            self.y = BF.cat([idata.y for idata in data])
         self.data = data
 
         self.metric = metric
@@ -137,7 +134,7 @@ class GraphDataset(MultiGraphDataset):
     def _process(self):
         if not os.path.exists(self.path):
             data = self.process()
-            torch.save(data, self.path)
+            BF.save(data, self.path)
 
     def get_evaluator(self):
         return _get_evaluator(self.metric)

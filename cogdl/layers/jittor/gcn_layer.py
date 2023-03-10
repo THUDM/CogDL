@@ -1,7 +1,6 @@
 import jittor as jt
 from jittor import nn, Module, init
-
-from cogdl.operators.jt_spmm import spmm
+from cogdl.utils import spmm ,get_activation
 
 
 class GCNLayer(Module):
@@ -22,7 +21,7 @@ class GCNLayer(Module):
             self.residual = None
 
         if activation is not None and activation == "relu":
-            self.act = nn.ReLU()
+            self.act = get_activation(activation)
         else:
             self.act = None
         

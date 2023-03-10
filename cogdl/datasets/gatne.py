@@ -1,7 +1,6 @@
 import os.path as osp
-
-import torch
-
+from sklearn.preprocessing import StandardScaler
+from cogdl import function as BF
 from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 
@@ -54,7 +53,7 @@ class GatneDataset(Dataset):
     def __init__(self, root, name):
         self.name = name
         super(GatneDataset, self).__init__(root)
-        self.data = torch.load(self.processed_paths[0])
+        self.data = BF.load(self.processed_paths[0])
 
     @property
     def raw_file_names(self):
@@ -75,7 +74,7 @@ class GatneDataset(Dataset):
 
     def process(self):
         data = read_gatne_data(self.raw_dir)
-        torch.save(data, self.processed_paths[0])
+        BF.save(data, self.processed_paths[0])
 
     def __repr__(self):
         return "{}()".format(self.name)

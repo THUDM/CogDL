@@ -1,5 +1,8 @@
-import torch
-
+from cogdl.backend import BACKEND
+if BACKEND == 'jittor':
+    import jittor as tj
+elif BACKEND == 'torch':
+    import torch as tj
 import numpy as np
 from cogdl.utils import RandomWalker
 from cogdl.wrappers.tools.wrapper_utils import evaluate_node_embeddings_using_logreg
@@ -27,8 +30,8 @@ class UnsupGraphSAGEModelWrapper(UnsupervisedModelWrapper):
         out = self.model(x_src,adjs)  
         out, pos_out, neg_out = out.split(out.size(0) // 3, dim=0)
 
-        pos_loss = torch.log(torch.sigmoid((out * pos_out).sum(-1)).mean())
-        neg_loss = torch.log(torch.sigmoid(-(out * neg_out).sum(-1)).mean())
+        pos_loss = tj.log(tj.sigmoid((out * pos_out).sum(-1)).mean())
+        neg_loss = tj.log(tj.sigmoid(-(out * neg_out).sum(-1)).mean())
         loss = -pos_loss - neg_loss
         return loss
 
@@ -51,4 +54,4 @@ class UnsupGraphSAGEModelWrapper(UnsupervisedModelWrapper):
 
     def setup_optimizer(self):
         cfg = self.optimizer_cfg
-        return torch.optim.Adam(self.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
+        return tj.optim.Adam(self.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])

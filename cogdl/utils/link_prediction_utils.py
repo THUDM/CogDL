@@ -1,13 +1,15 @@
 import numpy as np
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     from jittor import nn, Module
-    import jittor.nn as F 
-elif BACKEND == 'torch':
+    import jittor.nn as F
+elif BACKEND == "torch":
     import torch.nn as nn
     import torch.nn.functional as F
     from torch.nn import Module
+
 
 def cal_mrr(embedding, rel_embedding, edge_index, edge_type, scoring, protocol="raw", batch_size=1000, hits=[]):
     def no_grad():
@@ -30,24 +32,30 @@ def cal_mrr(embedding, rel_embedding, edge_index, edge_type, scoring, protocol="
             hits_count.append(np.mean((ranks <= hit).astype(np.float)))
         # return mrr.item(), hits_count
         return mrr, hits_count
-    if BACKEND == 'jittor':
-        import jittor 
+
+    if BACKEND == "jittor":
+        import jittor
+
         with jittor.no_grad():
             no_grad()
-    elif BACKEND == 'torch':
+    elif BACKEND == "torch":
         import torch
+
         with torch.no_grad():
             no_grad()
-
 
 
 class DistMultLayer(Module):
     def __init__(self):
         super(DistMultLayer, self).__init__()
-    if BACKEND == 'jittor':
+
+    if BACKEND == "jittor":
+
         def execute(self, sub_emb, obj_emb, rel_emb):
             return BF.sum(sub_emb * obj_emb * rel_emb, dim=-1)
-    elif BACKEND == 'torch':
+
+    elif BACKEND == "torch":
+
         def forward(self, sub_emb, obj_emb, rel_emb):
             return BF.sum(sub_emb * obj_emb * rel_emb, dim=-1)
 
@@ -86,7 +94,9 @@ class ConvELayer(Module):
         ent_rel = BF.cat([ent, rel], dim=1)
         ent_rel = ent_rel.transpose(2, 1).reshape(-1, 1, 2 * self.k_w, self.k_h)
         return ent_rel
-    if BACKEND == 'jittor':
+
+    if BACKEND == "jittor":
+
         def execute(self, sub_emb, obj_emb, rel_emb):
             h = self.concat(sub_emb, rel_emb)
             h = self.bn0(h)
@@ -97,8 +107,10 @@ class ConvELayer(Module):
             h = self.hidden_drop(self.fc(h))
             h = nn.relu(self.bn2(self.hidden_drop2(h)))
             x = BF.sum(h * obj_emb + self.bias, dim=-1)
-            return x      
-    elif BACKEND == 'torch':
+            return x
+
+    elif BACKEND == "torch":
+
         def forward(self, sub_emb, obj_emb, rel_emb):
             h = self.concat(sub_emb, rel_emb)
             h = self.bn0(h)
@@ -110,7 +122,6 @@ class ConvELayer(Module):
             h = F.relu(self.bn2(self.hidden_drop2(h)))
             x = BF.sum(h * obj_emb + self.bias, dim=-1)
             return x
-
 
     def predict(self, sub_emb, obj_emb, rel_emb):
         h = self.concat(sub_emb, rel_emb)
@@ -128,10 +139,14 @@ class GNNLinkPredict(Module):
     def __init__(self):
         super(GNNLinkPredict, self).__init__()
         self.edge_set = None
-    if BACKEND == 'jittor':
+
+    if BACKEND == "jittor":
+
         def execute(self, graph):
             raise NotImplementedError
-    elif BACKEND == 'torch':
+
+    elif BACKEND == "torch":
+
         def forward(self, graph):
             raise NotImplementedError
 
@@ -203,14 +218,14 @@ def sampling_edge_uniform(
 
     corrupt_triplets = corrupt_heads.union(corrupt_tails).union(corrupt_rels)
     corrupt_triplets = corrupt_triplets.difference(edge_set)
-    corrupt_triplets = BF.to(BF.tensor(list(corrupt_triplets)),row.device).T
+    corrupt_triplets = BF.to(BF.tensor(list(corrupt_triplets)), row.device).T
 
     _edge_index = corrupt_triplets[0:2]
     _edge_types = corrupt_triplets[2]
 
     sampled_edges_all = BF.cat((sampled_edges, _edge_index), dim=-1)
     edge_types_all = BF.cat((edge_types[selected_edges], _edge_types), dim=-1)
-    labels = BF.to(BF.tensor([1] * num_sampled_edges + [0] * _edge_index.shape[1]),row.device)
+    labels = BF.to(BF.tensor([1] * num_sampled_edges + [0] * _edge_index.shape[1]), row.device)
     if label_smoothing > 0:
         labels = (1.0 - label_smoothing) * labels + 1.0 / num_entities
     return sampled_edges, BF.from_numpy(rels), sampled_edges_all, edge_types_all, labels

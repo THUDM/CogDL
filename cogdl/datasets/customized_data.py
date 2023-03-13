@@ -4,6 +4,7 @@ from cogdl import function as BF
 from cogdl.data import Dataset, Graph, MultiGraphDataset
 from cogdl.utils import Accuracy, MultiLabelMicroF1, MultiClassMicroF1, CrossEntropyLoss, BCEWithLogitsLoss
 
+
 def _get_evaluator(metric):
     if metric == "accuracy":
         return Accuracy()

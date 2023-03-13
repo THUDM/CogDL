@@ -79,11 +79,10 @@ def set_default_wrapper_config():
         "pte",
         "hin2vec",
     ]
-    triple_link_prediction_models=["transe","distmult", "rotate", "complex"]
-    triple_link_prediction_wrappers=dict()
+    triple_link_prediction_models = ["transe", "distmult", "rotate", "complex"]
+    triple_link_prediction_wrappers = dict()
     for item in triple_link_prediction_models:
         triple_link_prediction_wrappers[item] = {"mw": "triple_link_prediction_mw", "dw": "triple_link_prediction_dw"}
-
 
     node_classification_wrappers = dict()
     for item in node_classification_models:

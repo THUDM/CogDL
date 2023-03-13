@@ -13,7 +13,7 @@ class LinearLayer(Module):
         if bias:
             self.bias = nn.Parameter(jittor.rand(out_features))
         else:
-            self.bias=None
+            self.bias = None
         self.reset_parameters()
 
     def reset_parameters(self):

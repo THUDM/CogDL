@@ -246,7 +246,6 @@ def raw_experiment(args):
     for variant, result in zip(variants, results):
         results_dict[variant[:-2]].append(result)
 
-
     tablefmt = args.tablefmt if hasattr(args, "tablefmt") else "github"
     output_results(results_dict, tablefmt)
 

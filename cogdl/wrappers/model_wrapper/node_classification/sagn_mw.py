@@ -63,9 +63,10 @@
 #         return tj.optim.Adam(self.model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     import jittor as tj
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch as tj
 
 from .. import ModelWrapper
@@ -103,8 +104,8 @@ class SAGNModelWrapper(ModelWrapper):
         self.note("test_metric", metric)
 
     def pre_stage(self, stage, data_w):
-        if BACKEND == 'jittor':
-            device=None
+        if BACKEND == "jittor":
+            device = None
         else:
             device = BF.device(next(self.model.parameters())[0])
         if stage == 0:

@@ -2,30 +2,49 @@ import os
 import jittor
 from jittor.compiler import compile_torch_extensions
 from jittor import Function
+
 path = os.path.join(os.path.dirname(__file__))
 
 # SPMM
 try:
-    compile_torch_extensions("mhspmm",
-        [os.path.join(path, "spmm/multiheadSpmm.cpp"), os.path.join(path, "spmm/multiheadSpmm.cu")],[], [], [],1, 1
+    compile_torch_extensions(
+        "mhspmm",
+        [os.path.join(path, "spmm/multiheadSpmm.cpp"), os.path.join(path, "spmm/multiheadSpmm.cu")],
+        [],
+        [],
+        [],
+        1,
+        1,
+    )
+    compile_torch_extensions(
+        "mhsddmm",
+        [os.path.join(path, "spmm/multiheadSddmm.cpp"), os.path.join(path, "spmm/multiheadSddmm.cu")],
+        [],
+        [],
+        [],
+        1,
+        1,
+    )
+    compile_torch_extensions(
+        "mhtranspose",
+        [os.path.join(path, "spmm/mhTranspose.cpp"), os.path.join(path, "spmm/mhTranspose.cu")],
+        [],
+        [],
+        [],
+        1,
+        1,
+    )
 
-    )
-    compile_torch_extensions("mhsddmm",
-        [os.path.join(path, "spmm/multiheadSddmm.cpp"), os.path.join(path, "spmm/multiheadSddmm.cu")],[], [], [],1, 1
-    )
-    compile_torch_extensions("mhtranspose",[os.path.join(path, "spmm/mhTranspose.cpp"), os.path.join(path, "spmm/mhTranspose.cu")],[], [], [],1, 1
-    )
-
-    compile_torch_extensions("spmm",
-        [os.path.join(path, "spmm/spmm.cpp"), os.path.join(path, "spmm/spmm_kernel.cu")],[], [], [],1, 1
+    compile_torch_extensions(
+        "spmm", [os.path.join(path, "spmm/spmm.cpp"), os.path.join(path, "spmm/spmm_kernel.cu")], [], [], [], 1, 1
     )
     import spmm
     import mhspmm
     import mhsddmm
     import mhtranspose
+
     def csrmhspmm(rowptr, colind, feat, attention):
         return MHSPMMFunction.apply(rowptr, colind, feat, attention)
-
 
 except Exception:
     mhspmm = None
@@ -36,7 +55,7 @@ except Exception:
 class MHSPMMFunction(Function):
     def execute(self, rowptr, colind, feat, attention):
         out = mhspmm.mhspmm(rowptr, colind, attention, feat)
-        self.backward_mhspmm=(rowptr, colind, feat, attention)
+        self.backward_mhspmm = (rowptr, colind, feat, attention)
 
         return out
 

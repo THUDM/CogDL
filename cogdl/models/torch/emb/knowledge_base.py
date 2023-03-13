@@ -9,7 +9,7 @@ class KGEModel(BaseModel):
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         parser.add_argument("--embedding_size", type=int, default=500, help="Dimensionality of embedded vectors")
-        parser.add_argument("--gamma", type=float,default=12.0, help="Hyperparameter for embedding")
+        parser.add_argument("--gamma", type=float, default=12.0, help="Hyperparameter for embedding")
         parser.add_argument("--double_entity_embedding", action="store_true")
         parser.add_argument("--double_relation_embedding", action="store_true")
 
@@ -24,9 +24,7 @@ class KGEModel(BaseModel):
             args.double_relation_embedding,
         )
 
-    def __init__(
-        self, nentity, nrelation, hidden_dim, gamma, double_entity_embedding, double_relation_embedding
-    ):
+    def __init__(self, nentity, nrelation, hidden_dim, gamma, double_entity_embedding, double_relation_embedding):
 
         super(KGEModel, self).__init__()
         self.nentity = nentity
@@ -39,7 +37,7 @@ class KGEModel(BaseModel):
         self.embedding_range = nn.Parameter(
             torch.Tensor([(self.gamma.item() + self.epsilon) / hidden_dim]), requires_grad=False
         )
-        
+
         self.entity_dim = hidden_dim * 2 if double_entity_embedding else hidden_dim
         self.relation_dim = hidden_dim * 2 if double_relation_embedding else hidden_dim
 

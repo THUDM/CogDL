@@ -6,7 +6,6 @@ try:
     def fused_gat_func(attn_row, attn_col, row_ptr, col_ind, col_ptr, row_ind, negative_slope, in_feat):
         return FusedGATFunction.apply(attn_row, attn_col, row_ptr, col_ind, col_ptr, row_ind, negative_slope, in_feat)
 
-
 except Exception:
     fused_gat_func = None
 

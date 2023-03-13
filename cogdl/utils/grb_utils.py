@@ -5,7 +5,8 @@ from cogdl import function as BF
 import numpy as np
 import scipy
 
-#TODO  BF.sparse.mm()
+# TODO  BF.sparse.mm()
+
 
 def getGRBGraph(graph: Graph):
     features = graph.x
@@ -14,9 +15,9 @@ def getGRBGraph(graph: Graph):
     else:
         edge_index = graph.edge_index
         edge_attr = graph.edge_attr
-        if type(edge_attr) == BF.dtype_dict('tensor'):
+        if type(edge_attr) == BF.dtype_dict("tensor"):
             edge_attr = BF.cpu(edge_attr).numpy()
-        if type(edge_index) == BF.dtype_dict('tensor'):
+        if type(edge_index) == BF.dtype_dict("tensor"):
             edge_index = BF.cpu(edge_index).numpy()
         if type(edge_index) == tuple:
             edge_index = [BF.cpu(edge_index[0]).numpy(), BF.cpu(edge_index[1]).numpy()]
@@ -25,8 +26,8 @@ def getGRBGraph(graph: Graph):
     return adj, features
 
 
-def getGraph(adj, features: BF.dtype_dict('tensor'), labels: BF.dtype_dict('tensor') = None, device="cpu"):
-    if type(adj) != BF.dtype_dict('tensor'):
+def getGraph(adj, features: BF.dtype_dict("tensor"), labels: BF.dtype_dict("tensor") = None, device="cpu"):
+    if type(adj) != BF.dtype_dict("tensor"):
         edge_index, edge_attr = adj2edge(adj, device)
         data = BF.to(Graph(x=features, y=labels, edge_index=edge_index, edge_attr=edge_attr), device)
     else:
@@ -40,8 +41,8 @@ def getGraph(adj, features: BF.dtype_dict('tensor'), labels: BF.dtype_dict('tens
     return data
 
 
-def updateGraph(graph, adj, features: BF.dtype_dict('tensor')):
-    if type(adj) != BF.dtype_dict('tensor'):
+def updateGraph(graph, adj, features: BF.dtype_dict("tensor")):
+    if type(adj) != BF.dtype_dict("tensor"):
         edge_index, edge_attr = adj2edge(adj, BF.device(graph))
         graph.x = features
         graph.edge_index = edge_index
@@ -65,7 +66,7 @@ def adj2edge(adj: sp.csr.csr_matrix, device="cpu"):
     col = BF.tensor(col, dtype=BF.dtype_dict("long"))
     edge_index = BF.stack([row, col], dim=0)
     edge_attr = BF.tensor(data, dtype=BF.dtype_dict("float"))
-    return BF.to(edge_index,device), BF.to(edge_attr,device)
+    return BF.to(edge_index, device), BF.to(edge_attr, device)
 
 
 def adj_to_tensor(adj):
@@ -85,7 +86,7 @@ def adj_to_tensor(adj):
         Adjacency matrix in form of ``N * N`` sparse tensor.
 
     """
-    if type(adj) == BF.dtype_dict('tensor'):
+    if type(adj) == BF.dtype_dict("tensor"):
         return adj
     if type(adj) != scipy.sparse.coo.coo_matrix:
         adj = adj.tocoo()
@@ -132,14 +133,17 @@ def adj_preprocess(adj, adj_norm_func=None, mask=None, device="cpu"):
         if mask is not None:
             adj = [
                 BF.to(adj_to_tensor(adj_[mask][:, mask]), device)
-                if type(adj_) != BF.dtype_dict('tensor')
+                if type(adj_) != BF.dtype_dict("tensor")
                 else BF.to(adj_[mask][:, mask], device)
                 for adj_ in adj
             ]
         else:
-            adj = [BF.to(adj_to_tensor(adj_),device) if type(adj_) != BF.dtype_dict('tensor') else BF.to(adj_.to,device) for adj_ in adj]
+            adj = [
+                BF.to(adj_to_tensor(adj_), device) if type(adj_) != BF.dtype_dict("tensor") else BF.to(adj_.to, device)
+                for adj_ in adj
+            ]
     else:
-        if type(adj) != BF.dtype_dict('tensor'):
+        if type(adj) != BF.dtype_dict("tensor"):
             if mask is not None:
                 adj = BF.to(adj_to_tensor(adj[mask][:, mask]), device)
             else:
@@ -186,7 +190,7 @@ def feat_preprocess(features, feat_norm=None, device="cpu"):
 
         return feat
 
-    if type(features) != BF.dtype_dict('tensor'):
+    if type(features) != BF.dtype_dict("tensor"):
         features = BF.FloatTensor(features)
     elif features.dtype() != BF.dtype_dict("float"):
         features = features.float()
@@ -219,9 +223,9 @@ def label_preprocess(labels, device="cpu"):
 
     """
 
-    if type(labels) != BF.dtype_dict('tensor'):
+    if type(labels) != BF.dtype_dict("tensor"):
         labels = BF.LongTensor(labels)
-    elif labels.dtype != BF.dtype_dict('long'):
+    elif labels.dtype != BF.dtype_dict("long"):
         labels = labels.long()
 
     labels = BF.to(labels, device)
@@ -334,18 +338,18 @@ def GCNAdjNorm(adj, order=-0.5):
         d_mat_inv = sp.diags(d_inv)
         adj = d_mat_inv @ adj @ d_mat_inv
     else:
-        rowsum =BF.sparse_mm(adj, BF.ones((adj.shape[0], 1), device=BF.device(adj))) + 1
-        d_inv =BF.pow(rowsum, order).flatten()
+        rowsum = BF.sparse_mm(adj, BF.ones((adj.shape[0], 1), device=BF.device(adj))) + 1
+        d_inv = BF.pow(rowsum, order).flatten()
         d_inv[BF.isinf(d_inv)] = 0.0
 
-        self_loop_idx =BF.stack(
-            (BF.arange(adj.shape[0], device=BF.device(adj)),BF.arange(adj.shape[0], device=BF.device(adj)))
+        self_loop_idx = BF.stack(
+            (BF.arange(adj.shape[0], device=BF.device(adj)), BF.arange(adj.shape[0], device=BF.device(adj)))
         )
-        self_loop_val =BF.ones_like(self_loop_idx[0], dtype=adj.dtype)
-        indices =BF.cat((self_loop_idx, adj.indices()), dim=1)
-        values =BF.cat((self_loop_val, adj.values()))
+        self_loop_val = BF.ones_like(self_loop_idx[0], dtype=adj.dtype)
+        indices = BF.cat((self_loop_idx, adj.indices()), dim=1)
+        values = BF.cat((self_loop_val, adj.values()))
         values = d_inv[indices[0]] * values * d_inv[indices[1]]
-        adj =BF.sparse_FloatTensor(indices, values, adj.shape).coalesce()
+        adj = BF.sparse_FloatTensor(indices, values, adj.shape).coalesce()
 
     return adj
 
@@ -388,11 +392,11 @@ def SAGEAdjNorm(adj, order=-1):
         d_mat_inv = sp.diags(d_inv)
         adj = d_mat_inv @ adj
     else:
-        adj =BF.to(BF.eye(adj.shape[0]), adj) + adj
+        adj = BF.to(BF.eye(adj.shape[0]), adj) + adj
         rowsum = adj.sum(1)
-        d_inv =BF.pow(rowsum, order).flatten()
+        d_inv = BF.pow(rowsum, order).flatten()
         d_inv[BF.isinf(d_inv)] = 0.0
-        d_mat_inv =BF.diag(d_inv)
+        d_mat_inv = BF.diag(d_inv)
         adj = d_mat_inv @ adj
 
     return adj
@@ -430,17 +434,17 @@ def SPARSEAdjNorm(adj, order=-0.5):
         adj = d_mat_inv @ adj @ d_mat_inv
     else:
         rowsum = BF.sparse.mm(adj, BF.ones((adj.shape[0], 1), device=BF.device(adj))) + 1
-        d_inv =BF.pow(rowsum, order).flatten()
+        d_inv = BF.pow(rowsum, order).flatten()
         d_inv[BF.isinf(d_inv)] = 0.0
 
-        self_loop_idx =BF.stack(
-            (BF.arange(adj.shape[0], device=BF.device(adj)),BF.arange(adj.shape[0], device=BF.device(adj)))
+        self_loop_idx = BF.stack(
+            (BF.arange(adj.shape[0], device=BF.device(adj)), BF.arange(adj.shape[0], device=BF.device(adj)))
         )
-        self_loop_val =BF.ones_like(self_loop_idx[0], dtype=adj.dtype)
-        indices =BF.cat((self_loop_idx, adj.indices()), dim=1)
-        values =BF.cat((self_loop_val, adj.values()))
+        self_loop_val = BF.ones_like(self_loop_idx[0], dtype=adj.dtype)
+        indices = BF.cat((self_loop_idx, adj.indices()), dim=1)
+        values = BF.cat((self_loop_val, adj.values()))
         values = d_inv[indices[0]] * values * d_inv[indices[1]]
-        adj =BF.sparse_FloatTensor(indices, values, adj.shape).coalesce()
+        adj = BF.sparse_FloatTensor(indices, values, adj.shape).coalesce()
 
     return adj
 
@@ -472,7 +476,7 @@ def RobustGCNAdjNorm(adj):
 
 
 def feature_normalize(features):
-    x_sum =BF.sum(features, dim=1)
+    x_sum = BF.sum(features, dim=1)
     x_rev = x_sum.pow(-1).flatten()
     x_rev[BF.isnan(x_rev)] = 0.0
     x_rev[BF.isinf(x_rev)] = 0.0

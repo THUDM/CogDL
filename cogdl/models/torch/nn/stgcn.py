@@ -28,7 +28,6 @@ class STGCN(BaseModel):
         parser.add_argument("--num_nodes", type=int, default=288)
         # fmt: on
 
-
     @classmethod
     def build_model_from_args(cls, args):
         return cls(
@@ -41,42 +40,44 @@ class STGCN(BaseModel):
             args.num_nodes,
         )
 
-
-    def __init__(self,
-                channel_size_list,
-                kernel_size,
-                num_layers,
-                K,
-                window_size,
-                normalization,
-                num_nodes,
-                device = 'cuda',
-                bias=True):
+    def __init__(
+        self,
+        channel_size_list,
+        kernel_size,
+        num_layers,
+        K,
+        window_size,
+        normalization,
+        num_nodes,
+        device="cuda",
+        bias=True,
+    ):
 
         super(STGCN, self).__init__()
         self.layers = nn.ModuleList([])
         # add STConv blocks
         for layer in range(num_layers):
-            input_size, hidden_size, output_size = \
-            channel_size_list[layer][0], channel_size_list[layer][1], \
-            channel_size_list[layer][2]
-            self.layers.append(STConvLayer(num_nodes, input_size, hidden_size, \
-                                      output_size, kernel_size, K, \
-                                      normalization, bias))
+            input_size, hidden_size, output_size = (
+                channel_size_list[layer][0],
+                channel_size_list[layer][1],
+                channel_size_list[layer][2],
+            )
+            self.layers.append(
+                STConvLayer(num_nodes, input_size, hidden_size, output_size, kernel_size, K, normalization, bias)
+            )
 
         # add output layer
-        self.layers.append(OutputLayer(channel_size_list[-1][-1], \
-                                       window_size - 2 * num_layers * (kernel_size - 1), \
-                                       num_nodes))
+        self.layers.append(
+            OutputLayer(channel_size_list[-1][-1], window_size - 2 * num_layers * (kernel_size - 1), num_nodes)
+        )
         # CUDA if available
         if torch.cuda.is_available():
             for layer in self.layers:
                 layer = layer.to(device)
 
-
     def forward(self, x, edge_index, edge_weight):
         for layer in self.layers[:-1]:
-          x = layer(x, edge_index, edge_weight)
+            x = layer(x, edge_index, edge_weight)
         out_layer = self.layers[-1]
         x = x.permute(0, 3, 1, 2)
         x = out_layer(x)
@@ -86,9 +87,9 @@ class STGCN(BaseModel):
 class OutputLayer(nn.Module):
     def __init__(self, c, T, n):
         super(OutputLayer, self).__init__()
-        self.tconv1 = nn.Conv2d(c, c, (T, 1), 1, dilation = 1, padding = (0,0))
+        self.tconv1 = nn.Conv2d(c, c, (T, 1), 1, dilation=1, padding=(0, 0))
         self.ln = nn.LayerNorm([n, c])
-        self.tconv2 = nn.Conv2d(c, c, (1, 1), 1, dilation = 1, padding = (0,0))
+        self.tconv2 = nn.Conv2d(c, c, (1, 1), 1, dilation=1, padding=(0, 0))
         self.fc = FullyConnLayer(c)
 
     def forward(self, x):
@@ -106,5 +107,3 @@ class FullyConnLayer(nn.Module):
 
     def forward(self, x):
         return self.conv(x)
-
-

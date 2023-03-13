@@ -1,6 +1,6 @@
 import jittor as jt
 from jittor import nn, Module, init
-from cogdl.utils import spmm ,get_activation
+from cogdl.utils import spmm, get_activation
 
 
 class GCNLayer(Module):
@@ -24,7 +24,7 @@ class GCNLayer(Module):
             self.act = get_activation(activation)
         else:
             self.act = None
-        
+
         if norm is not None:
             if norm == "batchnorm":
                 self.norm = nn.BatchNorm1d(out_features)
@@ -39,7 +39,7 @@ class GCNLayer(Module):
 
     def reset_parameters(self):
         init.xavier_uniform_(self.linear.weight)
-    
+
     def execute(self, graph, x):
         support = self.linear(x)
         out = spmm(graph, support)
@@ -54,4 +54,3 @@ class GCNLayer(Module):
         if self.dropout is not None:
             out = self.dropout(out)
         return out
-

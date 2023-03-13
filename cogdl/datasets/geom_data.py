@@ -263,7 +263,6 @@ def read_planetoid_data(folder, dataset_str):
     labels = np.argmax(labels, axis=-1)
     labels = BF.LongTensor(labels)
 
-
     coo_adj = adj.tocoo()
     row, col = BF.LongTensor(coo_adj.row), BF.LongTensor(coo_adj.col)
     edge_index = (row, col)

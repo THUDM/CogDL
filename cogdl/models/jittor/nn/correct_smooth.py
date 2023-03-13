@@ -65,10 +65,10 @@ def correlation_fixed(preds, y, resid, residual_nid, scale=1.0):
 
 
 def diffusion(g, x, nhtop, p=1, alpha=0.5):
-    x = x ** p
+    x = x**p
     for _ in range(nhtop):
         x = (1 - alpha) * x + alpha * spmm(g, x)
-        x = x ** p
+        x = x**p
     return x
 
 

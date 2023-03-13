@@ -20,6 +20,7 @@ def index_to_mask(index, size):
     mask[index] = True
     return mask
 
+
 def edge_index_from_dict(graph_dict, num_nodes=None):
     row, col = [], []
     for key, value in graph_dict.items():
@@ -85,7 +86,7 @@ def read_planetoid_data(folder, prefix):
         tx, ty = tx_ext, ty_ext
 
     x = BF.cat([allx, tx], dim=0).float()
-    y = BF.as_tensor(BF.argmax(BF.cat([ally, ty], dim=0),dim=1),dtype=BF.dtype_dict("long"))
+    y = BF.as_tensor(BF.argmax(BF.cat([ally, ty], dim=0), dim=1), dtype=BF.dtype_dict("long"))
     x[test_index] = x[test_index_reorder]
     y[test_index] = y[test_index_reorder]
 

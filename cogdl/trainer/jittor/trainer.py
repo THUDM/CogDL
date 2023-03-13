@@ -14,10 +14,12 @@ from .trainer_utils import (
     save_model,
     Printer,
 )
+
 # from cogdl.trainer.embed_trainer import EmbeddingTrainer
 from .controller import DataController
 from cogdl.loggers import build_logger
 from cogdl.data import Graph
+
 # from cogdl.utils.grb_utils import adj_preprocess, updateGraph, adj_to_tensor
 
 
@@ -147,7 +149,6 @@ class Trainer(object):
         if self.resume_training:
             model_w = load_model(model_w, self.checkpoint_path).to(self.devices[0])
 
-
         self.train(model_w, dataset_w)
         best_model_w = load_model(model_w, self.checkpoint_path)
 
@@ -193,7 +194,6 @@ class Trainer(object):
         print(final_test)
         return final_test
 
-   
     def build_optimizer(self, model_w):
         opt_wrap = model_w.setup_optimizer()
         if isinstance(opt_wrap, list) or isinstance(opt_wrap, tuple):
@@ -208,7 +208,6 @@ class Trainer(object):
         if lr_schedulers and not isinstance(lr_schedulers, list):
             lr_schedulers = [lr_schedulers]
         return optimizers, lr_schedulers
-
 
     def train(self, model_w, dataset_w):  # noqa: C901
         self.data_controller.prepare_data_wrapper(dataset_w)
@@ -241,10 +240,10 @@ class Trainer(object):
 
             if self.progress_bar == "epoch":
                 epoch_iter = tqdm(range(1, self.epochs + 1))
-                epoch_printer = Printer(epoch_iter.set_description,  world_size=self.world_size)
+                epoch_printer = Printer(epoch_iter.set_description, world_size=self.world_size)
             else:
                 epoch_iter = range(1, self.epochs + 1)
-                epoch_printer = Printer(print,world_size=self.world_size)
+                epoch_printer = Printer(print, world_size=self.world_size)
 
             self.logger.start()
             print_str_dict = dict()
@@ -305,7 +304,6 @@ class Trainer(object):
                                     break
                             print_str_dict[f"val_{self.evaluation_metric}"] = monitoring
 
-               
                 epoch_printer(print_str_dict)
                 self.logger.note(print_str_dict, epoch)
 
@@ -330,7 +328,6 @@ class Trainer(object):
     def validate(self, model_w: ModelWrapper, dataset_w: DataWrapper):
         model_w.eval()
         dataset_w.eval()
-        
 
         val_loader = dataset_w.on_val_wrapper()
         with jittor.no_grad():
@@ -351,7 +348,6 @@ class Trainer(object):
 
         return result
 
-
     def train_step(self, model_w, train_loader, optimizers, lr_schedulers):
         model_w.train()
         losses = []
@@ -362,7 +358,7 @@ class Trainer(object):
         for batch in train_loader:
             if hasattr(batch, "train_mask") and batch.train_mask.sum().item() == 0:
                 continue
-            
+
             loss = model_w.on_train_step(batch)
 
             for optimizer in optimizers:

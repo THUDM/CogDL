@@ -1,9 +1,10 @@
 from typing import Optional, Tuple
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     from jittor import Module
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     from torch.nn import Module
 
 from cogdl.utils.graph_utils import symmetric_normalization, row_normalization
@@ -43,7 +44,7 @@ def filter_adj(row, col, edge_attr, mask):
 
 def dropout_adj(
     edge_index: Tuple,
-    edge_weight: Optional[BF.dtype_dict('tensor')] = None,
+    edge_weight: Optional[BF.dtype_dict("tensor")] = None,
     drop_rate: float = 0.5,
     renorm: Optional[str] = "sym",
     training: bool = False,
@@ -59,7 +60,7 @@ def dropout_adj(
     row, col = edge_index
     num_nodes = int(max(row.max(), col.max())) + 1
     self_loop = row == col
-    mask = BF.full((row.shape[0],), 1 - drop_rate, dtype=BF.dtype_dict('float'), device=BF.device(row))
+    mask = BF.full((row.shape[0],), 1 - drop_rate, dtype=BF.dtype_dict("float"), device=BF.device(row))
     mask = BF.bernoulli(mask).bool()
     mask = self_loop | mask
     edge_index, edge_weight = filter_adj(row, col, edge_weight, mask)
@@ -70,13 +71,13 @@ def dropout_adj(
     return edge_index, edge_weight
 
 
-def dropout_features(x: BF.dtype_dict('tensor'), droprate: float, training=True):
+def dropout_features(x: BF.dtype_dict("tensor"), droprate: float, training=True):
     n = x.shape[1]
     drop_rates = BF.ones(n, device=BF.device(x)) * droprate
     if training:
         masks = BF.bernoulli(1.0 - drop_rates).view(1, -1).expand_as(x)
-        masks = BF.to(masks,x)
-        masks = BF.to(masks,x)
+        masks = BF.to(masks, x)
+        masks = BF.to(masks, x)
         x = masks * x
     return x
 

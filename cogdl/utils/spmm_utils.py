@@ -1,8 +1,9 @@
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     from jittor import nn
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch.nn as nn
 else:
     raise ("Unsupported backend:", BACKEND)
@@ -20,7 +21,6 @@ CONFIGS = {
 }
 
 
-
 def check_fused_gat():
     return CONFIGS["fused_gat_func"] is not None
 
@@ -30,9 +30,9 @@ def initialize_spmm():
         return
     CONFIGS["spmm_flag"] = True
     if BF.cuda_is_available():
-        if BACKEND == 'jittor':
+        if BACKEND == "jittor":
             from cogdl.operators.jittor.spmm import csrspmm
-        elif BACKEND == 'torch':
+        elif BACKEND == "torch":
             from cogdl.operators.torch.spmm import csrspmm
         else:
             raise ("Unsupported backend:", BACKEND)
@@ -46,12 +46,13 @@ def initialize_spmm_cpu():
     if CONFIGS["spmm_cpu_flag"]:
         return
     CONFIGS["spmm_cpu_flag"] = True
-    if BACKEND == 'jittor':
+    if BACKEND == "jittor":
         from cogdl.operators.jittor.spmm import spmm_cpu
-    elif BACKEND == 'torch':
+    elif BACKEND == "torch":
         from cogdl.operators.torch.spmm import spmm_cpu
-    
+
     CONFIGS["fast_spmm_cpu"] = spmm_cpu
+
 
 def spmm_scatter(row, col, values, b):
     r"""
@@ -61,7 +62,7 @@ def spmm_scatter(row, col, values, b):
         b : Tensor, shape=(N, d)
     """
     output = BF.type_as(BF.index_select(b, 0, col) * values.unsqueeze(-1), b)
-    output = BF.scatter_add_(BF.zeros_like(b),0, row.unsqueeze(-1).expand_as(output), output)
+    output = BF.scatter_add_(BF.zeros_like(b), 0, row.unsqueeze(-1).expand_as(output), output)
     return output
 
 
@@ -90,13 +91,16 @@ class SpMM_CPU(nn.Module):
         super().__init__()
         initialize_spmm_cpu()
         self.fast_spmm_cpu = CONFIGS["fast_spmm_cpu"]
-    if BACKEND == 'torch':
+
+    if BACKEND == "torch":
+
         def forward(self, graph, x):
             return spmm_cpu(graph, x, self.fast_spmm_cpu)
-    elif BACKEND == 'jittor':
+
+    elif BACKEND == "jittor":
+
         def execute(self, graph, x):
             return spmm_cpu(graph, x, self.fast_spmm_cpu)
-
 
 
 def spmm(graph, x, actnn=False, fast_spmm=None, fast_spmm_cpu=None):
@@ -118,7 +122,7 @@ def spmm(graph, x, actnn=False, fast_spmm=None, fast_spmm_cpu=None):
 
         row_ptr, col_indices = graph.row_indptr, graph.col_indices
         csr_data = graph.raw_edge_weight
-        if x.dtype == BF.dtype_dict('float16'):
+        if x.dtype == BF.dtype_dict("float16"):
             csr_data = csr_data.half()
         x = fast_spmm(row_ptr.int(), col_indices.int(), x, csr_data, graph.is_symmetric(), actnn=actnn)
 
@@ -139,6 +143,7 @@ def spmm(graph, x, actnn=False, fast_spmm=None, fast_spmm_cpu=None):
         x = spmm_scatter(row, col, graph.edge_weight, x)
     return x
 
+
 class SpMM(nn.Module):
     def __init__(self, actnn=False):
         super().__init__()
@@ -146,13 +151,15 @@ class SpMM(nn.Module):
         self.actnn = actnn
         self.fast_spmm = CONFIGS["fast_spmm"]
 
-    if BACKEND == 'torch':
+    if BACKEND == "torch":
+
         def forward(self, graph, x):
             return spmm(graph, x, self.actnn, self.fast_spmm)
-    elif BACKEND == 'jittor':
-        def execute(self, graph, x):
-           return spmm(graph, x, self.actnn, self.fast_spmm)
 
+    elif BACKEND == "jittor":
+
+        def execute(self, graph, x):
+            return spmm(graph, x, self.actnn, self.fast_spmm)
 
 
 def initialize_edge_softmax():
@@ -160,14 +167,13 @@ def initialize_edge_softmax():
         return
     CONFIGS["mh_spmm_flag"] = True
     if BF.cuda_is_available():
-        if BACKEND == 'jittor':
+        if BACKEND == "jittor":
             from cogdl.operators.jittor.edge_softmax import csr_edge_softmax
             from cogdl.operators.jittor.mhspmm import csrmhspmm
-        elif BACKEND == 'torch':
+        elif BACKEND == "torch":
             from cogdl.operators.torch.edge_softmax import csr_edge_softmax
             from cogdl.operators.torch.mhspmm import csrmhspmm
 
-            
         CONFIGS["csrmhspmm"] = csrmhspmm
         CONFIGS["csr_edge_softmax"] = csr_edge_softmax
 
@@ -219,12 +225,16 @@ class EdgeSoftmax(nn.Module):
         super().__init__()
         initialize_edge_softmax()
         self.csr_edge_softmax = CONFIGS["csr_edge_softmax"]
-    if BACKEND == 'torch':
+
+    if BACKEND == "torch":
+
         def forward(self, graph, edge_val):
             return edge_softmax(graph, edge_val, self.csr_edge_softmax)
-    elif BACKEND == 'jittor':
+
+    elif BACKEND == "jittor":
+
         def execute(self, graph, edge_val):
-           return edge_softmax(graph, edge_val, self.csr_edge_softmax)
+            return edge_softmax(graph, edge_val, self.csr_edge_softmax)
 
 
 def mh_spmm(graph, attention, h, csrmhspmm=None, fast_spmm=None):
@@ -254,6 +264,7 @@ def mh_spmm(graph, attention, h, csrmhspmm=None, fast_spmm=None):
         out = BF.cat(h_prime, dim=1)
     return out
 
+
 class MultiHeadSpMM(nn.Module):
     def __init__(self):
         super().__init__()
@@ -262,13 +273,15 @@ class MultiHeadSpMM(nn.Module):
         self.spmm = CONFIGS["fast_spmm"]
         self.csrmhspmm = CONFIGS["csrmhspmm"]
 
-    if BACKEND == 'torch':
+    if BACKEND == "torch":
+
         def forward(self, graph, attention, h):
             return mh_spmm(graph, attention, h, csrmhspmm=self.csrmhspmm, fast_spmm=self.spmm)
-    elif BACKEND == 'jittor':
-        def execute(self, graph, attention, h):
-           return mh_spmm(graph, attention, h, csrmhspmm=self.csrmhspmm, fast_spmm=self.spmm)
 
+    elif BACKEND == "jittor":
+
+        def execute(self, graph, attention, h):
+            return mh_spmm(graph, attention, h, csrmhspmm=self.csrmhspmm, fast_spmm=self.spmm)
 
 
 def initialize_fused_gat():
@@ -276,11 +289,10 @@ def initialize_fused_gat():
         return
     CONFIGS["fused_gat_flag"] = True
     if BF.cuda_is_available():
-        if BACKEND == 'jittor':
+        if BACKEND == "jittor":
             from cogdl.operators.jittor.fused_gat import fused_gat_func
-        elif BACKEND == 'torch':
+        elif BACKEND == "torch":
             from cogdl.operators.torch.fused_gat import fused_gat_func
-        
 
         CONFIGS["fused_gat_func"] = fused_gat_func
 
@@ -307,9 +319,12 @@ class FusedGATOp(nn.Module):
         initialize_fused_gat()
         self.fused_gat_func = CONFIGS["fused_gat_func"]
 
-    if BACKEND == 'torch':
+    if BACKEND == "torch":
+
         def forward(self, attn_row, attn_col, graph, negative_slope, in_feat):
             return fused_gat_op(attn_row, attn_col, graph, negative_slope, in_feat, fused_gat_op=self.fused_gat_func)
-    elif BACKEND == 'jittor':
+
+    elif BACKEND == "jittor":
+
         def execute(self, attn_row, attn_col, graph, negative_slope, in_feat):
-           return fused_gat_op(attn_row, attn_col, graph, negative_slope, in_feat, fused_gat_op=self.fused_gat_func)
+            return fused_gat_op(attn_row, attn_col, graph, negative_slope, in_feat, fused_gat_op=self.fused_gat_func)

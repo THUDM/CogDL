@@ -6,13 +6,13 @@ from .gcn_layerii import GCNLayerST
 # from torch_geometric.nn import GCNConv,ChebConv
 
 
-
 """
 one temporal conv +
 one graph conv +
 one temporal conv
 return batch * n_hid - (keral_size-1)*2 * num_nodes * out_channels
 """
+
 
 class STConvLayer(nn.Module):
     def __init__(
@@ -42,7 +42,6 @@ class STConvLayer(nn.Module):
             kernel_size=kernel_size,
         )
 
-
         self._graph_conv = GCNLayerST(
             hidden_channels,
             hidden_channels,
@@ -67,7 +66,7 @@ class STConvLayer(nn.Module):
 
     def forward(
         self,
-        X: torch.FloatTensor, # 30*20*50*1
+        X: torch.FloatTensor,  # 30*20*50*1
         edge_index: torch.LongTensor,
         edge_weight: torch.FloatTensor = None,
     ) -> torch.FloatTensor:
@@ -89,7 +88,7 @@ class STConvLayer(nn.Module):
         T = torch.zeros_like(T_0).to(T_0.device)
         for b in range(T_0.size(0)):
             for t in range(T_0.size(1)):
-                T[b][t] = self._graph_conv(T_0[b][t] ,edge_index, edge_weight)
+                T[b][t] = self._graph_conv(T_0[b][t], edge_index, edge_weight)
 
         T = F.relu(T)
         T = self._temporal_conv2(T)
@@ -135,7 +134,7 @@ class TemporalConv(nn.Module):
         Q = torch.sigmoid(PP)
         PQ = P * Q
         PPP = self.conv_3(X)
-        H = F.relu(PQ + PPP) 
+        H = F.relu(PQ + PPP)
         H = H.permute(0, 3, 2, 1)
 
         return H

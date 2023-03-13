@@ -1,18 +1,14 @@
-
-
 import importlib
 from cogdl.backend import BACKEND
 
-if BACKEND == 'jittor':
+if BACKEND == "jittor":
     from .jittor import *
     from .jittor.base_model import BaseModel
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     from .torch import *
     from .torch.base_model import BaseModel
 else:
     raise ("Unsupported backend:", BACKEND)
-
-
 
 
 def register_model(name):

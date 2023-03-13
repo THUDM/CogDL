@@ -1,12 +1,15 @@
 from .. import DataWrapper
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     pass
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch as tj
     from cogdl.models.torch.nn.sagn import prepare_labels, prepare_feats
     from torch.utils.data import DataLoader
+
+
 class SAGNDataWrapper(DataWrapper):
     @staticmethod
     def add_args(parser):

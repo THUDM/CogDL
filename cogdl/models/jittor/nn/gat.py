@@ -1,10 +1,11 @@
-
 import jittor.nn as nn
 from cogdl.layers import GATLayer
+
 # from .. import BaseModel
 from cogdl.models import BaseModel
 from cogdl.datasets.planetoid_data import CoraDataset
 from cogdl.datasets.customized_data import NodeDataset, generate_random_graph
+
 
 class GAT(BaseModel):
     r"""The GAT model from the `"Graph Attention Networks"
@@ -87,7 +88,12 @@ class GAT(BaseModel):
             )
         self.attentions.append(
             GATLayer(
-                hidden_size * nhead, out_features, attn_drop=attn_drop, alpha=alpha, nhead=last_nhead, residual=False,
+                hidden_size * nhead,
+                out_features,
+                attn_drop=attn_drop,
+                alpha=alpha,
+                nhead=last_nhead,
+                residual=False,
             )
         )
         self.num_layers = num_layers

@@ -5,14 +5,13 @@ import numpy as np
 import scipy.sparse as sp
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     from cogdl.operators.jittor.sample import coo2csr_cpu, coo2csr_cpu_index
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     from cogdl.operators.torch.sample import coo2csr_cpu, coo2csr_cpu_index
 else:
     raise ("Unsupported backend:", BACKEND)
-
-
 
 
 def get_degrees(row, col, num_nodes=None):
@@ -66,7 +65,7 @@ def add_remaining_self_loops(edge_index, edge_weight=None, fill_value=1, num_nod
     _col = BF.cat([col[mask], loop_index[1]])
     # edge_index = torch.cat([edge_index[:, mask], loop_index], dim=1)
 
-    #inv_mask = ~mask
+    # inv_mask = ~mask
     inv_mask = BF.logical_not(mask)
 
     loop_weight = BF.full((N,), fill_value, dtype=edge_weight.dtype, device=BF.device(edge_weight))
@@ -220,8 +219,8 @@ def coalesce(row, col, value=None):
         return row, col, value
     row = row[mask]
     if value is not None:
-        _value = BF.zeros(row.shape[0], dtype=BF.dtype_dict("float"),device=device)
-        value = BF.scatter_add_(_value,dim=0, src=value, index=col)
+        _value = BF.zeros(row.shape[0], dtype=BF.dtype_dict("float"), device=device)
+        value = BF.scatter_add_(_value, dim=0, src=value, index=col)
     col = col[mask]
     return row, col, value
 
@@ -247,7 +246,7 @@ def to_undirected(edge_index, num_nodes=None):
 
 
 def negative_edge_sampling(
-    edge_index: Union[Tuple, BF.dtype_dict('tensor')],
+    edge_index: Union[Tuple, BF.dtype_dict("tensor")],
     num_nodes: Optional[int] = None,
     num_neg_samples: Optional[int] = None,
     undirected: bool = False,
@@ -265,7 +264,7 @@ def negative_edge_sampling(
 
     num_samples = int(num_neg_samples * abs(1 / (1 - 1.1 * row.size(0) / size)))
     sample_result = BF.LongTensor(random.sample(range(size), min(num_samples, num_samples)))
-    mask = BF.from_numpy(np.isin(sample_result, BF.to(unique_pair,"cpu"))).bool()
+    mask = BF.from_numpy(np.isin(sample_result, BF.to(unique_pair, "cpu"))).bool()
     selected = BF.to(sample_result[~mask][:num_neg_samples], row)
 
     row = selected // num_nodes

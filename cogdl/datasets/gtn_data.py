@@ -6,6 +6,7 @@ from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url, untar
 from cogdl import function as BF
 
+
 class GTNDataset(Dataset):
     r"""The network datasets "ACM", "DBLP" and "IMDB" from the
     `"Graph Transformer Networks"

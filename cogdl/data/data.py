@@ -15,11 +15,11 @@ from cogdl.utils import (
 )
 from cogdl.utils import RandomWalker
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
-    from cogdl.operators.jittor.sample import sample_adj_c, subgraph_c
-elif BACKEND == 'torch':
-    from cogdl.operators.torch.sample import sample_adj_c, subgraph_c       
 
+if BACKEND == "jittor":
+    from cogdl.operators.jittor.sample import sample_adj_c, subgraph_c
+elif BACKEND == "torch":
+    from cogdl.operators.torch.sample import sample_adj_c, subgraph_c
 
 
 subgraph_c = None  # noqa: F811
@@ -130,7 +130,7 @@ class BaseGraph(object):
         :obj:`*keys`.
         If :obj:`*keys` is not given, the conversion is applied to all present
         attributes."""
-        return self.apply(lambda x: BF.to(x,device), *keys)
+        return self.apply(lambda x: BF.to(x, device), *keys)
 
     def cuda(self, *keys):
         return self.apply(lambda x: x.cuda(), *keys)
@@ -576,7 +576,7 @@ class Graph(BaseGraph):
     def mask2nid(self, split):
         mask = getattr(self, f"{split}_mask")
         if mask is not None:
-            if mask.dtype is BF.dtype_dict('bool'):
+            if mask.dtype is BF.dtype_dict("bool"):
                 return BF.where(mask)[0]
             return mask
 
@@ -793,7 +793,7 @@ class Graph(BaseGraph):
     def sample_adj(self, batch, size=-1, replace=True):
         if sample_adj_c is not None:
             if not BF.is_tensor(batch):
-                batch = BF.tensor(batch, dtype=BF.dtype_dict('long'))
+                batch = BF.tensor(batch, dtype=BF.dtype_dict("long"))
             (row_ptr, col_indices, nodes, edges) = sample_adj_c(
                 self._adj.row_indptr, self.col_indices, batch, size, replace
             )
@@ -819,12 +819,12 @@ class Graph(BaseGraph):
                 indices = indices.numpy()
             col_nodes = np.unique(indices)
             _node_idx = np.concatenate([batch, np.setdiff1d(col_nodes, batch)])
-            nodes = BF.tensor(_node_idx, dtype=BF.dtype_dict('long'))
+            nodes = BF.tensor(_node_idx, dtype=BF.dtype_dict("long"))
 
             assoc_dict = {v: i for i, v in enumerate(_node_idx)}
 
-            col_indices = BF.tensor([assoc_dict[i] for i in indices], dtype=BF.dtype_dict('long'))
-            row_ptr = BF.tensor(indptr, dtype=BF.dtype_dict('long'))
+            col_indices = BF.tensor([assoc_dict[i] for i in indices], dtype=BF.dtype_dict("long"))
+            row_ptr = BF.tensor(indptr, dtype=BF.dtype_dict("long"))
 
         if row_ptr.shape[0] - 1 < nodes.shape[0]:
             padding = BF.full((nodes.shape[0] - row_ptr.shape[0] + 1,), row_ptr[-1].item(), dtype=row_ptr.dtype)
@@ -877,7 +877,7 @@ class Graph(BaseGraph):
     def subgraph(self, node_idx, keep_order=False):
         if subgraph_c is not None:
             if isinstance(node_idx, list):
-                node_idx = BF.as_tensor(node_idx, dtype=BF.dtype_dict('long'))
+                node_idx = BF.as_tensor(node_idx, dtype=BF.dtype_dict("long"))
             elif isinstance(node_idx, np.ndarray):
                 node_idx = BF.from_numpy(node_idx)
             return self.csr_subgraph(node_idx, keep_order)

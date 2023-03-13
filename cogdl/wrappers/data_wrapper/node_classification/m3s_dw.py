@@ -39,7 +39,10 @@ class M3SDataWrapper(FullBatchNodeClfDataWrapper):
 
         # Compute absorption probability
         row, col = data.edge_index
-        A = sp.coo_matrix((np.ones(row.shape[0]), (row.numpy(), col.numpy())), shape=(num_nodes, num_nodes),).tocsr()
+        A = sp.coo_matrix(
+            (np.ones(row.shape[0]), (row.numpy(), col.numpy())),
+            shape=(num_nodes, num_nodes),
+        ).tocsr()
         D = A.sum(1).flat
         confidence = np.zeros([num_classes, num_nodes])
         confidence_ranking = np.zeros([num_classes, num_nodes], dtype=int)

@@ -15,12 +15,15 @@ def homo_index(g, x):
         diff = diff.mean(1)
         diff = diff[BF.logical_not(isolated_nodes)]
         return BF.mean(diff)
-    if BACKEND == 'jittor':
-        import jittor 
+
+    if BACKEND == "jittor":
+        import jittor
+
         with jittor.no_grad():
             no_grad()
-    elif BACKEND == 'torch':
+    elif BACKEND == "torch":
         import torch
+
         with torch.no_grad():
             no_grad()
 
@@ -42,18 +45,21 @@ def mad_index(g, x):
         N = g.num_nodes
 
         deg = g.degrees() - 1
-        out = BF.zeros((N,), dtype=BF.dtype_dict('float'), device=BF.device(x))
-        out = BF.scatter_add_(out,index=row, dim=0, src=distance)
+        out = BF.zeros((N,), dtype=BF.dtype_dict("float"), device=BF.device(x))
+        out = BF.scatter_add_(out, index=row, dim=0, src=distance)
         deg_inv = deg.pow(-1)
         deg_inv[BF.isinf(deg_inv)] = 1
         dis = out * deg_inv
         dis = dis[dis > 0]
         return BF.mean(dis).item()
-    if BACKEND == 'jittor':
-        import jittor 
+
+    if BACKEND == "jittor":
+        import jittor
+
         with jittor.no_grad():
             no_grad()
-    elif BACKEND == 'torch':
+    elif BACKEND == "torch":
         import torch
+
         with torch.no_grad():
             no_grad()

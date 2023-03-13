@@ -9,6 +9,7 @@ from cogdl.data import Graph, Dataset
 from cogdl.utils import download_url
 from cogdl.utils import Accuracy, CrossEntropyLoss
 
+
 class GCCDataset(Dataset):
     url = "https://github.com/cenyk1230/gcc-data/raw/master"
 
@@ -159,9 +160,7 @@ class Edgelist(Dataset):
 
 
 class PretrainDataset(object):
-
     class DataList(object):
-
         def __init__(self, graphs):
             for graph in graphs:
                 graph.y = None
@@ -274,10 +273,11 @@ class Livejournal_GCCDataset(Edgelist):
         super(Livejournal_GCCDataset, self).__init__(path, dataset)
 
 
-UNLABELED_GCCDATASETS = ["gcc_academic", 
-                         "gcc_dblp_netrep",
-                         "gcc_dblp_snap",
-                         "gcc_facebook",
-                         "gcc_imdb",
-                         "gcc_livejournal"
-                         ]
+UNLABELED_GCCDATASETS = [
+    "gcc_academic",
+    "gcc_dblp_netrep",
+    "gcc_dblp_snap",
+    "gcc_facebook",
+    "gcc_imdb",
+    "gcc_livejournal",
+]

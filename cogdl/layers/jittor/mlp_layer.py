@@ -2,6 +2,7 @@ from cogdl.backend import BACKEND
 from jittor import nn, Module
 from cogdl.utils import get_activation
 
+
 class MLP(Module):
     r"""Multilayer perception with normalization
 
@@ -58,7 +59,7 @@ class MLP(Module):
     def execute(self, x):
         for k, layer in enumerate(self.mlp):
             x = layer(x)
-            if k < len(self.mlp)-1:
+            if k < len(self.mlp) - 1:
                 if self.act_first:
                     x = self.activation(x)
                 if self.norm:

@@ -62,8 +62,8 @@ def build_dataset_from_name(dataset, split=0):
 def build_dataset_pretrain(args):
     args.pretrain = False
     dataset_names = args.dataset
-    if ' ' in args.dataset:
-        datasets_name = args.dataset.split(' ')
+    if " " in args.dataset:
+        datasets_name = args.dataset.split(" ")
         dataset = []
         for dataset_ in datasets_name:
             args.dataset = dataset_
@@ -220,4 +220,3 @@ SUPPORTED_DATASETS = {
     "pems-stgcn": "cogdl.datasets.stgcn_data.PeMS_Dataset",
     "pems-stgat": "cogdl.datasets.stgat_data.PeMS_Dataset",
 }
-

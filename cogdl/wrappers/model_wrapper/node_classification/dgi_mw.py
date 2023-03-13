@@ -1,10 +1,11 @@
 import numpy as np
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     import jittor as tj
     from jittor import nn, Module
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch as tj
     from torch import nn
     from torch.nn import Module
@@ -78,22 +79,24 @@ class DGIModelWrapper(UnsupervisedModelWrapper):
 class AvgReadout(Module):
     def __init__(self):
         super(AvgReadout, self).__init__()
-    
-    if BACKEND == 'jittor':
+
+    if BACKEND == "jittor":
+
         def execute(self, seq, msk=None):
             dim = len(seq.shape) - 2
             if msk is None:
                 return BF.mean(seq, dim)
             else:
                 return BF.sum(seq * msk, dim) / BF.sum(msk)
-    elif BACKEND == 'torch':
+
+    elif BACKEND == "torch":
+
         def forward(self, seq, msk=None):
             dim = len(seq.shape) - 2
             if msk is None:
                 return BF.mean(seq, dim)
             else:
                 return BF.sum(seq * msk, dim) / BF.sum(msk)
-        
 
 
 # Borrowed from https://github.com/PetarV-/DGI
@@ -110,7 +113,6 @@ class Discriminator(Module):
             BF.xavier_uniform_(m.weight)
             if m.bias is not None:
                 BF.fill_(m.bias, 0.0)
-            
 
     def temp(self, c, h_pl, h_mi, s_bias1=None, s_bias2=None):
         c_x = BF.unsqueeze(c, 0)
@@ -127,10 +129,12 @@ class Discriminator(Module):
         logits = BF.cat((sc_1, sc_2))
         return logits
 
-    if BACKEND == 'jittor':
+    if BACKEND == "jittor":
+
         def execute(self, c, h_pl, h_mi, s_bias1=None, s_bias2=None):
-             return self.temp(c, h_pl, h_mi, s_bias1=None, s_bias2=None)
-    elif BACKEND == 'torch':
-        def forward(self, c, h_pl, h_mi, s_bias1=None, s_bias2=None):
             return self.temp(c, h_pl, h_mi, s_bias1=None, s_bias2=None)
 
+    elif BACKEND == "torch":
+
+        def forward(self, c, h_pl, h_mi, s_bias1=None, s_bias2=None):
+            return self.temp(c, h_pl, h_mi, s_bias1=None, s_bias2=None)

@@ -5,11 +5,12 @@ import numpy as np
 import scipy.sparse as sp
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     import jittor as tj
     from jittor import nn
     from jittor import nn as F
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch as tj
     import torch.nn as nn
     import torch.nn.functional as F
@@ -74,7 +75,12 @@ class SelfAuxiliaryModelWrapper(UnsupervisedModelWrapper):
             self.agent = AttributeMask(data, self.hidden_size, data.train_mask, self.mask_ratio, self.device)
         elif self.auxiliary_task == "pairwise_distance":
             self.agent = PairwiseDistance(
-                self.hidden_size, [(1, 2), (2, 3), (3, 5)], self.sampling, self.dropedge_rate, 256, self.device,
+                self.hidden_size,
+                [(1, 2), (2, 3), (3, 5)],
+                self.sampling,
+                self.dropedge_rate,
+                256,
+                self.device,
             )
         elif self.auxiliary_task == "distance2clusters":
             self.agent = Distance2Clusters(self.hidden_size, 30, self.device)
@@ -106,7 +112,7 @@ class SSLTask:
 class EdgeMask(SSLTask):
     def __init__(self, hidden_size, mask_ratio, device):
         super().__init__(device)
-        self.linear = BF.to(nn.Linear(hidden_size, 2),device)
+        self.linear = BF.to(nn.Linear(hidden_size, 2), device)
         self.mask_ratio = mask_ratio
 
     def transform_data(self, graph):
@@ -122,9 +128,9 @@ class EdgeMask(SSLTask):
         self.masked_edges = edges[:, masked]
         self.cached_edges = edges[:, preserved]
         mask_num = len(masked)
-        self.neg_edges = BF.to(self.neg_sample(mask_num, graph),self.masked_edges)
-        self.pseudo_labels = BF.to(BF.cat([BF.ones(mask_num), BF.zeros(mask_num)]).long(),device)
-        self.node_pairs = BF.to(BF.cat([self.masked_edges, self.neg_edges], 1),device)
+        self.neg_edges = BF.to(self.neg_sample(mask_num, graph), self.masked_edges)
+        self.pseudo_labels = BF.to(BF.cat([BF.ones(mask_num), BF.zeros(mask_num)]).long(), device)
+        self.node_pairs = BF.to(BF.cat([self.masked_edges, self.neg_edges], 1), device)
 
         graph.edge_index = self.cached_edges
         return graph
@@ -155,7 +161,7 @@ class EdgeMask(SSLTask):
 class AttributeMask(SSLTask):
     def __init__(self, graph, hidden_size, train_mask, mask_ratio, device):
         super().__init__(device)
-        self.linear = BF.to(nn.Linear(hidden_size, graph.x.shape[1]),device)
+        self.linear = BF.to(nn.Linear(hidden_size, graph.x.shape[1]), device)
         self.cached_features = None
         self.mask_ratio = mask_ratio
 
@@ -170,7 +176,7 @@ class AttributeMask(SSLTask):
         mask_nnz = int(num_nodes * self.mask_ratio)
         self.masked_nodes = perm[:mask_nnz]
         x_feat[self.masked_nodes] = 0
-        self.pseudo_labels = BF.to(x_feat[self.masked_nodes],device)
+        self.pseudo_labels = BF.to(x_feat[self.masked_nodes], device)
         graph.x = x_feat
         return graph
 
@@ -189,7 +195,7 @@ class PairwiseDistance(SSLTask):
         self.sampling = sampling
         self.dropedge_rate = dropedge_rate
         self.num_centers = num_centers
-        self.linear = BF.to(nn.Linear(hidden_size, self.nclass),device)
+        self.linear = BF.to(nn.Linear(hidden_size, self.nclass), device)
         self.get_distance_cache = False
 
     def get_distance(self, graph):
@@ -308,14 +314,14 @@ class PairwiseDistance(SSLTask):
             else:
                 sampled = BF.cat([sampled, BF.tensor(tmp).long().t()], 1)
                 pseudo_labels = BF.cat([pseudo_labels, BF.ones(len(tmp)).long() * i])
-        return BF.to(sampled,self.device), BF.to(pseudo_labels,self.device)
+        return BF.to(sampled, self.device), BF.to(pseudo_labels, self.device)
 
 
 class Distance2Clusters(SSLTask):
     def __init__(self, hidden_size, num_clusters, device):
         super().__init__(device)
         self.num_clusters = num_clusters
-        self.linear = BF.to(nn.Linear(hidden_size, num_clusters),device)
+        self.linear = BF.to(nn.Linear(hidden_size, num_clusters), device)
         self.gen_cluster_info_cache = False
 
     def transform_data(self, graph):
@@ -357,7 +363,7 @@ class Distance2Clusters(SSLTask):
             distance = dict(nx.shortest_path_length(G, source=center))
             for node in distance:
                 self.distance_vec[node][i] = distance[node]
-        self.distance_vec = BF.to(BF.tensor(self.distance_vec).float(),self.device)
+        self.distance_vec = BF.to(BF.tensor(self.distance_vec).float(), self.device)
 
     def make_loss(self, embeddings):
         output = self.linear(embeddings)
@@ -368,7 +374,7 @@ class PairwiseAttrSim(SSLTask):
     def __init__(self, hidden_size, k, device):
         super().__init__(device)
         self.k = k
-        self.linear = BF.to(nn.Linear(hidden_size, 1),self.device)
+        self.linear = BF.to(nn.Linear(hidden_size, 1), self.device)
         self.get_attr_sim_cache = False
 
     def get_avg_distance(self, graph, idx_sorted, k, sampled):
@@ -429,8 +435,8 @@ class PairwiseAttrSim(SSLTask):
             "max k avg distance: {%.4f}, min k avg distance: {%.4f}, sampled k avg distance: {%.4f}"
             % (self.get_avg_distance(graph, idx_sorted, self.k, sampled))
         )
-        self.node_pairs = BF.to(self.node_pairs.long(),self.device)
-        self.pseudo_labels = BF.to(self.pseudo_labels.float(),self.device)
+        self.node_pairs = BF.to(self.node_pairs.long(), self.device)
+        self.pseudo_labels = BF.to(self.pseudo_labels.float(), self.device)
 
     def sample(self, k, num_nodes):
         sampled = []

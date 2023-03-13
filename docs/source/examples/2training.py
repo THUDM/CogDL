@@ -15,18 +15,22 @@ from cogdl import experiment
 from cogdl.datasets import build_dataset_from_name
 from cogdl.layers import GCNLayer
 from cogdl.models import BaseModel
+
+
 class Gnn(BaseModel):
     def __init__(self, in_feats, hidden_size, out_feats, dropout):
         super(Gnn, self).__init__()
         self.conv1 = GCNLayer(in_feats, hidden_size)
         self.conv2 = GCNLayer(hidden_size, out_feats)
         self.dropout = nn.Dropout(dropout)
+
     def forward(self, graph):
         graph.sym_norm()
         h = graph.x
         h = F.relu(self.conv1(graph, self.dropout(h)))
         h = self.conv2(graph, self.dropout(h))
         return F.log_softmax(h, dim=1)
+
 
 if __name__ == "__main__":
     dataset = build_dataset_from_name("cora")[0]
@@ -43,7 +47,7 @@ if __name__ == "__main__":
     _, pred = model(dataset).max(dim=1)
     correct = float(pred[dataset.test_mask].eq(dataset.y[dataset.test_mask]).sum().item())
     acc = correct / dataset.test_mask.sum().item()
-    print('The accuracy rate obtained by running the experiment with the custom training logic: {:.6f}'.format(acc))
+    print("The accuracy rate obtained by running the experiment with the custom training logic: {:.6f}".format(acc))
 
 
 # %%
@@ -51,6 +55,7 @@ if __name__ == "__main__":
 # --------------
 # CogDL provides a more easy-to-use API upon Trainer, i.e., experiment
 from cogdl import experiment
+
 experiment(model="gcn", dataset="cora")
 # Or you can create each component separately and manually run the process using build_dataset, build_model in CogDL.
 
@@ -85,5 +90,5 @@ experiment(
     dataset="blogcatalog",
     load_emb_path="./embeddings/prone_blog.npy",
     num_shuffle=5,
-    training_percents=[0.1, 0.5, 0.9]
+    training_percents=[0.1, 0.5, 0.9],
 )

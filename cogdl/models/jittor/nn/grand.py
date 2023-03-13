@@ -2,7 +2,8 @@ import jittor
 from jittor import nn
 from cogdl.models import BaseModel
 from cogdl.utils import spmm
-from cogdl.datasets.planetoid_data import CoraDataset,PubMedDataset
+from cogdl.datasets.planetoid_data import CoraDataset, PubMedDataset
+
 
 class Grand(BaseModel):
     """
@@ -67,7 +68,16 @@ class Grand(BaseModel):
         )
 
     def __init__(
-        self, nfeat, nhid, nclass, input_droprate, hidden_droprate, use_bn, dropnode_rate, order, alpha,
+        self,
+        nfeat,
+        nhid,
+        nclass,
+        input_droprate,
+        hidden_droprate,
+        use_bn,
+        dropnode_rate,
+        order,
+        alpha,
     ):
         super(Grand, self).__init__()
         self.layer1 = nn.Linear(nfeat, nhid)
@@ -125,4 +135,3 @@ class Grand(BaseModel):
 
     def predict(self, data):
         return self.execute(data)
-

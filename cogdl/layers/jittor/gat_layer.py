@@ -1,6 +1,6 @@
 import math
 
-import jittor 
+import jittor
 from jittor import nn, Module
 
 
@@ -45,7 +45,7 @@ class GATLayer(Module):
             self.residual = nn.Linear(in_feats, out_feats * nhead)
         else:
             self.residual = None
-            #self.register_buffer("residual", None)
+            # self.register_buffer("residual", None)
         self.reset_parameters()
 
     def reset_parameters(self):

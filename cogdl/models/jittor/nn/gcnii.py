@@ -1,10 +1,10 @@
-
 import math
 
 import jittor
 from jittor import nn
 from cogdl.layers import GCNIILayer
 from cogdl.models import BaseModel
+
 
 class GCNII(BaseModel):
     """
@@ -101,9 +101,7 @@ class GCNII(BaseModel):
 
         self.layers = nn.ModuleList()
         for i in range(num_layers):
-            self.layers.append(
-            GCNIILayer(hidden_size, self.alpha, math.log(self.lmbda / (i + 1) + 1), residual)
-            )
+            self.layers.append(GCNIILayer(hidden_size, self.alpha, math.log(self.lmbda / (i + 1) + 1), residual))
 
         self.fc_parameters = list(self.fc_layers.parameters())
         self.conv_parameters = list(self.layers.parameters())
@@ -135,4 +133,3 @@ class GCNII(BaseModel):
             ],
             lr=args.lr,
         )
-

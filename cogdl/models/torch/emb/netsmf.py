@@ -40,7 +40,13 @@ class NetSMF(BaseModel):
 
     @classmethod
     def build_model_from_args(cls, args):
-        return cls(args.hidden_size, args.window_size, args.negative, args.num_round, args.worker,)
+        return cls(
+            args.hidden_size,
+            args.window_size,
+            args.negative,
+            args.num_round,
+            args.worker,
+        )
 
     def __init__(self, dimension, window_size, negative, num_round, worker):
         super(NetSMF, self).__init__()
@@ -70,7 +76,12 @@ class NetSMF(BaseModel):
             norm_const = sum(unnormalized_probs)
             normalized_probs = [float(u_prob) / norm_const for u_prob in unnormalized_probs]
             self.alias_nodes[i] = alias_setup(normalized_probs)
-            self.node_weight[i] = dict(zip([node2id[nbr] for nbr in self.G.neighbors(id2node[i])], unnormalized_probs,))
+            self.node_weight[i] = dict(
+                zip(
+                    [node2id[nbr] for nbr in self.G.neighbors(id2node[i])],
+                    unnormalized_probs,
+                )
+            )
 
         t = time.time()
         print("alias_nodes", t - s)
@@ -124,7 +135,7 @@ class NetSMF(BaseModel):
         t1 = time.time()
         l = matrix.shape[0]  # noqa E741
         smat = sp.csc_matrix(matrix)
-        print("svd sparse", smat.data.shape[0] * 1.0 / l ** 2)
+        print("svd sparse", smat.data.shape[0] * 1.0 / l**2)
         U, Sigma, VT = randomized_svd(smat, n_components=self.dimension, n_iter=5, random_state=None)
         U = U * np.sqrt(Sigma)
         U = preprocessing.normalize(U, "l2")

@@ -11,6 +11,7 @@ from cogdl import experiment
 from cogdl.data import Graph
 from cogdl.datasets import NodeDataset, generate_random_graph
 
+
 class MyNodeDataset(NodeDataset):
     def __init__(self, path="data.pt"):
         self.path = path
@@ -35,6 +36,7 @@ class MyNodeDataset(NodeDataset):
         data = Graph(x=x, edge_index=edge_index, y=y, train_mask=train_mask, val_mask=val_mask, test_mask=test_mask)
         return data
 
+
 if __name__ == "__main__":
     # Train customized dataset via defining a new class
     dataset = MyNodeDataset()
@@ -51,6 +53,7 @@ if __name__ == "__main__":
 from cogdl.data import Graph
 from cogdl.datasets import GraphDataset
 
+
 class MyGraphDataset(GraphDataset):
     def __init__(self, path="data.pt"):
         self.path = path
@@ -65,6 +68,7 @@ class MyGraphDataset(GraphDataset):
             label = torch.randint(0, 7, (1,))
             graphs.append(Graph(edge_index=edges, y=label))
         return graphs
+
 
 if __name__ == "__main__":
     dataset = MyGraphDataset()

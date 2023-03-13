@@ -55,7 +55,14 @@ def gat_model(
     if dropout > 0.0:
         layers.append(nn.Dropout(p=dropout))
     layers.append(
-        GATLayer(hidden_size * nhead, out_feats, attn_drop=attn_drop, alpha=alpha, nhead=last_nhead, residual=False,)
+        GATLayer(
+            hidden_size * nhead,
+            out_feats,
+            attn_drop=attn_drop,
+            alpha=alpha,
+            nhead=last_nhead,
+            residual=False,
+        )
     )
 
     return layers

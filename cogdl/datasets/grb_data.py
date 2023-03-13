@@ -173,10 +173,10 @@ class Flickr_GRBDataset(GRBDataset):
 def adj2edge(adj: sp.csr.csr_matrix):
     row, col = adj.nonzero()
     data = adj.data
-    row = BF.tensor(row, dtype=BF.dtype_dict('long'))
-    col = BF.tensor(col, dtype=BF.dtype_dict('long'))
+    row = BF.tensor(row, dtype=BF.dtype_dict("long"))
+    col = BF.tensor(col, dtype=BF.dtype_dict("long"))
     edge_index = BF.stack([row, col], dim=0)
-    edge_attr = BF.tensor(data, dtype=BF.dtype_dict('long'))
+    edge_attr = BF.tensor(data, dtype=BF.dtype_dict("long"))
     return edge_index, edge_attr
 
 

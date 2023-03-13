@@ -14,17 +14,19 @@ class RotatE(KGEModel):
     <https://openreview.net/forum?id=HkgEQnRqYQ>`.
     borrowed from `KnowledgeGraphEmbedding<https://github.com/DeepGraphLearning/KnowledgeGraphEmbedding>`
     """
+
     @staticmethod
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         parser.add_argument("--embedding_size", type=int, default=500, help="Dimensionality of embedded vectors")
-        parser.add_argument("--gamma", type=float,default=12.0, help="Hyperparameter for embedding")
+        parser.add_argument("--gamma", type=float, default=12.0, help="Hyperparameter for embedding")
         parser.add_argument("--double_entity_embedding", default=True)
         parser.add_argument("--double_relation_embedding", action="store_true")
-    def __init__(
-        self, nentity, nrelation, hidden_dim, gamma, double_entity_embedding, double_relation_embedding
-    ):
-        super(RotatE, self).__init__(nentity, nrelation, hidden_dim, gamma,double_entity_embedding, double_relation_embedding)
+
+    def __init__(self, nentity, nrelation, hidden_dim, gamma, double_entity_embedding, double_relation_embedding):
+        super(RotatE, self).__init__(
+            nentity, nrelation, hidden_dim, gamma, double_entity_embedding, double_relation_embedding
+        )
 
     def score(self, head, relation, tail, mode):
         pi = 3.14159265358979323846

@@ -1,6 +1,6 @@
-
 import os
-os.environ['CogDLBACKEND']="jittor"
+
+os.environ["CogDLBACKEND"] = "jittor"
 from cogdl import function as BF
 from jittor import nn as F
 

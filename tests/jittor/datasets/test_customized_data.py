@@ -1,5 +1,6 @@
 import os
-os.environ['CogDLBACKEND']="jittor"
+
+os.environ["CogDLBACKEND"] = "jittor"
 from cogdl import function as BF
 from cogdl.data import Graph
 from cogdl.datasets import NodeDataset, GraphDataset

@@ -1,9 +1,10 @@
 """A wrapper class for optimizer """
 import numpy as np
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     from jittor import Module
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     from torch.nn import Module
 
 

@@ -177,7 +177,7 @@ class GCCModel(BaseModel):
             norm=args.norm,
             gnn_model=args.gnn_model,
             output_dim=args.output_size,
-            degree_input=args.degree_input
+            degree_input=args.degree_input,
         )
 
     def __init__(
@@ -252,7 +252,9 @@ class GCCModel(BaseModel):
         self.set2set = Set2Set(node_hidden_dim, num_step_set2set, num_layer_set2set)
         if gnn_model != "gin":
             self.lin_readout = nn.Sequential(
-                nn.Linear(2 * node_hidden_dim, node_hidden_dim), nn.ReLU(), nn.Linear(node_hidden_dim, output_dim),
+                nn.Linear(2 * node_hidden_dim, node_hidden_dim),
+                nn.ReLU(),
+                nn.Linear(node_hidden_dim, output_dim),
             )
         else:
             self.lin_readout = None

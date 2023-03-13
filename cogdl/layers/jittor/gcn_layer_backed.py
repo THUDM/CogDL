@@ -1,4 +1,3 @@
-
 class BackedMixin:
     def __call__(self, return_tensors=None):
         if return_tensors is None:

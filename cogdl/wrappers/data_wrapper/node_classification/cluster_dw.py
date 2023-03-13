@@ -1,11 +1,11 @@
 from .. import DataWrapper
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     pass
     # from cogdl.data.sampler_jt import ClusteredDataset
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     from cogdl.data.sampler import ClusteredLoader, ClusteredDataset
-
 
 
 class ClusterWrapper(DataWrapper):

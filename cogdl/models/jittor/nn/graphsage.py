@@ -1,6 +1,6 @@
 import random
 
-import jittor 
+import jittor
 from jittor import nn
 from cogdl.data import Graph
 from cogdl.layers import SAGELayer
@@ -183,6 +183,3 @@ class SAGE(BaseModel):
         for layer in self.layers:
             x = layer(graph, x)
         return x
-
-
-

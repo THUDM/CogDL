@@ -6,7 +6,7 @@ from cogdl.utils import spmm_scatter, get_activation
 
 class GCNLayerST(nn.Module):
     def __init__(
-        self, in_features, out_features, dropout=0.0, activation='relu', residual=False, norm=None, bias=True, **kwargs
+        self, in_features, out_features, dropout=0.0, activation="relu", residual=False, norm=None, bias=True, **kwargs
     ):
         super(GCNLayerST, self).__init__()
         self.in_features = in_features

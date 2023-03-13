@@ -1,9 +1,10 @@
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     import jittor as tj
     from jittor import nn
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch as tj
     from torch import nn
 

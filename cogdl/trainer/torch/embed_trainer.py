@@ -7,7 +7,9 @@ import torch
 
 class EmbeddingTrainer(object):
     def __init__(
-        self, save_emb_path: Optional[str] = None, load_emb_path: Optional[str] = None,
+        self,
+        save_emb_path: Optional[str] = None,
+        load_emb_path: Optional[str] = None,
     ):
         self.save_emb_path = save_emb_path
         self.load_emb_path = load_emb_path

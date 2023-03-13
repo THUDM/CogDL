@@ -1,11 +1,11 @@
-
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     import jittor as tj
     from jittor import nn
     from jittor import nn as F
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch as tj
     from torch import nn
     import torch.nn.functional as F
@@ -61,21 +61,26 @@ class GRACEModelWrapper(UnsupervisedModelWrapper):
         self.note("test_acc", result)
 
     def prop(
-        self, graph: Graph, x: BF.dtype_dict("tensor"), drop_feature_rate: float = 0.0, drop_edge_rate: float = 0.0,
+        self,
+        graph: Graph,
+        x: BF.dtype_dict("tensor"),
+        drop_feature_rate: float = 0.0,
+        drop_edge_rate: float = 0.0,
     ):
         x = dropout_features(x, drop_feature_rate)
         with graph.local_graph():
             graph.edge_index, graph.edge_weight = dropout_adj(graph.edge_index, graph.edge_weight, drop_edge_rate)
-        if BACKEND == 'jittor':
+        if BACKEND == "jittor":
             return self.model.execute(graph, x)
-        elif BACKEND == 'torch':
+        elif BACKEND == "torch":
             return self.model.forward(graph, x)
 
     def contrastive_loss(self, z1: BF.dtype_dict("tensor"), z2: BF.dtype_dict("tensor")):
         z1 = BF.normalize(z1, p=2, dim=-1)
         z2 = BF.normalize(z2, p=2, dim=-1)
+
         def score_func(emb1, emb2):
-            
+
             scores = BF.matmul(emb1, emb2.t())
             scores = BF.exp(scores / self.tau)
             return scores
@@ -87,13 +92,16 @@ class GRACEModelWrapper(UnsupervisedModelWrapper):
         return BF.mean(_loss)
 
     def batched_loss(
-        self, z1: BF.dtype_dict("tensor"), z2: BF.dtype_dict("tensor"), batch_size: int,
+        self,
+        z1: BF.dtype_dict("tensor"),
+        z2: BF.dtype_dict("tensor"),
+        batch_size: int,
     ):
         num_nodes = z1.shape[0]
         num_batches = (num_nodes - 1) // batch_size + 1
 
         losses = []
-        indices = BF.to(BF.arange(num_nodes),z1)
+        indices = BF.to(BF.arange(num_nodes), z1)
         for i in range(num_batches):
             train_indices = indices[i * batch_size : (i + 1) * batch_size]
             _loss = self.contrastive_loss(z1[train_indices], z2)

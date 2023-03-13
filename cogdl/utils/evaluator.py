@@ -3,10 +3,11 @@ import numpy as np
 import warnings
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     from jittor import nn
     from jittor import nn as F
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch.nn as nn
     import torch.nn.functional as F
 else:
@@ -54,6 +55,7 @@ class BaseEvaluator(object):
             return self.eval_func(y_pred, y_true)
         return 0
 
+
 class MAE(object):
     def __init__(self):
         super(MAE, self).__init__()
@@ -75,7 +77,6 @@ class MAE(object):
 
     def clear(self):
         self.MAE = list()
-
 
 
 class Accuracy(object):
@@ -124,9 +125,9 @@ class MultiLabelMicroF1(Accuracy):
             border = 0
         y_pred[y_pred >= border] = 1
         y_pred[y_pred < border] = 0
-        tp = BF.to((y_pred * y_true).sum(), BF.dtype_dict('float32')).item()
-        fp = BF.to(((1 - y_true) * y_pred).sum(), BF.dtype_dict('float32')).item()
-        fn = BF.to((y_true * (1 - y_pred)).sum(), BF.dtype_dict('float32')).item()
+        tp = BF.to((y_pred * y_true).sum(), BF.dtype_dict("float32")).item()
+        fp = BF.to(((1 - y_true) * y_pred).sum(), BF.dtype_dict("float32")).item()
+        fn = BF.to((y_true * (1 - y_pred)).sum(), BF.dtype_dict("float32")).item()
         total = tp + fp + fn
 
         # if self.mini_batch:
@@ -166,10 +167,10 @@ def multilabel_f1(y_pred, y_true, sigmoid=False):
     else:
         y_pred[y_pred > 0] = 1
         y_pred[y_pred <= 0] = 0
-    tp = BF.to((y_true * y_pred).sum(), BF.dtype_dict('float32'))
+    tp = BF.to((y_true * y_pred).sum(), BF.dtype_dict("float32"))
     # tn = ((1 - y_true) * (1 - y_pred)).sum().to(torch.float32)
-    fp = BF.to(((1 - y_true) * y_pred).sum(), BF.dtype_dict('float32'))
-    fn = BF.to((y_true * (1 - y_pred)).sum(), BF.dtype_dict('float32'))
+    fp = BF.to(((1 - y_true) * y_pred).sum(), BF.dtype_dict("float32"))
+    fn = BF.to((y_true * (1 - y_pred)).sum(), BF.dtype_dict("float32"))
 
     epsilon = 1e-7
     precision = tp / (tp + fp + epsilon)
@@ -180,7 +181,7 @@ def multilabel_f1(y_pred, y_true, sigmoid=False):
 
 def multiclass_f1(y_pred, y_true):
     y_true = BF.squeeze(y_true).long()
-    preds = BF.argmax(BF.argmax(y_pred,1))
+    preds = BF.argmax(BF.argmax(y_pred, 1))
     preds = BF.cpu(preds).detach().numpy()
     labels = BF.cpu(y_true).detach().numpy()
     micro = f1_score(labels, preds, average="micro")
@@ -189,7 +190,7 @@ def multiclass_f1(y_pred, y_true):
 
 def accuracy(y_pred, y_true):
     y_true = BF.squeeze(y_true).long()
-    preds = BF.type_as(BF.argmax(y_pred,1), y_true)
+    preds = BF.type_as(BF.argmax(y_pred, 1), y_true)
     correct = BF.eq(preds, y_true).double()
     correct = correct.sum().item()
     return correct / len(y_true)

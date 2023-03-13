@@ -82,7 +82,7 @@ class NetMF(BaseModel):
             X_power = X_power.dot(X)
             S += X_power
         S *= vol / window / b
-        D_rt_inv = sp.diags(d_rt ** -1)
+        D_rt_inv = sp.diags(d_rt**-1)
         M = D_rt_inv.dot(D_rt_inv.dot(S).T).todense()
         M[M <= 1] = 1
         Y = np.log(M)
@@ -98,17 +98,19 @@ class NetMF(BaseModel):
         evals, evecs = sp.linalg.eigsh(X, rank, which=which)
         print("Maximum eigenvalue %f, minimum eigenvalue %f", np.max(evals), np.min(evals))
         print("Computing D^{-1/2}U..")
-        D_rt_inv = sp.diags(d_rt ** -1)
+        D_rt_inv = sp.diags(d_rt**-1)
         D_rt_invU = D_rt_inv.dot(evecs)
         return evals, D_rt_invU
 
     def _deepwalk_filter(self, evals, window):
         for i in range(len(evals)):
             x = evals[i]
-            evals[i] = 1.0 if x >= 1 else x * (1 - x ** window) / (1 - x) / window
+            evals[i] = 1.0 if x >= 1 else x * (1 - x**window) / (1 - x) / window
         evals = np.maximum(evals, 0)
         print(
-            "After filtering, max eigenvalue=%f, min eigenvalue=%f", np.max(evals), np.min(evals),
+            "After filtering, max eigenvalue=%f, min eigenvalue=%f",
+            np.max(evals),
+            np.min(evals),
         )
         return evals
 

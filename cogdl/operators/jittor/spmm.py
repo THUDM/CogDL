@@ -1,33 +1,36 @@
-
 import os
 import numpy as np
-import jittor 
+import jittor
 from jittor import Function
 from jittor.compiler import compile_torch_extensions
+
 path = os.path.join(os.path.dirname(__file__))
 
 # SPMM
 
 try:
-    compile_torch_extensions("spmm",[os.path.join(path, "spmm/spmm.cpp"), os.path.join(path, "spmm/spmm_kernel.cu")], [], [], [],1, 1)
-    compile_torch_extensions("sddmm",[os.path.join(path, "spmm/sddmm.cpp"), os.path.join(path, "spmm/sddmm_kernel.cu")], [], [], [],1, 1)
+    compile_torch_extensions(
+        "spmm", [os.path.join(path, "spmm/spmm.cpp"), os.path.join(path, "spmm/spmm_kernel.cu")], [], [], [], 1, 1
+    )
+    compile_torch_extensions(
+        "sddmm", [os.path.join(path, "spmm/sddmm.cpp"), os.path.join(path, "spmm/sddmm_kernel.cu")], [], [], [], 1, 1
+    )
     import spmm
     import sddmm
+
     def csrspmm(rowptr, colind, x, csr_data, sym=False, actnn=False):
         if actnn:
             return ActSPMMFunction.apply(rowptr, colind, x, csr_data, sym)
         return SPMMFunction.apply(rowptr, colind, x, csr_data, sym)
-
 
 except Exception:
     csrspmm = None
 
 
 try:
-    compile_torch_extensions(
-        "spmm_cpu", [os.path.join(path, "spmm/spmm_cpu.cpp")], [], [], [],1, 1
-    )
+    compile_torch_extensions("spmm_cpu", [os.path.join(path, "spmm/spmm_cpu.cpp")], [], [], [], 1, 1)
     import spmm_cpu
+
     spmm_cpu = spmm_cpu.csr_spmm_cpu
 except Exception:
     spmm_cpu = None
@@ -68,7 +71,6 @@ class SPMMFunction(Function):
                 grad_feat = spmm.csr_spmm_no_edge_value(rowptr, colind, grad_out)
             grad_edge_weight = None
         return None, None, grad_feat, grad_edge_weight, None
-    
 
     # def grad(self, grad_out):
     #     rowptr, colind, edge_weight_csr ,edge_weight_csr ,sym= self.backward_csc
@@ -76,6 +78,7 @@ class SPMMFunction(Function):
     #     grad_feat = spmm.csr_spmm(colptr, rowind, edge_weight_csc, grad_out)
 
     #     return None, None, grad_feat, None
+
 
 # try:
 #     from actnn.ops import quantize_activation, dequantize_activation
@@ -127,5 +130,3 @@ class ActSPMMFunction(Function):
                 grad_feat = spmm.csr_spmm_no_edge_value(rowptr, colind, grad_out)
             grad_edge_weight = None
         return None, None, grad_feat, grad_edge_weight, None
-
-

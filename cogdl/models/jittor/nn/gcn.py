@@ -1,4 +1,3 @@
-
 from jittor import nn, Module, init
 from cogdl.models import BaseModel
 from jittor import optim
@@ -7,6 +6,7 @@ from jittor.contrib import slice_var_index
 from tqdm import tqdm
 
 from cogdl.layers import GCNLayer
+
 
 class GCN(BaseModel):
     @staticmethod
@@ -36,9 +36,16 @@ class GCN(BaseModel):
             args.norm,
         )
 
-
     def __init__(
-        self, in_feats, hidden_size, out_feats, num_layers, dropout, activation="relu", residual=False, norm=None,
+        self,
+        in_feats,
+        hidden_size,
+        out_feats,
+        num_layers,
+        dropout,
+        activation="relu",
+        residual=False,
+        norm=None,
     ):
         super(GCN, self).__init__()
         shapes = [in_feats] + [hidden_size] * (num_layers - 1) + [out_feats]

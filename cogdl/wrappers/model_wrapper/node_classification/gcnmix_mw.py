@@ -3,9 +3,10 @@ import random
 import numpy as np
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     import jittor as tj
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch as tj
 
 from .. import ModelWrapper
@@ -68,7 +69,7 @@ class GCNMixModelWrapper(ModelWrapper):
 
         rand_n = random.randint(0, 1)
         if rand_n == 0:
-            vector_labels = BF.to(get_one_hot_label(graph.y, train_mask),device)
+            vector_labels = BF.to(get_one_hot_label(graph.y, train_mask), device)
             loss = self.update_aux(graph, vector_labels, train_mask)
         else:
             loss = self.update_soft(graph)
@@ -108,8 +109,8 @@ class GCNMixModelWrapper(ModelWrapper):
 
     def update_aux(self, data, vector_labels, train_index):
         device = self.device
-        train_unlabelled = BF.to(BF.where(BF.logical_not(data.train_mask))[0],device)
-        temp_labels = BF.to(BF.zeros(self.k, vector_labels.shape[0], vector_labels.shape[1]),device)
+        train_unlabelled = BF.to(BF.where(BF.logical_not(data.train_mask))[0], device)
+        temp_labels = BF.to(BF.zeros(self.k, vector_labels.shape[0], vector_labels.shape[1]), device)
         with tj.no_grad():
             for i in range(self.k):
                 temp_labels[i, :, :] = self.model(data) / self.tau
@@ -122,9 +123,9 @@ class GCNMixModelWrapper(ModelWrapper):
 
         def get_loss(index):
             # TODO: call `forward_aux` in model
-            if BACKEND == 'jittor':
+            if BACKEND == "jittor":
                 mix_logits, target = self.model.execute_aux(data.x, vector_labels, index, mix_hidden=True)
-            elif BACKEND == 'torch':
+            elif BACKEND == "torch":
                 mix_logits, target = self.model.forward_aux(data.x, vector_labels, index, mix_hidden=True)
             # temp_loss = self.loss_f(F.softmax(mix_logits[index], -1), target)
             temp_loss = self.mix_loss(self.mix_transform(mix_logits[index]), target)
@@ -148,7 +149,7 @@ class GCNMixModelWrapper(ModelWrapper):
 
 def get_one_hot_label(labels, index):
     num_classes = int(BF.max(labels) + 1)
-    target = BF.to(BF.zeros(labels.shape[0], num_classes),labels)
+    target = BF.to(BF.zeros(labels.shape[0], num_classes), labels)
 
     target[index, labels[index]] = 1
     return target

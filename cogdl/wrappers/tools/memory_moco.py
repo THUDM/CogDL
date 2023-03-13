@@ -1,11 +1,12 @@
 import math
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
-    import jittor 
+
+if BACKEND == "jittor":
+    import jittor
     from jittor import nn, Module
     from jittor import nn as F
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch
     from torch.nn import Module
     import torch.nn as nn
@@ -31,7 +32,8 @@ class MemoryMoCo(Module):
         self.register_buffer("memory", BF.rand(self.queueSize, inputSize).mul_(2 * stdv).add_(-stdv))
         print("using queue shape: ({},{})".format(self.queueSize, inputSize))
 
-    if BACKEND == 'jittor':
+    if BACKEND == "jittor":
+
         def execute(self, q, k):
             batchSize = q.shape[0]
             k = k.detach()
@@ -59,7 +61,7 @@ class MemoryMoCo(Module):
                     print("normalization constant Z is set to {:.1f}".format(Z))
                 # compute the out
                 out = BF.squeeze(jittor.divide(out, Z)).contiguous()
-                    # # update memory
+                # # update memory
             with jittor.no_grad():
                 out_ids = jittor.arange(batchSize, device=out.device)
                 out_ids += self.index
@@ -70,7 +72,8 @@ class MemoryMoCo(Module):
 
             return out
 
-    elif BACKEND == 'torch':
+    elif BACKEND == "torch":
+
         def forward(self, q, k):
             batchSize = q.shape[0]
             k = k.detach()
@@ -97,7 +100,7 @@ class MemoryMoCo(Module):
                     Z = self.params[0].clone().detach().item()
                     print("normalization constant Z is set to {:.1f}".format(Z))
                 # compute the out
-                out = torch.div(out, Z).squeeze().contiguous()   
+                out = torch.div(out, Z).squeeze().contiguous()
 
             # # update memory
             with torch.no_grad():
@@ -117,7 +120,9 @@ class NCESoftmaxLoss(Module):
     def __init__(self):
         super(NCESoftmaxLoss, self).__init__()
         self.criterion = nn.CrossEntropyLoss()
-    if BACKEND == 'jittor':
+
+    if BACKEND == "jittor":
+
         def execute(self, x):
             bsz = x.shape[0]
             x = BF.squeeze(x)
@@ -125,7 +130,8 @@ class NCESoftmaxLoss(Module):
             loss = self.criterion(x, label)
             return loss
 
-    elif BACKEND == 'torch':
+    elif BACKEND == "torch":
+
         def forward(self, x):
             bsz = x.shape[0]
             x = x.squeeze()

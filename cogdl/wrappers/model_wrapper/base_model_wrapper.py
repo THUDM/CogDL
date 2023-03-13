@@ -2,9 +2,10 @@ from typing import Union, Callable
 from abc import abstractmethod
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     from jittor import nn, Module
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch.nn as nn
     from torch.nn import Module
 from cogdl.wrappers.tools.wrapper_utils import merge_batch_indexes
@@ -43,7 +44,9 @@ class ModelWrapper(Module):
     def test_step(self, subgraph):
         pass
 
-    def evaluate(self, pred: BF.dtype_dict('tensor'), labels: BF.dtype_dict('tensor'), metric: Union[str, Callable] = "auto"):
+    def evaluate(
+        self, pred: BF.dtype_dict("tensor"), labels: BF.dtype_dict("tensor"), metric: Union[str, Callable] = "auto"
+    ):
         """
         method: str or callable function,
         """

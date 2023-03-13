@@ -1,5 +1,6 @@
 import os
-os.environ['CogDLBACKEND']="jittor"
+
+os.environ["CogDLBACKEND"] = "jittor"
 from cogdl.datasets import build_dataset
 from cogdl.utils import build_args_from_dict
 

@@ -57,12 +57,12 @@ def save_model(model, path, epoch):
     emb_path = os.path.dirname(path)
     if hasattr(model, "entity_embedding"):
         entity_embedding = model.entity_embedding.detach().numpy()
-        print('Saving entity_embedding to ', path)
-        np.save(os.path.join(emb_path, "entity_embedding"), entity_embedding) 
+        print("Saving entity_embedding to ", path)
+        np.save(os.path.join(emb_path, "entity_embedding"), entity_embedding)
 
     if hasattr(model, "relation_embedding"):
         relation_embedding = model.relation_embedding.detach().numpy()
-        print('Saving entity_embedding to ', path)
+        print("Saving entity_embedding to ", path)
         np.save(os.path.join(emb_path, "relation_embedding"), relation_embedding)
 
 

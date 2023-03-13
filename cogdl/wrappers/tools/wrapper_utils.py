@@ -6,11 +6,12 @@ import scipy.sparse as sp
 from collections import defaultdict
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     import jittor as tj
     from jittor import nn, Module
     from jittor import nn as F
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch as tj
     from torch.nn import Module
     import torch.nn as nn
@@ -36,7 +37,7 @@ def pre_evaluation_index(y_pred, y_true, sigmoid=False):
         torch.Tensor((tp, fp, fn)) for multi-label classification
     """
     if len(y_true.shape) == 1:
-        pred = (BF.argmax(y_pred,1) == y_true).int()
+        pred = (BF.argmax(y_pred, 1) == y_true).int()
         tp = pred.sum()
         fnp = pred.shape[0] - tp
         return BF.tensor((tp, fnp)).float()
@@ -47,10 +48,10 @@ def pre_evaluation_index(y_pred, y_true, sigmoid=False):
             border = 0
         y_pred[y_pred >= border] = 1
         y_pred[y_pred < border] = 0
-        tp = (BF.astype((y_pred * y_true).sum(),BF.dtype_dict("float32")))
+        tp = BF.astype((y_pred * y_true).sum(), BF.dtype_dict("float32"))
         # tn = ((1 - y_true) * (1 - y_pred)).sum().to(torch.float32)
-        fp = (BF.astype((1 - y_true) * y_pred).sum(),BF.dtype_dict("float32"))
-        fn = (BF.astype(y_true * (1 - y_pred)).sum(),BF.dtype_dict("float32"))
+        fp = (BF.astype((1 - y_true) * y_pred).sum(), BF.dtype_dict("float32"))
+        fn = (BF.astype(y_true * (1 - y_pred)).sum(), BF.dtype_dict("float32"))
         return BF.tensor((tp, fp, fn))
 
 
@@ -105,7 +106,7 @@ def node_degree_as_feature(data):
     max_degree = int(max_degree) + 1
     for i in range(len(data)):
         one_hot = F.one_hot(degrees[i], max_degree).float()
-        data[i].x = BF.to(one_hot,device)
+        data[i].x = BF.to(one_hot, device)
     return data
 
 
@@ -144,11 +145,14 @@ class LogReg(Module):
             if m.bias is not None:
                 BF.fill_(m.bias, 0.0)
 
-    if BACKEND == 'jittor':
+    if BACKEND == "jittor":
+
         def execute(self, seq):
             ret = self.fc(seq)
             return ret
-    elif BACKEND == 'torch':
+
+    elif BACKEND == "torch":
+
         def forward(self, seq):
             ret = self.fc(seq)
             return ret
@@ -158,7 +162,7 @@ class LogRegTrainer(object):
     def train(self, data, labels, idx_train, idx_test, loss_fn=None, evaluator=None, run=20):
         device = BF.device(data)
         nhid = data.shape[-1]
-        labels = BF.to(labels,device)
+        labels = BF.to(labels, device)
 
         train_embs = data[idx_train]
         test_embs = data[idx_test]
@@ -178,15 +182,15 @@ class LogRegTrainer(object):
         for _ in range(run):
             log = BF.to(LogReg(nhid, num_classes), device)
             optimizer = tj.optim.Adam(log.parameters(), lr=0.01, weight_decay=0.0)
-            log=BF.to(log, device)
-            if BACKEND == 'jittor':
+            log = BF.to(log, device)
+            if BACKEND == "jittor":
                 for _ in range(100):
                     log.train()
                     logits = log(train_embs)
                     loss = loss_fn(logits, train_lbls)
                     optimizer.step(loss)
 
-            elif BACKEND == 'torch':
+            elif BACKEND == "torch":
                 for _ in range(100):
                     log.train()
                     optimizer.zero_grad()

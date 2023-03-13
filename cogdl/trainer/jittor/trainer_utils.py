@@ -4,6 +4,7 @@ import numpy as np
 import os
 import jittor
 
+
 def merge_batch_indexes(outputs: list):
     assert len(outputs) > 0
     keys = list(outputs[0].keys())
@@ -51,16 +52,16 @@ def evaluation_comp(monitor, compare="<"):
 def save_model(model, path, epoch):
     print(f"Saving {epoch}-th model to {path} ...")
     jittor.save(model.state_dict(), path)
-    model=model.model
-    emb_path=os.path.dirname(path)
+    model = model.model
+    emb_path = os.path.dirname(path)
     if hasattr(model, "entity_embedding"):
         entity_embedding = model.entity_embedding.detach().numpy()
-        print('Saving entity_embedding to ',path)
-        np.save(os.path.join(emb_path, "entity_embedding"), entity_embedding) 
+        print("Saving entity_embedding to ", path)
+        np.save(os.path.join(emb_path, "entity_embedding"), entity_embedding)
 
     if hasattr(model, "relation_embedding"):
         relation_embedding = model.relation_embedding.detach().numpy()
-        print('Saving entity_embedding to ',path)
+        print("Saving entity_embedding to ", path)
         np.save(os.path.join(emb_path, "relation_embedding"), relation_embedding)
 
 
@@ -82,7 +83,7 @@ def load_model(model, path):
 class Printer(object):
     def __init__(self, print_fn, world_size=1):
         self.printer = print_fn
-        self.to_print = (world_size <= 1) 
+        self.to_print = world_size <= 1
 
     def __call__(self, k_v: Dict):
         if self.to_print:

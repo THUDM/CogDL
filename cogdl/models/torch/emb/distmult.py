@@ -8,9 +8,7 @@ class DistMult(KGEModel):
     borrowed from `KnowledgeGraphEmbedding<https://github.com/DeepGraphLearning/KnowledgeGraphEmbedding>`
     """
 
-    def __init__(
-        self, nentity, nrelation, hidden_dim, gamma, double_entity_embedding, double_relation_embedding
-    ):
+    def __init__(self, nentity, nrelation, hidden_dim, gamma, double_entity_embedding, double_relation_embedding):
         super(DistMult, self).__init__(
             nentity, nrelation, hidden_dim, gamma, double_entity_embedding, double_relation_embedding
         )

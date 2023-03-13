@@ -1,20 +1,27 @@
 import os
 from jittor.compiler import compile_torch_extensions
 from jittor import Function
+
 path = os.path.join(os.path.dirname(__file__))
 
 
 try:
-    compile_torch_extensions("edge_softmax",[
+    compile_torch_extensions(
+        "edge_softmax",
+        [
             os.path.join(path, "edge_softmax/edge_softmax.cc"),
             os.path.join(path, "edge_softmax/edge_softmax.cu"),
-        ],[], [], [],1, 1
+        ],
+        [],
+        [],
+        [],
+        1,
+        1,
     )
     import edge_softmax
 
     def csr_edge_softmax(rowptr, h):
         return EdgeSoftmaxFunction.apply(rowptr, h)
-
 
 except Exception:
     edge_softmax = None
@@ -24,7 +31,7 @@ except Exception:
 class EdgeSoftmaxFunction(Function):
     def execute(self, rowptr, h):
         out = edge_softmax.edge_softmax(rowptr, h)
-        self.backward_edge_softmax=(rowptr, h)
+        self.backward_edge_softmax = (rowptr, h)
         return out
 
     def grad(self, grad_out):

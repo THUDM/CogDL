@@ -1,6 +1,6 @@
 import numpy as np
 import jittor
-from jittor import nn,Module
+from jittor import nn, Module
 from cogdl import function as BF
 from cogdl.models import BaseModel
 from cogdl.utils import get_activation, spmm
@@ -15,8 +15,8 @@ class GCN(Module):
 
         if bias:
             self.bias = BF.FloatTensor(out_ft)
-            #self.bias.data.fill_(0.0)
-            self.bias[self.bias.bool()]=0.0
+            # self.bias.data.fill_(0.0)
+            self.bias[self.bias.bool()] = 0.0
         else:
             self.register_parameter("bias", None)
 
@@ -27,7 +27,7 @@ class GCN(Module):
         if isinstance(m, nn.Linear):
             jittor.init.xavier_uniform_(m.weight)
             if m.bias is not None:
-                m.bias[m.bias.bool()]=0.0
+                m.bias[m.bias.bool()] = 0.0
 
     # Shape of seq: (batch, nodes, features)
     def execute(self, graph, seq, sparse=False):
@@ -39,7 +39,7 @@ class GCN(Module):
                 out = jittor.bmm(graph, seq_fts)
         else:
             if sparse:
-                if list(seq_fts.shape)[0]==1:
+                if list(seq_fts.shape)[0] == 1:
                     seq_fts = jittor.squeeze(seq_fts, 0)
                 out = spmm(graph, seq_fts)
             else:
@@ -80,5 +80,3 @@ class DGIModel(BaseModel):
     def embed(self, data):
         h_1 = self.gcn(data, data.x, self.sparse)
         return h_1
-
-

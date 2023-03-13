@@ -11,12 +11,14 @@ import numpy as np
 from tabulate import tabulate
 from .graph_utils import coo2csr_index
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     from jittor import nn
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch.nn as nn
 else:
     raise ("Unsupported backend:", BACKEND)
+
 
 class ArgClass(object):
     def __init__(self):
@@ -38,7 +40,6 @@ def update_args_from_dict(args, dic):
 
 def set_random_seed(seed):
     return BF.set_random_seed(seed)
-
 
 
 def untar(path, fname, deleteTar=True):
@@ -148,9 +149,9 @@ def identity_act(input):
 
 def get_activation(act: str, inplace=False):
     if act == "relu":
-        if BACKEND == 'jittor':
+        if BACKEND == "jittor":
             return nn.ReLU()
-        elif BACKEND == 'torch':
+        elif BACKEND == "torch":
             return nn.ReLU(inplace=inplace)
     elif act == "sigmoid":
         return nn.Sigmoid()
@@ -207,10 +208,10 @@ def batch_mean_pooling(x, batch):
 def batch_max_pooling(x, batch):
     if BF.cuda_is_available() and str(BF.device(x)) != "cpu":
         try:
-            if BACKEND == 'jittor':
+            if BACKEND == "jittor":
                 from cogdl.operators.jittor.scatter_max import scatter_max
-            elif BACKEND == 'torch':
-                from cogdl.operators.torch.scatter_max import scatter_max         
+            elif BACKEND == "torch":
+                from cogdl.operators.torch.scatter_max import scatter_max
 
             col = BF.to(BF.arange(0, len(batch), x))
             rowptr, colind = coo2csr_index(batch, col, num_nodes=batch.max().item() + 1)
@@ -220,6 +221,7 @@ def batch_max_pooling(x, batch):
             pass
 
     from torch_scatter import scatter_max
+
     # torch_scatter.scatter(可无out)和tensor.scatter(必须有out,将src按照index与out操作)不一样，
     x, _ = scatter_max(x, batch, dim=0)
     return x
@@ -292,15 +294,14 @@ def get_memory_usage(print_info=False):
     return allocated
 
 
-
 def build_model_path(args, model_name):
     if not hasattr(args, "save_model_path"):
         args.save_model_path = ""
     if model_name == "gcc":
         if hasattr(args, "pretrain") and args.pretrain:
             model_name_path = "{}_{}_{}_layer_{}_lr_{}_decay_{}_bsz_{}_hid_{}_samples_{}_nce_t_{}_nce_k_{}_rw_hops_{}_restart_prob_{}_aug_{}_ft_{}_deg_{}_pos_{}_momentum_{}".format(
-                "Pretrain" if not args.finetune else "FT", 
-                '_'.join([x.replace('gcc_', '').replace('_', '-') for x in args.dataset.split(' ')]),
+                "Pretrain" if not args.finetune else "FT",
+                "_".join([x.replace("gcc_", "").replace("_", "-") for x in args.dataset.split(" ")]),
                 args.gnn_model,
                 args.num_layers,
                 args.lr,

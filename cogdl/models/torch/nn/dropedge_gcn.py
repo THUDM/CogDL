@@ -16,7 +16,14 @@ class GraphConvolutionBS(Module):
     """
 
     def __init__(
-        self, in_features, out_features, activation=lambda x: x, withbn=True, withloop=True, bias=True, res=False,
+        self,
+        in_features,
+        out_features,
+        activation=lambda x: x,
+        withbn=True,
+        withloop=True,
+        bias=True,
+        res=False,
     ):
         """
         Initial function.
@@ -130,10 +137,20 @@ class GraphBaseBlock(Module):
         for i in range(self.nhiddenlayer):
             if i == 0:
                 layer = GraphConvolutionBS(
-                    self.in_features, self.hiddendim, self.activation, self.withbn, self.withloop,
+                    self.in_features,
+                    self.hiddendim,
+                    self.activation,
+                    self.withbn,
+                    self.withloop,
                 )
             else:
-                layer = GraphConvolutionBS(self.hiddendim, self.hiddendim, self.activation, self.withbn, self.withloop,)
+                layer = GraphConvolutionBS(
+                    self.hiddendim,
+                    self.hiddendim,
+                    self.activation,
+                    self.withbn,
+                    self.withloop,
+                )
             self.hiddenlayers.append(layer)
 
     def _doconcat(self, x, subx):
@@ -411,11 +428,19 @@ class InceptionGCNBlock(Module):
             for i in range(j + 1):
                 if i == 0:
                     layer = GraphConvolutionBS(
-                        self.in_features, self.hiddendim, self.activation, self.withbn, self.withloop,
+                        self.in_features,
+                        self.hiddendim,
+                        self.activation,
+                        self.withbn,
+                        self.withloop,
                     )
                 else:
                     layer = GraphConvolutionBS(
-                        self.hiddendim, self.hiddendim, self.activation, self.withbn, self.withloop,
+                        self.hiddendim,
+                        self.hiddendim,
+                        self.activation,
+                        self.withbn,
+                        self.withloop,
                     )
                 reslayer.append(layer)
             self.midlayers.append(reslayer)

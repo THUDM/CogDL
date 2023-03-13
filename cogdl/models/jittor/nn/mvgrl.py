@@ -48,7 +48,7 @@ class Discriminator(nn.Module):
         if isinstance(m, nn.Bilinear):
             jittor.init.xavier_uniform_(m.weight)
             if m.bias is not None:
-                m.bias[m.bias.bool()]=0.0
+                m.bias[m.bias.bool()] = 0.0
 
     def execute(self, c1, c2, h1, h2, h3, h4):
         c_x1 = jittor.unsqueeze(c1, 0)
@@ -202,5 +202,4 @@ class MVGRL(BaseModel):
         h_1 = self.gcn1(adj, data.x, True)
         h_2 = self.gcn2(diff, data.x, True)
         # c = self.read(h_1, msk)
-        return (h_1 + h_2)  # , c.detach()
-
+        return h_1 + h_2  # , c.detach()

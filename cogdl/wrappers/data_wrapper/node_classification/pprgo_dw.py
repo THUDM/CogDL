@@ -2,16 +2,17 @@ import os
 import scipy.sparse as sp
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
-    from  jittor.dataset import Dataset
-    from  jittor.dataset import Dataset as DataLoader
-    from  jittor.dataset import BatchSampler
-    from  jittor.dataset import SequentialSampler
-elif BACKEND == 'torch':
-    from  torch.utils.data import Dataset
-    from  torch.utils.data import DataLoader
-    from  torch.utils.data import BatchSampler
-    from  torch.utils.data import SequentialSampler
+
+if BACKEND == "jittor":
+    from jittor.dataset import Dataset
+    from jittor.dataset import Dataset as DataLoader
+    from jittor.dataset import BatchSampler
+    from jittor.dataset import SequentialSampler
+elif BACKEND == "torch":
+    from torch.utils.data import Dataset
+    from torch.utils.data import DataLoader
+    from torch.utils.data import BatchSampler
+    from torch.utils.data import SequentialSampler
 
 from .. import DataWrapper
 from cogdl.utils.ppr_utils import build_topk_ppr_matrix_from_data
@@ -73,7 +74,9 @@ def setup_dataloader(ppr_dataset, batch_size):
     data_loader = DataLoader(
         dataset=ppr_dataset,
         sampler=BatchSampler(
-            SequentialSampler(ppr_dataset), batch_size=batch_size, drop_last=False,
+            SequentialSampler(ppr_dataset),
+            batch_size=batch_size,
+            drop_last=False,
         ),
         batch_size=None,
     )

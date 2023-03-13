@@ -17,7 +17,6 @@ try:
     def csr_edge_softmax(rowptr, h):
         return EdgeSoftmaxFunction.apply(rowptr, h)
 
-
 except Exception:
     edge_softmax = None
     csr_edge_softmax = None

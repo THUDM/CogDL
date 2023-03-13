@@ -1,7 +1,8 @@
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     from cogdl.models.jittor.nn.correct_smooth import CorrectSmooth
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     from cogdl.models.torch.nn.correct_smooth import CorrectSmooth
 from .dgi_mw import DGIModelWrapper
 from .gcnmix_mw import GCNMixModelWrapper

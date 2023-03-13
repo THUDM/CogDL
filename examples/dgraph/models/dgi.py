@@ -49,7 +49,6 @@ class GCN(nn.Module):
 
 
 class DGI(BaseModel):
-
     def __init__(self, in_feats, hidden_size, out_feats, activation="prelu"):
         super(DGI, self).__init__()
         self.gcn = GCN(in_feats, hidden_size, activation)

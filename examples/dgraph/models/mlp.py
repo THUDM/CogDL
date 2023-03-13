@@ -1,5 +1,5 @@
 import torch.nn as nn
-from cogdl.layers import  MLP as MLPLayer
+from cogdl.layers import MLP as MLPLayer
 from cogdl.data import Graph
 import torch.nn.functional as F
 
@@ -28,7 +28,7 @@ class MLP(BaseModel):
     def forward(self, x):
         if isinstance(x, Graph):
             x = x.x
-        #return self.nn(x)
+        # return self.nn(x)
         return F.log_softmax(self.nn(x), dim=-1)
 
     def predict(self, data):

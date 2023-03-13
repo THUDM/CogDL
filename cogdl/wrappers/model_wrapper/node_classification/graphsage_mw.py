@@ -1,7 +1,8 @@
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     import jittor as tj
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch as tj
 
 from .. import ModelWrapper

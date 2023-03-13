@@ -17,7 +17,6 @@ try:
     def scatter_max(rowptr, colind, feat):
         return ScatterMaxFunction.apply(rowptr, colind, feat)
 
-
 except Exception:
     spmm_max = None
 

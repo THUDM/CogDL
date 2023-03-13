@@ -1,8 +1,9 @@
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     from jittor import nn as F
-elif BACKEND == 'torch':
+elif BACKEND == "torch":
     import torch.nn.functional as F
 from cogdl.wrappers.model_wrapper.node_classification.node_classification_mw import NodeClfModelWrapper
 

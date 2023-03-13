@@ -66,7 +66,7 @@ class GATLayerST(nn.Module):
         out = spmm_scatter(row, col, edge_weight, support)
 
         # TODO: Don't support the Multi-Head ATT/ATT now, the gcn_layer is used in here.
-  
+
         # Self-attention on the nodes - Shared attention mechanism
         # h_l = (self.a_l * h).sum(dim=-1)
         # h_r = (self.a_r * h).sum(dim=-1)

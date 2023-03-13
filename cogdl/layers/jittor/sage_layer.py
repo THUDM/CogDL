@@ -1,6 +1,5 @@
-
-import jittor 
-from jittor import nn,Module
+import jittor
+from jittor import nn, Module
 from cogdl.utils import spmm, get_activation, get_norm_layer
 
 

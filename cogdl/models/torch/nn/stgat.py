@@ -8,7 +8,6 @@ import torch
 import torch.nn.functional as F
 
 
-
 class STGAT(BaseModel):
     """
     Spatio-Temporal Graph Attention Network as presented in https://ieeexplore.ieee.org/document/8903252
@@ -27,7 +26,6 @@ class STGAT(BaseModel):
         parser.add_argument("--normalization", type=str, default='sym')
         parser.add_argument("--num_nodes", type=int, default=50)
         # fmt: on
-
 
     @classmethod
     def build_model_from_args(cls, args):
@@ -66,21 +64,20 @@ class STGAT(BaseModel):
         # add two LSTM layers
         self.lstm1 = torch.nn.LSTM(input_size=self.n_nodes, hidden_size=lstm1_hidden_size, num_layers=1)
         for name, param in self.lstm1.named_parameters():
-            if 'bias' in name:
+            if "bias" in name:
                 torch.nn.init.constant_(param, 0.0)
-            elif 'weight' in name:
+            elif "weight" in name:
                 torch.nn.init.xavier_uniform_(param)
         self.lstm2 = torch.nn.LSTM(input_size=lstm1_hidden_size, hidden_size=lstm2_hidden_size, num_layers=1)
         for name, param in self.lstm1.named_parameters():
-            if 'bias' in name:
+            if "bias" in name:
                 torch.nn.init.constant_(param, 0.0)
-            elif 'weight' in name:
+            elif "weight" in name:
                 torch.nn.init.xavier_uniform_(param)
 
         # fully-connected neural network
-        self.linear = torch.nn.Linear(lstm2_hidden_size, self.n_nodes*self.n_pred)
+        self.linear = torch.nn.Linear(lstm2_hidden_size, self.n_nodes * self.n_pred)
         torch.nn.init.xavier_uniform_(self.linear.weight)
-
 
     def forward(self, x, edge_index, edge_weight, batch_size, num_feature):
         """
@@ -89,11 +86,10 @@ class STGAT(BaseModel):
         :param device Device to operate on
         """
         # apply dropout
-        if torch.cuda.is_available():  
+        if torch.cuda.is_available():
             x = torch.cuda.FloatTensor(x)
         else:
             x = torch.FloatTensor(x)
-
 
         x = self.gat(x, edge_index, edge_weight)
         x = F.dropout(x, self.dropout, training=self.training)
@@ -109,13 +105,11 @@ class STGAT(BaseModel):
         x = self.linear(x)
 
         # Now reshape into final output
-        x = x.view(-1,n_node)
+        x = x.view(-1, n_node)
         s = x.shape
 
         x = torch.reshape(x, (s[0], self.n_nodes, self.n_pred))
-        x = torch.reshape(x, (s[0]*self.n_nodes, self.n_pred))
+        x = torch.reshape(x, (s[0] * self.n_nodes, self.n_pred))
 
-        xx = x[:,-1].view(batch_size,n_node)
+        xx = x[:, -1].view(batch_size, n_node)
         return xx
-
-

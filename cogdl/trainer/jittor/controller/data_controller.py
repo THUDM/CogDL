@@ -8,7 +8,7 @@ class DataController(object):
         self.distributed = distributed
 
     def prepare_data_wrapper(self, dataset_w):
-        
+
         dataset_w.pre_transform()
         dataset_w.prepare_training_data()
         dataset_w.prepare_val_data()
@@ -16,6 +16,6 @@ class DataController(object):
         return dataset_w
 
     def training_proc_per_stage(self, dataset_w):
-        if dataset_w.__refresh_per_epoch__(): 
+        if dataset_w.__refresh_per_epoch__():
             dataset_w.prepare_training_data()
         return dataset_w

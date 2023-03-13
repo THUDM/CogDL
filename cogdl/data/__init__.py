@@ -3,10 +3,11 @@ from .batch import Batch, batch_graphs
 
 
 from cogdl.backend import BACKEND
-if BACKEND == 'jittor':
+
+if BACKEND == "jittor":
     from .dataset_jt import Dataset, MultiGraphDataset
-    from .dataset_jt import Dataset as DataLoader 
-elif BACKEND == 'torch':
+    from .dataset_jt import Dataset as DataLoader
+elif BACKEND == "torch":
     from .dataset import Dataset, MultiGraphDataset
     from .dataloader import DataLoader
 else:

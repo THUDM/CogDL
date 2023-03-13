@@ -1,7 +1,14 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from cogdl import function as BF
+from cogdl.backend import BACKEND
 
+if BACKEND == "jittor":
+    import jittor as tj
+    from jittor import nn
+    from jittor import nn as F
+elif BACKEND == "torch":
+    import torch as tj
+    from torch import nn
+    import torch.nn.functional as F
 from cogdl.data import Graph
 from .. import UnsupervisedModelWrapper
 from cogdl.wrappers.tools.wrapper_utils import evaluate_node_embeddings_using_logreg
@@ -47,43 +54,54 @@ class GRACEModelWrapper(UnsupervisedModelWrapper):
             return 0.5 * (self.contrastive_loss(z1, z2) + self.contrastive_loss(z2, z1))
 
     def test_step(self, graph):
-        with torch.no_grad():
+        with tj.no_grad():
             pred = self.model(graph)
         y = graph.y
         result = evaluate_node_embeddings_using_logreg(pred, y, graph.train_mask, graph.test_mask)
         self.note("test_acc", result)
 
     def prop(
-        self, graph: Graph, x: torch.Tensor, drop_feature_rate: float = 0.0, drop_edge_rate: float = 0.0,
+        self,
+        graph: Graph,
+        x: BF.dtype_dict("tensor"),
+        drop_feature_rate: float = 0.0,
+        drop_edge_rate: float = 0.0,
     ):
         x = dropout_features(x, drop_feature_rate)
         with graph.local_graph():
             graph.edge_index, graph.edge_weight = dropout_adj(graph.edge_index, graph.edge_weight, drop_edge_rate)
+        if BACKEND == "jittor":
+            return self.model.execute(graph, x)
+        elif BACKEND == "torch":
             return self.model.forward(graph, x)
 
-    def contrastive_loss(self, z1: torch.Tensor, z2: torch.Tensor):
-        z1 = F.normalize(z1, p=2, dim=-1)
-        z2 = F.normalize(z2, p=2, dim=-1)
+    def contrastive_loss(self, z1: BF.dtype_dict("tensor"), z2: BF.dtype_dict("tensor")):
+        z1 = BF.normalize(z1, p=2, dim=-1)
+        z2 = BF.normalize(z2, p=2, dim=-1)
 
         def score_func(emb1, emb2):
-            scores = torch.matmul(emb1, emb2.t())
-            scores = torch.exp(scores / self.tau)
+
+            scores = BF.matmul(emb1, emb2.t())
+            scores = BF.exp(scores / self.tau)
             return scores
 
         intro_scores = score_func(z1, z1)
         inter_scores = score_func(z1, z2)
 
-        _loss = -torch.log(intro_scores.diag() / (intro_scores.sum(1) - intro_scores.diag() + inter_scores.sum(1)))
-        return torch.mean(_loss)
+        _loss = -BF.log(intro_scores.diag() / (intro_scores.sum(1) - intro_scores.diag() + inter_scores.sum(1)))
+        return BF.mean(_loss)
 
     def batched_loss(
-        self, z1: torch.Tensor, z2: torch.Tensor, batch_size: int,
+        self,
+        z1: BF.dtype_dict("tensor"),
+        z2: BF.dtype_dict("tensor"),
+        batch_size: int,
     ):
         num_nodes = z1.shape[0]
         num_batches = (num_nodes - 1) // batch_size + 1
 
         losses = []
-        indices = torch.arange(num_nodes).to(z1.device)
+        indices = BF.to(BF.arange(num_nodes), z1)
         for i in range(num_batches):
             train_indices = indices[i * batch_size : (i + 1) * batch_size]
             _loss = self.contrastive_loss(z1[train_indices], z2)
@@ -92,4 +110,4 @@ class GRACEModelWrapper(UnsupervisedModelWrapper):
 
     def setup_optimizer(self):
         cfg = self.optimizer_cfg
-        return torch.optim.Adam(self.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
+        return tj.optim.Adam(self.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])

@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -38,6 +37,7 @@ class Grand(BaseModel):
         Number of augmentations for consistency loss
     alpha : float
     """
+
     def __init__(
         self,
         nfeat,
@@ -74,8 +74,8 @@ class Grand(BaseModel):
         return x
 
     def reset_parameters(self):
-        self.layer1.reset_parameters()  
-        self.layer2.reset_parameters()  
+        self.layer1.reset_parameters()
+        self.layer2.reset_parameters()
 
     def rand_prop(self, graph, x):
         x = self.drop_node(x)
@@ -110,4 +110,3 @@ class Grand(BaseModel):
 
     def predict(self, data):
         return self.forward(data)
-

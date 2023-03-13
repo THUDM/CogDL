@@ -65,7 +65,7 @@ class GIN(BaseModel):
         self.layer2.reset_parameters()
 
     def forward(self, graph):
-        h=graph.x
+        h = graph.x
         for i in range(self.num_layers - 1):
             h = self.gin_layers[i](graph, h)
             h = self.batch_norm[i](h)

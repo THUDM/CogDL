@@ -1,8 +1,13 @@
-import torch
-from torch.utils.data import DataLoader
-
 from .. import DataWrapper
-from cogdl.models.nn.sagn import prepare_labels, prepare_feats
+from cogdl import function as BF
+from cogdl.backend import BACKEND
+
+if BACKEND == "jittor":
+    pass
+elif BACKEND == "torch":
+    import torch as tj
+    from cogdl.models.torch.nn.sagn import prepare_labels, prepare_feats
+    from torch.utils.data import DataLoader
 
 
 class SAGNDataWrapper(DataWrapper):
@@ -43,7 +48,7 @@ class SAGNDataWrapper(DataWrapper):
     def post_stage_wrapper(self):
         data = self.dataset.data
         train_nid, val_nid, test_nid = data.train_nid, data.val_nid, data.test_nid
-        all_nid = torch.cat([train_nid, val_nid, test_nid])
+        all_nid = BF.cat([train_nid, val_nid, test_nid])
         return DataLoader(all_nid.numpy(), batch_size=self.batch_size, shuffle=False)
 
     def pre_stage_transform(self, batch):
@@ -54,7 +59,7 @@ class SAGNDataWrapper(DataWrapper):
 
     def train_transform(self, batch):
         batch_x = [x[batch] for x in self.multihop_feats]
-        batch_x = torch.stack(batch_x)
+        batch_x = BF.stack(batch_x)
         if self.label_emb is not None:
             batch_y_emb = self.label_emb[batch]
         else:
@@ -64,7 +69,7 @@ class SAGNDataWrapper(DataWrapper):
 
     def val_transform(self, batch):
         batch_x = [x[batch] for x in self.multihop_feats]
-        batch_x = torch.stack(batch_x)
+        batch_x = BF.stack(batch_x)
 
         if self.label_emb is not None:
             batch_y_emb = self.label_emb[batch]
@@ -79,7 +84,7 @@ class SAGNDataWrapper(DataWrapper):
     def pre_stage(self, stage, model_w_out):
         dataset = self.dataset
         probs = model_w_out
-        with torch.no_grad():
+        with tj.no_grad():
             (label_emb, labels_with_pseudos, train_nid_with_pseudos) = prepare_labels(
                 dataset, stage, self.label_nhop, self.threshold, probs=probs
             )

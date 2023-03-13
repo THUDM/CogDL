@@ -4,6 +4,7 @@ from cogdl.backend import BACKEND
 if BACKEND == "jittor":
     from jittor import nn
 elif BACKEND == "torch":
+    import torch
     import torch.nn as nn
 else:
     raise ("Unsupported backend:", BACKEND)

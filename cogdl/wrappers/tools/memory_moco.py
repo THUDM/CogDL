@@ -11,8 +11,6 @@ elif BACKEND == "torch":
     from torch.nn import Module
     import torch.nn as nn
     import torch.nn.functional as F
-import torch
-import torch.nn as nn
 
 
 class MemoryMoCo(Module):

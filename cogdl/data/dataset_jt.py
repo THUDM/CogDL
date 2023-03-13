@@ -3,6 +3,7 @@ import os.path as osp
 from itertools import repeat
 import numpy as np
 import jittor
+from jittor.dataset.utils import collate_batch as default_collate
 import cogdl.function as BF
 from .data import Adjacency, Graph
 from cogdl.utils import makedirs, Accuracy, CrossEntropyLoss
@@ -93,7 +94,7 @@ class Dataset(jittor.dataset.Dataset):
         if isinstance(item, Graph):
             return Batch.from_data_list(batch)
         elif isinstance(item, jittor.Var):
-            return collate_batch(batch)
+            return default_collate(batch)
         elif isinstance(item, float):
             return jittor.array(batch, dtype=jittor.float)
 

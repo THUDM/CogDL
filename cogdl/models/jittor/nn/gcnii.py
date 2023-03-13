@@ -76,17 +76,17 @@ class GCNII(BaseModel):
         Linear = nn.Linear
         Dropout = nn.Dropout
         ReLU = nn.ReLU()
-        if actnn:
-            try:
-                from cogdl.layers.actgcnii_layer import ActGCNIILayer
-                from actnn.layers import QLinear, QReLU, QDropout
-            except Exception:
-                print("Please install the actnn library first.")
-                exit(1)
-            Layer = ActGCNIILayer
-            Linear = QLinear
-            Dropout = QDropout
-            ReLU = QReLU()
+        # if actnn:
+        #     try:
+        #         from cogdl.layers.jittor.actgcnii_layer import ActGCNIILayer
+        #         from actnn.layers import QLinear, QReLU, QDropout
+        #     except Exception:
+        #         print("Please install the actnn library first.")
+        #         exit(1)
+        #     Layer = ActGCNIILayer
+        #     Linear = QLinear
+        #     Dropout = QDropout
+        #     ReLU = QReLU()
 
         self.fc_layers = nn.ModuleList()
         self.fc_layers.append(Linear(in_feats, hidden_size))

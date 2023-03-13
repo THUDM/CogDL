@@ -80,10 +80,10 @@ class SPMMFunction(Function):
     #     return None, None, grad_feat, None
 
 
-# try:
-#     from actnn.ops import quantize_activation, dequantize_activation
-# except Exception:
-#     pass
+try:
+    from actnn.ops import quantize_activation, dequantize_activation
+except Exception:
+    pass
 
 
 class ActSPMMFunction(Function):

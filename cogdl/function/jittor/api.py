@@ -29,8 +29,8 @@ def zeros_like(input, dtype=None, device=None):
 
 
 def ones_like(input):
-    if isinstance(shape, jt.Var):
-        shape = shape.item()
+    if isinstance(input, jt.Var):
+        input = input.item()
     return jt.ones_like(input)
 
 

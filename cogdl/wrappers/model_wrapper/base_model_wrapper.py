@@ -44,7 +44,7 @@ class ModelWrapper(Module):
     def test_step(self, subgraph):
         pass
 
-    def evaluate(self, pred: BF.dtype_dict("tensor"), labels: BF.dtype_dict("tensor"), metric: Union[str, Callable] = "auto"):  # noqa: F821
+    def evaluate(self, pred, labels, metric: Union[str, Callable] = "auto"):  # noqa: F821
         pred = BF.cpu(pred)
         labels = BF.cpu(labels)
         if self._evaluator is None:

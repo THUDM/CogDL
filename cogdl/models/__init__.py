@@ -52,14 +52,6 @@ def build_model(args):
 
 
 SUPPORTED_MODELS = {
-    # "gcn": f"cogdl.models.{BACKEND}.nn.gcn.GCN",
-    # "gat": f"cogdl.models.{BACKEND}.nn.gat.GAT",
-    # "grand": f"cogdl.models.{BACKEND}.nn.grand.Grand",
-    # "gcnii": f"cogdl.models.{BACKEND}.nn.gcnii.GCNII",
-    # "dgi": f"cogdl.models.{BACKEND}.nn.dgi.DGIModel",
-    # "graphsage": f"cogdl.models.{BACKEND}.nn.graphsage.Graphsage",
-    # "drgat": f"cogdl.models.{BACKEND}.nn.drgat.DrGAT",
-    # "mvgrl": f"cogdl.models.{BACKEND}.nn.mvgrl.MVGRL",
     "transe": f"cogdl.models.{BACKEND}.emb.transe.TransE",
     "complex": f"cogdl.models.{BACKEND}.emb.complex.ComplEx",
     "distmult": f"cogdl.models.{BACKEND}.emb.distmult.DistMult",

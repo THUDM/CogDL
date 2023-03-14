@@ -4,6 +4,7 @@ python:
   - "3.7"
 
 install:
+  - sudo apt-get update
   - sudo apt install python3-dev
   - sudo apt install libomp-dev
   - pip install https://download.pytorch.org/whl/cpu/torch-1.7.1%2Bcpu-cp37-cp37m-linux_x86_64.whl

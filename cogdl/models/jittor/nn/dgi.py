@@ -6,6 +6,7 @@ from cogdl.models import BaseModel
 from cogdl.utils import get_activation, spmm
 from cogdl.datasets.planetoid_data import CoraDataset
 
+
 # Borrowed from https://github.com/PetarV-/DGI
 class GCN(Module):
     def __init__(self, in_ft, out_ft, act, bias=True):

@@ -6,6 +6,7 @@ from tqdm import tqdm
 import os
 
 import jittor
+from cogdl import function as BF
 from cogdl.wrappers.data_wrapper.base_data_wrapper import DataWrapper
 from cogdl.wrappers.model_wrapper.base_model_wrapper import ModelWrapper, EmbeddingModelWrapper
 from .trainer_utils import (
@@ -20,7 +21,7 @@ from .controller import DataController
 from cogdl.loggers import build_logger
 from cogdl.data import Graph
 
-# from cogdl.utils.grb_utils import adj_preprocess, updateGraph, adj_to_tensor
+from cogdl.utils.grb_utils import adj_preprocess, updateGraph, adj_to_tensor
 
 
 class Trainer(object):
@@ -157,9 +158,6 @@ class Trainer(object):
 
         final_test = self.evaluate(best_model_w, dataset_w)
 
-        # clear the GPU memory
-        dataset = dataset_w.get_dataset()
-
         return final_test
 
     def evaluate(self, model_w: ModelWrapper, dataset_w: DataWrapper, cpu=False):
@@ -259,28 +257,28 @@ class Trainer(object):
                 # inductive setting ..
                 dataset_w.train()
                 train_loader = dataset_w.on_train_wrapper()
-                train_dataset = train_loader.get_dataset_from_loader()
+                # train_dataset = train_loader.get_dataset_from_loader()
                 # if hasattr(train_dataset, "shuffle"):
                 #     train_dataset.shuffle()
                 training_loss = self.train_step(model_w, train_loader, optimizers, lr_schedulers)
 
-                # if self.attack is not None:
-                #     if self.attack_mode == "injection":
-                #         graph0.test_mask = graph0.train_mask
-                #     else:
-                #         graph0.test_mask[torch.where(graph0.train_mask)[0].multinomial(int(num_train * 0.01))] = True
-                #     graph_attack = self.attack.attack(model=model_w.model, graph=graph0, adj_norm_func=None)  # todo
-                #     adj_attack = graph_attack.to_scipy_csr()
-                #     features_attack = graph_attack.x
-                #     adj_train = adj_preprocess(adj=adj_attack, adj_norm_func=None, device=rank)  # todo
-                #     n_inject = graph_attack.num_nodes - graph.num_nodes
-                #     updateGraph(graph, adj_train, features_attack)
-                #     graph.edge_weight = torch.ones(graph.num_edges, device=rank)
-                #     graph.train_mask = torch.cat((graph.train_mask, torch.zeros(n_inject, dtype=bool, device=rank)), 0)
-                #     graph.val_mask = torch.cat((graph.val_mask, torch.zeros(n_inject, dtype=bool, device=rank)), 0)
-                #     graph.test_mask = torch.cat((graph.test_mask, torch.zeros(n_inject, dtype=bool, device=rank)), 0)
-                #     graph.y = torch.cat((graph.y, torch.zeros(n_inject, device=rank)), 0)
-                #     graph.grb_adj = adj_to_tensor(adj_train).to(rank)
+                if self.attack is not None:
+                    if self.attack_mode == "injection":
+                        graph0.test_mask = graph0.train_mask
+                    else:
+                        graph0.test_mask[jittor.where(graph0.train_mask)[0].multinomial(int(num_train * 0.01))] = True
+                    graph_attack = self.attack.attack(model=model_w.model, graph=graph0, adj_norm_func=None)  # todo
+                    adj_attack = graph_attack.to_scipy_csr()
+                    features_attack = graph_attack.x
+                    adj_train = adj_preprocess(adj=adj_attack, adj_norm_func=None)  # todo
+                    n_inject = graph_attack.num_nodes - graph.num_nodes
+                    updateGraph(graph, adj_train, features_attack)
+                    graph.edge_weight = jittor.ones(graph.num_edges)
+                    graph.train_mask = jittor.concat((graph.train_mask, jittor.zeros(n_inject, dtype=bool)), 0)
+                    graph.val_mask = jittor.concat((graph.val_mask, jittor.zeros(n_inject, dtype=bool)), 0)
+                    graph.test_mask = jittor.concat((graph.test_mask, jittor.zeros(n_inject, dtype=bool)), 0)
+                    graph.y = jittor.concat((graph.y, jittor.zeros(n_inject)), 0)
+                    graph.grb_adj = adj_to_tensor(adj_train)
                 print_str_dict["Epoch"] = epoch
                 print_str_dict["train_loss"] = training_loss
 

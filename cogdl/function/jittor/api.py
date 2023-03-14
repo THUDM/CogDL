@@ -75,7 +75,7 @@ def tensor(*input, dtype=None):
 
 
 def FloatTensor(*input, size=None, dtype=None):
-    if size != None:
+    if size is not None:
         return jt.rand(size)
     elif not isinstance(input[0], tuple) or (isinstance(input[0], tuple) and len(input[0]) != 1):  # eg ((3,2)) ([1,2])
         return jt.array(input[0], dtype=dtype)
@@ -84,7 +84,7 @@ def FloatTensor(*input, size=None, dtype=None):
 
 
 def LongTensor(*input, size=None, dtype=None):
-    if size != None:
+    if size is not None:
         return jt.rand(size).long()
     elif not isinstance(input[0], tuple) or (isinstance(input[0], tuple) and len(input[0]) != 1):  # eg ((3,2)) ([1,2])
         return jt.array(input[0], dtype=dtype)
@@ -121,11 +121,11 @@ def as_tensor(data, dtype=None, device=None):
 def unique(input, dim=None, return_inverse=False, return_counts=False):
     # retyrn output，counts
     output, inverse, counts = jt.unique(input, dim=None, return_inverse=True, return_counts=True)
-    if return_counts == True and return_inverse == False:
+    if return_counts and not return_inverse:
         return output, counts
-    elif return_inverse == True and return_counts == False:
+    elif return_inverse and not return_counts:
         return output, inverse
-    elif return_inverse == False and return_counts == False:
+    elif not return_inverse and not return_counts:
         return output
     else:
         return output, inverse, counts
@@ -258,7 +258,7 @@ def repeat_interleave(input, repeat, dim=None):
 
 
 def mean(x, dim=None, keepdims=False):
-    if dim == None:
+    if dim is None:
         return jt.mean(x)
     else:
         return jt.mean(x, dim=dim, keepdims=keepdims)

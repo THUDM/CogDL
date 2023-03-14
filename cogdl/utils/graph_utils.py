@@ -246,7 +246,7 @@ def to_undirected(edge_index, num_nodes=None):
 
 
 def negative_edge_sampling(
-    edge_index: Union[Tuple, BF.dtype_dict("tensor")],
+    edge_index: Union[Tuple, BF.dtype_dict("tensor")],  # noqa
     num_nodes: Optional[int] = None,
     num_neg_samples: Optional[int] = None,
     undirected: bool = False,

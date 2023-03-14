@@ -44,7 +44,7 @@ def filter_adj(row, col, edge_attr, mask):
 
 def dropout_adj(
     edge_index: Tuple,
-    edge_weight: Optional[BF.dtype_dict("tensor")] = None,
+    edge_weight: Optional[BF.dtype_dict("tensor")] = None,  # noqa
     drop_rate: float = 0.5,
     renorm: Optional[str] = "sym",
     training: bool = False,
@@ -71,7 +71,7 @@ def dropout_adj(
     return edge_index, edge_weight
 
 
-def dropout_features(x: BF.dtype_dict("tensor"), droprate: float, training=True):
+def dropout_features(x: BF.dtype_dict("tensor"), droprate: float, training=True):  # noqa
     n = x.shape[1]
     drop_rates = BF.ones(n, device=BF.device(x)) * droprate
     if training:

@@ -101,7 +101,7 @@ class GCNII(BaseModel):
 
         self.layers = nn.ModuleList()
         for i in range(num_layers):
-            self.layers.append(GCNIILayer(hidden_size, self.alpha, math.log(self.lmbda / (i + 1) + 1), residual))
+            self.layers.append(Layer(hidden_size, self.alpha, math.log(self.lmbda / (i + 1) + 1), residual))
 
         self.fc_parameters = list(self.fc_layers.parameters())
         self.conv_parameters = list(self.layers.parameters())

@@ -45,7 +45,7 @@ class ModelWrapper(Module):
         pass
 
     def evaluate(
-        self, pred: BF.dtype_dict("tensor"), labels: BF.dtype_dict("tensor"), metric: Union[str, Callable] = "auto"
+        self, pred: BF.dtype_dict("tensor"), labels: BF.dtype_dict("tensor"), metric: Union[str, Callable] = "auto"  # noqa
     ):
         """
         method: str or callable function,

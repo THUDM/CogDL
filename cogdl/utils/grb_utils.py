@@ -26,7 +26,7 @@ def getGRBGraph(graph: Graph):
     return adj, features
 
 
-def getGraph(adj, features: BF.dtype_dict("tensor"), labels: BF.dtype_dict("tensor") = None, device="cpu"):
+def getGraph(adj, features: BF.dtype_dict("tensor"), labels: BF.dtype_dict("tensor") = None, device="cpu"):  # noqa
     if type(adj) != BF.dtype_dict("tensor"):
         edge_index, edge_attr = adj2edge(adj, device)
         data = BF.to(Graph(x=features, y=labels, edge_index=edge_index, edge_attr=edge_attr), device)
@@ -41,7 +41,7 @@ def getGraph(adj, features: BF.dtype_dict("tensor"), labels: BF.dtype_dict("tens
     return data
 
 
-def updateGraph(graph, adj, features: BF.dtype_dict("tensor")):
+def updateGraph(graph, adj, features: BF.dtype_dict("tensor")):  # noqa
     if type(adj) != BF.dtype_dict("tensor"):
         edge_index, edge_attr = adj2edge(adj, BF.device(graph))
         graph.x = features

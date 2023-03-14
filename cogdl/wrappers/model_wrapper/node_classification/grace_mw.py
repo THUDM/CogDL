@@ -63,7 +63,7 @@ class GRACEModelWrapper(UnsupervisedModelWrapper):
     def prop(
         self,
         graph: Graph,
-        x: BF.dtype_dict("tensor"),
+        x: BF.dtype_dict("tensor"),  # noqa
         drop_feature_rate: float = 0.0,
         drop_edge_rate: float = 0.0,
     ):
@@ -75,7 +75,7 @@ class GRACEModelWrapper(UnsupervisedModelWrapper):
         elif BACKEND == "torch":
             return self.model.forward(graph, x)
 
-    def contrastive_loss(self, z1: BF.dtype_dict("tensor"), z2: BF.dtype_dict("tensor")):
+    def contrastive_loss(self, z1: BF.dtype_dict("tensor"), z2: BF.dtype_dict("tensor")):  # noqa
         z1 = BF.normalize(z1, p=2, dim=-1)
         z2 = BF.normalize(z2, p=2, dim=-1)
 
@@ -93,8 +93,8 @@ class GRACEModelWrapper(UnsupervisedModelWrapper):
 
     def batched_loss(
         self,
-        z1: BF.dtype_dict("tensor"),
-        z2: BF.dtype_dict("tensor"),
+        z1: BF.dtype_dict("tensor"),  # noqa
+        z2: BF.dtype_dict("tensor"),  # noqa
         batch_size: int,
     ):
         num_nodes = z1.shape[0]

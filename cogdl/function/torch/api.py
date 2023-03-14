@@ -63,7 +63,7 @@ def tensor(input=None, dtype=None):
 
 
 def FloatTensor(*input, size=None):
-    if size != None:
+    if size is not None:
         return torch.FloatTensor(size=size)
     elif isinstance(input[0], tuple) and len(input[0]) == 1:
         return torch.FloatTensor(size=input)  # (3,2) ((3):
@@ -72,7 +72,7 @@ def FloatTensor(*input, size=None):
 
 
 def LongTensor(*input, size=None):
-    if size != None:
+    if size is not None:
         return torch.LongTensor(size=size)
     elif isinstance(input[0], tuple):
         return torch.LongTensor(input[0])
@@ -107,11 +107,11 @@ def as_tensor(data, dtype=None, device=None):
 def unique(input, dim=None, return_inverse=False, return_counts=False):
     # return output，counts
     output, inverse, counts = torch.unique(input, dim=None, return_inverse=True, return_counts=True)
-    if return_counts == True and return_inverse == False:
+    if return_counts and not return_inverse:
         return output, counts
-    elif return_inverse == True and return_counts == False:
+    elif return_inverse and not return_counts:
         return output, inverse
-    elif return_inverse == False and return_counts == False:
+    elif not return_inverse and not return_counts:
         return output
     else:
         return output, inverse, counts
@@ -221,7 +221,7 @@ def logical_not(input):
 
 
 def squeeze(input, dim=None):
-    if dim == None:
+    if dim is None:
         return torch.squeeze(input)
     return torch.squeeze(input, dim=dim)
 
@@ -240,7 +240,7 @@ def repeat_interleave(input, repeats, dim=None):
 
 
 def mean(x, dim=None, keepdims=False):
-    if dim == None:
+    if dim is None:
         return torch.mean(x)
     else:
         return torch.mean(x, dim=dim, keepdims=keepdims)

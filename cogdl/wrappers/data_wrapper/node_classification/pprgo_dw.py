@@ -115,10 +115,10 @@ def pre_transform(dataset, topk, alpha, epsilon, normalization, mode="train"):
 class PPRGoDataset(Dataset):
     def __init__(
         self,
-        features: BF.dtype_dict("tensor"),
+        features: BF.dtype_dict("tensor"),  # noqa
         ppr_matrix: sp.csr_matrix,
-        node_indices: BF.dtype_dict("tensor"),
-        labels_all: BF.dtype_dict("tensor") = None,
+        node_indices: BF.dtype_dict("tensor"),  # noqa
+        labels_all: BF.dtype_dict("tensor") = None,  # noqa
     ):
         self.features = features
         self.matrix = ppr_matrix

@@ -1,5 +1,4 @@
 import os
-
 os.environ["CogDLBACKEND"] = "jittor"
 from cogdl import function as BF
 from cogdl.data import Graph

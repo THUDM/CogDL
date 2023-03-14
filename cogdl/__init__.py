@@ -8,4 +8,4 @@ elif BACKEND == "torch":
     from .experiments import experiment
 else:
     raise ("Unsupported backend:", BACKEND)
-# from .pipelines import pipeline
+from .pipelines import pipeline

@@ -44,7 +44,10 @@ class ModelWrapper(Module):
     def test_step(self, subgraph):
         pass
 
-    def evaluate(self, pred, labels, metric: Union[str, Callable] = "auto"):  # noqa: F821
+    def evaluate(self, pred, labels, metric: Union[str, Callable] = "auto"):  
+        """
+        method: str or callable function,
+        """
         pred = BF.cpu(pred)
         labels = BF.cpu(labels)
         if self._evaluator is None:

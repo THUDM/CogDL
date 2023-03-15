@@ -5,7 +5,7 @@ python:
 
 install:
   - whereis python
-  - sudo apt-get update
+  - sudo add-apt-repository ppa:deadsnakes/ppa 
   - sudo apt install python-dev
   - sudo apt install libomp-dev
   # - whereis python

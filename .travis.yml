@@ -6,7 +6,7 @@ python:
 install:
   - whereis python
   - sudo add-apt-repository ppa:deadsnakes/ppa 
-  - sudo apt install python-dev
+  - sudo apt install python3.7-dev
   - sudo apt install libomp-dev
   # - whereis python
   # - sudo cp /opt/pyenv/shims/python3.7-config /usr/bin

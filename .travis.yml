@@ -4,7 +4,7 @@ python:
   - "3.7"
 
 install:
-  - apt update
+  - sudo apt update
   - sudo apt install software-properties-common
   - sudo add-apt-repository -y ppa:deadsnakes/ppa
   - sudo apt-get install python3.7-dev

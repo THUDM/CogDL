@@ -8,28 +8,21 @@ python:
 install:
   - sudo apt update
   - sudo apt install software-properties-common
-  # - sudo add-apt-repository -y ppa:fkrull/deadsnakes
   - sudo add-apt-repository -y ppa:deadsnakes/ppa
   - sudo apt-get update
   - sudo apt-get install python3.7-dev
   - sudo apt-get install libomp-dev
-  # - whereis python
-  # - sudo cp /opt/pyenv/shims/python3.7-config /usr/bin
-  # - whereis python
-  # - export /opt/pyenv/shims/python3.7m:$C_INCLUDE_PATH
-  # - export /opt/pyenv/shims/python3.7m:$CPLUS_INCLUDE_PATH
-  # - export cc_path="g++"
-  # - pip install https://download.pytorch.org/whl/cpu/torch-1.7.1%2Bcpu-cp37-cp37m-linux_x86_64.whl
+  - pip install https://download.pytorch.org/whl/cpu/torch-1.7.1%2Bcpu-cp37-cp37m-linux_x86_64.whl
   - pip install git+https://github.com/Exusial/jittor.git@ctorch
-  # - pip install https://pytorch-geometric.com/whl/torch-1.7.0+cpu/torch_scatter-2.0.7-cp37-cp37m-linux_x86_64.whl
-  # - pip install https://pytorch-geometric.com/whl/torch-1.7.0+cpu/torch_sparse-0.6.9-cp37-cp37m-linux_x86_64.whl
+  - pip install https://pytorch-geometric.com/whl/torch-1.7.0+cpu/torch_scatter-2.0.7-cp37-cp37m-linux_x86_64.whl
+  - pip install https://pytorch-geometric.com/whl/torch-1.7.0+cpu/torch_sparse-0.6.9-cp37-cp37m-linux_x86_64.whl
   - pip install packaging==20.9
   - pip install setuptools==60.9.0
-  # - bash ./scripts/installation/metis.sh
-  # - source ./scripts/installation/gcc.sh
-  # - pip install metis
-  # - pip install -r docs/requirements.txt
-  # - pip install -e .
+  - bash ./scripts/installation/metis.sh
+  - source ./scripts/installation/gcc.sh
+  - pip install metis
+  - pip install -r docs/requirements.txt
+  - pip install -e .
   - python -m jittor.test.test_example
 
 before_script:

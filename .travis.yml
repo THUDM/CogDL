@@ -4,16 +4,16 @@ python:
   - "3.7"
 
 install:
-  - whereis python3.7
+  - whereis python
   - sudo apt-get update
-  - sudo apt install python3-dev
+  - sudo apt install python-dev
   - sudo apt install libomp-dev
-  - whereis python3.7
-  - sudo cp /opt/pyenv/shims/python3.7-config /usr/bin
-  - whereis python3.7
-  - export /opt/pyenv/shims/python3.7m:$C_INCLUDE_PATH
-  - export /opt/pyenv/shims/python3.7m:$CPLUS_INCLUDE_PATH
-  - export cc_path="g++"
+  # - whereis python
+  # - sudo cp /opt/pyenv/shims/python3.7-config /usr/bin
+  # - whereis python
+  # - export /opt/pyenv/shims/python3.7m:$C_INCLUDE_PATH
+  # - export /opt/pyenv/shims/python3.7m:$CPLUS_INCLUDE_PATH
+  # - export cc_path="g++"
   # - pip install https://download.pytorch.org/whl/cpu/torch-1.7.1%2Bcpu-cp37-cp37m-linux_x86_64.whl
   - pip install git+https://github.com/Exusial/jittor.git@ctorch
   # - pip install https://pytorch-geometric.com/whl/torch-1.7.0+cpu/torch_scatter-2.0.7-cp37-cp37m-linux_x86_64.whl

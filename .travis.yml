@@ -1,14 +1,14 @@
 language: python
 
 python:
-  - "3.7"
+  - "3.5"
 
 install:
   - sudo apt update
   - sudo apt install software-properties-common
   - sudo add-apt-repository -y ppa:deadsnakes/ppa
   - sudo apt-get update
-  - sudo apt install python3.7
+  - sudo apt-get install python3.7
   - sudo apt-get install libomp-dev
   # - whereis python
   # - sudo cp /opt/pyenv/shims/python3.7-config /usr/bin

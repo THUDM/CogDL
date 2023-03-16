@@ -1,9 +1,11 @@
 from cogdl.data import Graph
 import scipy.sparse as sp
-import torch
+from cogdl import function as BF
 
 import numpy as np
 import scipy
+
+# TODO  BF.sparse.mm()
 
 
 def getGRBGraph(graph: Graph):
@@ -13,44 +15,44 @@ def getGRBGraph(graph: Graph):
     else:
         edge_index = graph.edge_index
         edge_attr = graph.edge_attr
-        if type(edge_attr) == torch.Tensor:
-            edge_attr = edge_attr.cpu().numpy()
-        if type(edge_index) == torch.Tensor:
-            edge_index = edge_index.cpu().numpy()
+        if type(edge_attr) == BF.dtype_dict("tensor"):
+            edge_attr = BF.cpu(edge_attr).numpy()
+        if type(edge_index) == BF.dtype_dict("tensor"):
+            edge_index = BF.cpu(edge_index).numpy()
         if type(edge_index) == tuple:
-            edge_index = [edge_index[0].cpu().numpy(), edge_index[1].cpu().numpy()]
+            edge_index = [BF.cpu(edge_index[0]).numpy(), BF.cpu(edge_index[1]).numpy()]
         adj = sp.csr_matrix((edge_attr, edge_index), shape=[graph.num_nodes, graph.num_nodes])
 
     return adj, features
 
 
-def getGraph(adj, features: torch.FloatTensor, labels: torch.Tensor = None, device="cpu"):
-    if type(adj) != torch.Tensor:
+def getGraph(adj, features: BF.dtype_dict("tensor"), labels: BF.dtype_dict("tensor") = None, device="cpu"):  # noqa
+    if type(adj) != BF.dtype_dict("tensor"):
         edge_index, edge_attr = adj2edge(adj, device)
-        data = Graph(x=features, y=labels, edge_index=edge_index, edge_attr=edge_attr).to(device)
+        data = BF.to(Graph(x=features, y=labels, edge_index=edge_index, edge_attr=edge_attr), device)
     else:
         if adj.is_sparse:
-            adj_np = sp.csr_matrix(adj.to_dense().detach().cpu().numpy())
+            adj_np = sp.csr_matrix(BF.cpu(adj.to_dense().detach()).numpy())
         else:
-            adj_np = sp.csr_matrix(adj.detach().cpu().numpy())
+            adj_np = sp.csr_matrix(BF.cpu(adj.detach()).numpy())
         # print(type(adj_np))
         edge_index, edge_attr = adj2edge(adj_np, device)
-        data = Graph(x=features, y=labels, edge_index=edge_index, edge_attr=edge_attr, grb_adj=adj).to(device)
+        data = BF.to(Graph(x=features, y=labels, edge_index=edge_index, edge_attr=edge_attr, grb_adj=adj), device)
     return data
 
 
-def updateGraph(graph, adj, features: torch.FloatTensor):
-    if type(adj) != torch.Tensor:
-        edge_index, edge_attr = adj2edge(adj, graph.device)
+def updateGraph(graph, adj, features: BF.dtype_dict("tensor")):  # noqa
+    if type(adj) != BF.dtype_dict("tensor"):
+        edge_index, edge_attr = adj2edge(adj, BF.device(graph))
         graph.x = features
         graph.edge_index = edge_index
         graph.edge_attr = edge_attr
     else:
         if adj.is_sparse:
-            adj_np = sp.csr_matrix(adj.to_dense().detach().cpu().numpy())
+            adj_np = sp.csr_matrix(BF.cpu(adj.to_dense().detach()).numpy())
         else:
-            adj_np = sp.csr_matrix(adj.detach().cpu().numpy())
-        edge_index, edge_attr = adj2edge(adj_np, graph.device)
+            adj_np = sp.csr_matrix(BF.cpu(adj.detach()).numpy())
+        edge_index, edge_attr = adj2edge(adj_np, BF.device(graph))
         graph.x = features
         graph.edge_index = edge_index
         graph.edge_attr = edge_attr
@@ -60,11 +62,11 @@ def updateGraph(graph, adj, features: torch.FloatTensor):
 def adj2edge(adj: sp.csr.csr_matrix, device="cpu"):
     row, col = adj.nonzero()
     data = adj.data
-    row = torch.tensor(row, dtype=torch.long)
-    col = torch.tensor(col, dtype=torch.long)
-    edge_index = torch.stack([row, col], dim=0)
-    edge_attr = torch.tensor(data, dtype=torch.float)
-    return edge_index.to(device), edge_attr.to(device)
+    row = BF.tensor(row, dtype=BF.dtype_dict("long"))
+    col = BF.tensor(col, dtype=BF.dtype_dict("long"))
+    edge_index = BF.stack([row, col], dim=0)
+    edge_attr = BF.tensor(data, dtype=BF.dtype_dict("float"))
+    return BF.to(edge_index, device), BF.to(edge_attr, device)
 
 
 def adj_to_tensor(adj):
@@ -80,19 +82,19 @@ def adj_to_tensor(adj):
         Adjacency matrix in form of ``N * N`` sparse matrix.
     Returns
     -------
-    adj_tensor : torch.Tensor
+    adj_tensor : BF.Tensor
         Adjacency matrix in form of ``N * N`` sparse tensor.
 
     """
-    if type(adj) == torch.Tensor:
+    if type(adj) == BF.dtype_dict("tensor"):
         return adj
     if type(adj) != scipy.sparse.coo.coo_matrix:
         adj = adj.tocoo()
-    sparse_row = torch.LongTensor(adj.row).unsqueeze(1)
-    sparse_col = torch.LongTensor(adj.col).unsqueeze(1)
-    sparse_concat = torch.cat((sparse_row, sparse_col), 1)
-    sparse_data = torch.FloatTensor(adj.data)
-    adj_tensor = torch.sparse.FloatTensor(sparse_concat.t(), sparse_data, torch.Size(adj.shape))
+    sparse_row = BF.LongTensor(adj.row).unsqueeze(1)
+    sparse_col = BF.LongTensor(adj.col).unsqueeze(1)
+    sparse_concat = BF.cat((sparse_row, sparse_col), 1)
+    sparse_data = BF.FloatTensor(adj.data)
+    adj_tensor = BF.sparse_FloatTensor(sparse_concat.t(), sparse_data, adj.shape)
 
     return adj_tensor
 
@@ -130,24 +132,27 @@ def adj_preprocess(adj, adj_norm_func=None, mask=None, device="cpu"):
     if type(adj) is tuple or type(adj) is list:
         if mask is not None:
             adj = [
-                adj_to_tensor(adj_[mask][:, mask]).to(device)
-                if type(adj_) != torch.Tensor
-                else adj_[mask][:, mask].to(device)
+                BF.to(adj_to_tensor(adj_[mask][:, mask]), device)
+                if type(adj_) != BF.dtype_dict("tensor")
+                else BF.to(adj_[mask][:, mask], device)
                 for adj_ in adj
             ]
         else:
-            adj = [adj_to_tensor(adj_).to(device) if type(adj_) != torch.Tensor else adj_.to(device) for adj_ in adj]
+            adj = [
+                BF.to(adj_to_tensor(adj_), device) if type(adj_) != BF.dtype_dict("tensor") else BF.to(adj_.to, device)
+                for adj_ in adj
+            ]
     else:
-        if type(adj) != torch.Tensor:
+        if type(adj) != BF.dtype_dict("tensor"):
             if mask is not None:
-                adj = adj_to_tensor(adj[mask][:, mask]).to(device)
+                adj = BF.to(adj_to_tensor(adj[mask][:, mask]), device)
             else:
-                adj = adj_to_tensor(adj).to(device)
+                adj = BF.to(adj_to_tensor(adj), device)
         else:
             if mask is not None:
-                adj = adj[mask][:, mask].to(device)
+                adj = BF.to(adj[mask][:, mask], device)
             else:
-                adj = adj.to(device)
+                adj = BF.to(adj, device)
 
     return adj
 
@@ -185,14 +190,14 @@ def feat_preprocess(features, feat_norm=None, device="cpu"):
 
         return feat
 
-    if type(features) != torch.Tensor:
-        features = torch.FloatTensor(features)
-    elif features.type() != "torch.FloatTensor":
+    if type(features) != BF.dtype_dict("tensor"):
+        features = BF.FloatTensor(features)
+    elif features.dtype() != BF.dtype_dict("float"):
         features = features.float()
     if feat_norm is not None:
         features = feat_normalize(features, norm=feat_norm)
 
-    features = features.to(device)
+    features = BF.to(features, device)
 
     return features
 
@@ -218,12 +223,12 @@ def label_preprocess(labels, device="cpu"):
 
     """
 
-    if type(labels) != torch.Tensor:
-        labels = torch.LongTensor(labels)
-    elif labels.type() != "torch.LongTensor":
+    if type(labels) != BF.dtype_dict("tensor"):
+        labels = BF.LongTensor(labels)
+    elif labels.dtype != BF.dtype_dict("long"):
         labels = labels.long()
 
-    labels = labels.to(device)
+    labels = BF.to(labels, device)
 
     return labels
 
@@ -255,7 +260,7 @@ def eval_acc(pred, labels, mask=None):
         pred, labels = pred[mask], labels[mask]
         if pred is None or labels is None:
             return 0.0
-    acc = (torch.argmax(pred, dim=1) == labels).float().sum() / len(pred)
+    acc = (BF.argmax(pred, dim=1) == labels).float().sum() / len(pred)
 
     return acc
 
@@ -286,7 +291,7 @@ def evaluate(model, graph, feat_norm=None, adj_norm_func=None, eval_metric=eval_
         Score on masked nodes.
 
     """
-    model.to(device)
+    BF.to(model, device)
     model.eval()
     adj, features = getGRBGraph(graph)
     labels = graph.y
@@ -333,18 +338,18 @@ def GCNAdjNorm(adj, order=-0.5):
         d_mat_inv = sp.diags(d_inv)
         adj = d_mat_inv @ adj @ d_mat_inv
     else:
-        rowsum = torch.sparse.mm(adj, torch.ones((adj.shape[0], 1), device=adj.device)) + 1
-        d_inv = torch.pow(rowsum, order).flatten()
-        d_inv[torch.isinf(d_inv)] = 0.0
+        rowsum = BF.sparse_mm(adj, BF.ones((adj.shape[0], 1), device=BF.device(adj))) + 1
+        d_inv = BF.pow(rowsum, order).flatten()
+        d_inv[BF.isinf(d_inv)] = 0.0
 
-        self_loop_idx = torch.stack(
-            (torch.arange(adj.shape[0], device=adj.device), torch.arange(adj.shape[0], device=adj.device))
+        self_loop_idx = BF.stack(
+            (BF.arange(adj.shape[0], device=BF.device(adj)), BF.arange(adj.shape[0], device=BF.device(adj)))
         )
-        self_loop_val = torch.ones_like(self_loop_idx[0], dtype=adj.dtype)
-        indices = torch.cat((self_loop_idx, adj.indices()), dim=1)
-        values = torch.cat((self_loop_val, adj.values()))
+        self_loop_val = BF.ones_like(self_loop_idx[0], dtype=adj.dtype)
+        indices = BF.cat((self_loop_idx, adj.indices()), dim=1)
+        values = BF.cat((self_loop_val, adj.values()))
         values = d_inv[indices[0]] * values * d_inv[indices[1]]
-        adj = torch.sparse.FloatTensor(indices, values, adj.shape).coalesce()
+        adj = BF.sparse_FloatTensor(indices, values, adj.shape).coalesce()
 
     return adj
 
@@ -387,11 +392,11 @@ def SAGEAdjNorm(adj, order=-1):
         d_mat_inv = sp.diags(d_inv)
         adj = d_mat_inv @ adj
     else:
-        adj = torch.eye(adj.shape[0]).to(adj.device) + adj
+        adj = BF.to(BF.eye(adj.shape[0]), adj) + adj
         rowsum = adj.sum(1)
-        d_inv = torch.pow(rowsum, order).flatten()
-        d_inv[torch.isinf(d_inv)] = 0.0
-        d_mat_inv = torch.diag(d_inv)
+        d_inv = BF.pow(rowsum, order).flatten()
+        d_inv[BF.isinf(d_inv)] = 0.0
+        d_mat_inv = BF.diag(d_inv)
         adj = d_mat_inv @ adj
 
     return adj
@@ -406,7 +411,7 @@ def SPARSEAdjNorm(adj, order=-0.5):
 
     Parameters
     ----------
-    adj : scipy.sparse.csr.csr_matrix or torch.FloatTensor
+    adj : scipy.sparse.csr.csr_matrix orBF.FloatTensor
         Adjacency matrix in form of ``N * N`` sparse matrix (or in form of ``N * N`` dense tensor).
     order : float, optional
         Order of degree matrix. Default: ``-0.5``.
@@ -428,18 +433,18 @@ def SPARSEAdjNorm(adj, order=-0.5):
         d_mat_inv = sp.diags(d_inv)
         adj = d_mat_inv @ adj @ d_mat_inv
     else:
-        rowsum = torch.sparse.mm(adj, torch.ones((adj.shape[0], 1), device=adj.device)) + 1
-        d_inv = torch.pow(rowsum, order).flatten()
-        d_inv[torch.isinf(d_inv)] = 0.0
+        rowsum = BF.sparse.mm(adj, BF.ones((adj.shape[0], 1), device=BF.device(adj))) + 1
+        d_inv = BF.pow(rowsum, order).flatten()
+        d_inv[BF.isinf(d_inv)] = 0.0
 
-        self_loop_idx = torch.stack(
-            (torch.arange(adj.shape[0], device=adj.device), torch.arange(adj.shape[0], device=adj.device))
+        self_loop_idx = BF.stack(
+            (BF.arange(adj.shape[0], device=BF.device(adj)), BF.arange(adj.shape[0], device=BF.device(adj)))
         )
-        self_loop_val = torch.ones_like(self_loop_idx[0], dtype=adj.dtype)
-        indices = torch.cat((self_loop_idx, adj.indices()), dim=1)
-        values = torch.cat((self_loop_val, adj.values()))
+        self_loop_val = BF.ones_like(self_loop_idx[0], dtype=adj.dtype)
+        indices = BF.cat((self_loop_idx, adj.indices()), dim=1)
+        values = BF.cat((self_loop_val, adj.values()))
         values = d_inv[indices[0]] * values * d_inv[indices[1]]
-        adj = torch.sparse.FloatTensor(indices, values, adj.shape).coalesce()
+        adj = BF.sparse_FloatTensor(indices, values, adj.shape).coalesce()
 
     return adj
 
@@ -471,10 +476,10 @@ def RobustGCNAdjNorm(adj):
 
 
 def feature_normalize(features):
-    x_sum = torch.sum(features, dim=1)
+    x_sum = BF.sum(features, dim=1)
     x_rev = x_sum.pow(-1).flatten()
-    x_rev[torch.isnan(x_rev)] = 0.0
-    x_rev[torch.isinf(x_rev)] = 0.0
+    x_rev[BF.isnan(x_rev)] = 0.0
+    x_rev[BF.isinf(x_rev)] = 0.0
     features = features * x_rev.unsqueeze(-1).expand_as(features)
 
     return features

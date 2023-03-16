@@ -1,7 +1,13 @@
 import copy
 import random
 import numpy as np
-import torch
+from cogdl import function as BF
+from cogdl.backend import BACKEND
+
+if BACKEND == "jittor":
+    import jittor as tj
+elif BACKEND == "torch":
+    import torch as tj
 
 from .. import ModelWrapper
 
@@ -46,24 +52,24 @@ class GCNMixModelWrapper(ModelWrapper):
             "rampup_starts": rampup_starts,
             "rampup_ends": rampup_ends,
         }
-        self.mix_loss = torch.nn.BCELoss()
+        self.mix_loss = tj.nn.BCELoss()
         self.mix_transform = None
 
     def train_step(self, subgraph):
         if self.mix_transform is None:
             if len(subgraph.y.shape) > 1:
-                self.mix_transform = torch.nn.Sigmoid()
+                self.mix_transform = tj.nn.Sigmoid()
             else:
-                self.mix_transform = torch.nn.Softmax(-1)
+                self.mix_transform = tj.nn.Softmax(-1)
         graph = subgraph
-        device = graph.x.device
+        device = BF.device(graph.x)
         train_mask = graph.train_mask
 
         self.opt["epoch"] += 1
 
         rand_n = random.randint(0, 1)
         if rand_n == 0:
-            vector_labels = get_one_hot_label(graph.y, train_mask).to(device)
+            vector_labels = BF.to(get_one_hot_label(graph.y, train_mask), device)
             loss = self.update_aux(graph, vector_labels, train_mask)
         else:
             loss = self.update_soft(graph)
@@ -103,21 +109,24 @@ class GCNMixModelWrapper(ModelWrapper):
 
     def update_aux(self, data, vector_labels, train_index):
         device = self.device
-        train_unlabelled = torch.where(~data.train_mask)[0].to(device)
-        temp_labels = torch.zeros(self.k, vector_labels.shape[0], vector_labels.shape[1]).to(device)
-        with torch.no_grad():
+        train_unlabelled = BF.to(BF.where(BF.logical_not(data.train_mask))[0], device)
+        temp_labels = BF.to(BF.zeros(self.k, vector_labels.shape[0], vector_labels.shape[1]), device)
+        with tj.no_grad():
             for i in range(self.k):
                 temp_labels[i, :, :] = self.model(data) / self.tau
 
         target_labels = temp_labels.mean(dim=0)
         target_labels = sharpen(target_labels, self.temperature)
         vector_labels[train_unlabelled] = target_labels[train_unlabelled]
-        sampled_unlabelled = torch.randint(0, train_unlabelled.shape[0], size=(train_index.shape[0],))
+        sampled_unlabelled = BF.randint(0, train_unlabelled.shape[0], size=(train_index.shape[0],))
         train_unlabelled = train_unlabelled[sampled_unlabelled]
 
         def get_loss(index):
             # TODO: call `forward_aux` in model
-            mix_logits, target = self.model.forward_aux(data.x, vector_labels, index, mix_hidden=True)
+            if BACKEND == "jittor":
+                mix_logits, target = self.model.execute_aux(data.x, vector_labels, index, mix_hidden=True)
+            elif BACKEND == "torch":
+                mix_logits, target = self.model.forward_aux(data.x, vector_labels, index, mix_hidden=True)
             # temp_loss = self.loss_f(F.softmax(mix_logits[index], -1), target)
             temp_loss = self.mix_loss(self.mix_transform(mix_logits[index]), target)
             return temp_loss
@@ -135,20 +144,20 @@ class GCNMixModelWrapper(ModelWrapper):
     def setup_optimizer(self):
         lr = self.optimizer_cfg["lr"]
         wd = self.optimizer_cfg["weight_decay"]
-        return torch.optim.Adam(self.parameters(), lr=lr, weight_decay=wd)
+        return tj.optim.Adam(self.parameters(), lr=lr, weight_decay=wd)
 
 
 def get_one_hot_label(labels, index):
-    num_classes = int(torch.max(labels) + 1)
-    target = torch.zeros(labels.shape[0], num_classes).to(labels.device)
+    num_classes = int(BF.max(labels) + 1)
+    target = BF.to(BF.zeros(labels.shape[0], num_classes), labels)
 
     target[index, labels[index]] = 1
     return target
 
 
 def sharpen(prob, temperature):
-    prob = torch.pow(prob, 1.0 / temperature)
-    row_sum = torch.sum(prob, dim=1).reshape(-1, 1)
+    prob = BF.pow(prob, 1.0 / temperature)
+    row_sum = BF.sum(prob, dim=1).reshape(-1, 1)
     return prob / row_sum
 
 

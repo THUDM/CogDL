@@ -39,7 +39,7 @@ class NEA(ModificationAttack):
                 2 * eigen_vecs[i] * eigen_vecs[j] - eigen_vals * (eigen_vecs[i] ** 2 + eigen_vecs[j] ** 2)
             )
             vals_sum_powers = sum_of_powers(vals_est, 5)
-            loss_ij = np.sqrt(np.sum(np.sort(vals_sum_powers ** 2)[: adj.shape[0] - 32]))
+            loss_ij = np.sqrt(np.sum(np.sort(vals_sum_powers**2)[: adj.shape[0] - 32]))
             eigen_scores[k] = loss_ij
         struct_scores = -np.expand_dims(eigen_scores, 1)
 

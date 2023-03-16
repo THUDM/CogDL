@@ -72,11 +72,11 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        "torch",
         "importlib-metadata<5.0",
         "networkx",
         "matplotlib",
         "tqdm",
+        "pybind11",
         "numpy>=1.21",
         "scipy",
         "gensim>=4.0",
@@ -84,7 +84,7 @@ setup(
         "scikit_learn",
         "tabulate",
         "optuna==2.4.0",
-        "ogb",
+        # "ogb",
         "pre-commit",
         "flake8",
         "numba",

@@ -203,7 +203,7 @@ class GenerateEmbeddingPipeline(Pipeline):
             dataset = NodeDataset(path=self.data_path, scale_feat=False, metric="accuracy")
             self.args.dataset = dataset
             model = train(self.args)
-            embeddings = model.embed(BF.to(data, model))
+            embeddings = model.embed(BF.to(data, BF.device(model)))
             embeddings = BF.cpu(embeddings.detach()).numpy()
 
         return embeddings

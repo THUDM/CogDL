@@ -74,10 +74,10 @@ def FloatTensor(*input, size=None):
 def LongTensor(*input, size=None):
     if size is not None:
         return torch.LongTensor(size=size)
-    elif isinstance(input[0], tuple):
-        return torch.LongTensor(input[0])
-    else:
+    elif isinstance(input[0], tuple) and len(input[0]) == 1:
         return torch.LongTensor(size=input)
+    else:
+        return torch.LongTensor(input)
 
 
 def full(shape, val, dtype=None, device=None):
@@ -92,8 +92,8 @@ def randn(*size, dtype=None, requires_grad=False, device=None):
     return torch.randn(*size, dtype=dtype, requires_grad=True, device=device)
 
 
-def randint(low, high, shape, device=None):
-    return torch.randint(low, high, shape, device=device)
+def randint(low, high, size, device=None):
+    return torch.randint(low, high, size=size, device=device)
 
 
 def from_numpy(input):

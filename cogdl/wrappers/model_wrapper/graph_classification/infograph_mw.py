@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .. import ModelWrapper
-from cogdl.models.nn.mlp import MLP
+from cogdl.models.torch.nn.mlp import MLP
 from cogdl.data import DataLoader
 from cogdl.wrappers.tools.wrapper_utils import evaluate_graph_embeddings_using_svm
 

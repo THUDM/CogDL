@@ -3,16 +3,18 @@ from cogdl import function as BF
 from cogdl.backend import BACKEND
 
 if BACKEND == "jittor":
+    import jittor as tj
     from jittor import nn, Module
     import jittor.nn as F
 elif BACKEND == "torch":
+    import torch as tj 
     import torch.nn as nn
     import torch.nn.functional as F
     from torch.nn import Module
 
 
 def cal_mrr(embedding, rel_embedding, edge_index, edge_type, scoring, protocol="raw", batch_size=1000, hits=[]):
-    def no_grad():
+    with tj.no_grad():
         if protocol == "raw":
             heads = edge_index[0]
             tails = edge_index[1]
@@ -32,17 +34,6 @@ def cal_mrr(embedding, rel_embedding, edge_index, edge_type, scoring, protocol="
             hits_count.append(np.mean((ranks <= hit).astype(np.float)))
         # return mrr.item(), hits_count
         return mrr, hits_count
-
-    if BACKEND == "jittor":
-        import jittor
-
-        with jittor.no_grad():
-            no_grad()
-    elif BACKEND == "torch":
-        import torch
-
-        with torch.no_grad():
-            no_grad()
 
 
 class DistMultLayer(Module):

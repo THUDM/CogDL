@@ -5,7 +5,7 @@ from cogdl import function as BF
 from jittor import nn as F
 
 from cogdl.options import get_default_args
-from cogdl.experiments import train
+from cogdl.experiments_jt import train
 
 
 cuda_available = BF.cuda_is_available()

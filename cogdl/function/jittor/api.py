@@ -104,8 +104,8 @@ def randn(*size, dtype="float32", requires_grad=True, device=None):
     return jt.randn(*size, dtype="float32", requires_grad=True)
 
 
-def randint(low, high, shape, device=None):
-    return jt.randint(low, high, shape)
+def randint(low, high, size, device=None):
+    return jt.randint(low, high, shape=size)
 
 
 def from_numpy(input):

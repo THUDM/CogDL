@@ -154,7 +154,7 @@ class Edgelist(Dataset):
         y = BF.zeros(num_nodes, len(label2id))
         y[nodes, labels] = 1
 
-        data = Graph(edge_index=BF.tensor(edge_list, dtype=BF.dtype_dict["long"]).t(), x=None, y=y)
+        data = Graph(edge_index=BF.LongTensor(edge_list).t(), x=None, y=y)
 
         BF.save(data, self.processed_paths[0])
 

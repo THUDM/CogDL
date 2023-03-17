@@ -184,6 +184,7 @@ def multiclass_f1(y_pred, y_true):
     preds = BF.argmax(BF.argmax(y_pred, 1))
     preds = BF.cpu(preds).detach().numpy()
     labels = BF.cpu(y_true).detach().numpy()
+    print("--------",preds, labels)
     micro = f1_score(labels, preds, average="micro")
     return micro
 

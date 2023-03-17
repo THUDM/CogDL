@@ -2,7 +2,7 @@ import os
 
 os.environ["CogDLBACKEND"] = "jittor"
 from cogdl import function as BF
-from jittor import nn as F
+from jittor import nn 
 
 from cogdl.options import get_default_args
 from cogdl.experiments_jt import train
@@ -334,7 +334,7 @@ def test_dropedge_gcn_citeseer():
     args.nhiddenlayer = 1
     args.nbaseblocklayer = 1
     args.aggrmethod = "default"
-    args.activation = F.relu
+    args.activation = nn.relu
     args.task_type = "full"
 
     ret = train(args)
@@ -353,7 +353,7 @@ def test_dropedge_resgcn_citeseer():
     args.nhiddenlayer = 1
     args.nbaseblocklayer = 1
     args.aggrmethod = "concat"
-    args.activation = F.relu
+    args.activation = nn.relu
     args.task_type = "full"
 
     ret = train(args)
@@ -372,7 +372,7 @@ def test_dropedge_densegcn_citeseer():
     args.nhiddenlayer = 1
     args.nbaseblocklayer = 1
     args.aggrmethod = "add"
-    args.activation = F.relu
+    args.activation = nn.relu
     args.task_type = "full"
 
     ret = train(args)
@@ -392,7 +392,7 @@ def test_dropedge_inceptiongcn_citeseer():
     args.nhiddenlayer = 1
     args.nbaseblocklayer = 1
     args.aggrmethod = "add"
-    args.activation = F.relu
+    args.activation = nn.relu
     args.task_type = "full"
 
     ret = train(args)

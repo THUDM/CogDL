@@ -1,7 +1,7 @@
 import numba
 import numpy as np
 import scipy.sparse as sp
-import torch
+from cogdl import function as BF
 
 
 @numba.njit(cache=True, locals={"_val": numba.float32, "res": numba.float32, "res_vnode": numba.float32})
@@ -96,7 +96,7 @@ def topk_ppr_matrix(adj_matrix, alpha, eps, idx, topk, normalization="row"):
 
 
 def build_topk_ppr_matrix_from_data(edge_index, *args, **kwargs):
-    if isinstance(edge_index, torch.Tensor) or isinstance(edge_index, tuple):
+    if BF.is_tensor(edge_index) or isinstance(edge_index, tuple):
         row, col = edge_index
         row, col = row.numpy(), col.numpy()
         num_node = int(max(row.max(), col.max())) + 1

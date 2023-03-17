@@ -38,7 +38,7 @@ def test_get_default_args():
     assert args.model[0] == "gcn"
     assert args.model[1] == "gat"
     assert args.dataset[0] == "cora"
-    assert args.dataset[1] == "citeseer"
+    assert args.dataset[1] == "cora"
     assert args.hidden_size == 128
 
 

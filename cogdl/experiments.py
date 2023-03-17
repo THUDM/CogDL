@@ -103,7 +103,6 @@ def train(args):  # noqa: C901
     model_name = args.model if isinstance(args.model, str) else args.model.model_name
     dw_name = args.dw if isinstance(args.dw, str) else args.dw.__name__
     mw_name = args.mw if isinstance(args.mw, str) else args.mw.__name__
-
     print(
         f""" 
 |-------------------------------------{'-' * (len(str(args.dataset)) + len(model_name) + len(dw_name) + len(mw_name))}|

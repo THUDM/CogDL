@@ -1,9 +1,14 @@
 """A wrapper class for optimizer """
 import numpy as np
-import torch.nn as nn
+from cogdl.backend import BACKEND
+
+if BACKEND == "jittor":
+    from jittor import Module
+elif BACKEND == "torch":
+    from torch.nn import Module
 
 
-class NoamOptimizer(nn.Module):
+class NoamOptimizer(Module):
     """A simple wrapper class for learning rate scheduling"""
 
     def __init__(self, optimizer, d_model, n_warmup_steps, init_lr=None):
@@ -38,7 +43,7 @@ class NoamOptimizer(nn.Module):
             param_group["lr"] = lr
 
 
-class LinearOptimizer(nn.Module):
+class LinearOptimizer(Module):
     """A simple wrapper class for learning rate scheduling"""
 
     def __init__(self, optimizer, n_warmup_steps, n_training_steps, init_lr=0.001):

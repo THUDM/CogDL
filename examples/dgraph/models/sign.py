@@ -48,7 +48,6 @@ class SIGN(BaseModel):
         parser.add_argument("--diffusion", type=str, default="ppr")
         # fmt: on
 
-
     def __init__(
         self,
         num_features,
@@ -151,4 +150,3 @@ class SIGN(BaseModel):
         x = self.cache_x
         x = self.mlp(x)
         return F.log_softmax(x, dim=-1)
-

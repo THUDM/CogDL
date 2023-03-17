@@ -3,9 +3,17 @@ import random
 import networkx as nx
 import numpy as np
 import scipy.sparse as sp
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from cogdl import function as BF
+from cogdl.backend import BACKEND
+
+if BACKEND == "jittor":
+    import jittor as tj
+    from jittor import nn
+    from jittor import nn as F
+elif BACKEND == "torch":
+    import torch as tj
+    import torch.nn as nn
+    import torch.nn.functional as F
 from cogdl.utils.transform import dropout_adj
 from cogdl.wrappers.tools.wrapper_utils import evaluate_node_embeddings_using_logreg
 from tqdm import tqdm
@@ -49,7 +57,7 @@ class SelfAuxiliaryModelWrapper(UnsupervisedModelWrapper):
 
     def test_step(self, graph):
         self.model.eval()
-        with torch.no_grad():
+        with tj.no_grad():
             pred = self.model.embed(graph)
         y = graph.y
         result = evaluate_node_embeddings_using_logreg(pred, y, graph.train_mask, graph.test_mask)
@@ -67,7 +75,12 @@ class SelfAuxiliaryModelWrapper(UnsupervisedModelWrapper):
             self.agent = AttributeMask(data, self.hidden_size, data.train_mask, self.mask_ratio, self.device)
         elif self.auxiliary_task == "pairwise_distance":
             self.agent = PairwiseDistance(
-                self.hidden_size, [(1, 2), (2, 3), (3, 5)], self.sampling, self.dropedge_rate, 256, self.device,
+                self.hidden_size,
+                [(1, 2), (2, 3), (3, 5)],
+                self.sampling,
+                self.dropedge_rate,
+                256,
+                self.device,
             )
         elif self.auxiliary_task == "distance2clusters":
             self.agent = Distance2Clusters(self.hidden_size, 30, self.device)
@@ -81,7 +94,7 @@ class SelfAuxiliaryModelWrapper(UnsupervisedModelWrapper):
 
     def setup_optimizer(self):
         lr, wd = self.optimizer_cfg["lr"], self.optimizer_cfg["weight_decay"]
-        return torch.optim.Adam(self.parameters(), lr=lr, weight_decay=wd)
+        return tj.optim.Adam(self.parameters(), lr=lr, weight_decay=wd)
 
 
 class SSLTask:
@@ -99,7 +112,7 @@ class SSLTask:
 class EdgeMask(SSLTask):
     def __init__(self, hidden_size, mask_ratio, device):
         super().__init__(device)
-        self.linear = nn.Linear(hidden_size, 2).to(device)
+        self.linear = BF.to(nn.Linear(hidden_size, 2), device)
         self.mask_ratio = mask_ratio
 
     def transform_data(self, graph):
@@ -107,7 +120,7 @@ class EdgeMask(SSLTask):
         num_edges = graph.num_edges
         # if self.cached_edges is None:
         row, col = graph.edge_index
-        edges = torch.stack([row, col])
+        edges = BF.stack([row, col])
         perm = np.random.permutation(num_edges)
         preserve_nnz = int(num_edges * (1 - self.mask_ratio))
         masked = perm[preserve_nnz:]
@@ -115,26 +128,26 @@ class EdgeMask(SSLTask):
         self.masked_edges = edges[:, masked]
         self.cached_edges = edges[:, preserved]
         mask_num = len(masked)
-        self.neg_edges = self.neg_sample(mask_num, graph).to(self.masked_edges.device)
-        self.pseudo_labels = torch.cat([torch.ones(mask_num), torch.zeros(mask_num)]).long().to(device)
-        self.node_pairs = torch.cat([self.masked_edges, self.neg_edges], 1).to(device)
+        self.neg_edges = BF.to(self.neg_sample(mask_num, graph), self.masked_edges)
+        self.pseudo_labels = BF.to(BF.cat([BF.ones(mask_num), BF.zeros(mask_num)]).long(), device)
+        self.node_pairs = BF.to(BF.cat([self.masked_edges, self.neg_edges], 1), device)
 
         graph.edge_index = self.cached_edges
         return graph
 
     def make_loss(self, embeddings):
-        embeddings = self.linear(torch.abs(embeddings[self.node_pairs[0]] - embeddings[self.node_pairs[1]]))
+        embeddings = self.linear(BF.abs(embeddings[self.node_pairs[0]] - embeddings[self.node_pairs[1]]))
         output = F.log_softmax(embeddings, dim=1)
         return F.nll_loss(output, self.pseudo_labels)
 
     def neg_sample(self, edge_num, graph):
         edge_index = graph.edge_index
         num_nodes = graph.num_nodes
-        edges = torch.stack(edge_index).t().cpu().numpy()
+        edges = BF.cpu(BF.stack(edge_index).t()).numpy()
         exclude = set([(_[0], _[1]) for _ in list(edges)])
         itr = self.sample(exclude, num_nodes)
         sampled = [next(itr) for _ in range(edge_num)]
-        return torch.tensor(sampled).t()
+        return BF.tensor(sampled).t()
 
     def sample(self, exclude, num_nodes):
         while True:
@@ -148,7 +161,7 @@ class EdgeMask(SSLTask):
 class AttributeMask(SSLTask):
     def __init__(self, graph, hidden_size, train_mask, mask_ratio, device):
         super().__init__(device)
-        self.linear = nn.Linear(hidden_size, graph.x.shape[1]).to(device)
+        self.linear = BF.to(nn.Linear(hidden_size, graph.x.shape[1]), device)
         self.cached_features = None
         self.mask_ratio = mask_ratio
 
@@ -158,12 +171,12 @@ class AttributeMask(SSLTask):
         x_feat = graph.x
 
         num_nodes = graph.num_nodes
-        unlabelled = torch.where(~graph.train_mask)[0]
-        perm = np.random.permutation(unlabelled.cpu().numpy())
+        unlabelled = BF.where(BF.logical_not(graph.train_mask))[0]
+        perm = np.random.permutation(BF.cpu(unlabelled).numpy())
         mask_nnz = int(num_nodes * self.mask_ratio)
         self.masked_nodes = perm[:mask_nnz]
         x_feat[self.masked_nodes] = 0
-        self.pseudo_labels = x_feat[self.masked_nodes].to(device)
+        self.pseudo_labels = BF.to(x_feat[self.masked_nodes], device)
         graph.x = x_feat
         return graph
 
@@ -182,7 +195,7 @@ class PairwiseDistance(SSLTask):
         self.sampling = sampling
         self.dropedge_rate = dropedge_rate
         self.num_centers = num_centers
-        self.linear = nn.Linear(hidden_size, self.nclass).to(device)
+        self.linear = BF.to(nn.Linear(hidden_size, self.nclass), device)
         self.get_distance_cache = False
 
     def get_distance(self, graph):
@@ -194,7 +207,7 @@ class PairwiseDistance(SSLTask):
             self.dis_node_pairs = [[] for i in range(self.nclass)]
             node_idx = random.sample(range(num_nodes), self.num_centers)
             adj = sp.coo_matrix(
-                (np.ones(num_edges), (edge_index[0].cpu().numpy(), edge_index[1].cpu().numpy())),
+                (np.ones(num_edges), (BF.cpu(edge_index[0]).numpy(), BF.cpu(edge_index[1]).numpy())),
                 shape=(num_nodes, num_nodes),
             ).tocsr()
 
@@ -245,14 +258,14 @@ class PairwiseDistance(SSLTask):
                         (self.dis_node_pairs[cur_class], np.array([[idx] * len(sampled), sampled]).transpose()), axis=0
                     )
             if self.class_split[0][1] == 2:
-                self.dis_node_pairs[0] = torch.stack(edge_index).cpu().numpy().transpose()
+                self.dis_node_pairs[0] = BF.cpu(BF.stack(edge_index)).numpy().transpose()
             num_per_class = np.min(np.array([len(dis) for dis in self.dis_node_pairs]))
             for i in range(self.nclass):
                 sampled = np.random.choice(np.arange(len(self.dis_node_pairs[i])), num_per_class, replace=False)
                 self.dis_node_pairs[i] = self.dis_node_pairs[i][sampled]
         else:
             G = nx.Graph()
-            G.add_edges_from(torch.stack(edge_index).cpu().numpy().transpose())
+            G.add_edges_from(BF.cpu(BF.stack(edge_index)).numpy().transpose())
 
             path_length = dict(nx.all_pairs_shortest_path_length(G, cutoff=self.max_distance))
             distance = -np.ones((num_nodes, num_nodes), dtype=np.int)
@@ -281,34 +294,34 @@ class PairwiseDistance(SSLTask):
 
     def make_loss(self, embeddings, sample=True, k=4000):
         node_pairs, pseudo_labels = self.sample(sample, k)
-        embeddings = self.linear(torch.abs(embeddings[node_pairs[0]] - embeddings[node_pairs[1]]))
+        embeddings = self.linear(BF.abs(embeddings[node_pairs[0]] - embeddings[node_pairs[1]]))
         output = F.log_softmax(embeddings, dim=1)
         return F.nll_loss(output, pseudo_labels)
 
     def sample(self, sample, k):
-        sampled = torch.tensor([]).long()
-        pseudo_labels = torch.tensor([]).long()
+        sampled = BF.tensor([]).long()
+        pseudo_labels = BF.tensor([]).long()
         for i in range(self.nclass):
             tmp = self.dis_node_pairs[i]
             if sample:
                 x = int(random.random() * (len(tmp) - k))
-                sampled = torch.cat([sampled, torch.tensor(tmp[x : x + k]).long().t()], 1)
+                sampled = BF.cat([sampled, BF.tensor(tmp[x : x + k]).long().t()], 1)
                 """
                 indices = np.random.choice(np.arange(len(tmp)), k, replace=False)
                 sampled = torch.cat([sampled, torch.tensor(tmp[indices]).long().t()], 1)
                 """
-                pseudo_labels = torch.cat([pseudo_labels, torch.ones(k).long() * i])
+                pseudo_labels = BF.cat([pseudo_labels, BF.ones(k).long() * i])
             else:
-                sampled = torch.cat([sampled, torch.tensor(tmp).long().t()], 1)
-                pseudo_labels = torch.cat([pseudo_labels, torch.ones(len(tmp)).long() * i])
-        return sampled.to(self.device), pseudo_labels.to(self.device)
+                sampled = BF.cat([sampled, BF.tensor(tmp).long().t()], 1)
+                pseudo_labels = BF.cat([pseudo_labels, BF.ones(len(tmp)).long() * i])
+        return BF.to(sampled, self.device), BF.to(pseudo_labels, self.device)
 
 
 class Distance2Clusters(SSLTask):
     def __init__(self, hidden_size, num_clusters, device):
         super().__init__(device)
         self.num_clusters = num_clusters
-        self.linear = nn.Linear(hidden_size, num_clusters).to(device)
+        self.linear = BF.to(nn.Linear(hidden_size, num_clusters), device)
         self.gen_cluster_info_cache = False
 
     def transform_data(self, graph):
@@ -324,7 +337,7 @@ class Distance2Clusters(SSLTask):
         x = graph.x
 
         G = nx.Graph()
-        G.add_edges_from(torch.stack(edge_index).cpu().numpy().transpose())
+        G.add_edges_from(BF.cpu(BF.stack(edge_index)).numpy().transpose())
         if use_metis:
             import metis
 
@@ -332,7 +345,7 @@ class Distance2Clusters(SSLTask):
         else:
             from sklearn.cluster import KMeans
 
-            clustering = KMeans(n_clusters=self.num_clusters, random_state=0).fit(x.cpu())
+            clustering = KMeans(n_clusters=self.num_clusters, random_state=0).fit(BF.cpu(x))
             parts = clustering.labels_
 
         node_clusters = [[] for i in range(self.num_clusters)]
@@ -350,7 +363,7 @@ class Distance2Clusters(SSLTask):
             distance = dict(nx.shortest_path_length(G, source=center))
             for node in distance:
                 self.distance_vec[node][i] = distance[node]
-        self.distance_vec = torch.tensor(self.distance_vec).float().to(self.device)
+        self.distance_vec = BF.to(BF.tensor(self.distance_vec).float(), self.device)
 
     def make_loss(self, embeddings):
         output = self.linear(embeddings)
@@ -361,7 +374,7 @@ class PairwiseAttrSim(SSLTask):
     def __init__(self, hidden_size, k, device):
         super().__init__(device)
         self.k = k
-        self.linear = nn.Linear(hidden_size, 1).to(self.device)
+        self.linear = BF.to(nn.Linear(hidden_size, 1), self.device)
         self.get_attr_sim_cache = False
 
     def get_avg_distance(self, graph, idx_sorted, k, sampled):
@@ -369,7 +382,7 @@ class PairwiseAttrSim(SSLTask):
         num_nodes = graph.num_nodes
 
         self.G = nx.Graph()
-        self.G.add_edges_from(torch.stack(edge_index).cpu().numpy().transpose())
+        self.G.add_edges_from(BF.cpu(BF.stack(edge_index)).numpy().transpose())
         avg_min = 0
         avg_max = 0
         avg_sampled = 0
@@ -407,23 +420,23 @@ class PairwiseAttrSim(SSLTask):
 
         from sklearn.metrics.pairwise import cosine_similarity
 
-        sims = cosine_similarity(x.cpu().numpy())
+        sims = cosine_similarity(BF.cpu(x).numpy())
         idx_sorted = sims.argsort(1)
         self.node_pairs = None
         self.pseudo_labels = None
         sampled = self.sample(self.k, num_nodes)
         for i in range(num_nodes):
             for node in np.hstack((idx_sorted[i, : self.k], idx_sorted[i, -self.k - 1 :], idx_sorted[i, sampled])):
-                pair = torch.tensor([[i, node]])
-                sim = torch.tensor([sims[i][node]])
-                self.node_pairs = pair if self.node_pairs is None else torch.cat([self.node_pairs, pair], 0)
-                self.pseudo_labels = sim if self.pseudo_labels is None else torch.cat([self.pseudo_labels, sim])
+                pair = BF.tensor([[i, node]])
+                sim = BF.tensor([sims[i][node]])
+                self.node_pairs = pair if self.node_pairs is None else BF.cat([self.node_pairs, pair], 0)
+                self.pseudo_labels = sim if self.pseudo_labels is None else BF.cat([self.pseudo_labels, sim])
         print(
             "max k avg distance: {%.4f}, min k avg distance: {%.4f}, sampled k avg distance: {%.4f}"
             % (self.get_avg_distance(graph, idx_sorted, self.k, sampled))
         )
-        self.node_pairs = self.node_pairs.long().to(self.device)
-        self.pseudo_labels = self.pseudo_labels.float().to(self.device)
+        self.node_pairs = BF.to(self.node_pairs.long(), self.device)
+        self.pseudo_labels = BF.to(self.pseudo_labels.float(), self.device)
 
     def sample(self, k, num_nodes):
         sampled = []
@@ -438,5 +451,5 @@ class PairwiseAttrSim(SSLTask):
 
     def make_loss(self, embeddings):
         node_pairs = self.node_pairs
-        output = self.linear(torch.abs(embeddings[node_pairs[0]] - embeddings[node_pairs[1]]))
+        output = self.linear(BF.abs(embeddings[node_pairs[0]] - embeddings[node_pairs[1]]))
         return F.mse_loss(output, self.pseudo_labels, reduction="mean")

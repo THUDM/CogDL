@@ -20,16 +20,14 @@ class STGATDataWrapper(DataWrapper):
     def __init__(self, dataset, **args):
         super(STGATDataWrapper, self).__init__(dataset)
         self.dataset = dataset
-        self.train_prop = args['train_prop']
-        self.val_prop = args['val_prop']
-        self.test_prop = args['test_prop']
-        self.pred_length = args['pred_length']
-        self.n_his = args['n_his']
-        self.n_pred = args['n_pred']
-        self.batch_size = args['batch_size']
+        self.train_prop = args["train_prop"]
+        self.val_prop = args["val_prop"]
+        self.test_prop = args["test_prop"]
+        self.pred_length = args["pred_length"]
+        self.n_his = args["n_his"]
+        self.n_pred = args["n_pred"]
+        self.batch_size = args["batch_size"]
         self.scaler = dataset.data.scaler
-
-
 
     def train_wrapper(self):
         train_data = self.dataLoad()[0]
@@ -62,22 +60,21 @@ class STGATDataWrapper(DataWrapper):
         for i in range(num_obs):
             head = i
             tail = i + n_his
-            x[obs_idx, :, :, :] = data[head: tail].reshape(n_his, num_nodes, 1)
+            x[obs_idx, :, :, :] = data[head:tail].reshape(n_his, num_nodes, 1)
             y[obs_idx] = data[tail + n_pred - 1]
             obs_idx += 1
         return torch.Tensor(x).to(device), torch.Tensor(y).to(device)
-
 
     def dataLoad(self):
         V = self.dataset.data.V
         len_train = round(self.dataset.data.num_samples * self.train_prop)
         len_val = round(self.dataset.data.num_samples * self.val_prop)  # 验证时间段 T*0.02
         len_test = round(self.dataset.data.num_samples * self.test_prop)
-        train = V[: len_train]
-        val = V[len_train: len_train + len_val]
-        test = V[len_train + len_val: len_train + len_val + len_test]  # 测试时间段 T*0.01
+        train = V[:len_train]
+        val = V[len_train : len_train + len_val]
+        test = V[len_train + len_val : len_train + len_val + len_test]  # 测试时间段 T*0.01
 
-        pred_set = V[-(self.n_his + self.n_pred+ 1):]
+        pred_set = V[-(self.n_his + self.n_pred + 1) :]
 
         train = np.nan_to_num(self.scaler.fit_transform(train))
         val = np.nan_to_num(self.scaler.transform(val))
@@ -103,24 +100,9 @@ class STGATDataWrapper(DataWrapper):
 
         return [train_data, val_data, test_data, pred_data]
 
-
     def get_pre_timestamp(self):
         # len_train = round(self.dataset.data.num_samples * self.train_prop)
         # len_val = round(self.dataset.data.num_samples * self.val_prop)
         # pred_set_timestamp = self.dataset.data.timestamp[len_train + len_val: len_train + len_val + self.pred_length][-self.pred_length:]
-        pred_set_timestamp = self.dataset.data.timestamp[-self.pred_length:]
+        pred_set_timestamp = self.dataset.data.timestamp[-self.pred_length :]
         return pred_set_timestamp
-
-
-
-
-
-
-
-
-
-
-
-
-
-

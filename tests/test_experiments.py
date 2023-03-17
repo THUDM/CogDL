@@ -5,8 +5,9 @@ from cogdl.utils import makedirs
 import numpy as np
 import os
 
+
 def test_set_best_config():
-    args = get_default_args(task="node_classification", dataset="citeseer", model="gat")
+    args = get_default_args(task="node_classification", dataset="cora", model="gat")
     args.model = args.model[0]
     args.dataset = args.dataset[0]
     args = set_best_config(args)
@@ -75,34 +76,31 @@ def test_autognn_experiment():
     assert results[("cora", "autognn")][0]["test_acc"] > 0
 
 
-def test_stgcn_experiment():   
+def test_stgcn_experiment():
     root_path = os.path.dirname(os.path.abspath(__file__))
     test_path = root_path + "/test_stgcn/"
 
     if not os.path.exists(test_path):
         makedirs(test_path)
 
-    kwargs = {"epochs":1,
-              "kernel_size":3,
-              "n_his":20,
-              "n_pred":1,
-              "channel_size_list":np.array([[ 1, 4, 4],[4, 4, 4],[4, 4, 4]]),
-              "num_layers":3,
-              "num_nodes":288,
-              "train_prop": 0.1,
-              "val_prop": 0.1,
-              "test_prop": 0.1,
-              "pred_length":288,}
+    kwargs = {
+        "epochs": 1,
+        "kernel_size": 3,
+        "n_his": 20,
+        "n_pred": 1,
+        "channel_size_list": np.array([[1, 4, 4], [4, 4, 4], [4, 4, 4]]),
+        "num_layers": 3,
+        "num_nodes": 288,
+        "train_prop": 0.1,
+        "val_prop": 0.1,
+        "test_prop": 0.1,
+        "pred_length": 288,
+    }
 
-    results =traffic_experiment(
-        dataset="pems-stgcn",
-        model="stgcn",
-        resume_training=False,
-        cpu=True,
-        **kwargs
-    )
+    results = traffic_experiment(dataset="pems-stgcn", model="stgcn", resume_training=False, cpu=True, **kwargs)
     assert ("pems-stgcn", "stgcn") in results
     assert results[("pems-stgcn", "stgcn")][0]["test__metric"] > 0
+
 
 if __name__ == "__main__":
     test_set_best_config()

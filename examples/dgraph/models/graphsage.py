@@ -143,4 +143,3 @@ class SAGE(BaseModel):
         for layer in self.layers:
             x = layer(graph, x)
         return F.log_softmax(x, dim=-1)
-

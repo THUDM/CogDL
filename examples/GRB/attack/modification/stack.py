@@ -34,13 +34,13 @@ class STACK(ModificationAttack):
 
         flip_indicator = 1 - 2 * np.array(adj[tuple(edges_target.T)])[0]
         eigen_scores = np.zeros(len(edges_target))
-        sub_org = np.sqrt(np.sum(eigen_vals ** 2))
+        sub_org = np.sqrt(np.sum(eigen_vals**2))
         for x in range(len(edges_target)):
             i, j = edges_target[x]
             vals_est = eigen_vals + flip_indicator[x] * (
                 2 * eigen_vecs[i] * eigen_vecs[j] - eigen_vals * (eigen_vecs[i] ** 2 + eigen_vecs[j] ** 2)
             )
-            loss_ij = np.abs(sub_org - np.sqrt(np.sum(vals_est ** 2)))
+            loss_ij = np.abs(sub_org - np.sqrt(np.sum(vals_est**2)))
             eigen_scores[x] = loss_ij
         struct_scores = np.expand_dims(eigen_scores, 1)
         flip_edges_idx = np.argsort(struct_scores, axis=0)[::-1]

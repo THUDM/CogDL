@@ -1,11 +1,18 @@
 from typing import Union, Callable
 from abc import abstractmethod
-import torch
+from cogdl import function as BF
+from cogdl.backend import BACKEND
+
+if BACKEND == "jittor":
+    from jittor import nn, Module
+elif BACKEND == "torch":
+    import torch.nn as nn
+    from torch.nn import Module
 from cogdl.wrappers.tools.wrapper_utils import merge_batch_indexes
 from cogdl.utils.evaluator import setup_evaluator, Accuracy, MultiLabelMicroF1
 
 
-class ModelWrapper(torch.nn.Module):
+class ModelWrapper(Module):
     @staticmethod
     def add_args(parser):
         pass
@@ -37,12 +44,12 @@ class ModelWrapper(torch.nn.Module):
     def test_step(self, subgraph):
         pass
 
-    def evaluate(self, pred: torch.Tensor, labels: torch.Tensor, metric: Union[str, Callable] = "auto"):
+    def evaluate(self, pred, labels, metric: Union[str, Callable] = "auto"):  
         """
         method: str or callable function,
         """
-        pred = pred.cpu()
-        labels = labels.cpu()
+        pred = BF.cpu(pred)
+        labels = BF.cpu(labels)
         if self._evaluator is None:
             if metric == "auto":
                 if len(labels.shape) > 1:
@@ -142,7 +149,7 @@ class ModelWrapper(torch.nn.Module):
     def device(self):
         # for k in self._model_key_:
         #     return next(getattr(self, k).parameters()).device
-        return next(self.parameters()).device
+        return BF.device(next(self.parameters()))
 
     @property
     def evaluation_metric(self):
@@ -170,7 +177,7 @@ class ModelWrapper(torch.nn.Module):
     def _find_model(self):
         models = []
         for k, v in self.__dict__.items():
-            if isinstance(v, torch.nn.Module):
+            if isinstance(v, Module):
                 models.append(k)
         self.__model_keys__ = models
 

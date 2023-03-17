@@ -13,6 +13,7 @@ from cogdl.data import Graph
 from cogdl.datasets import build_dataset_from_name, NodeDataset
 from cogdl.models import build_model
 from cogdl.options import get_default_args
+from cogdl.backend import BACKEND
 if BACKEND == "jittor":
     from cogdl.experiments_jt import train
 elif BACKEND == "torch":

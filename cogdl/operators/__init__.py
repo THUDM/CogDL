@@ -1,16 +1,8 @@
-from .ops import (
-    s_add_e,
-    s_mul_e,
-    s_sub_e,
-    s_add_e_sum,
-    s_mul_e_sum,
-    s_sub_e_sum,
-    s_add_e_mean,
-    s_mul_e_mean,
-    s_sub_e_mean,
-    s_add_t,
-    s_mul_t,
-    s_dot_t,
-    s_sub_t,
-    s_div_t,
-)
+from cogdl.backend import BACKEND
+
+if BACKEND == "jittor":
+    from .jittor import *
+elif BACKEND == "torch":
+    from .torch import *
+else:
+    raise ("Unsupported backend:", BACKEND)

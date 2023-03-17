@@ -15,14 +15,12 @@ import torch
 from cogdl.layers import GCNLayer
 from cogdl.models import BaseModel
 
+
 class JKNet(BaseModel):
     def __init__(self, in_feats, out_feats, hidden_size, num_layers):
         super(JKNet, self).__init__()
         shapes = [in_feats] + [hidden_size] * num_layers
-        self.layers = nn.ModuleList([
-            GCNLayer(shapes[i], shapes[i+1])
-            for i in range(num_layers)
-        ])
+        self.layers = nn.ModuleList([GCNLayer(shapes[i], shapes[i + 1]) for i in range(num_layers)])
         self.fc = nn.Linear(hidden_size * num_layers, out_feats)
 
     def forward(self, graph):
@@ -31,10 +29,11 @@ class JKNet(BaseModel):
         h = graph.x
         out = []
         for layer in self.layers:
-            h = layer(graph,h)
+            h = layer(graph, h)
             out.append(h)
         out = torch.cat(out, dim=1)
         return self.fc(out)
+
 
 # %%
 # 定义你的 GNN 模块
@@ -44,6 +43,7 @@ class JKNet(BaseModel):
 import torch
 from cogdl.utils import spmm
 
+
 class GCNLayer(torch.nn.Module):
     """
     Args:
@@ -52,6 +52,7 @@ class GCNLayer(torch.nn.Module):
         out_feats: int
             Output feature size
     """
+
     def __init__(self, in_feats, out_feats):
         super(GCNLayer, self).__init__()
         self.fc = torch.nn.Linear(in_feats, out_feats)
@@ -61,6 +62,7 @@ class GCNLayer(torch.nn.Module):
         h = spmm(graph, h)
         return h
 
+
 # %%
 # 将自定义的GNN模型与Cogdl一起使用
 # ------------------------------------
@@ -68,6 +70,7 @@ class GCNLayer(torch.nn.Module):
 
 from cogdl import experiment
 from cogdl.datasets import build_dataset_from_name
+
 data = build_dataset_from_name("cora")[0]
 # Use the JKNet model as defined above
 model = JKNet(data.num_features, data.num_classes, 32, 4)

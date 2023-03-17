@@ -1,8 +1,7 @@
 import importlib
-import torch
 import inspect
-
-from cogdl.data.dataset import Dataset
+from cogdl import function as BF
+from cogdl.data import Dataset
 from .customized_data import NodeDataset, GraphDataset, generate_random_graph
 
 
@@ -63,8 +62,8 @@ def build_dataset_from_name(dataset, split=0):
 def build_dataset_pretrain(args):
     args.pretrain = False
     dataset_names = args.dataset
-    if ' ' in args.dataset:
-        datasets_name = args.dataset.split(' ')
+    if " " in args.dataset:
+        datasets_name = args.dataset.split(" ")
         dataset = []
         for dataset_ in datasets_name:
             args.dataset = dataset_
@@ -108,7 +107,7 @@ def build_dataset_from_path(data_path, dataset=None):
 
     if dataset is None:
         try:
-            return torch.load(data_path)
+            return BF.load(data_path)
         except Exception as e:
             print(e)
             exit(0)

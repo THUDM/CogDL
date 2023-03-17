@@ -1,7 +1,8 @@
-import sys,os
+import sys, os
+
 add_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(add_path.split('examples')[0])
-print(add_path.split('examples')[0])
+sys.path.append(add_path.split("examples")[0])
+print(add_path.split("examples")[0])
 
 import os.path as osp
 from cogdl import experiment
@@ -28,8 +29,6 @@ from cogdl.trainer import Trainer
 import numpy as np
 
 
-
-
 def output_results(results_dict, tablefmt="github"):
     variant = list(results_dict.keys())[0]
     col_names = ["Variant"] + list(results_dict[variant][-1].keys())
@@ -50,7 +49,6 @@ def train(args):  # noqa: C901
     # dataset='cora', model='gcn', seed=1, split=0
     set_random_seed(args.seed)
 
-
     model_name = args.model if isinstance(args.model, str) else args.model.model_name
     dw_name = args.dw if isinstance(args.dw, str) else args.dw.__name__
     mw_name = args.mw if isinstance(args.mw, str) else args.mw.__name__
@@ -62,7 +60,6 @@ def train(args):  # noqa: C901
 |-------------------------------------{'-' * (
                     len(str(args.dataset)) + len(model_name) + len(dw_name) + len(mw_name))}|"""
     )
-
 
     dataset = build_dataset(args)
     mw_class = fetch_model_wrapper(args.mw)
@@ -77,13 +74,13 @@ def train(args):  # noqa: C901
     data_wrapper_args = dict()
     model_wrapper_args = dict()
 
-    data_wrapper_args['batch_size'] = args.batch_size
-    data_wrapper_args['n_his'] = args.n_his
-    data_wrapper_args['n_pred'] = args.n_pred
-    data_wrapper_args['train_prop'] = args.train_prop
-    data_wrapper_args['val_prop'] = args.val_prop
-    data_wrapper_args['test_prop'] = args.test_prop
-    data_wrapper_args['pred_length'] = args.pred_length
+    data_wrapper_args["batch_size"] = args.batch_size
+    data_wrapper_args["n_his"] = args.n_his
+    data_wrapper_args["n_pred"] = args.n_pred
+    data_wrapper_args["train_prop"] = args.train_prop
+    data_wrapper_args["val_prop"] = args.val_prop
+    data_wrapper_args["test_prop"] = args.test_prop
+    data_wrapper_args["pred_length"] = args.pred_length
 
     dataset_wrapper = dw_class(dataset, **data_wrapper_args)
 
@@ -108,7 +105,6 @@ def train(args):  # noqa: C901
         args.num_entities = len(torch.unique(torch.stack(dataset.data.edge_index)))
         args.num_rels = len(torch.unique(dataset.data.edge_attr))
 
-
     # setup model
     if isinstance(args.model, nn.Module):
         model = args.model
@@ -128,11 +124,11 @@ def train(args):  # noqa: C901
         optimizer_cfg["hidden_size"] = args.hidden_size
 
     # setup model_wrapper
-    model_wrapper_args['edge_index'] = dataset.data.edge_index
-    model_wrapper_args['edge_weight'] = dataset.data.edge_weight
-    model_wrapper_args['scaler'] = dataset_wrapper.scaler
-    model_wrapper_args['node_ids'] = dataset.data.node_ids
-    model_wrapper_args['pred_timestamp'] = dataset_wrapper.get_pre_timestamp()
+    model_wrapper_args["edge_index"] = dataset.data.edge_index
+    model_wrapper_args["edge_weight"] = dataset.data.edge_weight
+    model_wrapper_args["scaler"] = dataset_wrapper.scaler
+    model_wrapper_args["node_ids"] = dataset.data.node_ids
+    model_wrapper_args["pred_timestamp"] = dataset_wrapper.get_pre_timestamp()
     if isinstance(args.mw, str) and "embedding" in args.mw:
         model_wrapper = mw_class(model, **model_wrapper_args)
     else:
@@ -203,23 +199,26 @@ def experiment(dataset, model=None, **kwargs):
     args.model = model
     return raw_experiment(args)
 
+
 def files_exist(files):
     return all([osp.exists(f) for f in files])
 
 
 if __name__ == "__main__":
 
-    kwargs = {"epochs":1,
-              "kernel_size":3,
-              "n_his":20,
-              "n_pred":1,
-              "channel_size_list":np.array([[ 1, 4, 8],[8, 8, 8],[8, 4, 8]]),
-              "num_layers":3,
-              "num_nodes":288,
-              "train_prop": 0.1,
-              "val_prop": 0.1,
-              "test_prop": 0.1,
-              "pred_length":288,}
+    kwargs = {
+        "epochs": 1,
+        "kernel_size": 3,
+        "n_his": 20,
+        "n_pred": 1,
+        "channel_size_list": np.array([[1, 4, 8], [8, 8, 8], [8, 4, 8]]),
+        "num_layers": 3,
+        "num_nodes": 288,
+        "train_prop": 0.1,
+        "val_prop": 0.1,
+        "test_prop": 0.1,
+        "pred_length": 288,
+    }
 
     # experiment(dataset="pems-stgcn", model="stgcn", resume_training=False, **kwargs)
     experiment(dataset="pems-stgat", model="stgat", resume_training=False, **kwargs)

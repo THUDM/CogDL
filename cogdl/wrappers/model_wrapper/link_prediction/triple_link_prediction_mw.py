@@ -46,7 +46,10 @@ class TripleModelWrapper(ModelWrapper):
 
         if self.args.negative_adversarial_sampling:
             # In self-adversarial sampling, we do not apply back-propagation on the sampling weight
-            negative_score = (F.softmax(negative_score * self.args.adversarial_temperature, dim=1).detach() * F.logsigmoid(-negative_score)).sum(dim=1)
+            negative_score = (
+                F.softmax(negative_score * self.args.adversarial_temperature, dim=1).detach()
+                * F.logsigmoid(-negative_score)
+            ).sum(dim=1)
         else:
             negative_score = F.logsigmoid(-negative_score).mean(dim=1)
 
@@ -74,14 +77,26 @@ class TripleModelWrapper(ModelWrapper):
     def test_step(self, subgraph):
         print("Test Dataset:")
         metrics = self.eval_step(subgraph)
-        return dict(mrr=metrics["MRR"], mr=metrics["MR"], hits1=metrics["HITS@1"], hits3=metrics["HITS@3"], hits10=metrics["HITS@10"])
+        return dict(
+            mrr=metrics["MRR"],
+            mr=metrics["MR"],
+            hits1=metrics["HITS@1"],
+            hits3=metrics["HITS@3"],
+            hits10=metrics["HITS@10"],
+        )
 
     def val_step(self, subgraph):
         print("Val Dataset:")
         metrics = self.eval_step(subgraph)
-        return dict(mrr=metrics["MRR"], mr=metrics["MR"], hits1=metrics["HITS@1"], hits3=metrics["HITS@3"], hits10=metrics["HITS@10"])
+        return dict(
+            mrr=metrics["MRR"],
+            mr=metrics["MR"],
+            hits1=metrics["HITS@1"],
+            hits3=metrics["HITS@3"],
+            hits10=metrics["HITS@10"],
+        )
 
-    def eval_step(self, subgraph):        
+    def eval_step(self, subgraph):
         test_dataloader_head, test_dataloader_tail = subgraph
         logs = []
         test_dataset_list = [test_dataloader_head, test_dataloader_tail]

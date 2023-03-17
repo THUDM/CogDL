@@ -3,6 +3,7 @@
 #include <vector>
 #include <pybind11/pybind11.h>
 #include <c10/cuda/CUDAGuard.h>
+#include "../backend.h"
 
 torch::Tensor spmm_cuda(
     torch::Tensor rowptr,
@@ -25,9 +26,10 @@ torch::Tensor csr_spmm(
     torch::Tensor A_csrVal,
     torch::Tensor B)
 {
+    if (backend()==0){
     assert(A_rowptr.device().type() == torch::kCUDA);
     assert(A_colind.device().type() == torch::kCUDA);
-    assert(A_csrVal.device().type() == torch::kCUDA);
+    assert(A_csrVal.device().type() == torch::kCUDA);}
     assert(B.device().type() == torch::kCUDA);
     assert(A_rowptr.is_contiguous());
     assert(A_colind.is_contiguous());
@@ -74,9 +76,10 @@ std::vector<torch::Tensor> csr2csc(
     torch::Tensor colind,
     torch::Tensor csr_data)
 {
+    if (backend()==0){
     assert(rowptr.device().type() == torch::kCUDA);
     assert(colind.device().type() == torch::kCUDA);
-    assert(csr_data.device().type() == torch::kCUDA);
+    assert(csr_data.device().type() == torch::kCUDA);}
     assert(rowptr.is_contiguous());
     assert(colind.is_contiguous());
     assert(csr_data.is_contiguous());

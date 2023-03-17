@@ -1,7 +1,7 @@
 import torch
 
 from .graph_classification_dw import GraphClassificationDataWrapper
-from cogdl.models.nn.patchy_san import get_single_feature
+from cogdl.models.torch.nn.patchy_san import get_single_feature
 
 
 class PATCHY_SAN_DataWrapper(GraphClassificationDataWrapper):

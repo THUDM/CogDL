@@ -5,7 +5,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import torch
+from cogdl import function as BF
 from grave import plot_network, use_attributes
 from tabulate import tabulate
 
@@ -13,7 +13,10 @@ from cogdl.data import Graph
 from cogdl.datasets import build_dataset_from_name, NodeDataset
 from cogdl.models import build_model
 from cogdl.options import get_default_args
-from cogdl.experiments import train
+if BACKEND == "jittor":
+    from cogdl.experiments_jt import train
+elif BACKEND == "torch":
+    from cogdl.experiments import train
 from cogdl.datasets.rec_data import build_recommendation_data
 
 
@@ -84,7 +87,7 @@ class DatasetVisualPipeline(DatasetPipeline):
         data = dataset[0]
 
         G = nx.Graph()
-        edge_index = torch.stack(data.edge_index)
+        edge_index = BF.stack(data.edge_index)
         G.add_edges_from([tuple(edge_index[:, i].numpy()) for i in range(edge_index.shape[1])])
 
         if seed == -1:
@@ -182,7 +185,7 @@ class GenerateEmbeddingPipeline(Pipeline):
     def __call__(self, edge_index, x=None, edge_weight=None):
         if self.method_type == "emb":
             if isinstance(edge_index, np.ndarray):
-                edge_index = torch.from_numpy(edge_index)
+                edge_index = BF.from_numpy(edge_index)
             edge_index = (edge_index[:, 0], edge_index[:, 1])
             data = Graph(edge_index=edge_index, edge_weight=edge_weight)
             self.model = build_model(self.args)
@@ -193,17 +196,17 @@ class GenerateEmbeddingPipeline(Pipeline):
                 print("No input node features, use random features instead.")
                 x = np.random.randn(num_nodes, self.num_features)
             if isinstance(x, np.ndarray):
-                x = torch.from_numpy(x).float()
+                x = BF.from_numpy(x).float()
             if isinstance(edge_index, np.ndarray):
-                edge_index = torch.from_numpy(edge_index)
+                edge_index = BF.from_numpy(edge_index)
             edge_index = (edge_index[:, 0], edge_index[:, 1])
             data = Graph(x=x, edge_index=edge_index, edge_weight=edge_weight)
-            torch.save(data, self.data_path)
+            BF.save(data, self.data_path)
             dataset = NodeDataset(path=self.data_path, scale_feat=False, metric="accuracy")
             self.args.dataset = dataset
             model = train(self.args)
-            embeddings = model.embed(data.to(model.device))
-            embeddings = embeddings.detach().cpu().numpy()
+            embeddings = model.embed(BF.to(data, BF.device(model)))
+            embeddings = BF.cpu(embeddings.detach()).numpy()
 
         return embeddings
 
@@ -218,7 +221,7 @@ class RecommendationPipepline(Pipeline):
             data = build_recommendation_data("custom", data, val_data, test_data)
             self.data_path = kwargs.get("data_path", "tmp_data.pt")
             self.batch_size = kwargs.get("batch_size", 128)
-            torch.save(data, self.data_path)
+            BF.save(data, self.data_path)
             self.dataset = NodeDataset(path=self.data_path, scale_feat=False)
         elif "dataset" in kwargs:
             dataset = kwargs.pop("dataset")
@@ -244,7 +247,7 @@ class RecommendationPipepline(Pipeline):
 
     def __call__(self, user_batch, **kwargs):
         user_batch = np.array(user_batch)
-        user_batch = torch.from_numpy(user_batch).to(self.model.device)
+        user_batch = BF.to(BF.from_numpy(user_batch), self.model)
         u_g_embeddings = self.user_emb[user_batch]
 
         # batch-item test
@@ -256,10 +259,10 @@ class RecommendationPipepline(Pipeline):
             i_start = i_batch_id * self.batch_size
             i_end = min((i_batch_id + 1) * self.batch_size, self.n_items)
 
-            item_batch = torch.LongTensor(np.array(range(i_start, i_end))).view(i_end - i_start).to(self.model.device)
+            item_batch = BF.to(BF.LongTensor(np.array(range(i_start, i_end))).view(i_end - i_start), self.model)
             i_g_embddings = self.item_emb[item_batch]
 
-            i_rate_batch = self.model.rating(u_g_embeddings, i_g_embddings).detach().cpu()
+            i_rate_batch = BF.cpu(self.model.rating(u_g_embeddings, i_g_embddings).detach())
 
             rate_batch[:, i_start:i_end] = i_rate_batch
             i_count += i_rate_batch.shape[1]

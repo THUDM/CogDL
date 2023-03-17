@@ -1,4 +1,9 @@
-import torch
+from cogdl.backend import BACKEND
+
+if BACKEND == "jittor":
+    import jittor as tj
+elif BACKEND == "torch":
+    import torch as tj
 from cogdl.wrappers.model_wrapper import ModelWrapper
 
 
@@ -52,4 +57,4 @@ class PPRGoModelWrapper(ModelWrapper):
 
     def setup_optimizer(self):
         cfg = self.optimizer_cfg
-        return torch.optim.Adam(self.model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
+        return tj.optim.Adam(self.model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])

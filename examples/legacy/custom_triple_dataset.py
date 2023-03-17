@@ -12,6 +12,7 @@ class Test_kgDatset(KnowledgeGraphDataset):
     def download(self):
         pass
 
-if __name__ == "__main__":   
-    dataset =Test_kgDatset()
-    experiment(dataset=dataset, model="transe",do_valid=False,do_test=True,epochs=500,eval_step=501)
+
+if __name__ == "__main__":
+    dataset = Test_kgDatset()
+    experiment(dataset=dataset, model="transe", do_valid=False, do_test=True, epochs=500, eval_step=501)

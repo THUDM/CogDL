@@ -46,7 +46,7 @@ class GCCModelWrapper(ModelWrapper):
         save_model_path="saved",
         load_model_path="",
         freeze=False,
-        pretrain=False
+        pretrain=False,
     ):
         super(GCCModelWrapper, self).__init__()
         self.model = model
@@ -67,7 +67,7 @@ class GCCModelWrapper(ModelWrapper):
         self.freeze = freeze
         self.save_model_path = save_model_path
         self.load_model_path = load_model_path
-        
+
         if finetune:
             self.linear = nn.Linear(self.output_size, num_classes)
         else:
@@ -83,6 +83,7 @@ class GCCModelWrapper(ModelWrapper):
                 classname = m.__class__.__name__
                 if classname.find("BatchNorm") != -1:
                     m.train()
+
             self.model_ema.apply(set_bn_train)
             return self.train_step_pretraining(batch)
         elif self.freeze:
@@ -91,7 +92,7 @@ class GCCModelWrapper(ModelWrapper):
     def train_step_pretraining(self, batch):
         # out = self.train_step_freeze(batch)
         graph_q, graph_k = batch
-        
+
         # ===================Moco forward=====================
         feat_q = self.model(graph_q)
         with torch.no_grad():
@@ -101,7 +102,9 @@ class GCCModelWrapper(ModelWrapper):
         assert feat_q.shape == (graph_q.batch_size, self.output_size)
         moment_update(self.model, self.model_ema, self.momentum)
 
-        loss = self.criterion(out,)
+        loss = self.criterion(
+            out,
+        )
         return loss
 
     def train_step_finetune(self, batch):
@@ -111,7 +114,7 @@ class GCCModelWrapper(ModelWrapper):
         # loss = self.default_loss_fn(pred, y)
         loss = self.criterion(pred, y)
         return loss
-    
+
     def ge_step(self, batch):
         graph_q, graph_k = batch
         with torch.no_grad():
@@ -127,11 +130,11 @@ class GCCModelWrapper(ModelWrapper):
         if self.freeze:
             graph_q, graph_k, y = batch
             embeddings = self.ge_step((graph_q, graph_k))
-            
-            if len(y.shape) == 1: 
+
+            if len(y.shape) == 1:
                 num_classes = y.max().cpu().item() + 1
                 y = nn.functional.one_hot(y, num_classes)
-        
+
             dic_results = evaluate_nc(embeddings, y.cpu(), self.num_shuffle)
             self.note("Micro-F1_mean", dic_results["Micro-F1_mean"])
         elif self.finetune:
@@ -169,7 +172,9 @@ class GCCModelWrapper(ModelWrapper):
                 weight_decay=weight_decay,
             )
         else:
-            optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay, betas=betas if betas else (0.9, 0.999))
+            optimizer = torch.optim.Adam(
+                self.model.parameters(), lr=lr, weight_decay=weight_decay, betas=betas if betas else (0.9, 0.999)
+            )
         optimizer = LinearOptimizer(optimizer, warm_steps, epochs * (total // batch_size), init_lr=lr)
         return optimizer
 
@@ -240,7 +245,7 @@ def evaluate_nc(features_matrix, label_matrix, num_shuffle):
         X_test = features_matrix[test_idx]
         y_test = label_matrix[test_idx]
 
-        clf = TopKRanker(LogisticRegression(solver='liblinear', C=1000))  # max_iter=1000
+        clf = TopKRanker(LogisticRegression(solver="liblinear", C=1000))  # max_iter=1000
         clf.fit(X_train, y_train)
 
         # find out how many labels should be predicted
@@ -251,6 +256,9 @@ def evaluate_nc(features_matrix, label_matrix, num_shuffle):
     # return "Micro-F1_mean", sum(all_results.values())/len(all_results)
 
     return dict(
-        ("Micro-F1_mean", sum(all_results[train_percent]) / len(all_results[train_percent]),)
+        (
+            "Micro-F1_mean",
+            sum(all_results[train_percent]) / len(all_results[train_percent]),
+        )
         for train_percent in sorted(all_results.keys())
     )

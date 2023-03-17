@@ -21,14 +21,14 @@ class PseudoRanger(torch.utils.data.Dataset):
 
 class AdjSampler(torch.utils.data.DataLoader):
     def __init__(self, graph, sizes=[2, 2], training=True, *args, **kwargs):
-        
+
         self.graph = copy.deepcopy(graph)
         self.sizes = sizes
         self.degree = graph.degrees()
         self.diag = self._sparse_diagonal_value(graph)
         self.training = training
         if training:
-            idx = torch.where(graph['train_mask'])[0]
+            idx = torch.where(graph["train_mask"])[0]
         else:
             idx = torch.arange(0, graph.x.shape[0])
         self.dataset = PseudoRanger(idx.shape[0])
@@ -78,7 +78,7 @@ class AdjSampler(torch.utils.data.DataLoader):
 
             return torch.tensor(idx), (sample_ids, sample_adjs), (full_ids, full_adjs)
         else:
-            # only return full adj in Evalution phase 
+            # only return full adj in Evalution phase
             sample_id = torch.tensor(idx)
             full_id, full_adj = self.graph.sample_adj(sample_id, -1)
             return sample_id, full_id, full_adj

@@ -4,7 +4,7 @@ models
 BaseModel
 ---------
 
-.. automodule:: cogdl.models.base_model
+.. automodule:: cogdl.models.torch.base_model
     :members:
     :undoc-members:
     :show-inheritance:
@@ -13,92 +13,92 @@ BaseModel
 Embedding Model
 ---------------
 
-.. autoclass:: cogdl.models.emb.hope.HOPE
+.. autoclass:: cogdl.models.torch.emb.hope.HOPE
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.spectral.Spectral
+.. autoclass:: cogdl.models.torch.emb.spectral.Spectral
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.hin2vec.Hin2vec
+.. autoclass:: cogdl.models.torch.emb.hin2vec.Hin2vec
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.netmf.NetMF
+.. autoclass:: cogdl.models.torch.emb.netmf.NetMF
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.deepwalk.DeepWalk
+.. autoclass:: cogdl.models.torch.emb.deepwalk.DeepWalk
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.gatne.GATNE
+.. autoclass:: cogdl.models.torch.emb.gatne.GATNE
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.dgk.DeepGraphKernel
+.. autoclass:: cogdl.models.torch.emb.dgk.DeepGraphKernel
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.grarep.GraRep
+.. autoclass:: cogdl.models.torch.emb.grarep.GraRep
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.dngr.DNGR
+.. autoclass:: cogdl.models.torch.emb.dngr.DNGR
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.pronepp.ProNEPP
+.. autoclass:: cogdl.models.torch.emb.pronepp.ProNEPP
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.graph2vec.Graph2Vec
+.. autoclass:: cogdl.models.torch.emb.graph2vec.Graph2Vec
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.metapath2vec.Metapath2vec
+.. autoclass:: cogdl.models.torch.emb.metapath2vec.Metapath2vec
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.node2vec.Node2vec
+.. autoclass:: cogdl.models.torch.emb.node2vec.Node2vec
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.pte.PTE
+.. autoclass:: cogdl.models.torch.emb.pte.PTE
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.netsmf.NetSMF
+.. autoclass:: cogdl.models.torch.emb.netsmf.NetSMF
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.line.LINE
+.. autoclass:: cogdl.models.torch.emb.line.LINE
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.sdne.SDNE
+.. autoclass:: cogdl.models.torch.emb.sdne.SDNE
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.emb.prone.ProNE
+.. autoclass:: cogdl.models.torch.emb.prone.ProNE
     :members:
     :undoc-members:
     :show-inheritance:
@@ -107,177 +107,177 @@ Embedding Model
 GNN Model
 ---------
 
-.. autoclass:: cogdl.models.nn.dgi.DGIModel
+.. autoclass:: cogdl.models.torch.nn.dgi.DGIModel
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.mvgrl.MVGRL
+.. autoclass:: cogdl.models.torch.nn.mvgrl.MVGRL
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.patchy_san.PatchySAN
+.. autoclass:: cogdl.models.torch.nn.patchy_san.PatchySAN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.gcn.GCN
+.. autoclass:: cogdl.models.torch.nn.gcn.GCN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.gdc_gcn.GDC_GCN
+.. autoclass:: cogdl.models.torch.nn.gdc_gcn.GDC_GCN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.graphsage.Graphsage
+.. autoclass:: cogdl.models.torch.nn.graphsage.Graphsage
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.compgcn.LinkPredictCompGCN
+.. autoclass:: cogdl.models.torch.nn.compgcn.LinkPredictCompGCN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.drgcn.DrGCN
+.. autoclass:: cogdl.models.torch.nn.drgcn.DrGCN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.graph_unet.GraphUnet
+.. autoclass:: cogdl.models.torch.nn.graph_unet.GraphUnet
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.gcnmix.GCNMix
+.. autoclass:: cogdl.models.torch.nn.gcnmix.GCNMix
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.diffpool.DiffPool
+.. autoclass:: cogdl.models.torch.nn.diffpool.DiffPool
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.gcnii.GCNII
+.. autoclass:: cogdl.models.torch.nn.gcnii.GCNII
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.sign.MLP
+.. autoclass:: cogdl.models.torch.nn.sign.MLP
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.mixhop.MixHop
+.. autoclass:: cogdl.models.torch.nn.mixhop.MixHop
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.gat.GAT
+.. autoclass:: cogdl.models.torch.nn.gat.GAT
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.han.HAN
+.. autoclass:: cogdl.models.torch.nn.han.HAN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.ppnp.PPNP
+.. autoclass:: cogdl.models.torch.nn.ppnp.PPNP
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.grace.GRACE
+.. autoclass:: cogdl.models.torch.nn.grace.GRACE
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.pprgo.PPRGo
+.. autoclass:: cogdl.models.torch.nn.pprgo.PPRGo
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.gin.GIN
+.. autoclass:: cogdl.models.torch.nn.gin.GIN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.grand.Grand
+.. autoclass:: cogdl.models.torch.nn.grand.Grand
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.gtn.GTN
+.. autoclass:: cogdl.models.torch.nn.gtn.GTN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.rgcn.LinkPredictRGCN
+.. autoclass:: cogdl.models.torch.nn.rgcn.LinkPredictRGCN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.deepergcn.DeeperGCN
+.. autoclass:: cogdl.models.torch.nn.deepergcn.DeeperGCN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.drgat.DrGAT
+.. autoclass:: cogdl.models.torch.nn.drgat.DrGAT
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.infograph.InfoGraph
+.. autoclass:: cogdl.models.torch.nn.infograph.InfoGraph
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.dropedge_gcn.DropEdge_GCN
+.. autoclass:: cogdl.models.torch.nn.dropedge_gcn.DropEdge_GCN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.disengcn.DisenGCN
+.. autoclass:: cogdl.models.torch.nn.disengcn.DisenGCN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.mlp.MLP
+.. autoclass:: cogdl.models.torch.nn.mlp.MLP
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.sgc.sgc
+.. autoclass:: cogdl.models.torch.nn.sgc.sgc
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.sortpool.SortPool
+.. autoclass:: cogdl.models.torch.nn.sortpool.SortPool
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.srgcn.SRGCN
+.. autoclass:: cogdl.models.torch.nn.srgcn.SRGCN
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.unsup_graphsage.SAGE
+.. autoclass:: cogdl.models.torch.nn.unsup_graphsage.SAGE
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.daegc.DAEGC
+.. autoclass:: cogdl.models.torch.nn.daegc.DAEGC
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.nn.agc.AGC
+.. autoclass:: cogdl.models.torch.nn.agc.AGC
     :members:
     :undoc-members:
     :show-inheritance:

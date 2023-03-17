@@ -70,7 +70,7 @@ class GCCDataset(Dataset):
                     # to undirected
                     edge_list.append([node2id[x], node2id[y]])
                     edge_list.append([node2id[y], node2id[x]])
-        edge_list = BF.tensor(edge_list, dtype=BF.dtype_dict["long"]).t()
+        edge_list = BF.LongTensor(edge_list).t()
 
         name_dict = dict()
         with open(dict_path) as f:

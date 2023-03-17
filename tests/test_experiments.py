@@ -7,7 +7,7 @@ import os
 
 
 def test_set_best_config():
-    args = get_default_args(task="node_classification", dataset="cora", model="gat")
+    args = get_default_args(task="node_classification", dataset="citeseer", model="gat")
     args.model = args.model[0]
     args.dataset = args.dataset[0]
     args = set_best_config(args)

@@ -286,7 +286,7 @@ GNN Model
 Model Module
 ------------
 
-.. automodule:: cogdl.models
+.. automodule:: cogdl.models.torch
     :members:
     :undoc-members:
     :show-inheritance:

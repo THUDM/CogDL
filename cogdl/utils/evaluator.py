@@ -181,10 +181,9 @@ def multilabel_f1(y_pred, y_true, sigmoid=False):
 
 def multiclass_f1(y_pred, y_true):
     y_true = BF.squeeze(y_true).long()
-    preds = BF.argmax(BF.argmax(y_pred, 1))
+    preds = BF.argmax(y_pred, 1)
     preds = BF.cpu(preds).detach().numpy()
     labels = BF.cpu(y_true).detach().numpy()
-    print("--------",preds, labels)
     micro = f1_score(labels, preds, average="micro")
     return micro
 

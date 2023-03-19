@@ -267,10 +267,10 @@ GNN Model
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: cogdl.models.torch.nn.unsup_graphsage.SAGE
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. .. autoclass:: cogdl.models.torch.nn.unsup_graphsage.SAGE
+..     :members:
+..     :undoc-members:
+..     :show-inheritance:
 
 .. autoclass:: cogdl.models.torch.nn.daegc.DAEGC
     :members:

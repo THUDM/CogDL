@@ -1,6 +1,10 @@
-import torch
-import torch.nn.functional as F
+from cogdl import function as BF
+from cogdl.backend import BACKEND
 
+if BACKEND == "jittor":
+    from jittor import nn as F
+elif BACKEND == "torch":
+    import torch.nn.functional as F
 from cogdl.wrappers.model_wrapper.node_classification.node_classification_mw import NodeClfModelWrapper
 
 
@@ -39,7 +43,7 @@ class GrandModelWrapper(NodeClfModelWrapper):
         loss_train = loss_train / self.sample
 
         if len(graph.y.shape) > 1:
-            output_list = [torch.sigmoid(x) for x in output_list]
+            output_list = [BF.sigmoid(x) for x in output_list]
         else:
             output_list = [F.log_softmax(x, dim=-1) for x in output_list]
         loss_consis = self.consistency_loss(output_list, graph.train_mask)
@@ -48,15 +52,15 @@ class GrandModelWrapper(NodeClfModelWrapper):
 
     def consistency_loss(self, logps, train_mask):
         temp = self.temperature
-        ps = [torch.exp(p)[~train_mask] for p in logps]
+        ps = [BF.exp(p)[BF.logical_not(train_mask)] for p in logps]
         sum_p = 0.0
         for p in ps:
             sum_p = sum_p + p
         avg_p = sum_p / len(ps)
-        sharp_p = (torch.pow(avg_p, 1.0 / temp) / torch.sum(torch.pow(avg_p, 1.0 / temp), dim=1, keepdim=True)).detach()
+        sharp_p = (BF.pow(avg_p, 1.0 / temp) / BF.sum(BF.pow(avg_p, 1.0 / temp), dim=1, keepdim=True)).detach()
         loss = 0.0
         for p in ps:
-            loss += torch.mean((p - sharp_p).pow(2).sum(1))
+            loss += BF.mean((p - sharp_p).pow(2).sum(1))
         loss = loss / len(ps)
 
         return self.lmbda * loss

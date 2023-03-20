@@ -3,8 +3,7 @@ import pickle as pkl
 import sys
 
 import numpy as np
-import torch
-
+from cogdl import function as BF
 from cogdl.data import Dataset, Graph
 from cogdl.utils import remove_self_loops, download_url, untar, coalesce, Accuracy, CrossEntropyLoss
 
@@ -17,7 +16,7 @@ def parse_index_file(filename):
 
 
 def index_to_mask(index, size):
-    mask = torch.full((size,), False, dtype=torch.bool)
+    mask = BF.full((size,), False, dtype=BF.dtype_dict("bool"))
     mask[index] = True
     return mask
 
@@ -41,14 +40,14 @@ def edge_index_from_dict(graph_dict, num_nodes=None):
     order = np.lexsort((_col, _row))
     edge_index = edge_index[:, order]
 
-    edge_index = torch.tensor(edge_index, dtype=torch.long)
+    edge_index = BF.tensor(edge_index, dtype=BF.dtype_dict("long"))
     # There may be duplicated edges and self loops in the datasets.
     edge_index, _ = remove_self_loops(edge_index)
-    row = torch.cat([edge_index[0], edge_index[1]])
-    col = torch.cat([edge_index[1], edge_index[0]])
+    row = BF.cat([edge_index[0], edge_index[1]])
+    col = BF.cat([edge_index[1], edge_index[0]])
 
     row, col, _ = coalesce(row, col)
-    edge_index = torch.stack([row, col])
+    edge_index = BF.stack([row, col])
     return edge_index
 
 
@@ -63,15 +62,15 @@ def read_planetoid_data(folder, prefix):
             else:
                 objects.append(pkl.load(f))
     test_index = parse_index_file(f"{folder}/ind.{prefix}.{names[-1]}")
-    test_index = torch.Tensor(test_index).long()
-    test_index_reorder = test_index.sort()[0]
+    test_index = BF.FloatTensor(test_index).long()
+    test_index_reorder = BF.sort(test_index)[0]
 
     x, tx, allx, y, ty, ally, graph = tuple(objects)
-    x, tx, allx = tuple([torch.from_numpy(item.todense()).float() for item in [x, tx, allx]])
-    y, ty, ally = tuple([torch.from_numpy(item).float() for item in [y, ty, ally]])
+    x, tx, allx = tuple([BF.from_numpy(item.todense()).float() for item in [x, tx, allx]])
+    y, ty, ally = tuple([BF.from_numpy(item).float() for item in [y, ty, ally]])
 
-    train_index = torch.arange(y.size(0), dtype=torch.long)
-    val_index = torch.arange(y.size(0), y.size(0) + 500, dtype=torch.long)
+    train_index = BF.arange(y.size(0), dtype=BF.dtype_dict("long"))
+    val_index = BF.arange(y.size(0), y.size(0) + 500, dtype=BF.dtype_dict("long"))
 
     if prefix.lower() == "citeseer":
         # There are some isolated nodes in the Citeseer graph, resulting in
@@ -79,16 +78,15 @@ def read_planetoid_data(folder, prefix):
         # as zero vectors to `tx` and `ty`.
         len_test_indices = (test_index.max() - test_index.min()).item() + 1
 
-        tx_ext = torch.zeros(len_test_indices, tx.size(1))
+        tx_ext = BF.zeros(len_test_indices, tx.size(1))
         tx_ext[test_index_reorder - test_index.min(), :] = tx
-        ty_ext = torch.zeros(len_test_indices, ty.size(1))
+        ty_ext = BF.zeros(len_test_indices, ty.size(1))
         ty_ext[test_index_reorder - test_index.min(), :] = ty
 
         tx, ty = tx_ext, ty_ext
 
-    x = torch.cat([allx, tx], dim=0).float()
-    y = torch.cat([ally, ty], dim=0).max(dim=1)[1].long()
-
+    x = BF.cat([allx, tx], dim=0).float()
+    y = BF.as_tensor(BF.argmax(BF.cat([ally, ty], dim=0), dim=1), dtype=BF.dtype_dict("long"))
     x[test_index] = x[test_index_reorder]
     y[test_index] = y[test_index_reorder]
 
@@ -118,7 +116,7 @@ class Planetoid(Dataset):
         self.name = name
 
         super(Planetoid, self).__init__(root)
-        self.data = torch.load(self.processed_paths[0])
+        self.data = BF.load(self.processed_paths[0])
 
         self.split = split
 
@@ -140,7 +138,7 @@ class Planetoid(Dataset):
     @property
     def num_classes(self):
         assert hasattr(self.data, "y")
-        return int(torch.max(self.data.y)) + 1
+        return int(BF.max(self.data.y).item()) + 1
 
     @property
     def num_nodes(self):
@@ -154,7 +152,7 @@ class Planetoid(Dataset):
 
     def process(self):
         data = read_planetoid_data(self.raw_dir, self.name)
-        torch.save(data, self.processed_paths[0])
+        BF.save(data, self.processed_paths[0])
 
     def get(self, idx):
         return self.data
@@ -173,10 +171,10 @@ class Planetoid(Dataset):
 
 
 def normalize_feature(data):
-    x_sum = torch.sum(data.x, dim=1)
+    x_sum = BF.sum(data.x, dim=1)
     x_rev = x_sum.pow(-1).flatten()
-    x_rev[torch.isnan(x_rev)] = 0.0
-    x_rev[torch.isinf(x_rev)] = 0.0
+    x_rev[BF.isnan(x_rev)] = 0.0
+    x_rev[BF.isinf(x_rev)] = 0.0
     data.x = data.x * x_rev.unsqueeze(-1).expand_as(data.x)
     return data
 

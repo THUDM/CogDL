@@ -47,10 +47,9 @@ def set_requires_grad(model, val):
 
 
 class Encoder(nn.Module):
-
     def __init__(self, layer_config, dropout=None, project=False, **kwargs):
         super().__init__()
-        
+
         self.conv1 = GCNLayer(layer_config[0], layer_config[1], bias=False, norm=None)
         self.bn1 = nn.BatchNorm1d(layer_config[1], momentum=0.99)
         self.prelu1 = nn.PReLU()
@@ -59,7 +58,7 @@ class Encoder(nn.Module):
         self.prelu2 = nn.PReLU()
 
     def forward(self, x, graph, edge_weight=None):
-        
+
         # x = self.conv1(x, edge_index, edge_weight=edge_weight)
         x = self.conv1(graph, x)
         x = self.prelu1(self.bn1(x))
@@ -77,7 +76,6 @@ def init_weights(m):
 
 
 class BGRL(nn.Module):
-
     def __init__(self, layer_config, pred_hid, dropout=0.0, moving_average_decay=0.99, epochs=1000, **kwargs):
         super().__init__()
         self.student_encoder = Encoder(layer_config=layer_config, dropout=dropout, **kwargs)
@@ -87,13 +85,13 @@ class BGRL(nn.Module):
         rep_dim = layer_config[-1]
         self.student_predictor = nn.Sequential(nn.Linear(rep_dim, pred_hid), nn.PReLU(), nn.Linear(pred_hid, rep_dim))
         self.student_predictor.apply(init_weights)
-    
+
     def reset_moving_average(self):
         del self.teacher_encoder
         self.teacher_encoder = None
 
     def update_moving_average(self):
-        assert self.teacher_encoder is not None, 'teacher encoder has not been created yet'
+        assert self.teacher_encoder is not None, "teacher encoder has not been created yet"
         update_moving_average(self.teacher_ema_updater, self.teacher_encoder, self.student_encoder)
 
     def forward(self, x1, x2, graph_v1, graph_v2, edge_weight_v1=None, edge_weight_v2=None):
@@ -102,11 +100,11 @@ class BGRL(nn.Module):
 
         v1_pred = self.student_predictor(v1_student)
         v2_pred = self.student_predictor(v2_student)
-        
+
         with torch.no_grad():
             v1_teacher = self.teacher_encoder(x=x1, graph=graph_v1, edge_weight=edge_weight_v1)
             v2_teacher = self.teacher_encoder(x=x2, graph=graph_v2, edge_weight=edge_weight_v2)
-            
+
         loss1 = loss_fn(v1_pred, v2_teacher.detach())
         loss2 = loss_fn(v2_pred, v1_teacher.detach())
 

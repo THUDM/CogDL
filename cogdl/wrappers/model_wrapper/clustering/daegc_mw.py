@@ -100,7 +100,7 @@ class DAEGCModelWrapper(ModelWrapper):
 
     def getP(self, Q):
         P = torch.sum(Q, dim=0).repeat(Q.shape[0], 1)
-        P = Q ** 2 / P
+        P = Q**2 / P
         P = P / (torch.ones(1, self.num_clusters, device=self.device) * torch.sum(P, dim=1).unsqueeze(-1))
         # print("P=", P)
         return P

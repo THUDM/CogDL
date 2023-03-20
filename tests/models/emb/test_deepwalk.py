@@ -7,7 +7,7 @@ import networkx as nx
 import numpy as np
 import torch
 from cogdl.data import Graph
-from cogdl.models.emb.deepwalk import DeepWalk
+from cogdl.models.torch.emb.deepwalk import DeepWalk
 
 
 class Word2VecFake:

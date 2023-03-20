@@ -9,9 +9,10 @@
 
 import torch
 from cogdl.data import Graph
-edges = torch.tensor([[0,1],[1,3],[2,1],[4,2],[0,3]]).t()
-x = torch.tensor([[-1],[0],[1],[2],[3]])
-g = Graph(edge_index=edges,x=x) # equivalent to that above
+
+edges = torch.tensor([[0, 1], [1, 3], [2, 1], [4, 2], [0, 3]]).t()
+x = torch.tensor([[-1], [0], [1], [2], [3]])
+g = Graph(edge_index=edges, x=x)  # equivalent to that above
 print(g.row_indptr)
 
 print(g.col_indices)
@@ -46,14 +47,11 @@ for batch in loader:
 def batch_sum_pooling(x, batch):
     batch_size = int(torch.max(batch.cpu())) + 1
     res = torch.zeros(batch_size, x.size(1)).to(x.device)
-    out = res.scatter_add_(
-        dim=0,
-        index=batch.unsqueeze(-1).expand_as(x),
-        src=x
-       )
+    out = res.scatter_add_(dim=0, index=batch.unsqueeze(-1).expand_as(x), src=x)
     return out
 
     return out
+
 
 # %%
 # 如何编辑一个graph?

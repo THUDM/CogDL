@@ -6,14 +6,19 @@ import random
 import shutil
 from collections import defaultdict
 from urllib import request
-
+from cogdl import function as BF
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from tabulate import tabulate
-
 from .graph_utils import coo2csr_index
+from cogdl.backend import BACKEND
+
+if BACKEND == "jittor":
+    from jittor import nn
+elif BACKEND == "torch":
+    import torch
+    import torch.nn as nn
+else:
+    raise ("Unsupported backend:", BACKEND)
 
 
 class ArgClass(object):
@@ -35,12 +40,7 @@ def update_args_from_dict(args, dic):
 
 
 def set_random_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.determinstic = True
+    return BF.set_random_seed(seed)
 
 
 def untar(path, fname, deleteTar=True):
@@ -150,7 +150,10 @@ def identity_act(input):
 
 def get_activation(act: str, inplace=False):
     if act == "relu":
-        return nn.ReLU(inplace=inplace)
+        if BACKEND == "jittor":
+            return nn.ReLU()
+        elif BACKEND == "torch":
+            return nn.ReLU(inplace=inplace)
     elif act == "sigmoid":
         return nn.Sigmoid()
     elif act == "tanh":
@@ -174,41 +177,44 @@ def get_norm_layer(norm: str, channels: int):
             size of features for normalization
     """
     if norm == "layernorm":
-        return torch.nn.LayerNorm(channels)
+        return nn.LayerNorm(channels)
     elif norm == "batchnorm":
-        return torch.nn.BatchNorm1d(channels)
+        return nn.BatchNorm1d(channels)
     elif norm == "instancenorm":
-        return torch.nn.InstanceNorm1d(channels)
+        return nn.InstanceNorm1d(channels)
     else:
-        return torch.nn.Identity()
+        return nn.Identity()
 
 
 def cycle_index(num, shift):
-    arr = torch.arange(num) + shift
-    arr[-shift:] = torch.arange(shift)
+    arr = BF.arange(num) + shift
+    arr[-shift:] = BF.arange(shift)
     return arr
 
 
 def batch_sum_pooling(x, batch):
-    batch_size = int(torch.max(batch.cpu())) + 1
+    batch_size = int(BF.max(BF.cpu(batch))) + 1
     # batch_size = len(torch.unique(batch))
-    res = torch.zeros(batch_size, x.size(1)).to(x.device)
-    return res.scatter_add_(dim=0, index=batch.unsqueeze(-1).expand_as(x), src=x)
+    res = BF.to(BF.zeros(batch_size, x.size(1)), x)
+    return BF.scatter_add_(res, dim=0, index=batch.unsqueeze(-1).expand_as(x), src=x)
 
 
 def batch_mean_pooling(x, batch):
-    values, counts = torch.unique(batch, return_counts=True)
-    res = torch.zeros(len(values), x.size(1)).to(x.device)
-    res = res.scatter_add_(dim=0, index=batch.unsqueeze(-1).expand_as(x), src=x)
+    values, counts = BF.unique(batch, return_counts=True)
+    res = BF.to(BF.zeros(len(values), x.size(1)), x)
+    res = BF.scatter_add_(res, dim=0, index=batch.unsqueeze(-1).expand_as(x), src=x)
     return res / counts.unsqueeze(-1)
 
 
 def batch_max_pooling(x, batch):
-    if torch.cuda.is_available() and str(x.device) != "cpu":
+    if BF.cuda_is_available() and str(BF.device(x)) != "cpu":
         try:
-            from cogdl.operators.scatter_max import scatter_max
+            if BACKEND == "jittor":
+                from cogdl.operators.jittor.scatter_max import scatter_max
+            elif BACKEND == "torch":
+                from cogdl.operators.torch.scatter_max import scatter_max
 
-            col = torch.arange(0, len(batch)).to(x.device)
+            col = BF.to(BF.arange(0, len(batch), x))
             rowptr, colind = coo2csr_index(batch, col, num_nodes=batch.max().item() + 1)
             x = scatter_max(rowptr.int(), colind.int(), x)
             return x
@@ -217,6 +223,7 @@ def batch_max_pooling(x, batch):
 
     from torch_scatter import scatter_max
 
+    # torch_scatter.scatter(可无out)和tensor.scatter(必须有out,将src按照index与out操作)不一样，
     x, _ = scatter_max(x, batch, dim=0)
     return x
 
@@ -234,7 +241,10 @@ def tabulate_results(results_dict):
             + list(
                 itertools.starmap(
                     lambda x, y: f"{x:.4f}±{y:.4f}",
-                    zip(np.mean(results, axis=0).tolist(), np.std(results, axis=0).tolist(),),
+                    zip(
+                        np.mean(results, axis=0).tolist(),
+                        np.std(results, axis=0).tolist(),
+                    ),
                 )
             )
         )
@@ -291,8 +301,8 @@ def build_model_path(args, model_name):
     if model_name == "gcc":
         if hasattr(args, "pretrain") and args.pretrain:
             model_name_path = "{}_{}_{}_layer_{}_lr_{}_decay_{}_bsz_{}_hid_{}_samples_{}_nce_t_{}_nce_k_{}_rw_hops_{}_restart_prob_{}_aug_{}_ft_{}_deg_{}_pos_{}_momentum_{}".format(
-                "Pretrain" if not args.finetune else "FT", 
-                '_'.join([x.replace('gcc_', '').replace('_', '-') for x in args.dataset.split(' ')]),
+                "Pretrain" if not args.finetune else "FT",
+                "_".join([x.replace("gcc_", "").replace("_", "-") for x in args.dataset.split(" ")]),
                 args.gnn_model,
                 args.num_layers,
                 args.lr,

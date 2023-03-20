@@ -26,4 +26,3 @@ class sgc(BaseModel):
 
     def predict(self, data):
         return self.forward(data)
-

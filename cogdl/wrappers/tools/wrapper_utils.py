@@ -4,11 +4,18 @@ import random
 import numpy as np
 import scipy.sparse as sp
 from collections import defaultdict
+from cogdl import function as BF
+from cogdl.backend import BACKEND
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
+if BACKEND == "jittor":
+    import jittor as tj
+    from jittor import nn, Module
+    from jittor import nn as F
+elif BACKEND == "torch":
+    import torch as tj
+    from torch.nn import Module
+    import torch.nn as nn
+    import torch.nn.functional as F
 from sklearn.utils import shuffle as skshuffle
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
@@ -30,10 +37,10 @@ def pre_evaluation_index(y_pred, y_true, sigmoid=False):
         torch.Tensor((tp, fp, fn)) for multi-label classification
     """
     if len(y_true.shape) == 1:
-        pred = (y_pred.argmax(1) == y_true).int()
+        pred = (BF.argmax(y_pred, 1) == y_true).int()
         tp = pred.sum()
         fnp = pred.shape[0] - tp
-        return torch.tensor((tp, fnp)).float()
+        return BF.tensor((tp, fnp)).float()
     else:
         if sigmoid:
             border = 0.5
@@ -41,11 +48,11 @@ def pre_evaluation_index(y_pred, y_true, sigmoid=False):
             border = 0
         y_pred[y_pred >= border] = 1
         y_pred[y_pred < border] = 0
-        tp = (y_pred * y_true).sum().to(torch.float32)
+        tp = BF.astype((y_pred * y_true).sum(), BF.dtype_dict("float32"))
         # tn = ((1 - y_true) * (1 - y_pred)).sum().to(torch.float32)
-        fp = ((1 - y_true) * y_pred).sum().to(torch.float32)
-        fn = (y_true * (1 - y_pred)).sum().to(torch.float32)
-        return torch.tensor((tp, fp, fn))
+        fp = (BF.astype((1 - y_true) * y_pred).sum(), BF.dtype_dict("float32"))
+        fn = (BF.astype(y_true * (1 - y_pred)).sum(), BF.dtype_dict("float32"))
+        return BF.tensor((tp, fp, fn))
 
 
 def merge_batch_indexes(values: list, method="mean"):
@@ -89,17 +96,17 @@ def node_degree_as_feature(data):
     """
     max_degree = 0
     degrees = []
-    device = data[0].edge_index[0].device
+    device = BF.device(data[0].edge_index[0])
 
     for graph in data:
         deg = graph.degrees().long()
         degrees.append(deg)
-        max_degree = max(deg.max().item(), max_degree)
+        max_degree = max(BF.max(deg).item(), max_degree)
 
     max_degree = int(max_degree) + 1
     for i in range(len(data)):
         one_hot = F.one_hot(degrees[i], max_degree).float()
-        data[i].x = one_hot.to(device)
+        data[i].x = BF.to(one_hot, device)
     return data
 
 
@@ -124,7 +131,7 @@ def evaluate_node_embeddings_using_logreg(data, labels, train_idx, test_idx, run
     return result
 
 
-class LogReg(nn.Module):
+class LogReg(Module):
     def __init__(self, ft_in, nb_classes):
         super(LogReg, self).__init__()
         self.fc = nn.Linear(ft_in, nb_classes)
@@ -134,20 +141,28 @@ class LogReg(nn.Module):
 
     def weights_init(self, m):
         if isinstance(m, nn.Linear):
-            torch.nn.init.xavier_uniform_(m.weight.data)
+            BF.xavier_uniform_(m.weight)
             if m.bias is not None:
-                m.bias.data.fill_(0.0)
+                BF.fill_(m.bias, 0.0)
 
-    def forward(self, seq):
-        ret = self.fc(seq)
-        return ret
+    if BACKEND == "jittor":
+
+        def execute(self, seq):
+            ret = self.fc(seq)
+            return ret
+
+    elif BACKEND == "torch":
+
+        def forward(self, seq):
+            ret = self.fc(seq)
+            return ret
 
 
 class LogRegTrainer(object):
     def train(self, data, labels, idx_train, idx_test, loss_fn=None, evaluator=None, run=20):
-        device = data.device
+        device = BF.device(data)
         nhid = data.shape[-1]
-        labels = labels.to(device)
+        labels = BF.to(labels, device)
 
         train_embs = data[idx_train]
         test_embs = data[idx_test]
@@ -156,7 +171,7 @@ class LogRegTrainer(object):
         test_lbls = labels[idx_test]
         tot = 0
 
-        num_classes = int(labels.max()) + 1
+        num_classes = int(BF.max(labels)) + 1
 
         if loss_fn is None:
             loss_fn = nn.CrossEntropyLoss() if len(labels.shape) == 1 else nn.BCEWithLogitsLoss()
@@ -165,22 +180,27 @@ class LogRegTrainer(object):
             evaluator = accuracy if len(labels.shape) == 1 else multilabel_f1
 
         for _ in range(run):
-            log = LogReg(nhid, num_classes).to(device)
-            optimizer = torch.optim.Adam(log.parameters(), lr=0.01, weight_decay=0.0)
-            log.to(device)
+            log = BF.to(LogReg(nhid, num_classes), device)
+            optimizer = tj.optim.Adam(log.parameters(), lr=0.01, weight_decay=0.0)
+            log = BF.to(log, device)
+            if BACKEND == "jittor":
+                for _ in range(100):
+                    log.train()
+                    logits = log(train_embs)
+                    loss = loss_fn(logits, train_lbls)
+                    optimizer.step(loss)
 
-            for _ in range(100):
-                log.train()
-                optimizer.zero_grad()
-
-                logits = log(train_embs)
-                loss = loss_fn(logits, train_lbls)
-
-                loss.backward()
-                optimizer.step()
+            elif BACKEND == "torch":
+                for _ in range(100):
+                    log.train()
+                    optimizer.zero_grad()
+                    logits = log(train_embs)
+                    loss = loss_fn(logits, train_lbls)
+                    loss.backward()
+                    optimizer.step()
 
             log.eval()
-            with torch.no_grad():
+            with tj.no_grad():
                 logits = log(test_embs)
             metric = evaluator(logits, test_lbls)
 

@@ -3,6 +3,7 @@
 #include <vector>
 #include <pybind11/pybind11.h>
 #include <c10/cuda/CUDAGuard.h>
+#include "../backend.h"
 
 torch::Tensor mhspmm_cuda(
     torch::Tensor rowptr,
@@ -16,10 +17,11 @@ torch::Tensor mhspmm(
     torch::Tensor attention,
     torch::Tensor infeat)
 {
+    if (backend()==0){
     assert(rowptr.device().type() == torch::kCUDA);
     assert(colind.device().type() == torch::kCUDA);
     assert(attention.device().type() == torch::kCUDA);
-    assert(infeat.device().type() == torch::kCUDA);
+    assert(infeat.device().type() == torch::kCUDA);}
     assert(rowptr.is_contiguous());
     assert(colind.is_contiguous());
     assert(attention.is_contiguous());

@@ -11,6 +11,3 @@ from .dropedge_gcn import DropEdge_GCN
 from .gin import GIN
 from .dgi import DGI
 from .sign import SIGN
-
-
-

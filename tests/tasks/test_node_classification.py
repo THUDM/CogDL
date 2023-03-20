@@ -70,15 +70,15 @@ def test_gat_cora():
     assert 0 <= ret["test_acc"] <= 1
 
 
-def test_mlp_pubmed():
-    args = get_default_args_for_nc("pubmed", "mlp")
+def test_mlp_cora():
+    args = get_default_args_for_nc("cora", "mlp")
     args.num_layers = 2
     ret = train(args)
     assert 0 <= ret["test_acc"] <= 1
 
 
-def test_mixhop_citeseer():
-    args = get_default_args_for_nc("citeseer", "mixhop")
+def test_mixhop_cora():
+    args = get_default_args_for_nc("cora", "mixhop")
     args.layer1_pows = [20, 20, 20]
     args.layer2_pows = [20, 20, 20]
     ret = train(args)
@@ -100,8 +100,8 @@ def test_graphsage_cora():
     assert 0 <= ret["test_acc"] <= 1
 
 
-def test_clustergcn_pubmed():
-    args = get_default_args_for_nc("pubmed", "gcn", dw="cluster_dw")
+def test_clustergcn_cora():
+    args = get_default_args_for_nc("cora", "gcn", dw="cluster_dw")
     args.cpu = True
     args.batch_size = 3
     args.n_cluster = 20
@@ -129,8 +129,8 @@ def test_graphsaint_cora():
     assert 0 <= ret["test_acc"] <= 1
 
 
-def test_unet_citeseer():
-    args = get_default_args_for_nc("citeseer", "unet")
+def test_unet_cora():
+    args = get_default_args_for_nc("cora", "unet")
     args.cpu = True
     args.pool_rate = [0.5, 0.5]
     args.n_pool = 2
@@ -520,11 +520,11 @@ if __name__ == "__main__":
     test_gcn_cora()
     test_gat_cora()
     test_sgc_cora()
-    test_mlp_pubmed()
-    test_mixhop_citeseer()
+    test_mlp_cora()
+    test_mixhop_cora()
     test_graphsage_cora()
     test_disengcn_cora()
-    test_graph_mix()
+    # test_graph_mix()
     test_srgcn_cora()
     test_gcnii_cora()
     test_deepergcn_cora()
@@ -542,4 +542,4 @@ if __name__ == "__main__":
     test_gcc_cora()
     test_pprgo_cora()
     test_sagn_cora()
-    test_clustergcn_pubmed()
+    test_clustergcn_cora()

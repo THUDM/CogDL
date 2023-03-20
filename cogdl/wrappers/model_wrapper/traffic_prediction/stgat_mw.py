@@ -9,28 +9,25 @@ class STGATModelWrapper(ModelWrapper):
         super(STGATModelWrapper, self).__init__()
         self.model = model
         self.optimizer_cfg = optimizer_cfg
-        self.edge_index = torch.stack(args['edge_index'])
-        self.edge_weight = args['edge_weight']
-        self.scaler = args['scaler']
-        self.node_ids = args['node_ids']
-        self.pred_timestamp = args['pred_timestamp']
-
+        self.edge_index = torch.stack(args["edge_index"])
+        self.edge_weight = args["edge_weight"]
+        self.scaler = args["scaler"]
+        self.node_ids = args["node_ids"]
+        self.pred_timestamp = args["pred_timestamp"]
 
     def train_step(self, batch):
         batch_x, y = batch
         batch_size, num_feature, _, _ = batch_x.size()
         xxx = batch_x.view(-1, num_feature)
-        pred = self.model(xxx, self.edge_index, self.edge_weight,batch_size , num_feature)
+        pred = self.model(xxx, self.edge_index, self.edge_weight, batch_size, num_feature)
         loss = self.default_loss_fn(pred.view(len(batch_x), -1), y)
         return loss
-
 
     def val_step(self, batch):
         batch_x, y = batch
         batch_size, num_feature, _, _ = batch_x.size()
         xxx = batch_x.view(-1, num_feature)
-        pred = self.model(xxx, self.edge_index, self.edge_weight,batch_size,num_feature)
-
+        pred = self.model(xxx, self.edge_index, self.edge_weight, batch_size, num_feature)
 
         _y = self.scaler.inverse_transform(y.cpu()).reshape(-1)
         _pred = self.scaler.inverse_transform(pred.view(len(batch_x), -1).cpu().numpy()).reshape(-1)
@@ -44,8 +41,6 @@ class STGATModelWrapper(ModelWrapper):
         # self.note("val_mae_metric", mae)
         # self.note("val_mape_metric", mape)
         # self.note("val_mse_metric", mse)
-
-
 
     def test_step(self, batch):
 
@@ -69,36 +64,36 @@ class STGATModelWrapper(ModelWrapper):
 
         pre_pd = pd.DataFrame()
         timestamp = self.pred_timestamp.tolist()
-        all_pre_y = torch.zeros(288,288)
+        all_pre_y = torch.zeros(288, 288)
         with torch.no_grad():
             for i in range(len(self.node_ids)):
-                timestamp[i] = datetime.datetime.strptime(timestamp[i], '%m/%d/%Y %H:%M:%S') + datetime.timedelta(days=1)
-                for j in range(pre_len-1):
-                    batch_x[0][j] = batch_x[0][j+1]
-                batch_x[0][pre_len-1] = y.view(-1,1)
-                pred = self.model(batch_x.view(-1, num_feature), self.edge_index, self.edge_weight,batch_size,num_feature)
-                y = pred.view(1,-1)
+                timestamp[i] = datetime.datetime.strptime(timestamp[i], "%m/%d/%Y %H:%M:%S") + datetime.timedelta(
+                    days=1
+                )
+                for j in range(pre_len - 1):
+                    batch_x[0][j] = batch_x[0][j + 1]
+                batch_x[0][pre_len - 1] = y.view(-1, 1)
+                pred = self.model(
+                    batch_x.view(-1, num_feature), self.edge_index, self.edge_weight, batch_size, num_feature
+                )
+                y = pred.view(1, -1)
                 all_pre_y[i] = y
 
         pre_y = self.scaler.inverse_transform(all_pre_y.cpu().numpy()).reshape(-1, len(self.node_ids))
-        pre_pd['timestamp'] = timestamp
+        pre_pd["timestamp"] = timestamp
         for i in range(len(self.node_ids)):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                pre_pd[self.node_ids[i]] = list(pre_y[:,i])
-        pre_pd.to_csv('./data/pems-stgat/stgat_prediction.csv',index=False)
-
-
+                pre_pd[self.node_ids[i]] = list(pre_y[:, i])
+        pre_pd.to_csv("./data/pems-stgat/stgat_prediction.csv", index=False)
 
     # def predict_step(self, batch):
     #     batch_x, y = batch
     #     batch_size, num_feature, _, _ = batch_x.size()
     #     pred = self.model(batch_x.view(-1, num_feature), self.edge_index, self.edge_weight,batch_size,num_feature)
 
-
     #     _y = self.scaler.inverse_transform(y.cpu()).reshape(-1)
     #     _pred = self.scaler.inverse_transform(pred.view(len(batch_x), -1).cpu().numpy()).reshape(-1)
-
 
     def pre_stage(self, stage, data_w):
         device = next(self.model.parameters()).device
@@ -113,20 +108,19 @@ class STGATModelWrapper(ModelWrapper):
                 batch_x = batch_x.to(device)
                 batch_y_emb = batch_y_emb.to(device) if batch_y_emb is not None else batch_y_emb
                 batch_size, num_feature, _, _ = batch_x.size()
-                pred = self.model(batch_x.view(-1, num_feature), self.edge_index, self.edge_weight,batch_size,num_feature)
+                pred = self.model(
+                    batch_x.view(-1, num_feature), self.edge_index, self.edge_weight, batch_size, num_feature
+                )
                 preds.append(pred.to("cpu"))
         probs = torch.cat(preds, dim=0)
         return probs
-
 
     def setup_optimizer(self):
         cfg = self.optimizer_cfg
         return torch.optim.Adam(self.model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
 
-
     def set_early_stopping(self):
         return "val_metric", "<"
-
 
 
 def evaluate_model(model, loss, x, y, edge_index, edge_weight):
@@ -148,7 +142,7 @@ def evaluate_metric(model, scaler, x, y, edge_index, edge_weight):
         d = np.abs(y - y_pred)
         mae = d.tolist()
         mape = (d / y).tolist()
-        mse = (d ** 2).tolist()
+        mse = (d**2).tolist()
     MAE = np.array(mae).mean()
     MAPE = np.array(mape).mean()
     RMSE = np.sqrt(np.array(mse).mean())

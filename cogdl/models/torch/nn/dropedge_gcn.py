@@ -1,11 +1,9 @@
 import math
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.modules.module import Module
 from torch.nn.parameter import Parameter
-
 from .. import BaseModel
 from cogdl.utils import spmm
 
@@ -483,32 +481,32 @@ class Dense(Module):
 
 class DropEdge_GCN(BaseModel):
     """
-     DropEdge: Towards Deep Graph Convolutional Networks on Node Classification
-     Applying DropEdge to GCN @ https://arxiv.org/pdf/1907.10903.pdf
+    DropEdge: Towards Deep Graph Convolutional Networks on Node Classification
+    Applying DropEdge to GCN @ https://arxiv.org/pdf/1907.10903.pdf
 
     The model for the single kind of deepgcn blocks.
     The model architecture likes:
-    inputlayer(nfeat)--block(nbaselayer, nhid)--...--outputlayer(nclass)--softmax(nclass)
-                        |------  nhidlayer  ----|
+    inputlayer(nfeat)--block(nbaselayer, nhid)--...--outputlayer(nclass)--softmax(nclass) 
+    |------  nhidlayer  ----|
     The total layer is nhidlayer*nbaselayer + 2.
     All options are configurable.
 
-     Args:
-         Initial function.
-         :param nfeat: the input feature dimension.
-         :param nhid:  the hidden feature dimension.
-         :param nclass: the output feature dimension.
-         :param nhidlayer: the number of hidden blocks.
-         :param dropout:  the dropout ratio.
-         :param baseblock: the baseblock type, can be "mutigcn", "resgcn", "densegcn" and "inceptiongcn".
-         :param inputlayer: the input layer type, can be "gcn", "dense", "none".
-         :param outputlayer: the input layer type, can be "gcn", "dense".
-         :param nbaselayer: the number of layers in one hidden block.
-         :param activation: the activation function, default is ReLu.
-         :param withbn: using batch normalization in graph convolution.
-         :param withloop: using self feature modeling in graph convolution.
-         :param aggrmethod: the aggregation function for baseblock, can be "concat" and "add". For "resgcn", the default
-                            is "add", for others the default is "concat".
+    Args:
+        Initial function.
+        :param nfeat: the input feature dimension.
+        :param nhid:  the hidden feature dimension.
+        :param nclass: the output feature dimension.
+        :param nhidlayer: the number of hidden blocks.
+        :param dropout:  the dropout ratio.
+        :param baseblock: the baseblock type, can be "mutigcn", "resgcn", "densegcn" and "inceptiongcn".
+        :param inputlayer: the input layer type, can be "gcn", "dense", "none".
+        :param outputlayer: the input layer type, can be "gcn", "dense".
+        :param nbaselayer: the number of layers in one hidden block.
+        :param activation: the activation function, default is ReLu.
+        :param withbn: using batch normalization in graph convolution.
+        :param withloop: using self feature modeling in graph convolution.
+        :param aggrmethod: the aggregation function for baseblock, can be "concat" and "add". For "resgcn", the default
+                        is "add", for others the default is "concat".
     """
 
     @staticmethod

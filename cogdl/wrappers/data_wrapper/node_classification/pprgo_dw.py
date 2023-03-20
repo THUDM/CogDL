@@ -2,7 +2,6 @@ import os
 import scipy.sparse as sp
 from cogdl import function as BF
 from cogdl.backend import BACKEND
-
 if BACKEND == "jittor":
     from jittor.dataset import Dataset
     from jittor.dataset import Dataset as DataLoader
@@ -13,7 +12,6 @@ elif BACKEND == "torch":
     from torch.utils.data import DataLoader
     from torch.utils.data import BatchSampler
     from torch.utils.data import SequentialSampler
-
 from .. import DataWrapper
 from cogdl.utils.ppr_utils import build_topk_ppr_matrix_from_data
 

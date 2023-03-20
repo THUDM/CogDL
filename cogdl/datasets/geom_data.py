@@ -1,11 +1,10 @@
-import torch
 import networkx as nx
 import numpy as np
 import os.path as osp
 import pickle as pkl
 import sys
 import scipy.sparse as sp
-
+from cogdl import function as BF
 from cogdl.data import Dataset, Graph
 from cogdl.utils import download_url, untar, Accuracy, CrossEntropyLoss
 
@@ -65,16 +64,16 @@ def read_geom_data(folder, dataset_name):
             train_mask = splits_file["train_mask"]
             val_mask = splits_file["val_mask"]
             test_mask = splits_file["test_mask"]
-            train_mask = torch.BoolTensor(train_mask)
-            val_mask = torch.BoolTensor(val_mask)
-            test_mask = torch.BoolTensor(test_mask)
+            train_mask = BF.BoolTensor(train_mask)
+            val_mask = BF.BoolTensor(val_mask)
+            test_mask = BF.BoolTensor(test_mask)
             all_masks.append({"train": train_mask, "val": val_mask, "test": test_mask})
 
-    features = torch.FloatTensor(features)
-    labels = torch.LongTensor(labels)
+    features = BF.FloatTensor(features)
+    labels = BF.FloatTensor(labels)
 
     coo_adj = adj.tocoo()
-    row, col = torch.LongTensor(coo_adj.row), torch.LongTensor(coo_adj.col)
+    row, col = BF.LongTensor(coo_adj.row), BF.LongTensor(coo_adj.col)
     edge_index = (row, col)
 
     data = Graph(x=features, edge_index=edge_index, y=labels, all_masks=all_masks)
@@ -91,7 +90,7 @@ class GeomDataset(Dataset):
 
         super(GeomDataset, self).__init__(root)
 
-        self.data = torch.load(self.processed_paths[0])
+        self.data = BF.load(self.processed_paths[0])
         self.raw_dir = osp.join(self.root, self.name, "raw")
         self.processed_dir = osp.join(self.root, self.name, "processed")
 
@@ -115,7 +114,7 @@ class GeomDataset(Dataset):
     @property
     def num_classes(self):
         assert hasattr(self.data, "y")
-        return int(torch.max(self.data.y)) + 1
+        return int(BF.max(self.data.y).item()) + 1
 
     @property
     def num_nodes(self):
@@ -129,7 +128,7 @@ class GeomDataset(Dataset):
 
     def process(self):
         data = read_geom_data(self.raw_dir, self.name)
-        torch.save(data, self.processed_paths[0])
+        BF.save(data, self.processed_paths[0])
 
         return data
 
@@ -254,17 +253,18 @@ def read_planetoid_data(folder, dataset_str):
             train_mask = splits_file["train_mask"]
             val_mask = splits_file["val_mask"]
             test_mask = splits_file["test_mask"]
-            train_mask = torch.BoolTensor(train_mask)
-            val_mask = torch.BoolTensor(val_mask)
-            test_mask = torch.BoolTensor(test_mask)
+            train_mask = BF.BoolTensor(train_mask)
+            val_mask = BF.BoolTensor(val_mask)
+            test_mask = BF.BoolTensor(test_mask)
             all_masks.append({"train": train_mask, "val": val_mask, "test": test_mask})
 
-    features = torch.FloatTensor(features.todense())
+    features = BF.FloatTensor(features.todense())
+
     labels = np.argmax(labels, axis=-1)
-    labels = torch.LongTensor(labels)
+    labels = BF.LongTensor(labels)
 
     coo_adj = adj.tocoo()
-    row, col = torch.LongTensor(coo_adj.row), torch.LongTensor(coo_adj.col)
+    row, col = BF.LongTensor(coo_adj.row), BF.LongTensor(coo_adj.col)
     edge_index = (row, col)
 
     graph = Graph(x=features, edge_index=edge_index, y=labels, all_masks=all_masks)
@@ -281,7 +281,7 @@ class GeomPlanetoidDataset(Dataset):
 
         super(GeomPlanetoidDataset, self).__init__(root)
 
-        self.data = torch.load(self.processed_paths[0])
+        self.data = BF.load(self.processed_paths[0])
         self.raw_dir = osp.join(self.root, self.name, "raw")
         self.processed_dir = osp.join(self.root, self.name, "processed")
 
@@ -304,7 +304,7 @@ class GeomPlanetoidDataset(Dataset):
     @property
     def num_classes(self):
         assert hasattr(self.data, "y")
-        return int(torch.max(self.data.y)) + 1
+        return int(BF.max(self.data.y).item()) + 1
 
     @property
     def num_nodes(self):
@@ -318,7 +318,7 @@ class GeomPlanetoidDataset(Dataset):
 
     def process(self):
         data = read_planetoid_data(self.raw_dir, self.name[:-5])
-        torch.save(data, self.processed_paths[0])
+        BF.save(data, self.processed_paths[0])
 
         return data
 

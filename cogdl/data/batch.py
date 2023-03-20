@@ -1,6 +1,6 @@
 import re
 
-import torch
+from cogdl import function as BF
 from cogdl.data import Graph, Adjacency
 
 
@@ -55,9 +55,9 @@ class Batch(Graph):
         for i, data in enumerate(data_list):
             for key in data.keys:
                 item = data[key]
-                if torch.is_tensor(item) and item.dtype != torch.bool:
+                if BF.is_tensor(item) and item.dtype != BF.dtype_dict("bool"):
                     item = item + cumsum[key]
-                if torch.is_tensor(item):
+                if BF.is_tensor(item):
                     size = item.size(data.cat_dim(key, data[key]))
                 else:
                     size = 1
@@ -73,33 +73,33 @@ class Batch(Graph):
             if num_nodes is not None:
                 num_nodes_cum.append(num_nodes + num_nodes_cum[-1])
                 num_edges_cum.append(data.num_edges + num_edges_cum[-1])
-                item = torch.full((num_nodes,), i, dtype=torch.long)
+                item = BF.full((num_nodes,), i, dtype=BF.dtype_dict("long"))
                 batch.batch.append(item)
         if num_nodes is None:
             batch.batch = None
         for key in batch.keys:
             item = batch[key][0]
-            if torch.is_tensor(item):
-                batch[key] = torch.cat(batch[key], dim=data_list[0].cat_dim(key, item))
+            if BF.is_tensor(item):
+                batch[key] = BF.cat(batch[key], dim=data_list[0].cat_dim(key, item))
             elif isinstance(item, int) or isinstance(item, float):
-                batch[key] = torch.tensor(batch[key])
+                batch[key] = BF.tensor(batch[key])
             elif isinstance(item, Adjacency):
                 target = Adjacency()
                 for k in item.keys:
                     if item[k] is None:
                         continue
                     if k == "row" or k == "col":
-                        _item = torch.cat(
+                        _item = BF.cat(
                             [x[k] + num_nodes_cum[i] for i, x in enumerate(batch[key])], dim=item.cat_dim(k, None)
                         )
                     elif k == "row_ptr":
-                        _item = torch.cat(
+                        _item = BF.cat(
                             [x[k][:-1] + num_edges_cum[i] for i, x in enumerate(batch[key][:-1])],
                             dim=item.cat_dim(k, None),
                         )
-                        _item = torch.cat([_item, batch[key][-1][k] + num_edges_cum[-2]], dim=item.cat_dim(k, None))
+                        _item = BF.cat([_item, batch[key][-1][k] + num_edges_cum[-2]], dim=item.cat_dim(k, None))
                     else:
-                        _item = torch.cat([x[k] for i, x in enumerate(batch[key])], dim=item.cat_dim(k, None))
+                        _item = BF.cat([x[k] for i, x in enumerate(batch[key])], dim=item.cat_dim(k, None))
                     target[k] = _item
                 batch[key] = target.to(item.device)
         return batch.contiguous()

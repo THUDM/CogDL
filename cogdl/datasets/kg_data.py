@@ -8,8 +8,6 @@ from cogdl.utils import download_url
 
 
 class BidirectionalOneShotIterator(object):
-
-
     def __init__(self, dataloader_head, dataloader_tail):
         self.iterator_head = self.one_shot_iterator(dataloader_head)
         self.iterator_tail = self.one_shot_iterator(dataloader_tail)
@@ -179,8 +177,6 @@ class TrainDataset(torch.utils.data.Dataset):
         return true_head, true_tail
 
 
-
-
 def read_triplet_data(folder):
     filenames = ["train2id.txt", "valid2id.txt", "test2id.txt"]
     count = 0
@@ -203,7 +199,7 @@ def read_triplet_data(folder):
             for line in f:
                 items = line.strip().split()
                 if len(items) != 3:
-                    continue  
+                    continue
                 edge_index.append([int(items[0]), int(items[1])])
                 edge_attr.append(int(items[2]))
                 triples.append((int(items[0]), int(items[2]), int(items[1])))
@@ -288,7 +284,7 @@ class KnowledgeGraphDataset(Dataset):
     def download(self):
         for name in self.raw_file_names:
             download_url(self.url.format(self.name, name), self.raw_dir, name=name)
-    
+
     def process(self):
         (
             data,

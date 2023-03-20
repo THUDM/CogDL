@@ -1,4 +1,3 @@
-
 from tracemalloc import start
 from turtle import pos
 from typing import List
@@ -19,7 +18,7 @@ class NeighborSampler(DataLoader):
             batch_size = kwargs["batch_size"]
         else:
             batch_size = 8
-        if isinstance(dataset.data, Graph):     
+        if isinstance(dataset.data, Graph):
             self.dataset = NeighborSamplerDataset(dataset, sizes, batch_size, mask)
         else:
             self.dataset = dataset
@@ -59,6 +58,7 @@ class UnsupNeighborSampler(DataLoader):
     def shuffle(self):
         self.dataset.shuffle()
 
+
 class NeighborSamplerDataset(torch.utils.data.Dataset):
     def __init__(self, dataset, sizes: List[int], batch_size: int, mask=None):
         super(NeighborSamplerDataset, self).__init__()
@@ -78,7 +78,7 @@ class NeighborSamplerDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return (self.num_nodes - 1) // self.batch_size + 1
-    
+
     def __getitem__(self, idx):
         """
             Sample a subgraph with neighborhood sampling
@@ -121,11 +121,11 @@ class UnsupNeighborSamplerDataset(torch.utils.data.Dataset):
         super(UnsupNeighborSamplerDataset, self).__init__()
         self.data = dataset.data
         self.x = self.data.x
-        self.edge_index=self.data.edge_index
+        self.edge_index = self.data.edge_index
         self.sizes = sizes
         self.batch_size = batch_size
         self.node_idx = torch.arange(0, self.data.x.shape[0], dtype=torch.long)
-        self.total_num_nodes=self.num_nodes = self.node_idx.shape[0]
+        self.total_num_nodes = self.num_nodes = self.node_idx.shape[0]
         if mask is not None:
             self.node_idx = self.node_idx[mask]
         self.num_nodes = self.node_idx.shape[0]
@@ -160,11 +160,10 @@ class UnsupNeighborSamplerDataset(torch.utils.data.Dataset):
         """
         batch = self.node_idx[idx * self.batch_size : (idx + 1) * self.batch_size]
         self.random_walker.build_up(self.edge_index, self.total_num_nodes)
-        walk_res=self.random_walker.walk_one(batch,length=1,p=0.0)
+        walk_res = self.random_walker.walk_one(batch, length=1, p=0.0)
 
-        neg_batch = torch.randint(0, self.total_num_nodes, (batch.numel(), ),
-                                  dtype=torch.int64)        
-        pos_batch=torch.tensor(walk_res)
+        neg_batch = torch.randint(0, self.total_num_nodes, (batch.numel(),), dtype=torch.int64)
+        pos_batch = torch.tensor(walk_res)
         batch = torch.cat([batch, pos_batch, neg_batch], dim=0)
         node_id = batch
         adj_list = []
@@ -288,4 +287,3 @@ class RandomPartitionDataset(torch.utils.data.Dataset):
 
     def shuffle(self):
         self.parts = torch.randint(0, self.n_cluster, size=(self.num_nodes,))
-

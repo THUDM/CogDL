@@ -9,12 +9,11 @@ class STGCNModelWrapper(ModelWrapper):
         super(STGCNModelWrapper, self).__init__()
         self.model = model
         self.optimizer_cfg = optimizer_cfg
-        self.edge_index = torch.stack(args['edge_index'])
-        self.edge_weight = args['edge_weight']
-        self.scaler = args['scaler']
-        self.node_ids = args['node_ids']
-        self.pred_timestamp = args['pred_timestamp']
-
+        self.edge_index = torch.stack(args["edge_index"])
+        self.edge_weight = args["edge_weight"]
+        self.scaler = args["scaler"]
+        self.node_ids = args["node_ids"]
+        self.pred_timestamp = args["pred_timestamp"]
 
     def train_step(self, batch):
         batch_x, y = batch
@@ -22,11 +21,9 @@ class STGCNModelWrapper(ModelWrapper):
         loss = self.default_loss_fn(pred.view(len(batch_x), -1), y)
         return loss
 
-
     def val_step(self, batch):
         batch_x, y = batch
         pred = self.model(batch_x, self.edge_index, self.edge_weight)
-
 
         _y = self.scaler.inverse_transform(y.cpu()).reshape(-1)
         _pred = self.scaler.inverse_transform(pred.view(len(batch_x), -1).cpu().numpy()).reshape(-1)
@@ -41,11 +38,9 @@ class STGCNModelWrapper(ModelWrapper):
         # self.note("val_mape_metric", mape)
         # self.note("val_mse_metric", mse)
 
-
     def test_step(self, batch):
         batch_x, y = batch
         pre_len = batch_x.shape[1]
-
 
         pred = self.model(batch_x, self.edge_index, self.edge_weight)
 
@@ -63,24 +58,26 @@ class STGCNModelWrapper(ModelWrapper):
 
         pre_pd = pd.DataFrame()
         timestamp = self.pred_timestamp.tolist()
-        all_pre_y = torch.zeros(288,288)
+        all_pre_y = torch.zeros(288, 288)
         with torch.no_grad():
             for i in range(len(self.node_ids)):
-                timestamp[i] = datetime.datetime.strptime(timestamp[i], '%m/%d/%Y %H:%M:%S') + datetime.timedelta(days=1)
-                for j in range(pre_len-1):
-                    batch_x[0][j] = batch_x[0][j+1]
-                batch_x[0][pre_len-1] = y.view(-1,1)
+                timestamp[i] = datetime.datetime.strptime(timestamp[i], "%m/%d/%Y %H:%M:%S") + datetime.timedelta(
+                    days=1
+                )
+                for j in range(pre_len - 1):
+                    batch_x[0][j] = batch_x[0][j + 1]
+                batch_x[0][pre_len - 1] = y.view(-1, 1)
                 pred = self.model(batch_x, self.edge_index, self.edge_weight)
-                y = pred.view(1,-1)
+                y = pred.view(1, -1)
                 all_pre_y[i] = y
 
         pre_y = self.scaler.inverse_transform(all_pre_y.cpu().numpy()).reshape(-1, len(self.node_ids))
-        pre_pd['timestamp'] = timestamp
+        pre_pd["timestamp"] = timestamp
         for i in range(len(self.node_ids)):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                pre_pd[self.node_ids[i]] = list(pre_y[:,i])
-        pre_pd.to_csv('./data/pems-stgcn/stgcn_prediction.csv',index=False)
+                pre_pd[self.node_ids[i]] = list(pre_y[:, i])
+        pre_pd.to_csv("./data/pems-stgcn/stgcn_prediction.csv", index=False)
 
     # def predict_step(self, batch):
     #     batch_x, y = batch
@@ -89,7 +86,6 @@ class STGCNModelWrapper(ModelWrapper):
     #
     #    _y = self.scaler.inverse_transform(y.cpu()).reshape(-1)
     #    _pred = self.scaler.inverse_transform(pred.view(len(batch_x), -1).cpu().numpy()).reshape(-1)
-
 
     def pre_stage(self, stage, data_w):
         device = next(self.model.parameters()).device
@@ -108,11 +104,9 @@ class STGCNModelWrapper(ModelWrapper):
         probs = torch.cat(preds, dim=0)
         return probs
 
-
     def setup_optimizer(self):
         cfg = self.optimizer_cfg
         return torch.optim.Adam(self.model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
-
 
     def set_early_stopping(self):
         return "val_metric", "<"
@@ -137,7 +131,7 @@ def evaluate_metric(model, scaler, x, y, edge_index, edge_weight):
         d = np.abs(y - y_pred)
         mae = d.tolist()
         mape = (d / y).tolist()
-        mse = (d ** 2).tolist()
+        mse = (d**2).tolist()
     MAE = np.array(mae).mean()
     MAPE = np.array(mape).mean()
     RMSE = np.sqrt(np.array(mse).mean())

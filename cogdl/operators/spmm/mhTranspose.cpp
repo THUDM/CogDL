@@ -3,6 +3,7 @@
 #include <vector>
 #include <pybind11/pybind11.h>
 #include <c10/cuda/CUDAGuard.h>
+#include "../backend.h"
 
 torch::Tensor mhtranspose_cuda(
     torch::Tensor permute,
@@ -12,9 +13,9 @@ torch::Tensor mhtranspose_cuda(
 torch::Tensor mhtranspose(
     torch::Tensor permute,
     torch::Tensor attention)
-{
+{   if (backend()==0){
     assert(permute.device().type() == torch::kCUDA);
-    assert(attention.device().type() == torch::kCUDA);
+    assert(attention.device().type() == torch::kCUDA);}
     assert(permute.is_contiguous());
     assert(attention.is_contiguous());
     assert(permute.dtype() == torch::kInt32);

@@ -92,7 +92,7 @@ class PRBCD(ModificationAttack):
         if self.make_undirected:
             self.n_possible_edges = self.n * (self.n - 1) // 2
         else:
-            self.n_possible_edges = self.n ** 2  # We filter self-loops later
+            self.n_possible_edges = self.n**2  # We filter self-loops later
 
         self.lr_factor = self.lr_factor * max(math.log2(self.n_possible_edges / self.search_space_size), 1.0)
 

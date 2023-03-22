@@ -82,6 +82,39 @@ cd cogdl
 pip install -e .
 ```
 
+## CogDL supports multiple backends
+
+CogDL supports PyTorch, Jittor backends.The default backend is PyTorch. CogDL will choose the backend on the following options (high priority to low priority)
+
+- Use the CogDLBACKEND environment variable:
+    You can use `export CogDLBACKEND=BACKEND` to set the global environment variable
+
+- Modify the config.json file under “~/.cogdl”:
+You can use `python -m cogdl.set_default_backend BACKEND` to set the default backend
+
+Currently BACKEND can be chosen from torch, jittor.
+
+### Jittor  backend
+
+The required jittor version is [jittor/ctorch](https://github.com/Exusial/jittor/tree/ctorch)
+
+### Working with different backends
+The leaderboard reports semi-supervised node classification using torch and jittor respectively as the backend.
+(For the following tasks, CogDL uses the default hyperparameters provided by the Experiments API)
+| Rank | Method                                                       |     Cora (torch/jittor)     |    Citeseer (torch/jittor)    |     Pubmed  (torch/jittor)   |
+| ---- | ------------------------------------------------------------ | :-----------: | :------------: | :------------: |
+| 1    | Grand([Feng et al., NIPS'20](https://arxiv.org/pdf/2005.11079.pdf)) |  81.7 ± 0.6 / 81.1 ± 0.8 | 70.5 ± 1/ 68.0 ± 0.4| 77.6 ± 0.5 / 79.3 ± 0.2 |
+| 2    | GCNII([Chen et al., ICML'20](https://arxiv.org/pdf/2007.02133.pdf)) | **82.6± 1** / **83.0± 0.4** |   **70.9 ± 0.8** / **70.0 ± 0.8**  |   **79.1 ± 0.4** / **79.6 ± 0.4**   |
+| 3    | DR-GAT [(Zou et al., 2019)](https://arxiv.org/abs/1907.02237) |  81.1 ± 1 /81.6 ± 1  |   65.0 ± 0.6 / 68.1 ± 0.5 |   76.0 ± 0.5 / 75.8 ± 0.2   |
+| 4    | MVGRL [(Hassani et al., KDD'20)](https://arxiv.org/pdf/2006.05582v1.pdf) |  81.5 ± 0.1  /79.1 ± 1  |   68.1 ± 0.6  / 68.4 ± 0.4 |   69.7 ±2 /73.4 ± 1   |
+| 5    | GAT [(Veličković et al., ICLR'18)](https://arxiv.org/abs/1710.10903) |  81.2 ± 0.8 / 81.4 ± 0.4  |   68.8 ± 0.6 / 69.0 ± 2   |   75.1 ± 0.5 / 76.1 ± 0.2  |
+| 6    | GCN [(Kipf et al., ICLR'17)](https://arxiv.org/abs/1609.02907) |  81.3 ± 0.3 /  81.0 ± 0.2|   68.9 ± 0.4  / 68.9 ± 0.4  |   76.6 ± 0.3  / 76.7 ± 0.4  |
+| 7    | DGI [(Veličković et al., ICLR'19)](https://arxiv.org/abs/1809.10341) |  79.8 ± 0.1 / 78.4 ± 0.9 |   69.6 ± 0.6 / 69.9 ± 1  |   76.6 ± 0.6  / 77.1 ± 1  |
+| 8    | GraphSAGE [(Hamilton et al., NeurIPS'17)](https://arxiv.org/abs/1706.02216) |  80.1 ± 0.2 /78.1 ± 0.08  |   68.0 ± 1 /68.1 ± 0.9  |   76.7 ± 0.7  / 75.7 ± 0.3 |
+| 9    | Grace([Feng et al., NIPS'20](https://arxiv.org/pdf/2005.11079.pdf)) |  74.1 ± 1 / 75.2 ± 2 | 62.3 ± 2 /62.7 ± 0.5| 74.2 ± 3 /76.8 ± 1  |
+
+
+
 ## Usage
 
 ### API Usage

@@ -36,3 +36,4 @@ def test_evaluator():
 
 if __name__ == "__main__":
     test_build_args_from_dict()
+    test_evaluator()

@@ -5,25 +5,26 @@ pretrain, freeze and finetune
 from cogdl import experiment
 
 # pretrain
-experiment(dataset="gcc_academic gcc_dblp_netrep gcc_dblp_snap gcc_facebook gcc_imdb gcc_livejournal", 
-           model="gcc",
-           lr=0.005,
-           weight_decay=1e-05,
-           clip_grad_norm=1.,
-           beta1=0.9,
-           beta2=0.999,
-           n_warmup_steps=0.1,
-           devices=[0],
-           epochs=100,
-           pretrain=True,  # must
-           no_test=True,  # must
-           unsup=True,  # must
-           do_valid=False,  # must
-           do_test=False  # must
-           )
+experiment(
+    dataset="gcc_academic gcc_dblp_netrep gcc_dblp_snap gcc_facebook gcc_imdb gcc_livejournal",
+    model="gcc",
+    lr=0.005,
+    weight_decay=1e-05,
+    clip_grad_norm=1.0,
+    beta1=0.9,
+    beta2=0.999,
+    n_warmup_steps=0.1,
+    devices=[0],
+    epochs=100,
+    pretrain=True,  # must
+    no_test=True,  # must
+    unsup=True,  # must
+    do_valid=False,  # must
+    do_test=False,  # must
+)
 
 # freeze
-# experiment(dataset="usa-airport", 
+# experiment(dataset="usa-airport",
 #            model="gcc",
 #            epochs=0,  # must
 #            freeze=True,  # must
@@ -32,7 +33,7 @@ experiment(dataset="gcc_academic gcc_dblp_netrep gcc_dblp_snap gcc_facebook gcc_
 #            )
 
 # finetune
-# experiment(dataset="usa-airport", 
+# experiment(dataset="usa-airport",
 #            model="gcc",
 #            epochs=30,  # must
 #            finetune=True,  # must

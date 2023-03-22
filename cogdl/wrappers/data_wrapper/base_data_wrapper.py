@@ -1,6 +1,10 @@
 import numpy as np
-import torch
-from torch.utils.data import DataLoader
+from cogdl.backend import BACKEND
+
+if BACKEND == "jittor":
+    from jittor.dataset import Dataset as DataLoader
+elif BACKEND == "torch":
+    from torch.utils.data import DataLoader
 from cogdl.data import Graph
 
 
@@ -154,17 +158,17 @@ class DataWrapper(object):
     def train(self):
         if self.__dataset__ is None:
             self.__dataset__ = getattr(self, "dataset", None)
-        if self.__dataset__ is not None and \
-                (isinstance(self.__dataset__.data, Graph) 
-                    or hasattr(self.__dataset__.data, "graphs")):
+        if self.__dataset__ is not None and (
+            isinstance(self.__dataset__.data, Graph) or hasattr(self.__dataset__.data, "graphs")
+        ):
             self.__dataset__.data.train()
 
     def eval(self):
         if self.__dataset__ is None:
             self.__dataset__ = getattr(self, "dataset", None)
-        if self.__dataset__ is not None and \
-                (isinstance(self.__dataset__.data, Graph) 
-                    or hasattr(self.__dataset__.data, "graphs")):
+        if self.__dataset__ is not None and (
+            isinstance(self.__dataset__.data, Graph) or hasattr(self.__dataset__.data, "graphs")
+        ):
             self.__dataset__.data.eval()
 
 

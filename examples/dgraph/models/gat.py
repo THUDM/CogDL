@@ -17,6 +17,7 @@ class GAT(BaseModel):
         alpha (float) : Coefficient of leaky_relu.
         nheads (int) : Number of attention heads.
     """
+
     def __init__(
         self,
         in_feats,

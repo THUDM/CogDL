@@ -189,3 +189,19 @@ class SAGE(BaseModel):
         for layer in self.layers:
             x = layer(graph, x)
         return x
+
+class UnsupGraphsage(Graphsage):
+    def __init__(self, num_features, num_classes, hidden_size, num_layers, sample_size, dropout, aggr):
+        super(Graphsage, self).__init__()
+        assert num_layers == len(sample_size)
+        self.adjlist = {}
+        self.num_features = num_features
+        self.num_classes = num_classes
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.sample_size = sample_size
+        self.dropout = dropout
+        shapes = [num_features] + hidden_size * num_layers
+        self.convs = nn.ModuleList(
+            [SAGELayer(shapes[layer], shapes[layer + 1], aggr=aggr) for layer in range(num_layers)]
+        )

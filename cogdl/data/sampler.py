@@ -160,12 +160,15 @@ class UnsupNeighborSamplerDataset(torch.utils.data.Dataset):
         """
         batch = self.node_idx[idx * self.batch_size : (idx + 1) * self.batch_size]
         self.random_walker.build_up(self.edge_index, self.total_num_nodes)
-        walk_res=self.random_walker.walk_one(batch,length=1,p=0.0)
-
+        walk_res = self.random_walker.walk(
+            batch, walk_length=2, parallel=False
+        )[:,1]
+       
         neg_batch = torch.randint(0, self.total_num_nodes, (batch.numel(), ),
                                   dtype=torch.int64)        
         pos_batch=torch.tensor(walk_res)
-        batch = torch.cat([batch, pos_batch, neg_batch], dim=0)
+        if self.sizes != [-1]:
+            batch = torch.cat([batch, pos_batch, neg_batch], dim=0)
         node_id = batch
         adj_list = []
         for size in self.sizes:

@@ -9,8 +9,8 @@ class UnsupGraphSAGEModelWrapper(UnsupervisedModelWrapper):
     @staticmethod
     def add_args(parser):
         # fmt: off
-        parser.add_argument("--num-shuffle", type=int, default=10)
-        parser.add_argument("--training-percents", default=[0.9], type=float, nargs="+")
+        parser.add_argument("--num-shuffle", type=int, default=1)
+        parser.add_argument("--training-percents", default=[0.2], type=float, nargs="+")
         parser.add_argument("--walk-length", type=int, default=10)
         parser.add_argument("--negative-samples", type=int, default=30)
         # fmt: on
@@ -38,7 +38,6 @@ class UnsupGraphSAGEModelWrapper(UnsupervisedModelWrapper):
     def test_step(self, graph):
         dataset, test_loader = graph
         graph = dataset.data
-        device = next(self.parameters()).device
         with torch.no_grad():
             if hasattr(self.model, "inference"):
                 pred = self.model.inference(graph.x, test_loader)

@@ -49,7 +49,7 @@ def test_unsupervised_graphsage():
     args.epochs = 2
     args.checkpoint_path = "graphsage.pt"
     ret = train(args)
-    assert ret["test_acc"] > 0
+    assert ret["micro-f1 0.1"] > 0
 
 
 def test_dgi():

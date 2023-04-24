@@ -1,0 +1,27 @@
+lr: 0.0005 # 0.0005
+lr_f: 0.025
+num_hidden: 1024
+num_heads: 4
+num_out_heads: 1
+num_layers: 2
+weight_decay: 1e-4
+weight_decay_f: 1e-2
+max_epoch: 500
+max_epoch_f: 500
+mask_rate: 0.5
+num_layers: 2
+encoder: gat
+decoder: gat 
+activation: prelu
+attn_drop: 0.1
+linear_prob: True
+in_drop: 0.2
+loss_fn: sce 
+drop_edge_rate: 0.0
+optimizer: adam
+replace_rate: 0.0
+alpha_l: 1
+scheduler: True
+remask_method: fixed
+momentum: 1
+lam: 0.1

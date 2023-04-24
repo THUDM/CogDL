@@ -480,16 +480,17 @@ class Graph(BaseGraph):
         self.x = x
         self.y = y
         self.grb_adj = None
+        num_nodes = x.shape[0] if x is not None else None
 
         for key, item in kwargs.items():
             if key == "num_nodes":
                 self.__num_nodes__ = item
+                num_nodes = item
             elif key == "grb_adj":
                 self.grb_adj = item
             elif not is_read_adj_key(key):
                 self[key] = item
 
-        num_nodes = x.shape[0] if x is not None else None
         if "edge_index_train" in kwargs:
             self._adj_train = Adjacency(num_nodes=num_nodes)
             for key, item in kwargs.items():
@@ -534,14 +535,17 @@ class Graph(BaseGraph):
         self._adj_full.add_remaining_self_loops()
         if self._adj_train is not None:
             self._adj_train.add_remaining_self_loops()
+        return self
 
     def padding_self_loops(self):
         self._adj.padding_self_loops()
+        return self
 
     def remove_self_loops(self):
         self._adj_full.remove_self_loops()
         if self._adj_train is not None:
             self._adj_train.remove_self_loops()
+        return self
 
     def row_norm(self):
         self._adj.row_norm()
@@ -790,7 +794,7 @@ class Graph(BaseGraph):
             if not torch.is_tensor(batch):
                 batch = torch.tensor(batch, dtype=torch.long)
             (row_ptr, col_indices, nodes, edges) = sample_adj_c(
-                self._adj.row_indptr, self.col_indices, batch, size, replace
+                self.row_indptr, self.col_indices, batch, size, replace
             )
         else:
             if torch.is_tensor(batch):
@@ -891,13 +895,18 @@ class Graph(BaseGraph):
                 val = self.edge_weight.numpy()
                 N = self.num_nodes
                 self[key] = sp.csr_matrix((val, (row, col)), shape=(N, N))
-            sub_adj = self[key][node_idx, :][:, node_idx]
+            sub_adj = self[key][node_idx, :][:, node_idx].tocoo()
             sub_g = Graph()
-            sub_g.row_indptr = torch.from_numpy(sub_adj.indptr).long()
-            sub_g.col_indices = torch.from_numpy(sub_adj.indices).long()
+            # sub_g.row_indptr = torch.from_numpy(sub_adj.indptr).long()
+            # sub_g.col_indices = torch.from_numpy(sub_adj.indices).long()
+            row = torch.from_numpy(sub_adj.row).long()
+            col = torch.from_numpy(sub_adj.col).long()
+            sub_g.edge_index = (row, col)
             sub_g.edge_weight = torch.from_numpy(sub_adj.data)
+            sub_g.num_nodes = len(node_idx)
             for key in self.__keys__():
                 sub_g[key] = self[key][node_idx]
+            sub_g._adj._to_csr()
             return sub_g.to(self._adj.device)
 
     def edge_subgraph(self, edge_idx, require_idx=True):

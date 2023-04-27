@@ -14,7 +14,7 @@ Implementing environment:
 - numpy = 1.21.2  
 - pytorch >= 1.6.0  
 - pillow = 9.1.1
-- cogdl = 0.5.3
+- cogdl >= 0.5.3
 
 ## Training
 

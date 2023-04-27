@@ -2,7 +2,7 @@
 ===
 
 [![PyPI Latest Release](https://badge.fury.io/py/cogdl.svg)](https://pypi.org/project/cogdl/)
-[![Build Status](https://travis-ci.org/THUDM/cogdl.svg?branch=master)](https://travis-ci.org/THUDM/cogdl)
+[![Build Status](https://app.travis-ci.com/THUDM/cogdl.svg?branch=master)](https://app.travis-ci.com/THUDM/cogdl)
 [![Documentation Status](https://readthedocs.org/projects/cogdl/badge/?version=latest)](https://cogdl.readthedocs.io/en/latest/?badge=latest)
 [![Downloads](https://pepy.tech/badge/cogdl)](https://pepy.tech/project/cogdl)
 [![Coverage Status](https://coveralls.io/repos/github/THUDM/cogdl/badge.svg?branch=master)](https://coveralls.io/github/THUDM/cogdl?branch=master)
@@ -21,19 +21,21 @@ CogDL的特性包括：
 
 ## ❗ 最新
 
+- [CogDL论文](https://arxiv.org/abs/2103.00959)被[WWW 2023](https://www2023.thewebconf.org/)接收。 欢迎大家关注我们在WWW 2023的报告！ 我们同时发布最新的 **v0.6 release**，添加了一系列图自监督学习的示例，包括[GraphMAE](https://github.com/THUDM/cogdl/tree/master/examples/graphmae), [GraphMAE2](https://github.com/THUDM/cogdl/tree/master/examples/graphmae2), 和[BGRL](https://github.com/THUDM/cogdl/tree/master/examples/bgrl). 
+
 - CogDL团队为大家开设了一门免费的GNN课程，大家可以访问[这个链接](https://cogdl.ai/gnn2022/)来获取。我们为大家提供了一个[讨论区](https://discuss.cogdl.ai)来进行交流。 
 
 - 最新的 **v0.5.3 release** 支持混合精度(fp16)训练，提供了[Jittor](https://github.com/Jittor/jittor)的初步支持（见[example](https://github.com/THUDM/cogdl/blob/master/examples/jittor/gcn.py)）。这个版本更新了文档中的使用教程，修复了一部分数据集的下载链接，修复了某些算子在不同环境下可能的问题。
-
-- 最新的 **v0.5.2 release** 给ogbn-products数据集添加了GNN样例，更新了geom数据集。这个版本同时修复了一些潜在的问题，包括设置不同device，使用cpu进行预测等。
-
-- 最新的 **v0.5.1 release** 添加了一些高效的算子，包括cpu版本的SpMM和cuda版本的scatter_max。这个版本同时增加了很多用于节点分类的[数据集](./cogdl/datasets/rd2cd_data.py)。 🎉
 
 <details>
 <summary>
 历史
 </summary>
 <br/>
+
+- 最新的 **v0.5.2 release** 给ogbn-products数据集添加了GNN样例，更新了geom数据集。这个版本同时修复了一些潜在的问题，包括设置不同device，使用cpu进行预测等。
+
+- 最新的 **v0.5.1 release** 添加了一些高效的算子，包括cpu版本的SpMM和cuda版本的scatter_max。这个版本同时增加了很多用于节点分类的[数据集](./cogdl/datasets/rd2cd_data.py)。 🎉
 
 - 最新的 **v0.5.0 release** 为图神经网络的训练设计了一套统一的流程. 这个版本去除了原先的`Task`类，引入了`DataWrapper`来准备training/validation/test过程中所需的数据，引入了`ModelWrapper`来定义模型training/validation/test的步骤. 🎉
 

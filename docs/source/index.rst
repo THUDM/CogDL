@@ -16,6 +16,8 @@ We summarize the contributions of CogDL as follows:
 ❗ News
 ------------
 
+- [The CogDL paper](https://arxiv.org/abs/2103.00959) was accepted by [WWW 2023](https://www2023.thewebconf.org/). Find us at WWW 2023! We also release the new **v0.6 release** which adds more examples of graph self-supervised learning, including [GraphMAE](https://github.com/THUDM/cogdl/tree/master/examples/graphmae), [GraphMAE2](https://github.com/THUDM/cogdl/tree/master/examples/graphmae2), and [BGRL](https://github.com/THUDM/cogdl/tree/master/examples/bgrl). 
+
 - The new **v0.5.3 release** supports mixed-precision training by setting \textit{fp16=True} and provides a basic [example](https://github.com/THUDM/cogdl/blob/master/examples/jittor/gcn.py) written by [Jittor](https://github.com/Jittor/jittor). It also updates the tutorial in the document, fixes downloading links of some datasets, and fixes potential bugs of operators. 
 - The new **v0.5.2 release** adds a GNN example for ogbn-products and updates geom datasets. It also fixes some potential bugs including setting devices, using cpu for inference, etc.
 - The new **v0.5.1 release** adds fast operators including SpMM (cpu version) and scatter_max (cuda version). It also adds lots of datasets for node classification. 🎉

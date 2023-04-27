@@ -2,7 +2,7 @@
 ===
 
 [![PyPI Latest Release](https://badge.fury.io/py/cogdl.svg)](https://pypi.org/project/cogdl/)
-[![Build Status](https://travis-ci.org/THUDM/cogdl.svg?branch=master)](https://travis-ci.org/THUDM/cogdl)
+[![Build Status](https://app.travis-ci.com/THUDM/cogdl.svg?branch=master)](https://app.travis-ci.com/THUDM/cogdl)
 [![Documentation Status](https://readthedocs.org/projects/cogdl/badge/?version=latest)](https://cogdl.readthedocs.io/en/latest/?badge=latest)
 [![Downloads](https://pepy.tech/badge/cogdl)](https://pepy.tech/project/cogdl)
 [![Coverage Status](https://coveralls.io/repos/github/THUDM/cogdl/badge.svg?branch=master)](https://coveralls.io/github/THUDM/cogdl?branch=master)
@@ -21,19 +21,21 @@ We summarize the contributions of CogDL as follows:
 
 ## ❗ News
 
+- [The CogDL paper](https://arxiv.org/abs/2103.00959) was accepted by [WWW 2023](https://www2023.thewebconf.org/). Find us at WWW 2023! We also release the new **v0.6 release** which adds more examples of graph self-supervised learning, including [GraphMAE](https://github.com/THUDM/cogdl/tree/master/examples/graphmae), [GraphMAE2](https://github.com/THUDM/cogdl/tree/master/examples/graphmae2), and [BGRL](https://github.com/THUDM/cogdl/tree/master/examples/bgrl). 
+
 - A free GNN course provided by CogDL Team is present at [this link](https://cogdl.ai/gnn2022/). We also provide a [discussion forum](https://discuss.cogdl.ai) for Chinese users. 
 
 - The new **v0.5.3 release** supports mixed-precision training by setting \textit{fp16=True} and provides a basic [example](https://github.com/THUDM/cogdl/blob/master/examples/jittor/gcn.py) written by [Jittor](https://github.com/Jittor/jittor). It also updates the tutorial in the document, fixes downloading links of some datasets, and fixes potential bugs of operators. 
-
-- The new **v0.5.2 release** adds a GNN example for ogbn-products and updates geom datasets. It also fixes some potential bugs including setting devices, using cpu for inference, etc.
-
-- The new **v0.5.1 release** adds fast operators including SpMM (cpu version) and scatter_max (cuda version). It also adds lots of datasets for node classification which can be found in [this link](./cogdl/datasets/rd2cd_data.py). 🎉
 
 <details>
 <summary>
 News History
 </summary>
 <br/>
+
+- The new **v0.5.2 release** adds a GNN example for ogbn-products and updates geom datasets. It also fixes some potential bugs including setting devices, using cpu for inference, etc.
+
+- The new **v0.5.1 release** adds fast operators including SpMM (cpu version) and scatter_max (cuda version). It also adds lots of datasets for node classification which can be found in [this link](./cogdl/datasets/rd2cd_data.py). 🎉
 
 - The new **v0.5.0 release** designs and implements a unified training loop for GNN. It introduces `DataWrapper` to help prepare the training/validation/test data and `ModelWrapper` to define the training/validation/test steps. 🎉
 
@@ -207,7 +209,7 @@ So how do you do a unit test?
 </details>
 
 ## CogDL Team
-CogDL is developed and maintained by [Tsinghua, ZJU, BAAI, DAMO Academy, and ZHIPU.AI](https://cogdl.ai/about/). 
+CogDL is developed and maintained by [Tsinghua, ZJU, DAMO Academy, and ZHIPU.AI](https://cogdl.ai/about/). 
 
 The core development team can be reached at [cogdlteam@gmail.com](mailto:cogdlteam@gmail.com).
 
@@ -216,10 +218,10 @@ The core development team can be reached at [cogdlteam@gmail.com](mailto:cogdlte
 Please cite [our paper](https://arxiv.org/abs/2103.00959) if you find our code or results useful for your research:
 
 ```
-@article{cen2021cogdl,
-    title={CogDL: A Toolkit for Deep Learning on Graphs},
+@inproceedings{cen2023cogdl,
+    title={CogDL: A Comprehensive Library for Graph Deep Learning},
     author={Yukuo Cen and Zhenyu Hou and Yan Wang and Qibin Chen and Yizhen Luo and Zhongming Yu and Hengrui Zhang and Xingcheng Yao and Aohan Zeng and Shiguang Guo and Yuxiao Dong and Yang Yang and Peng Zhang and Guohao Dai and Yu Wang and Chang Zhou and Hongxia Yang and Jie Tang},
-    journal={arXiv preprint arXiv:2103.00959},
-    year={2021}
+    booktitle={Proceedings of the ACM Web Conference 2023 (WWW'23)},
+    year={2023}
 }
 ```

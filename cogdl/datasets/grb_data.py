@@ -7,7 +7,7 @@ import scipy.sparse as sp
 import torch
 
 from cogdl.data import Graph, Dataset
-from cogdl.utils import download_url
+from cogdl.utils import untar, download_url
 from cogdl.utils.grb_utils import adj_to_tensor
 
 
@@ -16,36 +16,11 @@ class GRBDataset(Dataset):
     MODES = ["easy", "medium", "hard", "full"]
     FEAT_NORMS = [None, "linearize", "arctan", "tanh", "standardize"]
     URLs = {
-        "grb-cora": {
-            "adj.npz": "https://cloud.tsinghua.edu.cn/f/2e522f282e884907a39f/?dl=1",
-            "features.npz": "https://cloud.tsinghua.edu.cn/f/46fd09a8c1d04f11afbb/?dl=1",
-            "labels.npz": "https://cloud.tsinghua.edu.cn/f/88fccac46ee94161b48f/?dl=1",
-            "index.npz": "https://cloud.tsinghua.edu.cn/f/d8488cbf78a34a8c9c5b/?dl=1",
-        },
-        "grb-citeseer": {
-            "adj.npz": "https://cloud.tsinghua.edu.cn/f/d3063e4e010e431b95a6/?dl=1",
-            "features.npz": "https://cloud.tsinghua.edu.cn/f/172b66d454d348458bca/?dl=1",
-            "labels.npz": "https://cloud.tsinghua.edu.cn/f/f594655156c744da9ef6/?dl=1",
-            "index.npz": "https://cloud.tsinghua.edu.cn/f/cb25124f9a454dcf989f/?dl=1",
-        },
-        "grb-reddit": {
-            "adj.npz": "https://cloud.tsinghua.edu.cn/f/22e91d7f34494784a670/?dl=1",
-            "features.npz": "https://cloud.tsinghua.edu.cn/f/000dc5cd8dd643dcbfc6/?dl=1",
-            "labels.npz": "https://cloud.tsinghua.edu.cn/f/3e228140ede64b7886b2/?dl=1",
-            "index.npz": "https://cloud.tsinghua.edu.cn/f/24310393f5394e3a8b73/?dl=1",
-        },
-        "grb-aminer": {
-            "adj.npz": "https://cloud.tsinghua.edu.cn/f/dca1075cd8cc408bb4c0/?dl=1",
-            "features.npz": "https://cloud.tsinghua.edu.cn/f/e93ba93dbdd94673bce3/?dl=1",
-            "labels.npz": "https://cloud.tsinghua.edu.cn/f/0ddbca54864245f3b4e1/?dl=1",
-            "index.npz": "https://cloud.tsinghua.edu.cn/f/3444a2e87ef745e89828/?dl=1",
-        },
-        "grb-flickr": {
-            "adj.npz": "https://cloud.tsinghua.edu.cn/f/90a513e35f0a4f3896eb/?dl=1",
-            "features.npz": "https://cloud.tsinghua.edu.cn/f/54b2f1d7ee7c4d5bbcd4/?dl=1",
-            "labels.npz": "https://cloud.tsinghua.edu.cn/f/43e9ec09458e4d30b528/?dl=1",
-            "index.npz": "https://cloud.tsinghua.edu.cn/f/8239dc6a729e489da44f/?dl=1",
-        },
+        "grb-cora": "https://cogdl-data.oss-cn-beijing.aliyuncs.com/data/grb-cora.zip",
+        "grb-citeseer": "https://cogdl-data.oss-cn-beijing.aliyuncs.com/data/grb-citeseer.zip",
+        "grb-reddit": "https://cogdl-data.oss-cn-beijing.aliyuncs.com/data/grb-reddit.zip",
+        "grb-aminer": "https://cogdl-data.oss-cn-beijing.aliyuncs.com/data/grb-aminer.zip",
+        "grb-flickr": "https://cogdl-data.oss-cn-beijing.aliyuncs.com/data/grb-flickr.zip",
     }
 
     def __init__(self, root, name, mode="full", feat_norm=None):
@@ -83,9 +58,9 @@ class GRBDataset(Dataset):
         return ["data_" + self.mode + "_" + str(self.feat_norm) + ".pt"]
 
     def download(self):
-        print(self.name)
-        for name in self.raw_file_names:
-            download_url(self.URLs[self.name][name], self.raw_dir, name)
+        fname = "{}.zip".format(self.name.lower())
+        download_url(self.URLs[self.name.lower()], self.raw_dir, fname)
+        untar(self.raw_dir, fname)
 
     def get(self, idx):
         assert idx == 0

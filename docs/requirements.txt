@@ -11,7 +11,7 @@ numpy>=1.21
 scipy
 gensim>=4.0
 grave
-scikit_learn==0.24.2
+scikit_learn==1.0.1
 tabulate
 optuna==2.4.0
 ogb
